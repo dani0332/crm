@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
@@ -33,7 +34,7 @@ class AdvisorPerformanceReportService extends BaseService
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as in_progress'),
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as manual_created'),
                 DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as bad_leads'),
-                DB::raw('CAST(SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.') THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as sale_leads'),
+                DB::raw('CAST(SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED) as sale_leads'),
                 DB::raw('IFNULL(CAST(SUM(quote_view_count.visit_count) / COUNT(DISTINCT(user_team.team_id)) AS UNSIGNED), 0) as view_count'),
             )
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
@@ -42,6 +43,7 @@ class AdvisorPerformanceReportService extends BaseService
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id')
             ->orderBy('users.email');
 
@@ -114,13 +116,15 @@ class AdvisorPerformanceReportService extends BaseService
         $filters = (object) $filters;
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
+
         $startDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[0])->startOfDay()->format($dateFormat) :
-            Carbon::parse(now())->startOfDay()->format($dateFormat);
+                ($freshLoad ? Carbon::parse(now())->startOfDay()->format($dateFormat) : Carbon::parse(now()->subDays($maxDays))->startOfDay()->format($dateFormat));
 
         $endDate = isset($filters->advisorAssignedDates) ?
-            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) :
-            Carbon::parse(now())->endOfDay()->format($dateFormat);
+            Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 

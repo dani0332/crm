@@ -1205,6 +1205,10 @@ onMounted(() => {
             <dt class="font-medium">DETAILS</dt>
             <dd>{{ quote.details }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Additional Notes</dt>
+            <dd>{{ quote.additional_notes }}</dd>
+          </div>
         </dl>
       </div>
 

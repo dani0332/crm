@@ -10,6 +10,7 @@ const props = defineProps({
   childern: Object,
   typeOfInsurance: Object,
   numberOfYears: Object,
+  flash: Object,
 });
 
 const quoteForm = useForm({
@@ -43,15 +44,13 @@ function onSubmit(isValid) {
     let method = 'post';
     let url = `/quotes/life/`;
     let title = 'Quote saved successfully';
-    let redirectUrl = '/quotes/life';
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
       title = 'Quote updated successfully';
-      redirectUrl = `/quotes/life/${props.quote?.uuid}`;
     }
 
-    quoteForm.submit(method, url, {
+     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
       },
@@ -60,10 +59,6 @@ function onSubmit(isValid) {
           title: title,
           position: 'top',
         });
-
-        setTimeout(function () {
-          router.get(redirectUrl);
-        }, 500);
       },
     });
   }
@@ -196,7 +191,7 @@ function onSubmit(isValid) {
         />
         <x-select
           v-model="quoteForm.children_id"
-          label="Childern"
+          label="Children"
           :options="
             childern.map(item => ({
               value: item.id,

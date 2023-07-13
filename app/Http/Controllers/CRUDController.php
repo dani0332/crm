@@ -267,7 +267,7 @@ class CRUDController extends Controller
         $model = $this->genericModel;
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Create', [
+            return inertia('HealthQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -475,6 +475,14 @@ class CRUDController extends Controller
             $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
+            $daysAfterCapturedPayment = null;
+            if (($capturedPaymentDate = PaymentStatusLog::where(['quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $record->id,
+                'current_payment_status_id' => PaymentStatusEnum::CAPTURED,
+            ])->first())) {
+                $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
+            }
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -482,7 +490,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment',
             ]));
         }
 
@@ -682,7 +690,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HealthQuote/Edit', [
+            return inertia('HealthQuote/Form', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'dropdownSource' => $dropdownSource,
@@ -712,37 +720,44 @@ class CRUDController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
         $validateArray = [];
         if ($modelType == 'Home') {
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
-        } else {
-            $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
-            foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
-                    $validateArray[$property] = 'required';
+        } else
+        {
+            if($modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarManager))
+            {
+                $validateArray['renewal_batch'] = 'required';
+            }
+            else
+            {
+                $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
+                $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
+
+                foreach ($modelPropertiesList as $property => $value) {
+                    $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || !strpos($modelSkipPropertiesList['update'], $property);
+                    if (is_null($jsonDecodeSkipProps) && in_array($property, $modelSkipPropertiesList)) {
+                        continue;
+                    }
+                    if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $property != 'car_value_tier' && $modelSkipPropertiesList != null && $strPosUpdateCheck) {
+                        $validateArray[$property] = 'required';
+                    }
                 }
             }
         }
+
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        // dd($request->all(), $validateArray);
-        // $this->validate($request, $validateArray);
-        $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        $this->validate($request, $validateArray);
+        $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
+        if (! is_null($response) && ! $response) {
+            return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
+        }
 
         return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 
     public function cardsViewHome(Request $request)
@@ -972,7 +987,7 @@ class CRUDController extends Controller
     {
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
-            return redirect()->back()->with('message', $isValidRequest);
+            return redirect()->back()->with('error', $isValidRequest);
         }
         $assignedUser = $this->userService->getUserById((int) $request->assigned_to_id_new);
         if (! $assignedUser) {
@@ -1104,7 +1119,7 @@ class CRUDController extends Controller
         if ($response == 200 || $response == 201) {
             return redirect()->back()->with('success', 'Car Plan has been saved');
         } else {
-            return redirect()->back()->with('message', $response);
+            return redirect()->back()->with('error', $response);
         }
     }
 
@@ -1152,6 +1167,14 @@ class CRUDController extends Controller
         $leadHistory = $this->crudService->getLeadAuditHistory($request->modelType, $request->recordId);
 
         return $leadHistory;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLeadHistoryLogs(Request $request)
+    {
+        return $this->crudService->getLeadHistoryLogs($request->quoteTypeId, $request->recordId);
     }
 
     public function searchLead(Request $request)
@@ -1459,5 +1482,16 @@ class CRUDController extends Controller
             'quote_status_id' => QuoteStatusEnum::NewLead,
             'is_renewal_tier_email_sent' => 0,
         ]);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Models\ClaimsStatus  $claimsStatus
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy()
+    {
+
     }
 }

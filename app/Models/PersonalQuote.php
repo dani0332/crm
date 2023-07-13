@@ -30,6 +30,8 @@ class PersonalQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'advisor_id' => FilterTypes::IN,
+        'policy_number' => FilterTypes::EXACT,
     ];
 
     /**
@@ -89,6 +91,7 @@ class PersonalQuote extends Model implements AuditableContract
     {
         return $this->hasOne(CycleQuote::class);
     }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */

@@ -61,8 +61,8 @@ const tableHeader = [
   { text: 'SOURCE', value: 'source' },
   { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
-  { text: 'DESTINATION', value: 'destination' },
-  { text: 'CURRENTLY LOCATED IN', value: '' },
+  { text: 'DESTINATION', value: 'destination_id_text' },
+  { text: 'CURRENTLY LOCATED IN', value: 'currently_located_in_id_text' },
   { text: 'EXPIRY DATE', value: 'expiry_date' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
@@ -191,6 +191,9 @@ function setQueryFilters() {
     }
   }
 }
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 onMounted(() => {
   setQueryFilters();
@@ -337,6 +340,7 @@ onMounted(() => {
         </div>
 
         <ExportExcel
+            v-if="can(permissionsEnum.DATA_EXTRACTION)"
           :data="quotesSelected"
           :columns="tableHeader"
           :filename="'Travel-List'"

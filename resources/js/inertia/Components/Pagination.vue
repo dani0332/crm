@@ -20,7 +20,7 @@ router.on('finish', event => {
 <template>
   <div class="flex justify-between items-center gap-2 py-6">
     <Link
-      v-if="links.current !== 1"
+      v-if="props.links.current !== 1"
       :href="props.links.prev"
       preserve-scroll
       preserve-state
@@ -33,9 +33,10 @@ router.on('finish', event => {
       Previous
     </x-button>
 
-    <div class="text-xs lining-nums font-medium text-center">
-      Now displaying: {{ links.from }} ~ {{ links.to }}
-      <span v-if="links.total"> of {{ links.total }} </span>
+    <div class="text-xs lining-nums font-medium text-center text-gray-700">
+      Now displaying: {{ props.links.from }} ~ {{ props.links.to }}
+      <span v-if="props.links.total"> of {{ props.links.total }} </span>
+      (Page: {{ props.links.current }})
     </div>
 
     <Link

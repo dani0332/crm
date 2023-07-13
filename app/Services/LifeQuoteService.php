@@ -200,8 +200,8 @@ class LifeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
             $this->query->whereBetween(DB::raw('DATE(lqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+        if (! empty($request->created_at) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween(DB::raw('DATE(lqr.created_at)'), [$dateFrom, $dateTo]);
         }
@@ -388,132 +388,6 @@ class LifeQuoteService extends BaseService
         if (isset($request->return_to_view)) {
             return redirect('quotes/life')->with('success', 'Life Quote has been updated');
         }
-    }
-
-    public function getLifeOverDueFollowups()
-    {
-        $query = DB::table('life_quote_request as lqr')
-            ->select(
-                'lqr.id',
-                'lqr.uuid',
-                'lqr.code',
-                DB::raw("CONCAT_WS(' ',lqr.first_name,lqr.last_name) AS clientName"),
-                'qs.text as leadStatus',
-                'lqr.created_at as createdAt',
-                'lqr.quote_status_id',
-                'lqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'lqr.updated_at',
-                'lqr.source as leadSource',
-                'lqr.premium',
-                'lqrd.next_followup_date as nextFollowupDate',
-            )
-            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
-            ->where('lqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('lqr.advisor_id', Auth::user()->id);
-
-        return $query;
-    }
-
-    public function getLifeLeadsForAdvisor($request)
-    {
-        $query = DB::table('life_quote_request as lqr')
-            ->select(
-                'lqr.id',
-                'lqr.uuid',
-                'lqr.code',
-                'qs.text as leadStatus',
-                'lqr.created_at as createdAt',
-                'lqr.quote_status_id',
-                'lqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'lqr.updated_at as updatedAt',
-                'lqr.source as leadSource',
-                'lqr.policy_number as policy_number',
-                'lqr.email',
-                'lqr.mobile_no',
-                'lqrd.next_followup_date as nextFollowupDate',
-                'lqr.previous_quote_id',
-                'ps.text as paymentStatus',
-                'lqr.renewal_batch as renewalBatch',
-                'lqr.previous_quote_policy_number as previousPolicyNumber',
-                DB::raw('DATE_FORMAT(lqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
-                'lqr.previous_quote_policy_premium as previousPolicyPremium',
-                'lqr.first_name as firstName',
-                'lqr.last_name as lastName',
-            )
-            ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', '=', 'lqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'lqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'lqrd.advisor_assigned_by_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'lqr.payment_status_id')
-            ->where('lqr.quote_status_id', '!=', 9)
-            ->where('lqr.advisor_id', Auth::user()->id)
-            ->orderBy('lqr.created_at', 'DESC');
-
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 3) {
-                $column = 'lqr.created_at';
-            }
-            if ($column == 4) {
-                $column = 'lqrd.advisor_assigned_date';
-            }
-            if ($column == 7) {
-                $column = 'lqrd.next_followup_date';
-            }
-            $query->orderBy($column, $direction);
-        }
-        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
-            $query->whereBetween('lqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('lqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->cdbId) && $request->cdbId != 0) {
-            $query->where('lqr.code', $request->cdbId);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $query->where('lqr.email', $request->email);
-        }
-        if (isset($request->leadStatus) && $request->leadStatus != 0) {
-            $query->where('lqr.quote_status_id', $request->leadStatus);
-        }
-        if (isset($request->paymentStatus)) {
-            $query->where('lqr.payment_status_id', $request->paymentStatus);
-        }
-        if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('lqr.previous_quote_policy_number');
-        }
-        if (Auth::user()->isNewBusinessAdvisor()) {
-            $query->whereNull('lqr.previous_quote_policy_number');
-        }
-        if (isset($request->paymentStatus) && $request->paymentStatus != '') {
-            $query->where('lqr.payment_status_id', $request->paymentStatus);
-        }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $query->where('lqr.renewal_batch', $request->renewal_batch);
-        }
-        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
-            $query->where('lqr.previous_quote_policy_number', $request->previous_policy_number);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $query->where('lqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $query->whereBetween('lqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        return $query;
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $lead_type)

@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use App\Services\AdvisorPerformanceReportService;
 use App\Services\LeadDistributionReportService;
+use App\Services\ReportService;
+use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
+    use TeamHierarchyTrait;
+    use GetUserTreeTrait;
+
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
         return inertia('Reports/AdvisorConversion', [
@@ -34,6 +41,7 @@ class ReportsController extends Controller
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
+            'page' => $request->page,
         ];
 
         return $advisorConversionReportService->getAdvisorsAssignedLeads($filters);
@@ -69,5 +77,31 @@ class ReportsController extends Controller
     public function renderLeadListReport()
     {
         return view('reports.lead-list-report');
+    }
+
+    public function fetchAdvisorListByTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
+
+        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+        return User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+    }
+
+    public function utmLeadsSaleReport(Request $request, ReportService $reportService)
+    {
+        $resp = $reportService->utmReport($request);
+
+        return inertia('Reports/UtmLeadsSale', [
+            'quoteTypes' => $resp['lobs'],
+            'reportData' => $resp['records'],
+        ]);
     }
 }

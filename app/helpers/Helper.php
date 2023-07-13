@@ -408,6 +408,7 @@ function generateRouteNames($prefix)
         'edit' => $prefix.'-edit',
         'update' => $prefix.'-update',
         'destroy' => $prefix.'-delete',
+        'search' => $prefix.'-search',
     ];
 }
 
@@ -417,5 +418,12 @@ if (! function_exists('newUi')) {
         return [
             quoteTypeCode::Health
         ];
+    }
+}
+
+if (! function_exists('getAutomationUser')) {
+    function getAutomationUser(): array
+    {
+        return ['im.automation4@gmail.com'];
     }
 }

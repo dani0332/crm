@@ -6,7 +6,7 @@
         <h2 class="text-lg font-bold">
             Validation Passed Detail
         </h2>
-        <a href="{{ url('renewals/uploaded-leads') }}" class="btn-2">Batches List</a>
+        <a href="{{ route('renewals-uploaded-leads-list') }}" class="btn-2">Batches List</a>
     </div>
 
     @if(session()->has('success'))

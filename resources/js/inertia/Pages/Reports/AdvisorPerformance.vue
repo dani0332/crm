@@ -83,9 +83,16 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
+  if (page.props.defaultFilters) {
+    filters.advisorAssignedDates =
+      page.props.defaultFilters.advisorAssignedDates;
+  }
   router.visit('/reports/advisor-performance', {
     method: 'get',
-    data: { page: 1 },
+    data: {
+      advisorAssignedDates: filters.advisorAssignedDates,
+      page: 1,
+    },
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
     onSuccess: () => (loaders.table = false),
@@ -147,6 +154,8 @@ onMounted(() => {
               label: filterOptions.tiers[key],
             }))
           "
+          deselect-all
+          select-all
         />
         <ComboBox
           v-model="filters.teams"
@@ -158,6 +167,8 @@ onMounted(() => {
               label: filterOptions.teams[key],
             }))
           "
+           deselect-all
+          select-all
         />
         <ComboBox
           v-model="filters.leadSources"
@@ -225,7 +236,6 @@ onMounted(() => {
           </td>
         </tr>
       </template>
-
     </DataTable>
 
     <Pagination

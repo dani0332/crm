@@ -7,12 +7,14 @@ use App\Enums\CarPlanType;
 use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\TiersEnum;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
@@ -39,6 +41,7 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
+use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
@@ -358,12 +361,12 @@ class RenewalsUploadService
 
             $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
-                    if ($lead->renewalUploadLead->skip_plans) {
+                    if (! $lead->renewalUploadLead->skip_plans) {
+                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                    } else {
                         info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                         $totalSkipped++;
-                    } else {
-                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
                     }
                 }
             });
@@ -422,6 +425,14 @@ class RenewalsUploadService
         $quoteObject = $this->createQuoteObject($quoteType->code);
 
         if ($quoteObject && ($quote = $quoteObject->where('id', $renewalQuoteProcess->quote_id)->first())) {
+
+            if (! empty($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::DRAFT) {
+                info('FetchPlans FN: fetchRenewalPlans'.' can not proceed with quote as payment is already in process. ');
+                RenewalStatusProcess::where('id', $renewalStatusProcess->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+
+                return false;
+            }
+
             if ($renewalQuoteProcess->quote_type == QuoteTypeShortCode::CAR && (! $aml = AML::where('quote_request_id', $renewalQuoteProcess->quote_id)->where('quote_type_id', $quoteType->id)->first())) {
                 info('FetchPlans FN: fetchRenewalPlans'.' AML check started for UUID: '.$quote->uuid);
                 $this->checkAMLService->checkAML($quote->first_name, $quote->last_name, $quote->id, $quoteType->id, false, null, null);
@@ -771,6 +782,10 @@ class RenewalsUploadService
                         $quoteData['seat_capacity'] = $carModelDetail->seating_capacity;
                         $quoteData['vehicle_type_id'] = $carModelDetail->vehicle_type_id;
                     }
+                }
+
+                if ($tier = Tier::where('name', TiersEnum::TIER_R)->first()) {
+                    $quoteData['tier_id'] = $tier->id;
                 }
             }
 
@@ -1395,9 +1410,8 @@ class RenewalsUploadService
                             if ($leadData->claim_history && ! ClaimHistory::where('text', $leadData->claim_history)->first()) {
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
-                            if (! $leadData->driving_experience) {
-                                $leadValidationErrors->push('Driving Experience is required');
-                            } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+
+                            if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
 
@@ -1501,9 +1515,7 @@ class RenewalsUploadService
                                     }
                                 }
                             }
-                            if (! $leadData->registration_location) {
-                                $leadValidationErrors->push('Registration Location is required');
-                            } elseif (! Emirate::where('text', $leadData->registration_location)->first()) {
+                            if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
                                 $leadValidationErrors->push('Invalid Registration Location');
                             }
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {

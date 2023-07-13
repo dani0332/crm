@@ -23,7 +23,7 @@
         for (let index = 0; index < comprehensiveDashboardStats[0].length; index++) {
             data.push({
                 name: comprehensiveDashboardStats[0][index],
-                y: parseFloat(comprehensiveDashboardStats[1][index])
+                y: Number(comprehensiveDashboardStats[1][index])
             })
         }
         comprehensiveDashboardStatChart = Highcharts.chart('comprehensiveConversion', {
@@ -52,7 +52,7 @@
                     borderWidth: 0,
                     dataLabels: {
                         enabled: true,
-                        format: '{point.y:.1f}%'
+                        format: '{point.y:.2f}%'
                     }
                 }
             },
@@ -66,7 +66,10 @@
                 name: 'Net Conversion',
                 colorByPoint: true,
                 data: data
-            }]
+            }],
+            credits: {
+                enabled: false,
+            },
         });
 
     }
@@ -122,7 +125,7 @@
                         var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
                         var numbers = [];
                         for (let index = 0; index < data.length; index++) {
-                            numbers.push(parseFloat(data[index]));
+                            numbers.push(Number(data[index]));
                         }
                         if (labels.length > 0) {
                             comprehensiveDashboardStatChart.destroy();
@@ -196,7 +199,7 @@
             <select multiple name="teams[]" id="team-filter">
                 <option data-placeholder="true"></option>
                 @foreach ($teams as $team)
-                <option @if($commonTeam==$team->id) selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
+                <option @if($team->name == 'Organic') selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
                 @endforeach
             </select>
         </div>

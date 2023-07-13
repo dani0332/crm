@@ -40,6 +40,10 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -98,7 +102,7 @@ const onDeselectAll = () => {
   <label
     class="group relative x-select inline-block align-bottom text-left focus:outline-none mb-3 w-full"
   >
-    <p class="font-medium text-gray-800 mb-1">
+    <p v-if="props.label" class="font-medium text-gray-800 mb-1">
       {{ props.label }}
     </p>
     <Combobox
@@ -142,6 +146,7 @@ const onDeselectAll = () => {
               v-model="query"
               :placeholder="`${props.searchPlaceholder} (${props.options.length})`"
               class="w-full"
+              @update:modelValue="scrollTo(0)"
             />
           </li>
 
@@ -217,7 +222,9 @@ const onDeselectAll = () => {
       <div
         class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2"
       >
+        <x-spinner v-if="props.loading" size="sm" class="text-primary" />
         <svg
+          v-else
           xmlns="http://www.w3.org/2000/svg"
           class="shrink-0 x-icon inline h-5 w-5 stroke-2 text-gray-500"
           stroke-linejoin="round"

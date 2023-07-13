@@ -48,6 +48,7 @@ class HomeQuoteService extends BaseService
             'hqr.policy_number',
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
+            'hqr.additional_notes',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
@@ -336,133 +337,6 @@ class HomeQuoteService extends BaseService
         }
     }
 
-    public function getHomeOverDueFollowups()
-    {
-        $query = DB::table('home_quote_request as hqr')
-            ->select(
-                'hqr.id',
-                'hqr.uuid',
-                'hqr.code',
-                DB::raw("CONCAT_WS(' ',hqr.first_name,hqr.last_name) AS clientName"),
-                'qs.text as leadStatus',
-                'hqr.created_at as createdAt',
-                'hqr.quote_status_id',
-                'hqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'hqr.updated_at',
-                'hqr.premium',
-                'hqr.source as leadSource',
-                'hqrd.next_followup_date as nextFollowupDate',
-            )
-            ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
-            ->where('hqrd.next_followup_date', '<', date('Y-m-d H:i:s'))
-            ->whereIn('qs.text', ['Followed Up', 'Qualification Pending', 'Quoted', 'FTC Pending', 'FTC Sent', 'Missing Documents Requested', 'Policy Documents Pending', 'Payment Pending', 'Pending with UW', 'Application Pending', 'In Negotiation'])
-            ->where('hqr.advisor_id', Auth::user()->id);
-
-        return $query;
-    }
-
-    public function getHomeLeadsForAdvisor($request)
-    {
-        $query = DB::table('home_quote_request as hqr')
-            ->select(
-                'hqr.id',
-                'hqr.uuid',
-                'hqr.code',
-                'qs.text as leadStatus',
-                'hqr.created_at as createdAt',
-                'hqr.updated_at as updatedAt',
-                'hqr.quote_status_id',
-                'hqrd.advisor_assigned_date as assignedDate',
-                'u.name as assignedBy',
-                'hqr.policy_number as policy_number',
-                'hqr.email',
-                'hqr.mobile_no',
-                'hqr.source as leadSource',
-                'hqr.premium',
-                'hqrd.next_followup_date as nextFollowupDate',
-                'hqr.previous_quote_id',
-                'ps.text as paymentStatus',
-                'hqr.renewal_batch as renewalBatch',
-                'hqr.previous_quote_policy_number as previousPolicyNumber',
-                DB::raw('DATE_FORMAT(hqr.previous_policy_expiry_date, "%d-%m-%Y") as previousPolicyExpiryDate'),
-                'hqr.previous_quote_policy_premium as previousPolicyPremium',
-                'hqr.first_name as firstName',
-                'hqr.last_name as lastName',
-            )
-            ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqrd.advisor_assigned_by_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'hqr.payment_status_id')
-            ->where('hqr.quote_status_id', '!=', 9)
-            ->where('hqr.advisor_id', Auth::user()->id)
-            ->orderBy('hqr.created_at', 'DESC');
-
-        $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
-        $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
-        if ($column != '' && $column != 0 && $direction != '') {
-            if ($column == 3) {
-                $column = 'hqr.created_at';
-            }
-            if ($column == 4) {
-                $column = 'hqrd.advisor_assigned_date';
-            }
-            if ($column == 7) {
-                $column = 'hqrd.next_followup_date';
-            }
-            $query->orderBy($column, $direction);
-        }
-        if (isset($request->startedAt) && isset($request->endAt) && $request->startedAt != '' && $request->endAt != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->startedAt)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->endAt)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->nfdSart) && isset($request->nfdEnd) && $request->nfdSart != '' && $request->nfdEnd != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request->nfdSart)->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request->nfdEnd)->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
-        }
-        if (isset($request->cdbId) && $request->cdbId != 0) {
-            $query->where('hqr.code', $request->cdbId);
-        }
-        if (isset($request->email) && $request->email != '') {
-            $query->where('hqr.email', $request->email);
-        }
-        if (isset($request->leadStatus) && $request->leadStatus != 0) {
-            $query->where('hqr.quote_status_id', $request->leadStatus);
-        }
-        if (isset($request->paymentStatus)) {
-            $query->where('hqr.payment_status_id', $request->paymentStatus);
-        }
-        if (Auth::user()->isRenewalAdvisor()) {
-            $query->whereNotNull('hqr.previous_quote_policy_number');
-        }
-        if (Auth::user()->isNewBusinessAdvisor()) {
-            $query->whereNull('hqr.previous_quote_policy_number');
-        }
-        if (isset($request->paymentStatus) && $request->paymentStatus != '') {
-            $query->where('hqr.payment_status_id', $request->paymentStatus);
-        }
-        if (isset($request->renewal_batch) && $request->renewal_batch != '') {
-            $query->where('hqr.renewal_batch', $request->renewal_batch);
-        }
-        if (isset($request->previous_policy_number) && $request->previous_policy_number != '') {
-            $query->where('hqr.previous_quote_policy_number', $request->previous_policy_number);
-        }
-        if (isset($request->previous_quote_policy_premium) && $request->previous_quote_policy_premium != '') {
-            $query->where('hqr.previous_quote_policy_premium', $request->previous_quote_policy_premium);
-        }
-        if (isset($request->previous_policy_expiry_date) && $request->previous_policy_expiry_date != '' && $request->previous_policy_expiry_date_end != '') {
-            $dateFrom = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date'])->startOfDay()->toDateTimeString();
-            $dateTo = Carbon::createFromFormat('Y-m-d', $request['previous_policy_expiry_date_end'])->endOfDay()->toDateTimeString();
-            $query->whereBetween('hqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
-        }
-
-        return $query;
-    }
-
     public function getLeadsForAssignment()
     {
         return HomeQuote::orderBy('created_at', 'desc')->get();
@@ -572,6 +446,7 @@ class HomeQuoteService extends BaseService
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_premium' => 'input|number|title',
             'parent_duplicate_quote_id' => 'input|title',
+            'additional_notes' => 'readonly',
             'renewal_import_code' => 'input|text',
         ];
     }
@@ -641,10 +516,10 @@ class HomeQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
-            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,next_followup_date,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date,renewal_import_code',
-            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code',
-            'show' => 'source,is_renewal,id,next_followup_date,lost_reason,quote_status_id,previous_quote_id',
+            'create' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,additional_notes',
+            'list' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,renewal_expiry_date,is_renewal,previous_quote_id,email,address,iam_possesion_type_id,next_followup_date,ilivein_accommodation_type_id,mobile_no,personal_belongings_aed,building_aed,contents_aed,has_contents,has_personal_belongings,has_building,address,renewal_expiry_date,renewal_import_code,additional_notes',
+            'update' => 'parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,id,code,quote_status_id,advisor_id,created_at,updated_at,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,additional_notes',
+            'show' => 'source,is_renewal,next_followup_date,lost_reason,quote_status_id,previous_quote_id',
         ];
     }
 
