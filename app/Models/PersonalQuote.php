@@ -156,18 +156,18 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * @return string
      */
-//    public function getPolicyStartDateAttribute($date)
-//    {
-//        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
-//    }
+    //    public function getPolicyStartDateAttribute($date)
+    //    {
+    //        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    //    }
 
     /**
      * @return string
      */
-//    public function getPolicyIssuanceDateAttribute($date)
-//    {
-//        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
-//    }
+    //    public function getPolicyIssuanceDateAttribute($date)
+    //    {
+    //        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    //    }
 
     /**
      * @return string
