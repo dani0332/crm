@@ -29,7 +29,7 @@ class CentralService
             quoteTypeCode::Travel,
             quoteTypeCode::Car,
             quoteTypeCode::Pet,
-            quoteTypeCode::Cycle
+            quoteTypeCode::Cycle,
         ];
 
         if (strtolower($quoteType) == strtolower(quoteTypeCode::Business)) {
@@ -105,7 +105,7 @@ class CentralService
                 }
 
                 $response = in_array(ucfirst($lob), newUi()) ?
-                    ( method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
+                    (method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
                     Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
 
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
