@@ -511,7 +511,7 @@
                  @endforeach
                 <tr>
                     <td colspan="{{sizeof($planIds) + 1}}" class="no-border text-center" >
-                        <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >See all your Quotes</a>
+                        <a target="_blank" class="btn-all-quotes" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid )}}" >See all your quotes</a>
                     </td>
                 </tr>
             </tbody>
