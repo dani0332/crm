@@ -10,7 +10,6 @@ use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -22,7 +21,6 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
-use Maatwebsite\Excel\Row;
 
 class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
@@ -132,7 +130,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => ['max:10']],
+            'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => ['max:50']],
             'nationality' => ['index' => 15, 'title' => 'Nationality', 'rules' => ['max:50']],
             'provider_name' => ['index' => 16, 'title' => 'Provider Name', 'rules' => 'max:100'],
             'plan_name' => ['index' => 17, 'title' => 'Plan Name', 'rules' => 'max:100'],

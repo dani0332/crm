@@ -950,20 +950,6 @@ const sendPolicyToClient = () => {
   }
 };
 
-// temp fix for old structure notification
-watch(
-  () => page.props.flash,
-  () => {
-    if (page.props.flash && page.props.flash.success) {
-      notification.success({
-        title: page.props.flash.success,
-        position: 'top',
-      });
-    }
-  },
-  { immediate: true },
-);
-
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
@@ -1222,10 +1208,10 @@ onMounted(() => {
             <dt class="font-medium">DETAILS</dt>
             <dd>{{ quote.details }}</dd>
           </div>
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Additional Notes</dt>
-                <dd>{{ quote.additional_notes }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Additional Notes</dt>
+            <dd>{{ quote.additional_notes }}</dd>
+          </div>
         </dl>
       </div>
 
