@@ -337,7 +337,7 @@
             ["code" => "spacer"],
 //            ["code" => "policyFee", "title" => "Policy Fee", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
 //            ["code" => "spacer"],
-            ["code" => "vat", "title" => "Vat", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+            ["code" => "vat", "title" => "VAT", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "spacer"],
             ["code" => "total", "title" => "Total", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ];
