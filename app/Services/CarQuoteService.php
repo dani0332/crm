@@ -15,6 +15,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
@@ -1145,19 +1146,21 @@ class CarQuoteService extends BaseService
         $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
 
         if (in_array($quote->payment_status_id,[PaymentStatusEnum::CAPTURED,PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            if ($paymentStatusLog = PaymentStatusLog::where([
-                'quote_type_id' => QuoteTypeId::Car,
-                'quote_request_id' => $quote->id
-            ])->whereIn('current_payment_status_id',[PaymentStatusEnum::CAPTURED,PaymentStatusEnum::PARTIAL_CAPTURED])->first()) {
+            $carPayment = Payment::where('code', '=',$quote->code)->first();
+            if (!empty($carPayment->captured_at)) {
 
-                $daysAfterCaptured = Carbon::now()->diffInDays(Carbon::parse($paymentStatusLog->created_at));
+                $paymentCapturedAt =$carPayment->captured_at;
+                $today=Carbon::today();
 
-                if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCaptured <= 7) {
-                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$daysAfterCaptured);
+                $dateLimitForAdvisor= Carbon::parse($paymentCapturedAt)->addDays(7);
+                $dateLimitForManager= Carbon::parse($dateLimitForAdvisor)->addDays(7);
+
+                if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $today->lte($dateLimitForAdvisor) ) {
+                    info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
 
                     return true;
-                } elseif (Auth::user()->hasRole(RolesEnum::CarManager) && ($daysAfterCaptured > 7 && $daysAfterCaptured <= 14)) {
-                    info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' and captured days diff is '.$daysAfterCaptured);
+                } elseif (Auth::user()->hasRole(RolesEnum::CarManager)  && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) ) {
+                    info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
 
                     return true;
                 }

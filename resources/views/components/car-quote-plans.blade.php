@@ -285,7 +285,8 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >Copy</button>
                                 @endif
 
-                                @if(($access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) && $record->payment_status_id == PaymentStatusEnum::AUTHORISED)
+                                @if($record->plan_id != $quotePlan->id &&  $quotePlan->actualPremium > 0)
+                                    @if(($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) )
                                     <button class="btn btn-info btn-sm btn-change-insurer"
                                             data-planId="{{$quotePlan->id}}"
                                             data-uuid="{{$record->uuid}}"
@@ -293,14 +294,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >
                                         Change Insurer
                                     </button>
-                                @elseif($record->plan_id !=$quotePlan->id &&  $quotePlan->actualPremium > 0 && ($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) )
-                                    <button class="btn btn-info btn-sm btn-change-insurer"
-                                            data-planId="{{$quotePlan->id}}"
-                                            data-uuid="{{$record->uuid}}"
-                                            data-providerCode="{{$quotePlan->providerCode}}"
-                                    >
-                                        Change Insurer
-                                    </button>
+                                    @endif
                                 @endif
 
                             </td>
