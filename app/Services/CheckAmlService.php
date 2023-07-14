@@ -47,7 +47,7 @@ class CheckAmlService
             // Send Email alert to Compliance team only
             $quoteTypeName = QuoteType::where('id', $quoteTypeId)->value('text'); // Get quote type text
 
-            // Get Ref ID
+            // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
             $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
 
@@ -153,9 +153,9 @@ class CheckAmlService
         }
 
         if ($emailL_sys == 'PRODUCTION') {
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref ID : '.$quoteCdbId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref ID : '.$quoteCdbId;
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         }
 
         $this->amlComplianceMail('AmlComplianceMail', [
@@ -217,9 +217,9 @@ class CheckAmlService
 
         $emailL_sys = Config::get('constants.emailL_sys');
         if ($emailL_sys == 'PRODUCTION') {
-            $emailSubject = 'IMCRM | New AML Matches Found for Ref ID : '.$quoteCdbId;
+            $emailSubject = 'IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         } else {
-            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref ID : '.$quoteCdbId;
+            $emailSubject = $emailL_sys.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteCdbId;
         }
 
         $appUrl = env('APP_URL');

@@ -402,7 +402,7 @@
 
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Ref ID</label>
+                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Ref-ID</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
                                         <input type="text" class="form-control" name="code" id="code" >
@@ -610,7 +610,7 @@
                                     <th style="width: 15px;"><input type="checkbox" id="checkAllAMT"
                                             name="checkAllAMT" value=""></th>
                                 @endif
-                                <th>Ref ID</th>
+                                <th>Ref-ID</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
                                 <th>Lead Status</th>

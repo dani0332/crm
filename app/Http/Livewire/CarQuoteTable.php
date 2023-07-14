@@ -45,7 +45,7 @@ class CarQuoteTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('Ref ID', 'code')
+            Column::make('Ref-ID', 'code')
                 ->format(
                     function ($value, $row, Column $column) {
                         return '<a href="'.url('/quotes').'/car/'.$row->uuid.'" target="_blank" title="View Detail" class="text-sky-700">'.$value.'</a>';
@@ -88,9 +88,9 @@ class CarQuoteTable extends DataTableComponent
     public function filters(): array
     {
         return [
-            TextFilter::make('Ref ID', 'code')
+            TextFilter::make('Ref-ID', 'code')
                 ->config([
-                    'placeholder' => 'Search by Ref ID',
+                    'placeholder' => 'Search by Ref-ID',
                     'maxlength' => '25',
                 ])
                 ->filter(function (Builder $builder, string $value) {

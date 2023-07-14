@@ -435,7 +435,7 @@ const onAssignLead = () => {
               <div>
                   <x-tooltip position="bottom">
                       <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref ID
+                          Ref-ID
                       </label>
                       <template #tooltip> Reference ID </template>
                   </x-tooltip>
@@ -541,7 +541,7 @@ const onAssignLead = () => {
               <div>
                   <x-tooltip position="bottom">
                       <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          PARENT Ref ID
+                          PARENT Ref-ID
                       </label>
                       <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>

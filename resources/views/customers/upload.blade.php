@@ -27,8 +27,8 @@
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-align="center" title="Reference ID" style="text-decoration: underline; text-decoration-style: dotted;">Ref ID <span class="required">*</span></span>
-                            <input type="text" id="cdb_id" name="cdb_id" value="{{ old('cdb_id') }}" class="form-control form-control-sm" placeholder="Ref ID" />
+                            <span class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-align="center" title="Reference ID" style="text-decoration: underline; text-decoration-style: dotted;">Ref-ID <span class="required">*</span></span>
+                            <input type="text" id="cdb_id" name="cdb_id" value="{{ old('cdb_id') }}" class="form-control form-control-sm" placeholder="Ref-ID" />
                             @if ($errors->has('cdb_id'))
                                 <span class="text-danger">{{ $errors->first('cdb_id') }}</span>
                             @endif

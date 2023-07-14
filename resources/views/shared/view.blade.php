@@ -720,7 +720,7 @@
                                                 @if (!in_array($property, explode(',', $skipProperties['list'])))
                                                     @php
                                                         $textDecorations = $tooltip = "";
-                                                        if((strpos($value, 'title') && strtoupper($customTitles[$property]) == 'REF ID')){
+                                                        if((strpos($value, 'title') && strtoupper($customTitles[$property]) == 'REF-ID')){
                                                             $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
                                                             $tooltip = 'Reference ID';
                                                         }

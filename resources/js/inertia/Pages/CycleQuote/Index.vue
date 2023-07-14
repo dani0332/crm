@@ -96,7 +96,7 @@ onMounted(() => {
 });
 
 const tableHeader = [
-  { text: 'Ref ID', value: 'uuid' },
+  { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
@@ -135,7 +135,7 @@ const rolesEnum = page.props.rolesEnum;
           <div>
               <x-tooltip position="bottom">
                   <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref ID
+                      Ref-ID
                   </label>
                   <template #tooltip> Reference ID </template>
               </x-tooltip>
@@ -144,7 +144,7 @@ const rolesEnum = page.props.rolesEnum;
                   type="search"
                   name="code"
                   class="w-full"
-                  placeholder="Search by Ref ID"
+                  placeholder="Search by Ref-ID"
               />
           </div>
         <x-input

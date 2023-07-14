@@ -48,7 +48,7 @@ const loader = reactive({
 });
 
 const tableHeader = [
-  { text: 'Ref ID', value: 'code' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
@@ -220,7 +220,7 @@ onMounted(() => {
           <div>
               <x-tooltip position="bottom">
                   <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref ID
+                      Ref-ID
                   </label>
                   <template #tooltip> Reference ID </template>
               </x-tooltip>
@@ -229,7 +229,7 @@ onMounted(() => {
                   type="search"
                   name="code"
                   class="w-full"
-                  placeholder="Search by Ref ID"
+                  placeholder="Search by Ref-ID"
               />
           </div>
         <x-input

@@ -21,7 +21,7 @@ class LifeQuotesExport implements FromCollection, WithHeadings, WithMapping, Sho
     public function headings(): array
     {
         return [
-            'Ref ID',
+            'Ref-ID',
             'FIRST NAME',
             'LAST NAME',
             'LEAD STATUS',

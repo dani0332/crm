@@ -480,7 +480,7 @@ class HomeQuoteService extends BaseService
                 $title = 'Mobile Number';
                 break;
             case 'code':
-                $title = 'Ref ID';
+                $title = 'Ref-ID';
                 break;
             case 'next_followup_date':
                 $title = 'Next Followup Date';
@@ -504,7 +504,7 @@ class HomeQuoteService extends BaseService
                 $title = 'Previous Quote Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent Ref ID';
+                $title = 'Parent Ref-ID';
                 break;
             default:
                 break;

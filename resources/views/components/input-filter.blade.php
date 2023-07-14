@@ -2,7 +2,7 @@
     @if (strpos($value, 'input') !== false && !str_contains($value, 'range'))
         @php
             $textDecorations = $tooltip = "";
-            if((strpos($value, 'title') && strtoupper($customtitles[$property]) == 'REF ID')){
+            if((strpos($value, 'title') && strtoupper($customtitles[$property]) == 'REF-ID')){
                 $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
                 $tooltip = 'Reference ID';
             }

@@ -90,7 +90,7 @@ class CustomersImport implements OnEachRow
                 $newQuoteCustomer->cdb_id = $this->CDBId;
                 $newQuoteCustomer->customer_id = $customerId;
                 $newQuoteCustomer->save();
-                Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref Id ->'.$this->CDBId);
+                Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-Id ->'.$this->CDBId);
             }
         }
     }

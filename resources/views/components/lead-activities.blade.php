@@ -28,7 +28,7 @@ $url = '/quotes/' . strtolower($modeltype) . '/' . $lead->uuid;
                         <thead>
                             <tr>
                                 <th style="width: 20%;">Title</th>
-                                <th style="text-decoration: underline; text-decoration-style: dotted;" data-toggle="tooltip" data-placement="top" title="Reference ID" style="width: 10%;">Ref ID</th>
+                                <th style="text-decoration: underline; text-decoration-style: dotted;" data-toggle="tooltip" data-placement="top" title="Reference ID" style="width: 10%;">Ref-ID</th>
                                 <th style="width: 20%;">Client Name</th>
                                 <th style="width: 10%;">Followup Date</th>
                                 <th style="width: 20%;">Assigned To</th>

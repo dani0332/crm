@@ -44,7 +44,7 @@ class UpdateHealthStatus extends Command
             ->where('updated_at', '<', date('Y-m-d', strtotime('-29 days')))->chunkById(20, function ($leads) {
                 foreach ($leads as $lead) {
                     $lead->update(['quote_status_id' => QuoteStatusEnum::Lost]);
-                    info('UpdateHealthStatus - Updated Lead Status to Lost - Ref ID: '.$lead->uuid.' - Last Modified: '.$lead->updated_at);
+                    info('UpdateHealthStatus - Updated Lead Status to Lost - Ref-ID: '.$lead->uuid.' - Last Modified: '.$lead->updated_at);
                 }
             });
         info('UpdateHealthStatus Command Completed');
