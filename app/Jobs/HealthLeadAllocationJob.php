@@ -84,7 +84,7 @@ class HealthLeadAllocationJob implements ShouldQueue
                             LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
                         }
                     } else {
-                        info($healthTeam.' Leads count is'. count($filteredLeadsByHealthTeam) .' and available users count is '.count($filteredUsersByHealthTeam));
+                        info($healthTeam.' Leads count is'.count($filteredLeadsByHealthTeam).' and available users count is '.count($filteredUsersByHealthTeam));
                     }
                 }
                 info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR '.$currentIteration.' -----------------------');
