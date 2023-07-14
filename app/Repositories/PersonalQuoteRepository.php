@@ -105,13 +105,10 @@ class PersonalQuoteRepository extends BaseRepository
                 $paymentData['authorized_at'] = now();
             }
 
-            $mainPaymentExists = $quote->payments()->where('code','=', $quote->code)->first();
-
             $count = $quote->payments->count();
-            $paymentsCount =  $mainPaymentExists ? $count :  $count+1;
-
-            $paymentData['code']  =$quote->code.'-'.$paymentsCount;
+            $paymentData['code'] = ($count > 0) ? $quote->code.'-'.$count : $quote->code;
             $paymentData['payment_status_id'] = PaymentStatusEnum::DRAFT;
+
             $quote->payments()->create($paymentData);
 
             PaymentStatusLogRepository::create([

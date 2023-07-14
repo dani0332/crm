@@ -216,7 +216,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
-            $quote_status = $dropdownSource['quote_status_id'];
+        $quote_status = $dropdownSource['quote_status_id'];
 
             return inertia('HomeQuote/Index', [
                 'quotes' => $gridData,
@@ -1372,14 +1372,8 @@ class CRUDController extends Controller
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
-        $mainPaymentExists = $quoteModel->payments()->where('code','=', $quoteModel->code)->first();
 
-        $count = $quoteModel->payments->count();
-        $paymentsCount =  $mainPaymentExists ? $count :  $count+1;
-
-        $code= $quoteModel->code.'-'.$paymentsCount;
         $paymentInformation = [
-            'code' => $code,
             'collection_type' => $request->collection_type,
             'captured_amount' => $request->captured_amount,
             'payment_methods_code' => $request->payment_methods,
@@ -1389,6 +1383,10 @@ class CRUDController extends Controller
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ];
+
+        $count = $quoteModel->payments->count();
+        $paymentInformation['code'] = ($count > 0) ? $quoteModel->code.'-'.$count : $quoteModel->code;
+
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
@@ -1399,7 +1397,7 @@ class CRUDController extends Controller
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
             'current_payment_status_id' => PaymentStatusEnum::DRAFT,
-            'payment_code' => $code,
+            'payment_code' => $paymentInformation['code'],
             'created_at' => now(),
             'updated_at' => now(),
         ]);
