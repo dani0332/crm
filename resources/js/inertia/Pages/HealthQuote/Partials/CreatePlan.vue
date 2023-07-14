@@ -62,7 +62,15 @@ const numFixed = num => {
   return parseFloat(num).toFixed(2);
 };
 
+const isEmptyField = ref(false);
+
 const onSubmit = isValid => {
+  if (createForm.provider_id == null) {
+    isEmptyField.value = true;
+  } else {
+    isEmptyField.value = false;
+  }
+
   if (!isValid) {
     return;
   }
@@ -123,15 +131,16 @@ watch(
           }))
         "
         label="Provider"
-        placeholder="Select Provider"
+        placeholder="Please Select Provider"
         :disabled="$page.props.insuranceProviders?.length == 0"
         single
+        :hasError="isEmptyField"
       />
 
       <x-select
         v-model="createForm.network_id"
         label="Network"
-        placeholder="Select Network"
+        placeholder="Please Select Network"
         :disabled="!createForm.provider_id"
         class="w-full"
         :helper="!createForm.provider_id ? 'Select a provider first' : ''"
@@ -148,7 +157,7 @@ watch(
       <x-select
         v-model="createForm.plan_id"
         label="Plan"
-        placeholder="Select Plan"
+        placeholder="Please Select Plan"
         :disabled="!createForm.provider_id"
         class="w-full"
         :helper="!createForm.provider_id ? 'Select a provider first' : ''"
@@ -178,14 +187,25 @@ watch(
         :loading="options.loading"
         :rules="[isRequired]"
       />
-      <x-input
-        v-model="createForm.premium"
-        type="text"
-        label="Base Price"
-        placeholder="Enter Base Price exclusive of VAT, Basmah and Policy fee"
-        class="w-full"
-        :rules="[isRequired, isDecimal]"
-      />
+      <div>
+        <x-tooltip position="bottom" class="arrow">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+          >
+            Base Price
+          </label>
+          <template #tooltip>
+            Base Price exclusive of VAT, Basmah and Policy fee
+          </template>
+        </x-tooltip>
+        <x-input
+          v-model="createForm.premium"
+          type="text"
+          placeholder="Enter Base Price"
+          class="w-full"
+          :rules="[isRequired, isDecimal]"
+        />
+      </div>
     </div>
 
     <div class="text-sm my-4">
@@ -199,7 +219,7 @@ watch(
                 Relationship
               </th>
               <th
-                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
+                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28"
               >
                 DOB
               </th>
@@ -208,20 +228,37 @@ watch(
               >
                 Gender
               </th>
-              <th
-                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-              >
-                Base Price
+              <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
+                <x-tooltip position="bottom" class="arrow">
+                  <span
+                    class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                  >
+                    Base Price
+                  </span>
+                  <template #tooltip> Base Price (exclusive of VAT) </template>
+                </x-tooltip>
               </th>
-              <th
-                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-              >
-                Loading Price
+              <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
+                <x-tooltip position="bottom" class="arrow">
+                  <span
+                    class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                  >
+                    Loading Price
+                  </span>
+                  <template #tooltip>
+                    Loading Price (exclusive of VAT)
+                  </template>
+                </x-tooltip>
               </th>
-              <th
-                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-              >
-                Final Price
+              <th class="py-2 px-3 sticky top-0 text-left w-40 z-10">
+                <x-tooltip position="bottom" class="arrow">
+                  <span
+                    class="font-semibold tracking-widest uppercase text-xs underline decoration-dotted decoration-primary-600 cursor-help"
+                  >
+                    Final Price
+                  </span>
+                  <template #tooltip> Final Price (exclusive of VAT) </template>
+                </x-tooltip>
               </th>
             </tr>
           </thead>
@@ -231,24 +268,24 @@ watch(
               :key="index"
               class="border-b border-gray-200 align-top"
             >
-              <td class="x-table-cell last:pr-0 px-3 py-4 align-middle">
+              <td class="x-table-cell px-3 py-4 align-middle">
                 {{ memberCategoryText(member.member_category_id) }}
               </td>
-              <td class="x-table-cell last:pr-0 px-3 py-4 align-middle">
+              <td class="x-table-cell px-3 py-4 align-middle">
                 {{ dateFormat(member.dob) }}
               </td>
-              <td class="x-table-cell last:pr-0 px-3 py-4 align-middle">
+              <td class="x-table-cell px-3 py-4 align-middle">
                 {{ genderText(member.gender) }}
               </td>
-              <td class="x-table-cell last:pr-0 px-3 py-4 align-middle">
+              <td class="x-table-cell px-3 py-4 align-middle">
                 <x-input
                   v-model="membersPrice[index].base_price"
                   size="sm"
-                  class="!mb-0"
+                  class="!mb-0 w-36"
                   :rules="[isRequired, isDecimal]"
                 />
               </td>
-              <td class="x-table-cell last:pr-0 px-3 py-4 align-middle">
+              <td class="x-table-cell px-3 py-4 align-middle">
                 <x-input
                   v-model="membersPrice[index].loading_price"
                   size="sm"
@@ -256,7 +293,7 @@ watch(
                   :rules="[isDecimal]"
                 />
               </td>
-              <td class="x-table-cell last:pr-0 px-3 py-4 align-middle">
+              <td class="x-table-cell px-3 py-4 align-middle">
                 <x-input
                   :value="
                     numFixed(
