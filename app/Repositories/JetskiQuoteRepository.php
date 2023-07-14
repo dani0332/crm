@@ -49,7 +49,7 @@ class JetskiQuoteRepository extends BaseRepository
             'createdById' => auth()->user()->id,
         ];
 
-        if ( ! auth()->user()->hasRole(RolesEnum::Admin) ) {
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
             $quoteData['advisorId'] = auth()->user()->id;
         }
 

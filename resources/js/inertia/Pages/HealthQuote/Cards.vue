@@ -124,6 +124,25 @@ const onSearch = id => {
             <span>Total Leads</span>
             <span>{{ quote.data.total_leads }}</span>
           </div>
+        <div class="flex justify-between gap-1">
+            <x-popover hover position="right">
+          <span class="border-b2 border-dotted border-b-2 border-indigo-700"
+          >Total Opportunity</span
+          >
+                <template #content>
+                    <div
+                        class="p-2 bg-white rounded text-xs w-40 max-w-xs border border-primary-500 arrow"
+                    >
+                        Total Opportunity shows the sum of the minimum price of all
+                        leads at a specific stage, giving you an overview of the
+                        potential business to close
+                    </div>
+                </template>
+            </x-popover>
+            <span>
+          {{ Number(quote.data.total_opportunity).toLocaleString() }}</span
+            >
+        </div>
           <div class="flex justify-between gap-1">
             <span>Total Premium</span>
             <span>{{ Number(quote.data.total_premium).toLocaleString() }}</span>
