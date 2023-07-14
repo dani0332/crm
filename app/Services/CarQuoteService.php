@@ -214,8 +214,7 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
 
-        if(Auth::user()->hasRole(RolesEnum::CarManager))
-        {
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
             $carQuote->renewal_batch = $request->renewal_batch;
             $carQuote->updated_by = auth()->user()->email;
 
@@ -224,9 +223,7 @@ class CarQuoteService extends BaseService
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
             }
-        }
-        else
-        {
+        } else {
             $oldCarValue = $carQuote->car_value;
             info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
@@ -1350,7 +1347,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && !($isLeadPool)) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }

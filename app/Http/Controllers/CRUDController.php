@@ -727,19 +727,15 @@ class CRUDController extends Controller
         if ($modelType == 'Home') {
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
-        } else
-        {
-            if($modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarManager))
-            {
+        } else {
+            if ($modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarManager)) {
                 $validateArray['renewal_batch'] = 'required';
-            }
-            else
-            {
+            } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
                 $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
 
                 foreach ($modelPropertiesList as $property => $value) {
-                    $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || !strpos($modelSkipPropertiesList['update'], $property);
+                    $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || ! strpos($modelSkipPropertiesList['update'], $property);
                     if (is_null($jsonDecodeSkipProps) && in_array($property, $modelSkipPropertiesList)) {
                         continue;
                     }
