@@ -14,6 +14,8 @@ use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
 use App\Models\UAEAMLListUploads;
+use App\Repositories\QuoteStatusRepository;
+use App\Repositories\QuoteTypeRepository;
 use App\Services\CheckAmlService;
 use App\Services\QuoteRequestAmlService;
 use App\Services\QuoteStatusService;
@@ -50,8 +52,8 @@ class AMLController extends Controller
      */
     public function index(Request $request)
     {
-        $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $quoteStatuses = QuoteStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $quoteTypes = QuoteTypeRepository::getList();
+        $quoteStatuses = QuoteStatusRepository::getList();
         $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
 
         $quotes = new AML();
@@ -90,7 +92,7 @@ class AMLController extends Controller
                 isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                 isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
             ) {
-                // $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "' . $request->amlCreatedStartDate . '" AND "' . $request->amlCreatedEndDate . '"');
+                 $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "' . $request->amlCreatedStartDate . '" AND "' . $request->amlCreatedEndDate . '"');
             }
             $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
@@ -153,12 +155,12 @@ class AMLController extends Controller
         }
 
         $isCurrentUserFromCompliance = 0;
-        if (Auth::user()->hasRole(RolesEnum::COMPLIANCE)) {
+        if(auth()->user()->hasRole(RolesEnum::COMPLIANCE)){
             $isCurrentUserFromCompliance = 1;
         }
 
         $isCurrentUserFromPaAml = 0;
-        if (Auth::user()->hasRole(RolesEnum::PA) || Auth::user()->hasRole(RolesEnum::AML)) {
+        if(auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML])){
             $isCurrentUserFromPaAml = 1;
         }
 
@@ -210,7 +212,7 @@ class AMLController extends Controller
             $quoteTypeText = $updateQuoteStatusResp[2];
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
-            if (Auth::user()->hasRole(RolesEnum::COMPLIANCE)) {
+            if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
 
@@ -232,13 +234,12 @@ class AMLController extends Controller
             $quoteUpdate = $updateQuote;
             $firstName = ucwords(strtolower($request->first_name));
             $lastName = ucwords(strtolower($request->last_name));
-            $nationality = $request->nationality;
             $yob = $request->yob;
             $quoteUpdate->first_name = $firstName;
             $quoteUpdate->last_name = $lastName;
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
-            if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
-                $quoteUpdate->pa_id = Auth::user()->id;
+            if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
+                $quoteUpdate->pa_id = auth()->user()->id;
             }
             $quoteUpdate->save();
         }
@@ -264,7 +265,7 @@ class AMLController extends Controller
             $sanctionListDownloads = $sanctionListDownloads->where('file_name', 'like', '%'.$request->file_name.'%');
         }
         if ($request->is_processed == '0' || $request->is_processed == '1') {
-            $value = $request->is_processed == '1' ? true : false;
+            $value = $request->is_processed == '1';
             $sanctionListDownloads = $sanctionListDownloads->where('is_processed', $value);
         }
         $orderBy = $request->sortBy == '' ? 'created_at' : $request->sortBy;
