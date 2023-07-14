@@ -66,9 +66,9 @@ class HealthLeadAllocationJob implements ShouldQueue
                     info('Health Lead Allocation Started for health team: '.$healthTeam);
 
                     $filteredLeadsByHealthTeam = $this->getFilteredLeadsByHealthTeam($unAllocatedLeads, $healthTeam);
-                    $filteredUsersByHealthTeam = $this->getUsersByHealthTeam($availableUsers, $healthTeam)->count();
+                    $filteredUsersByHealthTeam = $this->getUsersByHealthTeam($availableUsers, $healthTeam);
 
-                    if ($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam > 0) {
+                    if (count($filteredLeadsByHealthTeam) > 0 && count($filteredUsersByHealthTeam) > 0) {
 
                         foreach ($filteredLeadsByHealthTeam as $lead) {
                             info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '.$lead->uuid.' -----------------------');
@@ -84,7 +84,7 @@ class HealthLeadAllocationJob implements ShouldQueue
                             LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
                         }
                     } else {
-                        info($healthTeam.' Leads count is '.$filteredLeadsByHealthTeam->count().' and available users count is '.$filteredUsersByHealthTeam->count());
+                        info($healthTeam.' Leads count is'.count($filteredLeadsByHealthTeam).' and available users count is '.count($filteredUsersByHealthTeam));
                     }
                 }
                 info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR '.$currentIteration.' -----------------------');
