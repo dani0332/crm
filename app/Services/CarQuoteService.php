@@ -400,16 +400,18 @@ class CarQuoteService extends BaseService
             }
 
         }
-        if (in_array($record->payment_status_id,[PaymentStatusEnum::CANCELLED,PaymentStatusEnum::REFUNDED])){
-            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
-                $access['carAdvisorCanEditPaymentCancelledRefund']=true;
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
+            if (in_array($record->payment_status_id,[PaymentStatusEnum::CANCELLED,PaymentStatusEnum::REFUNDED])){
+                    $access['carAdvisorCanEditPaymentCancelledRefund']=true;
 
             }
         }
-        if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED])  && in_array($record->quote_status_id , $quoteStatusArray)){
+        if (!empty($record->payment_status_id)){
+            if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED])  && in_array($record->quote_status_id , $quoteStatusArray)){
 
-            $access['carAdvisorCanEdit']=false;
-            $access['carManagerCanEdit']=false;
+                $access['carAdvisorCanEdit']=false;
+                $access['carManagerCanEdit']=false;
+            }
         }
         return $access;
     }
