@@ -13024,6 +13024,343 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
 
 /***/ }),
 
+/***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=script&setup=true&lang=js":
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=script&setup=true&lang=js ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
+/* unplugin-vue-components disabled */
+
+
+
+
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+function _iterableToArrayLimit(arr, i) { var _i = null == arr ? null : "undefined" != typeof Symbol && arr[Symbol.iterator] || arr["@@iterator"]; if (null != _i) { var _s, _e, _x, _r, _arr = [], _n = !0, _d = !1; try { if (_x = (_i = _i.call(arr)).next, 0 === i) { if (Object(_i) !== _i) return; _n = !1; } else for (; !(_n = (_s = _x.call(_i)).done) && (_arr.push(_s.value), _arr.length !== i); _n = !0) { ; } } catch (err) { _d = !0, _e = err; } finally { try { if (!_n && null != _i["return"] && (_r = _i["return"](), Object(_r) !== _r)) return; } finally { if (_d) throw _e; } } return _arr; } }
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  __name: 'RenewalBatch',
+  props: {
+    reportData: Object,
+    filterOptions: Object,
+    defaultFilters: Object
+  },
+  setup: function setup(__props, _ref) {
+    var __expose = _ref.expose;
+    __expose();
+    var loaders = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
+      table: false
+    });
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
+    var dataTableRef = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)();
+    var isMounted = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
+    var isDirty = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
+    var params = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_3__.useUrlSearchParams)('history');
+    var tableHeader = [{
+      text: 'Batch No.',
+      value: 'renewal_batch'
+    }, {
+      text: 'Week Ending',
+      value: 'end_date'
+    }, {
+      text: 'Renewed',
+      value: 'renewed'
+    }, {
+      text: 'Total Allocated',
+      value: 'total_allocated_leads'
+    }, {
+      text: 'Car Sold/Cancelled',
+      value: 'car_sold'
+    }, {
+      text: 'Uncontactable',
+      value: 'uncontactable'
+    }, {
+      text: 'Total Allocated (excluding cancelled and uncontactable)',
+      value: 'total_allocate_minus_cancelled_uncontactable'
+    }, {
+      text: 'Advisor Retention',
+      value: 'advisor_retention'
+    }, {
+      text: 'Value Segment Retention',
+      value: 'value_segment_retention'
+    }, {
+      text: 'Volume Segment Retention',
+      value: 'volume_segment_retention'
+    }, {
+      text: 'Relative Retention on Value Segment',
+      value: 'relative_retention_value_segment'
+    }, {
+      text: 'Relative Retention on  Volume Segment',
+      value: 'relative_retention_volume_segment'
+    }, {
+      text: 'IM Retention',
+      value: 'im_retention'
+    }, {
+      text: 'Relative Retention',
+      value: 'relative_retention'
+    }, {
+      text: 'Monthly Retention',
+      value: 'monthly_retention'
+    }];
+    var filters = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
+      reportDate: '',
+      batchNo: '',
+      //   is_ecommerce: '',
+      //   batches: [],
+      //   tiers: [],
+      segment: '',
+      advisors: [],
+      //   teams: [],
+      page: 1
+    });
+    var totalLeads = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
+      modal: false,
+      loader: false,
+      filters: {
+        leadType: '',
+        quote_batch_id: null,
+        advisorId: null
+      },
+      data: {},
+      current: '',
+      tableHeader: [{
+        text: 'CDB Id',
+        value: 'cdbId'
+      }, {
+        text: 'Customer Name',
+        value: 'fullName'
+      }, {
+        text: 'Lead Status',
+        value: 'quoteStatusName'
+      }]
+    });
+    function onSubmit(isValid) {
+      if (isValid) {
+        isDirty.value = false;
+        filters.page = 1;
+        var payLoad = cleanFilters(filters);
+        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.visit('/reports/renewal-report', {
+          method: 'get',
+          data: _objectSpread(_objectSpread({}, payLoad), payLoad.advisors && {
+            advisors: Array.isArray(payLoad.advisors) ? payLoad.advisors : [payLoad.advisors]
+          }),
+          preserveState: true,
+          preserveScroll: true,
+          onBefore: function onBefore() {
+            return loaders.table = true;
+          },
+          onFinish: function onFinish() {
+            return loaders.table = false;
+          }
+        });
+      } else {
+        console.log('Invalid');
+      }
+    }
+    function onReset() {
+      if (page.props.defaultFilters) {
+        filters.reportDate = page.props.defaultFilters.reportDate;
+      }
+      isDirty.value = false;
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.router.visit('/reports/renewal-report', {
+        method: 'get',
+        data: {
+          reportDate: filters.reportDate,
+          page: 1
+        },
+        preserveScroll: true,
+        onBefore: function onBefore() {
+          return loaders.table = true;
+        },
+        onSuccess: function onSuccess() {
+          return loaders.table = false;
+        }
+      });
+    }
+    var currentTypeTitle = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      if (totalLeads.current == 'new_leads') {
+        return 'Advisor Assigned : New Leads';
+      } else if (totalLeads.current == 'not_interested') {
+        return 'Advisor Assigned : Not Interested';
+      } else if (totalLeads.current == 'in_progress') {
+        return 'Advisor Assigned : In Progress';
+      } else if (totalLeads.current == 'bad_leads') {
+        return 'Advisor Assigned : Bad Leads';
+      } else if (totalLeads.current == 'sale_leads') {
+        return 'Advisor Assigned : Sale Leads';
+      } else if (totalLeads.current == 'created_sale_leads') {
+        return 'Advisor Assigned : Created Sale Leads';
+      } else if (totalLeads.current == 'afia_renewals_count') {
+        return 'Advisor Assigned : IM Renewals';
+      } else if (totalLeads.current == 'manual_created') {
+        return 'Advisor Assigned : Manual Created';
+      } else {
+        return 'Advisor Assigned : Total Leads';
+      }
+    });
+    function onFetchAdvisorAssignedLeads(item, type) {
+      var page = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
+      if (page == 1 && !totalLeads.modal) {
+        loaders.advisorLeadTable = true;
+      }
+      totalLeads.current = type;
+      totalLeads.modal = true;
+      totalLeads.loader = true;
+      if (item) {
+        totalLeads.filters = {
+          leadType: type,
+          quote_batch_id: item.quote_batch_id,
+          advisorId: item.advisorId
+        };
+      }
+      var payLoad = cleanFilters(filters);
+      axios__WEBPACK_IMPORTED_MODULE_4__["default"].post("/reports/fetch-advisor-assigned-leads-data", _objectSpread(_objectSpread(_objectSpread(_objectSpread(_objectSpread(_objectSpread(_objectSpread({}, payLoad), payLoad.batches && {
+        batches: Array.isArray(payLoad.batches) ? payLoad.batches : [payLoad.batches]
+      }), payLoad.tiers && {
+        tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers]
+      }), payLoad.leadSources && {
+        leadSources: Array.isArray(payLoad.leadSources) ? payLoad.leadSources : [payLoad.leadSources]
+      }), payLoad.advisors && {
+        advisors: Array.isArray(payLoad.advisors) ? payLoad.advisors : [payLoad.advisors]
+      }), payLoad.teams && {
+        teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams]
+      }), {}, {
+        page: page,
+        leadType: totalLeads.filters.leadType,
+        quote_batch_id: totalLeads.filters.quote_batch_id,
+        advisorId: totalLeads.filters.advisorId
+      })).then(function (response) {
+        totalLeads.data = response.data;
+      })["catch"](function (error) {
+        console.log(error);
+      })["finally"](function () {
+        loaders.advisorLeadTable = false;
+        totalLeads.loader = false;
+      });
+    }
+    var cleanFilters = function cleanFilters(filters) {
+      Object.keys(filters).forEach(function (key) {
+        return (filters[key] === '' || filters[key] == null || filters[key].length == 0) && delete filters[key];
+      });
+      return filters;
+    };
+    function setQueryStringFilters() {
+      for (var _i = 0, _Object$entries = Object.entries(params); _i < _Object$entries.length; _i++) {
+        var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 1),
+          key = _Object$entries$_i[0];
+        if (key.includes('[]')) {
+          filters[key.substring(0, key.length - 2)] = params[key];
+        } else {
+          filters[key] = params[key];
+        }
+      }
+    }
+    var setPageTable = function setPageTable(page) {
+      onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
+    };
+    var calculateTotalSum = function calculateTotalSum(data, key) {
+      return data.reduce(function (sum, item) {
+        return Number(sum) + Number(item[key]);
+      }, 0);
+    };
+    var onTeamChange = function onTeamChange(e) {
+      if (e.length == 0) {
+        filters.teams = [];
+        filters.advisors = [];
+        advisorOptions.value = [];
+        return;
+      }
+      if (isMounted.value) {
+        isDirty.value = true;
+      }
+      loaders.advisorOptions = true;
+      axios__WEBPACK_IMPORTED_MODULE_4__["default"].post("/reports/fetch-advisor-by-team", {
+        teamIds: Array.isArray(e) ? e : [e]
+      }).then(function (res) {
+        if (res.data.length > 0) {
+          advisorOptions.value = Object.keys(res.data).map(function (key) {
+            return {
+              value: res.data[key].id,
+              label: res.data[key].name
+            };
+          });
+        }
+      })["finally"](function () {
+        loaders.advisorOptions = false;
+      });
+    };
+    var hasRole = function hasRole(role) {
+      return (0,_Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__.useHasRole)(role);
+    };
+    var rolesEnum = page.props.rolesEnum;
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
+      if (page.props.defaultFilters && !params['page']) {
+        filters.reportDate = page.props.defaultFilters.reportDate;
+      }
+      setQueryStringFilters();
+      if (params['teams[]'] && params['teams[]'].length > 0) {
+        onTeamChange(params['teams[]']);
+      }
+      isMounted.value = true;
+    });
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.watch)(function () {
+      return totalLeads.modal;
+    }, function (val) {
+      if (!val) {
+        totalLeads.data = {};
+      }
+    });
+    var __returned__ = {
+      loaders: loaders,
+      page: page,
+      dataTableRef: dataTableRef,
+      isMounted: isMounted,
+      isDirty: isDirty,
+      params: params,
+      tableHeader: tableHeader,
+      filters: filters,
+      totalLeads: totalLeads,
+      onSubmit: onSubmit,
+      onReset: onReset,
+      currentTypeTitle: currentTypeTitle,
+      onFetchAdvisorAssignedLeads: onFetchAdvisorAssignedLeads,
+      cleanFilters: cleanFilters,
+      setQueryStringFilters: setQueryStringFilters,
+      setPageTable: setPageTable,
+      calculateTotalSum: calculateTotalSum,
+      onTeamChange: onTeamChange,
+      hasRole: hasRole,
+      rolesEnum: rolesEnum
+    };
+    Object.defineProperty(__returned__, '__isScriptSetup', {
+      enumerable: false,
+      value: true
+    });
+    return __returned__;
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=script&setup=true&lang=js":
 /*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=script&setup=true&lang=js ***!
@@ -33969,6 +34306,337 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 /***/ }),
 
+/***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=template&id=2d22b530":
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=template&id=2d22b530 ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render)
+/* harmony export */ });
+/* harmony import */ var _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_PaginateClient_vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./resources/js/inertia/Components/PaginateClient.vue */ "./resources/js/inertia/Components/PaginateClient.vue");
+/* harmony import */ var _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Components/ComboBox.vue */ "./resources/js/inertia/Components/ComboBox.vue");
+/* harmony import */ var _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Components/DatePicker.vue */ "./resources/js/inertia/Components/DatePicker.vue");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* unplugin-vue-components disabled */
+
+
+
+
+var _hoisted_1 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("h1", {
+  "class": "text-2xl font-bold text-center text-primary-500 mb-4"
+}, " Renewal Batches Report ", -1 /* HOISTED */);
+var _hoisted_2 = {
+  "class": "grid sm:grid-cols-2 md:grid-cols-4 gap-4"
+};
+var _hoisted_3 = {
+  "class": "flex justify-between gap-3 mb-4 items-center"
+};
+var _hoisted_4 = {
+  "class": "flex-1"
+};
+var _hoisted_5 = {
+  key: 0,
+  "class": "text-xs text-red-500 text-center font-bold"
+};
+var _hoisted_6 = {
+  "class": "flex gap-3"
+};
+var _hoisted_7 = {
+  key: 0
+};
+var _hoisted_8 = {
+  key: 1
+};
+var _hoisted_9 = {
+  key: 0
+};
+var _hoisted_10 = {
+  key: 1
+};
+var _hoisted_11 = {
+  key: 0
+};
+var _hoisted_12 = {
+  key: 1
+};
+var _hoisted_13 = {
+  key: 0
+};
+var _hoisted_14 = {
+  key: 1
+};
+var _hoisted_15 = {
+  key: 0
+};
+var _hoisted_16 = {
+  key: 1
+};
+var _hoisted_17 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("tr", null, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", {
+  rowspan: 2
+}, " testing ")], -1 /* HOISTED */);
+var _hoisted_18 = {
+  key: 0,
+  "class": "total-row"
+};
+var _hoisted_19 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", {
+  "class": "direction-left"
+}, "Total", -1 /* HOISTED */);
+var _hoisted_20 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", null, null, -1 /* HOISTED */);
+var _hoisted_21 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", null, null, -1 /* HOISTED */);
+var _hoisted_22 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", null, null, -1 /* HOISTED */);
+var _hoisted_23 = [_hoisted_19, _hoisted_20, _hoisted_21, _hoisted_22];
+var _hoisted_24 = {
+  "class": "flex flex-wrap justify-between items-center gap-2 py-6"
+};
+var _hoisted_25 = ["selected", "value"];
+var _hoisted_26 = {
+  "class": "text-xs lining-nums text-gray-700 text-center"
+};
+var _hoisted_27 = {
+  "class": "flex gap-2"
+};
+var _hoisted_28 = {
+  "class": "text-center"
+};
+var _hoisted_29 = {
+  "class": "min-h-[70vh]"
+};
+var _hoisted_30 = {
+  key: 0
+};
+var _hoisted_31 = {
+  key: 1,
+  "class": "p-4 flex flex-col justify-center items-center gap-4"
+};
+var _hoisted_32 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", {
+  "class": "text-sm"
+}, "Fetching records...", -1 /* HOISTED */);
+
+function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.Head;
+  var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-divider");
+  var _component_DatePicker = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_2__["default"];
+  var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-input");
+  var _component_ComboBox = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_1__["default"];
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-select");
+  var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-button");
+  var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-form");
+  var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("DataTable");
+  var _component_PaginateClient = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_PaginateClient_vue__WEBPACK_IMPORTED_MODULE_0__["default"];
+  var _component_x_spinner = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-spinner");
+  var _component_x_modal = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-modal");
+  return (0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Head, {
+    title: "Advisor Conversion Report"
+  }), _hoisted_1, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
+    "class": "my-4"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_form, {
+    onSubmit: $setup.onSubmit,
+    "auto-focus": false
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      var _$setup$filters$advis, _$setup$filters$advis2;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DatePicker, {
+        modelValue: $setup.filters.reportDate,
+        "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
+          return $setup.filters.reportDate = $event;
+        }),
+        label: "Report Date",
+        placeholder: "Select Date",
+        size: "sm",
+        "model-type": "yyyy-MM-dd"
+      }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
+        modelValue: $setup.filters.batchNo,
+        "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+          return $setup.filters.batchNo = $event;
+        }),
+        type: "search",
+        name: "batch_no",
+        label: "Batch No.",
+        "class": "w-full",
+        placeholder: "Search by batch no."
+      }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
+        modelValue: $setup.filters.advisors,
+        "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+          return $setup.filters.advisors = $event;
+        }),
+        label: "Advisors",
+        placeholder: "Search by Advisors",
+        options: Object.keys($props.filterOptions.advisors).map(function (key) {
+          return {
+            value: key,
+            label: $props.filterOptions.advisors[key]
+          };
+        }),
+        "select-all": ((_$setup$filters$advis = $setup.filters.advisors) === null || _$setup$filters$advis === void 0 ? void 0 : _$setup$filters$advis.length) > 0,
+        "deselect-all": ((_$setup$filters$advis2 = $setup.filters.advisors) === null || _$setup$filters$advis2 === void 0 ? void 0 : _$setup$filters$advis2.length) > 0
+      }, null, 8 /* PROPS */, ["modelValue", "options", "select-all", "deselect-all"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.segment,
+        "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
+          return $setup.filters.segment = $event;
+        }),
+        label: "Segment",
+        placeholder: "Search by Segment",
+        "class": "w-full",
+        options: Object.keys($props.filterOptions.segments).map(function (key) {
+          return {
+            value: $props.filterOptions.segments[key],
+            label: $props.filterOptions.segments[key].toUpperCase()
+          };
+        })
+      }, null, 8 /* PROPS */, ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_4, [$setup.isDirty ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_5, " Please click search, to show updated records based on the selected filters ")) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+        size: "sm",
+        color: "#ff5e00",
+        type: "submit"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)("Search")];
+        }),
+        _: 1 /* STABLE */
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+        size: "sm",
+        color: "primary",
+        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)($setup.onReset, ["prevent"])
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Reset ")];
+        }),
+        _: 1 /* STABLE */
+      }, 8 /* PROPS */, ["onClick"])])])];
+    }),
+    _: 1 /* STABLE */
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DataTable, {
+    ref: "dataTableRef",
+    "table-class-name": "tablefixed",
+    loading: $setup.loaders.table,
+    headers: $setup.tableHeader,
+    items: $props.reportData.data || [],
+    "border-cell": "",
+    "rows-per-page-message": 'Records per page',
+    "rows-items": [10, 25, 50, 100],
+    "rows-per-page": 10,
+    "empty-message": 'No Records Available',
+    "hide-footer": ""
+  }, {
+    "item-total_allocate_minus_cancelled_uncontactable": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) "), item.total_allocated_leads == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_7, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) + parseInt(item.uncontactable))), 1 /* TEXT */))];
+    }),
+
+    "item-advisor_retention": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" (Sum of policies issued (Payment status: Captured) per batch / Sum of allocations per batch - Approved Car Sold - Approved Uncontactable) *100% "), item.renewed == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_9, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.advisorRetention = Math.round(parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100)) + " %", 1 /* TEXT */))];
+    }),
+
+    "item-value_segment_retention": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" (Sum of all policies issued (Payment status: Captured) by Value Segment Advisors per batch / Sum of allocations of Value Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% "), item.renewed_by_value_segment_advisors == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_11, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.valueSegmentConversion = Math.round(parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100)) + " %", 1 /* TEXT */))];
+    }),
+
+    "item-volume_segment_retention": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" (Sum of all policies issued (Payment status: Captured) by Volume Segment Advisors per batch / Sum of allocations of Volume Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% "), item.renewed_by_volume_segment_advisors == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_13, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.volumeSegmentConversion = Math.round(parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100)) + " %", 1 /* TEXT */))];
+    }),
+
+    "item-relative_retention_value_segment": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" Advisor Retention - Value Segment Conversion "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(parseInt(_ctx.advisorRetention) - parseInt(_ctx.valueSegmentConversion)) + " %", 1 /* TEXT */)];
+    }),
+
+    "item-relative_retention_volume_segment": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" Advisor Retention - Volume Segment Conversion "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(parseInt(_ctx.advisorRetention) - parseInt(_ctx.volumeSegmentConversion)) + " %", 1 /* TEXT */)];
+    }),
+
+    "item-im_retention": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" (Sum of all policies issued (Payment status: Captured) by all Advisors per batch / Sum of allocations of all Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% "), item.renewed_by_volume_segment_advisors == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_15, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.imRetention = Math.round(parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100)) + " %", 1 /* TEXT */))];
+    }),
+
+    "item-relative_retention": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" Advisor Retention - IM Retention "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(parseInt(_ctx.advisorRetention) - parseInt(_ctx.imRetention)) + " %", 1 /* TEXT */)];
+    }),
+
+    "item-monthly_retention": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (item) {
+      return [_hoisted_17];
+    }),
+    "body-append": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [$props.reportData.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("tr", _hoisted_18, _hoisted_23)) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["loading", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_24, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("select", {
+    "class": "form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed",
+    onChange: _cache[4] || (_cache[4] = function () {
+      return _ctx.updateRowsPerPageSelect && _ctx.updateRowsPerPageSelect.apply(_ctx, arguments);
+    })
+  }, [((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_4__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.renderList)(_ctx.rowsPerPageOptions, function (item) {
+    return (0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("option", {
+      key: item,
+      selected: item === _ctx.rowsPerPageActiveOption,
+      value: item
+    }, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item) + " rows per page ", 9 /* TEXT, PROPS */, _hoisted_25);
+  }), 128 /* KEYED_FRAGMENT */))], 32 /* HYDRATE_EVENTS */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_26, " Now displaying: " + (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.currentPageFirstIndex) + " ~ " + (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.currentPageLastIndex) + " of " + (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(_ctx.clientItemsLength), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_27, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+    size: "sm",
+    "icon-left": "prev",
+    disabled: _ctx.isFirstPage,
+    onClick: _ctx.prevPage
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Prev ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["disabled", "onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+    size: "sm",
+    "icon-right": "next",
+    disabled: _ctx.isLastPage,
+    onClick: _ctx.nextPage
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Next ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["disabled", "onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
+    modelValue: $setup.totalLeads.modal,
+    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+      return $setup.totalLeads.modal = $event;
+    }),
+    size: "xl",
+    "show-close": "",
+    backdrop: ""
+  }, {
+    header: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.currentTypeTitle), 1 /* TEXT */)];
+    }),
+
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("section", _hoisted_29, [!$setup.loaders.advisorLeadTable ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_30, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_PaginateClient, {
+        links: {
+          next: $setup.totalLeads.data.next_page_url,
+          prev: $setup.totalLeads.data.prev_page_url,
+          current: $setup.totalLeads.data.current_page,
+          from: $setup.totalLeads.data.from,
+          to: $setup.totalLeads.data.to,
+          total: $setup.totalLeads.data.total,
+          last: $setup.totalLeads.data.last_page
+        },
+        loading: $setup.totalLeads.loader,
+        onUpdate: $setup.setPageTable
+      }, null, 8 /* PROPS */, ["links", "loading"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DataTable, {
+        "table-class-name": "tablefixed compact",
+        loading: $setup.totalLeads.loader,
+        headers: $setup.totalLeads.tableHeader,
+        items: $setup.totalLeads.data.data || [],
+        "border-cell": "",
+        "hide-rows-per-page": "",
+        "hide-footer": ""
+      }, null, 8 /* PROPS */, ["loading", "headers", "items"])])) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_31, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_spinner, {
+        size: "lg",
+        color: "#1d83bc"
+      }), _hoisted_32]))])];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["modelValue"])]);
+}
+
+/***/ }),
+
 /***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=template&id=ddb6a204":
 /*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=template&id=ddb6a204 ***!
@@ -39835,6 +40503,34 @@ if (false) {}
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/Reports/RenewalBatch.vue":
+/*!*************************************************************!*\
+  !*** ./resources/js/inertia/Pages/Reports/RenewalBatch.vue ***!
+  \*************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _RenewalBatch_vue_vue_type_template_id_2d22b530__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./RenewalBatch.vue?vue&type=template&id=2d22b530 */ "./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=template&id=2d22b530");
+/* harmony import */ var _RenewalBatch_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./RenewalBatch.vue?vue&type=script&setup=true&lang=js */ "./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=script&setup=true&lang=js");
+/* harmony import */ var _Users_bilal_Projects_insurance_market_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/vue-loader/dist/exportHelper.js */ "./node_modules/vue-loader/dist/exportHelper.js");
+/* unplugin-vue-components disabled */
+
+
+
+;
+const __exports__ = /*#__PURE__*/(0,_Users_bilal_Projects_insurance_market_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_RenewalBatch_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_RenewalBatch_vue_vue_type_template_id_2d22b530__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"resources/js/inertia/Pages/Reports/RenewalBatch.vue"]])
+/* hot reload */
+if (false) {}
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (__exports__);
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue":
 /*!*************************************************************!*\
   !*** ./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue ***!
@@ -41247,6 +41943,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=script&setup=true&lang=js":
+/*!************************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=script&setup=true&lang=js ***!
+  \************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* reexport safe */ _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_RenewalBatch_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_RenewalBatch_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./RenewalBatch.vue?vue&type=script&setup=true&lang=js */ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=script&setup=true&lang=js");
+/* unplugin-vue-components disabled */ 
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=script&setup=true&lang=js":
 /*!************************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=script&setup=true&lang=js ***!
@@ -42543,6 +43255,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=template&id=2d22b530":
+/*!*******************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=template&id=2d22b530 ***!
+  \*******************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_4_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_RenewalBatch_vue_vue_type_template_id_2d22b530__WEBPACK_IMPORTED_MODULE_0__.render)
+/* harmony export */ });
+/* harmony import */ var _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_4_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_RenewalBatch_vue_vue_type_template_id_2d22b530__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./RenewalBatch.vue?vue&type=template&id=2d22b530 */ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/Reports/RenewalBatch.vue?vue&type=template&id=2d22b530");
+/* unplugin-vue-components disabled */
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=template&id=ddb6a204":
 /*!*******************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue?vue&type=template&id=ddb6a204 ***!
@@ -42879,6 +43607,8 @@ var map = {
 	"./Reports/AdvisorPerformance.vue": "./resources/js/inertia/Pages/Reports/AdvisorPerformance.vue",
 	"./Reports/LeadDistribution": "./resources/js/inertia/Pages/Reports/LeadDistribution.vue",
 	"./Reports/LeadDistribution.vue": "./resources/js/inertia/Pages/Reports/LeadDistribution.vue",
+	"./Reports/RenewalBatch": "./resources/js/inertia/Pages/Reports/RenewalBatch.vue",
+	"./Reports/RenewalBatch.vue": "./resources/js/inertia/Pages/Reports/RenewalBatch.vue",
 	"./Reports/UtmLeadsSale": "./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue",
 	"./Reports/UtmLeadsSale.vue": "./resources/js/inertia/Pages/Reports/UtmLeadsSale.vue",
 	"./TravelQuote/Cards": "./resources/js/inertia/Pages/TravelQuote/Cards.vue",

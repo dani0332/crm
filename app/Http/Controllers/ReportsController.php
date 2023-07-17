@@ -3,14 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Services\AdvisorConversionReportService;
-use App\Services\AdvisorDistributionReportService;
-use App\Services\AdvisorPerformanceReportService;
-use App\Services\LeadDistributionReportService;
+use App\Models\CarQuote;
+use Illuminate\Http\Request;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Services\ReportService;
+use App\Enums\PaymentStatusEnum;
+use App\Models\RenewalBatch;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Services\LeadDistributionReportService;
+use App\Services\AdvisorConversionReportService;
+use App\Services\AdvisorPerformanceReportService;
+use App\Services\AdvisorDistributionReportService;
+use App\Services\RenewalBatchReportService;
 
 class ReportsController extends Controller
 {
@@ -103,5 +110,33 @@ class ReportsController extends Controller
             'quoteTypes' => $resp['lobs'],
             'reportData' => $resp['records'],
         ]);
+    }
+
+    public function renderRenewalReport(Request $request, RenewalBatchReportService $renewalBatchReportService)
+    {
+
+        return inertia('Reports/RenewalBatch', [
+            'reportData' => $renewalBatchReportService->getReportData($request),
+            'filterOptions' => $renewalBatchReportService->getFilterOptions(),
+            // 'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
+        ]);
+
+
+        // if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
+        //     $userIds = $this->walkTree(auth()->user()->id);
+        //     info('user ids for advisor performance report are : '.json_encode($userIds));
+        //     $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
+        // }
+
+        // $query = $this->applyFilters($query, $request->all());
+
+        // return $query->paginate(15)
+        //     ->withQueryString();
+
+        // return inertia('Reports/AdvisorPerformance', [
+        //     'reportData' => $advisorPerformanceReportService->getReportData($request),
+        //     'filterOptions' => $advisorPerformanceReportService->getFilterOptions(),
+        //     'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
+        // ]);
     }
 }

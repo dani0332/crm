@@ -2,17 +2,18 @@
 
 namespace App\Models;
 
-use App\Enums\RolesEnum;
 use Auth;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Enums\RolesEnum;
+use OwenIt\Auditing\Auditable;
+use Laravel\Sanctum\HasApiTokens;
+use Laravel\Jetstream\HasProfilePhoto;
+use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
-use Laravel\Jetstream\HasProfilePhoto;
-use Laravel\Sanctum\HasApiTokens;
-use OwenIt\Auditing\Auditable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -262,5 +263,23 @@ class User extends Authenticatable implements AuditableContract
         } else {
             return User::where('name', 'System User')->first()->email;
         }
+    }
+
+    /**
+     * get renewal batches segment wise for a particularadvisors function
+     *
+     * @return BelongsToMany
+     */
+    public function renewalBatch():BelongsToMany
+    {
+        return $this->belongsToMany(
+            RenewalBatch::class,
+            'renewal_batch_segment_user',
+            'advisor_id',
+            'renewal_batch_id',
+            'id',
+            'id',
+            'renewalBatch'
+        )->withTimestamps()->withPivot('segment_type');
     }
 }
