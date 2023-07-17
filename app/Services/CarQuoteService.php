@@ -363,7 +363,6 @@ class CarQuoteService extends BaseService
         $access['carAdvisorCanEditPaymentCancelledRefund']=false;
         $access['carAdvisorCanEditInsurer']=false;
         $access['carManagerCanEditInsurer']=false;
-        info('lead uuid '.$record->uuid .'- payment status is  '.$record->payment_status_id.' and quote status is '.$record->quote_status_id);
 
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
             if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED){
@@ -412,7 +411,6 @@ class CarQuoteService extends BaseService
             $access['carAdvisorCanEdit']=false;
             $access['carManagerCanEdit']=false;
         }
-        info('access is '.json_encode($access));
         return $access;
     }
 
