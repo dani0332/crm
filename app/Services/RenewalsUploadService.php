@@ -1219,14 +1219,6 @@ class RenewalsUploadService
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
             $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
-            $pdfData = [
-                'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
-                'quote_uuid' => $carQuote->uuid
-            ];
-
-            $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' =>  ['plans' => $listQuotePlans], 'isDataSorted' => true])));
-
-
             if (isset($carQuote->advisor_id)) {
                 $advisor = $this->userService->getUserById($carQuote->advisor_id);
                 $advisorName = $advisor->name;
@@ -1259,8 +1251,24 @@ class RenewalsUploadService
                 'listQuotePlans' => $listQuotePlans,
                 'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
-                'pdfAttachment' => (object) $pdf
             ];
+
+            if($quotePlansCount > 0)
+            {
+                $pdfData = [
+                    'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
+                    'quote_uuid' => $carQuote->uuid
+                ];
+
+                $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' =>  ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+                if(isset($pdf['error'])) {
+                    info('Failed to generate PDF for UUID: ' . $carQuote->uuid . ' Error: ' . $pdf['error']);
+                }
+                else
+                {
+                    $emailData->pdfAttachment = (object) $pdf;
+                }
+            }
 
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
