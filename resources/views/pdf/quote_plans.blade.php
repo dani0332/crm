@@ -253,7 +253,8 @@
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
-    foreach ($quotePlans->quotes->plans as &$quotePlan)
+    $loopPlans = $quotePlans->quotes->plans;
+    foreach ($loopPlans as &$quotePlan)
     {
         $addonsPrice = 0;
         $addonsVat   = 0;
@@ -305,7 +306,14 @@
         $plans[$quotePlan->id] = $quotePlan;
     }
 
-    $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+    $plans = collect($plans);
+
+    if(!isset($quotePlans->isDataSorted)) {
+        $plans->sortByDesc('isRenewal');
+    }
+
+    $planIds = $plans->pluck('id')->toArray();
+
 
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
