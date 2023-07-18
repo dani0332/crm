@@ -248,6 +248,7 @@
         }
         .text-center {text-align: center;}
         .text-white { color: #ffffff}
+        .text-underline{text-decoration:underline }
 
     </style>
 </head>
@@ -335,8 +336,6 @@
             ["code" => "spacer"],
             ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "spacer"],
-//            ["code" => "policyFee", "title" => "Policy Fee", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
-//            ["code" => "spacer"],
             ["code" => "vat", "title" => "VAT", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "spacer"],
             ["code" => "total", "title" => "Total", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
@@ -358,37 +357,26 @@
                 <img style="height: 110px;" src="{{ public_path('images/advisors/sample_1.png') }}">
             </div>
             <div style="float: left; margin-left: 10px; margin-top: 20px">
-                @php
-                    $advisorName = isset($quote->advisor->name) && !empty($quote->advisor->name);
-                @endphp
-                @if($advisorName)
-                    <p class="text-left text-white text-xl">Advisor Name: {{ $quote->advisor?->name }}</p>
+                @if(isset($quote->advisor->name) && !empty($quote->advisor->name))
+                    <p class="text-left text-white text-xl">Name: {{ $quote->advisor?->name }}</p>
                 @endif
-                @php
-                    $advisorMobile = isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no);
-                @endphp
-                @if($advisorMobile)
-                    <p class="text-left text-white text-xl">Mobile/Whatsapp: <a class="text-white" href="tel:{{ $quote->advisor->mobile_no }}">{{ $quote->advisor->mobile_no }}</a></p>
-                @endif
-                @php
-                    $advisorLandLine = isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no);
-                @endphp
-                @if($advisorLandLine)
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
-                @endif
-                @php
-                    $advisorEmail = isset($quote->advisor->email) && !empty($quote->advisor->email);
-                @endphp
-                @if($advisorEmail)
+                @if(isset($quote->advisor->email) && !empty($quote->advisor->email))
                     <p class="text-left text-white text-xl">Email: <a class="text-white" href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
                 @endif
+                @if(isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
+                    <p class="text-left text-white text-xl mar">Mobile number: {{ $quote->advisor->mobile_no }} <span class="text-white" style="margin-top:3px"><img style="height:20px;" src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
+                @endif
+                @if(isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
+                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
+                @endif
+
             </div>
             <div>
-                <h4 class="text-right text-white">InsuranceMarket.ae™</h4>
-                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">800 ALFRED (800-253-733)</a> | <a class="text-white" href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
-                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai, United Arab Emirates, P.O Box 26423</p>
-                <p class="text-right text-white text-xl">Registration No. 85 under Central Bank of UAE (UAE Insurance Authority)</p>
-                <p class="text-right text-white text-xl">Holder of HIIP from DHA, Intermediary ID No. BRK-00003</p>
+                <h4 class="text-right text-white">InsuranceMarket.ae</h4>
+                <p class="text-right text-white text-xl"><a class="text-white" href="tel:+800253733">Happiness Center: 800 ALFRED (800-253-733)</a></p>
+                <p class="text-right text-white text-xl"><a class="text-white" href="https://insurancemarket.ae">www.insurancemarket.ae</a></p>
+                <p class="text-right text-white text-xl">27th Floor, Control Tower, Motor City, Dubai,</p>
+                <p class="text-right text-white text-xl">United Arab Emirates, PO Box 26423 <a class="text-white text-underline" href="https://www.google.com/maps/place//data=!4m2!3m1!1s0x3e5f42d8a8e59cff:0x24d4afc0d969548c?source=g.page.share">(map)</a></p>
             </div>
         </table>
     </footer>
@@ -535,6 +523,6 @@
     </main>
 
     {{-- Last Page --}}
-    <img src="{{public_path('images/quote_plans_pages/rm-p3-1.png')}}" class="full-page-image"  />
+    <img src="{{public_path('images/quote_plans_pages/rm-p3-2.png')}}" class="full-page-image"  />
 </body>
 </html>
