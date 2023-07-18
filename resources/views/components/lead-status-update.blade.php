@@ -335,7 +335,7 @@ use App\Enums\LeadSourceEnum;
                                     <textarea @if( ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) || isCarLostStatus($lead->quote_status_id) )
                                         disabled
                                         @endif class="form-control" id="notes" name="notes"
-                                        
+
                                     placeholder="Notes">{{ old('notes', $lead->notes) }}</textarea>
                                 </div>
                             </div>
@@ -368,18 +368,14 @@ use App\Enums\LeadSourceEnum;
                             </div>
                             <div class="col">
                                 @cannot(PermissionsEnum::ApprovePayments)
-                                <<<<<<< HEAD <button type="submit" style="float: right;" @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
-                                    || (!$carLostChangeStatus && !$allowQuoteLogAction)
-                                    // || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-                                    // || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-                                    ) disabled @endif class="btn btn-success
-                                    =======
-                                    <button type="submit" style="float: right;" @if(($lead->quote_status_id == QuoteStatusEnum::TransactionApproved && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]))
-                                        || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-                                        || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)) disabled @endif class="btn btn-success
-                                        >>>>>>> develop
-                                        btn-sm" id="lead-change-status-btn">Change Status</button>
-                                    @endcannot
+                                    <button type="submit" style="float: right;"
+                                            @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
+                                            || (!$carLostChangeStatus && !$allowQuoteLogAction)
+        //                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+        //                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                                        ) disabled @endif class="btn btn-success
+                                btn-sm" id="lead-change-status-btn">Change Status</button>
+                                @endcannot
                             </div>
                         </div>
                     </form>
