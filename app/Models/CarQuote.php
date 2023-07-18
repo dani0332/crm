@@ -16,20 +16,20 @@ class CarQuote extends BaseModel
 {
     use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
-    public $filterables = [
-        'renewal_batch' => FilterTypes::EXACT,
-    ];
     protected $table = 'car_quote_request';
     protected $casts = [
         'dob' => 'datetime',
     ];
+
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
         'previous_quote_policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
+        'renewal_batch' => FilterTypes::EXACT,
     ];
+
     protected $guarded = [];
 
     public function fullName()
