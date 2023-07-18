@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Exports\LifeQuotesExport;
+use App\Exports\PersonalQuotesExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
@@ -40,12 +41,17 @@ class CentralController extends Controller
         if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
-        switch ($quoteType) {
-            case 'life':
-                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
-            default:
-                return false;
-        }
+
+        if($quoteType == 'life'):
+            return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
+
+        elseif(in_array($quoteType,['bike', 'home', 'pet', 'cycle', 'jetski', 'yacht', 'travel'])):
+            return Excel::download(new PersonalQuotesExport, ucfirst($quoteType) . '-Leads.xlsx');
+
+        else:
+            return false;
+        endif;
+
     }
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)

@@ -125,4 +125,13 @@ class PetQuoteRepository extends BaseRepository
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
+
+    public function fetchExportData()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
 }

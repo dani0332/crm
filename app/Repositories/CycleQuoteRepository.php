@@ -119,4 +119,18 @@ class CycleQuoteRepository extends BaseRepository
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
     }
+
+    public function fetchExportData()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc')
+            ->get();
+    }
 }
