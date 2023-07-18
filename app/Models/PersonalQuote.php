@@ -31,6 +31,7 @@ class PersonalQuote extends Model implements AuditableContract
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
         'advisor_id' => FilterTypes::IN,
+        'policy_number' => FilterTypes::EXACT,
     ];
 
     /**
@@ -155,18 +156,18 @@ class PersonalQuote extends Model implements AuditableContract
     /**
      * @return string
      */
-//    public function getPolicyStartDateAttribute($date)
-//    {
-//        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
-//    }
+    //    public function getPolicyStartDateAttribute($date)
+    //    {
+    //        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    //    }
 
     /**
      * @return string
      */
-//    public function getPolicyIssuanceDateAttribute($date)
-//    {
-//        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
-//    }
+    //    public function getPolicyIssuanceDateAttribute($date)
+    //    {
+    //        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+    //    }
 
     /**
      * @return string

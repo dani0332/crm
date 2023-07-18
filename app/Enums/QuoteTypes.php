@@ -10,10 +10,11 @@ enum QuoteTypes: string
     case PET = 'Pet';
     case YACHT = 'Yacht';
     case JETSKI = 'Jetski';
+    case CAR = 'Car';
 
     public function id(): string
     {
-        return static::getId($this);
+        return self::getId($this);
     }
 
     public static function getId(self $value): int
@@ -25,6 +26,7 @@ enum QuoteTypes: string
             QuoteTypes::PET => 9,
             QuoteTypes::YACHT => 7,
             QuoteTypes::JETSKI => 11,
+            QuoteTypes::CAR => 1,
         };
     }
 }

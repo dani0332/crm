@@ -3,6 +3,7 @@
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\HealthQuote;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -171,6 +172,9 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
                 ->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
                 ->sum('premium');
+            if ($modelType == HealthQuote::class) {
+                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+            }
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
                 ->paginate(10);
         }
@@ -202,6 +206,9 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
         } else {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
+            if ($modelType == HealthQuote::class) {
+                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+            }
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)->paginate(10);
         }
     }
@@ -408,6 +415,7 @@ function generateRouteNames($prefix)
         'edit' => $prefix . '-edit',
         'update' => $prefix . '-update',
         'destroy' => $prefix . '-delete',
+        'search' => $prefix . '-search',
     ];
 }
 

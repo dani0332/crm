@@ -17,7 +17,7 @@ describe('Car qoutes', () => {
         })
     })
     beforeEach(() => {
-        cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+        cy.loginByCookies()
         cy.runRoutes()
     })
     it('Should edit car qoute details', () => {
@@ -44,8 +44,6 @@ describe('Car qoutes', () => {
         carLeadPage.getAddonsByName('2', '20')
         carLeadPage.getAddonsByName('3', '30')
         carLeadPage.getAddonsByName('4', '40')
-        carLeadPage.getAddonsByName('5', '50')
-
         //inclusions tab
         carLeadPage.getInclusionTab()
 

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class GenericDocument extends Model
 {
     use HasFactory;
+
     protected $guarded = [];
 
     /**

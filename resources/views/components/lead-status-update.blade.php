@@ -61,8 +61,8 @@ use App\Enums\LeadSourceEnum;
                 $('#trans-div').hide();
             }
 
-            if($(this).val() == '{{QuoteStatusEnum::CarSold}}' || $(this).val() == '{{QuoteStatusEnum::Uncontactable}}') {
-               $('.div-proof-document').show();
+            if ($(this).val() == '{{QuoteStatusEnum::CarSold}}' || $(this).val() == '{{QuoteStatusEnum::Uncontactable}}') {
+                $('.div-proof-document').show();
             } else {
                 $('.div-proof-document').hide();
             }
@@ -98,7 +98,7 @@ use App\Enums\LeadSourceEnum;
                 $("#leadStatus option[value='15']").hide(); // Transaction Approved
             }
             // Car Quote: Lead_Status 'Lost' viewable only for renewal lead
-            if($.trim(renewal_batch) != '' || $.trim(previous_quote_policy_number) != '' || source == '{{ LeadSourceEnum::RENEWAL_UPLOAD }}'){
+            if ($.trim(renewal_batch) != '' || $.trim(previous_quote_policy_number) != '' || source == '{{ LeadSourceEnum::RENEWAL_UPLOAD }}') {
                 $("#leadStatus option[value='17']").show(); // Lost
                 $("#lostReason").show(); // Lost Reason
             } else {
@@ -110,14 +110,12 @@ use App\Enums\LeadSourceEnum;
             next_followup_date_visibility(lead_status_code);
         }
 
-        $('#lostApprovalStatus').on('change', function()
-        {
+        $('#lostApprovalStatus').on('change', function() {
             $('.div-approve-reasons, .div-reject-reasons').hide();
 
-            if($(this).val() == '{{GenericRequestEnum::APPROVED}}') {
+            if ($(this).val() == '{{GenericRequestEnum::APPROVED}}') {
                 $('.div-approve-reasons').show();
-            }
-            else if($(this).val() == '{{GenericRequestEnum::REJECTED}}') {
+            } else if ($(this).val() == '{{GenericRequestEnum::REJECTED}}') {
                 $('.div-reject-reasons').show();
             }
         });
@@ -140,8 +138,6 @@ use App\Enums\LeadSourceEnum;
         }
         return false;
     }
-
-
 </script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
@@ -153,91 +149,86 @@ use App\Enums\LeadSourceEnum;
             <div class="x_content">
                 @php
 
-                    $allowQuoteLogAction =  true;
-                    $carLostChangeStatus = true;
+                $allowQuoteLogAction = true;
+                $carLostChangeStatus = true;
 
-                    if($modeltype == quoteTypeCode::Car)
-                    {
-                        //mo can only change status when status is car sold / uncontactable, based on condition below
-                        if(!isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-                            $carLostChangeStatus = false;
-                            $allowQuoteLogAction = false;
-                        }
+                if($modeltype == quoteTypeCode::Car)
+                {
+                //mo can only change status when status is car sold / uncontactable, based on condition below
+                if(!isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                $carLostChangeStatus = false;
+                $allowQuoteLogAction = false;
+                }
 
-                        if(isCarLostStatus($lead->quote_status_id))
-                        {
-                            //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
-                            $carLostChangeStatus = false;
-                            $allowQuoteLogAction = false;
+                if(isCarLostStatus($lead->quote_status_id))
+                {
+                //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
+                $carLostChangeStatus = false;
+                $allowQuoteLogAction = false;
 
-                            //validations for MO role
-                            if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
-                            {
-                                $carLostChangeStatus = false;
-                                if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::PENDING)
-                                {
-                                    $allowQuoteLogAction = true;
-                                    $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
-                                }
-                            }
+                //validations for MO role
+                if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
+                {
+                $carLostChangeStatus = false;
+                if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::PENDING)
+                {
+                $allowQuoteLogAction = true;
+                $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+                }
+                }
 
-                            //validations for Car Advisor / Deputy Manager Role
-                            if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
-                            {
-                                $allowQuoteLogAction = false;
+                //validations for Car Advisor / Deputy Manager Role
+                if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
+                {
+                $allowQuoteLogAction = false;
 
-                                if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2)
-                                {
-                                    $carLostChangeStatus = true;
-                                    $statuses = $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
-                                }
-                            }
-                       }
+                if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) { $carLostChangeStatus=true; $statuses=$statuses=$statuses->whereIn('id', [$lead->quote_status_id])->all();
+                    }
+                    }
+                    }
                     }
 
-                @endphp
-                <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form" enctype="multipart/form-data">
-                    {{csrf_field()}}
-                    <input type="hidden" value="{{$lead->id}}" name="leadId">
-                    <input type="hidden" value="{{$modeltype}}" name="modelType">
-                    <input type="hidden" value="{{$lead->uuid}}" name="quote_uuid">
-                    <input type="hidden" value="{{$lead->advisor_id}}" name="assigned_to_user_id">
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
-                            <div class="col-md-6 col-sm-6">
-                                <select @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved ||
-                                    ($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake)
-                                    && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) || (!$carLostChangeStatus && !$allowQuoteLogAction)
-                                    )
-                                    disabled
-                                    @endif
-                                    class="form-control" id="leadStatus" name="leadStatus">
-                                    @foreach ($statuses as $item)
-                                    @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
-                                    <option @if($status==$item->id) selected="selected" @endif
-                                        value="{{$item->id}}">{{$item->text}}</option>
-                                    @elseif($item->id != QuoteStatusEnum::PolicyIssued)
-                                    <option {{ $item->id == old('leadStatus', $status) ? 'selected' : ''}} value="{{$item->id}}">{{$item->text}}</option>
-                                    @endif
-                                    @endforeach
-                                </select>
+                    @endphp
+                    <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form" enctype="multipart/form-data">
+                        {{csrf_field()}}
+                        <input type="hidden" value="{{$lead->id}}" name="leadId">
+                        <input type="hidden" value="{{$modeltype}}" name="modelType">
+                        <input type="hidden" value="{{$lead->uuid}}" name="quote_uuid">
+                        <input type="hidden" value="{{$lead->advisor_id}}" name="assigned_to_user_id">
+                        <div class="item form-group">
+                            <div class="col">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <select @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved ||
+                                        ($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake)
+                                        && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])) || (!$carLostChangeStatus && !$allowQuoteLogAction)
+                                        )
+                                        disabled
+                                        @endif
+                                        class="form-control" id="leadStatus" name="leadStatus">
+                                        @foreach ($statuses as $item)
+                                        @if($item->id == QuoteStatusEnum::PolicyIssued && isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
+                                        <option @if($status==$item->id) selected="selected" @endif
+                                            value="{{$item->id}}">{{$item->text}}</option>
+                                        @elseif($item->id != QuoteStatusEnum::PolicyIssued)
+                                        <option {{ $item->id == old('leadStatus', $status) ? 'selected' : ''}} value="{{$item->id}}">{{$item->text}}</option>
+                                        @endif
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col">
+                            <div class="col">
 
-                            @if(isCarLostStatus($lead->quote_status_id))
+                                @if(isCarLostStatus($lead->quote_status_id))
 
 
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Status</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select
-                                            @if(!$allowQuoteLogAction) disabled @endif
-                                            class="form-control" id="lostApprovalStatus" name="lost_approval_status">
+                                        <select @if(!$allowQuoteLogAction) disabled @endif class="form-control" id="lostApprovalStatus" name="lost_approval_status">
 
                                             @if(!$allowQuoteLogAction)
-                                                <option @if(@$carLostQuoteLog->status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
+                                            <option @if(@$carLostQuoteLog->status == GenericRequestEnum::PENDING) selected @endif value="{{ GenericRequestEnum::PENDING }}">{{ GenericRequestEnum::PENDING }}</option>
                                             @endif
                                             <option @if(@$paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::APPROVED) selected @endif value="{{ GenericRequestEnum::APPROVED }}">{{ GenericRequestEnum::APPROVED }}</option>
                                             <option @if(@$paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED) selected @endif value="{{ GenericRequestEnum::REJECTED }}">{{ GenericRequestEnum::REJECTED }}</option>
@@ -250,11 +241,9 @@ use App\Enums\LeadSourceEnum;
                                 <div class="col-sm-12 mb-3 div-reject-reasons" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Rejection Reasons</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select
-                                            @if(!$allowQuoteLogAction) disabled @endif
-                                            class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                        <select @if(!$allowQuoteLogAction) disabled @endif class="form-control" name="reject_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostRejectReasons as $lostRejectReason)
-                                                <option value="{{$lostRejectReason->id}}" @if(@$paymentEntityModel->carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif >{{$lostRejectReason->text}}</option>
+                                            <option value="{{$lostRejectReason->id}}" @if(@$paymentEntityModel->carLostQuoteLog->reason_id == $lostRejectReason->id) selected @endif >{{$lostRejectReason->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -263,11 +252,9 @@ use App\Enums\LeadSourceEnum;
                                 <div class="col-sm-12 mb-3 div-approve-reasons" style="display: none;">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Approval Reasons</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <select
-                                            @if(!$allowQuoteLogAction) disabled @endif
-                                            class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
+                                        <select @if(!$allowQuoteLogAction) disabled @endif class="form-control" name="approve_reason_id" @if(!auth()->user()->hasRole(RolesEnum::MarketingOperations))disabled @endif>
                                             @foreach($lostApproveReasons as $lostApproveReason)
-                                                <option value="{{$lostApproveReason->id}}" @if(@$paymentEntityModel->carLostQuoteLog->reason_id == $lostApproveReason->id) selected @endif>{{$lostApproveReason->text}}</option>
+                                            <option value="{{$lostApproveReason->id}}" @if(@$paymentEntityModel->carLostQuoteLog->reason_id == $lostApproveReason->id) selected @endif>{{$lostApproveReason->text}}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -276,7 +263,7 @@ use App\Enums\LeadSourceEnum;
                                 <div class="col-sm-12 mb-3">
                                     <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b> <span class='required'>*</span></label>
                                     <div class="col-md-6 col-sm-6">
-                                        <input maxlength="100" value="{{@$paymentEntityModel->carLostQuoteLog->notes }}" @if(!$allowQuoteLogAction) disabled @endif type="text" id="lost_notes" name="lost_notes"  class="form-control">
+                                        <input maxlength="100" value="{{@$paymentEntityModel->carLostQuoteLog->notes }}" @if(!$allowQuoteLogAction) disabled @endif type="text" id="lost_notes" name="lost_notes" class="form-control">
                                     </div>
                                 </div>
 
@@ -288,128 +275,131 @@ use App\Enums\LeadSourceEnum;
                                 </div>
 
                                 <input type="hidden" name="car_lost_quote_log_id" value="{{@$paymentEntityModel->carLostQuoteLog->id}}">
-                            @endif
-
-                            <div id="quote-next-followup-date" style="display: none;">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Followup Date</b> <span class='required'>*</span></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <input type="text" id="next_followup_date" name="next_followup_date" value="{{ old('next_followup_date', $lead->next_followup_date) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select follow-up date & time">
-                                </div>
-                            </div>
-                            <div id="quote-tier" style="display: none;">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Tier</b> <span class='required'>*</span></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <select id="tier_id" name="tier_id" class="form-control">
-                                        <option value="">Please Select Tier</option>
-                                        @foreach($tiers as $tier)
-                                        <option value="{{$tier->id}}" {{ $tier->id == old('tier_id', $lead->tier_id ?? '') ? 'selected' : ''}}>
-                                            {{ $tier->name }}
-                                        </option>
-                                        @endforeach
-                                    </select>
-                                    @if ($errors->has('tier_id'))
-                                    <span class="text-danger">{{ $errors->first('tier_id') }}</span>
-                                    @endif
-                                </div>
-                            </div>
-                            <div id="lost-reason-div" style="display: none;">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Lost Reason</b> <span class='required'>*</span></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" id="lostReason" name="lostReason">
-                                        <option value="">Select Lost Reason</option>
-                                        @foreach ($lostreasons as $item)
-                                        <option @if($selectedlostreason==$item->id) selected="selected" @endif
-                                            value="{{$item->id}}" >{{$item->text}}</option>
-                                        @endforeach
-                                    </select>
-                                    @if ($errors->has('lostReason'))
-                                    <span class="text-danger">{{ $errors->first('lostReason') }}</span>
-                                    @endif
-                                </div>
-                                @if($modeltype == quoteTypeCode::Car && isset($selectedlostreason) && ($lostreasons->where('id', $selectedlostreason)->first()?->text == 'Car sold' || $lostreasons->where('id', $selectedlostreason)->first()?->text == 'Uncontactable'))
-
                                 @endif
-                            </div>
-                            <div id="trans-div" style="display: none;">
-                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>TransApp Code</b> <span class='required'>*</span></label>
-                                <div class="col-md-6 col-sm-6">
-                                    <input type="text" class="form-control" id="trans_code" name="trans_code" value="">
-                                    @if ($errors->has('trans_code'))
-                                    <span class="text-danger">{{ $errors->first('trans_code') }}</span>
+
+                                <div id="quote-next-followup-date" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Followup Date</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <input type="text" id="next_followup_date" name="next_followup_date" value="{{ old('next_followup_date', $lead->next_followup_date) }}" class="form-control" data-toggle="tooltip" data-placement="top" title="Please select follow-up date & time">
+                                    </div>
+                                </div>
+                                <div id="quote-tier" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Tier</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <select id="tier_id" name="tier_id" class="form-control">
+                                            <option value="">Please Select Tier</option>
+                                            @foreach($tiers as $tier)
+                                            <option value="{{$tier->id}}" {{ $tier->id == old('tier_id', $lead->tier_id ?? '') ? 'selected' : ''}}>
+                                                {{ $tier->name }}
+                                            </option>
+                                            @endforeach
+                                        </select>
+                                        @if ($errors->has('tier_id'))
+                                        <span class="text-danger">{{ $errors->first('tier_id') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div id="lost-reason-div" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Lost Reason</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <select class="form-control" id="lostReason" name="lostReason">
+                                            <option value="">Select Lost Reason</option>
+                                            @foreach ($lostreasons as $item)
+                                            <option @if($selectedlostreason==$item->id) selected="selected" @endif
+                                                value="{{$item->id}}" >{{$item->text}}</option>
+                                            @endforeach
+                                        </select>
+                                        @if ($errors->has('lostReason'))
+                                        <span class="text-danger">{{ $errors->first('lostReason') }}</span>
+                                        @endif
+                                    </div>
+                                    @if($modeltype == quoteTypeCode::Car && isset($selectedlostreason) && ($lostreasons->where('id', $selectedlostreason)->first()?->text == 'Car sold' || $lostreasons->where('id', $selectedlostreason)->first()?->text == 'Uncontactable'))
+
                                     @endif
+                                </div>
+                                <div id="trans-div" style="display: none;">
+                                    <label class="col-form-label col-md-3 col-sm-3 label-align"><b>TransApp Code</b> <span class='required'>*</span></label>
+                                    <div class="col-md-6 col-sm-6">
+                                        <input type="text" class="form-control" id="trans_code" name="trans_code" value="">
+                                        @if ($errors->has('trans_code'))
+                                        <span class="text-danger">{{ $errors->first('trans_code') }}</span>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="item form-group">
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b></label>
-                            <div class="col-md-6 col-sm-6">
-                                <textarea
-                                    @if( ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) || isCarLostStatus($lead->quote_status_id) )
+                        <div class="item form-group">
+                            <div class="col">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Notes</b></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <textarea @if( ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved) || isCarLostStatus($lead->quote_status_id) )
                                         disabled
-                                    @endif class="form-control" id="notes" name="notes"
+                                        @endif class="form-control" id="notes" name="notes"
+                                        
                                     placeholder="Notes">{{ old('notes', $lead->notes) }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col">
+
                             </div>
                         </div>
-                        <div class="col">
 
-                        </div>
-                    </div>
-
-                    <div class="item form-group div-proof-document" style="display: none;" >
-                        <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
-                            <div class="col-md-6 col-sm-6">
-                                <input
-                                    @if(isCarLostStatus($lead->quote_status_id) && !$carLostChangeStatus)
-                                        disabled
+                        <div class="item form-group div-proof-document" style="display: none;">
+                            <div class="col">
+                                <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Car Sold / Uncontactable Proof</b></label>
+                                <div class="col-md-6 col-sm-6">
+                                    <input @if(isCarLostStatus($lead->quote_status_id) && !$carLostChangeStatus)
+                                    disabled
                                     @endif
                                     class="form-control hide" type="file" name="proof_document" id="proofDocument" />
-                                @if ($errors->has('proof_document'))
+                                    @if ($errors->has('proof_document'))
                                     <span class="text-danger font-weight-bold" role="alert"><strong>{{ $errors->first('proof_document') }}.</strong></span>
-                                @endif
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col">
+
                             </div>
                         </div>
-                        <div class="col">
 
-                        </div>
-                    </div>
+                        <div class="item form-group">
+                            <div class="col">
 
-                    <div class="item form-group">
-                        <div class="col">
-
-                        </div>
-                        <div class="col">
-                            @cannot(PermissionsEnum::ApprovePayments)
-                            <button type="submit" style="float: right;"
-                                    @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
+                            </div>
+                            <div class="col">
+                                @cannot(PermissionsEnum::ApprovePayments)
+                                <<<<<<< HEAD <button type="submit" style="float: right;" @if($lead->quote_status_id == QuoteStatusEnum::TransactionApproved
                                     || (!$carLostChangeStatus && !$allowQuoteLogAction)
-//                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-//                                || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
-                                ) disabled @endif class="btn btn-success
-                                btn-sm" id="lead-change-status-btn">Change Status</button>
-                            @endcannot
+                                    // || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                                    // || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                                    ) disabled @endif class="btn btn-success
+                                    =======
+                                    <button type="submit" style="float: right;" @if(($lead->quote_status_id == QuoteStatusEnum::TransactionApproved && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin]))
+                                        || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::APPROVED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)
+                                        || $lead->quote_status_id == QuoteStatusEnum::Lost && isset($lead->lost_approval_status) && $lead->lost_approval_status == GenericRequestEnum::REJECTED && !auth()->user()->hasRole(RolesEnum::MarketingOperations)) disabled @endif class="btn btn-success
+                                        >>>>>>> develop
+                                        btn-sm" id="lead-change-status-btn">Change Status</button>
+                                    @endcannot
+                            </div>
                         </div>
-                    </div>
-                </form>
+                    </form>
 
-                @if(isset($paymentEntityModel->carLostQuoteLogs))
+                    @if(isset($paymentEntityModel->carLostQuoteLogs))
                     <h2>Car Sold / Uncontactable Logs</h2>
                     <div id="lead-history-div">
                         <table id="carLostQuoteLogsTable" class="table table-striped jambo_table" style="width:100%">
                             <thead>
-                            <tr>
-                                <th>Modified At</th>
-                                <th>Modified By</th>
-                                <th>Notes</th>
-                                <th>Lead Status</th>
-                                <th>Approval Status</th>
-                                <th>Documents</th>
-                            </tr>
+                                <tr>
+                                    <th>Modified At</th>
+                                    <th>Modified By</th>
+                                    <th>Notes</th>
+                                    <th>Lead Status</th>
+                                    <th>Approval Status</th>
+                                    <th>Documents</th>
+                                </tr>
                             </thead>
                             <tbody>
-                            @foreach($paymentEntityModel->carLostQuoteLogs as $carLostQuoteLog)
+                                @foreach($paymentEntityModel->carLostQuoteLogs as $carLostQuoteLog)
                                 <tr>
                                     <td>{{$carLostQuoteLog->created_at}}</td>
                                     <td>{{$carLostQuoteLog->advisor->email}}</td>
@@ -418,15 +408,15 @@ use App\Enums\LeadSourceEnum;
                                     <td>{{$carLostQuoteLog->status}}</td>
                                     <td>
                                         @foreach($carLostQuoteLog->documents as $document)
-                                            <p><a target="_blank" href="{{ createCdnUrl($document->path) }}">Document</a></p>
+                                        <p><a target="_blank" href="{{ createCdnUrl($document->path) }}">Document</a></p>
                                         @endforeach
                                     </td>
                                 </tr>
-                            @endforeach
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
-                @endif
+                    @endif
             </div>
         </div>
     </div>

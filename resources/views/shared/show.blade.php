@@ -554,20 +554,21 @@ use App\Enums\GenericRequestEnum;
                 </div>
                 <div class="x_content">
                     <div id="lead-history-div">
-                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                        <table id="quoteStatusLogsTable" class="table table-striped jambo_table" style="width:100%">
                             <thead>
-                                <tr>
-                                    <th>Modified At</th>
-                                    <th>Modified By</th>
-                                    <th>Notes</th>
-                                    <th>Lead Status</th>
-                                </tr>
+                            <tr>
+                                <th>Modified At</th>
+                                <th>Modified By</th>
+                                <th>Lead Status From</th>
+                                <th>Lead Status To</th>
+                                <th>Notes</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn"
-                                            class="btn btn-success btn-sm">Load History Data</button></td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center"> <button id="loadQuoteStatusLog" data-quote-type-id="{{$quoteTypeId}}"
+                                                                                    class="btn btn-success btn-sm">Load History Data</button></td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>

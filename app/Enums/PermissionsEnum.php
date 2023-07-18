@@ -123,7 +123,7 @@ final class PermissionsEnum extends Enum
     const AgeDiscountCreate = 'age-discount-create';
     const AgeDiscountList = 'age-discount-list';
     const AMLAudit = 'aml-audit';
-    const RenewalsUpload = 'renewals-upload';
+    const RenewalsUpload = 'renewals-upload-create';
     const CustomersUpload = 'customers-upload';
     const TravelQuotesList = 'travel-quotes-list';
     const TravelQuotesShow = 'travel-quotes-show';
@@ -210,4 +210,9 @@ final class PermissionsEnum extends Enum
     const CarSoldList = 'car-sold-list';
     const CarUncontactableList = 'car-uncontactable-list';
     const ActivitiesAssignedToView = 'activities-assigned-to-view';
+    const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
+    const RenewalsUploadUpdate = 'renewals-upload-update';
+    const RenewalsBatches = 'renewals-batches';
+    const CarQuoteSearch = 'car-quotes-search';
+    const UtmLeadsSalesReport = 'utm-leads-sales-report';
 }

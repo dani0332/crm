@@ -166,6 +166,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('quote_view_count as qvc', function ($join) {
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
+                $join->on('qvc.user_id', 'cqr.advisor_id');
             });
     }
 
@@ -212,98 +213,134 @@ class CarQuoteService extends BaseService
     public function updateCarQuote(Request $request, $id)
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
-        $oldCarValue = $carQuote->car_value;
-        info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
 
-        if ($request->first_name) {
-            $carQuote->first_name = $request->first_name;
-        }
-        if ($request->last_name) {
-            $carQuote->last_name = $request->last_name;
-        }
-        if ($request->dob) {
-            $carQuote->dob = $request->dob;
-        }
-        if ($request->nationality_id) {
-            $carQuote->nationality_id = $request->nationality_id;
-        }
-        if ($request->uae_license_held_for_id) {
-            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-        }
-        if ($request->back_home_license_held_for_id) {
-            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
-        }
-        if ($request->year_of_manufacture) {
-            $carQuote->year_of_manufacture = $request->year_of_manufacture;
-        }
-        if ($request->emirate_of_registration_id) {
-            $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
-        }
-        if ($request->car_type_insurance_id) {
-            $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
-        }
-        if ($request->claim_history_id) {
-            $carQuote->claim_history_id = $request->claim_history_id;
-        }
-        if ($request->has_ncd_supporting_documents) {
-            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
-        }
-        if ($request->premium) {
-            $carQuote->premium = $request->premium;
-        }
-        if ($request->car_value) {
-            $carQuote->car_value = $request->car_value;
-        }
-        if ($request->seat_capacity) {
-            $carQuote->seat_capacity = $request->seat_capacity;
-        }
-        if ($request->cylinder) {
-            $carQuote->cylinder = $request->cylinder;
-        }
-        if ($request->vehicle_type_id) {
-            $carQuote->vehicle_type_id = $request->vehicle_type_id;
-        }
-        if ($request->additional_notes) {
-            $carQuote->additional_notes = $request->additional_notes;
-        }
-        if ($request->car_make_id) {
-            $carQuote->car_make_id = $request->car_make_id;
-        }
-        if ($request->car_model_id) {
-            $carQuote->car_model_id = $request->car_model_id;
-        }
-        if ($request->currently_insured_with) {
-            $carQuote->currently_insured_with = $request->currently_insured_with;
-        }
-        $carQuote->quote_updated_at = Carbon::now();
-        $carQuote->is_quote_locked = true;
-        if ($request->trim) {
-            $carQuote->car_model_detail_id = $request->trim;
-        }
-        if ($request->policy_start_date) {
-            $carQuote->policy_start_date = $request->policy_start_date;
-        }
-        if ($request->renewal_batch) {
-            $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
-        }
-        if ($request->previous_quote_policy_number) {
-            $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
-        }
-        if ($request->previous_policy_expiry_date) {
-            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
-        }
-        $carQuote->updated_by = auth()->user()->email;
-        $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
+        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
+            $carQuote->renewal_batch = $request->renewal_batch;
+            $carQuote->updated_by = auth()->user()->email;
 
-        if ($deleteValuationResponse) {
             $carQuote->save();
 
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
             }
         } else {
-            return false;
+            $oldCarValue = $carQuote->car_value;
+            info('Update triggered from IMCRM for Car Quote request with uuid : '.$carQuote->code);
+
+            if ($request->first_name) {
+                $carQuote->first_name = $request->first_name;
+            }
+            if ($request->last_name) {
+                $carQuote->last_name = $request->last_name;
+            }
+            if ($request->dob) {
+                $carQuote->dob = $request->dob;
+            }
+            if ($request->nationality_id) {
+                $carQuote->nationality_id = $request->nationality_id;
+            }
+            if ($request->uae_license_held_for_id) {
+                $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+            }
+            if ($request->back_home_license_held_for_id) {
+                $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
+            }
+            if ($request->year_of_manufacture) {
+                $carQuote->year_of_manufacture = $request->year_of_manufacture;
+            }
+            if ($request->emirate_of_registration_id) {
+                $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+            }
+            if ($request->car_type_insurance_id) {
+                $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+            }
+            if ($request->claim_history_id) {
+                $carQuote->claim_history_id = $request->claim_history_id;
+            }
+            if ($request->has_ncd_supporting_documents) {
+                $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
+            }
+            if ($request->premium) {
+                $carQuote->premium = $request->premium;
+            }
+            if ($request->car_value) {
+                $carQuote->car_value = $request->car_value;
+            }
+            if ($request->seat_capacity) {
+                $carQuote->seat_capacity = $request->seat_capacity;
+            }
+            if ($request->cylinder) {
+                $carQuote->cylinder = $request->cylinder;
+            }
+            if ($request->vehicle_type_id) {
+                $carQuote->vehicle_type_id = $request->vehicle_type_id;
+            }
+            if ($request->additional_notes) {
+                $carQuote->additional_notes = $request->additional_notes;
+            }
+            if ($request->car_make_id) {
+                $carQuote->car_make_id = $request->car_make_id;
+            }
+            if ($request->car_model_id) {
+                $carQuote->car_model_id = $request->car_model_id;
+            }
+            if ($request->currently_insured_with) {
+                $carQuote->currently_insured_with = $request->currently_insured_with;
+            }
+            $carQuote->quote_updated_at = Carbon::now();
+            $carQuote->is_quote_locked = true;
+            if ($request->trim) {
+                $carQuote->car_model_detail_id = $request->trim;
+            }
+            if ($request->policy_start_date) {
+                $carQuote->policy_start_date = $request->policy_start_date;
+            }
+            if ($request->renewal_batch) {
+                $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
+            }
+            if ($request->previous_quote_policy_number) {
+                $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
+            }
+            if ($request->previous_policy_expiry_date) {
+                $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+                $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
+            }
+
+            if ($request->car_value_tier) {
+
+                info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
+
+                $carQuote->car_value_tier = $request->car_value_tier;
+
+                $originalValue = $carQuote->car_value; // taking backup of original car_value
+
+                $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
+
+                $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
+
+                $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
+
+                info('After car value tier update the new selected tier is : '.$selectedTier->name.' for lead : '.$carQuote->code);
+
+                $carQuote->tier_id = $selectedTier->id;
+                $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+
+                info('Car tier and cost per lead updated after value change for lead : '.$carQuote->code);
+            }
+
+            $carQuote->updated_by = auth()->user()->email;
+            $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
+
+            if ($deleteValuationResponse) {
+
+                $carQuote->save();
+
+                if (isset($request->return_to_view)) {
+                    return redirect('quote/car/'.$carQuote->id)->with('success', 'Car Quote has been updated');
+                }
+            } else {
+                return false;
+            }
         }
     }
 
@@ -845,7 +882,7 @@ class CarQuoteService extends BaseService
     {
         return [
             'create' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,lost_reason,payment_status_id,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,quote_status_id,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,renewal_batch,premium,source,transapp_code,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,car_value,show_renewal_upload_leads',
-            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,cost_per_lead,car_value_tier,renewal_batch,show_renewal_upload_leads',
+            'list' => 'policy_start_date,transapp_code,seat_capacity,cylinder,has_ncd_supporting_documents,back_home_license_held_for_id,parent_duplicate_quote_id,trim,email,mobile_no,paid_at,plan_id,car_plan_provider_id,payment_gateway,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,emirate_of_registration_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code,customer_age,renewal_batch,show_renewal_upload_leads',
             'update' => 'is_modified,is_gcc_standard,year_of_first_registration,parent_duplicate_quote_id,id,advisor_id,paid_at,renewal_expiry_date,payment_status_id,lost_reason,plan_id,premium,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,policy_number,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,source,transapp_code,previous_quote_policy_premium,quote_status_id,car_model_detail_id,renewal_import_code,customer_age,tier_id,visit_count,cost_per_lead,quote_batch_id,policy_start_date,advisor_assigned_date,show_renewal_upload_leads',
             'show' => 'is_modified,is_gcc_standard,trim,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,quote_status_id,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,renewal_import_code,tier_id,visit_count,id,renewal_batch,policy_start_date,is_ecommerce,quote_link,transapp_code,order_reference,payment_reference,policy_number,renewal_expiry_date,lost_reason,show_renewal_upload_leads',
         ];
@@ -1298,6 +1335,7 @@ class CarQuoteService extends BaseService
 
     public function validateRequest($request)
     {
+        $isLeadPool = Auth::user()->isLeadPool();
         $userId = $request->assigned_to_id_new;
         $leadsIds = $request->selectTmLeadId == null || $request->selectTmLeadId == '' ? $request->entityId : $request->selectTmLeadId;
         if ($leadsIds == '' || $leadsIds == null) {
@@ -1309,7 +1347,7 @@ class CarQuoteService extends BaseService
         $leadsIds = array_map('intval', explode(',', $leadsIds));
         foreach ($leadsIds as $leadId) {
             $entity = $this->getEntityPlain($leadId);
-            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved) {
+            if ($entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! ($isLeadPool)) {
                 return 'One of the selected lead is in Transaction Approved state. Please unselect the lead and try again.';
             }
         }

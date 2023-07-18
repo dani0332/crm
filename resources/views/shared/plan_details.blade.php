@@ -89,6 +89,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			var carPlanTypeTpl = JSON.parse(
 				'<?php echo json_encode(CarPlanType::TPL) ?>');
 			var is_manual_update = $('#is_manual_update').is(':checked');
+            let insurer_quote_no = $('#insurer_quote_no').val();
+
+            if(insurer_quote_no.length > 50) {
+                validationDivText('red', '.car-quote-plan-validation-div',
+                    'Maximum allowed length for insurer quote no is 50.');
+                return false;
+            }
 
 			if (repair_type == carPlanTypeComp) { // if non-tpl
 				// Car Value should be within the given min/max range
@@ -200,8 +207,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		});
 
 		// Show total on load
-		totalPremium('.car-quote-plan-total-premium', 
-				'{{ isset($discountPremium) ? $discountPremium : 0 }}', '{{ isset($vat) ? $vat : 0 }}', 
+		totalPremium('.car-quote-plan-total-premium',
+				'{{ isset($discountPremium) ? $discountPremium : 0 }}', '{{ isset($vat) ? $vat : 0 }}',
 				'{{ isset($totalSelectedAddonsPriceWithVat) ? $totalSelectedAddonsPriceWithVat : 0 }}');
 
 		// Conditionally lock fields
@@ -904,11 +911,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>Provider Name:</td>
 								<td>{{ isset($providerName) ? $providerName : NULL }}</td>
 								<td>Repair Type:</td>
-								<td>{{ isset($repairType) && $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
+								<td>{{ isset($repairType) && $repairType == CarPlanType::COMP ? 'NON-AGENCY' : @$repairType }}</td>
 							</tr>
 							<tr>
 								<td>Insurer Quote No.:</td>
-								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no" value="{{ $insurerQuoteNo }}" data-value="{{ $insurerQuoteNo }}" class="form-control"></td>
+								<td><input type="text" maxlength="50" id="insurer_quote_no" name="insurer_quote_no" value="{{ $insurerQuoteNo }}" data-value="{{ $insurerQuoteNo }}" class="form-control"></td>
 								<td>Actual Premium:</td>
 								<td><input type="text" id="actual_premium" name="actual_premium" value="{{ $actualPremium }}" data-value="{{ $actualPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)"></td>
 							</tr>
