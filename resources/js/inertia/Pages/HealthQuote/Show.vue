@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import axios from 'axios';
 
 defineProps({
   quote: Object,
@@ -69,6 +70,7 @@ const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
+  planFilters: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -112,6 +114,56 @@ const confirmDeleteData = reactive({
 const confirmData = reactive({
   contactPrimary: null,
 });
+
+const planFilters = useForm({
+  insurer: [],
+  network: [],
+  manual_plan: null,
+  current_online: null,
+});
+const options = reactive({
+  network: [],
+  loading: false,
+});
+watch(
+  () => planFilters?.insurer,
+  value => {
+    if (value) {
+      options.loading = true;
+      console.log(planFilters.insurer);
+      const ids = planFilters.insurer.map(item => {
+        return item;
+      });
+
+      let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
+      axios
+        .get(url)
+        .then(res => {
+          if (res.data.length > 0) {
+            options.network = res.data;
+          } else {
+            options.network = [];
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+const onPlanFiltersSubmit = () => {
+  let insurerIds = planFilters.insurer.map(item => {
+    return item;
+  });
+
+  console.log(insurerIds);
+  return page.props.listQuotePlans.filter(plan =>
+    insurerIds.includes(plan.providerid),
+  );
+};
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
@@ -1659,6 +1711,14 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
+          <x-button
+            v-if="listQuotePlans.length > 0"
+            size="sm"
+            color="orange"
+            @click.prevent="modals.planFilters = true"
+          >
+            Filters
+          </x-button>
         </div>
       </div>
       <DataTable
@@ -2001,6 +2061,61 @@ onMounted(() => {
           </x-button>
         </template>
       </DataTable>
+
+      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+        <template #header> Filters </template>
+
+        <div class="grid sm:grid-cols-2 gap-4 py-8">
+          <ComboBox
+            v-model="planFilters.insurer"
+            label="Insurer"
+            :options="insuranceProviders"
+            :loading="planFilters.processing"
+          />
+          <ComboBox
+            v-model="planFilters.network"
+            label="Network"
+            :options="options.network"
+          />
+          <x-select
+            v-model="planFilters.manual_plan"
+            label="Manual Plan"
+            :options="[
+              { value: 'all', label: 'All' },
+              { value: 'yes', label: 'Yes' },
+              { value: 'no', label: 'No' },
+            ]"
+            class="w-full"
+          />
+          <x-select
+            v-model="planFilters.current_online"
+            label="Currently Online"
+            :options="[
+              { value: 'all', label: 'All' },
+              { value: 'yes', label: 'Yes' },
+              { value: 'no', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </div>
+
+        <div class="flex justify-end gap-3 mb-4">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            @click="onPlanFiltersSubmit"
+            >Apply</x-button
+          >
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.planFilters = false"
+          >
+            Reset
+          </x-button>
+        </div>
+      </x-modal>
 
       <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
         <template #header> Add Additional Contacts </template>
