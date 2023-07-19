@@ -253,8 +253,7 @@
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
-    $loopPlans = $quotePlans->quotes->plans;
-    foreach ($loopPlans as &$quotePlan)
+    foreach ($quotePlans->quotes->plans as &$quotePlan)
     {
         $addonsPrice = 0;
         $addonsVat   = 0;
