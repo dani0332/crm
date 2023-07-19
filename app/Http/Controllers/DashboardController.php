@@ -161,6 +161,7 @@ class DashboardController extends Controller
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
@@ -265,6 +266,7 @@ class DashboardController extends Controller
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+            ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
             ->orderByDesc('quote_batches.start_date')->orderBy('users.email');
 
