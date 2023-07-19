@@ -364,7 +364,7 @@
                     <p class="text-left text-white text-xl">Email: <a class="text-white" href="mailto:{{ $quote->advisor->email }}">{{ $quote->advisor->email }}</a></p>
                 @endif
                 @if(isset($quote->advisor->mobile_no) && !empty($quote->advisor->mobile_no))
-                    <p class="text-left text-white text-xl mar">Mobile number: {{ $quote->advisor->mobile_no }} <span class="text-white" style="margin-top:3px"><img style="height:20px;" src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
+                    <p class="text-left text-white text-xl mar">Mobile number: {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white" style="margin-top:3px"><img style="height:20px;" src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
                 @endif
                 @if(isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
                     <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ formatLandlineNumber($quote->advisor->landline_no) }}</a></p>
