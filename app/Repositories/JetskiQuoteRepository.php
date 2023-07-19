@@ -111,21 +111,14 @@ class JetskiQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($isForExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->orderBy('created_at', 'desc');
+
+        return ($isForExport) ? $query->get() : $query->simplePaginate();
     }
 
-    public function fetchExportData()
-    {
-        return $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->get();
-    }
 }

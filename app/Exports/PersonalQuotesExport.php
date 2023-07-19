@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Repositories\BikeQuoteRepository;
+use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
@@ -43,16 +44,27 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
 
             case 'travel':
                 return TravelQuoteRepository::getData(true);
+                break;
 
             case 'pet':
-                return PetQuoteRepository::exportData();
+                return PetQuoteRepository::getData(true);
                 break;
 
             case 'cycle':
-                return CycleQuoteRepository::exportData();
+                return CycleQuoteRepository::getData(true);
+                break;
 
             case 'jetski':
-                return JetskiQuoteRepository::exportData();
+                return JetskiQuoteRepository::getData(true);
+                break;
+
+            case 'amt':
+                return BusinessQuoteRepository::getData('Group Medical', true);
+                break;
+
+            case 'business':
+                return BusinessQuoteRepository::getData('Corpline', true);
+                break;
 
             default:
                 return abort(404);
@@ -62,7 +74,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
-        if(in_array($this->quoteType, ['home', 'bike', 'yacht', 'pet', 'cycle', 'jetski', 'travel'])):
+        if(in_array($this->quoteType, ['home', 'bike', 'yacht', 'pet', 'cycle', 'jetski', 'travel', 'amt', 'business'])):
             return $this->getHeadings($this->quoteType);
 
         else:
@@ -176,6 +188,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'SOURCE',
                     'IS ECOMMERCE'
                 ];
+                break;
 
             case 'jetski':
                 return [
@@ -193,8 +206,45 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'CURRENTLY INSURED WITH',
                     'IS ECOMMERCE',
                 ];
+                break;
 
+            case 'amt':
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'PREMIUM',
+                    'COMPANY NAME',
+                    'POLICY NUMBER',
+                    'LOST REASON',
+                    'SOURCE',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                ];
+                break;
 
+            case 'business':
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'COMPANY NAME',
+                    'TRANSAPP CODE',
+                    'SOURCE',
+                    'POLICY NUMBER',
+                    'LOST REASON',
+                    'ADVISOR',
+                    'LEAD STATUS',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'PREMIUM',
+                    'NUMBER OF EMPLOYEES',
+                    'BUSINESS INSURANCE TYPE',
+                    'GENDER'
+                ];
+                break;
 
             }
 
@@ -202,7 +252,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
 
     public function map($quote): array
     {
-        if(in_array($this->quoteType, ['home', 'bike', 'yacht', 'pet', 'cycle', 'jetski','travel'])):
+        if(in_array($this->quoteType, ['home', 'bike', 'yacht', 'pet', 'cycle', 'jetski','travel', 'amt', 'business'])):
             return $this->getValues($this->quoteType, $quote);
         else:
             return abort(404);
@@ -224,7 +274,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     date('d-m-Y H:i:s', strtotime($quote->updated_at)),
                     optional($quote->homeQuoteRequestDetail)->transapp_code,
                     $quote->source,
-                    optional($quote->homeQuoteRequestDetail->lostReason)->text,
+                    optional($quote->homeQuoteRequestDetail)->lostReason?->text,
                     $quote->premium,
                     $quote->policy_number,
                 ];
@@ -282,20 +332,20 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     date('d-m-Y H:i:s', strtotime($quote->created_at)),
                     date('d-m-Y H:i:s', strtotime($quote->updated_at)),
                     $quote->source,
-                    optional($quote->lost_reason)->text,
+                    optional($quote->petQuoteRequestDetail)->lostReason?->text,
                     $quote->premium,
-                    $quote->policy_no,
-                    $quote->type_of_pet,
-                    $quote->breed_of_pet1,
-                    $quote->age_of_pet,
-                    $quote->is_neutered,
-                    $quote->is_microchipped,
-                    $quote->microchip_no,
-                    $quote->is_mixed_breed,
-                    $quote->has_injury,
-                    $quote->accommodation_type,
-                    $quote->possesion_type,
-                    $quote->transapp_code,
+                    $quote->policy_number,
+                    optional($quote->petQuote)->petType?->text,
+                    optional($quote->petQuote)->breed_of_pet1,
+                    optional($quote->petQuote)->petAge?->text,
+                    optional($quote->petQuote)->is_neutered ? 'Yes' : 'No',
+                    optional($quote->petQuote)->is_microchipped ? 'Yes' : 'No',
+                    optional($quote->petQuote)->microchip_no,
+                    optional($quote->petQuote)->is_mixed_breed ? 'Yes' : 'No',
+                    optional($quote->petQuote)->has_injury ? 'Yes' : 'No',
+                    optional($quote->petQuote)->accomodationType?->text,
+                    optional($quote->petQuote)->possessionType?->text,
+                    optional($quote->petQuoteRequestDetail)->transapp_code,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                 ];
                 break;
@@ -310,7 +360,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     date('d-m-Y H:i:s', strtotime($quote->created_at)),
                     date('d-m-Y H:i:s', strtotime($quote->updated_at)),
                     $quote->premium,
-                    $quote->policy_no,
+                    $quote->policy_number,
                     $quote->source,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                 ];
@@ -327,7 +377,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     date('d-m-Y H:i:s', strtotime($quote->created_at)),
                     date('d-m-Y H:i:s', strtotime($quote->updated_at)),
                     $quote->premium,
-                    $quote->policy_no,
+                    $quote->policy_number,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',

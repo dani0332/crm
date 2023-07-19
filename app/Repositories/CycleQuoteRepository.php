@@ -58,9 +58,9 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($isForExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
                 $query->where(function ($query) {
                     $query->where('advisor_id', \auth()->user()->id);
@@ -68,8 +68,9 @@ class CycleQuoteRepository extends BaseRepository
             })
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->orderBy('created_at', 'desc');
+        
+        return ($isForExport) ? $query->get() : $query->simplePaginate();
     }
 
     /**
@@ -118,19 +119,5 @@ class CycleQuoteRepository extends BaseRepository
             }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
-    }
-
-    public function fetchExportData()
-    {
-        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
-            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                });
-            })
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->get();
     }
 }

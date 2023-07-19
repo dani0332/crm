@@ -45,7 +45,7 @@ class CentralController extends Controller
         if($quoteType == 'life'):
             return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
 
-        elseif(in_array($quoteType,['bike', 'home', 'pet', 'cycle', 'jetski', 'yacht', 'travel'])):
+        elseif(in_array($quoteType,['bike', 'home', 'pet', 'cycle', 'jetski', 'yacht', 'travel', 'amt', 'business'])):
             return Excel::download(new PersonalQuotesExport, ucfirst($quoteType) . '-Leads.xlsx');
 
         else:

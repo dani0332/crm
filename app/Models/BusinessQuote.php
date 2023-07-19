@@ -43,4 +43,10 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->hasOne(BusinessInsuranceType::class, 'id', 'business_type_of_insurance_id');
     }
+
+    public function advisor()
+    {
+        return $this->hasOne(User::class, 'id', 'advisor_id');
+    }
+    
 }
