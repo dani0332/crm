@@ -1415,7 +1415,7 @@ class CarQuoteService extends BaseService
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
-        if($quotePlans == null) {
+        if ($quotePlans == null) {
             $quotePlans = $this->getQuotePlans($data['quote_uuid']);
         }
 

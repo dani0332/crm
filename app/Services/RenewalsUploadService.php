@@ -1252,19 +1252,16 @@ class RenewalsUploadService
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
             ];
 
-            if($quotePlansCount > 0)
-            {
+            if ($quotePlansCount > 0) {
                 $pdfData = [
                     'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
-                    'quote_uuid' => $carQuote->uuid
+                    'quote_uuid' => $carQuote->uuid,
                 ];
 
-                $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' =>  ['plans' => $listQuotePlans], 'isDataSorted' => true])));
-                if(isset($pdf['error'])) {
-                    info('Failed to generate PDF for UUID: ' . $carQuote->uuid . ' Error: ' . $pdf['error']);
-                }
-                else
-                {
+                $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+                if (isset($pdf['error'])) {
+                    info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+                } else {
                     $emailData->pdfAttachment = (object) $pdf;
                 }
             }
