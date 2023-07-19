@@ -30,22 +30,33 @@ class CentralController extends Controller
         if (! $quoteType) {
             return abort(404);
         }
-        $request->validate([
+
+        $dateValidation = [
             'created_at_start' => 'required',
-            'created_at_end' => 'required',
-        ]);
-        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
+            'created_at_end' => 'required'
+        ];
+
+        $createdAt = $request->created_at_start;
+
+        if($quoteType == 'business'){
+            $dateValidation['created_at'] = $dateValidation['created_at_start'];
+            unset($dateValidation['created_at_start']);
+
+            $createdAt = $request->created_at;
+        }
+
+        $created_at_start = Carbon::parse($createdAt)->format('Y-m-d');
         $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+
         if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
-
         if($quoteType == 'life'):
             return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
 
-        elseif(in_array($quoteType,['bike', 'home', 'pet', 'cycle', 'jetski', 'yacht', 'travel', 'amt', 'business'])):
+        elseif(in_array($quoteType, ['bike', 'home', 'pet', 'cycle', 'jetski', 'yacht', 'travel', 'amt', 'business'])):
             return Excel::download(new PersonalQuotesExport, ucfirst($quoteType) . '-Leads.xlsx');
 
         else:

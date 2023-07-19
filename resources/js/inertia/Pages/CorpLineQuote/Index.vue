@@ -209,6 +209,18 @@ const onDataExport = () => {
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 onMounted(() => {
   setQueryFilters();
 });

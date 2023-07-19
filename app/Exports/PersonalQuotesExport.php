@@ -63,6 +63,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 break;
 
             case 'business':
+                dd(BusinessQuoteRepository::getData('Corpline', true)->toArray());
                 return BusinessQuoteRepository::getData('Corpline', true);
                 break;
 
@@ -381,6 +382,46 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
+                ];
+                break;
+
+            case 'amt':
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    optional($quote->quoteStatus)->text,
+                    optional($quote->advisor)->name,
+                    $quote->premium,
+                    $quote->company_name,
+                    $quote->policy_number,
+                    optional($quote->businessQuoteRequestDetail)->lostReason?->text,
+                    $quote->source,
+                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
+                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                ];
+                break;
+
+
+            case 'business':
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote->company_name,
+                    optional($quote->businessQuoteRequestDetail)->transapp_code,
+                    $quote->source,
+                    $quote->policy_number,
+                    optional($quote->businessQuoteRequestDetail)->lostReason?->text,
+                    optional($quote->advisor)->name,
+                    optional($quote->quoteStatus)->text,
+                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
+                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    $quote->premium,
+                    $quote->number_of_employees,
+
+                    
+                    
                 ];
                 break;
         }

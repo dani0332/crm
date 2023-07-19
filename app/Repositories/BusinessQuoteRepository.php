@@ -23,21 +23,21 @@ class BusinessQuoteRepository extends BaseRepository
         $query = $this->with([
             'businessQuoteRequestDetail.lostReason', 
             'quoteStatus', 
-            'advisor'
+            'advisor',
             ])->whereHas('typeOfInsurance', function($typeOfInsurance) use ($quoteType){
-                $typeOfInsurance->when($quoteType == 'Group Medical', function($query){
+                $typeOfInsurance->when($quoteType == 'amt', function($query){
                     $query->where('text', quoteStatusCode::GROUP_MEDICAL);
                 });
-                $typeOfInsurance->when($quoteType == 'Amt', function($query){
+                $typeOfInsurance->when($quoteType == 'business', function($query){
                     $query->where('text', '!=' ,quoteStatusCode::GROUP_MEDICAL);
                 });
-            })->when(($quoteType == 'Group Medical' && (
+            })->when(($quoteType == 'amt' && (
                 auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || 
                 auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || 
                 auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
             )), function($query){
                 $query->where('advisor_id', \auth()->user()->id);
-            })->when(($quoteType != 'Group Medical' && (
+            })->when(($quoteType == 'business' && (
                 auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) || 
                 auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) || 
                 auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) || 
