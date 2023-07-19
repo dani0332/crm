@@ -383,22 +383,27 @@ border-primary animate-spin;
 .bg-vtd-primary-100 {
   @apply bg-primary-100;
 }
-.arrow:before {
-    position: absolute;
-    content: '';
-    border-style: solid;
-    border-width: 0.4rem;
-    width: 0;
-    height: 0;
-    display: block;
+
+.arrow-t .x-popover-container::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(55, 65, 81) transparent transparent transparent;
+  transform: rotate(180deg);
 }
 
-.arrow:before {
-    transform: translateY(-50%);
-    border-color: transparent #1d83bc transparent transparent;
-    top: 50%;
-    left: -0.69rem;
-    right: auto;
-    bottom: auto;
+.arrow-l .x-popover-container::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(28, 124, 178) transparent transparent transparent;
+  transform: rotate(90deg);
 }
-

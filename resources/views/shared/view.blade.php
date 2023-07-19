@@ -365,6 +365,7 @@
                 changeMonth: true,
                 changeYear: true,
             });
+            $('.date-search-field').prop('readonly', true);
         });
         var ENDPOINT = "{{ url('/') }}";
         var page;
