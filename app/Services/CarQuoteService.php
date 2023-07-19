@@ -16,7 +16,6 @@ use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Payment;
-use App\Models\PaymentStatusLog;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
 use App\Models\Tier;
@@ -297,7 +296,6 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->car_value_tier) {
-
             info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
 
             $carQuote->car_value_tier = $request->car_value_tier;
@@ -322,7 +320,6 @@ class CarQuoteService extends BaseService
         $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
 
         if ($deleteValuationResponse) {
-
             $carQuote->save();
 
             if (isset($request->return_to_view)) {
@@ -354,65 +351,65 @@ class CarQuoteService extends BaseService
         return $oldAdvisorAssignedDate;
     }
 
-    public function updatedAccessAgainstPaymentStatus($paymentEntityModel,$record){
-        $carPayment = $paymentEntityModel->payments()->where('code', '=',$record->code)->first();
-        $quoteStatusArray =[QuoteStatusEnum::PolicyIssued,QuoteStatusEnum::TransactionApproved];
+    public function updatedAccessAgainstPaymentStatus($paymentEntityModel, $record)
+    {
+        $carPayment = [];
+        if ($paymentEntityModel->payments) {
+            $carPayment = $paymentEntityModel->payments()->where('code', '=', $record->code)->first();
+        }
+        $quoteStatusArray = [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved];
 
-        $access['carAdvisorCanEdit']=false;
-        $access['carManagerCanEdit']=false;
-        $access['carAdvisorCanEditPaymentCancelledRefund']=false;
-        $access['carAdvisorCanEditInsurer']=false;
-        $access['carManagerCanEditInsurer']=false;
+        $access['carAdvisorCanEdit'] = false;
+        $access['carManagerCanEdit'] = false;
+        $access['carAdvisorCanEditPaymentCancelledRefund'] = false;
+        $access['carAdvisorCanEditInsurer'] = false;
+        $access['carManagerCanEditInsurer'] = false;
 
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
-            if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED){
-                $access['carAdvisorCanEditInsurer']=true;
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+            if (! empty($record->payment_status_id) && $record->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                $access['carAdvisorCanEditInsurer'] = true;
             }
         }
 
-        if (auth()->user()->hasRole(RolesEnum::CarManager)){
-            if ($record->payment_status_id == PaymentStatusEnum::AUTHORISED){
-                $access['carManagerCanEditInsurer']=true;
+        if (auth()->user()->hasRole(RolesEnum::CarManager)) {
+            if (! empty($record->payment_status_id) && $record->payment_status_id == PaymentStatusEnum::AUTHORISED) {
+                $access['carManagerCanEditInsurer'] = true;
             }
         }
 
-        if (!empty($carPayment->captured_at)){
+        if (! empty($carPayment->captured_at)) {
+            $paymentCapturedAt = $carPayment->captured_at;
+            $today = Carbon::today();
 
-            $paymentCapturedAt =$carPayment->captured_at;
-            $today=Carbon::today();
+            $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(7);
+            $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(7);
 
-            $dateLimitForAdvisor= Carbon::parse($paymentCapturedAt)->addDays(7);
-            $dateLimitForManager= Carbon::parse($dateLimitForAdvisor)->addDays(7);
-
-            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
-
-                if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id , $quoteStatusArray)){
-                    $access['carAdvisorCanEdit']=true;
-                    $access['carAdvisorCanEditInsurer']=true;
+            if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+                if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
+                    $access['carAdvisorCanEdit'] = true;
+                    $access['carAdvisorCanEditInsurer'] = true;
                 }
             }
 
-            if (auth()->user()->hasRole(RolesEnum::CarManager)){
-                if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED]) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id , $quoteStatusArray)){
-                    $access['carManagerCanEdit']=true;
-                    $access['carManagerCanEditInsurer']=true;
+            if (auth()->user()->hasRole(RolesEnum::CarManager)) {
+                if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
+                    $access['carManagerCanEdit'] = true;
+                    $access['carManagerCanEditInsurer'] = true;
                 }
             }
-
         }
-        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)){
-            if (in_array($record->payment_status_id,[PaymentStatusEnum::CANCELLED,PaymentStatusEnum::REFUNDED])){
-                    $access['carAdvisorCanEditPaymentCancelledRefund']=true;
-
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+                $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
             }
         }
-        if (!empty($record->payment_status_id)){
-            if (in_array($record->payment_status_id,[PaymentStatusEnum::PARTIAL_CAPTURED,PaymentStatusEnum::CAPTURED])  && in_array($record->quote_status_id , $quoteStatusArray)){
-
-                $access['carAdvisorCanEdit']=false;
-                $access['carManagerCanEdit']=false;
+        if (! empty($record->payment_status_id)) {
+            if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && in_array($record->quote_status_id, $quoteStatusArray)) {
+                $access['carAdvisorCanEdit'] = false;
+                $access['carManagerCanEdit'] = false;
             }
         }
+
         return $access;
     }
 
@@ -1145,21 +1142,20 @@ class CarQuoteService extends BaseService
         $logPrefix = 'fn: isPlanModifyAllowed ';
         $quote = CarQuote::where('uuid', $data['car_quote_uuid'])->with('paymentStatus')->first();
 
-        if (in_array($quote->payment_status_id,[PaymentStatusEnum::CAPTURED,PaymentStatusEnum::PARTIAL_CAPTURED])) {
-            $carPayment = Payment::where('code', '=',$quote->code)->first();
-            if (!empty($carPayment->captured_at)) {
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+            $carPayment = Payment::where('code', '=', $quote->code)->first();
+            if (! empty($carPayment->captured_at)) {
+                $paymentCapturedAt = $carPayment->captured_at;
+                $today = Carbon::today();
 
-                $paymentCapturedAt =$carPayment->captured_at;
-                $today=Carbon::today();
+                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(7);
+                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(7);
 
-                $dateLimitForAdvisor= Carbon::parse($paymentCapturedAt)->addDays(7);
-                $dateLimitForManager= Carbon::parse($dateLimitForAdvisor)->addDays(7);
-
-                if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $today->lte($dateLimitForAdvisor) ) {
+                if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $today->lte($dateLimitForAdvisor)) {
                     info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
 
                     return true;
-                } elseif (Auth::user()->hasRole(RolesEnum::CarManager)  && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) ) {
+                } elseif (Auth::user()->hasRole(RolesEnum::CarManager) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager)) {
                     info($logPrefix.' plan modify allowed to car manager for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
 
                     return true;
@@ -1167,7 +1163,7 @@ class CarQuoteService extends BaseService
             }
         }
 
-        if (in_array($quote->payment_status_id,[PaymentStatusEnum::CANCELLED,PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
+        if (in_array($quote->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) && Auth::user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager, RolesEnum::CarManager])) {
             info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid);
 
             return true;
