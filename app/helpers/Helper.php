@@ -427,3 +427,14 @@ if (! function_exists('getAutomationUser')) {
         return ['im.automation4@gmail.com'];
     }
 }
+
+if (! function_exists('formatLandlineNumber')) {
+    function formatLandlineNumber($landlineNumber)
+    {
+        return preg_replace(
+            "/.*(\d{2})[^\d]{0,7}(\d{3})[^\d]{0,7}(\d{4})/",
+            '$1 $2 $3',
+            mapPhoneNumber($landlineNumber)
+        );
+    }
+}
