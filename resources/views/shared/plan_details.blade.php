@@ -923,7 +923,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>Discounted Premium:</td>
 								<td>
 									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ isset($discountPremium) ? $discountPremium : 0 }}" data-value="{{ isset($discountPremium) ? $discountPremium : 0 }}" class="form-control" onkeypress="return isNumberKey(event,this)">
-									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
+									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ isset($vat) ? $vat : 0 }}">
 								</td>
 								<td>Car value:</td>
 								<td><input type="text" id="car_value" name="car_value" value="{{ isset($carValue) ? $carValue : 0 }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
@@ -933,7 +933,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Excess:</td>
-								<td><input type="text" id="excess" name="excess" value="{{ $excess }}" data-value="{{ $excess }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								<td><input type="text" id="excess" name="excess" value="{{ isset($excess) ? $excess : 0 }}" data-value="{{ isset($excess) ? $excess : 0 }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
 								<td>Ancillary Excess:</td>
 								<td><select class="form-control" id='ancillary_excess' name="ancillary_excess">
