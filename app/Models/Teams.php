@@ -137,13 +137,13 @@ class Teams extends BaseModel
                     }
                 }
 
-                // ftc-form-delete schedule on 7th June 2023
-                //                $ftcModel = new FtcQuoteStatusHistory;
-                //                $ftcModel->quote_status_id = $modelInstance->quote_status_id;
-                //                $ftcModel->car_quote_id = $modelInstance->id;
-                //                $ftcModel->notes = $notes;
-                //
-                //                return $ftcModel->save();
+            // ftc-form-delete schedule on 7th June 2023
+            //                $ftcModel = new FtcQuoteStatusHistory;
+            //                $ftcModel->quote_status_id = $modelInstance->quote_status_id;
+            //                $ftcModel->car_quote_id = $modelInstance->id;
+            //                $ftcModel->notes = $notes;
+            //
+            //                return $ftcModel->save();
             } else {
                 $userId = $request->input('user_id');
                 if (! self::where('user_id', $userId)->exists()) {
