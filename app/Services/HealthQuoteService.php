@@ -107,6 +107,7 @@ class HealthQuoteService extends BaseService
             'hqr.parent_duplicate_quote_id',
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
+            'hqr.price_starting_from',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -631,7 +632,7 @@ class HealthQuoteService extends BaseService
         return [
             'create' => 'is_ecommerce,policy_start_date,wcu_id,parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
             'list' => 'policy_start_date,parent_duplicate_quote_id,previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,next_followup_date,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,renewal_expiry_date,renewal_import_code,device',
-            'update' => 'is_ecommerce,wcu_id,parent_duplicate_quote_id,previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
+            'update' => 'premium,is_ecommerce,wcu_id,parent_duplicate_quote_id,previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
             'show' => 'wcu_id,is_renewal,id,source,previous_quote_id,quote_status_id',
         ];
     }
@@ -1107,6 +1108,7 @@ class HealthQuoteService extends BaseService
         $response['paymentStatus'] = '';
         $response['paidAt'] = '';
         $response['planName'] = '';
+        $response['priceWithVAT'] = '';
 
         $planData = HealthQuotePlan::where('health_quote_request_id', $data->id)->first();
         if ($planData) {
@@ -1118,6 +1120,7 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
+                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['basmah'] + $plan['policyFee'] + $plan['vat'];
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
