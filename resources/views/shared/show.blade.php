@@ -368,11 +368,11 @@ use App\Enums\GenericRequestEnum;
                                     class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         @endif
-                            @if( $access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
+                            @if( ($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] ) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
                                 <a id="texta"
                                    href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                    class='btn btn-warning btn-sm'>Edit</a>
-                            @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager]) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
+                            @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                 class='btn btn-warning btn-sm'>Edit</a>

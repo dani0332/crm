@@ -49,10 +49,10 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 									<button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
 								</span>
 
-                            @if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] || $access['carAdvisorCanEditPaymentCancelledRefund'] ))
+								@if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] || $access['carAdvisorCanEditPaymentCancelledRefund'] ) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
                                 <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
                                    class="btn btn-primary btn-sm">Create Quote</a>
-                            @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager]) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate) )
+                            @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
                                 <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
                                    class="btn btn-primary btn-sm">Create Quote</a>
                             @endif
