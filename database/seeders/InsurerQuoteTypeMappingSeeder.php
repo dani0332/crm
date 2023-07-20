@@ -20,18 +20,16 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
         if( Schema::hasTable('insurer_quote_type_mapping') ){
 
-            \DB::table('insurance_provider')->insert([
-                ['code' => 'OUNB', 'text' => 'Orient UNB', 'text_lms' => 'Orient UNB'],
-                ['code' => 'ASCANA', 'text' => 'ASCANA Takaful', 'text_lms' => 'ASCANA Takaful'],
-                ['code' => 'EI', 'text' => 'Emirates Insurance', 'text_lms' => 'Emirates Insurance'],
-                ['code' => 'MOPT', 'text' => 'Moopet', 'text_lms' => 'Moopet'],
-                ['code' => 'NTPJSC', 'text' => 'Noor Takaful General PJSC', 'text_lms' => 'Noor Takaful General PJSC'],
-                ['code' => 'ASI', 'text' => 'Al Sagr Insurance', 'text_lms' => 'Al Sagr Insurance'],
-                ['code' => 'MDG', 'text' => 'Medgulf', 'text_lms' => 'Medgulf'],
-                ['code' => 'MTL', 'text' => 'Metlife', 'text_lms' => 'Metlife'],
-                ['code' => 'SAICO', 'text' => 'Saico', 'text_lms' => 'Saico'],
-                ['code' => 'NLGIC', 'text' => 'NLGIC', 'text_lms' => 'NLGIC'],
-            ]);
+            InsuranceProvider::updateOrCreate(['code' => 'OUNB'],['text' => 'Orient UNB', 'text_lms' => 'Orient UNB']);
+            InsuranceProvider::updateOrCreate(['code' => 'ASCANA'],['text' => 'ASCANA Takaful', 'text_lms' => 'ASCANA Takaful']);
+            InsuranceProvider::updateOrCreate(['code' => 'EI'],['text' => 'Emirates Insurance', 'text_lms' => 'Emirates Insurance']);
+            InsuranceProvider::updateOrCreate(['code' => 'MOPT'], ['text' => 'Moopet', 'text_lms' => 'Moopet']);
+            InsuranceProvider::updateOrCreate(['code' => 'NTPJSC'], ['text' => 'Noor Takaful General PJSC', 'text_lms' => 'Noor Takaful General PJSC']);
+            InsuranceProvider::updateOrCreate(['code' => 'ASI'], [ 'text' => 'Al Sagr Insurance', 'text_lms' => 'Al Sagr Insurance']);
+            InsuranceProvider::updateOrCreate(['code' => 'MDG'], [ 'text' => 'Medgulf', 'text_lms' => 'Medgulf']);
+            InsuranceProvider::updateOrCreate(['code' => 'MTL'], ['text' => 'Metlife', 'text_lms' => 'Metlife']);
+            InsuranceProvider::updateOrCreate(['code' => 'SAICO'], ['text' => 'Saico', 'text_lms' => 'Saico']);
+            InsuranceProvider::updateOrCreate(['code' => 'NLGIC'], [ 'text' => 'NLGIC', 'text_lms' => 'NLGIC']);
 
             $insurenceProviders = InsuranceProvider::get();
             $quoteTypes = QuoteTypeId::getOptions();
@@ -250,6 +248,8 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
     protected function insertMappingRecords($quoteTypeId, $insuranceProviderId)
     {
-        \DB::table('insurer_quote_type_mapping')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId ]);
+        $getMappedValue = \DB::table('insurer_quote_type_mapping')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId ])->count();
+        if( ! $getMappedValue )
+            \DB::table('insurer_quote_type_mapping')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId ]);
     }
 }
