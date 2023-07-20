@@ -115,12 +115,17 @@ const confirmData = reactive({
   contactPrimary: null,
 });
 
-const planFilters = useForm({
+const cleanObj = obj => useCleanObj(obj);
+
+const planFilters = reactive({
   insurer: [],
   network: [],
   manual_plan: null,
   current_online: null,
 });
+
+const planFiltersCount = ref(0);
+
 const options = reactive({
   network: [],
   loading: false,
@@ -154,15 +159,50 @@ watch(
     }
   },
 );
+
+const listQuotePlansFiltered = ref(page.props.listQuotePlans);
+
 const onPlanFiltersSubmit = () => {
-  let insurerIds = planFilters.insurer.map(item => {
-    return item;
+  const filters = cleanObj(planFilters);
+
+  planFiltersCount.value = Object.keys(filters).length;
+
+  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+    let isManualPlan = planFilters.manual_plan;
+    let insurerIds =
+      planFilters.insurer?.map(item => {
+        return item;
+      }) || [];
+
+    let manualMatch = false;
+    let insurerMatch = false;
+
+    if (isManualPlan != null) {
+      manualMatch = plan.isManualPlan == isManualPlan;
+    } else {
+      manualMatch = true;
+    }
+
+    if (insurerIds.length > 0) {
+      insurerMatch = insurerIds.includes(plan.providerId);
+    } else {
+      insurerMatch = true;
+    }
+
+    return manualMatch && insurerMatch;
   });
 
-  console.log(insurerIds);
-  return page.props.listQuotePlans.filter(plan =>
-    insurerIds.includes(plan.providerid),
-  );
+  modals.planFilters = false;
+};
+
+const onPlanFiltersReset = () => {
+  planFilters.insurer = [];
+  planFilters.network = [];
+  planFilters.manual_plan = null;
+  planFilters.current_online = null;
+  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  modals.planFilters = false;
+  planFiltersCount.value = 0;
 };
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
@@ -1711,25 +1751,34 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
-          <x-button
-            v-if="listQuotePlans.length > 0"
+          <x-badge
             size="sm"
-            color="orange"
-            @click.prevent="modals.planFilters = true"
+            color="error"
+            outlined
+            animated
+            :show="planFiltersCount > 0"
           >
-            Filters
-          </x-button>
+            <x-button
+              v-if="listQuotePlans.length > 0"
+              size="sm"
+              color="primary"
+              @click.prevent="modals.planFilters = true"
+            >
+              Filters
+            </x-button>
+            <template #content> {{ planFiltersCount }} </template>
+          </x-badge>
         </div>
       </div>
       <DataTable
         v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
-        :items="listQuotePlans || []"
+        :items="listQuotePlansFiltered || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="listQuotePlans.length < 15"
+        :hide-footer="listQuotePlansFiltered.length < 15"
       >
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
@@ -1797,6 +1846,62 @@ onMounted(() => {
           @success="onCreatePlan"
           @error="onPlanError"
         />
+      </x-modal>
+
+      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+        <template #header> Filters </template>
+
+        <div class="grid sm:grid-cols-2 gap-4 py-8">
+          <ComboBox
+            v-model="planFilters.insurer"
+            label="Insurer"
+            :options="insuranceProviders"
+            :loading="planFilters.processing"
+          />
+          <ComboBox
+            v-model="planFilters.network"
+            label="Network"
+            :options="options.network"
+          />
+          <x-select
+            v-model="planFilters.manual_plan"
+            label="Manual Plan"
+            :options="[
+              { value: '', label: 'All' },
+              { value: '1', label: 'Yes' },
+              { value: '0', label: 'No' },
+            ]"
+            class="w-full"
+          />
+          <x-select
+            v-model="planFilters.current_online"
+            label="Currently Online"
+            :options="[
+              { value: 'all', label: 'All' },
+              { value: 'yes', label: 'Yes' },
+              { value: 'no', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </div>
+
+        <div class="flex justify-end gap-3 mb-4">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            @click="onPlanFiltersSubmit"
+          >
+            Apply
+          </x-button>
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="onPlanFiltersReset"
+          >
+            Reset
+          </x-button>
+        </div>
       </x-modal>
     </div>
 
@@ -2061,61 +2166,6 @@ onMounted(() => {
           </x-button>
         </template>
       </DataTable>
-
-      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
-        <template #header> Filters </template>
-
-        <div class="grid sm:grid-cols-2 gap-4 py-8">
-          <ComboBox
-            v-model="planFilters.insurer"
-            label="Insurer"
-            :options="insuranceProviders"
-            :loading="planFilters.processing"
-          />
-          <ComboBox
-            v-model="planFilters.network"
-            label="Network"
-            :options="options.network"
-          />
-          <x-select
-            v-model="planFilters.manual_plan"
-            label="Manual Plan"
-            :options="[
-              { value: 'all', label: 'All' },
-              { value: 'yes', label: 'Yes' },
-              { value: 'no', label: 'No' },
-            ]"
-            class="w-full"
-          />
-          <x-select
-            v-model="planFilters.current_online"
-            label="Currently Online"
-            :options="[
-              { value: 'all', label: 'All' },
-              { value: 'yes', label: 'Yes' },
-              { value: 'no', label: 'No' },
-            ]"
-            class="w-full"
-          />
-        </div>
-
-        <div class="flex justify-end gap-3 mb-4">
-          <x-button
-            size="sm"
-            color="#ff5e00"
-            type="submit"
-            @click="onPlanFiltersSubmit"
-            >Apply</x-button
-          >
-          <x-button
-            size="sm"
-            color="primary"
-            @click.prevent="modals.planFilters = false"
-          >
-            Reset
-          </x-button>
-        </div>
-      </x-modal>
 
       <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
         <template #header> Add Additional Contacts </template>
