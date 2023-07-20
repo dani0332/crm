@@ -160,7 +160,13 @@ watch(
   },
 );
 
-const listQuotePlansFiltered = ref(page.props.listQuotePlans);
+const listQuotePlansFiltered = ref(
+  page.props.listQuotePlans.sort((a, b) => {
+    if (a.providerName < b.providerName) {
+      return -1;
+    }
+  }),
+);
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
@@ -169,6 +175,8 @@ const onPlanFiltersSubmit = () => {
 
   listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
     let isManualPlan = planFilters.manual_plan;
+    let isCurrentlyOnline = planFilters.current_online;
+    let network = planFilters.network;
     let insurerIds =
       planFilters.insurer?.map(item => {
         return item;
@@ -176,20 +184,32 @@ const onPlanFiltersSubmit = () => {
 
     let manualMatch = false;
     let insurerMatch = false;
+    let networkMatch = false;
+    let onlineMatch = false;
 
     if (isManualPlan != null) {
       manualMatch = plan.isManualPlan == isManualPlan;
     } else {
       manualMatch = true;
     }
+    if (isCurrentlyOnline != null) {
+      onlineMatch = !plan.isHidden == isCurrentlyOnline;
+    } else {
+      onlineMatch = true;
+    }
 
-    if (insurerIds.length > 0) {
+    if (insurerIds?.length > 0) {
       insurerMatch = insurerIds.includes(plan.providerId);
     } else {
       insurerMatch = true;
     }
+    if (network?.length > 0) {
+      networkMatch = network.includes(plan.eligibilityName);
+    } else {
+      networkMatch = true;
+    }
 
-    return manualMatch && insurerMatch;
+    return manualMatch && insurerMatch && networkMatch && onlineMatch;
   });
 
   modals.planFilters = false;
@@ -1799,6 +1819,14 @@ onMounted(() => {
             >
               Hidden
             </x-tag>
+            <x-tag
+              v-if="!isHidden"
+              size="xs"
+              color="success"
+              class="mt-0.5 text-[10px]"
+            >
+              Currently Online
+            </x-tag>
           </div>
         </template>
         <template #item-total="{ actualPremium, vat, basmah }">
@@ -1861,12 +1889,12 @@ onMounted(() => {
           <ComboBox
             v-model="planFilters.network"
             :label="
-              planFilters.insurer.length == 0
+              planFilters.insurer?.length == 0
                 ? 'Network (please select insurer first)'
                 : 'Network'
             "
             :options="options.network"
-            :disabled="planFilters.insurer.length == 0"
+            :disabled="options.network.length == 0"
           />
           <x-select
             v-model="planFilters.manual_plan"
@@ -1882,9 +1910,9 @@ onMounted(() => {
             v-model="planFilters.current_online"
             label="Currently Online"
             :options="[
-              { value: 'all', label: 'All' },
-              { value: 'yes', label: 'Yes' },
-              { value: 'no', label: 'No' },
+              { value: '', label: 'All' },
+              { value: '1', label: 'Yes' },
+              { value: '0', label: 'No' },
             ]"
             class="w-full"
           />

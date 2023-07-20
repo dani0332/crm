@@ -42,7 +42,7 @@ class InsuranceProviderRepository extends BaseRepository
                 ->get();
             $networks = $data->map(function ($item) {
                 return [
-                    'value' => $item->id,
+                    'value' => $item->text,
                     'label' => $item->text,
                 ];
             })->values();
