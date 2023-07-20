@@ -1860,8 +1860,13 @@ onMounted(() => {
           />
           <ComboBox
             v-model="planFilters.network"
-            label="Network"
+            :label="
+              planFilters.insurer.length == 0
+                ? 'Network (please select insurer first)'
+                : 'Network'
+            "
             :options="options.network"
+            :disabled="planFilters.insurer.length == 0"
           />
           <x-select
             v-model="planFilters.manual_plan"
