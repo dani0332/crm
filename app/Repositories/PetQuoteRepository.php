@@ -87,21 +87,21 @@ class PetQuoteRepository extends BaseRepository
     public function fetchGetData($isForExport = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
-            'quoteStatus', 
+            'quoteStatus',
             'petQuote.accomodationType:id,text',
-            'petQuote.possessionType:id,text', 
-            'petQuote.petAge:id,text', 
-            'petQuote.petType:id,text', 
-            'currentlyInsuredWith', 
+            'petQuote.possessionType:id,text',
+            'petQuote.petAge:id,text',
+            'petQuote.petType:id,text',
+            'currentlyInsuredWith',
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
-            ])
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
+        ])
+        ->filter()
+        ->withFakeLeadCriteria()
+        ->orderBy('created_at', 'desc');
 
         return ($isForExport) ? $query->get() : $query->simplePaginate()->withQueryString();
-            
+
     }
 
     public function fetchGetBy($column, $value)

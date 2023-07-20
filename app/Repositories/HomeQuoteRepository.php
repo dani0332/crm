@@ -14,11 +14,17 @@ class HomeQuoteRepository extends BaseRepository
 
     public function fetchGetData($isForExport = false)
     {
-        $query = $this->with(['quoteStatus', 'homeQuoteRequestDetail.lostReason', 'accommodationType:id,text', 'possessionType:id,text', 'advisor'])
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
-        
+        $query = $this->with([
+            'quoteStatus',
+            'homeQuoteRequestDetail.lostReason',
+            'accommodationType:id,text',
+            'possessionType:id,text',
+            'advisor'
+        ])
+        ->filter()
+        ->withFakeLeadCriteria()
+        ->orderBy('created_at', 'desc');
+
         return ($isForExport) ? $query->get() : $query->simplePaginate();
 
     }

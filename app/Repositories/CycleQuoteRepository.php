@@ -60,16 +60,20 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchGetData($isForExport = false)
     {
-        $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
-            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                });
-            })
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
-        
+        $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
+            'quoteStatus',
+            'currentlyInsuredWith',
+            'advisor'
+        ])
+        ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+            $query->where(function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            });
+        })
+        ->filter()
+        ->withFakeLeadCriteria()
+        ->orderBy('created_at', 'desc');
+
         return ($isForExport) ? $query->get() : $query->simplePaginate();
     }
 

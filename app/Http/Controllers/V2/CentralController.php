@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Http\Controllers\Controller;
@@ -31,21 +33,19 @@ class CentralController extends Controller
             return abort(404);
         }
 
-        $dateValidation = [
-            'created_at_start' => 'required',
-            'created_at_end' => 'required'
-        ];
-
-        $createdAt = $request->created_at_start;
-
-        if($quoteType == 'business'){
-            $dateValidation['created_at'] = $dateValidation['created_at_start'];
-            unset($dateValidation['created_at_start']);
-
-            $createdAt = $request->created_at;
+        if(request()->has('created_at')){
+            request()->merge(['created_at_start' => request()->get('created_at')]);
+            request()->query->remove('created_at');
         }
 
-        $created_at_start = Carbon::parse($createdAt)->format('Y-m-d');
+        $request->validate([
+            'created_at_start' => 'required',
+            'created_at_end' => 'required',
+        ]);
+
+        $quoteTypes = array_merge(array_column(QuoteTypes::cases(), 'value'), [ucfirst(strtolower(quoteTypeCode::Amt))]);
+
+        $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
         $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
@@ -53,10 +53,10 @@ class CentralController extends Controller
         if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
-        if($quoteType == 'life'):
+        if(ucfirst($quoteType) == QuoteTypes::LIFE):
             return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
 
-        elseif(in_array($quoteType, ['bike', 'home', 'pet', 'cycle', 'jetski', 'yacht', 'travel', 'amt', 'business'])):
+        elseif(in_array(ucfirst($quoteType), $quoteTypes)):
             return Excel::download(new PersonalQuotesExport, ucfirst($quoteType) . '-Leads.xlsx');
 
         else:

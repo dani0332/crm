@@ -116,12 +116,16 @@ class BikeQuoteRepository extends BaseRepository
      */
     public function fetchGetData($isForExport = false)
     {
-        $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc');
-            
-        return ($isForExport) ? $query->get() : $query->simplePaginate();   
+        $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
+            'quoteStatus',
+            'currentlyInsuredWith',
+            'advisor'
+        ])
+        ->filter()
+        ->withFakeLeadCriteria()
+        ->orderBy('created_at', 'desc');
+
+        return ($isForExport) ? $query->get() : $query->simplePaginate();
     }
 
 }

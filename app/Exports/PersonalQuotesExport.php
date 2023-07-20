@@ -2,6 +2,8 @@
 
 namespace App\Exports;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -21,50 +23,51 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
     use Exportable;
 
     private $quoteType = "";
+    private $quoteTypes = [];
 
     public function __construct()
     {
         $this->quoteType = request()->segment(1);
+        $this->quoteTypes = array_merge(array_column(QuoteTypes::cases(), 'value'), [ucfirst(strtolower(quoteTypeCode::Amt))]);
     }
 
     public function collection()
     {
         switch ($this->quoteType) {
-            case 'home':
+            case strtolower(QuoteTypes::HOME->value):
                 return HomeQuoteRepository::getData(true);
                 break;
 
-            case 'bike':
+            case strtolower(quoteTypeCode::Amt):
+                return BusinessQuoteRepository::getData(quoteTypeCode::GroupMedical, true);
+                break;
+
+            case strtolower(QuoteTypes::BUSINESS->value):
+                return BusinessQuoteRepository::getData(quoteTypeCode::CORPLINE, true);
+                break;
+
+            case strtolower(QuoteTypes::BIKE->value):
                 return BikeQuoteRepository::getData(true);
                 break;
 
-            case 'yacht':
+            case strtolower(QuoteTypes::YACHT->value):
                 return YachtQuoteRepository::getData(true);
                 break;
 
-            case 'travel':
+            case strtolower(QuoteTypes::TRAVEL->value):
                 return TravelQuoteRepository::getData(true);
                 break;
 
-            case 'pet':
+            case strtolower(QuoteTypes::PET->value):
                 return PetQuoteRepository::getData(true);
                 break;
 
-            case 'cycle':
+            case strtolower(QuoteTypes::CYCLE->value):
                 return CycleQuoteRepository::getData(true);
                 break;
 
-            case 'jetski':
+            case strtolower(QuoteTypes::JETSKI->value):
                 return JetskiQuoteRepository::getData(true);
-                break;
-
-            case 'amt':
-                return BusinessQuoteRepository::getData('Group Medical', true);
-                break;
-
-            case 'business':
-                dd(BusinessQuoteRepository::getData('Corpline', true)->toArray());
-                return BusinessQuoteRepository::getData('Corpline', true);
                 break;
 
             default:
@@ -75,20 +78,19 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
-        if(in_array($this->quoteType, ['home', 'bike', 'yacht', 'pet', 'cycle', 'jetski', 'travel', 'amt', 'business'])):
+        if(in_array(ucfirst($this->quoteType), $this->quoteTypes)):
             return $this->getHeadings($this->quoteType);
 
         else:
             return abort(404);
         endif;
-
     }
 
     protected function getHeadings($quoteType)
     {
 
         switch ($quoteType) {
-            case 'home':
+            case strtolower(QuoteTypes::HOME->value):
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -105,8 +107,46 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'bike':
-            case 'yacht':
+            case strtolower(quoteTypeCode::Amt):
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'LEAD STATUS',
+                    'ADVISOR',
+                    'PREMIUM',
+                    'COMPANY NAME',
+                    'POLICY NUMBER',
+                    'LOST REASON',
+                    'SOURCE',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                ];
+                break;
+
+            case strtolower(QuoteTypes::BUSINESS->value):
+                return [
+                    'REF-ID',
+                    'FIRST NAME',
+                    'LAST NAME',
+                    'COMPANY NAME',
+                    'TRANSAPP CODE',
+                    'SOURCE',
+                    'POLICY NUMBER',
+                    'LOST REASON',
+                    'ADVISOR',
+                    'LEAD STATUS',
+                    'CREATED DATE',
+                    'LAST MODIFIED DATE',
+                    'PREMIUM',
+                    'NUMBER OF EMPLOYEES',
+                    'BUSINESS INSURANCE TYPE',
+                    'GENDER'
+                ];
+                break;
+
+            case strtolower(QuoteTypes::BIKE->value):
+            case strtolower(QuoteTypes::YACHT->value):
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -124,7 +164,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'travel':
+            case strtolower(QuoteTypes::TRAVEL->value):
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -147,7 +187,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'pet':
+            case strtolower(QuoteTypes::PET->value):
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -175,7 +215,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'cycle':
+            case strtolower(QuoteTypes::CYCLE->value):
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -191,7 +231,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'jetski':
+            case strtolower(QuoteTypes::JETSKI->value):
                 return [
                     'REF-ID',
                     'FIRST NAME',
@@ -208,52 +248,12 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'IS ECOMMERCE',
                 ];
                 break;
-
-            case 'amt':
-                return [
-                    'REF-ID',
-                    'FIRST NAME',
-                    'LAST NAME',
-                    'LEAD STATUS',
-                    'ADVISOR',
-                    'PREMIUM',
-                    'COMPANY NAME',
-                    'POLICY NUMBER',
-                    'LOST REASON',
-                    'SOURCE',
-                    'CREATED DATE',
-                    'LAST MODIFIED DATE',
-                ];
-                break;
-
-            case 'business':
-                return [
-                    'REF-ID',
-                    'FIRST NAME',
-                    'LAST NAME',
-                    'COMPANY NAME',
-                    'TRANSAPP CODE',
-                    'SOURCE',
-                    'POLICY NUMBER',
-                    'LOST REASON',
-                    'ADVISOR',
-                    'LEAD STATUS',
-                    'CREATED DATE',
-                    'LAST MODIFIED DATE',
-                    'PREMIUM',
-                    'NUMBER OF EMPLOYEES',
-                    'BUSINESS INSURANCE TYPE',
-                    'GENDER'
-                ];
-                break;
-
-            }
-
+        }
     }
 
     public function map($quote): array
     {
-        if(in_array($this->quoteType, ['home', 'bike', 'yacht', 'pet', 'cycle', 'jetski','travel', 'amt', 'business'])):
+        if(in_array(ucfirst($this->quoteType), $this->quoteTypes)):
             return $this->getValues($this->quoteType, $quote);
         else:
             return abort(404);
@@ -264,7 +264,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
     protected function getValues($quoteType, $quote)
     {
         switch ($quoteType) {
-            case 'home':
+            case strtolower(QuoteTypes::HOME->value):
                 return [
                     $quote->code,
                     $quote->first_name,
@@ -281,8 +281,46 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'bike':
-            case 'yacht':
+            case strtolower(quoteTypeCode::Amt):
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    optional($quote->quoteStatus)->text,
+                    optional($quote->advisor)->name,
+                    $quote->premium,
+                    $quote->company_name,
+                    $quote->policy_number,
+                    optional($quote->businessQuoteRequestDetail)->lostReason?->text,
+                    $quote->source,
+                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
+                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                ];
+                break;
+
+            case strtolower(QuoteTypes::BUSINESS->value):
+                return [
+                    $quote->code,
+                    $quote->first_name,
+                    $quote->last_name,
+                    $quote->company_name,
+                    optional($quote->businessQuoteRequestDetail)->transapp_code,
+                    $quote->source,
+                    $quote->policy_number,
+                    optional($quote->businessQuoteRequestDetail)->lostReason?->text,
+                    optional($quote->advisor)->name,
+                    optional($quote->quoteStatus)->text,
+                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
+                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    $quote->premium,
+                    $quote->number_of_employees,
+                    optional($quote->typeOfInsurance)->text,
+                    $quote->gender,
+                ];
+                break;
+
+            case strtolower(QuoteTypes::BIKE->value):
+            case strtolower(QuoteTypes::YACHT->value):
                 return [
                     $quote->code,
                     $quote->first_name,
@@ -300,7 +338,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'travel':
+            case strtolower(QuoteTypes::TRAVEL->value):
                 return [
                     $quote->code,
                     $quote->first_name,
@@ -323,7 +361,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'pet':
+            case strtolower(QuoteTypes::PET->value):
                 return [
                     $quote->code,
                     $quote->first_name,
@@ -351,7 +389,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'cycle':
+            case strtolower(QuoteTypes::CYCLE->value):
                 return [
                     $quote->code,
                     $quote->first_name,
@@ -367,7 +405,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                 ];
                 break;
 
-            case 'jetski':
+            case strtolower(QuoteTypes::JETSKI->value):
                 return [
                     $quote->code,
                     $quote->first_name,
@@ -382,46 +420,6 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->source,
                     optional($quote->currentlyInsuredWith)->text,
                     $quote->is_ecommerce ? 'Yes' : 'No',
-                ];
-                break;
-
-            case 'amt':
-                return [
-                    $quote->code,
-                    $quote->first_name,
-                    $quote->last_name,
-                    optional($quote->quoteStatus)->text,
-                    optional($quote->advisor)->name,
-                    $quote->premium,
-                    $quote->company_name,
-                    $quote->policy_number,
-                    optional($quote->businessQuoteRequestDetail)->lostReason?->text,
-                    $quote->source,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
-                ];
-                break;
-
-
-            case 'business':
-                return [
-                    $quote->code,
-                    $quote->first_name,
-                    $quote->last_name,
-                    $quote->company_name,
-                    optional($quote->businessQuoteRequestDetail)->transapp_code,
-                    $quote->source,
-                    $quote->policy_number,
-                    optional($quote->businessQuoteRequestDetail)->lostReason?->text,
-                    optional($quote->advisor)->name,
-                    optional($quote->quoteStatus)->text,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
-                    $quote->premium,
-                    $quote->number_of_employees,
-
-                    
-                    
                 ];
                 break;
         }
