@@ -12,7 +12,7 @@ class HomeQuoteRepository extends BaseRepository
         return HomeQuote::class;
     }
 
-    public function fetchGetData($isForExport = false)
+    public function fetchGetData($forExport = false)
     {
         $query = $this->with([
             'quoteStatus',
@@ -25,7 +25,7 @@ class HomeQuoteRepository extends BaseRepository
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
 
-        return ($isForExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
 
     }
 

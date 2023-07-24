@@ -95,7 +95,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function advisor()
     {
-        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id');
     }
 
     public function paymentStatus()

@@ -58,7 +58,7 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($isForExport = false)
+    public function fetchGetData($forExport = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
@@ -74,7 +74,7 @@ class CycleQuoteRepository extends BaseRepository
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
 
-        return ($isForExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
     /**

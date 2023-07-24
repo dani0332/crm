@@ -114,7 +114,7 @@ class BikeQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($isForExport = false)
+    public function fetchGetData($forExport = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
@@ -125,7 +125,7 @@ class BikeQuoteRepository extends BaseRepository
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
 
-        return ($isForExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
 }

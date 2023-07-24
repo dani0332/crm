@@ -392,21 +392,6 @@ onMounted(() => {
             </div>
           </x-form>
         </div>
-
-        <!-- <ExportExcel
-            v-if="can(permissionsEnum.DATA_EXTRACTION)"
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Travel-List'"
-          :sheetname="'Leads'"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel> -->
       </div>
     </Transition>
 

@@ -15,6 +15,9 @@ enum QuoteTypes: string
     case PET = 'Pet';
     case CYCLE = 'Cycle';
     case JETSKI = 'Jetski';
+    case AMT = 'Amt';
+    case GROUP_MEDICAL = 'Group Medical';
+    case CORPLINE = 'Corpline';
 
     public function id(): string
     {

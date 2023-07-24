@@ -13,7 +13,7 @@ class TravelQuoteRepository extends BaseRepository
         return TravelQuote::class;
     }
 
-    public function fetchGetData($isForExport = false)
+    public function fetchGetData($forExport = false)
     {
         $query = $this->with([
             'travelQuoteRequestDetail.lostReason',
@@ -32,6 +32,6 @@ class TravelQuoteRepository extends BaseRepository
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
 
-        return ($isForExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 }

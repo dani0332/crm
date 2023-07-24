@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Exports\AmtQuoteExport;
+use App\Exports\BusinessQuoteExport;
+use App\Exports\HomeQuoteExport;
 use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
+use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
@@ -43,8 +46,6 @@ class CentralController extends Controller
             'created_at_end' => 'required',
         ]);
 
-        $quoteTypes = array_merge(array_column(QuoteTypes::cases(), 'value'), [ucfirst(strtolower(quoteTypeCode::Amt))]);
-
         $created_at_start = Carbon::parse($request->created_at_start)->format('Y-m-d');
         $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
@@ -53,16 +54,38 @@ class CentralController extends Controller
         if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
-        if(ucfirst($quoteType) == QuoteTypes::LIFE):
-            return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
 
-        elseif(in_array(ucfirst($quoteType), $quoteTypes)):
-            return Excel::download(new PersonalQuotesExport, ucfirst($quoteType) . '-Leads.xlsx');
+        // For Personal Quotes
+        if(in_array(ucfirst($quoteType), [
+            QuoteTypes::BIKE->value,
+            QuoteTypes::YACHT->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value
+        ])){
+            return Excel::download(new PersonalQuotesExport, $quoteType . '_leads.xlsx');
+        }
 
-        else:
-            return false;
-        endif;
+        switch (ucfirst($quoteType)){
+            case QuoteTypes::LIFE->value:
+                return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
 
+            case QuoteTypes::HOME->value:
+                return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
+
+            case QuoteTypes::AMT->value;
+                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+
+            case QuoteTypes::BUSINESS->value;
+                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+
+            case QuoteTypes::TRAVEL->value;
+                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+
+            default:
+                return false;
+
+        }
     }
 
     public function manualLeadAssign(LeadAssignRequest $leadAssignRequest)

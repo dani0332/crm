@@ -18,7 +18,7 @@ class BusinessQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData($quoteType, $isForExport = false)
+    public function fetchGetData($quoteType, $forExport = false)
     {
         $query = $this->with([
             'businessQuoteRequestDetail.lostReason',
@@ -50,6 +50,6 @@ class BusinessQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
-        return ($isForExport) ? $query->get() : $query->simplePaginate();
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 }

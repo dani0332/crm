@@ -84,7 +84,7 @@ class PetQuoteRepository extends BaseRepository
         });
     }
 
-    public function fetchGetData($isForExport = false)
+    public function fetchGetData($forExport = false)
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
@@ -100,7 +100,7 @@ class PetQuoteRepository extends BaseRepository
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
 
-        return ($isForExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
 
     }
 
