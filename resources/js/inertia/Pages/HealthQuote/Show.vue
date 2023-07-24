@@ -213,6 +213,7 @@ const onPlanFiltersSubmit = () => {
   });
 
   modals.planFilters = false;
+  plansTable.currentPage = 1;
 };
 
 const onPlanFiltersReset = () => {
@@ -223,6 +224,7 @@ const onPlanFiltersReset = () => {
   listQuotePlansFiltered.value = page.props.listQuotePlans;
   modals.planFilters = false;
   planFiltersCount.value = 0;
+  plansTable.currentPage = 1;
 };
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
@@ -558,6 +560,7 @@ const memberDataDocs = membersDetail => {
 // plans
 const plansTable = reactive({
   isLoading: false,
+  currentPage: 1,
   columns: [
     {
       text: 'Provider Name',
@@ -1799,6 +1802,7 @@ onMounted(() => {
         hide-rows-per-page
         :rows-per-page="15"
         :hide-footer="listQuotePlansFiltered.length < 15"
+        :current-page="plansTable.currentPage"
       >
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
