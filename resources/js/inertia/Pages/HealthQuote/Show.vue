@@ -1896,26 +1896,46 @@ onMounted(() => {
             :options="options.network"
             :disabled="options.network.length == 0"
           />
-          <x-select
-            v-model="planFilters.manual_plan"
-            label="Manual Plan"
-            :options="[
-              { value: '', label: 'All' },
-              { value: '1', label: 'Yes' },
-              { value: '0', label: 'No' },
-            ]"
-            class="w-full"
-          />
-          <x-select
-            v-model="planFilters.current_online"
-            label="Currently Online"
-            :options="[
-              { value: '', label: 'All' },
-              { value: '1', label: 'Yes' },
-              { value: '0', label: 'No' },
-            ]"
-            class="w-full"
-          />
+
+          <div>
+            <x-tooltip position="right" class="arrow-t">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+              >
+                Manual Plan
+              </label>
+              <template #tooltip>Manually Added Plans</template>
+            </x-tooltip>
+            <x-select
+              v-model="planFilters.manual_plan"
+              :options="[
+                { value: '', label: 'All' },
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' },
+              ]"
+              class="w-full"
+            />
+          </div>
+
+          <div>
+            <x-tooltip position="right" class="arrow-t">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+              >
+                Currently Online
+              </label>
+              <template #tooltip> Plans that are Currently Online </template>
+            </x-tooltip>
+            <x-select
+              v-model="planFilters.current_online"
+              :options="[
+                { value: '', label: 'All' },
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' },
+              ]"
+              class="w-full"
+            />
+          </div>
         </div>
 
         <div class="flex justify-end gap-3 mb-4">
