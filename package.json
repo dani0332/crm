@@ -36,6 +36,7 @@
         "@vueuse/core": "^10.2.1",
         "cypress-file-upload": "^5.0.8",
         "md-editor-v3": "^4.1.1",
+        "moment": "^2.29.4",
         "vue": "^3.2.45",
         "vue3-dropzone": "^2.0.1",
         "vue3-easy-data-table": "^1.5.47",

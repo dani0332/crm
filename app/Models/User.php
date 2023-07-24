@@ -11,8 +11,10 @@ use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class User extends Authenticatable implements AuditableContract
@@ -281,5 +283,36 @@ class User extends Authenticatable implements AuditableContract
             'id',
             'renewalBatch'
         )->withTimestamps()->withPivot('segment_type');
+    }
+
+    /**
+     * get user all teams function
+     *
+     * @return BelongsToMany
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Team::class,
+            'user_team',
+            'user_id',
+            'team_id',
+            'id',
+            'id',
+            'teams'
+        )->withTimestamps()->withPivot('manager_id');
+    }
+
+    /**
+     * get user all teams id function
+     *
+     * @param int $userId
+     * @return Collection
+     */
+    public function getUserTeamsIds($userId): Collection
+    {
+        $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
+
+        return Team::whereIn('id', $userTeamIds)->get()->pluck('id');
     }
 }

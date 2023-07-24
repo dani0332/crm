@@ -30,6 +30,7 @@ class RenewalsPermissionSeeder extends Seeder
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsUploadUpdate, 'web')->id;
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsBatches, 'web')->id;
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalBatchConfigs, 'web')->id;
+        $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalBatchReport, 'web')->id;
 
         $renewalsManagerRole = Role::findOrCreate(RolesEnum::RenewalsManager, 'web');
         foreach ($permissions as $permission) {

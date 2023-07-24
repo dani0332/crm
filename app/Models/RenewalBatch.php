@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwenIt\Auditing\Auditable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class RenewalBatch extends Model implements AuditableContract
@@ -64,13 +64,33 @@ class RenewalBatch extends Model implements AuditableContract
      * RELATIONS
      */
 
+
     /**
      * get renewal batch team wise slabs function
      *
      * @return BelongsToMany
      */
 
-    public function slabs():BelongsToMany
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Team::class,
+            'renewal_batch_slabs',
+            'renewal_batch_id',
+            'team_id',
+            'id',
+            'id',
+            'slabs'
+        )->withTimestamps()->withPivot('slab_id', 'max', 'min');
+    }
+
+    /**
+     * get renewal batch slab wise teams function
+     *
+     * @return BelongsToMany
+     */
+
+    public function slabs(): BelongsToMany
     {
         return $this->belongsToMany(
             Slab::class,
@@ -88,7 +108,7 @@ class RenewalBatch extends Model implements AuditableContract
      *
      * @return BelongsToMany
      */
-    public function segmentAdvisors():BelongsToMany
+    public function segmentAdvisors(): BelongsToMany
     {
         return $this->belongsToMany(
             User::class,

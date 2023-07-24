@@ -102,6 +102,36 @@ class ReportsController extends Controller
             ->toArray();
     }
 
+    public function fetchSubTeamsAdvisorListByTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
+
+        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+        // subteams
+
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->toArray();
+
+        $subTeams = array_reduce($subTeams, function ($carry, $item) {
+                $carry[$item['id']] = $item['name'];
+                return $carry;
+            }, []);
+
+        $advisors =  User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+
+        return [
+            'advisors' => $advisors,
+            'subTeams' => $subTeams
+        ];
+    }
+
     public function utmLeadsSaleReport(Request $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
@@ -112,31 +142,23 @@ class ReportsController extends Controller
         ]);
     }
 
+    /**
+     * generate renewal reports function
+     *
+     * @param Request $request
+     * @param RenewalBatchReportService $renewalBatchReportService
+     * @return void
+     */
     public function renderRenewalReport(Request $request, RenewalBatchReportService $renewalBatchReportService)
     {
-
+        $renewalBatches = RenewalBatch::with(['slabs', 'teams' => function ($qry){
+            $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
+        }])->get();
         return inertia('Reports/RenewalBatch', [
             'reportData' => $renewalBatchReportService->getReportData($request),
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
-            // 'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
+            'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
+            'renewalBatchesList' => $renewalBatches
         ]);
-
-
-        // if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
-        //     $userIds = $this->walkTree(auth()->user()->id);
-        //     info('user ids for advisor performance report are : '.json_encode($userIds));
-        //     $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        // }
-
-        // $query = $this->applyFilters($query, $request->all());
-
-        // return $query->paginate(15)
-        //     ->withQueryString();
-
-        // return inertia('Reports/AdvisorPerformance', [
-        //     'reportData' => $advisorPerformanceReportService->getReportData($request),
-        //     'filterOptions' => $advisorPerformanceReportService->getFilterOptions(),
-        //     'defaultFilters' => $advisorPerformanceReportService->getDefaultFilters(),
-        // ]);
     }
 }

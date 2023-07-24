@@ -1,569 +1,773 @@
 <script setup>
+import { useHasRole, useHasAnyRole } from '../../Composables/can';
+import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
+import moment from 'moment'
+
+
 defineProps({
-  reportData: Object,
-  filterOptions: Object,
-  defaultFilters: Object,
+    reportData: Object,
+    filterOptions: Object,
+    defaultFilters: Object,
+    renewalBatchesList: Object
 });
 
+
 const loaders = reactive({
-  table: false,
+    table: false,
+    advisorsOptions: false,
+    subTeamsOptions: false,
 });
+
 const page = usePage();
 const dataTableRef = ref();
 const isMounted = ref(false);
 const isDirty = ref(false);
 
+const {
+    currentPageFirstIndex,
+    currentPageLastIndex,
+    clientItemsLength,
+    isFirstPage,
+    isLastPage,
+    nextPage,
+    prevPage,
+} = usePagination(dataTableRef);
+
+const {
+    rowsPerPageOptions,
+    rowsPerPageActiveOption,
+    updateRowsPerPageActiveOption,
+} = useRowsPerPage(dataTableRef);
+
+const updateRowsPerPageSelect = e => {
+    updateRowsPerPageActiveOption(Number(e.target.value));
+};
+
+
+const advisorOptions = ref(
+    Object.keys(page.props.filterOptions.advisors).map(key => ({
+        value: key,
+        label: page.props.filterOptions.advisors[key],
+    }))
+);
+
+const defaultAdvisorOptions = advisorOptions;
+
+const subTeamsOptions = ref(
+    Object.keys(page.props.filterOptions.subTeams).map(key => ({
+        value: key,
+        label: page.props.filterOptions.subTeams[key].toUpperCase(),
+    }))
+);
+
+const defaultSubTeamsOptions = subTeamsOptions;
+
 const params = useUrlSearchParams('history');
 const tableHeader = [
-  {
-    text: 'Batch No.',
-    value: 'renewal_batch',
-  },
-  {
-    text: 'Week Ending',
-    value: 'end_date',
-  },
-  {
-    text: 'Renewed',
-    value: 'renewed',
-  },
-  {
-    text: 'Total Allocated',
-    value: 'total_allocated_leads',
-  },
-  {
-    text: 'Car Sold/Cancelled',
-    value: 'car_sold',
-  },
-  {
-    text: 'Uncontactable',
-    value: 'uncontactable',
-  },
-  {
-    text: 'Total Allocated (excluding cancelled and uncontactable)',
-    value: 'total_allocate_minus_cancelled_uncontactable',
-  },
-  {
-    text: 'Advisor Retention',
-    value: 'advisor_retention',
-  },
-  {
-    text: 'Value Segment Retention',
-    value: 'value_segment_retention',
-  },
-  {
-    text: 'Volume Segment Retention',
-    value: 'volume_segment_retention',
-  },
-  {
-    text: 'Relative Retention on Value Segment',
-    value: 'relative_retention_value_segment',
-  },
-  {
-    text: 'Relative Retention on  Volume Segment',
-    value: 'relative_retention_volume_segment',
-  },
-  {
-    text: 'IM Retention',
-    value: 'im_retention',
-  },
-  {
-    text: 'Relative Retention',
-    value: 'relative_retention',
-  },
-  {
-    text: 'Monthly Retention',
-    value: 'monthly_retention',
-  },
+    {
+        text: 'Batch No.',
+        value: 'renewal_batch',
+    },
+    {
+        text: 'Week Ending',
+        value: 'end_date',
+    },
+    {
+        text: 'Renewed',
+        value: 'renewed',
+    },
+    {
+        text: 'Total Allocated',
+        value: 'total_allocated_leads',
+    },
+    {
+        text: 'Car Sold/Cancelled',
+        value: 'car_sold',
+    },
+    {
+        text: 'Uncontactable',
+        value: 'uncontactable',
+    },
+    {
+        text: 'Total Allocated (excluding cancelled and uncontactable)',
+        value: 'total_allocate_minus_cancelled_uncontactable',
+    },
+    {
+        text: 'Advisor Retention',
+        value: 'advisor_retention',
+    },
+    {
+        text: 'Value Segment Retention',
+        value: 'value_segment_retention',
+    },
+    {
+        text: 'Volume Segment Retention',
+        value: 'volume_segment_retention',
+    },
+    {
+        text: 'Relative Retention on Value Segment',
+        value: 'relative_retention_value_segment',
+    },
+    {
+        text: 'Relative Retention on  Volume Segment',
+        value: 'relative_retention_volume_segment',
+    },
+    {
+        text: 'IM Retention',
+        value: 'im_retention',
+    },
+    {
+        text: 'Relative Retention',
+        value: 'relative_retention',
+    },
+    {
+        text: 'Monthly Retention',
+        value: 'monthly_retention',
+    },
 ];
 
 const filters = reactive({
-  reportDate: '',
-  batchNo: '',
-//   is_ecommerce: '',
-//   batches: [],
-//   tiers: [],
-  segment: '',
-  advisors: [],
-//   teams: [],
-  page: 1,
-});
-
-const totalLeads = reactive({
-  modal: false,
-  loader: false,
-  filters: {
-    leadType: '',
-    quote_batch_id: null,
-    advisorId: null,
-  },
-  data: {},
-  current: '',
-  tableHeader: [
-    {
-      text: 'CDB Id',
-      value: 'cdbId',
-    },
-    {
-      text: 'Customer Name',
-      value: 'fullName',
-    },
-    {
-      text: 'Lead Status',
-      value: 'quoteStatusName',
-    },
-  ],
+    reportDate: '',
+    batchNo: '',
+    subTeams: [],
+    segment: '',
+    advisors: [],
+    teams: [],
+    page: 1,
 });
 
 function onSubmit(isValid) {
-  if (isValid) {
-    isDirty.value = false;
-    filters.page = 1;
-    const payLoad = cleanFilters(filters);
-    router.visit('/reports/renewal-report', {
-      method: 'get',
-      data: {
-        ...payLoad,
-        // ...(payLoad.batches && {
-        //   batches: Array.isArray(payLoad.batches)
-        //     ? payLoad.batches
-        //     : [payLoad.batches],
-        // }),
-        // ...(payLoad.tiers && {
-        //   tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers],
-        // }),
-        // ...(payLoad.leadSources && {
-        //   leadSources: Array.isArray(payLoad.leadSources)
-        //     ? payLoad.leadSources
-        //     : [payLoad.leadSources],
-        // }),
-        ...(payLoad.advisors && {
-          advisors: Array.isArray(payLoad.advisors)
-            ? payLoad.advisors
-            : [payLoad.advisors],
-        })
-        // ...(payLoad.teams && {
-        //   teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
-        // }),
-      },
-      preserveState: true,
-      preserveScroll: true,
-      onBefore: () => (loaders.table = true),
-      onFinish: () => (loaders.table = false),
-    });
-  } else {
-    console.log('Invalid');
-  }
+    if (isValid) {
+        isDirty.value = false;
+        filters.page = 1;
+        const payLoad = cleanFilters(filters);
+        router.visit('/reports/renewal-report', {
+            method: 'get',
+            data: {
+                ...payLoad,
+                ...(payLoad.advisors && {
+                    advisors: Array.isArray(payLoad.advisors)
+                        ? payLoad.advisors
+                        : [payLoad.advisors],
+                }),
+                ...(payLoad.subTeams && {
+                    subTeams: Array.isArray(payLoad.subTeams) ? payLoad.subTeams : [payLoad.subTeams],
+                }),
+                ...(payLoad.teams && {
+                    teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
+                }),
+            },
+            preserveState: true,
+            preserveScroll: true,
+            onBefore: () => (loaders.table = true),
+            onFinish: () => (loaders.table = false),
+        });
+    } else {
+        console.log('Invalid');
+    }
 }
 
 function onReset() {
-  if (page.props.defaultFilters) {
-    filters.reportDate =
-      page.props.defaultFilters.reportDate;
-  }
+    if (page.props.defaultFilters) {
+        filters.reportDate =
+            page.props.defaultFilters.reportDate;
+    }
 
-  isDirty.value = false;
-  router.visit('/reports/renewal-report', {
-    method: 'get',
-    data: {
-        reportDate: filters.reportDate,
-        page: 1,
-    },
-    preserveScroll: true,
-    onBefore: () => (loaders.table = true),
-    onSuccess: () => (loaders.table = false),
-  });
+    isDirty.value = false;
+    router.visit('/reports/renewal-report', {
+        method: 'get',
+        data: {
+            reportDate: filters.reportDate,
+            page: 1,
+        },
+        preserveScroll: true,
+        onBefore: () => (loaders.table = true),
+        onSuccess: () => (loaders.table = false),
+    });
 }
 
 const currentTypeTitle = computed(() => {
-  if (totalLeads.current == 'new_leads') {
-    return 'Advisor Assigned : New Leads';
-  } else if (totalLeads.current == 'not_interested') {
-    return 'Advisor Assigned : Not Interested';
-  } else if (totalLeads.current == 'in_progress') {
-    return 'Advisor Assigned : In Progress';
-  } else if (totalLeads.current == 'bad_leads') {
-    return 'Advisor Assigned : Bad Leads';
-  } else if (totalLeads.current == 'sale_leads') {
-    return 'Advisor Assigned : Sale Leads';
-  } else if (totalLeads.current == 'created_sale_leads') {
-    return 'Advisor Assigned : Created Sale Leads';
-  } else if (totalLeads.current == 'afia_renewals_count') {
-    return 'Advisor Assigned : IM Renewals';
-  } else if (totalLeads.current == 'manual_created') {
-    return 'Advisor Assigned : Manual Created';
-  } else {
-    return 'Advisor Assigned : Total Leads';
-  }
+    if (totalLeads.current == 'new_leads') {
+        return 'Advisor Assigned : New Leads';
+    } else if (totalLeads.current == 'not_interested') {
+        return 'Advisor Assigned : Not Interested';
+    } else if (totalLeads.current == 'in_progress') {
+        return 'Advisor Assigned : In Progress';
+    } else if (totalLeads.current == 'bad_leads') {
+        return 'Advisor Assigned : Bad Leads';
+    } else if (totalLeads.current == 'sale_leads') {
+        return 'Advisor Assigned : Sale Leads';
+    } else if (totalLeads.current == 'created_sale_leads') {
+        return 'Advisor Assigned : Created Sale Leads';
+    } else if (totalLeads.current == 'afia_renewals_count') {
+        return 'Advisor Assigned : IM Renewals';
+    } else if (totalLeads.current == 'manual_created') {
+        return 'Advisor Assigned : Manual Created';
+    } else {
+        return 'Advisor Assigned : Total Leads';
+    }
 });
 
-function onFetchAdvisorAssignedLeads(item, type, page = 1) {
-  if (page == 1 && !totalLeads.modal) {
-    loaders.advisorLeadTable = true;
-  }
-
-  totalLeads.current = type;
-  totalLeads.modal = true;
-  totalLeads.loader = true;
-
-  if (item) {
-    totalLeads.filters = {
-      leadType: type,
-      quote_batch_id: item.quote_batch_id,
-      advisorId: item.advisorId,
-    };
-  }
-
-  const payLoad = cleanFilters(filters);
-
-  axios
-    .post(`/reports/fetch-advisor-assigned-leads-data`, {
-      ...payLoad,
-      ...(payLoad.batches && {
-        batches: Array.isArray(payLoad.batches)
-          ? payLoad.batches
-          : [payLoad.batches],
-      }),
-      ...(payLoad.tiers && {
-        tiers: Array.isArray(payLoad.tiers) ? payLoad.tiers : [payLoad.tiers],
-      }),
-      ...(payLoad.leadSources && {
-        leadSources: Array.isArray(payLoad.leadSources)
-          ? payLoad.leadSources
-          : [payLoad.leadSources],
-      }),
-      ...(payLoad.advisors && {
-        advisors: Array.isArray(payLoad.advisors)
-          ? payLoad.advisors
-          : [payLoad.advisors],
-      }),
-      ...(payLoad.teams && {
-        teams: Array.isArray(payLoad.teams) ? payLoad.teams : [payLoad.teams],
-      }),
-      page: page,
-      leadType: totalLeads.filters.leadType,
-      quote_batch_id: totalLeads.filters.quote_batch_id,
-      advisorId: totalLeads.filters.advisorId,
-    })
-    .then(response => {
-      totalLeads.data = response.data;
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      loaders.advisorLeadTable = false;
-      totalLeads.loader = false;
-    });
-}
 
 const cleanFilters = filters => {
-  Object.keys(filters).forEach(
-    key =>
-      (filters[key] === '' ||
-        filters[key] == null ||
-        filters[key].length == 0) &&
-      delete filters[key],
-  );
-  return filters;
+    Object.keys(filters).forEach(
+        key =>
+            (filters[key] === '' ||
+                filters[key] == null ||
+                filters[key].length == 0) &&
+            delete filters[key],
+    );
+    return filters;
 };
 
 function setQueryStringFilters() {
-  for (const [key] of Object.entries(params)) {
-    if (key.includes('[]')) {
-      filters[key.substring(0, key.length - 2)] = params[key];
-    } else {
-      filters[key] = params[key];
+    for (const [key] of Object.entries(params)) {
+        if (key.includes('[]')) {
+            filters[key.substring(0, key.length - 2)] = params[key];
+        } else {
+            filters[key] = params[key];
+        }
     }
-  }
 }
 
-const setPageTable = page => {
-  onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
-};
+// const setPageTable = page => {
+//     onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
+// };
 
-const calculateTotalSum = (data, key) => {
-  return data.reduce((sum, item) => Number(sum) + Number(item[key]), 0);
-};
 
 const onTeamChange = e => {
-  if (e.length == 0) {
-    filters.teams = [];
-    filters.advisors = [];
-    advisorOptions.value = [];
+    if (e.length == 0) {
+        console.log("all deselect");
+        // filters.teams = [];
+        filters.subTeams = [];
+        advisorOptions.value = [];
+        subTeamsOptions.value = [];
 
-    return;
-  }
+        return;
+    }
 
-  if (isMounted.value) {
-    isDirty.value = true;
-  }
+    if (isMounted.value) {
+        isDirty.value = true;
+    }
 
-  loaders.advisorOptions = true;
+    loaders.advisorOptions = true;
+    loaders.subTeamsOptions = true;
 
-  axios
-    .post(`/reports/fetch-advisor-by-team`, {
-      teamIds: Array.isArray(e) ? e : [e],
-    })
-    .then(res => {
-      if (res.data.length > 0) {
-        advisorOptions.value = Object.keys(res.data).map(key => ({
-          value: res.data[key].id,
-          label: res.data[key].name,
-        }));
-      }
-    })
-    .finally(() => {
-      loaders.advisorOptions = false;
-    });
+    axios
+        .post(`/reports/fetch-subteams-advisor-by-team`, {
+            teamIds: Array.isArray(e) ? e : [e],
+        })
+        .then(res => {
+
+            if (res.data.advisors.length > 0) {
+                advisorOptions.value = Object.keys(res.data.advisors).map(key => ({
+                    value: res.data.advisors[key].id,
+                    label: res.data.advisors[key].name,
+                }));
+            }
+            if (res.data.subTeams) {
+                subTeamsOptions.value = Object.keys(res.data.subTeams).map(key => ({
+                    value: key,
+                    label: res.data.subTeams[key],
+                }));
+            }
+        })
+        .finally(() => {
+            loaders.advisorOptions = false;
+            loaders.subTeamsOptions = false;
+        });
 };
 
 const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
+
+let lastMonthSummedIndex = 0;
+let currentRowSpan = 0;
+
 const rolesEnum = page.props.rolesEnum;
 
+function calculateValuesAndHighlight() {
+    page.props.reportData.data.forEach((item, index) => {
+
+        const advisorRetention = Math.round(
+            (
+                parseInt(item.renewed) /
+                (
+                    parseInt(item.total_allocated_leads) -
+                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                )) * 100
+
+        );
+
+        const imRetention = Math.round(
+            (
+                parseInt(item.renewed) /
+                (
+                    parseInt(item.total_allocated_leads) -
+                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                )) * 100
+
+        );
+
+        const valueSegmentConversion = Math.round(
+            (
+                parseInt(item.renewed_by_value_segment_advisors) /
+                (
+                    parseInt(item.total_by_value_segment_advisors) -
+                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                )) * 100
+        );
+
+        const volumeSegmentConversion =
+            Math.round(
+                (
+                    parseInt(item.renewed_by_volume_segment_advisors) /
+                    (
+                        parseInt(item.total_by_volume_segment_advisors) -
+                        (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                    )) * 100);
+
+        const monthlySum = calculateMonthlySum(page.props.reportData.data, index);
+
+        item.advisorRetention = advisorRetention;
+        item.volumeSegmentConversion = volumeSegmentConversion;
+        item.valueSegmentConversion = valueSegmentConversion;
+        item.imRetention = imRetention;
+        item.monthlySum = monthlySum;
+        item.rowSpan = currentRowSpan;
+        item.highlight = (advisorRetention < valueSegmentConversion) ||
+            (advisorRetention < volumeSegmentConversion) ||
+            (advisorRetention < imRetention);
+
+        page.props.renewalBatchesList.forEach(batch => {
+            batch.slabs.forEach(slab => {
+
+                batch.teams.forEach(team => {
+                    let teamName = team.name;
+
+                    if (teamName.includes('BDM')) {
+                        let slabId = slab.pivot.slab_id;
+                        let slabMax = slab.pivot.max;
+                        let slabMin = slab.pivot.min;
+
+                        if (slabId === 3 && item.advisorRetention > slabMin) {
+                            item.advisorRetentionClass = "class-green";
+                        }
+                        else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
+                            item.advisorRetentionClass = "class-amber";
+                        }
+                        else if (slabId === 1 && item.advisorRetention < slabMax) {
+                            item.advisorRetentionClass = "class-red";
+                        }
+
+                    }
+                    else if (teamName.includes('volume') || teamName.includes('value')) {
+                        let slabId = slab.pivot.slab_id;
+                        let slabMax = slab.pivot.max;
+                        let slabMin = slab.pivot.min;
+
+                        if (slabId === 4 && item.advisorRetention > slabMin) {
+                            item.advisorRetentionClass = "class-green";
+                        }
+                        if (slabId === 3 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
+                            item.advisorRetentionClass = "class-amber";
+                        }
+                        else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
+                            item.advisorRetentionClass = "class-orange";
+                        }
+                        else if (slabId === 1 && item.advisorRetention < slabMax) {
+                            item.advisorRetentionClass = "class-red";
+                        }
+                    }
+                });
+
+            })
+        });
+    });
+}
+
+
 onMounted(() => {
-  if (page.props.defaultFilters && !params['page']) {
-    filters.reportDate =
-      page.props.defaultFilters.reportDate;
-  }
 
-  setQueryStringFilters();
+    calculateValuesAndHighlight();
 
-  if (params['teams[]'] && params['teams[]'].length > 0) {
-    onTeamChange(params['teams[]']);
-  }
-  isMounted.value = true;
+    if (page.props.defaultFilters && !params['page']) {
+        filters.reportDate =
+            page.props.defaultFilters.reportDate;
+    }
+
+    setQueryStringFilters();
+
+    if (params['teams[]'] && params['teams[]'].length > 0) {
+        onTeamChange(params['teams[]']);
+    }
+    isMounted.value = true;
 });
 
-watch(
-  () => totalLeads.modal,
-  val => {
-    if (!val) {
-      totalLeads.data = {};
+const calculateMonthlySum = (data, index) => {
+
+    var totalRenewed = 0;
+    var totalAllocated = 0;
+    var totalCarSold = 0;
+    var totalCarUncontactable = 0;
+    currentRowSpan = 0;
+
+    var currentMonthValue = data[index].month;
+
+    if (lastMonthSummedIndex <= index) {
+        while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
+
+            totalRenewed = + data[index].renewed;
+            totalAllocated = + data[index].total_allocated_leads;
+            totalCarSold = + data[index].car_sold;
+            totalCarUncontactable = + data[index].uncontactable;
+            index++;
+            lastMonthSummedIndex = index;
+            currentRowSpan++;
+        }
+
+        var result = totalRenewed / (totalAllocated - (totalCarSold - totalCarUncontactable)) * 100;
+
+        return Math.round(result) + " %";
     }
-  },
-);
+};
+
+// watch(
+
+// );
 </script>
+<style>
+.highlight-row {
+    background-color: yellow;
+}
 
+.class-green {
+    color: green;
+}
+
+.class-orange {
+    color: orange;
+}
+
+.class-red {
+    color: red;
+}
+
+.class-amber {
+    color: #ffbf00;
+}
+
+thead {
+    background-color: #186b9a;
+}
+
+thead th {
+    color: #e6e6e6;
+}
+
+thead,
+th,
+td {
+    border: 1px solid #e6e6e6 !important;
+}
+</style>
 <template>
-  <div>
-    <Head title="Advisor Conversion Report" />
-    <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
-      Renewal Batches Report
-    </h1>
+    <div>
 
-    <x-divider class="my-4" />
-    <x-form @submit="onSubmit" :auto-focus="false">
-      <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <DatePicker
-          v-model="filters.reportDate"
-          label="Report Date"
-          placeholder="Select Date"
-          size="sm"
-          model-type="yyyy-MM-dd"
-        />
+        <Head title="Advisor Conversion Report" />
+        <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
+            Renewal Batches Report
+        </h1>
 
-        <x-input
-          v-model="filters.batchNo"
-          type="search"
-          name="batch_no"
-          label="Batch No."
-          class="w-full"
-          placeholder="Search by batch no."
-        />
+        <x-divider class="my-4" />
+        <x-form @submit="onSubmit" :auto-focus="false">
+            <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <DatePicker v-model="filters.reportDate" label="Report Date" placeholder="Select Date" size="sm"
+                    model-type="yyyy-MM-dd" />
 
-        <ComboBox
-          v-model="filters.advisors"
-          label="Advisors"
-          placeholder="Search by Advisors"
-          :options="
-            Object.keys(filterOptions.advisors).map(key => ({
-              value: key,
-              label: filterOptions.advisors[key],
-            }))
-          "
-          :select-all="filters.advisors?.length > 0"
-            :deselect-all="filters.advisors?.length > 0"
-        />
+                <x-input v-model="filters.batchNo" type="search" name="batch_no" label="Batch No." class="w-full"
+                    placeholder="Search by batch no." />
 
-        <x-select
-          v-model="filters.segment"
-          label="Segment"
-          placeholder="Search by Segment"
-          class="w-full"
-          :options="
-            Object.keys(filterOptions.segments).map(key => ({
-              value: filterOptions.segments[key],
-              label: filterOptions.segments[key].toUpperCase(),
-            }))
-          "
-        />
+                <ComboBox v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])" v-model="filters.teams"
+                    label="Teams" placeholder="Search by Teams" :options="Object.keys(filterOptions.teams).map(key => ({
+                        value: key,
+                        label: filterOptions.teams[key],
+                    }))
+                        " @update:model-value="onTeamChange" :select-all="filters.teams?.length > 0"
+                    :deselect-all="filters.teams?.length > 0" />
 
-      </div>
-      <div class="flex justify-between gap-3 mb-4 items-center">
-        <div class="flex-1">
-          <p v-if="isDirty" class="text-xs text-red-500 text-center font-bold">
-            Please click search, to show updated records based on the selected
-            filters
-          </p>
+                <ComboBox
+                    v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                    v-model="filters.advisors" label="Advisors" placeholder="Search by Advisors" :options="advisorOptions"
+                    :loading="loaders.advisorOptions" :select-all="filters.advisors?.length > 0"
+                    :deselect-all="filters.advisors?.length > 0" />
+
+                <ComboBox v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.SeniorManagement])" v-model="filters.subTeams"
+                    label="Sub Team" placeholder="Search by Sub Team" class="w-full" :options="subTeamsOptions"
+                    :select-all="filters.subTeams?.length > 0" :deselect-all="filters.subTeams?.length > 0" />
+
+                <x-select v-if="hasRole(rolesEnum.CarManager)" v-model="filters.segment" label="Segment"
+                    placeholder="Search by Segment" class="w-full" :options="Object.keys(filterOptions.segments).map(key => ({
+                        value: filterOptions.segments[key],
+                        label: filterOptions.segments[key].toUpperCase(),
+                    }))
+                        " />
+
+            </div>
+            <div class="flex justify-between gap-3 mb-4 items-center">
+                <div class="flex-1">
+                    <p v-if="isDirty" class="text-xs text-red-500 text-center font-bold">
+                        Please click search, to show updated records based on the selected
+                        filters
+                    </p>
+                </div>
+                <div class="flex gap-3">
+                    <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+                    <x-button size="sm" color="primary" @click.prevent="onReset">
+                        Reset
+                    </x-button>
+                </div>
+            </div>
+        </x-form>
+
+        <!-- ============================================================= -->
+
+        <div class="text-sm my-4">
+            <div class="w-full overflow-x-auto">
+                <table class="x-table w-full relative">
+                    <thead class="align-bottom">
+                        <tr class="text-sm text-gray-600 border-b">
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Batch No.
+                            </th>
+                            <th
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
+                                Week Ending
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Renewed
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Tot. Alloc.
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Car Sold
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Uncontactable
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Tot. Alloc. (excluding cancelled and uncontactable)
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Adv. Retention
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Val. Retention
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Vol. Retention
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Rel. Retention on Val.
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Rel. Retention on Vol.
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                IM Retention
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Relative Retention
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
+                                v-if="hasRole(rolesEnum.CarAdvisor) != true">
+                                Raw Retention
+                            </th>
+
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Monthly Retention
+                            </th>
+
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr :class="{ 'highlight-row': item.highlight }" v-for="(item, index) in reportData.data" :key="index"
+                            class="border-b border-gray-200 align-top">
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.renewal_batch }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ moment(item.end_date).format('MMMM do') }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.renewed }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.total_allocated_leads }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.car_sold }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.uncontactable }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
+                                <p v-if="item.total_allocated_leads == 0"> NaN </p>
+                                <p v-else>{{ parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
+                                    parseInt(item.uncontactable)) }} </p>
+                            </td>
+                            <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
+                                <!-- (Sum of policies issued (Payment status: Captured) per batch / Sum of allocations per batch - Approved Car Sold - Approved Uncontactable) *100% -->
+                                <!-- <p v-if="item.renewed == 0"> {{ advisorRetention = 0 }} </p>
+                                <p v-else>{{ advisorRetention = Math.round(
+                                    (
+                                        parseInt(item.renewed) /
+                                        (
+                                            parseInt(item.total_allocated_leads) -
+                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                                        )) * 100
+
+                                ) }} %</p> -->
+                                {{ item.advisorRetention }} %
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- (Sum of all policies issued (Payment status: Captured) by Value Segment Advisors per batch / Sum of allocations of Value Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
+                                <!-- <p v-if="item.renewed_by_value_segment_advisors == 0"> {{ valueSegmentConversion = 0 }} </p>
+                                <p v-else>{{ valueSegmentConversion = Math.round(
+                                    (
+                                        parseInt(item.renewed_by_value_segment_advisors) /
+                                        (
+                                            parseInt(item.total_by_value_segment_advisors) -
+                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                                        )) * 100
+                                ) }} %</p> -->
+                                {{ item.valueSegmentConversion }} %
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- (Sum of all policies issued (Payment status: Captured) by Volume Segment Advisors per batch / Sum of allocations of Volume Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
+                                <!-- <p v-if="item.renewed_by_volume_segment_advisors == 0"> {{ volumeSegmentConversion = 0 }}
+                                </p>
+                                <p v-else>{{ volumeSegmentConversion =
+                                Math.round(
+                                    (
+                                        parseInt(item.renewed_by_volume_segment_advisors) /
+                                        (
+                                            parseInt(item.total_by_volume_segment_advisors) -
+                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                                        )) * 100) }} %</p> -->
+                                {{ item.volumeSegmentConversion }} %
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- Advisor Retention - Value Segment Conversion -->
+                                <p>{{ parseInt(item.advisorRetention) - parseInt(item.valueSegmentConversion) }} %</p>
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- Advisor Retention - Volume Segment Conversion -->
+                                <p>{{ parseInt(item.advisorRetention) - parseInt(item.volumeSegmentConversion) }} %</p>
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- (Sum of all policies issued (Payment status: Captured) by all Advisors per batch / Sum of allocations of all Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
+                                <!-- <p v-if="item.renewed == 0"> {{ imRetention = 0 }} </p>
+                                <p v-else>{{ imRetention = Math.round(
+                                    (
+                                        parseInt(item.renewed) /
+                                        (
+                                            parseInt(item.total_allocated_leads) -
+                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                                        )) * 100) }} %</p> -->
+                                {{ item.imRetention }} %
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                <!-- Advisor Retention - IM Retention -->
+                                <p>{{ parseInt(item.advisorRetention) - parseInt(item.imRetention) }} %</p>
+                            </td>
+                            <td v-if="hasRole(rolesEnum.CarAdvisor) != true"
+                                class="x-table-cell px-3 py-4 align-middle text-center">
+                                <!-- raw retention -->
+                                <p> {{ Math.round((item.renewed / item.total_allocated_leads) * 100) }} %</p>
+                            </td>
+                            <!-- <p style="display: none;">
+                                {{$result = calculateMonthlySum(reportData.data, index)}}
+                            </p> -->
+                            <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle text-center"
+                                :rowspan="item.rowSpan">
+                                <!-- monthly sum -->
+                                <b> {{ item.monthlySum }}</b>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="flex gap-3">
-          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-          <x-button size="sm" color="primary" @click.prevent="onReset">
-            Reset
-          </x-button>
+
+
+        <!-- ============================================================= -->
+
+
+        <div class="flex flex-wrap justify-between items-center gap-2 py-6">
+            <div>
+                <select
+                    class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                    @change="updateRowsPerPageSelect">
+                    <option v-for="item in rowsPerPageOptions" :key="item" :selected="item === rowsPerPageActiveOption"
+                        :value="item">
+                        {{ item }} rows per page
+                    </option>
+                </select>
+            </div>
+
+            <div class="text-xs lining-nums text-gray-700 text-center">
+                Now displaying: {{ currentPageFirstIndex }} ~
+                {{ currentPageLastIndex }} of {{ clientItemsLength }}
+            </div>
+
+            <div class="flex gap-2">
+                <x-button size="sm" icon-left="prev" :disabled="isFirstPage" @click="prevPage">
+                    Prev
+                </x-button>
+                <x-button size="sm" icon-right="next" :disabled="isLastPage" @click="nextPage">
+                    Next
+                </x-button>
+            </div>
         </div>
-      </div>
-    </x-form>
 
-    <DataTable
-      ref="dataTableRef"
-      table-class-name="tablefixed"
-      :loading="loaders.table"
-      :headers="tableHeader"
-      :items="reportData.data || []"
-      border-cell
-      :rows-per-page-message="'Records per page'"
-      :rows-items="[10, 25, 50, 100]"
-      :rows-per-page="10"
-      :empty-message="'No Records Available'"
-      hide-footer
-    >
-      <template #item-total_allocate_minus_cancelled_uncontactable="item">
-        <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
-        <p v-if="item.total_allocated_leads == 0"> NaN </p>
-        <p v-else>{{ parseInt(item.total_allocated_leads) - ( parseInt(item.car_sold) + parseInt(item.uncontactable) ) }} </p>
-      </template>
-      <template #item-advisor_retention="item">
-        <!-- (Sum of policies issued (Payment status: Captured) per batch / Sum of allocations per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-        <p v-if="item.renewed == 0"> NaN </p>
-        <p v-else>{{ advisorRetention = Math.round(( parseInt(item.renewed) / (( parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable) ) ) ) * 100)}} %</p>
-      </template>
-      <template #item-value_segment_retention="item">
-        <!-- (Sum of all policies issued (Payment status: Captured) by Value Segment Advisors per batch / Sum of allocations of Value Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-        <p v-if="item.renewed_by_value_segment_advisors == 0"> NaN </p>
-        <p v-else>{{ valueSegmentConversion =  Math.round( (parseInt(item.renewed_by_value_segment_advisors) / ( parseInt(item.total_by_value_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable) ) ) * 100)}} %</p>
-      </template>
-      <template #item-volume_segment_retention="item">
-        <!-- (Sum of all policies issued (Payment status: Captured) by Volume Segment Advisors per batch / Sum of allocations of Volume Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-        <p v-if="item.renewed_by_volume_segment_advisors == 0"> NaN </p>
-        <p v-else>{{ volumeSegmentConversion = Math.round((parseInt(item.renewed_by_volume_segment_advisors) / ( parseInt(item.total_by_volume_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable) ) ) * 100)}} %</p>
-      </template>
-      <template #item-relative_retention_value_segment="item">
-        <!-- Advisor Retention - Value Segment Conversion -->
-        <p>{{ parseInt(advisorRetention) - parseInt(valueSegmentConversion)}} %</p>
-      </template>
-      <template #item-relative_retention_volume_segment="item">
-        <!-- Advisor Retention - Volume Segment Conversion -->
-        <p >{{ parseInt(advisorRetention) - parseInt(volumeSegmentConversion)}} %</p>
-      </template>
-      <template #item-im_retention="item">
-      <!-- (Sum of all policies issued (Payment status: Captured) by all Advisors per batch / Sum of allocations of all Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-        <p v-if="item.renewed_by_volume_segment_advisors == 0"> NaN </p>
-        <p v-else>{{ imRetention = Math.round(( parseInt(item.renewed) / ( parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable) ) ) * 100)}} %</p>
-      </template>
-      <template #item-relative_retention="item">
-        <!-- Advisor Retention - IM Retention -->
-        <p >{{ parseInt(advisorRetention) - parseInt(imRetention)}} %</p>
-      </template>
-      <template #item-monthly_retention="item">
-        <tr>
-            <td :rowspan="2">
-                testing
-            </td>
-        </tr>
-    </template>
-
-        <!-- (Sum of policies issued (Payment status: Captured) per month / Sum of allocations per month - Approved Car Sold - Approved Uncontactable) *100% -->
-        <!-- <p v-if="item.renewed_by_volume_segment_advisors == 0"> NaN </p>
-        <p v-else>{{ imRetention = (item.renewed / (item.total_allocated_leads - item.car_sold - item.uncontactable) ) * 100}} %</p> -->
-            <!-- <p>0</p> -->
-      <template #body-append>
-        <tr v-if="reportData.length > 0" class="total-row">
-          <td class="direction-left">Total</td>
-          <td></td>
-          <td></td>
-          <td></td>
-        </tr>
-      </template>
-    </DataTable>
-
-    <div class="flex flex-wrap justify-between items-center gap-2 py-6">
-      <div>
-        <select
-          class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
-          @change="updateRowsPerPageSelect"
-        >
-          <option
-            v-for="item in rowsPerPageOptions"
-            :key="item"
-            :selected="item === rowsPerPageActiveOption"
-            :value="item"
-          >
-            {{ item }} rows per page
-          </option>
-        </select>
-      </div>
-
-      <div class="text-xs lining-nums text-gray-700 text-center">
-        Now displaying: {{ currentPageFirstIndex }} ~
-        {{ currentPageLastIndex }} of {{ clientItemsLength }}
-      </div>
-
-      <div class="flex gap-2">
-        <x-button
-          size="sm"
-          icon-left="prev"
-          :disabled="isFirstPage"
-          @click="prevPage"
-        >
-          Prev
-        </x-button>
-        <x-button
-          size="sm"
-          icon-right="next"
-          :disabled="isLastPage"
-          @click="nextPage"
-        >
-          Next
-        </x-button>
-      </div>
+        <!-- <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
+            <template #header>
+                <div class="text-center">{{ currentTypeTitle }}</div>
+            </template>
+            <section class="min-h-[70vh]">
+                <div v-if="!loaders.advisorLeadTable">
+                    <PaginateClient :links="{
+                        next: totalLeads.data.next_page_url,
+                        prev: totalLeads.data.prev_page_url,
+                        current: totalLeads.data.current_page,
+                        from: totalLeads.data.from,
+                        to: totalLeads.data.to,
+                        total: totalLeads.data.total,
+                        last: totalLeads.data.last_page,
+                    }" :loading="totalLeads.loader" @update="setPageTable" />
+                    <DataTable table-class-name="tablefixed compact" :loading="totalLeads.loader"
+                        :headers="totalLeads.tableHeader" :items="totalLeads.data.data || []" border-cell hide-rows-per-page
+                        hide-footer></DataTable>
+                </div>
+                <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
+                    <x-spinner size="lg" color="#1d83bc" />
+                    <p class="text-sm">Fetching records...</p>
+                </div>
+            </section>
+        </x-modal> -->
     </div>
-
-    <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
-      <template #header>
-        <div class="text-center">{{ currentTypeTitle }}</div>
-      </template>
-      <section class="min-h-[70vh]">
-        <div v-if="!loaders.advisorLeadTable">
-          <PaginateClient
-            :links="{
-              next: totalLeads.data.next_page_url,
-              prev: totalLeads.data.prev_page_url,
-              current: totalLeads.data.current_page,
-              from: totalLeads.data.from,
-              to: totalLeads.data.to,
-              total: totalLeads.data.total,
-              last: totalLeads.data.last_page,
-            }"
-            :loading="totalLeads.loader"
-            @update="setPageTable"
-          />
-          <DataTable
-            table-class-name="tablefixed compact"
-            :loading="totalLeads.loader"
-            :headers="totalLeads.tableHeader"
-            :items="totalLeads.data.data || []"
-            border-cell
-            hide-rows-per-page
-            hide-footer
-          ></DataTable>
-        </div>
-        <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
-          <x-spinner size="lg" color="#1d83bc" />
-          <p class="text-sm">Fetching records...</p>
-        </div>
-      </section>
-    </x-modal>
-  </div>
 </template>

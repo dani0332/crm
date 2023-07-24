@@ -41,7 +41,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RenewalBatchReport])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
@@ -61,6 +61,9 @@ use App\Enums\PermissionsEnum;
                                 @can(PermissionsEnum::UtmLeadsSalesReport)
                                     <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
                                 @endcan
+                            @can(PermissionsEnum::RenewalBatchReport)
+                                <li><a href="{{ url('reports/renewal-report') }}">Daily Renewal Report</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>
