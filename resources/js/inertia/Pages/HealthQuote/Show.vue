@@ -1885,7 +1885,7 @@ onMounted(() => {
       <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
         <template #header> Filters </template>
 
-        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[10rem]">
+        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
           <ComboBox
             v-model="planFilters.insurer"
             label="Insurer"
