@@ -47,11 +47,8 @@ class JetskiQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
         ];
-
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $quoteData['advisorId'] = auth()->user()->id;
-        }
 
         info('JetSki Quote Create :'.json_encode($quoteData));
 

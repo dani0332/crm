@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
@@ -50,13 +51,11 @@ class PetQuoteRepository extends BaseRepository
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
         ];
 
-        if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
-        }
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
-        
+
         if (isset($response->quoteUID)) {
             $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())->where('uuid', $response->quoteUID)->firstOrFail();
 
