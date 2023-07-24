@@ -35,6 +35,12 @@ let availableFilters = {
 
 const filters = reactive(availableFilters);
 
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -241,7 +247,7 @@ const quotesSelected = ref([]),
       <div v-if="quotesSelected.length > 0" class="mb-4">
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
-          :advisors="advisors"
+          :advisors="advisorOptions"
           :quoteType="quoteType"
         />
         <ExportExcel
