@@ -307,12 +307,6 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-{{--                ftc-form-delete schedule on 7th June 2023--}}
-                <!-- @if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess())
-                <ul class="nav side-menu">
-                    <li><a href="{{ url('ftcform') }}"><i></i> Policy Issuance </a>
-                </ul>
-                @endif  -->
                 @hasanyrole(RolesEnum::BetaUser.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
