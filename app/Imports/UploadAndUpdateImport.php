@@ -5,11 +5,11 @@ namespace App\Imports;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
+use App\Enums\SkipPlansEnum;
 use App\Models\RenewalQuoteProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
 use App\Traits\RenewalsImportTrait;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\RegistersEventListeners;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
@@ -21,7 +21,6 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
-use Maatwebsite\Excel\Row;
 
 class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
 {
@@ -108,7 +107,7 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
      */
     public function getColumns()
     {
-        return [
+        $columns = [
             'customer_name' => ['index' => 0, 'title' => 'Customer Name', 'rules' => 'required|max:100'],
             'email' => ['index' => 1, 'title' => 'Customer Email', 'rules' => 'max:255'],
             'mobile_no' => ['index' => 2, 'title' => 'Customer Mobile', 'rules' => 'max:100'],
@@ -123,20 +122,20 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
                 }
             }], 'type' => 'date'],
             'batch' => ['index' => 9, 'title' => 'Batch', 'rules' => 'required|max:50'],
-            'make' => ['index' => 10, 'title' => 'Car Make', 'rules' => 'required|max:50'],
-            'model' => ['index' => 11, 'title' => 'Car Model', 'rules' => 'required|max:50'],
-            'year' => ['index' => 12, 'title' => 'Model Year', 'rules' => 'required|max:4'],
-            'dob' => ['index' => 13, 'title' => 'Date of Birth', 'rules' => ['required', 'max:10', function ($attribute, $value, $onFailure) {
+            'make' => ['index' => 10, 'title' => 'Car Make', 'rules' => ['max:50']],
+            'model' => ['index' => 11, 'title' => 'Car Model', 'rules' => ['max:50']],
+            'year' => ['index' => 12, 'title' => 'Model Year', 'rules' => ['max:4']],
+            'dob' => ['index' => 13, 'title' => 'Date of Birth', 'rules' => ['max:10', function ($attribute, $value, $onFailure) {
                 if (! $this->validateDate($value)) {
                     $onFailure('Invalid value provided for '.$attribute);
                 }
             }], 'type' => 'date'],
-            'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => 'required|max:10'],
-            'nationality' => ['index' => 15, 'title' => 'Nationality', 'rules' => 'required|max:50'],
+            'driving_experience' => ['index' => 14, 'title' => 'Driving Experience', 'rules' => ['max:50']],
+            'nationality' => ['index' => 15, 'title' => 'Nationality', 'rules' => ['max:50']],
             'provider_name' => ['index' => 16, 'title' => 'Provider Name', 'rules' => 'max:100'],
             'plan_name' => ['index' => 17, 'title' => 'Plan Name', 'rules' => 'max:100'],
             'plan_type' => ['index' => 18, 'title' => 'Repair Type', 'rules' => 'max:100'],
-            'claim_history' => ['index' => 19, 'title' => 'Claim History', 'rules' => 'required|max:50'],
+            'claim_history' => ['index' => 19, 'title' => 'Claim History', 'rules' => ['max:50']],
             'nc_letter' => ['index' => 20, 'title' => 'NC Letter', 'rules' => 'max:3'],
             'insurer_quote_no' => ['index' => 21, 'title' => 'Insurer Quote No', 'rules' => 'max:50'],
             'car_value' => ['index' => 22, 'title' => 'Car Value (From Insurer)', 'rules' => 'nullable|numeric'],
@@ -155,10 +154,22 @@ class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, 
             'road_side_assistance_amount' => ['index' => 35, 'title' => 'Amount - Road Side Assistance', 'rules' => 'nullable|numeric'],
             'year_of_first_registration' => ['index' => 36, 'title' => 'First Year of Registration', 'rules' => 'max:4'],
             'trim' => ['index' => 37, 'title' => 'Trim', 'rules' => 'max:20'],
-            'registration_location' => ['index' => 38, 'title' => 'Registration Location', 'rules' => 'required|max:100'],
+            'registration_location' => ['index' => 38, 'title' => 'Registration Location', 'rules' => ['max:100']],
             'previous_advisor' => ['index' => 39, 'title' => 'Previous Advisor Email', 'rules' => 'max:100'],
             'notes' => ['index' => 40, 'title' => 'Notes', 'rules' => 'max:500'],
         ];
+
+        if ($this->renewalsUploadLead->skip_plans != SkipPlansEnum::NON_GCC) {
+            $columns['make']['rules'][] = 'required';
+            $columns['model']['rules'][] = 'required';
+            $columns['year']['rules'][] = 'required';
+            $columns['dob']['rules'][] = 'required';
+            $columns['driving_experience']['rules'][] = 'required';
+            $columns['nationality']['rules'][] = 'required';
+            $columns['registration_location']['rules'][] = 'required';
+        }
+
+        return $columns;
     }
 
     /**

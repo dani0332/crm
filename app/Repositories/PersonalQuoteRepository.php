@@ -5,6 +5,8 @@ namespace App\Repositories;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
+use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
@@ -191,5 +193,12 @@ class PersonalQuoteRepository extends BaseRepository
 
             return true;
         });
+    }
+
+    public function fetchCreateDuplicate(array $dataArr, $quoteTypeId): object
+    {
+        $dataArr['quoteTypeId'] = intval(array_search($quoteTypeId, QuoteTypeId::getOptions()));
+
+        return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
 }
