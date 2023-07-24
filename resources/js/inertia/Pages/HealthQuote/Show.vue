@@ -117,116 +117,6 @@ const confirmData = reactive({
 
 const cleanObj = obj => useCleanObj(obj);
 
-const planFilters = reactive({
-  insurer: [],
-  network: [],
-  manual_plan: null,
-  current_online: null,
-});
-
-const planFiltersCount = ref(0);
-
-const options = reactive({
-  network: [],
-  loading: false,
-});
-watch(
-  () => planFilters?.insurer,
-  value => {
-    if (value) {
-      options.loading = true;
-      console.log(planFilters.insurer);
-      const ids = planFilters.insurer.map(item => {
-        return item;
-      });
-
-      let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
-      axios
-        .get(url)
-        .then(res => {
-          if (res.data.length > 0) {
-            options.network = res.data;
-          } else {
-            options.network = [];
-          }
-        })
-        .catch(err => {
-          console.log(err);
-        })
-        .finally(() => {
-          options.loading = false;
-        });
-    }
-  },
-);
-
-const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort((a, b) => {
-    if (a.providerName < b.providerName) {
-      return -1;
-    }
-  }),
-);
-
-const onPlanFiltersSubmit = () => {
-  const filters = cleanObj(planFilters);
-
-  planFiltersCount.value = Object.keys(filters).length;
-
-  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
-    let isManualPlan = planFilters.manual_plan;
-    let isCurrentlyOnline = planFilters.current_online;
-    let network = planFilters.network;
-    let insurerIds =
-      planFilters.insurer?.map(item => {
-        return item;
-      }) || [];
-
-    let manualMatch = false;
-    let insurerMatch = false;
-    let networkMatch = false;
-    let onlineMatch = false;
-
-    if (isManualPlan != null) {
-      manualMatch = plan.isManualPlan == isManualPlan;
-    } else {
-      manualMatch = true;
-    }
-    if (isCurrentlyOnline != null) {
-      onlineMatch = !plan.isHidden == isCurrentlyOnline;
-    } else {
-      onlineMatch = true;
-    }
-
-    if (insurerIds?.length > 0) {
-      insurerMatch = insurerIds.includes(plan.providerId);
-    } else {
-      insurerMatch = true;
-    }
-    if (network?.length > 0) {
-      networkMatch = network.includes(plan.eligibilityName);
-    } else {
-      networkMatch = true;
-    }
-
-    return manualMatch && insurerMatch && networkMatch && onlineMatch;
-  });
-
-  modals.planFilters = false;
-  plansTable.currentPage = 1;
-};
-
-const onPlanFiltersReset = () => {
-  planFilters.insurer = [];
-  planFilters.network = [];
-  planFilters.manual_plan = null;
-  planFilters.current_online = null;
-  listQuotePlansFiltered.value = page.props.listQuotePlans;
-  modals.planFilters = false;
-  planFiltersCount.value = 0;
-  plansTable.currentPage = 1;
-};
-
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
   memberActionEdit = ref(false),
@@ -558,9 +448,10 @@ const memberDataDocs = membersDetail => {
 };
 
 // plans
+const planDataTable = ref();
+
 const plansTable = reactive({
   isLoading: false,
-  currentPage: 1,
   columns: [
     {
       text: 'Provider Name',
@@ -705,6 +596,117 @@ const onPlanError = () => {
     title: 'Plan Creation Failed',
     position: 'top',
   });
+};
+
+const planFilters = reactive({
+  insurer: [],
+  network: [],
+  manual_plan: null,
+  current_online: null,
+});
+
+const planFiltersCount = ref(0);
+
+const options = reactive({
+  network: [],
+  loading: false,
+});
+
+watch(
+  () => planFilters?.insurer,
+  value => {
+    if (value) {
+      options.loading = true;
+      console.log(planFilters.insurer);
+      const ids = planFilters.insurer.map(item => {
+        return item;
+      });
+
+      let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
+      axios
+        .get(url)
+        .then(res => {
+          if (res.data.length > 0) {
+            options.network = res.data;
+          } else {
+            options.network = [];
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+
+const listQuotePlansFiltered = ref(
+  page.props.listQuotePlans.sort((a, b) => {
+    if (a.providerName < b.providerName) {
+      return -1;
+    }
+  }),
+);
+
+const onPlanFiltersSubmit = () => {
+  const filters = cleanObj(planFilters);
+
+  planFiltersCount.value = Object.keys(filters).length;
+
+  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+    let isManualPlan = planFilters.manual_plan;
+    let isCurrentlyOnline = planFilters.current_online;
+    let network = planFilters.network;
+    let insurerIds =
+      planFilters.insurer?.map(item => {
+        return item;
+      }) || [];
+
+    let manualMatch = false;
+    let insurerMatch = false;
+    let networkMatch = false;
+    let onlineMatch = false;
+
+    if (isManualPlan != null) {
+      manualMatch = plan.isManualPlan == isManualPlan;
+    } else {
+      manualMatch = true;
+    }
+    if (isCurrentlyOnline != null) {
+      onlineMatch = !plan.isHidden == isCurrentlyOnline;
+    } else {
+      onlineMatch = true;
+    }
+
+    if (insurerIds?.length > 0) {
+      insurerMatch = insurerIds.includes(plan.providerId);
+    } else {
+      insurerMatch = true;
+    }
+    if (network?.length > 0) {
+      networkMatch = network.includes(plan.eligibilityName);
+    } else {
+      networkMatch = true;
+    }
+
+    return manualMatch && insurerMatch && networkMatch && onlineMatch;
+  });
+
+  modals.planFilters = false;
+  planDataTable.value.updatePage(1);
+};
+
+const onPlanFiltersReset = () => {
+  planFilters.insurer = [];
+  planFilters.network = [];
+  planFilters.manual_plan = null;
+  planFilters.current_online = null;
+  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  modals.planFilters = false;
+  planFiltersCount.value = 0;
+  planDataTable.value.updatePage(1);
 };
 
 // quoteDocuments
@@ -1794,6 +1796,7 @@ onMounted(() => {
         </div>
       </div>
       <DataTable
+        ref="planDataTable"
         v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
@@ -1802,7 +1805,6 @@ onMounted(() => {
         hide-rows-per-page
         :rows-per-page="15"
         :hide-footer="listQuotePlansFiltered.length < 15"
-        :current-page="plansTable.currentPage"
       >
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
