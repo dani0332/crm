@@ -1879,12 +1879,14 @@ onMounted(() => {
       <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
         <template #header> Filters </template>
 
-        <div class="grid sm:grid-cols-2 gap-4 py-8">
+        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[10rem]">
           <ComboBox
             v-model="planFilters.insurer"
             label="Insurer"
             :options="insuranceProviders"
             :loading="planFilters.processing"
+            select-all
+            deselect-all
           />
           <ComboBox
             v-model="planFilters.network"
@@ -1895,6 +1897,8 @@ onMounted(() => {
             "
             :options="options.network"
             :disabled="options.network.length == 0"
+            select-all
+            deselect-all
           />
 
           <div>
