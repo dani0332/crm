@@ -385,14 +385,14 @@ class CarQuoteService extends BaseService
             $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(7);
 
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-                if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
+                if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
                     $access['carAdvisorCanEdit'] = true;
                     $access['carAdvisorCanEditInsurer'] = true;
                 }
             }
 
             if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-                if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
+                if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->gt($dateLimitForAdvisor) && $today->lte($dateLimitForManager) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
                     $access['carManagerCanEdit'] = true;
                     $access['carManagerCanEditInsurer'] = true;
                 }
