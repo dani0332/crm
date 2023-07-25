@@ -51,9 +51,9 @@ const dateFormat = date =>
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
-    return number;
+    return number.toLocaleString();
   } else {
-    return number.toFixed(2);
+    return number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 };
 
@@ -1187,6 +1187,10 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+        <div v-if="hasRole($page.props.rolesEnum.Engineering)" class="grid sm:grid-cols-2">
+            <dt class="font-medium">ID</dt>
+            <dd>{{ quote.id }}</dd>
+        </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CDB ID</dt>
             <dd>{{ quote.code }}</dd>
@@ -1620,6 +1624,10 @@ onMounted(() => {
             <dt class="font-medium">NETWORK</dt>
             <dd>{{ ecomDetails.network }}</dd>
           </div>
+        <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
+            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+        </div>
         </dl>
       </div>
     </div>

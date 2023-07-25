@@ -114,17 +114,17 @@ label {
 /* table head sort icons */
 /* None */
 .vue3-easy-data-table__header tr th.sortable.none .sortType-icon {
-  @apply border hover:bg-success-400 ml-3 border-white inline-block p-1 -rotate-45  
+  @apply border hover:bg-success-400 ml-3 border-white inline-block p-1 -rotate-45
 transition duration-300 cursor-pointer;
 }
 /* Asce */
 .vue3-easy-data-table__header tr th.sortable.asc .sortType-icon {
-  @apply border-t-2 border-r-2 ml-3 border-success-400 inline-block p-1 -rotate-45  
+  @apply border-t-2 border-r-2 ml-3 border-success-400 inline-block p-1 -rotate-45
 transition duration-300 cursor-pointer;
 }
 /* Desc */
 .vue3-easy-data-table__header tr th.sortable.desc .sortType-icon {
-  @apply border-b-2 border-l-2 ml-3 border-success-400 inline-block p-1 -rotate-45  
+  @apply border-b-2 border-l-2 ml-3 border-success-400 inline-block p-1 -rotate-45
 transition duration-300 cursor-pointer;
 }
 /* make sortable headers use cursor pointer */
@@ -139,7 +139,7 @@ transition duration-300 cursor-pointer;
 
 /* Expand Icon  */
 .expand-icon {
-  @apply border-t border-r border-slate-500 inline-block p-1 -rotate-45  
+  @apply border-t border-r border-slate-500 inline-block p-1 -rotate-45
 transition duration-300 cursor-pointer;
 }
 .expand-icon.expanding {
@@ -382,4 +382,28 @@ border-primary animate-spin;
 
 .bg-vtd-primary-100 {
   @apply bg-primary-100;
+}
+
+.arrow-t .x-popover-container::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(55, 65, 81) transparent transparent transparent;
+  transform: rotate(180deg);
+}
+
+.arrow-l .x-popover-container::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 10px;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(28, 124, 178) transparent transparent transparent;
+  transform: rotate(90deg);
 }
