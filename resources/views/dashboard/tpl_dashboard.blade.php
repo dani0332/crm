@@ -75,6 +75,148 @@
     }
     $(function() {
         createLeadRcdSummaryByTierPieChart(tplDashboardStats);
+
+        const agentFilter = new SlimSelect({
+            select: '#user-filter',
+            settings: {
+                allowDeselect: true,
+                placeholderText: 'Select Users',
+                disabled: true,
+            }
+        })
+        const subTeamFilter = new SlimSelect({
+            select: '#sub-team-filter',
+            settings: {
+                allowDeselect: true,
+                placeholderText: 'Select Sub Teams',
+                disabled: true,
+            }
+        })
+        const teamFilter = new SlimSelect({
+            select: '#team-filter',
+            settings: {
+                allowDeselect: true,
+                placeholderText: 'Select Teams',
+            },
+            events: {
+                beforeChange: (newVal, oldVal) => {
+                    if (newVal.length === 0) {
+                        subTeamFilter.setData([]);
+                        subTeamFilter.disable();
+                        agentFilter.setData([]);
+                        agentFilter.disable();
+                    }
+                    return true;
+                }
+            }
+        })
+
+        $('#user-filter, #team-filter, #sub-team-filter, #excludeManualFilter').on('change', function(e) {            
+            var userFilterValue = $('#user-filter').val();
+            var teamFilterValue = $('#team-filter').val();
+            var subTeamFilterValue = $('#sub-team-filter').val();
+
+            if (e.target.id == 'team-filter') {
+                if (!teamFilterValue) return;
+                $.ajax({
+                    url: "/get-sub-teams-by-team",
+                    type: "post",
+                    data: {
+                        'team_filter': teamFilterValue
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(users) {
+                        if (users) {
+                            users = users.map(user => {
+                                return { text: user.name, value: user.id }
+                            })
+                            subTeamFilter.setData(users);
+                            if (users.length > 0) {
+                                subTeamFilter.enable();
+                            } else {
+                                subTeamFilter.disable();
+                                agentFilter.setData([]);
+                                agentFilter.disable();
+                            }
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                    }
+                });
+            } else if (e.target.id == 'sub-team-filter') {
+                if (!subTeamFilterValue) return;
+                $.ajax({
+                    url: "/get-users-by-sub-team",
+                    type: "post",
+                    data: {
+                        'sub_team_filter': subTeamFilterValue
+                    },
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(users) {
+                        if (users) {
+                            users = users.map(user => {
+                                return { text: user.name, value: user.id }
+                            })
+                            agentFilter.setData(users);
+                            if (users.length > 0) {
+                                agentFilter.enable();
+                            } else {
+                                agentFilter.disable();
+                            }
+                        }
+                    },
+                    error: function(jqXHR, textStatus, errorThrown) {
+                        console.log(textStatus, errorThrown);
+                    }
+                });
+            }
+
+            var excludeFilterValue = $('#excludeManualFilter option:selected').val();
+            comprehensiveDashboardStatChart.showLoading();
+            $.ajax({
+                url: "/get-comp-filter-stats",
+                type: "post",
+                data: {
+                    'tier_filter': tierFilterValue,
+                    'team_filter': teamFilterValue,
+                    'userFilter': userFilterValue,
+                    'excludeFilter': excludeFilterValue
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(result) {
+                    if (result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        for (let index = 0; index < data.length; index++) {
+                            numbers.push(Number(data[index]));
+                        }
+                        if (labels.length > 0) {
+                            comprehensiveDashboardStatChart.destroy();
+                            createComprehensiveConversionChart([labels, numbers]);
+                        } else {
+                            comprehensiveDashboardStatChart.destroy();
+                            createComprehensiveConversionChart([
+                                [''],
+                                [0]
+                            ]);
+                        }
+                    }
+                    comprehensiveDashboardStatChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    comprehensiveDashboardStatChart.hideLoading();
+                    console.log(textStatus, errorThrown);
+                }
+            });
+        });
     });
 
 </script>

@@ -285,6 +285,10 @@ class DashboardController extends Controller
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->whereIn('teams.id', $request->team_filter);
             });
+
+            if (isset($request->sub_team_filter) && $request->sub_team_filter != 'undefined') {
+                $records->whereIn('users.sub_team_id', $request->sub_team_filter);
+            }
         } else {
             $organicTeam = Team::where('name', 'Organic')->first();
             $records->whereIn('users.id', function ($query) use ($organicTeam) {
@@ -344,19 +348,19 @@ class DashboardController extends Controller
 
     public function renderComprehensiveDashboard(Request $request)
     {
-        $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
+        // $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
-        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        info('inside renderComprehensiveDashboard common teams are : '.json_encode($commonTeams));
-        $commonTeam = 0;
-        if (count($commonTeams) > 0) {
-            $commonTeam = $commonTeams[0];
-        }
+        // $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        // info('inside renderComprehensiveDashboard common teams are : '.json_encode($commonTeams));
+        // $commonTeam = 0;
+        // if (count($commonTeams) > 0) {
+        //     $commonTeam = $commonTeams[0];
+        // }
 
-        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams', 'commonTeam'));
+        return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
     }
 
     public function conversionStats($quoteType)
@@ -428,5 +432,15 @@ class DashboardController extends Controller
     public function getUsersByTeam(Request $request)
     {
         return $this->getUsersByTeamId($request->team_filter);
+    }
+
+    public function getSubTeamsByTeam(Request $request)
+    {
+        return $this->getSubTeamsByTeamIds($request->team_filter);
+    }
+
+    public function getUsersBySubTeam(Request $request)
+    {
+        return $this->getUsersBySubTeamIds($request->sub_team_filter);
     }
 }

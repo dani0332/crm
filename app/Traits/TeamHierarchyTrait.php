@@ -99,6 +99,11 @@ trait TeamHierarchyTrait
         return User::whereIn('id', $teamUserIds)->where('is_active', 1)->get();
     }
 
+    public function getUsersBySubTeamIds($teamIds)
+    {
+        return User::whereIn('sub_team_id', $teamIds)->where('is_active', 1)->get();
+    }
+
     public function getUsersByProductName($productName)
     {
         $product = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', $productName)->where('is_active', 1)->first();
