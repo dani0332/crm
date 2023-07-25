@@ -67,27 +67,11 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
-const objToUrl = obj => {
-  Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
-  );
-  return Object.keys(obj)
-    .map(key => {
-      if (Array.isArray(obj[key])) {
-        return obj[key].map(value => `${key}[]=${value}`).join('&');
-      }
-      return `${key}=${obj[key]}`;
-    })
-    .join('&');
-};
-
 const onDataExport = () => {
-  const data = objToUrl(filters);
+  const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
-
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
