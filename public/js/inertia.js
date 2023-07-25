@@ -13513,7 +13513,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
             return loaders.table = true;
           },
           onFinish: function onFinish() {
-            return loaders.table = false;
+            return loaders.table = false, calculateValuesAndHighlight();
           }
         });
       } else {
@@ -13540,27 +13540,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         }
       });
     }
-    var currentTypeTitle = (0,vue__WEBPACK_IMPORTED_MODULE_3__.computed)(function () {
-      if (totalLeads.current == 'new_leads') {
-        return 'Advisor Assigned : New Leads';
-      } else if (totalLeads.current == 'not_interested') {
-        return 'Advisor Assigned : Not Interested';
-      } else if (totalLeads.current == 'in_progress') {
-        return 'Advisor Assigned : In Progress';
-      } else if (totalLeads.current == 'bad_leads') {
-        return 'Advisor Assigned : Bad Leads';
-      } else if (totalLeads.current == 'sale_leads') {
-        return 'Advisor Assigned : Sale Leads';
-      } else if (totalLeads.current == 'created_sale_leads') {
-        return 'Advisor Assigned : Created Sale Leads';
-      } else if (totalLeads.current == 'afia_renewals_count') {
-        return 'Advisor Assigned : IM Renewals';
-      } else if (totalLeads.current == 'manual_created') {
-        return 'Advisor Assigned : Manual Created';
-      } else {
-        return 'Advisor Assigned : Total Leads';
-      }
-    });
     var cleanFilters = function cleanFilters(filters) {
       Object.keys(filters).forEach(function (key) {
         return (filters[key] === '' || filters[key] == null || filters[key].length == 0) && delete filters[key];
@@ -13578,11 +13557,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         }
       }
     }
-
-    // const setPageTable = page => {
-    //     onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
-    // };
-
     var onTeamChange = function onTeamChange(e) {
       if (e.length == 0) {
         console.log("all deselect");
@@ -13630,20 +13604,38 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     var lastMonthSummedIndex = 0;
     var currentRowSpan = 0;
     var rolesEnum = page.props.rolesEnum;
+    var avgImRetentionArr = {};
+    var avgRawRetentionArr = {};
+    var monthlyIMAverages = {};
+    var monthlyRawAverages = {};
     function calculateValuesAndHighlight() {
+      lastMonthSummedIndex = 0;
+      currentRowSpan = 0;
       page.props.reportData.data.forEach(function (item, index) {
-        var advisorRetention = Math.round(parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100);
-        var imRetention = Math.round(parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100);
-        var valueSegmentConversion = Math.round(parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100);
-        var volumeSegmentConversion = Math.round(parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100);
+        var advisorRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
+        var imRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
+        var valueSegmentConversion = (parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
+        var volumeSegmentConversion = (parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
         var monthlySum = calculateMonthlySum(page.props.reportData.data, index);
+        var rawRetention = (item.renewed / item.total_allocated_leads * 100).toFixed(2);
         item.advisorRetention = advisorRetention;
         item.volumeSegmentConversion = volumeSegmentConversion;
         item.valueSegmentConversion = valueSegmentConversion;
         item.imRetention = imRetention;
         item.monthlySum = monthlySum;
+        item.rawRetention = rawRetention;
         item.rowSpan = currentRowSpan;
         item.highlight = advisorRetention < valueSegmentConversion || advisorRetention < volumeSegmentConversion || advisorRetention < imRetention;
+        var monthName = moment__WEBPACK_IMPORTED_MODULE_2___default()(item.month, 'MM').format('MMMM YY');
+        // Check if the property exists and initialize it as an array if it doesn't
+        if (!avgImRetentionArr[monthName]) {
+          avgImRetentionArr[monthName] = [];
+        }
+        if (!avgRawRetentionArr[monthName]) {
+          avgRawRetentionArr[monthName] = [];
+        }
+        avgImRetentionArr[monthName].push(parseFloat(imRetention));
+        avgRawRetentionArr[monthName].push(parseFloat(rawRetention));
         page.props.renewalBatchesList.forEach(function (batch) {
           batch.slabs.forEach(function (slab) {
             batch.teams.forEach(function (team) {
@@ -13678,6 +13670,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
           });
         });
       });
+      monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
+      monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
     }
     (0,vue__WEBPACK_IMPORTED_MODULE_3__.onMounted)(function () {
       calculateValuesAndHighlight();
@@ -13708,14 +13702,24 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
           currentRowSpan++;
         }
         var result = totalRenewed / (totalAllocated - (totalCarSold - totalCarUncontactable)) * 100;
-        return Math.round(result) + " %";
+        return result.toFixed(2) + " %";
       }
     };
-
-    // watch(
-
-    // );
-
+    function calculateAverage(arr) {
+      var sum = arr.reduce(function (acc, val) {
+        return acc + val;
+      }, 0);
+      return sum / arr.length;
+    }
+    function calculateMonthlyAverages(data) {
+      var monthlyAverages = {};
+      for (var month in data) {
+        var avg = calculateAverage(data[month]);
+        monthlyAverages[month] = avg;
+      }
+      return monthlyAverages;
+    }
+    (0,vue__WEBPACK_IMPORTED_MODULE_3__.watch)();
     var __returned__ = {
       loaders: loaders,
       page: page,
@@ -13742,7 +13746,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       filters: filters,
       onSubmit: onSubmit,
       onReset: onReset,
-      currentTypeTitle: currentTypeTitle,
       cleanFilters: cleanFilters,
       setQueryStringFilters: setQueryStringFilters,
       onTeamChange: onTeamChange,
@@ -13761,8 +13764,24 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         currentRowSpan = v;
       },
       rolesEnum: rolesEnum,
+      avgImRetentionArr: avgImRetentionArr,
+      avgRawRetentionArr: avgRawRetentionArr,
+      get monthlyIMAverages() {
+        return monthlyIMAverages;
+      },
+      set monthlyIMAverages(v) {
+        monthlyIMAverages = v;
+      },
+      get monthlyRawAverages() {
+        return monthlyRawAverages;
+      },
+      set monthlyRawAverages(v) {
+        monthlyRawAverages = v;
+      },
       calculateValuesAndHighlight: calculateValuesAndHighlight,
       calculateMonthlySum: calculateMonthlySum,
+      calculateAverage: calculateAverage,
+      calculateMonthlyAverages: calculateMonthlyAverages,
       get useHasRole() {
         return _Composables_can__WEBPACK_IMPORTED_MODULE_0__.useHasRole;
       },
@@ -34886,16 +34905,34 @@ var _hoisted_43 = {
   "class": "x-table-cell px-3 py-4 align-middle text-center"
 };
 var _hoisted_44 = ["rowspan"];
-var _hoisted_45 = {
-  "class": "flex flex-wrap justify-between items-center gap-2 py-6"
+var _hoisted_45 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("hr", null, null, -1 /* HOISTED */);
+var _hoisted_46 = {
+  "class": "x-table relative w-50 mt-10"
 };
-var _hoisted_46 = ["selected", "value"];
-var _hoisted_47 = {
-  "class": "text-xs lining-nums text-gray-700 text-center"
-};
+var _hoisted_47 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("thead", {
+  "class": "align-bottom"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("tr", {
+  "class": "text-sm text-gray-600 border-b"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("th", {
+  "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
+}, " Month "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("th", {
+  "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28"
+}, " Avg. IMRet. "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("th", {
+  "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
+}, " Avg. RawRet. ")])], -1 /* HOISTED */);
 var _hoisted_48 = {
-  "class": "flex gap-2"
+  "class": "x-table-cell px-3 py-4 align-middle"
 };
+var _hoisted_49 = {
+  "class": "x-table-cell px-3 py-4 align-middle"
+};
+var _hoisted_50 = {
+  "class": "x-table-cell px-3 py-4 align-middle"
+};
+var _hoisted_51 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", {
+  "class": "flex flex-wrap justify-between items-center gap-2 py-6"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <div>\n                <select\n                    class=\"form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed\"\n                    @change=\"updateRowsPerPageSelect\">\n                    <option v-for=\"item in rowsPerPageOptions\" :key=\"item\" :selected=\"item === rowsPerPageActiveOption\"\n                        :value=\"item\">\n                        {{ item }} rows per page\n                    </option>\n                </select>\n            </div> "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <div class=\"text-xs lining-nums text-gray-700 text-center\">\n                Now displaying: {{ currentPageFirstIndex }} ~\n                {{ currentPageLastIndex }} of {{ clientItemsLength }}\n            </div>\n\n            <div class=\"flex gap-2\">\n                <x-button size=\"sm\" icon-left=\"prev\" :disabled=\"isFirstPage\" @click=\"prevPage\">\n                    Prev\n                </x-button>\n                <x-button size=\"sm\" icon-right=\"next\" :disabled=\"isLastPage\" @click=\"nextPage\">\n                    Next\n                </x-button>\n            </div> "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <PaginateClient\n            :links=\"{\n              next: reportData.data.next_page_url,\n              prev: reportData.data.prev_page_url,\n              current: reportData.data.current_page,\n              from: reportData.data.from,\n              to: reportData.data.to,\n              total: reportData.data.total,\n              last: reportData.data.last_page,\n            }\"\n            :loading=\"reportData.loader\"\n          /> ")], -1 /* HOISTED */);
+
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.Head;
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-divider");
@@ -35018,41 +35055,17 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       key: index
     }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.renewal_batch), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.moment(item.end_date).format('MMMM do')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.renewed), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.total_allocated_leads), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.car_sold), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.uncontactable), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) "), item.total_allocated_leads == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_35, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) + parseInt(item.uncontactable))), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", {
       "class": (0,vue__WEBPACK_IMPORTED_MODULE_3__.normalizeClass)([item.advisorRetentionClass, "x-table-cell px-3 py-4 align-middle"])
-    }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" (Sum of policies issued (Payment status: Captured) per batch / Sum of allocations per batch - Approved Car Sold - Approved Uncontactable) *100% "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <p v-if=\"item.renewed == 0\"> {{ advisorRetention = 0 }} </p>\n                                <p v-else>{{ advisorRetention = Math.round(\n                                    (\n                                        parseInt(item.renewed) /\n                                        (\n                                            parseInt(item.total_allocated_leads) -\n                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))\n                                        )) * 100\n\n                                ) }} %</p> "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.advisorRetention) + " % ", 1 /* TEXT */)], 2 /* CLASS */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_37, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" (Sum of all policies issued (Payment status: Captured) by Value Segment Advisors per batch / Sum of allocations of Value Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <p v-if=\"item.renewed_by_value_segment_advisors == 0\"> {{ valueSegmentConversion = 0 }} </p>\n                                <p v-else>{{ valueSegmentConversion = Math.round(\n                                    (\n                                        parseInt(item.renewed_by_value_segment_advisors) /\n                                        (\n                                            parseInt(item.total_by_value_segment_advisors) -\n                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))\n                                        )) * 100\n                                ) }} %</p> "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.valueSegmentConversion) + " % ", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_38, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" (Sum of all policies issued (Payment status: Captured) by Volume Segment Advisors per batch / Sum of allocations of Volume Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <p v-if=\"item.renewed_by_volume_segment_advisors == 0\"> {{ volumeSegmentConversion = 0 }}\n                                </p>\n                                <p v-else>{{ volumeSegmentConversion =\n                                Math.round(\n                                    (\n                                        parseInt(item.renewed_by_volume_segment_advisors) /\n                                        (\n                                            parseInt(item.total_by_volume_segment_advisors) -\n                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))\n                                        )) * 100) }} %</p> "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.volumeSegmentConversion) + " % ", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_39, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" Advisor Retention - Value Segment Conversion "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(parseInt(item.advisorRetention) - parseInt(item.valueSegmentConversion)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_40, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" Advisor Retention - Volume Segment Conversion "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(parseInt(item.advisorRetention) - parseInt(item.volumeSegmentConversion)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_41, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" (Sum of all policies issued (Payment status: Captured) by all Advisors per batch / Sum of allocations of all Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <p v-if=\"item.renewed == 0\"> {{ imRetention = 0 }} </p>\n                                <p v-else>{{ imRetention = Math.round(\n                                    (\n                                        parseInt(item.renewed) /\n                                        (\n                                            parseInt(item.total_allocated_leads) -\n                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))\n                                        )) * 100) }} %</p> "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.imRetention) + " % ", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" Advisor Retention - IM Retention "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(parseInt(item.advisorRetention) - parseInt(item.imRetention)) + " %", 1 /* TEXT */)]), $setup.hasRole($setup.rolesEnum.CarAdvisor) != true ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("td", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" raw retention "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(Math.round(item.renewed / item.total_allocated_leads * 100)) + " %", 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <p style=\"display: none;\">\n                                {{$result = calculateMonthlySum(reportData.data, index)}}\n                            </p> "), item.rowSpan > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("td", {
+    }, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.advisorRetention) + " % ", 3 /* TEXT, CLASS */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_37, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.valueSegmentConversion) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.volumeSegmentConversion) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_39, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.valueSegmentConversion)).toFixed(2)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_40, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.volumeSegmentConversion)).toFixed(2)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_41, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.imRetention) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2)) + " %", 1 /* TEXT */)]), $setup.hasRole($setup.rolesEnum.CarAdvisor) != true ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("td", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.rawRetention) + " %", 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true), item.rowSpan > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("td", {
       key: 1,
       "class": "x-table-cell px-3 py-4 align-middle text-center",
       rowspan: item.rowSpan
-    }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" monthly sum "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("b", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.monthlySum), 1 /* TEXT */)], 8 /* PROPS */, _hoisted_44)) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)], 2 /* CLASS */);
-  }), 128 /* KEYED_FRAGMENT */))])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" ============================================================= "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_45, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("select", {
-    "class": "form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed",
-    onChange: $setup.updateRowsPerPageSelect
-  }, [((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_3__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.renderList)($setup.rowsPerPageOptions, function (item) {
-    return (0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("option", {
-      key: item,
-      selected: item === $setup.rowsPerPageActiveOption,
-      value: item
-    }, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item) + " rows per page ", 9 /* TEXT, PROPS */, _hoisted_46);
-  }), 128 /* KEYED_FRAGMENT */))], 32 /* HYDRATE_EVENTS */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_47, " Now displaying: " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.currentPageFirstIndex) + " ~ " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.currentPageLastIndex) + " of " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.clientItemsLength), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", _hoisted_48, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
-    size: "sm",
-    "icon-left": "prev",
-    disabled: $setup.isFirstPage,
-    onClick: $setup.prevPage
-  }, {
-    "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Prev ")];
-    }),
-    _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["disabled", "onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_button, {
-    size: "sm",
-    "icon-right": "next",
-    disabled: $setup.isLastPage,
-    onClick: $setup.nextPage
-  }, {
-    "default": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function () {
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" Next ")];
-    }),
-    _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["disabled", "onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <x-modal v-model=\"totalLeads.modal\" size=\"xl\" show-close backdrop>\n            <template #header>\n                <div class=\"text-center\">{{ currentTypeTitle }}</div>\n            </template>\n            <section class=\"min-h-[70vh]\">\n                <div v-if=\"!loaders.advisorLeadTable\">\n                    <PaginateClient :links=\"{\n                        next: totalLeads.data.next_page_url,\n                        prev: totalLeads.data.prev_page_url,\n                        current: totalLeads.data.current_page,\n                        from: totalLeads.data.from,\n                        to: totalLeads.data.to,\n                        total: totalLeads.data.total,\n                        last: totalLeads.data.last_page,\n                    }\" :loading=\"totalLeads.loader\" @update=\"setPageTable\" />\n                    <DataTable table-class-name=\"tablefixed compact\" :loading=\"totalLeads.loader\"\n                        :headers=\"totalLeads.tableHeader\" :items=\"totalLeads.data.data || []\" border-cell hide-rows-per-page\n                        hide-footer></DataTable>\n                </div>\n                <div v-else class=\"p-4 flex flex-col justify-center items-center gap-4\">\n                    <x-spinner size=\"lg\" color=\"#1d83bc\" />\n                    <p class=\"text-sm\">Fetching records...</p>\n                </div>\n            </section>\n        </x-modal> ")]);
+    }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("b", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.monthlySum), 1 /* TEXT */)], 8 /* PROPS */, _hoisted_44)) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true)], 2 /* CLASS */);
+  }), 128 /* KEYED_FRAGMENT */))])]), _hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("table", _hoisted_46, [_hoisted_47, (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("tbody", null, [((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_3__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.renderList)($setup.monthlyIMAverages, function (value, index) {
+    return (0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("tr", {
+      key: index,
+      "class": "border-b border-gray-200 align-top"
+    }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_48, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(index), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.monthlyIMAverages[index] ? $setup.monthlyIMAverages[index].toFixed(2) : 0) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_50, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.monthlyRawAverages[index] ? $setup.monthlyRawAverages[index].toFixed(2) : 0) + " % ", 1 /* TEXT */)]);
+  }), 128 /* KEYED_FRAGMENT */))])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" ============================================================= "), _hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <x-modal v-model=\"totalLeads.modal\" size=\"xl\" show-close backdrop>\n            <template #header>\n                <div class=\"text-center\">{{ currentTypeTitle }}</div>\n            </template>\n            <section class=\"min-h-[70vh]\">\n                <div v-if=\"!loaders.advisorLeadTable\">\n                    <PaginateClient :links=\"{\n                        next: totalLeads.data.next_page_url,\n                        prev: totalLeads.data.prev_page_url,\n                        current: totalLeads.data.current_page,\n                        from: totalLeads.data.from,\n                        to: totalLeads.data.to,\n                        total: totalLeads.data.total,\n                        last: totalLeads.data.last_page,\n                    }\" :loading=\"totalLeads.loader\" @update=\"setPageTable\" />\n                    <DataTable table-class-name=\"tablefixed compact\" :loading=\"totalLeads.loader\"\n                        :headers=\"totalLeads.tableHeader\" :items=\"totalLeads.data.data || []\" border-cell hide-rows-per-page\n                        hide-footer></DataTable>\n                </div>\n                <div v-else class=\"p-4 flex flex-col justify-center items-center gap-4\">\n                    <x-spinner size=\"lg\" color=\"#1d83bc\" />\n                    <p class=\"text-sm\">Fetching records...</p>\n                </div>\n            </section>\n        </x-modal> ")]);
 }
 
 /***/ }),

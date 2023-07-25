@@ -160,7 +160,7 @@ function onSubmit(isValid) {
             preserveState: true,
             preserveScroll: true,
             onBefore: () => (loaders.table = true),
-            onFinish: () => (loaders.table = false),
+            onFinish: () => (loaders.table = false, calculateValuesAndHighlight()),
         });
     } else {
         console.log('Invalid');
@@ -186,29 +186,6 @@ function onReset() {
     });
 }
 
-const currentTypeTitle = computed(() => {
-    if (totalLeads.current == 'new_leads') {
-        return 'Advisor Assigned : New Leads';
-    } else if (totalLeads.current == 'not_interested') {
-        return 'Advisor Assigned : Not Interested';
-    } else if (totalLeads.current == 'in_progress') {
-        return 'Advisor Assigned : In Progress';
-    } else if (totalLeads.current == 'bad_leads') {
-        return 'Advisor Assigned : Bad Leads';
-    } else if (totalLeads.current == 'sale_leads') {
-        return 'Advisor Assigned : Sale Leads';
-    } else if (totalLeads.current == 'created_sale_leads') {
-        return 'Advisor Assigned : Created Sale Leads';
-    } else if (totalLeads.current == 'afia_renewals_count') {
-        return 'Advisor Assigned : IM Renewals';
-    } else if (totalLeads.current == 'manual_created') {
-        return 'Advisor Assigned : Manual Created';
-    } else {
-        return 'Advisor Assigned : Total Leads';
-    }
-});
-
-
 const cleanFilters = filters => {
     Object.keys(filters).forEach(
         key =>
@@ -229,10 +206,6 @@ function setQueryStringFilters() {
         }
     }
 }
-
-// const setPageTable = page => {
-//     onFetchAdvisorAssignedLeads(null, totalLeads.current, page);
-// };
 
 
 const onTeamChange = e => {
@@ -286,10 +259,31 @@ let currentRowSpan = 0;
 
 const rolesEnum = page.props.rolesEnum;
 
+const avgImRetentionArr = {};
+const avgRawRetentionArr = {};
+
+let monthlyIMAverages = {};
+let monthlyRawAverages = {};
+
 function calculateValuesAndHighlight() {
+
+    lastMonthSummedIndex = 0;
+    currentRowSpan = 0;
+
     page.props.reportData.data.forEach((item, index) => {
 
-        const advisorRetention = Math.round(
+        const advisorRetention =
+            (
+                (
+                    parseInt(item.renewed) /
+                    (
+                        parseInt(item.total_allocated_leads) -
+                        (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                    )) * 100
+
+            ).toFixed(2);
+
+        const imRetention = (
             (
                 parseInt(item.renewed) /
                 (
@@ -297,47 +291,50 @@ function calculateValuesAndHighlight() {
                     (parseInt(item.car_sold) - parseInt(item.uncontactable))
                 )) * 100
 
-        );
+        ).toFixed(2);
 
-        const imRetention = Math.round(
-            (
-                parseInt(item.renewed) /
-                (
-                    parseInt(item.total_allocated_leads) -
-                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
-                )) * 100
-
-        );
-
-        const valueSegmentConversion = Math.round(
+        const valueSegmentConversion = (
             (
                 parseInt(item.renewed_by_value_segment_advisors) /
                 (
                     parseInt(item.total_by_value_segment_advisors) -
                     (parseInt(item.car_sold) - parseInt(item.uncontactable))
                 )) * 100
-        );
+        ).toFixed(2);
 
-        const volumeSegmentConversion =
-            Math.round(
+        const volumeSegmentConversion = (
+            (
+                parseInt(item.renewed_by_volume_segment_advisors) /
                 (
-                    parseInt(item.renewed_by_volume_segment_advisors) /
-                    (
-                        parseInt(item.total_by_volume_segment_advisors) -
-                        (parseInt(item.car_sold) - parseInt(item.uncontactable))
-                    )) * 100);
+                    parseInt(item.total_by_volume_segment_advisors) -
+                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                )) * 100
+        ).toFixed(2);
 
         const monthlySum = calculateMonthlySum(page.props.reportData.data, index);
+        const rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
 
         item.advisorRetention = advisorRetention;
         item.volumeSegmentConversion = volumeSegmentConversion;
         item.valueSegmentConversion = valueSegmentConversion;
         item.imRetention = imRetention;
         item.monthlySum = monthlySum;
+        item.rawRetention = rawRetention;
         item.rowSpan = currentRowSpan;
         item.highlight = (advisorRetention < valueSegmentConversion) ||
             (advisorRetention < volumeSegmentConversion) ||
             (advisorRetention < imRetention);
+
+        let monthName = moment(item.month, 'MM').format('MMMM YY');
+        // Check if the property exists and initialize it as an array if it doesn't
+        if (!avgImRetentionArr[monthName]) {
+            avgImRetentionArr[monthName] = [];
+        }
+        if (!avgRawRetentionArr[monthName]) {
+            avgRawRetentionArr[monthName] = [];
+        }
+        avgImRetentionArr[monthName].push(parseFloat(imRetention));
+        avgRawRetentionArr[monthName].push(parseFloat(rawRetention));
 
         page.props.renewalBatchesList.forEach(batch => {
             batch.slabs.forEach(slab => {
@@ -384,6 +381,10 @@ function calculateValuesAndHighlight() {
             })
         });
     });
+
+    monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
+    monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
+
 }
 
 
@@ -401,8 +402,10 @@ onMounted(() => {
     if (params['teams[]'] && params['teams[]'].length > 0) {
         onTeamChange(params['teams[]']);
     }
+
     isMounted.value = true;
 });
+
 
 const calculateMonthlySum = (data, index) => {
 
@@ -428,13 +431,30 @@ const calculateMonthlySum = (data, index) => {
 
         var result = totalRenewed / (totalAllocated - (totalCarSold - totalCarUncontactable)) * 100;
 
-        return Math.round(result) + " %";
+        return (result).toFixed(2) + " %";
     }
 };
 
-// watch(
+function calculateAverage(arr) {
+    const sum = arr.reduce((acc, val) => acc + val, 0);
+    return sum / arr.length;
+}
 
-// );
+function calculateMonthlyAverages(data) {
+    const monthlyAverages = {};
+
+    for (const month in data) {
+        const avg = calculateAverage(data[month]);
+        monthlyAverages[month] = avg;
+    }
+
+    return monthlyAverages;
+}
+
+watch(
+
+);
+
 </script>
 <style>
 .highlight-row {
@@ -603,8 +623,8 @@ td {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr :class="{ 'highlight-row': item.highlight }" v-for="(item, index) in reportData.data" :key="index"
-                            class="border-b border-gray-200 align-top">
+                        <tr :class="{ 'highlight-row': item.highlight }" v-for="(item, index) in reportData.data"
+                            :key="index" class="border-b border-gray-200 align-top">
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.renewal_batch }}
                             </td>
@@ -630,83 +650,69 @@ td {
                                     parseInt(item.uncontactable)) }} </p>
                             </td>
                             <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
-                                <!-- (Sum of policies issued (Payment status: Captured) per batch / Sum of allocations per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-                                <!-- <p v-if="item.renewed == 0"> {{ advisorRetention = 0 }} </p>
-                                <p v-else>{{ advisorRetention = Math.round(
-                                    (
-                                        parseInt(item.renewed) /
-                                        (
-                                            parseInt(item.total_allocated_leads) -
-                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
-                                        )) * 100
-
-                                ) }} %</p> -->
                                 {{ item.advisorRetention }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <!-- (Sum of all policies issued (Payment status: Captured) by Value Segment Advisors per batch / Sum of allocations of Value Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-                                <!-- <p v-if="item.renewed_by_value_segment_advisors == 0"> {{ valueSegmentConversion = 0 }} </p>
-                                <p v-else>{{ valueSegmentConversion = Math.round(
-                                    (
-                                        parseInt(item.renewed_by_value_segment_advisors) /
-                                        (
-                                            parseInt(item.total_by_value_segment_advisors) -
-                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
-                                        )) * 100
-                                ) }} %</p> -->
                                 {{ item.valueSegmentConversion }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <!-- (Sum of all policies issued (Payment status: Captured) by Volume Segment Advisors per batch / Sum of allocations of Volume Segment Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-                                <!-- <p v-if="item.renewed_by_volume_segment_advisors == 0"> {{ volumeSegmentConversion = 0 }}
-                                </p>
-                                <p v-else>{{ volumeSegmentConversion =
-                                Math.round(
-                                    (
-                                        parseInt(item.renewed_by_volume_segment_advisors) /
-                                        (
-                                            parseInt(item.total_by_volume_segment_advisors) -
-                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
-                                        )) * 100) }} %</p> -->
                                 {{ item.volumeSegmentConversion }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <!-- Advisor Retention - Value Segment Conversion -->
-                                <p>{{ parseInt(item.advisorRetention) - parseInt(item.valueSegmentConversion) }} %</p>
+                                <p>{{ (parseFloat(item.advisorRetention) -
+                                    parseFloat(item.valueSegmentConversion)).toFixed(2) }} %</p>
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <!-- Advisor Retention - Volume Segment Conversion -->
-                                <p>{{ parseInt(item.advisorRetention) - parseInt(item.volumeSegmentConversion) }} %</p>
+                                <p>{{ (parseFloat(item.advisorRetention) -
+                                    parseFloat(item.volumeSegmentConversion)).toFixed(2) }} %</p>
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <!-- (Sum of all policies issued (Payment status: Captured) by all Advisors per batch / Sum of allocations of all Advisors per batch - Approved Car Sold - Approved Uncontactable) *100% -->
-                                <!-- <p v-if="item.renewed == 0"> {{ imRetention = 0 }} </p>
-                                <p v-else>{{ imRetention = Math.round(
-                                    (
-                                        parseInt(item.renewed) /
-                                        (
-                                            parseInt(item.total_allocated_leads) -
-                                            (parseInt(item.car_sold) - parseInt(item.uncontactable))
-                                        )) * 100) }} %</p> -->
                                 {{ item.imRetention }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <!-- Advisor Retention - IM Retention -->
-                                <p>{{ parseInt(item.advisorRetention) - parseInt(item.imRetention) }} %</p>
+                                <p>{{ (parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2) }} %</p>
                             </td>
                             <td v-if="hasRole(rolesEnum.CarAdvisor) != true"
                                 class="x-table-cell px-3 py-4 align-middle text-center">
-                                <!-- raw retention -->
-                                <p> {{ Math.round((item.renewed / item.total_allocated_leads) * 100) }} %</p>
+                                <p> {{ item.rawRetention }} %</p>
                             </td>
-                            <!-- <p style="display: none;">
-                                {{$result = calculateMonthlySum(reportData.data, index)}}
-                            </p> -->
                             <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle text-center"
                                 :rowspan="item.rowSpan">
-                                <!-- monthly sum -->
                                 <b> {{ item.monthlySum }}</b>
                             </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <hr />
+                <table class="x-table relative w-50 mt-10">
+                    <thead class="align-bottom">
+                        <tr class="text-sm text-gray-600 border-b">
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Month
+                            </th>
+                            <th
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
+                                Avg. IMRet.
+                            </th>
+                            <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                Avg. RawRet.
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(value, index) in monthlyIMAverages" :key="index"
+                            class="border-b border-gray-200 align-top">
+
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ index }}
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ monthlyIMAverages[index] ? monthlyIMAverages[index].toFixed(2) : 0 }} %
+                            </td>
+                            <td class="x-table-cell px-3 py-4 align-middle">
+                                {{ monthlyRawAverages[index] ? monthlyRawAverages[index].toFixed(2) : 0 }} %
+                            </td>
+
                         </tr>
                     </tbody>
                 </table>
@@ -718,7 +724,7 @@ td {
 
 
         <div class="flex flex-wrap justify-between items-center gap-2 py-6">
-            <div>
+            <!-- <div>
                 <select
                     class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
                     @change="updateRowsPerPageSelect">
@@ -727,9 +733,9 @@ td {
                         {{ item }} rows per page
                     </option>
                 </select>
-            </div>
+            </div> -->
 
-            <div class="text-xs lining-nums text-gray-700 text-center">
+            <!-- <div class="text-xs lining-nums text-gray-700 text-center">
                 Now displaying: {{ currentPageFirstIndex }} ~
                 {{ currentPageLastIndex }} of {{ clientItemsLength }}
             </div>
@@ -741,7 +747,21 @@ td {
                 <x-button size="sm" icon-right="next" :disabled="isLastPage" @click="nextPage">
                     Next
                 </x-button>
-            </div>
+            </div> -->
+
+            <!-- <PaginateClient
+            :links="{
+              next: reportData.data.next_page_url,
+              prev: reportData.data.prev_page_url,
+              current: reportData.data.current_page,
+              from: reportData.data.from,
+              to: reportData.data.to,
+              total: reportData.data.total,
+              last: reportData.data.last_page,
+            }"
+            :loading="reportData.loader"
+          /> -->
+
         </div>
 
         <!-- <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
