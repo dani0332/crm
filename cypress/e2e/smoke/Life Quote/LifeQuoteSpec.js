@@ -83,7 +83,7 @@ describe('Life qoutes', () => {
         commonPage.getPopUpAssertion(" Activity has been Created")
         //Delete Activity
         commonPage.getDeleteActivityButton()
-        cy.wait(4000)
+        commonPage.getApiIntercept(`@deleteLifeActivity`, 200)
         //Add Additional Contact
         commonPage.getAdditionalContactButton()
         commonPage.getContactType("Mobile Number")
