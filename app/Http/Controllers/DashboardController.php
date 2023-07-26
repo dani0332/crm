@@ -171,7 +171,16 @@ class DashboardController extends Controller
             $records->whereIn('tiers.id', $tiers);
         }
 
-        if ($tplTeam != null) {
+        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
+            $records->whereIn('users.id', function ($query) use ($request) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $request->team_filter);
+            });
+        } else if ($tplTeam != null) {
             $records->whereIn('users.id', function ($query) use ($tplTeam) {
                 $query->distinct()
                     ->select('users.id')
@@ -180,6 +189,10 @@ class DashboardController extends Controller
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->where('teams.id', $tplTeam->id);
             });
+        }
+
+        if (isset($request->userFilter) && $request->userFilter != 'null') {
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
         $labels = [];
