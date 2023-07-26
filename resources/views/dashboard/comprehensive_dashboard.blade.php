@@ -1,4 +1,9 @@
 @extends('layouts.app_livewire')
+
+@php
+use App\Enums\PermissionsEnum;
+@endphp
+
 @section('title','Comprehensive Dashboard')
 @section('content')
 
@@ -252,7 +257,7 @@
 
 <div>
     <div class="flex gap-4 justify-end mb-4">
-        @can('view-teams-filters')
+        @can(PermissionsEnum::ViewTeamsFilters)
             <div class="md:w-1/4">
                 <label>Teams</label>
                 <select multiple name="teams[]" id="team-filter">

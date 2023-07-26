@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -42,7 +43,7 @@ class AuthServiceProvider extends ServiceProvider
             return true;
         });
 
-        Gate::define('view-teams-filters', function ($user) {
+        Gate::define(PermissionsEnum::ViewTeamsFilters, function ($user) {
             return $user->hasAnyRole([RolesEnum::Admin, RolesEnum::CarManager]);
         });
     }
