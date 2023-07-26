@@ -84,14 +84,6 @@
                 disabled: true,
             }
         })
-        const subTeamFilter = new SlimSelect({
-            select: '#sub-team-filter',
-            settings: {
-                allowDeselect: true,
-                placeholderText: 'Select Sub Teams',
-                disabled: true,
-            }
-        })
         const teamFilter = new SlimSelect({
             select: '#team-filter',
             settings: {
@@ -101,8 +93,6 @@
             events: {
                 beforeChange: (newVal, oldVal) => {
                     if (newVal.length === 0) {
-                        subTeamFilter.setData([]);
-                        subTeamFilter.disable();
                         agentFilter.setData([]);
                         agentFilter.disable();
                     }
@@ -111,78 +101,21 @@
             }
         })
 
-        $('#user-filter, #team-filter, #sub-team-filter, #excludeManualFilter').on('change', function(e) {            
+        $('#user-filter, #team-filter, #excludeManualFilter').on('change', function(e) {            
             var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
-            var subTeamFilterValue = $('#sub-team-filter').val();
 
             if (e.target.id == 'team-filter') {
                 if (!teamFilterValue) return;
-                $.ajax({
-                    url: "/get-sub-teams-by-team",
-                    type: "post",
-                    data: {
-                        'team_filter': teamFilterValue
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(users) {
-                        if (users) {
-                            users = users.map(user => {
-                                return { text: user.name, value: user.id }
-                            })
-                            subTeamFilter.setData(users);
-                            if (users.length > 0) {
-                                subTeamFilter.enable();
-                            } else {
-                                subTeamFilter.disable();
-                                agentFilter.setData([]);
-                                agentFilter.disable();
-                            }
-                        }
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(textStatus, errorThrown);
-                    }
-                });
-            } else if (e.target.id == 'sub-team-filter') {
-                if (!subTeamFilterValue) return;
-                $.ajax({
-                    url: "/get-users-by-sub-team",
-                    type: "post",
-                    data: {
-                        'sub_team_filter': subTeamFilterValue
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(users) {
-                        if (users) {
-                            users = users.map(user => {
-                                return { text: user.name, value: user.id }
-                            })
-                            agentFilter.setData(users);
-                            if (users.length > 0) {
-                                agentFilter.enable();
-                            } else {
-                                agentFilter.disable();
-                            }
-                        }
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(textStatus, errorThrown);
-                    }
-                });
+                fetchTeamUsers(teamFilterValue);
             }
 
             var excludeFilterValue = $('#excludeManualFilter option:selected').val();
-            comprehensiveDashboardStatChart.showLoading();
+            tplDashboardStatsBarChart.showLoading();
             $.ajax({
                 url: "/get-comp-filter-stats",
                 type: "post",
                 data: {
-                    'tier_filter': tierFilterValue,
                     'team_filter': teamFilterValue,
                     'userFilter': userFilterValue,
                     'excludeFilter': excludeFilterValue
@@ -199,30 +132,90 @@
                             numbers.push(Number(data[index]));
                         }
                         if (labels.length > 0) {
-                            comprehensiveDashboardStatChart.destroy();
-                            createComprehensiveConversionChart([labels, numbers]);
+                            tplDashboardStatsBarChart.destroy();
+                            createLeadRcdSummaryByTierPieChart([labels, numbers]);
                         } else {
-                            comprehensiveDashboardStatChart.destroy();
-                            createComprehensiveConversionChart([
+                            tplDashboardStatsBarChart.destroy();
+                            createLeadRcdSummaryByTierPieChart([
                                 [''],
                                 [0]
                             ]);
                         }
                     }
-                    comprehensiveDashboardStatChart.hideLoading();
+                    tplDashboardStatsBarChart.hideLoading();
                 },
                 error: function(jqXHR, textStatus, errorThrown) {
-                    comprehensiveDashboardStatChart.hideLoading();
+                    tplDashboardStatsBarChart.hideLoading();
                     console.log(textStatus, errorThrown);
                 }
             });
         });
+
+        checkSelectedTeam();
+
+        function checkSelectedTeam () {
+        const selectedTeam = $('#team-filter').val();
+        if (selectedTeam && selectedTeam.length > 0) {
+            fetchTeamUsers(selectedTeam);
+        }
+    }
+
+        function fetchTeamUsers(teams) {
+            $.ajax({
+                url: "/get-users-by-team",
+                type: "post",
+                data: {
+                    'team_filter': teams
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(users) {
+                    if (users) {
+                        users = users.map(user => {
+                            return { text: user.name, value: user.id }
+                        })
+                        if (users.length > 0) {
+                            agentFilter.enable();
+                            agentFilter.setData(users);
+                        } else {
+                            agentFilter.setData([]);
+                            agentFilter.disable();
+                        }
+                    }
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    console.log(textStatus, errorThrown);
+                }
+            });
+        }
     });
 
 </script>
 @endpush
 
 <div>
+    <div class="flex gap-4 justify-end mb-4">
+        @can('view-teams-filters')
+            <div class="md:w-1/4">
+                <label>Teams</label>
+                <select multiple name="teams[]" id="team-filter">
+                    <option data-placeholder="true"></option>
+                    @foreach ($teams as $team)
+                    <option @if($team->name == 'Organic') selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
+                    @endforeach
+                </select>
+            </div>
+        @endcan
+        <div class="md:w-1/4">
+            <label>Advisor</label>
+            <select multiple name="users[]" id="user-filter">
+                <option data-placeholder="true"></option>
+                
+            </select>
+        </div>
+        
+    </div>
     <div style="min-height: 700px;">
         <div id="tplConversionDiv"></div>
     </div>

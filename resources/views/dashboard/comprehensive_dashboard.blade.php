@@ -73,58 +73,57 @@
         });
 
     }
+    const agentFilter = new SlimSelect({
+        select: '#user-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Users',
+            disabled: true,
+        }
+    })
+    const tierFilter = new SlimSelect({
+        select: '#tier-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Tiers',
+        }
+    })
+    const subTeamFilter = new SlimSelect({
+        select: '#sub-team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Sub Teams',
+            disabled: true,
+        },
+        events: {
+            beforeChange: (newVal, oldVal) => {
+                if (newVal.length === 0) {
+                    agentFilter.setData([]);
+                    agentFilter.disable();
+                }
+                return true;
+            }
+        }
+    })
+    const teamFilter = new SlimSelect({
+        select: '#team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Teams',
+        },
+        events: {
+            beforeChange: (newVal, oldVal) => {
+                if (newVal.length === 0) {
+                    subTeamFilter.setData([]);
+                    subTeamFilter.disable();
+                    agentFilter.setData([]);
+                    agentFilter.disable();
+                }
+                return true;
+            }
+        }
+    })
     $(function() {
-        const agentFilter = new SlimSelect({
-            select: '#user-filter',
-            settings: {
-                allowDeselect: true,
-                placeholderText: 'Select Users',
-                disabled: true,
-            }
-        })
-        const tierFilter = new SlimSelect({
-            select: '#tier-filter',
-            settings: {
-                allowDeselect: true,
-                placeholderText: 'Select Tiers',
-            }
-        })
-        const subTeamFilter = new SlimSelect({
-            select: '#sub-team-filter',
-            settings: {
-                allowDeselect: true,
-                placeholderText: 'Select Sub Teams',
-                disabled: true,
-            },
-            events: {
-                beforeChange: (newVal, oldVal) => {
-                    if (newVal.length === 0) {
-                        agentFilter.setData([]);
-                        agentFilter.disable();
-                    }
-                    return true;
-                }
-            }
-        })
-        const teamFilter = new SlimSelect({
-            select: '#team-filter',
-            settings: {
-                allowDeselect: true,
-                placeholderText: 'Select Teams',
-            },
-            events: {
-                beforeChange: (newVal, oldVal) => {
-                    if (newVal.length === 0) {
-                        subTeamFilter.setData([]);
-                        subTeamFilter.disable();
-                        agentFilter.setData([]);
-                        agentFilter.disable();
-                    }
-                    return true;
-                }
-            }
-        })
-        
         createComprehensiveConversionChart(comprehensiveDashboardStats);
         $('#tier-filter, #user-filter, #team-filter, #sub-team-filter, #excludeManualFilter').on('change', function(e) {
             var tierFilterValue = $('#tier-filter').val();
@@ -134,34 +133,7 @@
 
             if (e.target.id == 'team-filter') {
                 if (!teamFilterValue) return;
-                $.ajax({
-                    url: "/get-sub-teams-by-team",
-                    type: "post",
-                    data: {
-                        'team_filter': teamFilterValue
-                    },
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(users) {
-                        if (users) {
-                            users = users.map(user => {
-                                return { text: user.name, value: user.id }
-                            })
-                            subTeamFilter.setData(users);
-                            if (users.length > 0) {
-                                subTeamFilter.enable();
-                            } else {
-                                subTeamFilter.disable();
-                                agentFilter.setData([]);
-                                agentFilter.disable();
-                            }
-                        }
-                    },
-                    error: function(jqXHR, textStatus, errorThrown) {
-                        console.log(textStatus, errorThrown);
-                    }
-                });
+                fetchSubTeams(teamFilterValue);
             } else if (e.target.id == 'sub-team-filter') {
                 if (!subTeamFilterValue) return;
                 $.ajax({
@@ -234,7 +206,47 @@
                 }
             });
         });
+
+        checkSelectedTeam();
     });
+
+    function checkSelectedTeam () {
+        const selectedTeam = $('#team-filter').val();
+        if (selectedTeam && selectedTeam.length > 0) {
+            fetchSubTeams(selectedTeam);
+        }
+    }
+
+    function fetchSubTeams(teams) {
+        $.ajax({
+            url: "/get-sub-teams-by-team",
+            type: "post",
+            data: {
+                'team_filter': teams
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(users) {
+                if (users) {
+                    users = users.map(user => {
+                        return { text: user.name, value: user.id }
+                    })
+                    subTeamFilter.setData(users);
+                    if (users.length > 0) {
+                        subTeamFilter.enable();
+                    } else {
+                        subTeamFilter.disable();
+                        agentFilter.setData([]);
+                        agentFilter.disable();
+                    }
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log(textStatus, errorThrown);
+            }
+        });
+    }
 </script>
 @endpush
 
