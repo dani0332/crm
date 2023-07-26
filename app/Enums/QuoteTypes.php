@@ -4,13 +4,17 @@ namespace App\Enums;
 
 enum QuoteTypes: string
 {
-    case LIFE = 'Life';
-    case BIKE = 'Bike';
-    case CYCLE = 'Cycle';
-    case PET = 'Pet';
-    case YACHT = 'Yacht';
-    case JETSKI = 'Jetski';
     case CAR = 'Car';
+    case HOME = 'Home';
+    case HEALTH = 'Health';
+    case LIFE = 'Life';
+    case BUSINESS = 'Business';
+    case BIKE = 'Bike';
+    case YACHT = 'Yacht';
+    case TRAVEL = 'TRAVEL';
+    case PET = 'Pet';
+    case CYCLE = 'Cycle';
+    case JETSKI = 'Jetski';
 
     public function id(): string
     {
@@ -20,13 +24,17 @@ enum QuoteTypes: string
     public static function getId(self $value): int
     {
         return match ($value) {
-            QuoteTypes::LIFE => 4,
-            QuoteTypes::BIKE => 6,
-            QuoteTypes::CYCLE => 10,
-            QuoteTypes::PET => 9,
-            QuoteTypes::YACHT => 7,
-            QuoteTypes::JETSKI => 11,
             QuoteTypes::CAR => 1,
+            QuoteTypes::HOME => 2,
+            QuoteTypes::HEALTH => 3,
+            QuoteTypes::LIFE => 4,
+            QuoteTypes::BUSINESS => 5,
+            QuoteTypes::BIKE => 6,
+            QuoteTypes::YACHT => 7,
+            QuoteTypes::TRAVEL => 8,
+            QuoteTypes::PET => 9,
+            QuoteTypes::CYCLE => 10,
+            QuoteTypes::JETSKI => 11,
         };
     }
 }
