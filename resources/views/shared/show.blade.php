@@ -76,6 +76,11 @@ use App\Enums\GenericRequestEnum;
       });
     });
 </script>
+@php
+    $updatedTitles = [
+        'premium' => 'price'
+    ];
+@endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             @if ($model->modelType == quoteTypeCode::Car)
@@ -302,10 +307,10 @@ use App\Enums\GenericRequestEnum;
                                         }
                                     @endphp
                                     <label style="{{$textDecorations}}" class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
-                                        for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
+                                        for="Status Description"><b>{{ strtoupper( (array_key_exists($customTitles[$property], $updatedTitles) ? $updatedTitles[$property] : $customTitles[$property]) ) }}</b></label>
                                 @else
                                     <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
+                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper((array_key_exists($property, $updatedTitles) ? $updatedTitles[$property] : $property))) }}</b></label>
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
