@@ -180,7 +180,7 @@ class DashboardController extends Controller
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->whereIn('teams.id', $request->team_filter);
             });
-        } else if ($tplTeam != null) {
+        } elseif ($tplTeam != null) {
             $records->whereIn('users.id', function ($query) use ($tplTeam) {
                 $query->distinct()
                     ->select('users.id')
