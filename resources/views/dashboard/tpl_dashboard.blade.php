@@ -116,7 +116,7 @@ use App\Enums\PermissionsEnum;
             var excludeFilterValue = $('#excludeManualFilter option:selected').val();
             tplDashboardStatsBarChart.showLoading();
             $.ajax({
-                url: "/get-comp-filter-stats",
+                url: "/get-tpl-filter-stats",
                 type: "post",
                 data: {
                     'team_filter': teamFilterValue,
