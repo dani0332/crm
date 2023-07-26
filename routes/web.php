@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
@@ -82,7 +83,7 @@ use App\Http\Controllers\LoginController;
 Route::get('/', function () {
     return redirect('login');
 });
-if(config('constants.APP_ENV') == 'staging') {
+if(config('constants.APP_ENV') == EnvEnum::STAGING) {
     Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
     Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
 }

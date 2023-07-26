@@ -10,10 +10,6 @@ use Illuminate\Support\Facades\Session;
 class LoginController extends Controller
 {
 
-    public function __construct()
-    {
-    }
-
     /**
      * Display a listing of the resource.
      *
