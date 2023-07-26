@@ -1,7 +1,7 @@
 <script setup>
 import { useHasRole, useHasAnyRole } from '../../Composables/can';
 import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
-import moment from 'moment'
+import { useDateFormat } from '@vueuse/shared';
 
 
 defineProps({
@@ -210,7 +210,6 @@ function setQueryStringFilters() {
 
 const onTeamChange = e => {
     if (e.length == 0) {
-        console.log("all deselect");
         // filters.teams = [];
         filters.subTeams = [];
         advisorOptions.value = [];
@@ -325,7 +324,8 @@ function calculateValuesAndHighlight() {
             (advisorRetention < volumeSegmentConversion) ||
             (advisorRetention < imRetention);
 
-        let monthName = moment(item.month, 'MM').format('MMMM YY');
+        let monthName = useDateFormat(item.end_date, 'MMM YY').value;
+
         // Check if the property exists and initialize it as an array if it doesn't
         if (!avgImRetentionArr[monthName]) {
             avgImRetentionArr[monthName] = [];
@@ -505,8 +505,8 @@ td {
                 <DatePicker v-model="filters.reportDate" label="Report Date" placeholder="Select Date" size="sm"
                     model-type="yyyy-MM-dd" />
 
-                <x-input v-model="filters.batchNo" type="search" name="batch_no" label="Batch No." class="w-full"
-                    placeholder="Search by batch no." />
+                <x-input v-model="filters.batchNo" type="search" name="batch_no" label="Batch" class="w-full"
+                    placeholder="Search by batch." />
 
                 <ComboBox v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])" v-model="filters.teams"
                     label="Teams" placeholder="Search by Teams" :options="Object.keys(filterOptions.teams).map(key => ({
@@ -558,7 +558,7 @@ td {
                     <thead class="align-bottom">
                         <tr class="text-sm text-gray-600 border-b">
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Batch No.
+                                Batch
                             </th>
                             <th
                                 class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
@@ -626,10 +626,11 @@ td {
                         <tr :class="{ 'highlight-row': item.highlight }" v-for="(item, index) in reportData.data"
                             :key="index" class="border-b border-gray-200 align-top">
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.renewal_batch }}
+                                {{ item.name }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ moment(item.end_date).format('MMMM do') }}
+                                <!-- {{ moment(item.end_date).format('MMMM do') }} -->
+                                {{ useDateFormat(item.end_date, 'MMM DD').value }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.renewed }}
@@ -751,15 +752,15 @@ td {
 
             <!-- <PaginateClient
             :links="{
-              next: reportData.data.next_page_url,
-              prev: reportData.data.prev_page_url,
-              current: reportData.data.current_page,
-              from: reportData.data.from,
-              to: reportData.data.to,
-              total: reportData.data.total,
-              last: reportData.data.last_page,
+              next: page.props.reportData.next_page_url,
+              prev: page.props.reportData.prev_page_url,
+              current: page.props.reportData.current_page,
+              from: page.props.reportData.from,
+              to: page.props.reportData.to,
+              total: page.props.reportData.total,
+              last: page.props.reportData.last_page
             }"
-            :loading="reportData.loader"
+            :loading="page.props.reportData.loader"
           /> -->
 
         </div>

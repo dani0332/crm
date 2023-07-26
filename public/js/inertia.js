@@ -122,307 +122,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "./node_modules/moment/locale sync recursive ^\\.\\/.*$":
-/*!***************************************************!*\
-  !*** ./node_modules/moment/locale/ sync ^\.\/.*$ ***!
-  \***************************************************/
-/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
-
-var map = {
-	"./af": "./node_modules/moment/locale/af.js",
-	"./af.js": "./node_modules/moment/locale/af.js",
-	"./ar": "./node_modules/moment/locale/ar.js",
-	"./ar-dz": "./node_modules/moment/locale/ar-dz.js",
-	"./ar-dz.js": "./node_modules/moment/locale/ar-dz.js",
-	"./ar-kw": "./node_modules/moment/locale/ar-kw.js",
-	"./ar-kw.js": "./node_modules/moment/locale/ar-kw.js",
-	"./ar-ly": "./node_modules/moment/locale/ar-ly.js",
-	"./ar-ly.js": "./node_modules/moment/locale/ar-ly.js",
-	"./ar-ma": "./node_modules/moment/locale/ar-ma.js",
-	"./ar-ma.js": "./node_modules/moment/locale/ar-ma.js",
-	"./ar-sa": "./node_modules/moment/locale/ar-sa.js",
-	"./ar-sa.js": "./node_modules/moment/locale/ar-sa.js",
-	"./ar-tn": "./node_modules/moment/locale/ar-tn.js",
-	"./ar-tn.js": "./node_modules/moment/locale/ar-tn.js",
-	"./ar.js": "./node_modules/moment/locale/ar.js",
-	"./az": "./node_modules/moment/locale/az.js",
-	"./az.js": "./node_modules/moment/locale/az.js",
-	"./be": "./node_modules/moment/locale/be.js",
-	"./be.js": "./node_modules/moment/locale/be.js",
-	"./bg": "./node_modules/moment/locale/bg.js",
-	"./bg.js": "./node_modules/moment/locale/bg.js",
-	"./bm": "./node_modules/moment/locale/bm.js",
-	"./bm.js": "./node_modules/moment/locale/bm.js",
-	"./bn": "./node_modules/moment/locale/bn.js",
-	"./bn-bd": "./node_modules/moment/locale/bn-bd.js",
-	"./bn-bd.js": "./node_modules/moment/locale/bn-bd.js",
-	"./bn.js": "./node_modules/moment/locale/bn.js",
-	"./bo": "./node_modules/moment/locale/bo.js",
-	"./bo.js": "./node_modules/moment/locale/bo.js",
-	"./br": "./node_modules/moment/locale/br.js",
-	"./br.js": "./node_modules/moment/locale/br.js",
-	"./bs": "./node_modules/moment/locale/bs.js",
-	"./bs.js": "./node_modules/moment/locale/bs.js",
-	"./ca": "./node_modules/moment/locale/ca.js",
-	"./ca.js": "./node_modules/moment/locale/ca.js",
-	"./cs": "./node_modules/moment/locale/cs.js",
-	"./cs.js": "./node_modules/moment/locale/cs.js",
-	"./cv": "./node_modules/moment/locale/cv.js",
-	"./cv.js": "./node_modules/moment/locale/cv.js",
-	"./cy": "./node_modules/moment/locale/cy.js",
-	"./cy.js": "./node_modules/moment/locale/cy.js",
-	"./da": "./node_modules/moment/locale/da.js",
-	"./da.js": "./node_modules/moment/locale/da.js",
-	"./de": "./node_modules/moment/locale/de.js",
-	"./de-at": "./node_modules/moment/locale/de-at.js",
-	"./de-at.js": "./node_modules/moment/locale/de-at.js",
-	"./de-ch": "./node_modules/moment/locale/de-ch.js",
-	"./de-ch.js": "./node_modules/moment/locale/de-ch.js",
-	"./de.js": "./node_modules/moment/locale/de.js",
-	"./dv": "./node_modules/moment/locale/dv.js",
-	"./dv.js": "./node_modules/moment/locale/dv.js",
-	"./el": "./node_modules/moment/locale/el.js",
-	"./el.js": "./node_modules/moment/locale/el.js",
-	"./en-au": "./node_modules/moment/locale/en-au.js",
-	"./en-au.js": "./node_modules/moment/locale/en-au.js",
-	"./en-ca": "./node_modules/moment/locale/en-ca.js",
-	"./en-ca.js": "./node_modules/moment/locale/en-ca.js",
-	"./en-gb": "./node_modules/moment/locale/en-gb.js",
-	"./en-gb.js": "./node_modules/moment/locale/en-gb.js",
-	"./en-ie": "./node_modules/moment/locale/en-ie.js",
-	"./en-ie.js": "./node_modules/moment/locale/en-ie.js",
-	"./en-il": "./node_modules/moment/locale/en-il.js",
-	"./en-il.js": "./node_modules/moment/locale/en-il.js",
-	"./en-in": "./node_modules/moment/locale/en-in.js",
-	"./en-in.js": "./node_modules/moment/locale/en-in.js",
-	"./en-nz": "./node_modules/moment/locale/en-nz.js",
-	"./en-nz.js": "./node_modules/moment/locale/en-nz.js",
-	"./en-sg": "./node_modules/moment/locale/en-sg.js",
-	"./en-sg.js": "./node_modules/moment/locale/en-sg.js",
-	"./eo": "./node_modules/moment/locale/eo.js",
-	"./eo.js": "./node_modules/moment/locale/eo.js",
-	"./es": "./node_modules/moment/locale/es.js",
-	"./es-do": "./node_modules/moment/locale/es-do.js",
-	"./es-do.js": "./node_modules/moment/locale/es-do.js",
-	"./es-mx": "./node_modules/moment/locale/es-mx.js",
-	"./es-mx.js": "./node_modules/moment/locale/es-mx.js",
-	"./es-us": "./node_modules/moment/locale/es-us.js",
-	"./es-us.js": "./node_modules/moment/locale/es-us.js",
-	"./es.js": "./node_modules/moment/locale/es.js",
-	"./et": "./node_modules/moment/locale/et.js",
-	"./et.js": "./node_modules/moment/locale/et.js",
-	"./eu": "./node_modules/moment/locale/eu.js",
-	"./eu.js": "./node_modules/moment/locale/eu.js",
-	"./fa": "./node_modules/moment/locale/fa.js",
-	"./fa.js": "./node_modules/moment/locale/fa.js",
-	"./fi": "./node_modules/moment/locale/fi.js",
-	"./fi.js": "./node_modules/moment/locale/fi.js",
-	"./fil": "./node_modules/moment/locale/fil.js",
-	"./fil.js": "./node_modules/moment/locale/fil.js",
-	"./fo": "./node_modules/moment/locale/fo.js",
-	"./fo.js": "./node_modules/moment/locale/fo.js",
-	"./fr": "./node_modules/moment/locale/fr.js",
-	"./fr-ca": "./node_modules/moment/locale/fr-ca.js",
-	"./fr-ca.js": "./node_modules/moment/locale/fr-ca.js",
-	"./fr-ch": "./node_modules/moment/locale/fr-ch.js",
-	"./fr-ch.js": "./node_modules/moment/locale/fr-ch.js",
-	"./fr.js": "./node_modules/moment/locale/fr.js",
-	"./fy": "./node_modules/moment/locale/fy.js",
-	"./fy.js": "./node_modules/moment/locale/fy.js",
-	"./ga": "./node_modules/moment/locale/ga.js",
-	"./ga.js": "./node_modules/moment/locale/ga.js",
-	"./gd": "./node_modules/moment/locale/gd.js",
-	"./gd.js": "./node_modules/moment/locale/gd.js",
-	"./gl": "./node_modules/moment/locale/gl.js",
-	"./gl.js": "./node_modules/moment/locale/gl.js",
-	"./gom-deva": "./node_modules/moment/locale/gom-deva.js",
-	"./gom-deva.js": "./node_modules/moment/locale/gom-deva.js",
-	"./gom-latn": "./node_modules/moment/locale/gom-latn.js",
-	"./gom-latn.js": "./node_modules/moment/locale/gom-latn.js",
-	"./gu": "./node_modules/moment/locale/gu.js",
-	"./gu.js": "./node_modules/moment/locale/gu.js",
-	"./he": "./node_modules/moment/locale/he.js",
-	"./he.js": "./node_modules/moment/locale/he.js",
-	"./hi": "./node_modules/moment/locale/hi.js",
-	"./hi.js": "./node_modules/moment/locale/hi.js",
-	"./hr": "./node_modules/moment/locale/hr.js",
-	"./hr.js": "./node_modules/moment/locale/hr.js",
-	"./hu": "./node_modules/moment/locale/hu.js",
-	"./hu.js": "./node_modules/moment/locale/hu.js",
-	"./hy-am": "./node_modules/moment/locale/hy-am.js",
-	"./hy-am.js": "./node_modules/moment/locale/hy-am.js",
-	"./id": "./node_modules/moment/locale/id.js",
-	"./id.js": "./node_modules/moment/locale/id.js",
-	"./is": "./node_modules/moment/locale/is.js",
-	"./is.js": "./node_modules/moment/locale/is.js",
-	"./it": "./node_modules/moment/locale/it.js",
-	"./it-ch": "./node_modules/moment/locale/it-ch.js",
-	"./it-ch.js": "./node_modules/moment/locale/it-ch.js",
-	"./it.js": "./node_modules/moment/locale/it.js",
-	"./ja": "./node_modules/moment/locale/ja.js",
-	"./ja.js": "./node_modules/moment/locale/ja.js",
-	"./jv": "./node_modules/moment/locale/jv.js",
-	"./jv.js": "./node_modules/moment/locale/jv.js",
-	"./ka": "./node_modules/moment/locale/ka.js",
-	"./ka.js": "./node_modules/moment/locale/ka.js",
-	"./kk": "./node_modules/moment/locale/kk.js",
-	"./kk.js": "./node_modules/moment/locale/kk.js",
-	"./km": "./node_modules/moment/locale/km.js",
-	"./km.js": "./node_modules/moment/locale/km.js",
-	"./kn": "./node_modules/moment/locale/kn.js",
-	"./kn.js": "./node_modules/moment/locale/kn.js",
-	"./ko": "./node_modules/moment/locale/ko.js",
-	"./ko.js": "./node_modules/moment/locale/ko.js",
-	"./ku": "./node_modules/moment/locale/ku.js",
-	"./ku.js": "./node_modules/moment/locale/ku.js",
-	"./ky": "./node_modules/moment/locale/ky.js",
-	"./ky.js": "./node_modules/moment/locale/ky.js",
-	"./lb": "./node_modules/moment/locale/lb.js",
-	"./lb.js": "./node_modules/moment/locale/lb.js",
-	"./lo": "./node_modules/moment/locale/lo.js",
-	"./lo.js": "./node_modules/moment/locale/lo.js",
-	"./lt": "./node_modules/moment/locale/lt.js",
-	"./lt.js": "./node_modules/moment/locale/lt.js",
-	"./lv": "./node_modules/moment/locale/lv.js",
-	"./lv.js": "./node_modules/moment/locale/lv.js",
-	"./me": "./node_modules/moment/locale/me.js",
-	"./me.js": "./node_modules/moment/locale/me.js",
-	"./mi": "./node_modules/moment/locale/mi.js",
-	"./mi.js": "./node_modules/moment/locale/mi.js",
-	"./mk": "./node_modules/moment/locale/mk.js",
-	"./mk.js": "./node_modules/moment/locale/mk.js",
-	"./ml": "./node_modules/moment/locale/ml.js",
-	"./ml.js": "./node_modules/moment/locale/ml.js",
-	"./mn": "./node_modules/moment/locale/mn.js",
-	"./mn.js": "./node_modules/moment/locale/mn.js",
-	"./mr": "./node_modules/moment/locale/mr.js",
-	"./mr.js": "./node_modules/moment/locale/mr.js",
-	"./ms": "./node_modules/moment/locale/ms.js",
-	"./ms-my": "./node_modules/moment/locale/ms-my.js",
-	"./ms-my.js": "./node_modules/moment/locale/ms-my.js",
-	"./ms.js": "./node_modules/moment/locale/ms.js",
-	"./mt": "./node_modules/moment/locale/mt.js",
-	"./mt.js": "./node_modules/moment/locale/mt.js",
-	"./my": "./node_modules/moment/locale/my.js",
-	"./my.js": "./node_modules/moment/locale/my.js",
-	"./nb": "./node_modules/moment/locale/nb.js",
-	"./nb.js": "./node_modules/moment/locale/nb.js",
-	"./ne": "./node_modules/moment/locale/ne.js",
-	"./ne.js": "./node_modules/moment/locale/ne.js",
-	"./nl": "./node_modules/moment/locale/nl.js",
-	"./nl-be": "./node_modules/moment/locale/nl-be.js",
-	"./nl-be.js": "./node_modules/moment/locale/nl-be.js",
-	"./nl.js": "./node_modules/moment/locale/nl.js",
-	"./nn": "./node_modules/moment/locale/nn.js",
-	"./nn.js": "./node_modules/moment/locale/nn.js",
-	"./oc-lnc": "./node_modules/moment/locale/oc-lnc.js",
-	"./oc-lnc.js": "./node_modules/moment/locale/oc-lnc.js",
-	"./pa-in": "./node_modules/moment/locale/pa-in.js",
-	"./pa-in.js": "./node_modules/moment/locale/pa-in.js",
-	"./pl": "./node_modules/moment/locale/pl.js",
-	"./pl.js": "./node_modules/moment/locale/pl.js",
-	"./pt": "./node_modules/moment/locale/pt.js",
-	"./pt-br": "./node_modules/moment/locale/pt-br.js",
-	"./pt-br.js": "./node_modules/moment/locale/pt-br.js",
-	"./pt.js": "./node_modules/moment/locale/pt.js",
-	"./ro": "./node_modules/moment/locale/ro.js",
-	"./ro.js": "./node_modules/moment/locale/ro.js",
-	"./ru": "./node_modules/moment/locale/ru.js",
-	"./ru.js": "./node_modules/moment/locale/ru.js",
-	"./sd": "./node_modules/moment/locale/sd.js",
-	"./sd.js": "./node_modules/moment/locale/sd.js",
-	"./se": "./node_modules/moment/locale/se.js",
-	"./se.js": "./node_modules/moment/locale/se.js",
-	"./si": "./node_modules/moment/locale/si.js",
-	"./si.js": "./node_modules/moment/locale/si.js",
-	"./sk": "./node_modules/moment/locale/sk.js",
-	"./sk.js": "./node_modules/moment/locale/sk.js",
-	"./sl": "./node_modules/moment/locale/sl.js",
-	"./sl.js": "./node_modules/moment/locale/sl.js",
-	"./sq": "./node_modules/moment/locale/sq.js",
-	"./sq.js": "./node_modules/moment/locale/sq.js",
-	"./sr": "./node_modules/moment/locale/sr.js",
-	"./sr-cyrl": "./node_modules/moment/locale/sr-cyrl.js",
-	"./sr-cyrl.js": "./node_modules/moment/locale/sr-cyrl.js",
-	"./sr.js": "./node_modules/moment/locale/sr.js",
-	"./ss": "./node_modules/moment/locale/ss.js",
-	"./ss.js": "./node_modules/moment/locale/ss.js",
-	"./sv": "./node_modules/moment/locale/sv.js",
-	"./sv.js": "./node_modules/moment/locale/sv.js",
-	"./sw": "./node_modules/moment/locale/sw.js",
-	"./sw.js": "./node_modules/moment/locale/sw.js",
-	"./ta": "./node_modules/moment/locale/ta.js",
-	"./ta.js": "./node_modules/moment/locale/ta.js",
-	"./te": "./node_modules/moment/locale/te.js",
-	"./te.js": "./node_modules/moment/locale/te.js",
-	"./tet": "./node_modules/moment/locale/tet.js",
-	"./tet.js": "./node_modules/moment/locale/tet.js",
-	"./tg": "./node_modules/moment/locale/tg.js",
-	"./tg.js": "./node_modules/moment/locale/tg.js",
-	"./th": "./node_modules/moment/locale/th.js",
-	"./th.js": "./node_modules/moment/locale/th.js",
-	"./tk": "./node_modules/moment/locale/tk.js",
-	"./tk.js": "./node_modules/moment/locale/tk.js",
-	"./tl-ph": "./node_modules/moment/locale/tl-ph.js",
-	"./tl-ph.js": "./node_modules/moment/locale/tl-ph.js",
-	"./tlh": "./node_modules/moment/locale/tlh.js",
-	"./tlh.js": "./node_modules/moment/locale/tlh.js",
-	"./tr": "./node_modules/moment/locale/tr.js",
-	"./tr.js": "./node_modules/moment/locale/tr.js",
-	"./tzl": "./node_modules/moment/locale/tzl.js",
-	"./tzl.js": "./node_modules/moment/locale/tzl.js",
-	"./tzm": "./node_modules/moment/locale/tzm.js",
-	"./tzm-latn": "./node_modules/moment/locale/tzm-latn.js",
-	"./tzm-latn.js": "./node_modules/moment/locale/tzm-latn.js",
-	"./tzm.js": "./node_modules/moment/locale/tzm.js",
-	"./ug-cn": "./node_modules/moment/locale/ug-cn.js",
-	"./ug-cn.js": "./node_modules/moment/locale/ug-cn.js",
-	"./uk": "./node_modules/moment/locale/uk.js",
-	"./uk.js": "./node_modules/moment/locale/uk.js",
-	"./ur": "./node_modules/moment/locale/ur.js",
-	"./ur.js": "./node_modules/moment/locale/ur.js",
-	"./uz": "./node_modules/moment/locale/uz.js",
-	"./uz-latn": "./node_modules/moment/locale/uz-latn.js",
-	"./uz-latn.js": "./node_modules/moment/locale/uz-latn.js",
-	"./uz.js": "./node_modules/moment/locale/uz.js",
-	"./vi": "./node_modules/moment/locale/vi.js",
-	"./vi.js": "./node_modules/moment/locale/vi.js",
-	"./x-pseudo": "./node_modules/moment/locale/x-pseudo.js",
-	"./x-pseudo.js": "./node_modules/moment/locale/x-pseudo.js",
-	"./yo": "./node_modules/moment/locale/yo.js",
-	"./yo.js": "./node_modules/moment/locale/yo.js",
-	"./zh-cn": "./node_modules/moment/locale/zh-cn.js",
-	"./zh-cn.js": "./node_modules/moment/locale/zh-cn.js",
-	"./zh-hk": "./node_modules/moment/locale/zh-hk.js",
-	"./zh-hk.js": "./node_modules/moment/locale/zh-hk.js",
-	"./zh-mo": "./node_modules/moment/locale/zh-mo.js",
-	"./zh-mo.js": "./node_modules/moment/locale/zh-mo.js",
-	"./zh-tw": "./node_modules/moment/locale/zh-tw.js",
-	"./zh-tw.js": "./node_modules/moment/locale/zh-tw.js"
-};
-
-
-function webpackContext(req) {
-	var id = webpackContextResolve(req);
-	return __webpack_require__(id);
-}
-function webpackContextResolve(req) {
-	if(!__webpack_require__.o(map, req)) {
-		var e = new Error("Cannot find module '" + req + "'");
-		e.code = 'MODULE_NOT_FOUND';
-		throw e;
-	}
-	return map[req];
-}
-webpackContext.keys = function webpackContextKeys() {
-	return Object.keys(map);
-};
-webpackContext.resolve = webpackContextResolve;
-module.exports = webpackContext;
-webpackContext.id = "./node_modules/moment/locale sync recursive ^\\.\\/.*$";
-
-/***/ }),
-
 /***/ "./resources/js/inertia/Composables/can.js":
 /*!*************************************************!*\
   !*** ./resources/js/inertia/Composables/can.js ***!
@@ -13362,12 +13061,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _Composables_can__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../Composables/can */ "./resources/js/inertia/Composables/can.js");
 /* harmony import */ var use_vue3_easy_data_table__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! use-vue3-easy-data-table */ "./node_modules/use-vue3-easy-data-table/dist/use-vue3-easy-data-table.es.js");
-/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! moment */ "./node_modules/moment/moment.js");
-/* harmony import */ var moment__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(moment__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var _vueuse_shared__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @vueuse/shared */ "./node_modules/@vueuse/shared/index.mjs");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
 /* unplugin-vue-components disabled */function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
@@ -13399,15 +13097,15 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
   setup: function setup(__props, _ref) {
     var __expose = _ref.expose;
     __expose();
-    var loaders = (0,vue__WEBPACK_IMPORTED_MODULE_3__.reactive)({
+    var loaders = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
       table: false,
       advisorsOptions: false,
       subTeamsOptions: false
     });
-    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.usePage)();
-    var dataTableRef = (0,vue__WEBPACK_IMPORTED_MODULE_3__.ref)();
-    var isMounted = (0,vue__WEBPACK_IMPORTED_MODULE_3__.ref)(false);
-    var isDirty = (0,vue__WEBPACK_IMPORTED_MODULE_3__.ref)(false);
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.usePage)();
+    var dataTableRef = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)();
+    var isMounted = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(false);
+    var isDirty = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(false);
     var _usePagination = (0,use_vue3_easy_data_table__WEBPACK_IMPORTED_MODULE_1__.usePagination)(dataTableRef),
       currentPageFirstIndex = _usePagination.currentPageFirstIndex,
       currentPageLastIndex = _usePagination.currentPageLastIndex,
@@ -13423,21 +13121,21 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     var updateRowsPerPageSelect = function updateRowsPerPageSelect(e) {
       updateRowsPerPageActiveOption(Number(e.target.value));
     };
-    var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_3__.ref)(Object.keys(page.props.filterOptions.advisors).map(function (key) {
+    var advisorOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(Object.keys(page.props.filterOptions.advisors).map(function (key) {
       return {
         value: key,
         label: page.props.filterOptions.advisors[key]
       };
     }));
     var defaultAdvisorOptions = advisorOptions;
-    var subTeamsOptions = (0,vue__WEBPACK_IMPORTED_MODULE_3__.ref)(Object.keys(page.props.filterOptions.subTeams).map(function (key) {
+    var subTeamsOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(Object.keys(page.props.filterOptions.subTeams).map(function (key) {
       return {
         value: key,
         label: page.props.filterOptions.subTeams[key].toUpperCase()
       };
     }));
     var defaultSubTeamsOptions = subTeamsOptions;
-    var params = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_5__.useUrlSearchParams)('history');
+    var params = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_4__.useUrlSearchParams)('history');
     var tableHeader = [{
       text: 'Batch No.',
       value: 'renewal_batch'
@@ -13484,7 +13182,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       text: 'Monthly Retention',
       value: 'monthly_retention'
     }];
-    var filters = (0,vue__WEBPACK_IMPORTED_MODULE_3__.reactive)({
+    var filters = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
       reportDate: '',
       batchNo: '',
       subTeams: [],
@@ -13498,7 +13196,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         isDirty.value = false;
         filters.page = 1;
         var payLoad = cleanFilters(filters);
-        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.visit('/reports/renewal-report', {
+        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.visit('/reports/renewal-report', {
           method: 'get',
           data: _objectSpread(_objectSpread(_objectSpread(_objectSpread({}, payLoad), payLoad.advisors && {
             advisors: Array.isArray(payLoad.advisors) ? payLoad.advisors : [payLoad.advisors]
@@ -13525,7 +13223,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         filters.reportDate = page.props.defaultFilters.reportDate;
       }
       isDirty.value = false;
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.visit('/reports/renewal-report', {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.visit('/reports/renewal-report', {
         method: 'get',
         data: {
           reportDate: filters.reportDate,
@@ -13559,7 +13257,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     }
     var onTeamChange = function onTeamChange(e) {
       if (e.length == 0) {
-        console.log("all deselect");
         // filters.teams = [];
         filters.subTeams = [];
         advisorOptions.value = [];
@@ -13571,7 +13268,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       }
       loaders.advisorOptions = true;
       loaders.subTeamsOptions = true;
-      axios__WEBPACK_IMPORTED_MODULE_6__["default"].post("/reports/fetch-subteams-advisor-by-team", {
+      axios__WEBPACK_IMPORTED_MODULE_5__["default"].post("/reports/fetch-subteams-advisor-by-team", {
         teamIds: Array.isArray(e) ? e : [e]
       }).then(function (res) {
         if (res.data.advisors.length > 0) {
@@ -13626,7 +13323,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         item.rawRetention = rawRetention;
         item.rowSpan = currentRowSpan;
         item.highlight = advisorRetention < valueSegmentConversion || advisorRetention < volumeSegmentConversion || advisorRetention < imRetention;
-        var monthName = moment__WEBPACK_IMPORTED_MODULE_2___default()(item.month, 'MM').format('MMMM YY');
+        var monthName = (0,_vueuse_shared__WEBPACK_IMPORTED_MODULE_6__.useDateFormat)(item.end_date, 'MMM YY').value;
+
         // Check if the property exists and initialize it as an array if it doesn't
         if (!avgImRetentionArr[monthName]) {
           avgImRetentionArr[monthName] = [];
@@ -13673,7 +13371,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
       monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
     }
-    (0,vue__WEBPACK_IMPORTED_MODULE_3__.onMounted)(function () {
+    (0,vue__WEBPACK_IMPORTED_MODULE_2__.onMounted)(function () {
       calculateValuesAndHighlight();
       if (page.props.defaultFilters && !params['page']) {
         filters.reportDate = page.props.defaultFilters.reportDate;
@@ -13719,7 +13417,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       }
       return monthlyAverages;
     }
-    (0,vue__WEBPACK_IMPORTED_MODULE_3__.watch)();
+    (0,vue__WEBPACK_IMPORTED_MODULE_2__.watch)();
     var __returned__ = {
       loaders: loaders,
       page: page,
@@ -13794,8 +13492,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       get useRowsPerPage() {
         return use_vue3_easy_data_table__WEBPACK_IMPORTED_MODULE_1__.useRowsPerPage;
       },
-      get moment() {
-        return (moment__WEBPACK_IMPORTED_MODULE_2___default());
+      get useDateFormat() {
+        return _vueuse_shared__WEBPACK_IMPORTED_MODULE_6__.useDateFormat;
       }
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
@@ -34808,7 +34506,7 @@ var _hoisted_11 = {
 };
 var _hoisted_12 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("th", {
   "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-}, " Batch No. ", -1 /* HOISTED */);
+}, " Batch ", -1 /* HOISTED */);
 var _hoisted_13 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("th", {
   "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28"
 }, " Week Ending ", -1 /* HOISTED */);
@@ -34931,7 +34629,7 @@ var _hoisted_50 = {
 };
 var _hoisted_51 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("div", {
   "class": "flex flex-wrap justify-between items-center gap-2 py-6"
-}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <div>\n                <select\n                    class=\"form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed\"\n                    @change=\"updateRowsPerPageSelect\">\n                    <option v-for=\"item in rowsPerPageOptions\" :key=\"item\" :selected=\"item === rowsPerPageActiveOption\"\n                        :value=\"item\">\n                        {{ item }} rows per page\n                    </option>\n                </select>\n            </div> "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <div class=\"text-xs lining-nums text-gray-700 text-center\">\n                Now displaying: {{ currentPageFirstIndex }} ~\n                {{ currentPageLastIndex }} of {{ clientItemsLength }}\n            </div>\n\n            <div class=\"flex gap-2\">\n                <x-button size=\"sm\" icon-left=\"prev\" :disabled=\"isFirstPage\" @click=\"prevPage\">\n                    Prev\n                </x-button>\n                <x-button size=\"sm\" icon-right=\"next\" :disabled=\"isLastPage\" @click=\"nextPage\">\n                    Next\n                </x-button>\n            </div> "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <PaginateClient\n            :links=\"{\n              next: reportData.data.next_page_url,\n              prev: reportData.data.prev_page_url,\n              current: reportData.data.current_page,\n              from: reportData.data.from,\n              to: reportData.data.to,\n              total: reportData.data.total,\n              last: reportData.data.last_page,\n            }\"\n            :loading=\"reportData.loader\"\n          /> ")], -1 /* HOISTED */);
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <div>\n                <select\n                    class=\"form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed\"\n                    @change=\"updateRowsPerPageSelect\">\n                    <option v-for=\"item in rowsPerPageOptions\" :key=\"item\" :selected=\"item === rowsPerPageActiveOption\"\n                        :value=\"item\">\n                        {{ item }} rows per page\n                    </option>\n                </select>\n            </div> "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <div class=\"text-xs lining-nums text-gray-700 text-center\">\n                Now displaying: {{ currentPageFirstIndex }} ~\n                {{ currentPageLastIndex }} of {{ clientItemsLength }}\n            </div>\n\n            <div class=\"flex gap-2\">\n                <x-button size=\"sm\" icon-left=\"prev\" :disabled=\"isFirstPage\" @click=\"prevPage\">\n                    Prev\n                </x-button>\n                <x-button size=\"sm\" icon-right=\"next\" :disabled=\"isLastPage\" @click=\"nextPage\">\n                    Next\n                </x-button>\n            </div> "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" <PaginateClient\n            :links=\"{\n              next: page.props.reportData.next_page_url,\n              prev: page.props.reportData.prev_page_url,\n              current: page.props.reportData.current_page,\n              from: page.props.reportData.from,\n              to: page.props.reportData.to,\n              total: page.props.reportData.total,\n              last: page.props.reportData.last_page\n            }\"\n            :loading=\"page.props.reportData.loader\"\n          /> ")], -1 /* HOISTED */);
 
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.Head;
@@ -34968,9 +34666,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         type: "search",
         name: "batch_no",
-        label: "Batch No.",
+        label: "Batch",
         "class": "w-full",
-        placeholder: "Search by batch no."
+        placeholder: "Search by batch."
       }, null, 8 /* PROPS */, ["modelValue"]), $setup.hasAnyRole([$setup.rolesEnum.SeniorManagement, $setup.rolesEnum.Accounts]) ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_ComboBox, {
         key: 0,
         modelValue: $setup.filters.teams,
@@ -35053,7 +34751,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         'highlight-row': item.highlight
       }, "border-b border-gray-200 align-top"]),
       key: index
-    }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.renewal_batch), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.moment(item.end_date).format('MMMM do')), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.renewed), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.total_allocated_leads), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.car_sold), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.uncontactable), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) "), item.total_allocated_leads == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_35, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) + parseInt(item.uncontactable))), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", {
+    }, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.name), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_29, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" {{ moment(item.end_date).format('MMMM do') }} "), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)($setup.useDateFormat(item.end_date, 'MMM DD').value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.renewed), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.total_allocated_leads), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.car_sold), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.uncontactable), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)(" Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) "), item.total_allocated_leads == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_35, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("p", _hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) + parseInt(item.uncontactable))), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", {
       "class": (0,vue__WEBPACK_IMPORTED_MODULE_3__.normalizeClass)([item.advisorRetentionClass, "x-table-cell px-3 py-4 align-middle"])
     }, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.advisorRetention) + " % ", 3 /* TEXT, CLASS */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_37, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.valueSegmentConversion) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.volumeSegmentConversion) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_39, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.valueSegmentConversion)).toFixed(2)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_40, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.volumeSegmentConversion)).toFixed(2)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_41, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.imRetention) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("td", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2)) + " %", 1 /* TEXT */)]), $setup.hasRole($setup.rolesEnum.CarAdvisor) != true ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("td", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(item.rawRetention) + " %", 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_3__.createCommentVNode)("v-if", true), item.rowSpan > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementBlock)("td", {
       key: 1,

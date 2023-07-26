@@ -35,6 +35,8 @@ class RenewalBatchReportService extends BaseService
             ->select(
                 'car_quote_request.renewal_batch',
                 'renewal_batches.end_date',
+                'renewal_batches.id',
+                'renewal_batches.name',
                 DB::raw('MONTH(renewal_batches.end_date) month')
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
@@ -45,7 +47,6 @@ class RenewalBatchReportService extends BaseService
             ->orderBy('renewal_batches.end_date');
 
         $query = $this->applyFilters($query, $request->all());
-        // dd($query->get()->toArray());
 
         return $query->paginate(15)
             ->withQueryString();
@@ -180,7 +181,7 @@ class RenewalBatchReportService extends BaseService
         // batch no filter
         $batchNo = isset($filters->batchNo) ? $filters->batchNo : null;
         if ($batchNo) {
-            $query->where('renewal_batches.id', intval($batchNo));
+            $query->where('renewal_batches.name', 'like' , '%'.$batchNo.'%');
         } else {
             $query->whereIn('car_quote_request.renewal_batch', $renewalBatches);
         }

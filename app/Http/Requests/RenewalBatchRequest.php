@@ -3,8 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\RolesEnum;
-use App\Models\Rule;
-use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -58,7 +57,7 @@ class RenewalBatchRequest extends FormRequest
                         in_array($i, $optionalSlabsId)
                     ) ?
                         ['sometimes', 'nullable'] : ($previousSlabIndex === 0 ? ['required', 'numeric'] :
-                            ['required', 'numeric', 'gt:' . $slabArray[$previousSlabIndex][$teamId]['Max']]
+                            ['required', 'numeric', 'gt:' . $slabArray[$previousSlabIndex][$teamId]['Max'], 'lt:' . ($slabArray[$previousSlabIndex][$teamId]['Max'] + 2)]
                         );
 
                     $rules['slab.' . $i . '.' . $teamId . '.Min'] = $flexRequired;
@@ -86,7 +85,8 @@ class RenewalBatchRequest extends FormRequest
         $simpleRules = [
             'name' => [
                 'required',
-                'max:240'
+                'max:240',
+                Rule::unique('renewal_quote_processes', 'batch')->ignore($this->id), // Replace $yourModel with your actual model instance.
             ],
             'start_date' => [
                 'required',

@@ -180,7 +180,7 @@ class RenewalBatchController extends Controller
                 ->pluck('users.id')
                 ->toArray();
 
-            $lastBatchSlabs = $renewalBatch->slabs()->get()->groupBy('pivot.slab_id');
+            $lastBatchSlabs = $renewalBatch->slabs()->orderBy('id')->get()->groupBy('pivot.slab_id');
 
             $lastBatchSlabs = $lastBatchSlabs->map(function($lastBatchSlab){
                 return $lastBatchSlab->keyBy('pivot.team_id');
@@ -194,7 +194,7 @@ class RenewalBatchController extends Controller
             ->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST)
             ->get();
 
-        $slabs = Slab::select(['id', 'title'])->orderByDesc('id')->get();
+        $slabs = Slab::select(['id', 'title'])->orderBy('id')->get();
 
         return
         [

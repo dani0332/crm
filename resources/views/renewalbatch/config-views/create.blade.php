@@ -65,8 +65,8 @@
                                                         @php
                                                             $slabsCount = count($slabs);
                                                         @endphp
-                                                        @foreach ($slabs as $slab)
-                                                            @if ($slabsCount <= ($team->slabs_count ?: 0))
+                                                        @foreach ($slabs as $key => $slab)
+                                                            @if ($key < ($team->slabs_count ?: 0))
                                                                 <td>
                                                                     <div class="form-row">
                                                                         <div class="col">
@@ -74,7 +74,7 @@
                                                                                 name="slab[{{ $slab->id }}][{{ $team->id }}][Min]"
                                                                                 class="form-control" placeholder="min"
                                                                                 min="0" max="100"
-                                                                                value="{{ !empty($lastBatchSlabs) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['min'] : old("slab.$slab->id.$team->id.Min") }}"
+                                                                                value="{{ !empty($lastBatchSlabs) && isset($lastBatchSlabs[$slab->id][$team->id]) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['min'] : old("slab.$slab->id.$team->id.Min") }}"
                                                                                 required>
                                                                         </div>
                                                                         <div class="col">
@@ -82,7 +82,7 @@
                                                                                 name="slab[{{ $slab->id }}][{{ $team->id }}][Max]"
                                                                                 class="form-control" placeholder="max"
                                                                                 min="0" max="100"
-                                                                                value="{{ !empty($lastBatchSlabs) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['max'] : old("slab.$slab->id.$team->id.Max") }}"
+                                                                                value="{{ !empty($lastBatchSlabs) && isset($lastBatchSlabs[$slab->id][$team->id]) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['max'] : old("slab.$slab->id.$team->id.Max") }}"
                                                                                 required>
                                                                         </div>
                                                                     </div>
