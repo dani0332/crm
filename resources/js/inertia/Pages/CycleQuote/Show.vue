@@ -202,6 +202,11 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
           </div>
+
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">PARENT CDB ID</dt>
+                <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+            </div>
         </dl>
       </div>
 
