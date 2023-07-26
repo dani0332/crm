@@ -66,6 +66,7 @@ use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\LoginController;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +82,11 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
+if(config('constants.APP_ENV') == 'staging') {
+    Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
+    Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
+}
+
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
