@@ -41,7 +41,7 @@ class RenewalBatchReportService extends BaseService
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', '=', 'users.id')
-            ->join('renewal_batches', 'renewal_batches.id', '=', 'car_quote_request.renewal_batch')
+            ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.renewal_batch')
             ->orderBy('renewal_batches.end_date');
@@ -111,11 +111,26 @@ class RenewalBatchReportService extends BaseService
             }, []);
         }
 
+        $batches = RenewalBatch::query()
+            ->select('name', 'start_date', 'end_date', 'id')
+            ->orderBy('id')
+            ->get()
+            ->keyBy('name')
+            ->map(function ($batch) {
+                $dateFormat = config('constants.DATE_DISPLAY_FORMAT');
+                $start_date = Carbon::parse($batch->start_date)->format($dateFormat);
+                $end_date = Carbon::parse($batch->end_date)->format($dateFormat);
+
+                return $batch->name.'-('.$start_date.' to '.$end_date.')';
+            })
+            ->toArray();
+
         return [
             'advisors'  =>  $carAdvisors,
             'segments'  =>  $segments,
             'subTeams'  =>  $authUserSubTeams,
-            'teams'     =>  $authUserTeams
+            'teams'     =>  $authUserTeams,
+            'batches'   =>  $batches,
         ];
     }
 
@@ -131,7 +146,7 @@ class RenewalBatchReportService extends BaseService
         $filters = (object) $filters;
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $authUserId = auth()->id();
-        $renewalBatches = RenewalBatch::select('id')->pluck('id')->toArray();
+        $renewalBatches = RenewalBatch::select('name')->pluck('name')->toArray();
         /**
          * check auth user roles
          */
@@ -181,7 +196,7 @@ class RenewalBatchReportService extends BaseService
         // batch no filter
         $batchNo = isset($filters->batchNo) ? $filters->batchNo : null;
         if ($batchNo) {
-            $query->where('renewal_batches.name', 'like' , '%'.$batchNo.'%');
+            $query->whereIn('car_quote_request.renewal_batch', $batchNo);
         } else {
             $query->whereIn('car_quote_request.renewal_batch', $renewalBatches);
         }

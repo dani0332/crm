@@ -13184,7 +13184,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     }];
     var filters = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
       reportDate: '',
-      batchNo: '',
+      batchNo: [],
       subTeams: [],
       segment: '',
       advisors: [],
@@ -34635,7 +34635,6 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.Head;
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-divider");
   var _component_DatePicker = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_1__["default"];
-  var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-input");
   var _component_ComboBox = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_0__["default"];
   var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-select");
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-button");
@@ -34659,17 +34658,22 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         placeholder: "Select Date",
         size: "sm",
         "model-type": "yyyy-MM-dd"
-      }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_x_input, {
+      }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_ComboBox, {
         modelValue: $setup.filters.batchNo,
         "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
           return $setup.filters.batchNo = $event;
         }),
-        type: "search",
-        name: "batch_no",
-        label: "Batch",
-        "class": "w-full",
-        placeholder: "Search by batch."
-      }, null, 8 /* PROPS */, ["modelValue"]), $setup.hasAnyRole([$setup.rolesEnum.SeniorManagement, $setup.rolesEnum.Accounts]) ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_ComboBox, {
+        label: "Batch Number",
+        placeholder: "Search by Batch Number",
+        options: Object.keys($props.filterOptions.batches).map(function (key) {
+          return {
+            value: key,
+            label: $props.filterOptions.batches[key]
+          };
+        }),
+        "max-limit": 15,
+        "deselect-all": ""
+      }, null, 8 /* PROPS */, ["modelValue", "options"]), $setup.hasAnyRole([$setup.rolesEnum.SeniorManagement, $setup.rolesEnum.Accounts]) ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_ComboBox, {
         key: 0,
         modelValue: $setup.filters.teams,
         "onUpdate:modelValue": [_cache[2] || (_cache[2] = function ($event) {

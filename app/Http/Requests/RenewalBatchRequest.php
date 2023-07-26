@@ -86,8 +86,7 @@ class RenewalBatchRequest extends FormRequest
             'name' => [
                 'required',
                 'max:240',
-                Rule::unique('renewal_quote_processes', 'batch')->ignore($this->id), // Replace $yourModel with your actual model instance.
-                Rule::unique('renewal_batches', 'name')->ignore($this->id), // Replace $yourModel with your actual model instance.
+                Rule::unique('renewal_quote_processes', 'batch')->ignore($this->id),
             ],
             'start_date' => [
                 'required',
@@ -120,5 +119,15 @@ class RenewalBatchRequest extends FormRequest
 
         $finalRulesSet = array_merge($rules, $simpleRules);
         return $finalRulesSet;
+    }
+
+    /**
+     * @return array|string[]
+     */
+    public function messages(): array
+    {
+        return [
+            'name.unique' => 'Batch :attribute is already taken.',
+        ];
     }
 }

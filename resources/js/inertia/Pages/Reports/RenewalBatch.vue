@@ -128,7 +128,7 @@ const tableHeader = [
 
 const filters = reactive({
     reportDate: '',
-    batchNo: '',
+    batchNo: [],
     subTeams: [],
     segment: '',
     advisors: [],
@@ -505,8 +505,19 @@ td {
                 <DatePicker v-model="filters.reportDate" label="Report Date" placeholder="Select Date" size="sm"
                     model-type="yyyy-MM-dd" />
 
-                <x-input v-model="filters.batchNo" type="search" name="batch_no" label="Batch" class="w-full"
-                    placeholder="Search by batch." />
+                <ComboBox
+                    v-model="filters.batchNo"
+                    label="Batch Number"
+                    placeholder="Search by Batch Number"
+                    :options="
+                        Object.keys(filterOptions.batches).map(key => ({
+                        value: key,
+                        label: filterOptions.batches[key],
+                        }))
+                    "
+                    :max-limit="15"
+                    deselect-all
+                />
 
                 <ComboBox v-if="hasAnyRole([rolesEnum.SeniorManagement, rolesEnum.Accounts])" v-model="filters.teams"
                     label="Teams" placeholder="Search by Teams" :options="Object.keys(filterOptions.teams).map(key => ({
