@@ -87,6 +87,7 @@ class RenewalBatchRequest extends FormRequest
                 'required',
                 'max:240',
                 Rule::unique('renewal_quote_processes', 'batch')->ignore($this->id), // Replace $yourModel with your actual model instance.
+                Rule::unique('renewal_batches', 'name')->ignore($this->id), // Replace $yourModel with your actual model instance.
             ],
             'start_date' => [
                 'required',
