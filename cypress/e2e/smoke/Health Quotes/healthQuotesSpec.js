@@ -52,7 +52,7 @@ describe('Health qoutes', () => {
     commonPage.getDropdownByName('GENDER ', 'Male')
     healthLeadPage.getSubmitButton()
     commonPage.verifyURL('/quotes/health')
-    cy.wait(10000)
+    cy.wait(5000)
     cy.url().then(data => {
       cy.log("Data logged", data)
       leadUrl = `/${data.substring(data.lastIndexOf('quotes/health/'))}`
