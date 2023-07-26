@@ -698,6 +698,9 @@
                             <input type="hidden" id="isManualAllocationAllowed" name="isManualAllocationAllowed"
                                 value="{{ $isManualAllocationAllowed }}">
                         </form>
+                        @php
+                            $updatedTitles = ['premium' => 'price'];
+                        @endphp
                         <table id="dtBasicExample" class="table-striped jambo_table table" style="table-layout: fixed;"
                             width="100%">
                             <thead>
@@ -729,9 +732,9 @@
                                                     <th data-type="{{ explode('|', $value)[1] }}" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
                                                         style="width: 180px !important; {{$textDecorations}}">
                                                         @if (strpos($value, 'title'))
-                                                            {{ strtoupper($customTitles[$property]) }}
+                                                            {{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property])) }}
                                                         @else
-                                                            {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                            {{ str_replace('_', ' ', strtoupper((array_key_exists(strtolower($property), $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}
                                                         @endif
                                                     </th>
                                                 @endif
@@ -741,9 +744,9 @@
                                                 <th data-type="{{ explode('|', $value)[1] }}"
                                                     style="width: 180px !important">
                                                     @if (strpos($value, 'title'))
-                                                        {{ strtoupper($customTitles[$property]) }}
+                                                        {{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property])) }}
                                                     @else
-                                                        {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                        {{ str_replace('_', ' ', strtoupper((array_key_exists($property, $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}
                                                     @endif
                                                 </th>
                                             @endif

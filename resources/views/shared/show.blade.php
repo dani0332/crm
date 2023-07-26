@@ -307,10 +307,10 @@ use App\Enums\GenericRequestEnum;
                                         }
                                     @endphp
                                     <label style="{{$textDecorations}}" class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
-                                        for="Status Description"><b>{{ strtoupper( (array_key_exists($customTitles[$property], $updatedTitles) ? $updatedTitles[$property] : $customTitles[$property]) ) }}</b></label>
+                                        for="Status Description"><b>{{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property]) ) }}</b></label>
                                 @else
                                     <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper((array_key_exists($property, $updatedTitles) ? $updatedTitles[$property] : $property))) }}</b></label>
+                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper((array_key_exists(strtolower($property), $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}</b></label>
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))

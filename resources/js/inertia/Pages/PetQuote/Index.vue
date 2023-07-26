@@ -75,7 +75,7 @@ const tableHeader = [
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'TYPE OF PET', value: 'type_of_pet' },
   { text: 'BREED OF PET', value: 'breed_of_pet1' },

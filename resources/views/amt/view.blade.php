@@ -615,7 +615,7 @@
                                 <th>Last Name</th>
                                 <th>Lead Status</th>
                                 <th>Advisor</th>
-                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Premium</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Price</th>@endif
                                 <th>Company Name</th>
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Premium</th>@endif
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Expiry Date</th>@endif
