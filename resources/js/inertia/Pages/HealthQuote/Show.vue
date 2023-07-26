@@ -1636,6 +1636,16 @@ onMounted(() => {
             Download PDF
           </x-button>
 
+          <!-- hide create quote button for rm deployment -->
+          <x-button
+            size="sm"
+            color="primary"
+            v-show="false"
+            @click.prevent="modals.createPlan = true"
+          >
+            Create Quote
+          </x-button>
+
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"

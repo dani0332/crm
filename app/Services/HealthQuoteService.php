@@ -1222,7 +1222,7 @@ class HealthQuoteService extends BaseService
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
         $quote->load(['advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
