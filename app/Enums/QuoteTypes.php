@@ -27,13 +27,17 @@ enum QuoteTypes: string
     public static function getId(self $value): int
     {
         return match ($value) {
-            QuoteTypes::LIFE => 4,
-            QuoteTypes::BIKE => 6,
-            QuoteTypes::CYCLE => 10,
-            QuoteTypes::PET => 9,
-            QuoteTypes::YACHT => 7,
-            QuoteTypes::JETSKI => 11,
             QuoteTypes::CAR => 1,
+            QuoteTypes::HOME => 2,
+            QuoteTypes::HEALTH => 3,
+            QuoteTypes::LIFE => 4,
+            QuoteTypes::BUSINESS => 5,
+            QuoteTypes::BIKE => 6,
+            QuoteTypes::YACHT => 7,
+            QuoteTypes::TRAVEL => 8,
+            QuoteTypes::PET => 9,
+            QuoteTypes::CYCLE => 10,
+            QuoteTypes::JETSKI => 11,
         };
     }
 }
