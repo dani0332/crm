@@ -1,5 +1,8 @@
 @extends('layouts.app_livewire')
 @section('title','TPL Dashboard')
+@php
+use App\Enums\PermissionsEnum;
+@endphp
 @section('content')
 @push('scripts')
 <meta name="csrf-token" content="{{ csrf_token() }}" />
@@ -196,7 +199,7 @@
 
 <div>
     <div class="flex gap-4 justify-end mb-4">
-        @can('view-teams-filters')
+        @can(PermissionsEnum::ViewTeamsFilters)
             <div class="md:w-1/4">
                 <label>Teams</label>
                 <select multiple name="teams[]" id="team-filter">
