@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
-            AddPersonalLobsProducts::class
+            AddPersonalLobsProducts::class,
+            addTeamThresholdViewPermission::class,
         ]);
     }
 }
