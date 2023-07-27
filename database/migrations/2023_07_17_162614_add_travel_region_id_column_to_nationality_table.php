@@ -21,7 +21,6 @@ class AddTravelRegionIdColumnToNationalityTable extends Migration
             }
         });
     }
-    
 
     /**
      * Reverse the migrations.
@@ -30,6 +29,6 @@ class AddTravelRegionIdColumnToNationalityTable extends Migration
      */
     public function down()
     {
-       
+
     }
 }

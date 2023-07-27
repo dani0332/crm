@@ -45,14 +45,14 @@ describe('Health qoutes', () => {
     commonPage.getTextFieldByName('PREFERENCE ', healthLeadData.healthData.reference)
     commonPage.getTextFieldByName('DETAILS ', healthLeadData.healthData.details)
     commonPage.getDropdownByName('LEAD TYPE ', 'Individual')
-    commonPage.getDropdownByName('CURRENTLY INSURED WITH ', 'BUPA')
+    commonPage.getDropdownByName('CURRENTLY INSURED WITH ', 'Abu Dhabi National Takaful')
     commonPage.getDropdownByName('MARITAL STATUS ', 'Single')
     commonPage.getDropdownByName('MEMBER CATEGORY ', 'Employee')
     commonPage.getDropdownByName('SALARY BAND ', 'More than AED 4000')
     commonPage.getDropdownByName('GENDER ', 'Male')
     healthLeadPage.getSubmitButton()
     commonPage.verifyURL('/quotes/health')
-    cy.wait(10000)
+    cy.wait(5000)
     cy.url().then(data => {
       cy.log("Data logged", data)
       leadUrl = `/${data.substring(data.lastIndexOf('quotes/health/'))}`
