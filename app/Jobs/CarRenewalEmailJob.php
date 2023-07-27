@@ -19,27 +19,26 @@ class CarRenewalEmailJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 3;
-    public $timeout = 15;
-    public $backoff = 300;
-    private $lead = null;
+    public int $tries = 3;
+    public int $timeout = 15;
+    public int $backoff = 300;
+    private mixed $lead = null;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($lead)
+    public function __construct(mixed $lead)
     {
         $this->lead = $lead;
+        $this->onQueue('lmsEmails');
     }
 
     /**
      * Execute the job.
-     *
-     * @return void
      */
-    public function handle(EmailDataService $emailDataService, LeadAllocationService $leadAllocationService)
+    public function handle(EmailDataService $emailDataService, LeadAllocationService $leadAllocationService): void
     {
         info('sendRenewalLeadEmail -- start');
 
