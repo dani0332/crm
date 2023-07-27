@@ -645,9 +645,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
-									@if(! auth()->user()->hasRole(RolesEnum::PA))
-										<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
-									@endif
+                                    @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] || $access['carAdvisorCanEditPaymentCancelledRefund'])
+                                        <button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                        <button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+                                    @endif
 								</td>
 							</tr>
 							<tr>
@@ -953,8 +955,10 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 								<td valign="top"></td>
 								<td align="right">
-									@if(! auth()->user()->hasRole(RolesEnum::PA))
+									@if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] || $access['carAdvisorCanEditPaymentCancelledRefund'])
 										<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
 									@endif
 								</td>
 							</tr>
@@ -1020,9 +1024,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 										</tr>
 										<tr>
 											<td colspan="4" align="right">
-												@if(! auth()->user()->hasRole(RolesEnum::PA))
-													<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
-												@endif
+                                                    @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit']|| $access['carAdvisorCanEditPaymentCancelledRefund'])
+                                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                                    @endif
 											</td>
 										</tr>
 										<tr>
