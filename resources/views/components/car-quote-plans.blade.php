@@ -278,6 +278,16 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     data-websiteURL="{{$websiteURL}}"
                                     >Copy</button>
                                 @endif
+								{{-- tabby--functionality hidden  --}}
+								{{-- @if($quotePlan->providerCode == InsuranceProvidersEnum::RSA)
+									<button
+									class="btn btn-success btn-sm enable-bnpl"
+									data-planId="{{$quotePlan->id}}"
+									data-quoteUUId="{{$record->uuid}}"
+									{{ $quotePlan->isPayLaterActive ? 'disabled' : '' }}
+									>Enable BNPL</button>
+									@endif --}}
+                              
 
                                 @php
                                     $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
@@ -305,17 +315,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                         Change Insurer
                                     </button>
                                 @endif
-
-                            </td>
-								@if($quotePlan->providerCode == InsuranceProvidersEnum::RSA)
-								<button
-								class="btn btn-success btn-sm enable-tabby"
-								data-planId="{{$quotePlan->id}}"
-								data-quoteUUId="{{$record->uuid}}"
-								{{ $quotePlan->isPayLaterActive ? 'disabled' : '' }}
-								>Enable Tabby</button>
-								@endif
-                                </td>
+							</td>
 						</tr>
 						@endforeach
 					</tbody>
