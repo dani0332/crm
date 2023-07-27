@@ -1,3 +1,4 @@
+@inject('crudService', 'App\Services\CRUDService')
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -294,11 +295,11 @@
                 $quotePlan->policyFee = $policyFee;
                 $plans[$quotePlan->id] = $quotePlan;
 
-                // Basma Price Included for Emirate Visa Dubai
-                if( $quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI){
-                    $quotePlan->total += (int) \App\Models\ApplicationStorage::where('key_name', 'BASMA_PRICE')->value('value') ?? 0;
-                }
             }
+
+            // Add Basma Calculations
+            $quotePlan->discountPremium += $crudService->getBasmaPrice($quote);
+            $quotePlan->total += $crudService->getBasmaPrice($quote);
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
