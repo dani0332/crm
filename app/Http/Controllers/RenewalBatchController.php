@@ -34,14 +34,12 @@ class RenewalBatchController extends Controller
             return DataTables::of($gridData)
                 ->addIndexColumn()
                 ->addColumn('action', function ($gridData) {
-                    // $btn =   '<a href="#" data-id="'.$gridData->id.'" class="btn edit btn-secondary">Edit</a>';
-                    // return $btn;
                 })
                 ->rawColumns(['action'])
                 ->make(true);
         }
 
-        return view('renewalBatch.index');
+        return view('renewalbatch.index');
     }
 
     /**
