@@ -146,7 +146,7 @@
                                     name: "id",
                                     render: function(data, type, row, meta) {
                                         if (row.quote_status_id !=
-                                            '{{ QuoteStatusEnum::TransactionApproved }}') {
+                                            '{{ QuoteStatusEnum::TransactionApproved }}' || isLeadPool) {
                                             return (
                                                 '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
                                                 data + '">'
@@ -365,6 +365,7 @@
                 changeMonth: true,
                 changeYear: true,
             });
+            $('.date-search-field').prop('readonly', true);
         });
         var ENDPOINT = "{{ url('/') }}";
         var page;

@@ -33,7 +33,6 @@ const quoteForm = useForm({
   dob: props.quote?.dob
     ? props.quote?.dob.split('-').reverse().join('-')
     : null,
-  premium: props.quote?.premium || null,
   policy_number: props.quote?.policy_number || null,
   preference: props.quote?.preference || '',
   details: props.quote?.details || '',
@@ -148,10 +147,6 @@ function onSubmit(isValid) {
             :rules="[isRequired]"
             class="w-full"
           />
-        </x-field>
-
-        <x-field label="PREMIUM">
-          <x-input v-model="quoteForm.premium" class="w-full" />
         </x-field>
 
         <x-field label="POLICY NUMBER">

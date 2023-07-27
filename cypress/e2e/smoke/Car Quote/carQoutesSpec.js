@@ -44,7 +44,7 @@ describe('Car qoutes', () => {
     carLeadPage.getCurrentInsurance(carLeadData.carLeadData.currentInsurance)
     carLeadPage.getClaimHistory(carLeadData.carLeadData.claimHistory)
     carLeadPage.getCreateButton().click()
-    cy.wait(4000)
+    commonPage.getApiIntercept(`@createLead`, 200)
     cy.url().then(data => {
       leadUrl = `/${data.substring(data.lastIndexOf('quotes/car/'))}`
       quoteId = `${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
