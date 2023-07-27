@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import PaymentTable from './Partials/PaymentTable.vue';
+import axios from 'axios';
 
 defineProps({
   quote: Object,
@@ -52,7 +53,10 @@ const fixedValue = number => {
   if (number == Math.floor(number)) {
     return number.toLocaleString();
   } else {
-    return number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return number.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 };
 
@@ -69,6 +73,7 @@ const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
+  planFilters: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -112,6 +117,8 @@ const confirmDeleteData = reactive({
 const confirmData = reactive({
   contactPrimary: null,
 });
+
+const cleanObj = obj => useCleanObj(obj);
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
@@ -444,6 +451,8 @@ const memberDataDocs = membersDetail => {
 };
 
 // plans
+const planDataTable = ref();
+
 const plansTable = reactive({
   isLoading: false,
   columns: [
@@ -590,6 +599,117 @@ const onPlanError = () => {
     title: 'Plan Creation Failed',
     position: 'top',
   });
+};
+
+const planFilters = reactive({
+  insurer: [],
+  network: [],
+  manual_plan: null,
+  current_online: null,
+});
+
+const planFiltersCount = ref(0);
+
+const options = reactive({
+  network: [],
+  loading: false,
+});
+
+watch(
+  () => planFilters?.insurer,
+  value => {
+    if (value) {
+      options.loading = true;
+      console.log(planFilters.insurer);
+      const ids = planFilters.insurer.map(item => {
+        return item;
+      });
+
+      let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
+      axios
+        .get(url)
+        .then(res => {
+          if (res.data.length > 0) {
+            options.network = res.data;
+          } else {
+            options.network = [];
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+
+const listQuotePlansFiltered = ref(
+  page.props.listQuotePlans.sort((a, b) => {
+    if (a.providerName < b.providerName) {
+      return -1;
+    }
+  }),
+);
+
+const onPlanFiltersSubmit = () => {
+  const filters = cleanObj(planFilters);
+
+  planFiltersCount.value = Object.keys(filters).length;
+
+  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+    let isManualPlan = planFilters.manual_plan;
+    let isCurrentlyOnline = planFilters.current_online;
+    let network = planFilters.network;
+    let insurerIds =
+      planFilters.insurer?.map(item => {
+        return item;
+      }) || [];
+
+    let manualMatch = false;
+    let insurerMatch = false;
+    let networkMatch = false;
+    let onlineMatch = false;
+
+    if (isManualPlan != null) {
+      manualMatch = plan.isManualPlan == isManualPlan;
+    } else {
+      manualMatch = true;
+    }
+    if (isCurrentlyOnline != null) {
+      onlineMatch = !plan.isHidden == isCurrentlyOnline;
+    } else {
+      onlineMatch = true;
+    }
+
+    if (insurerIds?.length > 0) {
+      insurerMatch = insurerIds.includes(plan.providerId);
+    } else {
+      insurerMatch = true;
+    }
+    if (network?.length > 0) {
+      networkMatch = network.includes(plan.eligibilityName);
+    } else {
+      networkMatch = true;
+    }
+
+    return manualMatch && insurerMatch && networkMatch && onlineMatch;
+  });
+
+  modals.planFilters = false;
+  planDataTable.value.updatePage(1);
+};
+
+const onPlanFiltersReset = () => {
+  planFilters.insurer = [];
+  planFilters.network = [];
+  planFilters.manual_plan = null;
+  planFilters.current_online = null;
+  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  modals.planFilters = false;
+  planFiltersCount.value = 0;
+  planDataTable.value.updatePage(1);
 };
 
 // quoteDocuments
@@ -1070,10 +1190,13 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div v-if="hasRole($page.props.rolesEnum.Engineering)" class="grid sm:grid-cols-2">
+          <div
+            v-if="hasRole($page.props.rolesEnum.Engineering)"
+            class="grid sm:grid-cols-2"
+          >
             <dt class="font-medium">ID</dt>
             <dd>{{ quote.id }}</dd>
-        </div>
+          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CDB ID</dt>
             <dd>{{ quote.code }}</dd>
@@ -1507,10 +1630,10 @@ onMounted(() => {
             <dt class="font-medium">NETWORK</dt>
             <dd>{{ ecomDetails.network }}</dd>
           </div>
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
-        </div>
+          </div>
         </dl>
       </div>
     </div>
@@ -1667,17 +1790,35 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
+          <x-badge
+            size="sm"
+            color="error"
+            outlined
+            animated
+            :show="planFiltersCount > 0"
+          >
+            <x-button
+              v-if="listQuotePlans.length > 0"
+              size="sm"
+              color="primary"
+              @click.prevent="modals.planFilters = true"
+            >
+              Filters
+            </x-button>
+            <template #content> {{ planFiltersCount }} </template>
+          </x-badge>
         </div>
       </div>
       <DataTable
+        ref="planDataTable"
         v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
-        :items="listQuotePlans || []"
+        :items="listQuotePlansFiltered || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="listQuotePlans.length < 15"
+        :hide-footer="listQuotePlansFiltered.length < 15"
       >
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
@@ -1697,6 +1838,14 @@ onMounted(() => {
               class="mt-0.5 text-[10px]"
             >
               Hidden
+            </x-tag>
+            <x-tag
+              v-if="!isHidden"
+              size="xs"
+              color="success"
+              class="mt-0.5 text-[10px]"
+            >
+              Currently Online
             </x-tag>
           </div>
         </template>
@@ -1745,6 +1894,91 @@ onMounted(() => {
           @success="onCreatePlan"
           @error="onPlanError"
         />
+      </x-modal>
+
+      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+        <template #header> Filters </template>
+
+        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
+          <ComboBox
+            v-model="planFilters.insurer"
+            label="Insurer"
+            :options="insuranceProviders"
+            :loading="planFilters.processing"
+            select-all
+            deselect-all
+          />
+          <ComboBox
+            v-model="planFilters.network"
+            :label="
+              planFilters.insurer?.length == 0
+                ? 'Network (please select insurer first)'
+                : 'Network'
+            "
+            :options="options.network"
+            :disabled="options.network.length == 0"
+            select-all
+            deselect-all
+          />
+
+          <div>
+            <x-tooltip position="right" class="arrow-l">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+              >
+                Manual Plan
+              </label>
+              <template #tooltip>Manually Added Plans</template>
+            </x-tooltip>
+            <x-select
+              v-model="planFilters.manual_plan"
+              :options="[
+                { value: '', label: 'All' },
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' },
+              ]"
+              class="w-full"
+            />
+          </div>
+
+          <div>
+            <x-tooltip position="right" class="arrow-l">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+              >
+                Currently Online
+              </label>
+              <template #tooltip> Plans that are Currently Online </template>
+            </x-tooltip>
+            <x-select
+              v-model="planFilters.current_online"
+              :options="[
+                { value: '', label: 'All' },
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' },
+              ]"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mb-4">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            @click="onPlanFiltersSubmit"
+          >
+            Apply
+          </x-button>
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="onPlanFiltersReset"
+          >
+            Reset
+          </x-button>
+        </div>
       </x-modal>
     </div>
 

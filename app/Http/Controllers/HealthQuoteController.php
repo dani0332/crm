@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
 
@@ -78,6 +79,14 @@ class HealthQuoteController extends Controller
         $healthPlans = $this->healthQuoteService->getNonQuotedHealthPlans($insuranceProviderId, $quotePlanId);
 
         return response()->json($healthPlans);
+    }
+
+    public function networksByInsuranceProvider(Request $request)
+    {
+        $ids = explode(',', $request->insuranceProviderId);
+        $networks = InsuranceProviderRepository::networksByInsuranceProviders($ids);
+
+        return $networks;
     }
 
     // TODO: Code Refactor
