@@ -84,8 +84,10 @@ Route::get('/', function () {
     return redirect('login');
 });
 if(config('constants.APP_ENV') == EnvEnum::STAGING) {
-    Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
-    Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
+    Route::middleware('throttle:5,10')->group(function() {
+        Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
+        Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
+    });
 }
 
 
