@@ -1760,7 +1760,7 @@ onMounted(() => {
             </x-button>
           </x-button-group>
 
-          <!-- <x-button
+          <x-button
             v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
@@ -1768,7 +1768,7 @@ onMounted(() => {
             :loading="exportLoader"
           >
             Download PDF
-          </x-button> -->
+          </x-button>
 
           <!-- hide create quote button for rm deployment -->
           <x-button
