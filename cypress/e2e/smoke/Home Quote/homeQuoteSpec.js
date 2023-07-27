@@ -82,7 +82,7 @@ describe('Home qoutes', () => {
 
         //Delete Activity
         commonPage.getDeleteActivityButton()
-        cy.wait(3000)
+        commonPage.getApiIntercept(`@deleteHomeActivity`, 200)
 
         //Add Additional Contact
         commonPage.getAdditionalContactButton()
