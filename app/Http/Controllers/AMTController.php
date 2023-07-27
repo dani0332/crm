@@ -12,6 +12,7 @@ use App\Models\GenericModel;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -275,7 +276,7 @@ class AMTController extends Controller
         $payments =  $record->payments;
         $mainPayment =  $record->payments()->where('code','=', $record->code)->first();
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Group_Medical);
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')

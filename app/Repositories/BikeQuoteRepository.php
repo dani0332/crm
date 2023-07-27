@@ -98,7 +98,7 @@ class BikeQuoteRepository extends BaseRepository
             ->with(['bikeQuote' => function ($q) {
                 $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
             }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs']);
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();

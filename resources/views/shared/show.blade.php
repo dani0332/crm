@@ -505,7 +505,7 @@ use App\Enums\GenericRequestEnum;
             </div>
         </div>
         @if(auth()->user()->hasRole(RolesEnum::BetaUser))
-            <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
+            <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" :insuranceProviders="$insuranceProviders" />
         @endif
         <x-travel-ecom-detail :payments="$payments" :mainPayment="$mainPayment"  :record="$record" :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$membersDetail" />

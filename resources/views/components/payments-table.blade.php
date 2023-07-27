@@ -121,6 +121,7 @@ use App\Enums\QuoteTypes;
                             <tr>
                                 <th>Payment ID</th>
                                 <th>Payment Status</th>
+                                <th>Provider Name</th>
                                 <th>Plan Name</th>
                                 <th>Authorize Amount</th>
                                 <th>Status Change Date</th>
@@ -139,6 +140,7 @@ use App\Enums\QuoteTypes;
                             <tr>
                                 <td>{{ strtoupper($payment->code)}}</td>
                                 <td>{{ $payment->paymentStatus->text }}</td>
+                                <td>{{ $payment->insuranceProvider->text }}</td>
                                 <td>{{ !empty($paymentPlainModel->plan)? $paymentPlainModel->plan->text : "" }}</td>
                                 <td>{{ $payment->captured_amount }}</td>
                                 <td>{{  $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : ''}}</td>
@@ -271,7 +273,7 @@ use App\Enums\QuoteTypes;
                         </div>
 
                         <br />
-                        @if($modeltype == quoteTypeCode::Car || $modeltype == quoteTypeCode::Travel)
+                        @if($modeltype == quoteTypeCode::Car)
                             <div class="item form-group">
                                 <div class="col">
                                     <div class="input-group">
@@ -305,8 +307,6 @@ use App\Enums\QuoteTypes;
                                 <span class="col-form-label col-md-6 col-sm-6">Provider Name<span
                                         class="required">*</span></span>
                                     <select  class="form-control" name='insurance_provider_id'>
-                                        @php
-                                            @endphp
                                         @foreach ($insuranceProviders as $item)
                                             <option value="{{ $item->id }}">{{ $item->text }}</option>
                                         @endforeach

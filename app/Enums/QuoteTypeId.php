@@ -23,6 +23,8 @@ final class QuoteTypeId extends Enum
     const Pet = 9;
     const Cycle = 10;
     const Jetski = 11;
+    const Corpline = 101;
+    const Group_Medical = 102;
 
     public static function getOptions()
     {
