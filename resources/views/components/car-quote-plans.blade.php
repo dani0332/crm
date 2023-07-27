@@ -51,10 +51,10 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 
 								@if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] || $access['carAdvisorCanEditPaymentCancelledRefund'] ) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
                                 <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
-                                   class="btn btn-primary btn-sm">Create Quote</a>
+                                   class="btn btn-primary btn-sm">Add Plan</a>
                             @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
                                 <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
-                                   class="btn btn-primary btn-sm">Create Quote</a>
+                                   class="btn btn-primary btn-sm">Add Plan</a>
                             @endif
 
                             @if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
