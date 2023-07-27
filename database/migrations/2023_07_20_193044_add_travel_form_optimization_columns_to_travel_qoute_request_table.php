@@ -28,6 +28,12 @@ class AddTravelFormOptimizationColumnsToTravelQouteRequestTable extends Migratio
             if (!Schema::hasColumn('travel_quote_request', 'travel_end_date')) {
                 $table->date('travel_end_date')->nullable(); 
             }
+            if (!Schema::hasColumn('travel_quote_request', 'has_arrived_uae')) {
+                $table->boolean('has_arrived_uae')->nullable();
+            }
+            if (!Schema::hasColumn('travel_quote_request', 'has_arrived_destination')) {
+                $table->boolean('has_arrived_destination')->nullable();
+            }
         });
     }
 
