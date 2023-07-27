@@ -23,7 +23,7 @@ const rules = {
 };
 
 const quotesSelected = ref([]);
-
+const canExport = ref(false);
 const page = usePage();
 const notification = useNotifications('toast');
 
@@ -195,6 +195,24 @@ function setQueryFilters() {
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
+const onDataExport = () => {
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'travel');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 onMounted(() => {
   setQueryFilters();
 });
@@ -308,11 +326,33 @@ onMounted(() => {
           class="w-full"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="resetFilters">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+              <x-button
+                  v-if="canExport"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="onDataExport"
+                  class="justify-self-start"
+              >
+                  Export
+              </x-button>
+              <x-tooltip v-else position="right">
+                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+                  <template #tooltip>
+            <span class="font-medium">
+              Created dates are required to export data.
+            </span>
+                  </template>
+              </x-tooltip>
+          </div>
+          <div v-else />
+          <div class="flex justify-self-end gap-3">
+              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+              <x-button size="sm" color="primary" @click.prevent="resetFilters">
+                  Reset
+              </x-button>
+          </div>
       </div>
     </x-form>
 
@@ -345,21 +385,6 @@ onMounted(() => {
             </div>
           </x-form>
         </div>
-
-        <ExportExcel
-            v-if="can(permissionsEnum.DATA_EXTRACTION)"
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Travel-List'"
-          :sheetname="'Leads'"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel>
       </div>
     </Transition>
 
