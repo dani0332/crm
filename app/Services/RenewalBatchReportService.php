@@ -217,7 +217,7 @@ class RenewalBatchReportService extends BaseService
             ->pluck('id')
             ->toArray();
 
-        $volumeSegmentAdvisorsIdString = implode(',', $volumeSegmentAdvisorsId);
+        $volumeSegmentAdvisorsIdString = !empty($volumeSegmentAdvisorsId) ? implode(',', $volumeSegmentAdvisorsId) : false;
 
         $valueSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
             $qry->where('segment_type',  RenewalBatch::SEGMENT_TYPE_VALUE);
@@ -226,7 +226,7 @@ class RenewalBatchReportService extends BaseService
             ->pluck('id')
             ->toArray();
 
-        $valueSegmentAdvisorsIdString = implode(',', $valueSegmentAdvisorsId);
+        $valueSegmentAdvisorsIdString = !empty($valueSegmentAdvisorsId) ? implode(',', $valueSegmentAdvisorsId) : false;
 
         if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
             $query->addSelect(
