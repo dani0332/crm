@@ -598,10 +598,10 @@ class HealthQuoteService extends BaseService
             'details' => 'input|text',
             'is_ebp_renewal' => 'input|checkbox|title',
             'source' => 'input|text|title',
-            'marital_status_id' => 'select|title|required',
+            'marital_status_id' => 'select|title',
             'cover_for_id' => 'select|title|required',
             'nationality_id' => 'select|title|required',
-            'lead_type_id' => 'select|title|required',
+            'lead_type_id' => 'select|title',
             'has_dental' => 'input|checkbox|title',
             'has_worldwide_cover' => 'input|checkbox|title',
             'has_home' => 'input|checkbox|title',
@@ -1221,7 +1221,7 @@ class HealthQuoteService extends BaseService
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
         $quote->load(['advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])

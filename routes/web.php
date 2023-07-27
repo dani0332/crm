@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AMLController;
@@ -29,6 +30,11 @@ use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HealthQuoteController;
+use App\Http\Controllers\InsuranceCompanyController;
+use App\Http\Controllers\LeadAllocationController;
+use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LoginController;
+use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\V2\ActivityController;
@@ -43,12 +49,9 @@ use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarRepairTypeController;
-use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\QuoteDocumentController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\YachtQuoteController;
-use App\Http\Controllers\LeadAllocationController;
-use App\Http\Controllers\LeadAssignmentController;
 use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\V2\JetskiQuoteController;
@@ -56,7 +59,6 @@ use App\Http\Controllers\TmInsuranceTypeController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\BulkEmailProcessController;
-use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarRepairCoverageController;
@@ -82,6 +84,12 @@ use App\Http\Controllers\V2\AmtController as V2AmtController;
 Route::get('/', function () {
     return redirect('login');
 });
+if (config('constants.APP_ENV') == EnvEnum::STAGING) {
+    Route::middleware('throttle:5,10')->group(function () {
+        Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
+        Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
+    });
+}
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
@@ -423,9 +431,6 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 /***** RestAPI */
 
 Route::group(['middleware' => ['auth.rest']], function () {
-    // ftc-form-delete schedule on 7th June 2023
-    //    Route::resource('ftcform', FtcFormController::class);
-    //    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
         Route::GET('/{form}', [FormController::class, 'index']);
         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);

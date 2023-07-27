@@ -176,6 +176,16 @@ function setQueryStringFilters() {
   }
 }
 
+const fixedValue = numberString => {
+  const number = parseFloat(numberString);
+  if (isNaN(number)) {
+    return "Invalid number";
+  } else if (number === Math.floor(number)) {
+    return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
+  } else {
+    return parseFloat(number.toFixed(2)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+};
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -405,6 +415,13 @@ onMounted(() => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-price_starting_from="item">
+        <p v-if="item.price_starting_from != null">{{ fixedValue(item.price_starting_from) }}</p>
+      </template>
+
+      <template #item-premium="item">
+        <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
       </template>
     </DataTable>
 

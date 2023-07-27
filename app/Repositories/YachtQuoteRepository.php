@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
@@ -41,8 +42,12 @@ class YachtQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id,
+            'createdById' => auth()->user()->id,
         ];
+
+        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
+            $quoteData['advisorId'] = auth()->user()->id;
+        }
 
         info('YachtQuote create data : '.json_encode($quoteData));
 
