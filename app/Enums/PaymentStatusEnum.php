@@ -21,4 +21,6 @@ final class PaymentStatusEnum extends Enum
     const FAILED = 9;
     const PAID = 10;
     const DRAFT = 11;
+
+    const PARTIAL_CAPTURED = 12;
 }

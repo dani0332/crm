@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UtmLeadsSalesReportSeeder::class,
             AddPersonalLobsProducts::class,
             addTeamThresholdViewPermission::class,
+            InsurerQuoteTypeMappingSeeder::class
         ]);
     }
 }

@@ -2,10 +2,9 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentMethodsEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
-class PersonalQuotePaymentRequest extends FormRequest
+class UpdateCarQuotePlanDetailsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,14 +23,9 @@ class PersonalQuotePaymentRequest extends FormRequest
      */
     public function rules()
     {
-        $data = request()->all();
-
-        $rules = [
-            'collection_type' => 'required',
-            'captured_amount' => 'required|numeric',
-            'payment_methods_code' => 'required',
-            'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
+        return [
+            'quote_uuid' => 'required',
+            'plan_id' => 'required',
         ];
-        return $rules;
     }
 }

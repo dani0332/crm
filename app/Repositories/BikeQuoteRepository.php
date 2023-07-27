@@ -44,11 +44,8 @@ class BikeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
         ];
-
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $quoteData['advisorId'] = auth()->user()->id;
-        }
 
         info('bikeQuote:'.json_encode($quoteData));
 
@@ -101,7 +98,7 @@ class BikeQuoteRepository extends BaseRepository
             ->with(['bikeQuote' => function ($q) {
                 $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
             }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();

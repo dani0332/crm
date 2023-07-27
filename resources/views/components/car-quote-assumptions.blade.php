@@ -156,7 +156,11 @@ $(document).ready(function() {
                             <button type="button" class="btn btn-primary btn-sm" id="cancel-motor-assumptions-btn">Cancel</button>
                             @cannot(PermissionsEnum::ApprovePayments)
                                 <button type="submit" class="btn btn-success btn-sm" id="update-motor-assumptions-btn">Update</button>
-                                <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                            @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
+                                    <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                                @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager]) )
+                                    <button type="button" class="btn btn-primary btn-sm" id="edit-motor-assumptions-btn">Edit Assumptions</button>
+                                @endif
                             @endcannot
                         </div>
                     @endcan

@@ -84,7 +84,7 @@ use App\Enums\GenericRequestEnum;
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             @if ($model->modelType == quoteTypeCode::Car)
-                <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+                <x-car-ecom-detail :record="$record" :mainPayment="$mainPayment" :payments="$payments" :carQuotePlanAddons="$carQuotePlanAddons" />
             @endif
             <div class="x_panel">
                 <br />
@@ -380,11 +380,15 @@ use App\Enums\GenericRequestEnum;
                                     class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         @endif
-                        @can(strtolower($model->modelType) . '-quotes-edit')
+                            @if( ($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] ) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
+                                <a id="texta"
+                                   href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
+                                   class='btn btn-warning btn-sm'>Edit</a>
+                            @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                 class='btn btn-warning btn-sm'>Edit</a>
-                        @endcan
+                            @endif
                     @endcannot
                 </div>
             </div>
@@ -475,9 +479,9 @@ use App\Enums\GenericRequestEnum;
         @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
-        <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
+        <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :access="$access" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
 
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
@@ -488,6 +492,12 @@ use App\Enums\GenericRequestEnum;
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
+@if ($model->modelType == quoteTypeCode::Life ||  $model->modelType == quoteTypeCode::Home ||  $model->modelType == quoteTypeCode::Business)
+    @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :insuranceProviders="$insuranceProviders" :modeltype="$model->modelType" />
+    @endif
+
+@endif
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
             aria-labelledby="quotePlanModalLabel" aria-hidden="true">
@@ -510,7 +520,10 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
-        <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+            <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" :insuranceProviders="$insuranceProviders" />
+        @endif
+        <x-travel-ecom-detail :payments="$payments" :mainPayment="$mainPayment"  :record="$record" :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$membersDetail" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)

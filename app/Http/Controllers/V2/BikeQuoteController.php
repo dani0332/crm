@@ -25,12 +25,13 @@ class BikeQuoteController extends Controller
     public function index()
     {
         $personalQuotes = BikeQuoteRepository::getData();
-
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -86,7 +87,7 @@ class BikeQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BIKE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
 

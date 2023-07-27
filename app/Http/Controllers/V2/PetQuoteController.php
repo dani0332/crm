@@ -83,7 +83,7 @@ class PetQuoteController extends Controller
 
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
 

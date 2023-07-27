@@ -1,4 +1,6 @@
 <script setup>
+import { useCan } from '../../../Composables/can';
+
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -8,19 +10,19 @@ defineProps({
   can: Object,
   quoteRequest: Object,
   paymentMethods: Object,
+  insuranceProviders: Array,
   quote: Object,
 });
 
 const createPaymentModal = ref(false);
 
+const can = permission => useCan(permission);
+const hasRole = role => useHasRole(role);
+const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
 const rules = {
   isRequired: v => !!v || 'This field is required',
-  reference: v => {
-    if (paymentMethodsForm.payment_method !== 'CC') {
-      return !!v || 'This field is required';
-    }
-    return true;
-  },
   amount: v => {
     const regex = /^\d+(\.\d{1,2})?$/;
     if (regex.test(v)) {
@@ -33,21 +35,19 @@ const rules = {
 const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
   { text: 'Payment Status', value: 'payment_status.code' },
-  { text: 'Plan Name', value: 'health_plan.text' },
-  { text: 'Captured Amount', value: 'captured_amount', sortable: true },
+  { text: 'Plan Name', value: '' },
+  { text: 'Authorize Amount', value: 'captured_amount', sortable: true },
   { text: 'Status Change Date', value: 'payment_status_log.created_at' },
-  { text: 'Captured At', value: 'captured_at' },
   { text: 'Authorized At', value: 'authorized_at' },
+  { text: 'Captured At', value: 'captured_at' },
   { text: 'Payment method', value: 'payment_method.name' },
+  { text: 'Captured Amount', value: 'premium_captured' },
   { text: 'Reference', value: 'reference' },
+  { text: 'Status Detail', value: 'payment_status_message' },
   { text: 'Actions', value: 'actions', sortable: false },
 ];
 
-const collectionTypes = [
-  { value: '', label: 'Select Collection Type' },
-  { value: 'broker', label: 'Broker' },
-  { value: 'insurer', label: 'Insurer' },
-];
+const collectionTypes = [{ value: 'broker', label: 'Broker' }];
 
 const generateCCLink = async code => {
   try {
@@ -86,11 +86,11 @@ const generateCCLink = async code => {
 
 const addPaymentModal = () => {
   paymentMethodsForm.reset();
-  paymentMethodsForm.payment_method = '';
-  paymentMethodsForm.collection_type = '';
+  paymentMethodsForm.payment_method = 'CC';
+  paymentMethodsForm.collection_type = 'broker';
   paymentMethodsForm.amount = '';
-  paymentMethodsForm.payment_reference = '';
   paymentMethodsForm.paymentCode = '';
+  paymentMethodsForm.insurance_provider_id = '';
 
   paymentMethodsForm.status = 'create';
   createPaymentModal.value = true;
@@ -102,7 +102,7 @@ const editPaymentModal = payment => {
   paymentMethodsForm.payment_method = payment.payment_method.code;
   paymentMethodsForm.collection_type = payment.collection_type;
   paymentMethodsForm.amount = payment.captured_amount;
-  paymentMethodsForm.payment_reference = payment.reference;
+  paymentMethodsForm.insurance_provider_id = payment.insurance_provider_id;
   paymentMethodsForm.paymentCode = payment.code;
   createPaymentModal.value = true;
 };
@@ -111,7 +111,6 @@ const paymentMethodsForm = useForm({
   payment_method: '',
   collection_type: '',
   amount: '',
-  payment_reference: '',
   paymentCode: '',
   status: 'create',
 });
@@ -124,11 +123,9 @@ const addPayment = isValid => {
     code: paymentMethodsForm.payment_method,
     modelType: page.props.modelType,
     quote_id: page.props.quoteRequest.id,
-    plan_id: page.props.quoteRequest.plan.id,
-    insurance_provider_id: providerId.value,
+    insurance_provider_id: paymentMethodsForm.insurance_provider_id,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
-    reference: paymentMethodsForm.payment_reference,
     isInertia: true,
   };
 
@@ -137,15 +134,12 @@ const addPayment = isValid => {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
     };
+
     paymentMethodsForm
       .transform(data => editData)
       .post('/payments/Health/update', {
         preserveScroll: true,
         onSuccess: () => {
-          notification.success({
-            title: 'Payment Updated',
-            position: 'top',
-          });
           createPaymentModal.value = false;
         },
         onError: () => {
@@ -165,10 +159,6 @@ const addPayment = isValid => {
     .post('/payments/Health/store', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Payment Added',
-          position: 'top',
-        });
         createPaymentModal.value = false;
       },
       onError: () => {
@@ -202,35 +192,20 @@ const approvePayment = payment => {
     });
   }
 };
-
-const getPlanName = computed(() => {
-  const plan = page.props.quoteRequest.plan;
-  return plan ? plan.text : 'Not Available';
-});
-
-const providerName = computed(() => {
-  const plan = page.props.quoteRequest.plan;
-  if (plan && plan.insurance_provider) {
-    return plan.insurance_provider.text;
-  }
-  return 'Not Available';
-});
-
-const providerId = computed(() => {
-  const plan = page.props.quoteRequest.plan;
-  if (plan && plan.insurance_provider) {
-    return plan.insurance_provider.id;
-  }
-  return null;
-});
 </script>
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
     <div class="flex justify-between gap-4 items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Payments <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
+      </h3>
       <x-button
-        v-if="can.create_payments && !can.approve_payments"
+        v-if="
+          can(permissionsEnum.PaymentsCreate) &&
+          !can(permissionsEnum.ApprovePayments) &&
+          !hasRole(rolesEnum.PA)
+        "
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -251,7 +226,7 @@ const providerId = computed(() => {
       </template>
       <template #item-actions="item">
         <div class="flex gap-2">
-          <template v-if="can.approve_payments">
+          <template v-if="can(permissionsEnum.ApprovePayments)">
             <x-button
               size="xs"
               color="error"
@@ -281,7 +256,7 @@ const providerId = computed(() => {
             <x-button
               size="xs"
               color="emerald"
-              v-if="can.edit_payments && item.edit_button"
+              v-if="can(permissionsEnum.PaymentsEdit) && item.edit_button"
               @click="editPaymentModal(item)"
             >
               Edit
@@ -313,6 +288,7 @@ const providerId = computed(() => {
             class="w-full"
             v-model="paymentMethodsForm.collection_type"
             :options="collectionTypes"
+            disabled
             label="Collection Type*"
             :rules="[rules.isRequired]"
           >
@@ -320,30 +296,21 @@ const providerId = computed(() => {
 
           <x-select
             class="w-full md:col-span-2"
+            disabled
             v-model="paymentMethodsForm.payment_method"
             :options="paymentMethods"
             label="Payment Method*"
             :rules="[rules.isRequired]"
           >
           </x-select>
-
-          <p class="text-sm text-gray-500">
-            Provider Name:
-            <span class="text-primary-800">{{ providerName }}</span>
-          </p>
-
-          <p class="text-sm text-gray-500">
-            Plan Name :
-            <span class="text-primary-800">{{ getPlanName }}</span>
-          </p>
-
-          <x-input
+          <x-select
             class="w-full md:col-span-2"
-            label="Payment Reference*"
-            :rules="[rules.isRequired, rules.reference]"
-            v-show="paymentMethodsForm.payment_method != 'CC'"
-            v-model="paymentMethodsForm.payment_reference"
-          />
+            v-model="paymentMethodsForm.insurance_provider_id"
+            :options="insuranceProviders"
+            label="Provider Name*"
+            :rules="[rules.isRequired]"
+          >
+          </x-select>
 
           <div
             class="w-full md:col-span-2 flex justify-end"

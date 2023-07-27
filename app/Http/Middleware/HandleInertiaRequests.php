@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
@@ -56,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
         ]);
