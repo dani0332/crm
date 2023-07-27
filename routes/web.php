@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -81,6 +83,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
+if (config('constants.APP_ENV') == EnvEnum::STAGING) {
+    Route::middleware('throttle:5,10')->group(function () {
+        Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
+        Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
+    });
+}
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
