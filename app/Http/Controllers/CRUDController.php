@@ -720,7 +720,6 @@ class CRUDController extends Controller
      */
     public function update(Request $request, $id)
     {
-
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
         $validateArray = [];
@@ -1063,6 +1062,11 @@ class CRUDController extends Controller
             $this->validate($request, [
                 'trans_code' => 'required',
             ]);
+        }
+        // courtesy email
+        $lobs = [strtolower(quoteTypeCode::GroupMedical), strtolower(quoteTypeCode::CORPLINE)];
+        if ($request->leadStatus == QuoteStatusEnum::TransactionApproved && ! in_array(strtolower($request->modelType), $lobs)) {
+            // dd('m here');
         }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
@@ -1488,6 +1492,5 @@ class CRUDController extends Controller
      */
     public function destroy()
     {
-
     }
 }
