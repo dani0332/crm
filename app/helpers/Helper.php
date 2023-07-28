@@ -424,16 +424,6 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
-            quoteTypeCode::Home,
-            quoteTypeCode::Life,
-            quoteTypeCode::GroupMedical,
-            quoteTypeCode::CORPLINE,
-            quoteTypeCode::Pet,
-            quoteTypeCode::Business,
-            quoteTypeCode::Travel,
-            quoteTypeCode::Jetski,
-            quoteTypeCode::Yacht,
-            quoteTypeCode::Bike
         ];
     }
 }
