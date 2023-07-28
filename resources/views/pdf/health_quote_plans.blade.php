@@ -1,3 +1,4 @@
+@inject('crudService', 'App\Services\CRUDService')
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -293,7 +294,12 @@
                 $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat + $policyFee;
                 $quotePlan->policyFee = $policyFee;
                 $plans[$quotePlan->id] = $quotePlan;
+
             }
+
+            // Add Basma Price
+            $quotePlan->discountPremium += $crudService->getBasmaPrice($quote, $quotePlan);
+            $quotePlan->total += $crudService->getBasmaPrice($quote, $quotePlan);
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
