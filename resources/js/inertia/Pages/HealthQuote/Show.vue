@@ -49,7 +49,10 @@ const fixedValue = number => {
   if (number == Math.floor(number)) {
     return number.toLocaleString();
   } else {
-    return number.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return number.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 };
 
@@ -610,10 +613,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -1067,10 +1066,13 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div v-if="hasRole($page.props.rolesEnum.Engineering)" class="grid sm:grid-cols-2">
+          <div
+            v-if="hasRole($page.props.rolesEnum.Engineering)"
+            class="grid sm:grid-cols-2"
+          >
             <dt class="font-medium">ID</dt>
             <dd>{{ quote.id }}</dd>
-        </div>
+          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CDB ID</dt>
             <dd>{{ quote.code }}</dd>
@@ -1495,15 +1497,15 @@ onMounted(() => {
             <dt class="font-medium">NETWORK</dt>
             <dd>{{ ecomDetails.network }}</dd>
           </div>
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
             <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
-        </div>
+          </div>
         </dl>
       </div>
     </div>
 
-    <!-- <PaymentTable
+    <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
@@ -1511,7 +1513,7 @@ onMounted(() => {
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
       :quote="quote"
-    /> -->
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -1654,6 +1656,14 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
+
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Add Plan
+          </x-button>
         </div>
       </div>
       <DataTable
@@ -1725,17 +1735,19 @@ onMounted(() => {
         <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
+          :members="membersDetail"
+          :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
         />
       </x-modal>
     </div>
 
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -1819,7 +1831,7 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
-    </div> -->
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
