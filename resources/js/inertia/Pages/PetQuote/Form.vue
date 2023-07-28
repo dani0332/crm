@@ -120,7 +120,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.premium"
           type="number"
-          label="PREMIUM"
+          label="PRICE"
           class="w-full"
           :error="quoteForm.errors.premium"
         />
