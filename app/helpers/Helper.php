@@ -2,6 +2,7 @@
 
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use Carbon\Carbon;
@@ -459,3 +460,18 @@ if (! function_exists('formatMobileNumber')) {
         );
     }
 }
+
+if (! function_exists('checkPersonalQuotes')) {
+    function checkPersonalQuotes($quoteType)
+    {
+        return in_array($quoteType, [
+            QuoteTypes::BIKE,
+            QuoteTypes::CYCLE,
+            QuoteTypes::JETSKI,
+            QuoteTypes::PET,
+            QuoteTypes::YACHT
+        ]);
+    }
+}
+
+
