@@ -329,7 +329,7 @@
         ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
         ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
         ["code" => "spacer"],
-        ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],

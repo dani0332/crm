@@ -59,7 +59,7 @@ const tableHeader = [
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'DESTINATION', value: 'destination_id_text' },
   { text: 'CURRENTLY LOCATED IN', value: 'currently_located_in_id_text' },

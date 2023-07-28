@@ -83,7 +83,7 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'NUMBER OF EMPLOYEES', value: 'number_of_employees' },
   {
     text: 'BUSINESS INSURANCE TYPE',

@@ -35,7 +35,7 @@ const tableHeader = [
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
 ];
 
