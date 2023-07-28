@@ -388,7 +388,7 @@ class CarQuoteService extends BaseService
                 $access['carManagerCanEditInsurer'] = true;
             }
         }
-
+        // Car Advisor & Manager with payment status captured/Partially captured
         if (! empty($carPayment->captured_at)) {
             $paymentCapturedAt = $carPayment->captured_at;
             $today = Carbon::today();
@@ -410,6 +410,7 @@ class CarQuoteService extends BaseService
                 }
             }
         }
+        // Car Advisor
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
                 $access['carAdvisorCanEdit'] = true;
@@ -418,6 +419,13 @@ class CarQuoteService extends BaseService
                 $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
             }
         }
+        // Car Manager
+        if (auth()->user()->hasRole(RolesEnum::CarManager)) {
+            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+                $access['carManagerCanEdit'] = true;
+            }
+        }
+
         if (! empty($record->payment_status_id)) {
             if (in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && in_array($record->quote_status_id, $quoteStatusArray)) {
                 $access['carAdvisorCanEdit'] = false;
