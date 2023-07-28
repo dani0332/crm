@@ -1,8 +1,5 @@
 <script setup>
-import { useHasRole, useHasAnyRole } from '../../Composables/can';
-import { usePagination, useRowsPerPage } from 'use-vue3-easy-data-table';
 import { useDateFormat } from '@vueuse/shared';
-
 
 defineProps({
     reportData: Object,
@@ -22,26 +19,6 @@ const page = usePage();
 const dataTableRef = ref();
 const isMounted = ref(false);
 const isDirty = ref(false);
-
-const {
-    currentPageFirstIndex,
-    currentPageLastIndex,
-    clientItemsLength,
-    isFirstPage,
-    isLastPage,
-    nextPage,
-    prevPage,
-} = usePagination(dataTableRef);
-
-const {
-    rowsPerPageOptions,
-    rowsPerPageActiveOption,
-    updateRowsPerPageActiveOption,
-} = useRowsPerPage(dataTableRef);
-
-const updateRowsPerPageSelect = e => {
-    updateRowsPerPageActiveOption(Number(e.target.value));
-};
 
 
 const advisorOptions = ref(
@@ -160,7 +137,7 @@ function onSubmit(isValid) {
             preserveState: true,
             preserveScroll: true,
             onBefore: () => (loaders.table = true),
-            onFinish: () => (loaders.table = false, calculateValuesAndHighlight()),
+            onFinish: () => (loaders.table = false, calculateValuesAndHighlight),
         });
     } else {
         console.log('Invalid');
@@ -348,13 +325,13 @@ function calculateValuesAndHighlight() {
                         let slabMin = slab.pivot.min;
 
                         if (slabId === 3 && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "class-green";
+                            item.advisorRetentionClass = "text-green-500";
                         }
                         else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "class-amber";
+                            item.advisorRetentionClass = "text-amber-500";
                         }
                         else if (slabId === 1 && item.advisorRetention < slabMax) {
-                            item.advisorRetentionClass = "class-red";
+                            item.advisorRetentionClass = "text-red-500";
                         }
 
                     }
@@ -364,16 +341,16 @@ function calculateValuesAndHighlight() {
                         let slabMin = slab.pivot.min;
 
                         if (slabId === 4 && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "class-green";
+                            item.advisorRetentionClass = "text-green-500";
                         }
                         if (slabId === 3 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "class-amber";
+                            item.advisorRetentionClass = "text-amber-500";
                         }
                         else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "class-orange";
+                            item.advisorRetentionClass = "text-orange-500";
                         }
                         else if (slabId === 1 && item.advisorRetention < slabMax) {
-                            item.advisorRetentionClass = "class-red";
+                            item.advisorRetentionClass = "text-red-500";
                         }
                     }
                 });
@@ -405,7 +382,6 @@ onMounted(() => {
 
     isMounted.value = true;
 });
-
 
 const calculateMonthlySum = (data, index) => {
 
@@ -452,45 +428,14 @@ function calculateMonthlyAverages(data) {
 }
 
 watch(
-
-);
+  () => page.props.reportData.current_page,
+  () => {
+    calculateValuesAndHighlight()
+  },
+  { deep: true, immediate: false },
+)
 
 </script>
-<style>
-.highlight-row {
-    background-color: yellow;
-}
-
-.class-green {
-    color: green;
-}
-
-.class-orange {
-    color: orange;
-}
-
-.class-red {
-    color: red;
-}
-
-.class-amber {
-    color: #ffbf00;
-}
-
-thead {
-    background-color: #186b9a;
-}
-
-thead th {
-    color: #e6e6e6;
-}
-
-thead,
-th,
-td {
-    border: 1px solid #e6e6e6 !important;
-}
-</style>
 <template>
     <div>
 
@@ -566,7 +511,7 @@ td {
         <div class="text-sm my-4">
             <div class="w-full overflow-x-auto">
                 <table class="x-table w-full relative">
-                    <thead class="align-bottom">
+                    <thead class="align-bottom bg-primary-700">
                         <tr class="text-sm text-gray-600 border-b">
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                 Batch
@@ -634,7 +579,7 @@ td {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr :class="{ 'highlight-row': item.highlight }" v-for="(item, index) in reportData.data"
+                        <tr :class="{ 'bg-[#ffff00]' : item.highlight }" v-for="(item, index) in reportData.data"
                             :key="index" class="border-b border-gray-200 align-top">
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.name }}
@@ -697,7 +642,7 @@ td {
                 </table>
                 <hr />
                 <table class="x-table relative w-50 mt-10">
-                    <thead class="align-bottom">
+                    <thead class="align-bottom bg-primary-700">
                         <tr class="text-sm text-gray-600 border-b">
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                 Month
@@ -735,71 +680,31 @@ td {
         <!-- ============================================================= -->
 
 
-        <div class="flex flex-wrap justify-between items-center gap-2 py-6">
-            <!-- <div>
-                <select
-                    class="form-select text-sm border shadow-sm rounded-md border-gray-300 hover:border-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
-                    @change="updateRowsPerPageSelect">
-                    <option v-for="item in rowsPerPageOptions" :key="item" :selected="item === rowsPerPageActiveOption"
-                        :value="item">
-                        {{ item }} rows per page
-                    </option>
-                </select>
-            </div> -->
+        <div>
+            <Pagination
+                :links="{
 
-            <!-- <div class="text-xs lining-nums text-gray-700 text-center">
-                Now displaying: {{ currentPageFirstIndex }} ~
-                {{ currentPageLastIndex }} of {{ clientItemsLength }}
-            </div>
-
-            <div class="flex gap-2">
-                <x-button size="sm" icon-left="prev" :disabled="isFirstPage" @click="prevPage">
-                    Prev
-                </x-button>
-                <x-button size="sm" icon-right="next" :disabled="isLastPage" @click="nextPage">
-                    Next
-                </x-button>
-            </div> -->
-
-            <!-- <PaginateClient
-            :links="{
-              next: page.props.reportData.next_page_url,
-              prev: page.props.reportData.prev_page_url,
-              current: page.props.reportData.current_page,
-              from: page.props.reportData.from,
-              to: page.props.reportData.to,
-              total: page.props.reportData.total,
-              last: page.props.reportData.last_page
-            }"
-            :loading="page.props.reportData.loader"
-          /> -->
-
+                    next: page.props.reportData.next_page_url,
+                    prev: page.props.reportData.prev_page_url,
+                    current: page.props.reportData.current_page,
+                    from: page.props.reportData.from,
+                    to: page.props.reportData.to,
+                    total: page.props.reportData.total,
+                    last: page.props.reportData.last_page
+                }"
+                :loading="page.props.reportData.loader"
+            />
         </div>
-
-        <!-- <x-modal v-model="totalLeads.modal" size="xl" show-close backdrop>
-            <template #header>
-                <div class="text-center">{{ currentTypeTitle }}</div>
-            </template>
-            <section class="min-h-[70vh]">
-                <div v-if="!loaders.advisorLeadTable">
-                    <PaginateClient :links="{
-                        next: totalLeads.data.next_page_url,
-                        prev: totalLeads.data.prev_page_url,
-                        current: totalLeads.data.current_page,
-                        from: totalLeads.data.from,
-                        to: totalLeads.data.to,
-                        total: totalLeads.data.total,
-                        last: totalLeads.data.last_page,
-                    }" :loading="totalLeads.loader" @update="setPageTable" />
-                    <DataTable table-class-name="tablefixed compact" :loading="totalLeads.loader"
-                        :headers="totalLeads.tableHeader" :items="totalLeads.data.data || []" border-cell hide-rows-per-page
-                        hide-footer></DataTable>
-                </div>
-                <div v-else class="p-4 flex flex-col justify-center items-center gap-4">
-                    <x-spinner size="lg" color="#1d83bc" />
-                    <p class="text-sm">Fetching records...</p>
-                </div>
-            </section>
-        </x-modal> -->
     </div>
 </template>
+<style scoped>
+    thead th {
+        color: #e6e6e6;
+    }
+
+    thead,
+    th,
+    td {
+        border: 1px solid #e6e6e6 !important;
+    }
+</style>
