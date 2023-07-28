@@ -303,8 +303,15 @@ const onCreateDuplicate = isValid => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quote.code }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Ref-ID
+                      </label>
+                      <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -377,7 +384,7 @@ const onCreateDuplicate = isValid => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
             <dd></dd>
           </div>
@@ -435,8 +442,15 @@ const onCreateDuplicate = isValid => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
-            <dd></dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Parent Ref-ID
+                      </label>
+                      <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div></div>
           </div>
         </dl>
       </div>
@@ -455,7 +469,7 @@ const onCreateDuplicate = isValid => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
           </div>
 
           <div class="grid sm:grid-cols-2">

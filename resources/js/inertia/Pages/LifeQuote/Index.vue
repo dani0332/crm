@@ -58,7 +58,7 @@ const loader = reactive({
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'code' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
@@ -69,7 +69,7 @@ const tableHeader = [
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
 ];
 
 const advisorOptions = computed(() => {
@@ -218,14 +218,21 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
+          <div>
+              <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+                      Ref-ID
+                  </label>
+                  <template #tooltip> Reference ID </template>
+              </x-tooltip>
+              <x-input
+                  v-model="filters.code"
+                  type="search"
+                  name="code"
+                  class="w-full"
+                  placeholder="Search by Ref-ID"
+              />
+          </div>
         <x-input
           v-model="filters.first_name"
           type="search"
