@@ -297,9 +297,9 @@
 
             }
 
-            // Add Basma Calculations
-            $quotePlan->discountPremium += $crudService->getBasmaPrice($quote);
-            $quotePlan->total += $crudService->getBasmaPrice($quote);
+            // Add Basma Price
+            $quotePlan->discountPremium += $crudService->getBasmaPrice($quote, $quotePlan);
+            $quotePlan->total += $crudService->getBasmaPrice($quote, $quotePlan);
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();

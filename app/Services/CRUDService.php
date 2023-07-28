@@ -11,7 +11,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\SyncSIBContactJob;
-use App\Models\ApplicationStorage;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
@@ -466,12 +465,12 @@ class CRUDService extends BaseService
         return $genderOptions;
     }
 
-    public function getBasmaPrice($quote)
+    public function getBasmaPrice($quote, $quotePlan)
     {
         $basmaPrice = 0;
         // Basma Price for Emirate Visa Dubai
         if( $quote->emirate_of_your_visa_id == EmirateEnum::DUBAI){
-            $basmaPrice = (int) ApplicationStorage::where('key_name', 'BASMA_PRICE')->value('value');
+            $basmaPrice = $quotePlan->basmah;
         }
 
         return $basmaPrice;
