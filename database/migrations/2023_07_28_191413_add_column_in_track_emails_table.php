@@ -16,7 +16,7 @@ class AddColumnInTrackEmailsTable extends Migration
         if (Schema::hasTable('track_emails')) {
             Schema::table('track_emails', function ($table) {
                 if (! Schema::hasColumn('track_emails', 'is_ce_processed')) {
-                    $table->boolean('is_ce_processed')->default(false);
+                    $table->boolean('is_ce_processed')->nullable()->default(false);
                 }
             });
         }
