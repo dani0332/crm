@@ -19,6 +19,7 @@ const loader = reactive({
   export: false,
 });
 
+const canExport = ref(false);
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
@@ -66,7 +67,11 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
+const onDataExport = () => {
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'home');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -177,6 +182,18 @@ onMounted(() => {
   setQueryStringFilters();
 });
 
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -276,11 +293,33 @@ const permissionsEnum = page.props.permissionsEnum;
           class="w-full"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+              <x-button
+                  v-if="canExport"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="onDataExport"
+                  class="justify-self-start"
+              >
+                  Export
+              </x-button>
+              <x-tooltip v-else position="right">
+                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+                  <template #tooltip>
+            <span class="font-medium">
+              Created dates are required to export data.
+            </span>
+                  </template>
+              </x-tooltip>
+          </div>
+          <div v-else />
+          <div class="flex justify-self-end gap-3">
+              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+              <x-button size="sm" color="primary" @click.prevent="onReset">
+                  Reset
+              </x-button>
+          </div>
       </div>
     </x-form>
 
@@ -315,24 +354,6 @@ const permissionsEnum = page.props.permissionsEnum;
         </x-form>
       </div>
     </section>
-
-    <Transition name="fade">
-      <div v-if="quotesSelected.length > 0 && can(permissionsEnum.DATA_EXTRACTION)" class="mb-4">
-        <ExportExcel
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Home-List'"
-          :sheetname="'Leads'"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel>
-      </div>
-    </Transition>
     <DataTable
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"

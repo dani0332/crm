@@ -3,13 +3,30 @@
 namespace App\Repositories;
 
 use App\Models\HomeQuote;
-use App\Traits\CentralTrait;
 
 class HomeQuoteRepository extends BaseRepository
 {
-    use CentralTrait;
+
     public function model()
     {
         return HomeQuote::class;
     }
+
+    public function fetchGetData($forExport = false)
+    {
+        $query = $this->with([
+            'quoteStatus',
+            'homeQuoteRequestDetail.lostReason',
+            'accommodationType:id,text',
+            'possessionType:id,text',
+            'advisor'
+        ])
+        ->filter()
+        ->withFakeLeadCriteria()
+        ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate();
+
+    }
+
 }

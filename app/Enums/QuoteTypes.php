@@ -4,13 +4,20 @@ namespace App\Enums;
 
 enum QuoteTypes: string
 {
-    case LIFE = 'Life';
-    case BIKE = 'Bike';
-    case CYCLE = 'Cycle';
-    case PET = 'Pet';
-    case YACHT = 'Yacht';
-    case JETSKI = 'Jetski';
     case CAR = 'Car';
+    case HOME = 'Home';
+    case HEALTH = 'Health';
+    case LIFE = 'Life';
+    case BUSINESS = 'Business';
+    case BIKE = 'Bike';
+    case YACHT = 'Yacht';
+    case TRAVEL = 'Travel';
+    case PET = 'Pet';
+    case CYCLE = 'Cycle';
+    case JETSKI = 'Jetski';
+    case AMT = 'Amt';
+    case GROUP_MEDICAL = 'Group Medical';
+    case CORPLINE = 'Corpline';
 
     public function id(): string
     {
