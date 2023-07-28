@@ -384,7 +384,7 @@ const onCreateDuplicate = isValid => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
             <dd></dd>
           </div>
@@ -445,7 +445,7 @@ const onCreateDuplicate = isValid => {
               <div>
                   <x-tooltip position="bottom">
                       <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          PARENT Ref-ID
+                          Parent Ref-ID
                       </label>
                       <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
