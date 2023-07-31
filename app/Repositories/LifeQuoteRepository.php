@@ -70,6 +70,11 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchGetData()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality'])
+            ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')
