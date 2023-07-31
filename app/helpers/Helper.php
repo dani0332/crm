@@ -465,11 +465,11 @@ if (! function_exists('checkPersonalQuotes')) {
     function checkPersonalQuotes($quoteType)
     {
         return in_array($quoteType, [
-            QuoteTypes::BIKE,
-            QuoteTypes::CYCLE,
-            QuoteTypes::JETSKI,
-            QuoteTypes::PET,
-            QuoteTypes::YACHT
+            QuoteTypes::BIKE->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::YACHT->value
         ]);
     }
 }
