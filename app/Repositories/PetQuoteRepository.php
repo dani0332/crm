@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
@@ -96,6 +97,11 @@ class PetQuoteRepository extends BaseRepository
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
         ])
+        ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
+            $query->where(function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            });
+        })
         ->filter()
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
