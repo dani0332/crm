@@ -214,4 +214,5 @@ final class PermissionsEnum extends Enum
     const CarQuoteSearch = 'car-quotes-search';
     const UtmLeadsSalesReport = 'utm-leads-sales-report';
     const TeamThresholdView = 'team-threshold-view';
+    const ViewTeamsFilters = 'view-teams-filters';
 }
