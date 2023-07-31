@@ -1,6 +1,6 @@
 import CommonPage from '../../../pageObjects/CommonPage';
 let quoteData = require('../../../fixtures/qoutesData')
-let TravelData = require('../../../pageObjects/TravelData')
+let TravelData = require('../../../pageObjects/TravelPage')
 let travelLeadData = require('../../../fixtures/travelLeadData')
 let leadUrl
 let quoteId
@@ -27,7 +27,7 @@ describe('Travel qoutes', () => {
         })
         cy.visit('quotes/travel')
         commonPage.verifyURL('/quotes/travel')
-        cy.get('a[href="https://crmstage.alfred.ae/quotes/travel/create"]').should('be.visible').click()
+        travelPage.getCreateButton()
         commonPage.getFirstNameField(quoteData.personalInfo.firstName)
         commonPage.getLastNameField(quoteData.personalInfo.lastName)
         commonPage.getEmail(quoteData.personalInfo.email)
@@ -41,7 +41,7 @@ describe('Travel qoutes', () => {
         travelPage.getTravelCoverFor(travelLeadData.travelLeadData.travelCoverFor)
         travelPage.getDescriptionField(travelLeadData.travelLeadData.details)
         travelPage.getCurrentlyLocated(travelLeadData.travelLeadData.currentlyLocated)
-        travelPage.getCreateButton("Create")
+        travelPage.getSubmitButton("Create")
         travelPage.getPanelAssertion('Travel Detail')
         cy.url().then(data => {
             leadUrl = `/${data.substring(data.lastIndexOf('quotes/travel/'))}`
@@ -55,7 +55,7 @@ describe('Travel qoutes', () => {
         travelPage.getPanelAssertion('Lead Status')
         travelPage.getleadStatusDropdown(travelLeadData.travelLeadData.leadStatus)
         travelPage.getNotesField(travelLeadData.travelLeadData.leadStatusNotes)
-        travelPage.getCreateButton('Change Status')
+        travelPage.getSubmitButton('Change Status')
         travelPage.getPopUpAssertion(" Lead Status has been Updated")
     })
 
@@ -70,15 +70,18 @@ describe('Travel qoutes', () => {
         //Add Member
         travelPage.getAddMemberButton()
         travelPage.getAddMemberPopUpAssertion()
-        travelPage.getCreateButton('Save')
+        travelPage.getSubmitButton('Save')
         travelPage.getDeleteButton()
-        commonPage.getApiIntercept('@deleteTraveler', 302)
-        cy.wait(4000)
+        commonPage.getApiIntercept(`@deleteTravelMember`, 200)
+
 
         //Available plan
         travelPage.getPanelAssertion('Available Plans')
         travelPage.getCoopyLinkButton()
         travelPage.getCopiedAssertion()
+        cy.wait(5000)
+
+        //Activity Button
         travelPage.getActivityButton()
         travelPage.getModalAssertion()
         travelPage.getTitleField("Test title")
@@ -87,22 +90,18 @@ describe('Travel qoutes', () => {
         travelPage.getDueDateField()
         travelPage.selectDate("22")
         travelPage.getApplyButton()
-        travelPage.getCreateButton('Add Activity')
+        travelPage.getSubmitButton('Add Activity')
         travelPage.getPopUpAssertion("Activity has been Created")
 
         //Delete Activity
         travelPage.getDeleteActivityButton()
-        commonPage.getApiIntercept('@deleteActivity', 302)
-        cy.wait(3000)
+        cy.wait(5000)
 
         //Add Additional Contact
         travelPage.getAdditionalContactButton()
         travelPage.getAdditionalContactType("Email")
         travelPage.getValueField("muhammad.abdull@insurancemarket.ae")
-        travelPage.getCreateButton('Add Contact')
-
-        //Delete Additional Contact
-        // travelPage.getDeleteAdditionalContactButton()
+        travelPage.getSubmitButton('Add Contact')
 
     })
 
@@ -127,7 +126,7 @@ describe('Travel qoutes', () => {
         travelPage.getTravelCoverFor(travelLeadData.travelLeadData.travelCoverFor)
         travelPage.getDescriptionField(travelLeadData.travelLeadData.details)
         travelPage.getCurrentlyLocated(travelLeadData.travelLeadData.currentlyLocated)
-        travelPage.getCreateButton("Update")
+        travelPage.getSubmitButton("Update")
         travelPage.getPopUpAssertion("Travel has been updated")
     })
 
