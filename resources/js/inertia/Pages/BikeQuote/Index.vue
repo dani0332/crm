@@ -33,6 +33,7 @@ let availableFilters = {
   page: 1,
 };
 const canExport = ref(false);
+const permissionAssignLeads = ref(false);
 const filters = reactive(availableFilters);
 
 const advisorOptions = computed(() => {
@@ -87,6 +88,9 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+    if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
+        permissionAssignLeads.value = true;
+    }
 });
 
 const tableHeader = [
@@ -107,6 +111,7 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
@@ -290,7 +295,7 @@ watch(
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div v-if="quotesSelected.length > 0 && permissionAssignLeads" class="mb-4">
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"

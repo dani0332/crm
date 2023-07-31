@@ -96,9 +96,9 @@ class BikeQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
             ->with(['bikeQuote' => function ($q) {
-                $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
-            }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                $q->with(['uaeLicenseHeldFor']);
+            }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'currentlyInsuredWith', 'payments' => function ($q) {
+                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
             }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
@@ -118,6 +118,11 @@ class BikeQuoteRepository extends BaseRepository
             'currentlyInsuredWith',
             'advisor'
         ])
+//        ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
+//            $query->where(function ($query) {
+//                $query->where('advisor_id', \auth()->user()->id);
+//            });
+//        })
         ->filter()
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');

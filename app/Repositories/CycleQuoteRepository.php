@@ -116,7 +116,7 @@ class CycleQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
             ->where($column, $value)
             ->with([
-                'cycleQuote',
+                'cycleQuote.yearOfManufacture',
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
