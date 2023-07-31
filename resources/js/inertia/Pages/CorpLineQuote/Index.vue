@@ -389,7 +389,6 @@ onMounted(() => {
       <template #item-code="{ code, uuid }">
         <a
           :href="`/quotes/business/${uuid}`"
-          target="_blank"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
