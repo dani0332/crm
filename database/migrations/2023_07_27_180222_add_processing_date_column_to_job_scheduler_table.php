@@ -14,7 +14,6 @@ class AddProcessingDateColumnToJobSchedulerTable extends Migration
     public function up()
     {
         Schema::table('job_scheduler', function (Blueprint $table) {
-            //
             $table->timestamp('processing_date')->nullable();
         });
     }
@@ -27,7 +26,6 @@ class AddProcessingDateColumnToJobSchedulerTable extends Migration
     public function down()
     {
         Schema::table('job_scheduler', function (Blueprint $table) {
-            //
             $table->dropColumn('processing_date');
         });
     }
