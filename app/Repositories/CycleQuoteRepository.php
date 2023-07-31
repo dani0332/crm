@@ -118,9 +118,14 @@ class CycleQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
             ->where($column, $value)
-            ->with(['cycleQuote.yearOfManufacture', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
+            ->with([
+                'cycleQuote.yearOfManufacture',
+                'advisor',
+                'nationality',
+                'quoteDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
     }
