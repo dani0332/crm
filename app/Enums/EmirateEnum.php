@@ -12,7 +12,7 @@ use BenSampo\Enum\Enum;
 final class EmirateEnum extends Enum
 {
     const AJMAN = 1;
-    const DUBAI =   2;
+    const DUBAI = 2;
     const FUJAIRAH = 3;
     const RAS_AL_KHAIMAH = 4;
     const SHARJAH = 5;
