@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
@@ -461,5 +460,4 @@ class CRUDService extends BaseService
 
         return $genderOptions;
     }
-
 }

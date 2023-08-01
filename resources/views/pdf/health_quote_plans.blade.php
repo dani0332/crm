@@ -287,14 +287,16 @@
                 $benefit->price = 0;
                 $benefit->vat = 0;
 
-                $policyFee = (isset($providers[$quotePlan->providerId]->health_policy_fee)) ? $providers[$quotePlan->providerId]->health_policy_fee : 0;
-                $quotePlan->discountPremium += $addonsPrice + $policyFee;
+                $quotePlan->discountPremium += $addonsPrice;
                 $quotePlan->vat += $addonsVat;
                 $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
-                $quotePlan->policyFee = $policyFee;
                 $plans[$quotePlan->id] = $quotePlan;
 
             }
+
+            // Add Policy Price
+            $policyFee = (isset($providers[$quotePlan->providerId]['health_policy_fee'])) ? $providers[$quotePlan->providerId]['health_policy_fee'] : 0;
+            $quotePlan->discountPremium += $policyFee;
 
             // Add Basma Price
             if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
