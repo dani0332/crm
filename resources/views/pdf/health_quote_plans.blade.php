@@ -297,6 +297,7 @@
             // Add Policy Price
             $policyFee = (isset($providers[$quotePlan->providerId]['health_policy_fee'])) ? $providers[$quotePlan->providerId]['health_policy_fee'] : 0;
             $quotePlan->discountPremium += $policyFee;
+            $quotePlan->total += $policyFee;
 
             // Add Basma Price
             if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
