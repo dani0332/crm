@@ -36,6 +36,10 @@ const formFieldReq = reactive({
   dob: false,
 });
 
+const editMode = computed(() => {
+    return props.quote ? true : false;
+});
+
 const isEmptyField = ref(false);
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
@@ -116,6 +120,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
+          :disabled="editMode"
           :rules="[isRequired, isEmail]"
           class="w-full"
           :error="quoteForm.errors.email"
@@ -125,6 +130,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
+          :disabled="editMode"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
