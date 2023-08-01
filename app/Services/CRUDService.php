@@ -464,14 +464,4 @@ class CRUDService extends BaseService
         return $genderOptions;
     }
 
-    public function getBasmaPrice($quote, $quotePlan)
-    {
-        $basmaPrice = 0;
-        // Basma Price for Emirate Visa Dubai
-        if ($quote->emirate_of_your_visa_id == EmirateEnum::DUBAI) {
-            $basmaPrice = $quotePlan->basmah;
-        }
-
-        return $basmaPrice;
-    }
 }
