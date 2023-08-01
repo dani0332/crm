@@ -31,6 +31,12 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
 });
 
 const page = usePage();
@@ -973,22 +979,26 @@ onMounted(() => {
             v-for="field in travelFields"
             :key="field"
           >
-              <dt v-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </dt>
-              <dt v-else-if="field.title == 'Parent Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </dt>
+            <dt v-if="field.title == 'Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </dt>
+            <dt v-else-if="field.title == 'Parent Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </dt>
             <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
@@ -1456,6 +1466,17 @@ onMounted(() => {
         </template>
       </x-modal>
     </div>
+
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
