@@ -1,4 +1,3 @@
-@inject('crudService', 'App\Services\CRUDService')
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -288,18 +287,20 @@
                 $benefit->price = 0;
                 $benefit->vat = 0;
 
-                $policyFee = (isset($providers[$quotePlan->providerId]->policy_fee)) ? $providers[$quotePlan->providerId]->policy_fee : 0;
-                $quotePlan->discountPremium += $addonsPrice;
+                $policyFee = (isset($providers[$quotePlan->providerId]->health_policy_fee)) ? $providers[$quotePlan->providerId]->health_policy_fee : 0;
+                $quotePlan->discountPremium += $addonsPrice + $policyFee;
                 $quotePlan->vat += $addonsVat;
-                $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat + $policyFee;
+                $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
                 $quotePlan->policyFee = $policyFee;
                 $plans[$quotePlan->id] = $quotePlan;
 
             }
 
             // Add Basma Price
-            $quotePlan->discountPremium += $crudService->getBasmaPrice($quote, $quotePlan);
-            $quotePlan->total += $crudService->getBasmaPrice($quote, $quotePlan);
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
+                $quotePlan->discountPremium += $quotePlan->basmah;
+                $quotePlan->total += $quotePlan->basmah;
+            }
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
