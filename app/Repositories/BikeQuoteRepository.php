@@ -98,13 +98,29 @@ class BikeQuoteRepository extends BaseRepository
     {
         $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
-            ->with(['bikeQuote' => function ($q) {
-                $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
-            }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'bikeQuote' => function ($q) {
+                    $q->with(['uaeLicenseHeldFor', 'currentlyInsuredWith']);
+                },
+                'advisor',
+                'nationality',
+                'quoteDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider'
+                    ]);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }
+            ])->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
