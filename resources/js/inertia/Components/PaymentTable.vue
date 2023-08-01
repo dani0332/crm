@@ -1,6 +1,4 @@
 <script setup>
-import { useCan } from '../../../Composables/can';
-
 const notification = useNotifications('toast');
 const page = usePage();
 
