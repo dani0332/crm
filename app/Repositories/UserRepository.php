@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Models\Team;
 use App\Models\User;
 
 class UserRepository extends BaseRepository
@@ -26,5 +27,21 @@ class UserRepository extends BaseRepository
             ->whereHas('roles', function ($q) use ($roles) {
                 $q->whereIn('name', $roles);  //todo: add required roles here
             })->get();
+    }
+
+    /**
+     * @param $userId
+     * @param $teamName this could be a string - single team or array of team names
+     * @return mixed
+     */
+    public function fetchIsUserMemberofTeam($userId, $teamName)
+    {
+        $teamName = (!is_array($teamName)) ? [$teamName] : $teamName;
+
+        $teams = Team::whereIn('name', $teamName)->get();
+
+        return $this->where('id', $userId)->whereHas('teams', function($q) use ($teams) {
+            if($teams) $q->whereIn('team_id', $teams->pluck('id')->toArray());
+        })->first();
     }
 }
