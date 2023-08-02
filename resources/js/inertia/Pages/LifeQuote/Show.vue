@@ -255,7 +255,7 @@ const leadStatusForm = useForm({
     quote_uuid: page.props.quote.uuid,
     assigned_to_user_id: page.props.quote.advisor_id,
     leadStatus: page.props.quote.quote_status_id || null,
-    notes: page.props.quote.notes || null,
+    notes: page.props.quote.life_quote_request_detail?.notes || null,
     trans_code: page.props.quote.transapp_code || null,
     lostReason: page.props.quote.lost_reason_id || null,
 });
@@ -536,17 +536,7 @@ const onLeadStatus = () => {
               <x-divider class="mb-4 mt-1" />
           </div>
           <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-              <div class="w-full md:w-2/3">
-                  <x-textarea
-                      v-model="leadStatusForm.notes"
-                      type="text"
-                      label="Notes"
-                      placeholder="Lead Notes"
-                      class="w-full"
-                      :disabled="allowStatusUpdate"
-                  />
-              </div>
-              <div class="w-full md:w-1/3">
+              <div class="w-full md:w-1/2">
                   <div class="flex flex-col gap-4">
                       <x-select
                           v-model="leadStatusForm.leadStatus"
@@ -556,47 +546,54 @@ const onLeadStatus = () => {
                           placeholder="Lead Status"
                           class="w-full"
                       />
-                      <x-input
-                          v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.TransactionApproved"
-                          v-model="leadStatusForm.trans_code"
-                          label="TransApp Code"
-                          placeholder="TransApp Code is required"
+                      <x-textarea
+                          v-model="leadStatusForm.notes"
+                          type="text"
+                          label="Notes"
+                          placeholder="Lead Notes"
                           class="w-full"
-                          :error="leadStatusForm.errors.trans_code"
+                          :disabled="allowStatusUpdate"
                       />
-                      <x-select
-                          v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
-                          v-model="leadStatusForm.lostReason"
-                          label="Lost Reason"
-                          :options="
+                  </div>
+              </div>
+              <div class="w-full md:w-2/3">
+                  <x-input
+                      v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.TransactionApproved"
+                      v-model="leadStatusForm.trans_code"
+                      label="TransApp Code"
+                      placeholder="TransApp Code is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.trans_code"
+                  />
+                  <x-select
+                      v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
+                      v-model="leadStatusForm.lostReason"
+                      label="Lost Reason"
+                      :options="
                             lostReasons?.map(item => ({
                               value: item.id,
                               label: item.text,
                             }))
-              "
-                          placeholder="Lost Reason is required"
-                          class="w-full"
-                          :error="leadStatusForm.errors.lostReason"
-                      />
-                  </div>
-
-                  <div class="flex justify-end">
-                      <x-button
-                          class="mt-4"
-                          color="emerald"
-                          size="sm"
-                          :loading="leadStatusForm.processing"
-                          @click.prevent="onLeadStatus"
-                      >
-                          Change Status
-                      </x-button>
-                  </div>
+                          "
+                      placeholder="Lost Reason is required"
+                      class="w-full"
+                      :error="leadStatusForm.errors.lostReason"
+                  />
               </div>
           </div>
+          <div class="flex justify-end">
+              <x-button
+                  class="mt-4"
+                  color="emerald"
+                  size="sm"
+                  :loading="leadStatusForm.processing"
+                  @click.prevent="onLeadStatus"
+                  :disabled="allowStatusUpdate"
+              >
+                  Change Status
+              </x-button>
+          </div>
       </div>
-
-
-
 
 
     <div class="p-4 rounded shadow mb-6 bg-white">
