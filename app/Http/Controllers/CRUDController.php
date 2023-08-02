@@ -13,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
+use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -1063,11 +1064,6 @@ class CRUDController extends Controller
                 'trans_code' => 'required',
             ]);
         }
-        // courtesy email
-        $lobs = [strtolower(quoteTypeCode::GroupMedical), strtolower(quoteTypeCode::CORPLINE)];
-        if ($request->leadStatus == QuoteStatusEnum::TransactionApproved && ! in_array(strtolower($request->modelType), $lobs)) {
-            // dd('m here');
-        }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
@@ -1104,7 +1100,20 @@ class CRUDController extends Controller
                 }
             }
         }
+        $oldEntity=$this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
+        // courtesy email
+        $lobs = [quoteTypeCode::Business];
+        if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
+            
+            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
+            $quoteData['quoteTypeId']=$quoteTypeId;
+            $quoteData['quoteUID']=$request->quote_uuid;
+            
+            $response =  Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
+            
+            info('courtesy-email-response-------------- : '.json_encode($response));
+           }
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
