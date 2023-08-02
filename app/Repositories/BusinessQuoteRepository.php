@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
+use App\Facades\Capi;
 use App\Models\BusinessQuote;
 use App\Traits\CentralTrait;
 
@@ -51,5 +53,10 @@ class BusinessQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::BUSINESS->value).'-quote', 'post', $dataArr);
     }
 }

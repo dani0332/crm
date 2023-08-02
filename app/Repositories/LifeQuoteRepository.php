@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
@@ -114,5 +115,10 @@ class LifeQuoteRepository extends BaseRepository
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::LIFE->value).'-quote', 'post', $dataArr);
     }
 }

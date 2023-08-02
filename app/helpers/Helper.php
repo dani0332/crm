@@ -479,5 +479,3 @@ if (! function_exists('checkPersonalQuotes')) {
         ]);
     }
 }
-
-
