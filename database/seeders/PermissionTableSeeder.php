@@ -382,7 +382,7 @@ class PermissionTableSeeder extends Seeder
         // Renewal Batch Permission
         \DB::table('permissions')->insertGetId([
             'name' => 'renewal-batches',
-            'gurad_name' => 'web'
+            'guard_name' => 'web'
         ]);
     }
 }

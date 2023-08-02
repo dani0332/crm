@@ -74,7 +74,7 @@ const tableHeader = [
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
     { text: 'ADVISOR', value: 'advisor_email' },
-    { text: 'Approval Status STATUS', value: 'approval_status' },
+    { text: 'Approval Status', value: 'approval_status' },
     { text: 'Notes', value: 'mo_notes' },
 ];
 

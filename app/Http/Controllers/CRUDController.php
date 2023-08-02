@@ -30,6 +30,7 @@ use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\LookupRepository;
+use App\Repositories\RenewalBatchRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -143,10 +144,11 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
-        $renewalAdvisors = [];
+        $renewalAdvisors = $upcomingBatches = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
+            $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
             $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
         } else {
             $userRoles = Auth::user()->usersroles()->get();
@@ -235,6 +237,7 @@ class CRUDController extends Controller
                 ->addIndexColumn()
                 ->make(true);
         }
+
 
         return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount'));
     }

@@ -48,4 +48,21 @@ class RenewalBatchRepository extends BaseRepository
             ->simplePaginate()
             ->withQueryString();
     }
+
+    /**
+     * get upcoming batch
+     * @return mixed
+     */
+    public function fetchGetUpcomingBatch($quoteStatusId = null)
+    {
+        $nextMonday = Carbon::now()->next('Monday');
+
+        $query = $this->whereBetween('deadline_date' , [Carbon::now(), $nextMonday])->orderBy('deadline_date')->first();
+
+        if($quoteStatusId != null) {
+            $query->where('quote_status_id', $quoteStatusId);
+        }
+
+        return $query->first();
+    }
 }
