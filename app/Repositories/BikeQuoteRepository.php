@@ -135,11 +135,11 @@ class BikeQuoteRepository extends BaseRepository
             'currentlyInsuredWith',
             'advisor'
         ])
-//        ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
-//            $query->where(function ($query) {
-//                $query->where('advisor_id', \auth()->user()->id);
-//            });
-//        })
+        ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
+            $query->where(function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            });
+        })
         ->filter()
         ->withFakeLeadCriteria()
         ->orderBy('created_at', 'desc');
