@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
+use App\Facades\Capi;
 use App\Models\HomeQuote;
 
 class HomeQuoteRepository extends BaseRepository
@@ -27,6 +29,11 @@ class HomeQuoteRepository extends BaseRepository
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
 
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
 }
