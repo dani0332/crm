@@ -86,12 +86,18 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetData()
     {
-        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
-            ->filter()
-            ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate()->withQueryString();
+        return $this->filter()->with(
+            ['advisor'])->orderBy('created_at', 'desc')->Paginate();
     }
+    /*
+        public function fetchGetData()
+        {
+            return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
+                ->filter()
+               // ->withFakeLeadCriteria()
+                ->orderBy('created_at', 'desc')
+                ->simplePaginate()->withQueryString();
+        } */
 
     public function fetchGetBy($column, $value)
     {
@@ -124,5 +130,11 @@ class PetQuoteRepository extends BaseRepository
         $dataArr['quoteTypeId'] = intval(QuoteTypes::PET->id());
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
     }
 }

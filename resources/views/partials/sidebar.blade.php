@@ -260,6 +260,9 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::RenewalsBatches)
                             <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
                             @endcan
+                                @can(PermissionsEnum::RenewalsBatches)
+                                    <li><a href="{{ route('renewals-batches-search') }}">Search</a></li>
+                                @endcan
                         </ul>
                     </li>
                 </ul>

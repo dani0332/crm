@@ -12,4 +12,16 @@ class TravelQuoteRepository extends BaseRepository
     {
         return TravelQuote::class;
     }
+
+    public function fetchGetData()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc')->Paginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter()->with(
+            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+    }
 }

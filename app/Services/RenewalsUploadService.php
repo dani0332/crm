@@ -11,10 +11,13 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\TiersEnum;
+use App\Exports\RenewalQuotesExport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
@@ -44,6 +47,17 @@ use App\Models\RenewalsUploadLeads;
 use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Repositories\BikeQuoteRepository;
+use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\CarQuoteRepository;
+use App\Repositories\CycleQuoteRepository;
+use App\Repositories\HealthQuoteRepository;
+use App\Repositories\HomeQuoteRepository;
+use App\Repositories\JetskiQuoteRepository;
+use App\Repositories\LifeQuoteRepository;
+use App\Repositories\PetQuoteRepository;
+use App\Repositories\TravelQuoteRepository;
+use App\Repositories\YachtQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -1617,4 +1631,102 @@ class RenewalsUploadService
         }
         info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
     }
+    public function getSearch($data)
+    {
+        $quotes = [];
+        $product = $data->product;
+        switch ($product) {
+            case QuoteTypeId::Car:
+                $quotes = CarQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Home:
+                $quotes = HomeQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Health:
+                $quotes = HealthQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Life:
+                $quotes = LifeQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Business:
+                $quotes = BusinessQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Bike:  // can
+                $quotes = BikeQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Yacht:
+                $quotes = YachtQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Travel:
+                $quotes = TravelQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Pet:
+                $quotes = PetQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Cycle:
+                $quotes = CycleQuoteRepository::getData()->withQueryString();
+                break;
+            case QuoteTypeId::Jetski:
+                $quotes = JetskiQuoteRepository::getData()->withQueryString();
+                break;
+        }
+
+        return $quotes;
+    }
+
+    public function getExport($data)
+    {
+        $product = $data->product;
+        $quotes = [];
+        $quoteType = '';
+        switch ($product) {
+            case QuoteTypeId::Car:
+                $quotes = CarQuoteRepository::export();
+                $quoteType = QuoteTypes::CAR;
+                break;
+            case QuoteTypeId::Home:
+                $quotes = HomeQuoteRepository::export();
+                $quoteType = QuoteTypes::HOME;
+                break;
+            case QuoteTypeId::Health:
+                $quotes = HealthQuoteRepository::export();
+                $quoteType = QuoteTypes::HEALTH;
+                break;
+            case QuoteTypeId::Life:
+                $quotes = LifeQuoteRepository::export();
+                $quoteType = QuoteTypes::LIFE;
+                break;
+            case QuoteTypeId::Business:
+                $quotes = BusinessQuoteRepository::export();
+                $quoteType = QuoteTypes::BUSINESS;
+                break;
+            case QuoteTypeId::Bike:  // can
+                $quotes = BikeQuoteRepository::export();
+                $quoteType = QuoteTypes::BIKE;
+                break;
+            case QuoteTypeId::Yacht:
+                $quotes = YachtQuoteRepository::export();
+                $quoteType = QuoteTypes::YACHT;
+                break;
+            case QuoteTypeId::Travel:
+                $quotes = TravelQuoteRepository::export();
+                $quoteType = QuoteTypes::TRAVEL;
+                break;
+            case QuoteTypeId::Pet:
+                $quotes = PetQuoteRepository::export();
+                $quoteType = QuoteTypes::PET;
+                break;
+            case QuoteTypeId::Cycle:
+                $quotes = CycleQuoteRepository::export();
+                $quoteType = QuoteTypes::CYCLE;
+                break;
+            case QuoteTypeId::Jetski:
+                $quotes = JetskiQuoteRepository::export();
+                $quoteType = QuoteTypes::JETSKI;
+                break;
+        }
+
+        return (new RenewalQuotesExport($quotes, $quoteType->name))->download('Renewal.xlsx');
+    }
+
 }

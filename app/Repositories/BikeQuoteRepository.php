@@ -122,4 +122,12 @@ class BikeQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc')
             ->simplePaginate();
     }
+
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::BIKE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
 }

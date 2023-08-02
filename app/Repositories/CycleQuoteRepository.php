@@ -72,6 +72,19 @@ class CycleQuoteRepository extends BaseRepository
             ->simplePaginate();
     }
 
+    public function fetchExport()
+    {
+        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+    }
+
     /**
      * @return mixed
      */

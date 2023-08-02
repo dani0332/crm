@@ -11,6 +11,10 @@ enum QuoteTypes: string
     case YACHT = 'Yacht';
     case JETSKI = 'Jetski';
     case CAR = 'Car';
+    case TRAVEL = 'Travel';
+    case BUSINESS = 'Business';
+    case HEALTH = 'Health';
+    case HOME = 'Home';
 
     public function id(): string
     {

@@ -25,6 +25,8 @@ class CarQuote extends BaseModel
         'previous_quote_policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
+        'source' => FilterTypes::EXACT,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
     protected $guarded = [];
 
@@ -247,6 +249,11 @@ class CarQuote extends BaseModel
     public function updatedBy()
     {
         return $this->hasOne(User::class, 'email', 'updated_by')->select(['id', 'email', 'name']);
+    }
+
+    public function previousAdvisor()
+    {
+        return $this->hasOne(User::class, 'id', 'previous_advisor_id')->select(['id', 'email', 'name']);
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)

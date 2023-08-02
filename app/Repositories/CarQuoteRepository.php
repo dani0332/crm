@@ -20,10 +20,16 @@ class CarQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($paginate = true)
     {
         return $this->filter()->with(
             ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id'])->orderBy('created_at', 'desc')->Paginate();
+    }
+
+    public function fetchExport()
+    {
+        return $this->filter(false)->with(
+            ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id'])->orderBy('created_at', 'desc');
     }
 
     /**
