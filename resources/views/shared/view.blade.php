@@ -698,11 +698,14 @@
                                 value="{{ $isManualAllocationAllowed }}">
                         </form>
 
-                        <div class="row">
-                            <div class="col-sm-12 text-center">
-                                <span class="text-danger">Alert! Deadline for submission for Batch 624 uncontactable is on 1st May 2023</span>
+                        @if(auth()->user()->hasRole(RolesEnum::CarAdvisor) && isset($upcomingBatch->id))
+                            <div class="row">
+                                <div class="col-sm-12 text-center">
+                                    <span class="text-danger">Alert! Deadline for submission for Batch {{$upcomingBatch->name}} uncontactable is on {{$upcomingBatch->deadline_date}}</span>
+                                </div>
                             </div>
-                        </div>
+                        @endif
+
 
                         <table id="dtBasicExample" class="table-striped jambo_table table" style="table-layout: fixed;"
                             width="100%">
