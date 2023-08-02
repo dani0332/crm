@@ -102,6 +102,11 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
           </div>
+
+        <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">IS ECOMMERCE</dt>
+            <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+        </div>
         </dl>
       </div>
 
