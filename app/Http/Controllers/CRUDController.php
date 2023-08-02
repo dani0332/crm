@@ -144,7 +144,7 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
-        $renewalAdvisors = $upcomingBatches = [];
+        $renewalAdvisors = $upcomingBatch = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
