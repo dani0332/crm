@@ -112,6 +112,8 @@ class SIBService extends BaseService
                 }
             }
 
+            info('sendEmailUsingSIB -- CC recipients are : '.json_encode($cc));
+
             $body = [
                 'to' => $to,
                 'templateId' => $emailTemplateId,

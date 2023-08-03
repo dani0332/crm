@@ -44,8 +44,6 @@ class CarLostStatusRejected //implements ShouldQueue
      */
     public function handle()
     {
-        info('before sending Status rejected email');
-
         $emailTemplateKey = ($this->carLostQuoteLog->quote_status_id == QuoteStatusEnum::CarSold) ? ApplicationStorageEnums::CAR_SOLD_STATUS_REJECTION_TEMPLATE : ApplicationStorageEnums::UNCONTACTABLE_STATUS_REJECTION_TEMPLATE;
         $templateId = ApplicationStorage::where('key_name', $emailTemplateKey)->first()->value;
 
@@ -62,6 +60,8 @@ class CarLostStatusRejected //implements ShouldQueue
         if($this->quote->advisor->managers->count()) {
             $cc = implode(',',$this->quote->advisor->managers->pluck('email')->toArray());
         }
+
+        info('before sending Status rejected email for UUID: ' . $this->quote->uuid . ' to Advisor ' . $this->quote->advisor->email);
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
