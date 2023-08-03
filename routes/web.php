@@ -20,6 +20,7 @@ use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\ClaimsStatusController;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\V2\CustomerController as V2CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\FormController;
@@ -141,6 +142,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
+//        Route::resource('customer', V2CustomerController::class)->names(generateRouteNames('customers'));
         Route::get('{quoteType}/leads-export', [CentralController::class, 'exportLeads'])->name('data-extraction');
 
         Route::group(['prefix' => 'renewals'], function () {
