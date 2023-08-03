@@ -119,7 +119,7 @@ class AjaxController extends Controller
             return response()->json(['success' => true, 'payment_link' => $payment->payment_link]);
         } else {
             $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
-            $quoteTypeId = collect(QuoteTypeId::getOptions())->search($request->modelType);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->modelType));
 
             $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
 
