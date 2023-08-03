@@ -31,6 +31,7 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LeadAllocationService extends BaseService
 {
@@ -863,7 +864,8 @@ class LeadAllocationService extends BaseService
             $healthQuote->update([
                 'is_error_email_sent' => true,
             ]);
-            dispatch(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
+            //dispatch(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
+            Mail::send(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
         }
     }
 }
