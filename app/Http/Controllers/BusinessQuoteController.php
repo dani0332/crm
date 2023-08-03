@@ -165,7 +165,7 @@ class BusinessQuoteController extends Controller
                 'label' => $paymentMethod->text,
             ];
         })->sortBy('label')->values();
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);

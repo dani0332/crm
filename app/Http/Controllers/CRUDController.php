@@ -540,7 +540,7 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
 
-            $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod']);
+            $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
 
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
 
@@ -639,7 +639,7 @@ class CRUDController extends Controller
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
-            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
+            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $payments->each(function ($payment) {
