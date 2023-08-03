@@ -28,11 +28,11 @@ class TravelQuoteRepository extends BaseRepository
             'currentlyLocatedIn',
             'nationality',
             'destination',
-            'paymentStatus'
+            'paymentStatus',
         ])
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

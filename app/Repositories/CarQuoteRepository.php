@@ -41,7 +41,7 @@ class CarQuoteRepository extends BaseRepository
             'userId' => strval(auth()->id()),
         ];
 
-        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
+        info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
 
         return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
     }
@@ -63,7 +63,7 @@ class CarQuoteRepository extends BaseRepository
             'update' => true,
         ];
         $payLoad['plans'][] = (object) [
-            'planId' =>  (int) $data['plan_id'],
+            'planId' => (int) $data['plan_id'],
             'isPayLaterActive' => true,
         ];
 

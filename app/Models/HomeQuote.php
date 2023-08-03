@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\FilterCriteria;
-use App\Traits\QuoteModelTrait;
 
 class HomeQuote extends Model implements AuditableContract
 {
@@ -67,7 +67,7 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
-    
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');

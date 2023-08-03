@@ -26,28 +26,28 @@ class BusinessQuoteRepository extends BaseRepository
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
-            'typeOfInsurance'
-            ])->whereHas('typeOfInsurance', function($typeOfInsurance) use($quoteType){
-                $typeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function($groupMedical){
-                    $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
-                });
-                $typeOfInsurance->when($quoteType == quoteTypeCode::CORPLINE, function($corpline){
-                    $corpline->where('text', '!=', quoteStatusCode::GROUP_MEDICAL);
-                });
-            })->when(($quoteType == quoteTypeCode::GroupMedical && (
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
-            )), function($query){
-                $query->where('advisor_id', \auth()->user()->id);
-            })->when(($quoteType == quoteTypeCode::CORPLINE && (
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) ||
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
-                auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
-            )), function($query){
-                $query->where('advisor_id', auth()->user()->id);
-            })
+            'typeOfInsurance',
+        ])->whereHas('typeOfInsurance', function ($typeOfInsurance) use ($quoteType) {
+            $typeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
+                $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
+            });
+            $typeOfInsurance->when($quoteType == quoteTypeCode::CORPLINE, function ($corpline) {
+                $corpline->where('text', '!=', quoteStatusCode::GROUP_MEDICAL);
+            });
+        })->when(($quoteType == quoteTypeCode::GroupMedical && (
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
+        )), function ($query) {
+            $query->where('advisor_id', \auth()->user()->id);
+        })->when(($quoteType == quoteTypeCode::CORPLINE && (
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::CORPLINE) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Business) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::Amt) ||
+            auth()->user()->isSpecificTeamAdvisor(quoteTypeCode::GM)
+        )), function ($query) {
+            $query->where('advisor_id', auth()->user()->id);
+        })
             ->filter()
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');

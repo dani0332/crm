@@ -44,7 +44,7 @@ class BikeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         info('bikeQuote:'.json_encode($quoteData));
@@ -109,7 +109,7 @@ class BikeQuoteRepository extends BaseRepository
                         'personalPlan',
                         'paymentMethod',
                         'paymentStatusLogs',
-                        'insuranceProvider'
+                        'insuranceProvider',
                     ]);
                 },
                 'createdBy',
@@ -117,7 +117,7 @@ class BikeQuoteRepository extends BaseRepository
                 'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }
+                },
             ])->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
@@ -133,16 +133,16 @@ class BikeQuoteRepository extends BaseRepository
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
-            'advisor'
+            'advisor',
         ])
-        ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
-            $query->where(function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
-            });
-        })
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

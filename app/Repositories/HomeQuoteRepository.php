@@ -8,7 +8,6 @@ use App\Models\HomeQuote;
 
 class HomeQuoteRepository extends BaseRepository
 {
-
     public function model()
     {
         return HomeQuote::class;
@@ -21,11 +20,11 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuoteRequestDetail.lostReason',
             'accommodationType:id,text',
             'possessionType:id,text',
-            'advisor'
+            'advisor',
         ])
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
 

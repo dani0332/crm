@@ -62,7 +62,7 @@ class BusinessQuote extends Model implements AuditableContract
     {
         return $this->hasOne(User::class, 'id', 'advisor_id');
     }
-    
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');

@@ -187,7 +187,7 @@ class PersonalQuote extends Model implements AuditableContract
 
     public function plans()
     {
-        return $this->belongsTo(PersonalPlan::class,'plan_id','id');
+        return $this->belongsTo(PersonalPlan::class, 'plan_id', 'id');
     }
 
     /**

@@ -540,7 +540,7 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
 
-            $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
+            $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
 
@@ -580,7 +580,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'lostReasons' => $lostReasons,
-                'payments'=>$payments,
+                'payments' => $payments,
                 'quoteRequest' => $paymentEntityModel,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'paymentMethods' => $filteredPaymentMethods,
@@ -639,7 +639,7 @@ class CRUDController extends Controller
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
-            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
+            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $payments->each(function ($payment) {
@@ -1167,20 +1167,20 @@ class CRUDController extends Controller
                 }
             }
         }
-        $oldEntity=$this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
+        $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-            
+
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
-            $quoteData['quoteTypeId']=$quoteTypeId;
-            $quoteData['quoteUID']=$request->quote_uuid;
-            
-            $response =  Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
-            
+            $quoteData['quoteTypeId'] = $quoteTypeId;
+            $quoteData['quoteUID'] = $request->quote_uuid;
+
+            $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
+
             info('courtesy-email-response-------------- : '.json_encode($response));
-           }
+        }
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
