@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Exports\CarQuoteExport;
 use App\Exports\HealthQuotesExport;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
@@ -222,6 +223,18 @@ class CRUDController extends Controller
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'isManualAllocationAllowed' => $isManualAllocationAllowed,
+            ]);
+        }
+
+        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+            $gridData = $gridData->simplePaginate(10)->withQueryString();
+            
+            // dd($advisors);
+            return inertia('PersonalQuote/Car/LeadList', [
+                'quotes' => $gridData,
+                'advisors' => $advisors,
+                'dropdownSource' => $dropdownSource,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
             ]);
         }
@@ -981,6 +994,7 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
+        // dd($request->all());
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
@@ -1347,6 +1361,23 @@ class CRUDController extends Controller
         $query = $this->crudService->getGridData($this->genericModel, $request);
 
         return (new HealthQuotesExport($query))->download('Health-List.xlsx');
+    }
+
+    /**
+     * export health leads to excel sheet.
+     */
+    public function exportCarLeads(Request $request)
+    {
+        $created_at_start = $request->created_at_start;
+        $created_at_end = $request->created_at_end;
+
+        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
+            return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
+        }
+
+        $query = $this->crudService->getGridData($this->genericModel, $request);
+
+        return (new CarQuoteExport($query))->download('Car-List.xlsx');
     }
 
     public function destroyDocument($quoteType, $quoteUuId, $id)
