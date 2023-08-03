@@ -30,11 +30,13 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+    advisor_id: [],
   page: 1,
 };
 const canExport = ref(false);
 const permissionAssignLeads = ref(false);
 const filters = reactive(availableFilters);
+const hasRole = role => useHasRole(role);
 
 const advisorOptions = computed(() => {
     return page.props.advisors.map(advisor => ({
@@ -112,6 +114,15 @@ const tableHeader = [
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+
+const advisorOptionsFilter = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.roles[0].name
+            ? advisor.name + ' - ' + advisor.roles[0]?.name
+            : advisor.name,
+    }));
+});
 
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
@@ -218,6 +229,38 @@ watch(
           class="w-full"
         />
 
+      <ComboBox
+          v-model="filters.quote_status_id"
+          label="Lead Status"
+          name="quote_status"
+          placeholder="Search by Lead Status"
+          :options="
+        quoteStatuses.map(item => ({
+          value: item.id,
+          label: item.text,
+        }))
+      "
+      />
+
+      <ComboBox
+          v-model="filters.advisor_id"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="advisorOptionsFilter"
+      />
+
+          <x-select
+              v-model="filters.is_ecommerce"
+              label="Is Ecommerce"
+              placeholder="Search by Ecommerce"
+              :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+              class="w-full"
+          />
+
         <x-input
           v-model="filters.renewal_batch"
           type="search"
@@ -225,31 +268,6 @@ watch(
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-        />
-
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status"
-          placeholder="Search by Lead Status"
-          :options="
-            quoteStatuses.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-        />
-
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Is Ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 1, label: 'Yes' },
-            { value: 0, label: 'No' },
-          ]"
-          class="w-full"
         />
 
         <x-select
