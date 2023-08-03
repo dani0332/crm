@@ -96,9 +96,9 @@ use App\Enums\GenericRequestEnum;
                         <span class="col-form-label col-md-6 col-sm-6">Is Active
                         <br>
                         @if ($team->is_active === GenericRequestEnum::TRUE)
-                        <input type="checkbox" name="is_active" checked="">
+                            <input type="checkbox" name="is_active" checked="">
                         @else
-                        <input type="checkbox" name="is_active"  {{ old("is_active") ? "checked" : "" }} >
+                            <input type="checkbox" name="is_active"  {{ old("is_active") ? "checked" : "" }} >
                         @endif
                         </span>
                     </div>

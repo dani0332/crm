@@ -48,91 +48,93 @@ const uploadFile = (doc, memberId, files) => {
 </script>
 
 <template>
-  <div>
-    <div>
-      <x-tab-group v-model="memberTabs" class="pb-10" variant="block">
-        <x-tab value="quote-documents" label="Documents">
-          <div
-            v-for="docType in docTypes['QUOTE']"
-            :key="docType.id"
-            class="grid md:grid-cols-2 gap-2 my-4 border-b"
-          >
-            <div class="flex flex-col gap-1">
-              <h5 class="text-sm font-semibold">
-                {{ docType.text }}
-              </h5>
-              <p class="text-xs">Max files: {{ docType.max_files }}</p>
-              <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
-              <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
-            </div>
-            <div class="pb-4">
-              <Dropzone
-                :id="docType.id"
-                :accept="docType.accepted_files"
-                :max-files="docType.max_files"
-                :max-size="docType.max_size"
-                :loading="docForm.processing"
-                @change="uploadFile(docType, null, $event)"
-              />
-              <a
-                v-for="doc in docs.filter(
-                  d => d.document_type_code == docType.code,
-                )"
-                :key="doc.id"
-                :href="cdn + doc.doc_url"
-                target="_blank"
-                class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-              >
-                {{ doc.original_name || doc.doc_name }}
-              </a>
-            </div>
-          </div>
-        </x-tab>
-        <x-tab
-          v-for="member in members"
-          :key="member.id"
-          :value="`member-${member.id}`"
-          :label="member.name"
-        >
-          <div
-            v-for="docType in docTypes['MEMBER']"
-            :key="docType.id"
-            class="grid md:grid-cols-2 gap-2 my-4 border-b"
-          >
-            <div class="flex flex-col gap-1">
-              <h5 class="text-sm font-semibold">
-                {{ docType.text }}
-              </h5>
-              <p class="text-xs">Max files: {{ docType.max_files }}</p>
-              <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
-              <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
-            </div>
-            <div class="pb-4">
-              <Dropzone
-                :id="docType.id"
-                :accept="docType.accepted_files"
-                :max-files="docType.max_files"
-                :max-size="docType.max_size"
-                :loading="docForm.processing"
-                @change="uploadFile(docType, member.id, $event)"
-              />
-              <a
-                v-for="doc in docs.filter(
-                  d =>
-                    d.document_type_code == docType.code &&
-                    d.member_detail_id == member.id,
-                )"
-                :key="doc.id"
-                :href="cdn + doc.doc_url"
-                target="_blank"
-                class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-              >
-                {{ doc.original_name || doc.doc_name }}
-              </a>
-            </div>
-          </div>
-        </x-tab>
-      </x-tab-group>
+  <div class="relative">
+    <div
+      v-if="docForm.processing"
+      class="fixed inset-0 z-10 w-full h-full bg-white-75 flex justify-center items-center"
+    >
+      <x-spinner class="w-10 h-10 text-primary-600" />
     </div>
+    <x-tab-group v-model="memberTabs" class="pb-10" variant="block">
+      <x-tab value="quote-documents" label="Documents">
+        <div
+          v-for="docType in docTypes['QUOTE']"
+          :key="docType.id"
+          class="grid md:grid-cols-2 gap-2 my-4 border-b"
+        >
+          <div class="flex flex-col gap-1">
+            <h5 class="text-sm font-semibold">
+              {{ docType.text }}
+            </h5>
+            <p class="text-xs">Max files: {{ docType.max_files }}</p>
+            <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
+            <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
+          </div>
+          <div class="pb-4">
+            <Dropzone
+              :id="docType.id"
+              :accept="docType.accepted_files"
+              :max-files="docType.max_files"
+              :max-size="docType.max_size"
+              @change="uploadFile(docType, null, $event)"
+            />
+            <a
+              v-for="doc in docs.filter(
+                d => d.document_type_code == docType.code,
+              )"
+              :key="doc.id"
+              :href="cdn + doc.doc_url"
+              target="_blank"
+              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+            >
+              {{ doc.original_name || doc.doc_name }}
+            </a>
+          </div>
+        </div>
+      </x-tab>
+      <x-tab
+        v-for="member in members"
+        :key="member.id"
+        :value="`member-${member.id}`"
+        :label="member.name"
+      >
+        <div
+          v-for="docType in docTypes['MEMBER']"
+          :key="docType.id"
+          class="grid md:grid-cols-2 gap-2 my-4 border-b"
+        >
+          <div class="flex flex-col gap-1">
+            <h5 class="text-sm font-semibold">
+              {{ docType.text }}
+            </h5>
+            <p class="text-xs">Max files: {{ docType.max_files }}</p>
+            <p class="text-xs">Supported: {{ docType.accepted_files }}</p>
+            <p class="text-xs">Max file size: {{ docType.max_size }} MB</p>
+          </div>
+          <div class="pb-4">
+            <Dropzone
+              :id="docType.id"
+              :accept="docType.accepted_files"
+              :max-files="docType.max_files"
+              :max-size="docType.max_size"
+              @change="uploadFile(docType, member.id, $event)"
+            />
+            <a
+              v-for="doc in docs.filter(
+                d =>
+                  d.document_type_code == docType.code &&
+                  d.member_detail_id == member.id,
+              )"
+              :key="doc.id"
+              :href="cdn + doc.doc_url"
+              target="_blank"
+              class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+            >
+              {{ doc.original_name || doc.doc_name }}
+            </a>
+          </div>
+        </div>
+      </x-tab>
+    </x-tab-group>
   </div>
 </template>
