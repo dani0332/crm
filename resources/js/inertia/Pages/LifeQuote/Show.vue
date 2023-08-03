@@ -378,7 +378,7 @@ const onLeadStatus = () => {
             <dd>{{ quote?.mobile_no }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Advisor</dt>
+            <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor?.name }}</dd>
           </div>
 
@@ -478,16 +478,16 @@ const onLeadStatus = () => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EXPIRY DATE</dt>
-            <dd></dd>
+            <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
+            <dd>{{ quote.renewal_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd></dd>
+            <dd>{{ quote.renewal_batch }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PARENT CDB ID</dt>
-            <dd></dd>
+            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
           </div>
         </dl>
       </div>
