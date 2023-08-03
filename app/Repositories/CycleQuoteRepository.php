@@ -44,7 +44,7 @@ class CycleQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         info('cycleQuote:'.json_encode($quoteData));
@@ -60,16 +60,16 @@ class CycleQuoteRepository extends BaseRepository
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
-            'advisor'
+            'advisor',
         ])
-        ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-            $query->where(function ($query) {
-                $query->where('advisor_id', \auth()->user()->id);
-            });
-        })
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where(function ($query) {
+                    $query->where('advisor_id', \auth()->user()->id);
+                });
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
@@ -116,7 +116,7 @@ class CycleQuoteRepository extends BaseRepository
         $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
             ->where($column, $value)
             ->with([
-                'cycleQuote',
+                'cycleQuote.yearOfManufacture',
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
@@ -127,7 +127,7 @@ class CycleQuoteRepository extends BaseRepository
                 'updatedBy',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }
+                },
             ])->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 

@@ -1,4 +1,3 @@
-@inject('crudService', 'App\Services\CRUDService')
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -260,6 +259,7 @@
         $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
         $plans = [];
         $benefits = ['feature', 'inpatient', 'outpatient', 'exclusion', 'coInsurance', 'regionCover', 'maternityCover', 'networkList'];
+        $vatPercentage = \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         foreach ($quotePlans->quote->plans as &$quotePlan){
             $addonsPrice = 0;
@@ -288,18 +288,25 @@
                 $benefit->price = 0;
                 $benefit->vat = 0;
 
-                $policyFee = (isset($providers[$quotePlan->providerId]->policy_fee)) ? $providers[$quotePlan->providerId]->policy_fee : 0;
                 $quotePlan->discountPremium += $addonsPrice;
                 $quotePlan->vat += $addonsVat;
-                $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat + $policyFee;
-                $quotePlan->policyFee = $policyFee;
+                $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
                 $plans[$quotePlan->id] = $quotePlan;
 
             }
 
             // Add Basma Price
-            $quotePlan->discountPremium += $crudService->getBasmaPrice($quote, $quotePlan);
-            $quotePlan->total += $crudService->getBasmaPrice($quote, $quotePlan);
+            if ($quote->emirate_of_your_visa_id == \App\Enums\EmirateEnum::DUBAI) {
+                $quotePlan->discountPremium += $quotePlan->basmah;
+                $quotePlan->total += $quotePlan->basmah;
+            }
+
+            // Add Policy Price
+            $policyFee = (isset($providers[$quotePlan->providerId]['health_policy_fee'])) ? $providers[$quotePlan->providerId]['health_policy_fee'] : 0;
+            $quotePlan->discountPremium += $policyFee;
+            $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
+            $quotePlan->total += $policyFee + ($policyFee * ($vatPercentage / 100 ));
+
         }
 
         $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();

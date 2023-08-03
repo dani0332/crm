@@ -206,7 +206,6 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
                 ->whereNull('previous_quote_id')->paginate(10);
         } else {
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
-            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
             if ($modelType == HealthQuote::class) {
                 $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
@@ -434,7 +433,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Business,
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
-            quoteTypeCode::Aml
+            quoteTypeCode::Aml,
         ];
     }
 }
@@ -472,13 +471,11 @@ if (! function_exists('checkPersonalQuotes')) {
     function checkPersonalQuotes($quoteType)
     {
         return in_array($quoteType, [
-            QuoteTypes::BIKE,
-            QuoteTypes::CYCLE,
-            QuoteTypes::JETSKI,
-            QuoteTypes::PET,
-            QuoteTypes::YACHT
+            QuoteTypes::BIKE->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::YACHT->value,
         ]);
     }
 }
-
-

@@ -103,7 +103,7 @@ class PersonalQuoteRepository extends BaseRepository
 
             $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code', 'insurance_provider_id']);
 
-            if ($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard && $data['payment_methods_code']  != PaymentMethodsEnum::InsureNowPayLater) {
+            if ($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard && $data['payment_methods_code'] != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentData['authorized_at'] = now();
             }
 
@@ -130,7 +130,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUpdatePayment($quoteId, $paymentCode, $data)
     {
         $payment = PaymentRepository::where('code', $paymentCode)->firstOrFail();
-        $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code','insurance_provider_id']);
+        $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code', 'insurance_provider_id']);
 
         if (! empty($data['reference'])) {
             $paymentData['reference'] = $data['reference'];

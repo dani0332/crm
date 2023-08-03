@@ -165,7 +165,7 @@ class BusinessQuoteController extends Controller
                 'label' => $paymentMethod->text,
             ];
         })->sortBy('label')->values();
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -199,7 +199,7 @@ class BusinessQuoteController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
-            'payments'=>$payments,
+            'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'paymentMethods' => $filteredPaymentMethods,

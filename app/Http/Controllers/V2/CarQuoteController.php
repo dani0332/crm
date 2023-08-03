@@ -49,7 +49,7 @@ class CarQuoteController extends Controller
     {
         $response = CarQuoteRepository::create($request->validated());
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 

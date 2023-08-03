@@ -110,7 +110,7 @@ class TravelController extends Controller
                 'label' => $paymentMethod->text,
             ];
         })->sortBy('label')->values();
-        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod','insuranceProvider']);
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
         $payments->each(function ($payment) {
             $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -121,7 +121,7 @@ class TravelController extends Controller
 
             $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
         });
-        
+
         $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
@@ -170,7 +170,7 @@ class TravelController extends Controller
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
             'listQuotePlans' => $this->travelQuoteService->listQuotePlans($id),
             'activities' => $activities,
-            'payments'=>$payments,
+            'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'paymentMethods' => $filteredPaymentMethods,

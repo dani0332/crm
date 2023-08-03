@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\EmirateEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\QuoteStatusEnum;
@@ -46,26 +45,25 @@ class CRUDService extends BaseService
     protected $ruleService;
 
     public function __construct(
-        HealthQuoteService        $healthQuoteService,
-        TeamService               $teamsService,
-        CarQuoteService           $carQuoteService,
-        LeadStatusService         $leadstatusService,
-        TravelQuoteService        $travelQuoteService,
-        LifeQuoteService          $lifeQuoteService,
-        HomeQuoteService          $homeQuoteService,
-        BusinessQuoteService      $businessQuoteService,
-        PetQuoteService           $petQuoteService,
-        InsuranceProviderService  $insuranceproviderService,
-        CarPlanService            $carplanService,
-        CarPlanCoverageService    $carplancoverageService,
-        CarPlanAddonService       $carplanaddonService,
+        HealthQuoteService $healthQuoteService,
+        TeamService $teamsService,
+        CarQuoteService $carQuoteService,
+        LeadStatusService $leadstatusService,
+        TravelQuoteService $travelQuoteService,
+        LifeQuoteService $lifeQuoteService,
+        HomeQuoteService $homeQuoteService,
+        BusinessQuoteService $businessQuoteService,
+        PetQuoteService $petQuoteService,
+        InsuranceProviderService $insuranceproviderService,
+        CarPlanService $carplanService,
+        CarPlanCoverageService $carplancoverageService,
+        CarPlanAddonService $carplanaddonService,
         CarPlanAddOnOptionService $carplanaddonoptionService,
         ApplicationStorageService $applicationstorageService,
-        TierService               $tierService,
-        QuadrantService           $quadrantService,
-        RuleService               $ruleService,
-    )
-    {
+        TierService $tierService,
+        QuadrantService $quadrantService,
+        RuleService $ruleService,
+    ) {
         $this->healthQuoteService = $healthQuoteService;
         $this->carQuoteService = $carQuoteService;
         $this->teamsService = $teamsService;
@@ -91,30 +89,30 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($model->modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getGridData($model, $request);
     }
 
     public function getLeads($CDBID, $email, $mobile_no, $leadType)
     {
-        return $this->{$leadType . 'QuoteService'}->getLeads($CDBID, $email, $mobile_no, $leadType);
+        return $this->{$leadType.'QuoteService'}->getLeads($CDBID, $email, $mobile_no, $leadType);
     }
 
     public function getLeadAssignmentRecords($teamName)
     {
-        return $this->{$teamName . 'QuoteService'}->getLeadsForAssignment();
+        return $this->{$teamName.'QuoteService'}->getLeadsForAssignment();
     }
 
     public function getEntityByUUID($uuid, $leadType)
     {
-        return $this->{strtolower($leadType) . 'QuoteService'}->getEntity($uuid, $leadType);
+        return $this->{strtolower($leadType).'QuoteService'}->getEntity($uuid, $leadType);
     }
 
     public function getCustomTitleByModelType($modelType, $propertyName)
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getCustomTitleByProperty($propertyName);
     }
 
@@ -132,7 +130,7 @@ class CRUDService extends BaseService
             if ($leadType == strtolower(quoteTypeCode::CORPLINE) || $leadType = strtolower(quoteTypeCode::GroupMedical)) {
                 $leadType = 'Business';
             }
-            $duplicateRecord = $this->{strtolower($leadType) . 'QuoteService'}->getDuplicateEntityByCode($leadCode);
+            $duplicateRecord = $this->{strtolower($leadType).'QuoteService'}->getDuplicateEntityByCode($leadCode);
             if ($duplicateRecord) {
                 $allowedLeadTypes = array_filter($allowedLeadTypes, function ($item) {
                     return $item;
@@ -151,14 +149,14 @@ class CRUDService extends BaseService
         if (strtolower($parentType) == strtolower(quoteTypeCode::CORPLINE) || strtolower($parentType) == strtolower(quoteTypeCode::GroupMedical)) {
             $parentType = 'Business';
         }
-        $parentRecord = $this->{strtolower($request->parentType) . 'QuoteService'}->getEntityPlain($request->entityId);
+        $parentRecord = $this->{strtolower($request->parentType).'QuoteService'}->getEntityPlain($request->entityId);
         if ($request->has('lob_team_sub_selection') && isset($request->lob_team_sub_selection)) {
             $parentRecord['enquiryType'] = $request->lob_team_sub_selection;
         } else {
             $parentRecord['enquiryType'] = 'record_only';
         }
 
-        if (!empty($lobTeams)) {
+        if (! empty($lobTeams)) {
             foreach ($lobTeams as $lobTeam) {
                 $this->createDuplicateRecord($lobTeam, $parentRecord);
             }
@@ -182,14 +180,14 @@ class CRUDService extends BaseService
                     ->orWhereNotNull(DB::raw("JSON_EXTRACT(a.new_values, '$.advisor_id')"));
             })
             ->where(function ($query) use ($leadId, $leadType) {
-                $query->where('a.auditable_type', 'App\Models\\' . $leadType . 'Quote')
+                $query->where('a.auditable_type', 'App\Models\\'.$leadType.'Quote')
                     ->where('a.auditable_id', $leadId);
             })
             ->orWhere(function ($query) use ($leadType, $leadId) {
-                $entityDetail = $this->{strtolower($leadType) . 'QuoteService'}->getDetailEntity($leadId);
+                $entityDetail = $this->{strtolower($leadType).'QuoteService'}->getDetailEntity($leadId);
                 if ($entityDetail) {
                     $query->where('a.auditable_id', $entityDetail->id)
-                        ->where('a.auditable_type', 'App\Models\\' . $leadType . 'QuoteRequestDetail');
+                        ->where('a.auditable_type', 'App\Models\\'.$leadType.'QuoteRequestDetail');
                 }
             })
             ->orderBy('a.created_at', 'DESC')->get();
@@ -208,7 +206,7 @@ class CRUDService extends BaseService
 
     public function updateQuoteStatus(Request $request)
     {
-        $quoteDetailEntity = $this->{strtolower($request->modelType) . 'QuoteService'}->getDetailEntity($request->leadId);
+        $quoteDetailEntity = $this->{strtolower($request->modelType).'QuoteService'}->getDetailEntity($request->leadId);
 
         if (isset($request->lostReason) && $request->lostReason != '') {
             $quoteDetailEntity->lost_reason_id = $request->lostReason;
@@ -234,7 +232,7 @@ class CRUDService extends BaseService
 
         $quoteDetailEntity->save();
 
-        $entity = $this->{strtolower($request->modelType) . 'QuoteService'}->getEntityPlain($request->leadId);
+        $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
         $previousQuoteStatus = $entity->quote_status_id;
         //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
@@ -297,7 +295,7 @@ class CRUDService extends BaseService
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_ADVISOR', strtoupper($modelType) . '_RENEWAL_ADVISOR', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR']);
         }
 
         return $query->orderBy('r.name')->distinct()->get();
@@ -310,15 +308,15 @@ class CRUDService extends BaseService
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
+            $query->whereIn('r.name', [strtoupper($modelType).'_RENEWAL_ADVISOR', 'advisor']);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_RENEWAL_ADVISOR']);
+            $query->whereIn('r.name', [strtoupper($modelType).'_WCU_ADVISOR', 'RM_ADVISOR', 'EBP_ADVISOR', 'HEALTH_RENEWAL_ADVISOR']);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', ['CORPLINE_ADVISOR', 'CORPLINE_RENEWAL_ADVISOR']);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Life) || strtolower($modelType) == strtolower(quoteTypeCode::Home) || strtolower($modelType) == strtolower(quoteTypeCode::Travel) || strtolower($modelType) == strtolower(quoteTypeCode::Pet)) {
-            $query->whereIn('r.name', [strtoupper($modelType) . '_RENEWAL_ADVISOR', 'advisor']);
+            $query->whereIn('r.name', [strtoupper($modelType).'_RENEWAL_ADVISOR', 'advisor']);
         } else {
-            $query->where('r.name', strtoupper($modelType) . '_ADVISOR');
+            $query->where('r.name', strtoupper($modelType).'_ADVISOR');
         }
 
         return $query->orderBy('r.name')->distinct()->get();
@@ -330,7 +328,7 @@ class CRUDService extends BaseService
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
             ->join('roles as r', 'r.id', '=', 'mr.role_id')
             ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"));
-        $query->where('r.name', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR');
+        $query->where('r.name', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR');
 
         return $query->orderBy('r.name')->distinct()->get();
     }
@@ -361,17 +359,17 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
-            ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'save' . ucwords($modelType) . 'Quote' : 'save' . ucwords($modelType)}($request);
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+            ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'save'.ucwords($modelType).'Quote' : 'save'.ucwords($modelType)}($request);
     }
 
     public function updateModelByType($modelType, Request $request, $id)
     {
         $lowerCaseModelType = strtolower($modelType);
-        $response = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
-            ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update' . ucwords($modelType) . 'Quote' : 'update' . ucwords($modelType)}($request, $id);
+        $response = $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
+            ->{in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)}($request, $id);
 
-        if ((in_array($lowerCaseModelType, $this->quoteTypes) ? 'update' . ucwords($modelType) . 'Quote' : 'update' . ucwords($modelType)) == 'update' . ucwords($modelType) . 'Quote') {
+        if ((in_array($lowerCaseModelType, $this->quoteTypes) ? 'update'.ucwords($modelType).'Quote' : 'update'.ucwords($modelType)) == 'update'.ucwords($modelType).'Quote') {
             return $response;
         }
     }
@@ -380,7 +378,7 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getEntity($id);
     }
 
@@ -388,7 +386,7 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($model->modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->fillRenewalProperties($model);
     }
 
@@ -396,7 +394,7 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($model->modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->fillNewBusinessProperties($model);
     }
 
@@ -404,7 +402,7 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getSelectedLostReason($id);
     }
 
@@ -412,7 +410,7 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->getEntityPlainByUUID($uuid);
     }
 
@@ -420,13 +418,13 @@ class CRUDService extends BaseService
     {
         $lowerCaseModelType = strtolower($modelType);
 
-        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType . 'QuoteService' : $lowerCaseModelType . 'Service'}
+        return $this->{in_array($lowerCaseModelType, $this->quoteTypes) ? $lowerCaseModelType.'QuoteService' : $lowerCaseModelType.'Service'}
             ->validateRequest($request);
     }
 
     public function quoteModel($quoteType, $quoteUuId)
     {
-        $model = '\\App\\Models\\' . ucwords($quoteType) . 'Quote';
+        $model = '\\App\\Models\\'.ucwords($quoteType).'Quote';
 
         return $model::where('uuid', $quoteUuId)->first();
     }
@@ -461,16 +459,5 @@ class CRUDService extends BaseService
         ];
 
         return $genderOptions;
-    }
-
-    public function getBasmaPrice($quote, $quotePlan)
-    {
-        $basmaPrice = 0;
-        // Basma Price for Emirate Visa Dubai
-        if( $quote->emirate_of_your_visa_id == EmirateEnum::DUBAI){
-            $basmaPrice = $quotePlan->basmah;
-        }
-
-        return $basmaPrice;
     }
 }

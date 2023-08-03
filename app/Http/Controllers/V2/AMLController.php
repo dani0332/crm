@@ -21,7 +21,6 @@ use App\Services\QuoteRequestAmlService;
 use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
-use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -92,7 +91,7 @@ class AMLController extends Controller
                 isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                 isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
             ) {
-                 $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "' . $request->amlCreatedStartDate . '" AND "' . $request->amlCreatedEndDate . '"');
+                $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
             }
             $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
@@ -155,12 +154,12 @@ class AMLController extends Controller
         }
 
         $isCurrentUserFromCompliance = 0;
-        if(auth()->user()->hasRole(RolesEnum::COMPLIANCE)){
+        if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
             $isCurrentUserFromCompliance = 1;
         }
 
         $isCurrentUserFromPaAml = 0;
-        if(auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML])){
+        if (auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML])) {
             $isCurrentUserFromPaAml = 1;
         }
 

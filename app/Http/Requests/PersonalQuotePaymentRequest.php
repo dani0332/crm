@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentMethodsEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PersonalQuotePaymentRequest extends FormRequest
@@ -32,6 +31,7 @@ class PersonalQuotePaymentRequest extends FormRequest
             'payment_methods_code' => 'required',
             'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
         ];
+
         return $rules;
     }
 }

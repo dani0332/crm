@@ -2,11 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
+use App\Facades\Capi;
 use App\Models\HomeQuote;
 
 class HomeQuoteRepository extends BaseRepository
 {
-
     public function model()
     {
         return HomeQuote::class;
@@ -19,14 +20,19 @@ class HomeQuoteRepository extends BaseRepository
             'homeQuoteRequestDetail.lostReason',
             'accommodationType:id,text',
             'possessionType:id,text',
-            'advisor'
+            'advisor',
         ])
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
 
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::HOME->value).'-quote', 'post', $dataArr);
     }
 
 }

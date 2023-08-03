@@ -1482,12 +1482,14 @@ class CarQuoteService extends BaseService
      *
      * @return array|string[]
      */
-    public function exportPlansPdf($quoteType, $data)
+    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
-        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if ($quotePlans == null) {
+            $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        }
 
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
