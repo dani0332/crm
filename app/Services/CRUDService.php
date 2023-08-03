@@ -9,6 +9,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
+use App\Jobs\CarLostStatusRejected;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
@@ -266,6 +267,7 @@ class CRUDService extends BaseService
 
                 $lostQuoteLogData = [
                     'status' => $request->lost_approval_status,
+                    'quote_status_id' => $request->leadStatus,
                     'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
                     'notes' => $request->lost_notes
                 ];
@@ -287,6 +289,12 @@ class CRUDService extends BaseService
                         'mime_type' => $request->mo_proof_document->getClientMimeType(),
                         'created_by_id' => auth()->user()->id
                     ]);
+                }
+
+                if($request->lost_approval_status == GenericRequestEnum::REJECTED)
+                {
+                    //send rejection email
+                    CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
                 }
             }
             else if(auth()->user()->hasRole(RolesEnum::CarAdvisor))

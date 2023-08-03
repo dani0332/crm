@@ -95,7 +95,7 @@ class SIBService extends BaseService
                 }
                 $to = $emails;
             } else {
-                $to = $emailTo;
+                $to = [['email' => $emailTo]];
             }
             info('sendEmailUsingSIB -- to recipients are : '.json_encode($to));
 

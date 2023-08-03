@@ -33,4 +33,12 @@ class CarLostQuoteLog extends Model
     {
         return $this->belongsTo(QuoteStatus::class);
     }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function reason()
+    {
+        return $this->belongsTo(Lookup::class, 'reason_id');
+    }
 }
