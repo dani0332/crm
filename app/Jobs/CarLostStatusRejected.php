@@ -57,7 +57,11 @@ class CarLostStatusRejected //implements ShouldQueue
         ];
 
         $to = $this->quote->advisor->email;
-        $cc = [];
+        $cc = null;
+
+        if($this->quote->advisor->managers->count()) {
+            $cc = implode(',',$this->quote->advisor->managers->pluck('email')->toArray());
+        }
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 

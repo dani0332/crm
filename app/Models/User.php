@@ -264,8 +264,19 @@ class User extends Authenticatable implements AuditableContract
         }
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
     public function teams()
     {
         return $this->belongsToMany(Team::class, 'user_team');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function managers()
+    {
+        return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')->select(['user_id', 'name', 'email']);
     }
 }
