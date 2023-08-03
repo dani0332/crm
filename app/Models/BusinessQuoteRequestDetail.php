@@ -40,4 +40,9 @@ class BusinessQuoteRequestDetail extends Model implements AuditableContract
     {
         return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
     }
+
+    public function lostReason()
+    {
+        return $this->hasOne(LostReasons::class, 'id', 'lost_reason_id');
+    }
 }

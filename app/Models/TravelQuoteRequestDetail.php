@@ -40,6 +40,12 @@ class TravelQuoteRequestDetail extends Model implements AuditableContract
     {
         return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
     }
+
+    public function lostReason()
+    {
+        return $this->belongsTo(LostReasons::class, 'lost_reason_id', 'id');
+    }
+    
     public function getNextFollowupDateAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

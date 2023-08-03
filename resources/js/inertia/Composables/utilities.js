@@ -18,3 +18,17 @@ export const useCleanObj = reactive => {
   });
   return reactive;
 };
+
+export const useObjToUrl = obj => {
+    Object.keys(obj).forEach(
+        key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
+    );
+    return Object.keys(obj)
+        .map(key => {
+            if (Array.isArray(obj[key])) {
+                return obj[key].map(value => `${key}[]=${value}`).join('&');
+            }
+            return `${key}=${obj[key]}`;
+        })
+        .join('&');
+};

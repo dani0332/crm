@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
@@ -53,6 +54,8 @@ class HandleInertiaRequests extends Middleware
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
         ]);
@@ -380,10 +383,6 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        // ftc-form-delete schedule on 7th June 2023
-        // if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
-        //     $nav = $nav->add('Policy Issuance', url('ftcform'));
-        // }
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
