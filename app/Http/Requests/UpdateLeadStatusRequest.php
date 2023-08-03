@@ -75,7 +75,10 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            $rules['proof_document'] = 'required';
+            if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
+            {
+                $rules['proof_document'] = 'required';
+            }
         }
 
         return $rules;
