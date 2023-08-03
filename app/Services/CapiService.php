@@ -16,7 +16,9 @@ class CapiService
     {
         $this->baseUrl = config('constants.CENTRAL_API_ENDPOINT');
 
-        $this->client = Http::withHeaders([
+
+        $this->client = Http::withBasicAuth(config('constants.CENTRAL_API_USER'), config('constants.CENTRAL_API_PWD'))
+        ->withHeaders([
             'Content-Type' => 'application/json',
             'Accept' => 'application/json',
             'x-api-token' => config('constants.CENTRAL_API_TOKEN'),
