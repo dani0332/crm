@@ -109,7 +109,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
-const advisorOptions = computed(() => {
+const advisorOptionsFilter = computed(() => {
     return page.props.advisors.map(advisor => ({
         value: advisor.id,
         label: advisor.roles[0].name
@@ -240,7 +240,7 @@ watch(
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
-          :options="advisorOptions"
+          :options="advisorOptionsFilter"
       />
 
           <x-select
