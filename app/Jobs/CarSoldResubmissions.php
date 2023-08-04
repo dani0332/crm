@@ -40,8 +40,11 @@ class CarSoldResubmissions //implements ShouldQueue
         $quotes = CarQuote::whereHas('carLostQuoteLog', function($q) {
             $q->where('quote_status_id', QuoteStatusEnum::CarSold)
                 ->whereDate('created_at', Carbon::yesterday())
-                ->where('status', GenericRequestEnum::REJECTED);
-        })->with(['carLostQuoteLog.actionBy','advisor.managers'])->get();
+                ->where('status', GenericRequestEnum::PENDING);
+        })->with(['carLostQuoteLog.actionBy','advisor.managers'])
+            ->withCount('carLostQuoteLogs')
+            ->having('car_lost_quote_logs_count', '>=' , 2)
+            ->get();
 
         $advisors = $quotes->pluck('advisor.email')->toArray();
         $managers = $quotes->pluck('advisor.managers.*.email')->unique()->flatten()->all();
@@ -55,7 +58,10 @@ class CarSoldResubmissions //implements ShouldQueue
 
         //group all cc recipients, advisors -> managers,
         $cc = implode(',', array_merge([$cc], $advisors, $managers));
+
+        //dd($to, $cc);
         $templateId = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE]->value;
+
         $emailData = [
             'name' => 'test'
         ];
