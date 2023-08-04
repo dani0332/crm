@@ -30,18 +30,19 @@ class UserRepository extends BaseRepository
     }
 
     /**
-     * @param $userId
      * @param $teamName this could be a string - single team or array of team names
      * @return mixed
      */
     public function fetchIsUserMemberofTeam($userId, $teamName)
     {
-        $teamName = (!is_array($teamName)) ? [$teamName] : $teamName;
+        $teamName = (! is_array($teamName)) ? [$teamName] : $teamName;
 
         $teams = Team::whereIn('name', $teamName)->get();
 
-        return $this->where('id', $userId)->whereHas('teams', function($q) use ($teams) {
-            if($teams) $q->whereIn('team_id', $teams->pluck('id')->toArray());
+        return $this->where('id', $userId)->whereHas('teams', function ($q) use ($teams) {
+            if ($teams) {
+                $q->whereIn('team_id', $teams->pluck('id')->toArray());
+            }
         })->first();
     }
 }

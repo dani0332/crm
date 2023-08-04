@@ -53,7 +53,7 @@ class addCarQuoteNewStatuses extends Seeder
         }
 
         //todo: check sort order
-        if(!QuoteStatus::where('id', QuoteStatusEnum::CarSold)->first()) {
+        if (! QuoteStatus::where('id', QuoteStatusEnum::CarSold)->first()) {
             $carSold = QuoteStatus::create([
                 'id' => QuoteStatusEnum::CarSold,
                 'text' => 'Car Sold',
@@ -73,7 +73,7 @@ class addCarQuoteNewStatuses extends Seeder
             ]);
         }
 
-        if(!QuoteStatus::where('id', QuoteStatusEnum::Uncontactable)->first()) {
+        if (! QuoteStatus::where('id', QuoteStatusEnum::Uncontactable)->first()) {
             $carSold = QuoteStatus::create([
                 'id' => QuoteStatusEnum::Uncontactable,
                 'text' => 'Uncontactable',

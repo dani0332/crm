@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CarLostQuoteLog extends Model
 {
     use HasFactory;
+
     protected $guarded = [];
 
     /**
