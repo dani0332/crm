@@ -16,6 +16,22 @@ class CustomerRepository extends BaseRepository
     }
 
     /**
+     * @return mixed
+     */
+    public function fetchGetData()
+    {
+        return $this->filter()->orderBy('created_at', 'desc')->simplePaginate();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function fetchGetBy($column, $value)
+    {
+        return $this->with(['nationality'])->where($column, $value)->firstOrFail();
+    }
+
+    /**
      * @return bool
      */
     public function fetchStoreAdditionalContact($customerId, $data)

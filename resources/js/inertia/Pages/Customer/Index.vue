@@ -1,11 +1,10 @@
 <script setup>
 
 defineProps({
-    customers: {
-        type: [Object, Array],
-        default : []
-    }
+    customers : Object
 });
+
+const page = usePage();
 
 let availableFilters = {
     'search_type' : '',
@@ -19,13 +18,13 @@ const loader = reactive({
 });
 
 const tableHeader = [
-    { text: 'ID', value: 'uuid' },
+    { text: 'ID', value: 'id' },
     { text: 'NAME', value: 'first_name' },
-    { text: 'EMAIL', value: 'last_name' },
-    { text: 'MOBILE NO', value: 'dob_formatted' },
-    { text: 'GENDER', value: 'quote_status' },
-    { text: 'HAS ALFRED ACCESS', value: 'advisor' },
-    { text: 'DOB', value: 'premium' },
+    { text: 'EMAIL', value: 'email' },
+    { text: 'MOBILE NO', value: 'mobile_no' },
+    { text: 'GENDER', value: 'gender' },
+    { text: 'HAS ALFRED ACCESS', value: 'has_alfred_access' },
+    { text: 'DOB', value: 'dob' },
     { text: 'CREATED DATE', value: 'created_at' },
     { text: 'LAST MODIFIED DATE', value: 'updated_at' },
 ];
@@ -82,11 +81,25 @@ function onReset(){
             table-class-name="tablefixed"
             :headers="tableHeader"
             :loading="loader.table"
-            :items="customers || []"
+            :items="customers.data || []"
             border-cell
             hide-rows-per-page
             hide-footer
             fixed-checkbox>
+
+            <template #item-id="{id, uuid}">
+                <Link :href="`/customer/${uuid}`" class="text-primary-500 hover:underline">
+                    {{ id }}
+                </Link>
+            </template>
+
+            <template #item-has_alfred_access="{has_alfred_access}">
+                <div class="text-center">
+                    <x-tag size="sm" :color="has_alfred_access ? 'success' : 'error'">
+                        {{ has_alfred_access ? 'Yes' : 'No' }}
+                    </x-tag>
+                </div>
+            </template>
 
         </DataTable>
         <Pagination
