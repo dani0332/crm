@@ -15,20 +15,23 @@ class CarLostStorageSeeder extends Seeder
      */
     public function run()
     {
-        if(!ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_SOLD_STATUS_REJECTION_TEMPLATE)->first()) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::CAR_SOLD_STATUS_REJECTION_TEMPLATE,
-                'value' => 472,
-                'is_active' => 1,
-            ]);
+        $items = [
+            ['key_name' => ApplicationStorageEnums::CAR_SOLD_STATUS_REJECTION_TEMPLATE, 'value' => 472],
+            ['key_name' => ApplicationStorageEnums::UNCONTACTABLE_STATUS_REJECTION_TEMPLATE, 'value' => 473],
+            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE, 'value' => 474],
+            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TO, 'value' => 'renewalsapprovals@insurancemarket.ae'],
+            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_CC, 'value' => 'marketing.operations@insurancemarket.ae']
+        ];
+
+        foreach ($items as $storage) {
+            if(!ApplicationStorage::where('key_name', $storage['key_name'])->first()) {
+                ApplicationStorage::insert([
+                    'key_name' => $storage['key_name'],
+                    'value' => $storage['value'],
+                    'is_active' => 1,
+                ]);
+            }
         }
 
-        if(!ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCONTACTABLE_STATUS_REJECTION_TEMPLATE)->first()) {
-            ApplicationStorage::insert([
-                'key_name' => ApplicationStorageEnums::UNCONTACTABLE_STATUS_REJECTION_TEMPLATE,
-                'value' => 473,
-                'is_active' => 1,
-            ]);
-        }
     }
 }
