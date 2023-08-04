@@ -1112,7 +1112,7 @@ class CRUDController extends Controller
 
             $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
 
-            info('courtesy-email-response-------------- : '.json_encode($response));
+            info('Courtesy Email CAPI Response - : '.json_encode($response));
         }
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
