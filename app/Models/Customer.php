@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\FilterTypes;
-use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -11,14 +9,10 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Customer extends Model implements AuditableContract
 {
-    use HasFactory, Auditable, FilterCriteria;
+    use HasFactory, Auditable;
 
     protected $table = 'customer';
     protected $guarded = [];
-
-    public $filterables = [
-        'email' => FilterTypes::EXACT,
-    ];
 
     public function nationality()
     {

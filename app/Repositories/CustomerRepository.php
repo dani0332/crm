@@ -20,7 +20,17 @@ class CustomerRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->filter()->orderBy('created_at', 'desc')->simplePaginate();
+        $query = [];
+        $filterColumns = ['email'];
+
+        if ((!empty(request()->get('search_type')) && !empty(request()->get('search_value'))) &&
+            in_array(request()->get('search_type'), $filterColumns)){
+            $query = $this->where(request()->get('search_type'), request()->get('search_value'))
+                ->orderBy('created_at', 'desc')->simplePaginate();
+        }
+
+        return $query;
+
     }
 
     /**

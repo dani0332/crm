@@ -7,8 +7,9 @@ defineProps({
 const page = usePage();
 
 let availableFilters = {
-    'search_type' : '',
-    'search_value' : ''
+    search_type : '',
+    search_value : '',
+    page : 1
 }
 
 const filters = reactive(availableFilters);
@@ -30,11 +31,35 @@ const tableHeader = [
 ];
 
 function onSubmit(isValid){
-    console.log("Submit Triggered")
+    if (isValid) {
+        filters.page = 1;
+        Object.keys(filters).forEach(
+            key =>
+                (filters[key] === '' || filters[key].length === 0) &&
+                delete filters[key],
+        );
+
+        router.visit('/customer', {
+            method: 'get',
+            data: filters,
+            preserveState: true,
+            preserveScroll: true,
+            onBefore: () => (loader.table = true),
+            onSuccess: () => (loader.table = false),
+        });
+    } else {
+        console.log('Invalid');
+    }
 }
 
 function onReset(){
-    console.log("Reset Triggered")
+    router.visit('/customer', {
+        method: 'get',
+        data: { page: 1 },
+        preserveScroll: true,
+        onBefore: () => (loader.table = true),
+        onSuccess: () => (loader.table = false),
+    });
 }
 
 </script>
@@ -68,13 +93,11 @@ function onReset(){
                     class="w-full"
                 />
             </div>
-            <div class="flex justify-between gap-3 mb-4 mt-1">
-                <div class="flex justify-self-end gap-3">
-                    <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-                    <x-button size="sm" color="primary" @click.prevent="onReset">
-                        Reset
-                    </x-button>
-                </div>
+            <div class="flex justify-end gap-2 mb-4 mt-1">
+                <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+                <x-button size="sm" color="primary" @click.prevent="onReset">
+                    Reset
+                </x-button>
             </div>
         </x-form>
         <DataTable
