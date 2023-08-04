@@ -57,7 +57,7 @@ class RenewalBatchRepository extends BaseRepository
     {
         $nextMonday = Carbon::now()->next('Monday');
 
-        $query = $this->whereBetween('deadline_date' , [Carbon::now(), $nextMonday])->orderBy('deadline_date')->first();
+        $query = $this->whereBetween('deadline_date' , [Carbon::now(), $nextMonday])->orderBy('deadline_date');
 
         if($quoteStatusId != null) {
             $query->where('quote_status_id', $quoteStatusId);
