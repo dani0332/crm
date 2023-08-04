@@ -287,6 +287,14 @@ class CRUDController extends Controller
             ]);
         }
 
+        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+            return inertia('PersonalQuote/Car/Form', [
+                'dropdownSource' => $dropdownSource,
+                'model' => json_encode($model->properties),
+                'genderOptions' => $this->crudService->getGenderOptions(),
+            ]);
+        }
+
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             return inertia('HomeQuote/Create', [
                 'dropdownSource' => $dropdownSource,
