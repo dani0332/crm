@@ -136,7 +136,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     if (! $modelType) {
         return $result;
     }
-    $nameSpace = '\\App\\Models\\';
+    $nameSpace = 'App\\Models\\';
     $modelType = $nameSpace.$modelType.'Quote';
 
     if ($myleads) {

@@ -245,13 +245,13 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
-            $nav = $nav->add('Discount Management', '', function (Section $section) {
-                $section
-                    ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
-            });
-        }
+        // if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
+        //     $nav = $nav->add('Discount Management', '', function (Section $section) {
+        //         $section
+        //             ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
+        //     });
+        // }
 
         if (auth()->user()->can(PermissionsEnum::TransAppList)) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
