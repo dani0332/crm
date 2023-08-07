@@ -185,6 +185,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Nationality::class);
     }
 
+    public function plans()
+    {
+        return $this->belongsTo(PersonalPlan::class, 'plan_id', 'id');
+    }
+
     /**
      * get data by personal quote type.
      *
