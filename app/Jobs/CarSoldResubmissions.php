@@ -38,11 +38,9 @@ class CarSoldResubmissions //implements ShouldQueue
     public function handle()
     {
         $quotes = CarQuote::whereHas('carLostQuoteLog', function($q) {
-
             $q->where('quote_status_id', QuoteStatusEnum::CarSold)
                 ->whereDate('created_at', Carbon::yesterday())
                 ->where('status', GenericRequestEnum::PENDING);
-
         })->with(['carLostQuoteLog','advisor.managers', 'carLostQuoteLogs'])
             ->withCount('carLostQuoteLogs')
             ->having('car_lost_quote_logs_count', '>=' , 2)
@@ -63,6 +61,7 @@ class CarSoldResubmissions //implements ShouldQueue
 
         $templateId = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE]->value;
 
+
         $emailData = [];
 
         foreach ($quotes as $quote) {
@@ -72,13 +71,15 @@ class CarSoldResubmissions //implements ShouldQueue
                 'batch' => $quote->renewal_batch,
                 'submission_date' => Carbon::parse($quote->carLostQuoteLogs[0]->created_at)->format('d M Y'),
                 'resubmission_date' => Carbon::parse($quote->carLostQuoteLog->created_at)->format('d M Y'),
-                'quote_url' => env('APP_URL') . '/quotes/car/' . $quote->uuid
+                'quote_url' => env('APP_URL') . '/quotes/car/' . $quote->uuid,
+                'highlight' => (in_array(Carbon::parse($quote->carLostQuoteLog->created_at)->format('d'), [15, 16, 17, 6])),
             ];
         }
 
+
         info('Sending Car Sold Resubmissions email total Leads: ' . $quotes->count());
 
-        SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, []);
+        SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
         info('Car Sold Resubmissions email sent');
 
