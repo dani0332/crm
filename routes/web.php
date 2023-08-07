@@ -5,7 +5,6 @@ use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
-use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
@@ -69,6 +68,7 @@ use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -109,7 +109,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
 
     Route::group(['middleware' => ['check_route_access']], function () {
-        Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
         Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
@@ -156,7 +155,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
 
-    Route::get('/clear-cache', [FailedJobsController::class, 'clearCache']);
+    Route::get('/clear-cache', function () {
+        Artisan::call('cache:clear');
+        Artisan::call('view:cache');
+        Artisan::call('config:cache');
+
+        return '<h1>All cache cleared and optimized</h1>';
+    });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
 
@@ -315,7 +320,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
-        Route::resource('allocation-threshold', AllocationThresholdController::class);
         Route::resource('team', TeamController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);

@@ -25,11 +25,6 @@ class TierAssignmentJob implements ShouldQueue
     public $timeout = 117;
     public $backoff = 3;
 
-    public function __construct()
-    {
-        $this->onQueue('lms');
-    }
-
     /**
      * Execute the job.
      *
