@@ -78,4 +78,11 @@ class CustomerController extends Controller
 
         return back();
     }
+
+    public function uploadCustomers()
+    {
+        return inertia('Customer/Upload');
+    }
+
+
 }
