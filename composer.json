@@ -33,6 +33,7 @@
         "owen-it/laravel-auditing": "^12.0",
         "parsecsv/php-parsecsv": "^1.3",
         "predis/predis": "^1.1",
+        "pusher/pusher-php-server": "^7.2",
         "rappasoft/laravel-livewire-tables": "^2.8",
         "sammyjo20/laravel-haystack": "^0.10.1",
         "sentry/sentry-laravel": "^2.7",

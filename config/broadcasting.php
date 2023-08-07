@@ -29,6 +29,7 @@ return [
     */
 
     'connections' => [
+        // config/broadcasting.php
 
         'pusher' => [
             'driver' => 'pusher',
@@ -37,7 +38,7 @@ return [
             'app_id' => env('PUSHER_APP_ID'),
             'options' => [
                 'cluster' => env('PUSHER_APP_CLUSTER'),
-                'useTLS' => true,
+                'useTLS' => false,
             ],
         ],
 
