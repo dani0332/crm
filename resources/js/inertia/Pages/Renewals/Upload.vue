@@ -31,21 +31,24 @@ function onSubmit(isValid) {
                     'Content-Type': 'multipart/form-data'
                 }
             }
-        ).then(function(){
+        ).then(()=>{
             console.log('SUCCESS!!');
             notification.success({
                 title: 'Uploaded renewals records has been stored',
                 position: 'top',
             });
+            uploadForm.csvFile = '';
             document.getElementById("file_name").value = "";
         })
-            .catch(function(error){
+            .catch((error)=>{
+                console.log('FAILURE!!');
                 uploadForm.setError(error.response.data.errors);
                 notification.error({
                     title: 'Error while uploading . Please try again',
                     position: 'top',
                 });
-                console.log('FAILURE!!');
+                document.getElementById("file_name").value = "";
+
             });
     } else {
         notification.error({
@@ -115,7 +118,7 @@ const can = permission => useCan(permission);
             </div>
         <div class="item form-group">
             <div class="col-md-12 scrollable">
-                <table class="table table-bordered">
+                <table class="table table-bordered w-full">
                     <thead class="vue3-easy-data-table__header">
                     <tr><th>Sr No.</th>
                         <th>Field name</th>

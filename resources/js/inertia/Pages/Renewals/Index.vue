@@ -33,11 +33,12 @@ function onSubmit(isValid) {
                     'Content-Type': 'multipart/form-data'
                 }
             }
-        ).then(function(){
+        ).then(()=>{
             notification.success({
                 title: 'Uploaded renewals records has been stored',
                 position: 'top',
             });
+            uploadForm.csvFile = '';
             document.getElementById("file_name").value = "";
         })
             .catch(function(error){
