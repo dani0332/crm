@@ -15,7 +15,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-class CarSoldResubmissions //implements ShouldQueue
+class CarSoldResubmissions implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -70,7 +70,7 @@ class CarSoldResubmissions //implements ShouldQueue
                 'submission_date' => Carbon::parse($quote->carLostQuoteLogs[0]->created_at)->format('d M Y'),
                 'resubmission_date' => Carbon::parse($quote->carLostQuoteLog->created_at)->format('d M Y'),
                 'quote_url' => env('APP_URL').'/quotes/car/'.$quote->uuid,
-                'highlight' => (in_array(Carbon::parse($quote->carLostQuoteLog->created_at)->format('d'), [15, 16, 17, 6])),
+                'highlight' => (in_array(Carbon::parse($quote->carLostQuoteLog->created_at)->format('d'), [15, 16, 17])),
             ];
         }
 
