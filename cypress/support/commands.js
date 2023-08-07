@@ -59,7 +59,9 @@ Cypress.Commands.add('generate_CDBID', (token, data, endPoint) => {
 })
 
 Cypress.Commands.add('runRoutes', () => {
-   cy.intercept(`GET`, `Request URL: https://crmstage.alfred.ae/quotes/car/*`).as('createLead')
-   cy.intercept(`DELETE`, `/travelers/*`).as('deleteTraveler')
-   cy.intercept(`DELETE`, `/travelers/*`).as('deleteActivity')
+   cy.intercept(`GET`, `https://crmstage.alfred.ae/quotes/car/*`).as('createLead')
+   cy.intercept(`GET`, `https://crmstage.alfred.ae/quotes/health/*`).as('createHealth')
+   cy.intercept(`GET`, `https://crmstage.alfred.ae/quotes/home/*`).as('deleteHomeActivity')
+   cy.intercept(`GET`, `https://crmstage.alfred.ae/quotes/life/*`).as('deleteLifeActivity')
+   cy.intercept(`GET`, `https://crmstage.alfred.ae/quotes/travel/*`).as('deleteTravelMember')
 })

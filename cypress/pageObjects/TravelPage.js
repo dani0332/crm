@@ -1,4 +1,8 @@
 class TravelData {
+    getCreateButton() {
+        return cy.get('a[href="https://crmstage.alfred.ae/quotes/travel/create"]').should('be.visible').click()
+    }
+
     getPremiumField(premium) {
         return cy.get('input#premium').should('be.visible').clear().type(premium)
     }
@@ -27,7 +31,7 @@ class TravelData {
         return cy.get('select#currently_located_in_id').should('be.visible').select(value)
     }
 
-    getCreateButton(name) {
+    getSubmitButton(name) {
         return cy.get('button[type="submit"]').contains(name).click()
     }
 

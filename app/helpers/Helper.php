@@ -3,6 +3,7 @@
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\HealthQuote;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -134,7 +135,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     if (! $modelType) {
         return $result;
     }
-    $nameSpace = '\\App\\Models\\';
+    $nameSpace = 'App\\Models\\';
     $modelType = $nameSpace.$modelType.'Quote';
 
     if ($myleads) {
@@ -171,7 +172,9 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
                 ->count();
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)
                 ->sum('premium');
-            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+            if ($modelType == HealthQuote::class) {
+                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+            }
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)
                 ->paginate(10);
         }
@@ -204,7 +207,9 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
             $result['total_leads'] = $modelType::where('quote_status_id', $statusId)->count();
             $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
             $result['total_premium'] = $modelType::where('quote_status_id', $statusId)->sum('premium');
-            $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+            if ($modelType == HealthQuote::class) {
+                $result['total_opportunity'] = $modelType::where('quote_status_id', $statusId)->sum('price_starting_from');
+            }
             $result['leads_list'] = $modelType::where('quote_status_id', $statusId)->paginate(10);
         }
     }
@@ -428,5 +433,27 @@ if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
         return ['im.automation4@gmail.com'];
+    }
+}
+
+if (! function_exists('formatLandlineNumber')) {
+    function formatLandlineNumber($landlineNumber)
+    {
+        return preg_replace(
+            "/.*(\d{2})[^\d]{0,7}(\d{3})[^\d]{0,7}(\d{4})/",
+            '$1 $2 $3',
+            mapPhoneNumber($landlineNumber)
+        );
+    }
+}
+
+if (! function_exists('formatMobileNumber')) {
+    function formatMobileNumber($mobileNumber)
+    {
+        return preg_replace(
+            "/.*(\d{3})[^\d]{0,7}(\d{3})[^\d]{0,7}(\d{4})/",
+            '$1 $2 $3',
+            mapPhoneNumber($mobileNumber)
+        );
     }
 }

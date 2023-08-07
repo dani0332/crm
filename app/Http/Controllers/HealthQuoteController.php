@@ -107,7 +107,7 @@ class HealthQuoteController extends Controller
         $quotes[] = [
             'id' => 26,
             'title' => 'Application Pending',
-            'data' => getDataAgainstStatus('health', 26),
+            'data' => getDataAgainstStatus('Health', 26),
         ];
         $quotes[] = [
             'id' => 28,
