@@ -46,7 +46,7 @@
                     </div>
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="phone_number"><b> Is Active </b></label>
-                        <div class="col-md-2 col-sm-2 ">
+                        <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $team->is_active }}</p>
                         </div>
                     </div>
@@ -62,29 +62,6 @@
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_by"><b> Created by </b></label>
                         <div class="col-md-6 col-sm-6 ">
                         <p class="label-align-center">{{ $team->created_at }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="item form-group"  @if(!$team->allocation_threshold_enabled) style="display: none;" @endif>
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="updated_at"><b> Min Price </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $team->min_price }}</p>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="created_by"><b> Max Price </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $team->max_price }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="item form-group">
-                    <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3" for="phone_number"><b> Lead Allocation Threshold Enabled ? </b></label>
-                        <div class="col-md-6 col-sm-6 ">
-                        <p class="label-align-center">{{ $team->allocation_threshold_enabled == 1 ? 'True' : 'False' }}</p>
                         </div>
                     </div>
                 </div>

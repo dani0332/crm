@@ -369,9 +369,6 @@ use App\Enums\PermissionsEnum;
                                     @can(PermissionsEnum::RULE_CONFIG_LIST)
                                         <li><a href="{{ url('generic/rule') }}">Rules</a></li>
                                     @endcan
-                                    @can(PermissionsEnum::TeamThresholdView)
-                                        <li><a href="{{ url('generic/allocation-threshold') }}">Team Threshold</a></li>
-                                    @endcan
                                 </ul>
                             </li>
                             @endcanany

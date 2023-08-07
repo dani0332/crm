@@ -462,12 +462,6 @@ class HandleInertiaRequests extends Middleware
                                 url('generic/rule'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::TeamThresholdView),
-                                'Team Threshold',
-                                url('generic/allocation-threshold'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
                     );
             });
         }
