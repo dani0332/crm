@@ -3,10 +3,8 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
-use App\Models\QuoteStatus;
 use App\Models\RenewalBatch;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -40,43 +38,41 @@ class UpdateLeadStatusRequest extends FormRequest
             'notes' => 'nullable',
             'lost_notes' => 'nullable|max:100',
             'approve_reason_id' => 'nullable',
-            'reject_reason_id' => 'nullable'
+            'reject_reason_id' => 'nullable',
         ];
 
         /**
          * advisor can mark car quote lead status to car sold / un-contactable with proof document required
          * && auth()->user()->hasRole(RolesEnum::CarAdvisor)
          */
-        if(!empty(request()->leadStatus) && !empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
+        if (! empty(request()->leadStatus) && ! empty(request()->modelType) && strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)
             && isCarLostStatus(request()->leadStatus)
-        )
-        {
+        ) {
             //check for valid quote
-            if(!$quote = $this->getQuoteObject(request()->modelType, request()->quote_uuid)) {
+            if (! $quote = $this->getQuoteObject(request()->modelType, request()->quote_uuid)) {
                 vAbort('Invalid quote type or uuid provided');
             }
 
             //once quote is marked as sold/uncontactable, quote should be locked until have pending request
-            if(isCarLostStatus($quote->quote_status_id) && auth()->user()->hasAnyrole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) ) {
+            if (isCarLostStatus($quote->quote_status_id) && auth()->user()->hasAnyrole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
                 $quote->load('carLostQuoteLog');
-                if(isset($quote->carLostQuoteLog->id) && $quote->carLostQuoteLog->status == GenericRequestEnum::PENDING) {
+                if (isset($quote->carLostQuoteLog->id) && $quote->carLostQuoteLog->status == GenericRequestEnum::PENDING) {
                     vAbort('Quote is locked as it has pending request to verify proof document');
                 }
             }
 
             //check for deadline date
-            if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::MarketingOperations, RolesEnum::CarDeputyManager]) &&
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::MarketingOperations, RolesEnum::CarDeputyManager]) &&
                 ($batch = RenewalBatch::where([
                     'quote_status_id' => request()->leadStatus,
-                    'name' => $quote->renewal_batch
-                ])->first()) ) {
-                if(now()->gt($batch->deadline_date)) {
+                    'name' => $quote->renewal_batch,
+                ])->first())) {
+                if (now()->gt($batch->deadline_date)) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
                 }
             }
 
-            if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
-            {
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
                 $rules['proof_document'] = 'required';
             }
         }

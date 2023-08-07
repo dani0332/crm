@@ -10,7 +10,6 @@ use App\Models\CarQuote;
 use App\Services\SIBService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -37,16 +36,16 @@ class CarSoldResubmissions //implements ShouldQueue
      */
     public function handle()
     {
-        $quotes = CarQuote::whereHas('carLostQuoteLog', function($q) {
+        $quotes = CarQuote::whereHas('carLostQuoteLog', function ($q) {
             $q->where('quote_status_id', QuoteStatusEnum::CarSold)
                 ->whereDate('created_at', Carbon::yesterday())
                 ->where('status', GenericRequestEnum::PENDING);
-        })->with(['carLostQuoteLog','advisor.managers', 'carLostQuoteLogs'])
+        })->with(['carLostQuoteLog', 'advisor.managers', 'carLostQuoteLogs'])
             ->withCount('carLostQuoteLogs')
-            ->having('car_lost_quote_logs_count', '>=' , 2)
+            ->having('car_lost_quote_logs_count', '>=', 2)
             ->get();
 
-                $advisors = $quotes->pluck('advisor.email')->toArray();
+        $advisors = $quotes->pluck('advisor.email')->toArray();
         $managers = $quotes->pluck('advisor.managers.*.email')->unique()->flatten()->all();
 
         $storage = ApplicationStorage::whereIn('key_name', [ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TO, ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_CC, ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE])
@@ -61,7 +60,6 @@ class CarSoldResubmissions //implements ShouldQueue
 
         $templateId = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE]->value;
 
-
         $emailData = [];
 
         foreach ($quotes as $quote) {
@@ -71,13 +69,12 @@ class CarSoldResubmissions //implements ShouldQueue
                 'batch' => $quote->renewal_batch,
                 'submission_date' => Carbon::parse($quote->carLostQuoteLogs[0]->created_at)->format('d M Y'),
                 'resubmission_date' => Carbon::parse($quote->carLostQuoteLog->created_at)->format('d M Y'),
-                'quote_url' => env('APP_URL') . '/quotes/car/' . $quote->uuid,
+                'quote_url' => env('APP_URL').'/quotes/car/'.$quote->uuid,
                 'highlight' => (in_array(Carbon::parse($quote->carLostQuoteLog->created_at)->format('d'), [15, 16, 17, 6])),
             ];
         }
 
-
-        info('Sending Car Sold Resubmissions email total Leads: ' . $quotes->count());
+        info('Sending Car Sold Resubmissions email total Leads: '.$quotes->count());
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 

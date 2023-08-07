@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RenewalBatchRequest extends FormRequest
@@ -25,22 +24,23 @@ class RenewalBatchRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', \Illuminate\Validation\Rule::unique('renewal_batches')->where(function($query) {
+            'name' => ['required', \Illuminate\Validation\Rule::unique('renewal_batches')->where(function ($query) {
                 $query = $query->where('quote_status_id', request()->quote_status_id);
-                if(!empty(request()->renewal_batch)) {
+                if (! empty(request()->renewal_batch)) {
                     $query->where('id', '<>', request()->renewal_batch);
                 }
+
                 return $query;
             })],
             'quote_status_id' => 'required|integer',
-            'deadline_date' => 'required'
+            'deadline_date' => 'required',
         ];
     }
 
     public function messages()
     {
-       return [
-           'name.unique' => 'Batch name and lead status already exists.'
-       ];
+        return [
+            'name.unique' => 'Batch name and lead status already exists.',
+        ];
     }
 }

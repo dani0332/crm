@@ -5,10 +5,8 @@ namespace App\Jobs;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
 use App\Models\ApplicationStorage;
-use App\Models\QuoteStatusLog;
 use App\Services\SIBService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -21,10 +19,8 @@ class CarLostStatusRejected //implements ShouldQueue
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 300;
-
     private $quote = null;
     private $carLostQuoteLog = null;
-
 
     /**
      * Create a new job instance.
@@ -51,17 +47,17 @@ class CarLostStatusRejected //implements ShouldQueue
             'uuid' => $this->quote->uuid,
             'reason' => $this->carLostQuoteLog->reason->text,
             'advisor_name' => $this->quote->advisor->name,
-            'notes' => $this->carLostQuoteLog->notes
+            'notes' => $this->carLostQuoteLog->notes,
         ];
 
         $to = $this->quote->advisor->email;
         $cc = null;
 
-        if($this->quote->advisor->managers->count()) {
-            $cc = implode(',',$this->quote->advisor->managers->pluck('email')->toArray());
+        if ($this->quote->advisor->managers->count()) {
+            $cc = implode(',', $this->quote->advisor->managers->pluck('email')->toArray());
         }
 
-        info('before sending Status rejected email for UUID: ' . $this->quote->uuid . ' to Advisor ' . $this->quote->advisor->email);
+        info('before sending Status rejected email for UUID: '.$this->quote->uuid.' to Advisor '.$this->quote->advisor->email);
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
