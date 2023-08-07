@@ -38,15 +38,17 @@ class CarSoldResubmissions //implements ShouldQueue
     public function handle()
     {
         $quotes = CarQuote::whereHas('carLostQuoteLog', function($q) {
+
             $q->where('quote_status_id', QuoteStatusEnum::CarSold)
                 ->whereDate('created_at', Carbon::yesterday())
                 ->where('status', GenericRequestEnum::PENDING);
-        })->with(['carLostQuoteLog.actionBy','advisor.managers'])
+
+        })->with(['carLostQuoteLog','advisor.managers', 'carLostQuoteLogs'])
             ->withCount('carLostQuoteLogs')
             ->having('car_lost_quote_logs_count', '>=' , 2)
             ->get();
 
-        $advisors = $quotes->pluck('advisor.email')->toArray();
+                $advisors = $quotes->pluck('advisor.email')->toArray();
         $managers = $quotes->pluck('advisor.managers.*.email')->unique()->flatten()->all();
 
         $storage = ApplicationStorage::whereIn('key_name', [ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TO, ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_CC, ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE])
@@ -59,16 +61,24 @@ class CarSoldResubmissions //implements ShouldQueue
         //group all cc recipients, advisors -> managers,
         $cc = implode(',', array_merge([$cc], $advisors, $managers));
 
-        //dd($to, $cc);
         $templateId = $storage[ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE]->value;
 
-        $emailData = [
-            'name' => 'test'
-        ];
+        $emailData = [];
+
+        foreach ($quotes as $quote) {
+            $emailData['quotes'][] = [
+                'uuid' => $quote->uuid,
+                'advisor_name' => $quote->advisor->name,
+                'batch' => $quote->renewal_batch,
+                'submission_date' => Carbon::parse($quote->carLostQuoteLogs[0]->created_at)->format('d M Y'),
+                'resubmission_date' => Carbon::parse($quote->carLostQuoteLog->created_at)->format('d M Y'),
+                'quote_url' => env('APP_URL') . '/quotes/car/' . $quote->uuid
+            ];
+        }
 
         info('Sending Car Sold Resubmissions email total Leads: ' . $quotes->count());
 
-        SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
+        SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, []);
 
         info('Car Sold Resubmissions email sent');
 
