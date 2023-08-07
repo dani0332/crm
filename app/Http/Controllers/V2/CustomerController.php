@@ -4,6 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
+use App\Http\Requests\CustomerRequest;
+use App\Jobs\MAWelcomeJob;
 use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
 
@@ -47,8 +49,25 @@ class CustomerController extends Controller
         ]);
     }
 
+    /**
+     * @param $quoteTypeCode
+     * @param $quoteId
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function update($uuid, CustomerRequest $customerRequest)
+    {
+        $customer = CustomerRepository::where(['uuid' => $uuid])->firstorFail();
 
+        $sendWelcomeEmail = ((!$customer->has_alfred_access || $customer->has_reward_access) &&
+                                $customerRequest->has_alfred_access && $customerRequest->has_reward_access );
 
+        $customer->update($customerRequest->validated());
+
+        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent)
+            dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+
+        return redirect('customer/'.$uuid)->with('message', 'Customer information has been updated');
+    }
 
     /**
      * @return \Illuminate\Http\RedirectResponse

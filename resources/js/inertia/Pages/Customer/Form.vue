@@ -30,7 +30,27 @@ const nationalityOptions = computed(() => {
 });
 
 function onSubmit(){
-    console.log("Submit Triggered");
+    let method = 'post';
+    let url = `/customer/`;
+    let title = 'Customer saved successfully';
+
+    if (page.props.customer) {
+        method = 'put';
+        url = url + page.props.customer.uuid;
+        title = 'Customer updated successfully';
+    }
+
+    customerForm.submit(method, url, {
+        onError: errors => {
+            console.log(customerForm.setError(errors));
+        },
+        onSuccess: () => {
+            notification.success({
+                title: title,
+                position: 'top',
+            });
+        },
+    });
 }
 
 </script>
@@ -123,6 +143,17 @@ function onSubmit(){
                     color="primary"
                 />
             </div>
+        </div>
+        <x-divider class="my-4" />
+        <div class="flex justify-end gap-3 mb-4">
+            <x-button
+                size="md"
+                color="emerald"
+                type="submit"
+                :loading="customerForm.processing"
+            >
+                Save
+            </x-button>
         </div>
     </x-form>
 </template>
