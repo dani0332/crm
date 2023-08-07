@@ -43,7 +43,7 @@ function onSubmit(isValid) {
             .catch(function(error){
                 uploadForm.setError(error.response.data.errors);
                 notification.error({
-                    title: 'Error while fetching quotes. Please try again',
+                    title: 'Error while uploading . Please try again',
                     position: 'top',
                 });
                 console.log('FAILURE!!');
