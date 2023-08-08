@@ -47,7 +47,6 @@ const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     <div class="p-4">
       <input v-bind="getInputProps()" />
       <span class="block text-gray-700 text-xs"> Drop file here </span>
-        <span  class="block text-gray-700 text-xs"> {{files}} </span>
       <span class="block mb-2 mt-1 text-gray-700 text-xs"> or </span>
       <x-button @click="open" size="xs" :loading="loading">
         Click to browse

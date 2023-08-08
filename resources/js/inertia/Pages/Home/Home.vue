@@ -1,18 +1,5 @@
 <script setup>
-
-
-
-
-
-
-onMounted(() => {
-
-});
-
 const can = permission => useCan(permission);
-
-
-
 </script>
 
 <template>

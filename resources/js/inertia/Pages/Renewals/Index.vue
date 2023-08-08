@@ -1,6 +1,4 @@
 <script setup>
-import {XAlert, XSelect} from "@indielayer/ui";
-import Dropzone from "../../Components/Dropzone.vue";
 
 const notification = useToast();
 const uploadForm = useForm({
@@ -63,14 +61,6 @@ function onSubmit(isValid) {
         });
     }
 }
-
-
-
-
-
-onMounted(() => {
-
-});
 
 const skipOptions = [
     { value: 0, text: 'No' },

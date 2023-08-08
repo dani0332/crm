@@ -1,6 +1,4 @@
 <script setup>
-import {XAlert, XSelect} from "@indielayer/ui";
-import Dropzone from "../../Components/Dropzone.vue";
 
 const notification = useToast();
 const uploadForm = useForm({
@@ -68,13 +66,6 @@ function onSubmit(isValid) {
 }
 
 
-
-
-
-onMounted(() => {
-
-});
-
 const can = permission => useCan(permission);
 
 
@@ -116,6 +107,9 @@ const can = permission => useCan(permission);
                             {{ uploadFile.original_name || uploadFile.name }}
                         </a>
                         <span class="text-red-500" v-for="error in uploadForm.errors.type">
+                                {{error}}
+                        </span>
+                        <span class="text-red-500" v-for="error in uploadForm.errors.file_name">
                                 {{error}}
                         </span>
 
