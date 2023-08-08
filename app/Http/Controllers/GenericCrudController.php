@@ -143,6 +143,9 @@ class GenericCrudController extends Controller
                 if (strpos($value, 'min')) {
                     $min = explode(':', $value)[1];
                     $validateArray[$property] = 'required|numeric|min:'.$min;
+                } else if (strpos($value, 'required_without')) {
+                    $without = explode(':', $value)[1];
+                    $validateArray[$property] = 'required_without:'.$without;
                 } else {
                     $validateArray[$property] = 'required';
                 }
@@ -260,6 +263,10 @@ class GenericCrudController extends Controller
             if (str_contains($value, 'max')) {
                 $max = explode(':', $value)[1];
                 $validateArray[$property] = 'required|numeric|max:'.$max;
+            }
+            if (strpos($value, 'required_without')) {
+                $without = explode(':', $value)[1];
+                $validateArray[$property] = 'required_without:'.$without;
             }
             if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && ! strpos($modelSkipPropertiesList, $property)) {
                 if (! str_contains($value, 'max') && ! str_contains($value, 'min')) {

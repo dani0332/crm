@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Rule;
 use App\Models\RuleLeadSource;
+use App\Models\RuleMotorCorporate;
 use DB;
 use Illuminate\Http\Request;
 use stdClass;
@@ -20,16 +21,28 @@ class RuleService extends BaseService
                 'r.name',
                 'r.rule_start_date',
                 'r.rule_end_date',
+                'rt.name as rule_type',
                 'rls.lead_source_id as pid',
+                'rmc.car_make_id as car_make_id',
+                'rmc.car_model_id as car_model_id',
                 'ls.name as lead_source_id',
-                DB::raw('group_concat(u.name) AS rule_users'),
+                'cmk.text as rule_car_make_id',
+                'cmdl.text as rule_car_model_id',
+                // DB::raw('group_concat(u.name) AS rule_users'),
+                // DB::raw('group_concat(cmu.name) AS rule_users'),
+                DB::raw('IF(rls.lead_source_id IS NOT NULL, group_concat(u.name), group_concat(cmu.name)) AS rule_users'),
                 'r.is_active',
                 'r.updated_at',
                 'r.created_at'
             )
             ->leftJoin('rule_lead_sources as rls', 'rls.rule_id', 'r.id')
+            ->leftJoin('rule_motor_corporates as rmc', 'rmc.rule_id', 'r.id')
             ->leftJoin('lead_sources as ls', 'ls.id', 'rls.lead_source_id')
+            ->leftJoin('car_make as cmk', 'cmk.id', 'rmc.car_make_id')
+            ->leftJoin('car_model as cmdl', 'cmdl.id', 'rmc.car_model_id')
+            ->leftJoin('rule_types as rt', 'rt.id', 'r.rule_type')
             ->leftJoin('users as u', 'u.id', 'rls.user_id')
+            ->leftJoin('users as cmu', 'cmu.id', 'rmc.user_id')
             ->groupBy('r.id');
     }
 
@@ -63,6 +76,7 @@ class RuleService extends BaseService
             'rule_end_date' => $request->rule_end_date,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
             'is_applicable_for_rules' => false,
+            'rule_type' => $request->get('rule_type'),
         ]);
         if (isset($request->rule_users) && isset($request->lead_source_id)) {
             $userIds = $request->rule_users;
@@ -70,6 +84,18 @@ class RuleService extends BaseService
                 RuleLeadSource::create([
                     'lead_source_id' => $request->lead_source_id,
                     'rule_id' => $rule->id,
+                    'user_id' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        } else if (isset($request->rule_users) && isset($request->rule_car_model_id)) {
+            $userIds = $request->rule_users;
+            foreach ($userIds as $userId) {
+                RuleMotorCorporate::create([
+                    'rule_id' => $rule->id,
+                    'car_make_id' => $request->rule_car_make_id,
+                    'car_model_id' => $request->rule_car_model_id,
                     'user_id' => $userId,
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -104,6 +130,19 @@ class RuleService extends BaseService
                     'updated_at' => now(),
                 ]);
             }
+        } else if (isset($request->rule_users) && isset($request->rule_car_model_id)) {
+            RuleMotorCorporate::where('rule_id', $rule->id)->delete();
+            $userIds = $request->rule_users;
+            foreach ($userIds as $userId) {
+                RuleMotorCorporate::create([
+                    'rule_id' => $rule->id,
+                    'car_make_id' => $request->rule_car_make_id,
+                    'car_model_id' => $request->rule_car_model_id,
+                    'user_id' => $userId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
@@ -118,7 +157,10 @@ class RuleService extends BaseService
             'name' => 'input|title|required|likeSearch',
             'rule_start_date' => 'input|date|title',
             'rule_end_date' => 'input|date|title',
-            'lead_source_id' => 'select|title|required',
+            'rule_type' => 'select|required',
+            'lead_source_id' => 'select|title|required_without:rule_car_model_id',
+            'rule_car_make_id' => 'select|required_without:lead_source_id',
+            'rule_car_model_id' => 'select|required_without:lead_source_id',
             'rule_users' => 'select|multiple|required|multiSearch',
             'is_active' => 'input|checkbox|title',
             'created_at' => 'input|title|date|range|dateRange',

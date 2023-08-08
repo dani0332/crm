@@ -169,4 +169,18 @@ class AjaxController extends Controller
             }
         }
     }
+
+    public function commercialCarModelBasedOnCarMakeId(Request $request)
+    {
+        $carMakeCode = $request->get('make_code');
+
+        $carModel = CarModel::where('car_make_code', $carMakeCode)
+            ->select('id', 'text', 'code')
+            ->where('is_commercial', true)
+            ->where('is_active', true)
+            ->orderBy('text')
+            ->get();
+
+        return response()->json($carModel);
+    }
 }

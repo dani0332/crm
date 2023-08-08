@@ -12,5 +12,24 @@ class Rule extends Model implements AuditableContract
     use HasFactory, Auditable;
 
     protected $table = 'rules';
-    protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active'];
+    protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active', 'rule_type'];
+
+
+    /**
+     * RELATIONS
+     */
+
+    /**
+     * get rule motor corporates function
+     *
+     * @return void
+     */
+    public function motorCoporates()
+    {
+        return $this->hasMany(
+            RuleMotorCorporate::class,
+            'rule_id',
+            'id'
+        );
+    }
 }

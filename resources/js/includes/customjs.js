@@ -2791,3 +2791,57 @@ $('#search-teams').submit(function (e) {
     $('.loader').hide();
   }, 1000);
 });
+
+// Listen for change events on select1
+$('#rule_type').change(function() {
+    var selectedValue = $(this).val(); // Get the selected value
+
+    if (selectedValue == 1) {
+        $('#lead_source_id_div').show();
+        $('#rule_car_make_id_div').hide();
+        $('#rule_car_model_id_div').hide();
+    } else {
+        $('#rule_car_make_id_div').show();
+        $('#rule_car_model_id_div').show();
+        $('#lead_source_id_div').hide();
+
+    }
+});
+
+$('#rule_car_make_id').on('change', function (e) {
+    console.log("changed");
+    var make_code = $('#rule_car_make_id option:selected').attr('data-id');
+    if (!make_code) {
+      console.log("Car make code not found");
+      return;
+    }
+    $.get('/commercial_car-model-by-id?make_code=' + make_code, function (data) {
+      var carmodel = $('#rule_car_model_id').empty();
+      carmodel.append(
+        '<option data-id="" value="">Please select rule car model</option>',
+      );
+      if (data.length > 0) {
+        $.each(data, function (create, carmodelObj) {
+          var option = $('<option/>', { id: create, value: carmodelObj });
+          carmodel.append(
+            '<option data-id="' +
+              carmodelObj.code +
+              '" value="' +
+              carmodelObj.id +
+              '">' +
+              carmodelObj.text +
+              '</option>',
+          );
+        });
+      }else{
+        carmodel.append(
+            '<option disabled>No commercial vehicle record found for this car make</option>',
+          );
+      }
+    });
+  });
+
+  function triggerTest()
+  {
+    console.log("Triggered");
+  }
