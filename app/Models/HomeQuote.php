@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\FilterCriteria;
-use App\Traits\QuoteModelTrait;
 
 class HomeQuote extends Model implements AuditableContract
 {

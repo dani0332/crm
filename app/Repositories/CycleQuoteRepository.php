@@ -44,7 +44,7 @@ class CycleQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         info('cycleQuote:'.json_encode($quoteData));
@@ -60,7 +60,7 @@ class CycleQuoteRepository extends BaseRepository
         $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
-            'advisor'
+            'advisor',
         ])
         ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
             $query->where('advisor_id', \auth()->user()->id);
@@ -121,7 +121,7 @@ class CycleQuoteRepository extends BaseRepository
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
                 }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }])->firstOrFail();
     }
 }

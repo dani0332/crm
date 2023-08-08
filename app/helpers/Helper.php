@@ -474,7 +474,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
-            QuoteTypes::YACHT->value
+            QuoteTypes::YACHT->value,
         ]);
     }
 }

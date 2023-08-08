@@ -36,7 +36,7 @@ class CentralController extends Controller
             return abort(404);
         }
 
-        if(request()->has('created_at')){
+        if (request()->has('created_at')) {
             request()->merge(['created_at_start' => request()->get('created_at')]);
             request()->query->remove('created_at');
         }
@@ -56,31 +56,31 @@ class CentralController extends Controller
         }
 
         // For Personal Quotes
-        if(in_array(ucfirst($quoteType), [
+        if (in_array(ucfirst($quoteType), [
             QuoteTypes::BIKE->value,
             QuoteTypes::YACHT->value,
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
-            QuoteTypes::JETSKI->value
-        ])){
-            return Excel::download(new PersonalQuotesExport, $quoteType . '_leads.xlsx');
+            QuoteTypes::JETSKI->value,
+        ])) {
+            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
         }
 
-        switch (ucfirst($quoteType)){
+        switch (ucfirst($quoteType)) {
             case QuoteTypes::LIFE->value:
                 return Excel::download(new LifeQuotesExport, 'life_leads.xlsx');
 
             case QuoteTypes::HOME->value:
                 return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
 
-            case QuoteTypes::AMT->value;
-                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+            case QuoteTypes::AMT->value:
+            return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
 
-            case QuoteTypes::BUSINESS->value;
-                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+            case QuoteTypes::BUSINESS->value:
+            return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
 
-            case QuoteTypes::TRAVEL->value;
-                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+            case QuoteTypes::TRAVEL->value:
+            return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             default:
                 return false;

@@ -44,7 +44,7 @@ class BikeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         info('bikeQuote:'.json_encode($quoteData));
@@ -116,7 +116,7 @@ class BikeQuoteRepository extends BaseRepository
         $query = $this->byQuoteTypeCode(QuoteTypes::BIKE)->with([
             'quoteStatus',
             'currentlyInsuredWith',
-            'advisor'
+            'advisor',
         ])
         ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
             $query->where('advisor_id', \auth()->user()->id);
