@@ -38,8 +38,8 @@ return [
             'app_id' => env('PUSHER_APP_ID'),
             'options' => [
                 'cluster' => 'ap1',
-                'useTLS' => true
-              ],
+                'useTLS' => true,
+            ],
         ],
 
         'ably' => [
