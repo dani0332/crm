@@ -393,8 +393,8 @@ class CarQuoteService extends BaseService
             $paymentCapturedAt = $carPayment->captured_at;
             $today = Carbon::today();
 
-            $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(7);
-            $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(7);
+            $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
+            $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
             if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
                 if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::CAPTURED]) && $today->lte($dateLimitForAdvisor) && ! in_array($record->quote_status_id, $quoteStatusArray)) {
