@@ -95,12 +95,12 @@ class PetQuoteRepository extends BaseRepository
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
         ])
-        ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
-            $query->where('advisor_id', \auth()->user()->id);
-        })
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
 

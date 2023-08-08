@@ -116,7 +116,7 @@ const totalLeads = reactive({
   current: '',
   tableHeader: [
     {
-      text: 'CDB Id',
+      text: 'Ref-ID',
       value: 'cdbId',
     },
     {
