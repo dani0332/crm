@@ -85,6 +85,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
+
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -111,6 +112,7 @@ class LeadAllocationService extends BaseService
             if (isset($isAvailable)) {
                 $leadAllocation->is_available = $isAvailable;
             }
+
             $leadAllocation->save();
             DB::commit();
         } catch (\Exception $e) {
@@ -157,7 +159,6 @@ class LeadAllocationService extends BaseService
                 if (str_starts_with($lead->code, 'CAR-')) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
-
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
