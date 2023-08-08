@@ -151,10 +151,10 @@ class CarRevivalQuoteRepository extends BaseRepository
 
         $subject = $inbound->Subject();
         $strings = explode('-', $subject);
-        if(!empty($strings[1])){
+        if (! empty($strings[1])) {
             $uuid = $strings[1];
             $this->where('uuid', $uuid)->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
-            
+
             info('Lead  - UUID - '.$uuid.' - source updated to Revival');
         }
 

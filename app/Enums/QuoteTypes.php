@@ -15,7 +15,7 @@ enum QuoteTypes: string
 
     public function id(): string
     {
-        return static::getId($this);
+        return self::getId($this);
     }
 
     public static function getId(self $value): int

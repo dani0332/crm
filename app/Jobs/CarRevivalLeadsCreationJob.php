@@ -84,13 +84,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        if (! isset($capiResponse->errors) &&  ! empty($capiResponse->quoteUID)) {
+        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
             info('CarRevivalLeadsCreationJob - Lead Created -'.$capiResponse->quoteUID.' - CAPI Response:');
             // $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
             $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
             // Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
             // dispatch(new SendOCBEmailJob($capiResponse->quoteUID, 1));
-            
+
             $emailData = (object) [
                 'quoteId' => $carQuote->id,
                 'templateId' => 296,
