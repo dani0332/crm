@@ -30,10 +30,13 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
+    advisor_id: [],
   page: 1,
 };
-
+const canExport = ref(false);
+const permissionAssignLeads = ref(false);
 const filters = reactive(availableFilters);
+const hasRole = role => useHasRole(role);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -81,6 +84,9 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+    if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
+        permissionAssignLeads.value = true;
+    }
 });
 
 const tableHeader = [
@@ -92,7 +98,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
@@ -101,12 +107,46 @@ const tableHeader = [
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
+const advisorOptionsFilter = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.roles[0].name
+            ? advisor.name + ' - ' + advisor.roles[0]?.name
+            : advisor.name,
+    }));
+});
+
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
 
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
   isDisabled = ref(false);
 
+const onDataExport = () => {
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'bike');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
 
 </script>
 
@@ -190,6 +230,38 @@ const quotesSelected = ref([]),
           class="w-full"
         />
 
+      <ComboBox
+          v-model="filters.quote_status_id"
+          label="Lead Status"
+          name="quote_status"
+          placeholder="Search by Lead Status"
+          :options="
+        quoteStatuses.map(item => ({
+          value: item.id,
+          label: item.text,
+        }))
+      "
+      />
+
+      <ComboBox
+          v-model="filters.advisor_id"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="advisorOptionsFilter"
+      />
+
+          <x-select
+              v-model="filters.is_ecommerce"
+              label="Is Ecommerce"
+              placeholder="Search by Ecommerce"
+              :options="[
+            { value: '', label: 'All' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
+          ]"
+              class="w-full"
+          />
+
         <x-input
           v-model="filters.renewal_batch"
           type="search"
@@ -197,31 +269,6 @@ const quotesSelected = ref([]),
           label="Renewal Batch"
           class="w-full"
           placeholder="Search by Renewal Batch"
-        />
-
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status"
-          placeholder="Search by Lead Status"
-          :options="
-            quoteStatuses.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-        />
-
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Is Ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 1, label: 'Yes' },
-            { value: 0, label: 'No' },
-          ]"
-          class="w-full"
         />
 
         <x-select
@@ -236,35 +283,43 @@ const quotesSelected = ref([]),
           class="w-full"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+              <x-button
+                  v-if="canExport"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="onDataExport"
+                  class="justify-self-start"
+              >
+                  Export
+              </x-button>
+              <x-tooltip v-else position="right">
+                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+                  <template #tooltip>
+            <span class="font-medium">
+              Created dates are required to export data.
+            </span>
+                  </template>
+              </x-tooltip>
+          </div>
+          <div v-else />
+          <div class="flex justify-self-end gap-3">
+              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+              <x-button size="sm" color="primary" @click.prevent="onReset">
+                  Reset
+              </x-button>
+          </div>
       </div>
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
+      <div v-if="quotesSelected.length > 0 && permissionAssignLeads" class="mb-4">
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
-          :advisors="advisors"
+          :advisors="advisorOptions"
           :quoteType="quoteType"
         />
-        <ExportExcel
-            v-if="can(permissionsEnum.DATA_EXTRACTION)"
-          :data="quotesSelected"
-          :columns="tableHeader"
-          :filename="'Home-List'"
-          :sheetname="'Leads'"
-        >
-          <x-button size="sm" color="emerald">
-            Export -
-            <span class="lining-nums">
-              Selected: {{ quotesSelected.length }}
-            </span>
-          </x-button>
-        </ExportExcel>
       </div>
     </Transition>
 
@@ -291,7 +346,7 @@ const quotesSelected = ref([]),
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">

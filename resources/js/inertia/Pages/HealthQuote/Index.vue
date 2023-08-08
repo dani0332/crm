@@ -15,7 +15,7 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
-
+const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
 
 const assignForm = useForm({
@@ -151,20 +151,6 @@ function onAssignLead(isValid) {
       });
   }
 }
-
-const objToUrl = obj => {
-  Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
-  );
-  return Object.keys(obj)
-    .map(key => {
-      if (Array.isArray(obj[key])) {
-        return obj[key].map(value => `${key}[]=${value}`).join('&');
-      }
-      return `${key}=${obj[key]}`;
-    })
-    .join('&');
-};
 
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
@@ -331,7 +317,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/health-export?${objToUrl(filters)}`"
+            :href="`/quotes/health-export?${ objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export
