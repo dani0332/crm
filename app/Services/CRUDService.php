@@ -269,6 +269,7 @@ class CRUDService extends BaseService
         //     ) {
         //         CammyJob::dispatch($entity, 'unsub');
         //     }
+        // }
 
         QuoteStatusLog::create([
             'quote_type_id' => QuoteTypeId::Car,
