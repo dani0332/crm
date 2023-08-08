@@ -50,7 +50,6 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
@@ -1252,6 +1251,20 @@ class RenewalsUploadService
                 'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
             ];
+
+            if ($quotePlansCount > 0) {
+                $pdfData = [
+                    'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
+                    'quote_uuid' => $carQuote->uuid,
+                ];
+
+                $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+                if (isset($pdf['error'])) {
+                    info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+                } else {
+                    $emailData->pdfAttachment = (object) $pdf;
+                }
+            }
 
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 

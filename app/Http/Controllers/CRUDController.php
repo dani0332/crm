@@ -16,6 +16,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
+use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -764,16 +765,26 @@ class CRUDController extends Controller
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
-            $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
-            foreach ($modelPropertiesList as $property => $value) {
-                if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
-                    $validateArray[$property] = 'required';
+            if ($modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarManager)) {
+                $validateArray['renewal_batch'] = 'required';
+            } else {
+                $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
+                $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
+
+                foreach ($modelPropertiesList as $property => $value) {
+                    $strPosUpdateCheck = (is_null($jsonDecodeSkipProps)) || ! strpos($modelSkipPropertiesList['update'], $property);
+                    if (is_null($jsonDecodeSkipProps) && in_array($property, $modelSkipPropertiesList)) {
+                        continue;
+                    }
+                    if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $property != 'car_value_tier' && $modelSkipPropertiesList != null && $strPosUpdateCheck) {
+                        $validateArray[$property] = 'required';
+                    }
                 }
             }
         }
+
         $request->dob = isset($request->dob) ? Carbon::parse($request->dob)->format('Y-m-d') : null;
-        // dd($request->all(), $validateArray);
-        // $this->validate($request, $validateArray);
+        $this->validate($request, $validateArray);
         $response = $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
         if (! is_null($response) && ! $response) {
             return redirect('/quotes/'.strtolower(str_replace('"', '', $request->modelType)).'/'.$id.'/edit')->with('error', json_decode($request->modelType, true).' has not been updated');
@@ -1126,7 +1137,20 @@ class CRUDController extends Controller
                 }
             }
         }
+        $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
+        // courtesy email
+        $lobs = [quoteTypeCode::Business];
+        if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
+
+            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
+            $quoteData['quoteTypeId'] = $quoteTypeId;
+            $quoteData['quoteUID'] = $request->quote_uuid;
+
+            $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
+
+            info('Courtesy Email CAPI Response - : '.json_encode($response));
+        }
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }

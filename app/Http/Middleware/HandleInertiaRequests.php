@@ -243,13 +243,13 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
-            $nav = $nav->add('Discount Management', '', function (Section $section) {
-                $section
-                    ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
-            });
-        }
+        // if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
+        //     $nav = $nav->add('Discount Management', '', function (Section $section) {
+        //         $section
+        //             ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
+        //     });
+        // }
 
         if (auth()->user()->can(PermissionsEnum::TransAppList)) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
@@ -381,10 +381,6 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        // ftc-form-delete schedule on 7th June 2023
-        // if (auth()->check() && auth()->user()->hasPolicyIssuanceAccess()) {
-        //     $nav = $nav->add('Policy Issuance', url('ftcform'));
-        // }
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
