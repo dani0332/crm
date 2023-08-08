@@ -3,8 +3,10 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
+use App\Jobs\CarSoldResubmissions;
 use App\Jobs\LeadAllocationJob;
 use App\Jobs\TierAssignmentJob;
+use App\Jobs\UnconSubmissionReminder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -37,6 +39,16 @@ class Kernel extends ConsoleKernel
         //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
 
         $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
+
+        $schedule->job(new UnconSubmissionReminder)
+            ->tuesdays()
+            ->fridays()
+            ->at('9:00');
+
+        //send leads which are resubmitted for car sold approval yesterday
+        $schedule->job((new CarSoldResubmissions))
+            ->daily()
+            ->at('9:00');
 
         $schedule
             ->command('AddBatchNumber:cron')

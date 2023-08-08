@@ -29,7 +29,7 @@ class CarSoldResubmissions implements ShouldQueue
         //
     }
 
-    /**
+      /**
      * Execute the job.
      *
      * @return void
@@ -67,8 +67,8 @@ class CarSoldResubmissions implements ShouldQueue
                 'uuid' => $quote->uuid,
                 'advisor_name' => $quote->advisor->name,
                 'batch' => $quote->renewal_batch,
-                'submission_date' => Carbon::parse($quote->carLostQuoteLogs[0]->created_at)->format('d M Y'),
-                'resubmission_date' => Carbon::parse($quote->carLostQuoteLog->created_at)->format('d M Y'),
+                'submission_date' => Carbon::parse($quote->carLostQuoteLogs[0]->created_at)->format('jS M Y'),
+                'resubmission_date' => Carbon::parse($quote->carLostQuoteLog->created_at)->format('jS M Y'),
                 'quote_url' => env('APP_URL').'/quotes/car/'.$quote->uuid,
                 'highlight' => (in_array(Carbon::parse($quote->carLostQuoteLog->created_at)->format('d'), [15, 16, 17])),
             ];
