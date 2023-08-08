@@ -45,7 +45,7 @@ class HomeQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function homeQuoteRequestDetail()
@@ -55,12 +55,12 @@ class HomeQuote extends Model implements AuditableContract
 
     public function accommodationType()
     {
-        return $this->hasOne(HomeAccomodationType::class, 'id', 'ilivein_accommodation_type_id');
+        return $this->belongsTo(HomeAccomodationType::class, 'ilivein_accommodation_type_id');
     }
 
     public function possessionType()
     {
-        return $this->hasOne(HomePossessionType::class, 'id', 'iam_possesion_type_id');
+        return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id');
     }
 
     public function advisor()

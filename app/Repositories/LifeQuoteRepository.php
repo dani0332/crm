@@ -71,9 +71,7 @@ class LifeQuoteRepository extends BaseRepository
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                });
+                $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter()
             ->withFakeLeadCriteria()

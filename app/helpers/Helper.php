@@ -433,7 +433,6 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Business,
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
-            quoteTypeCode::Aml
         ];
     }
 }

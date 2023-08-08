@@ -38,11 +38,11 @@ class PetQuoteRequestDetail extends Model implements AuditableContract
 
     public function assignedBy()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
+        return $this->belongsTo(User::class, 'advisor_assigned_by_id');
     }
 
     public function lostReason()
     {
-        return $this->belongsTo(LostReasons::class, 'lost_reason_id', 'id');
+        return $this->belongsTo(LostReasons::class);
     }
 }
