@@ -1,11 +1,14 @@
 <script setup>
-import {XSelect} from "@indielayer/ui";
+import {XAlert, XSelect} from "@indielayer/ui";
+import Dropzone from "../../Components/Dropzone.vue";
 
 const notification = useToast();
 const uploadForm = useForm({
     csvFile:'',
     skipPlans:''
 });
+let file = '';
+let files = [];
 defineProps({
     azureStorageUrl: String,
     azureStorageContainer: String,
@@ -16,9 +19,10 @@ let errors = {
     type:'',
     step:''
 }
-let file = '';
 function handleFileUpload( event ){
-    file = event.target.files[0];
+    files = event;
+    file = event[0].file;
+    uploadForm.csvFile = event[0];
 }
 function onSubmit(isValid) {
     if (isValid) {
@@ -38,8 +42,11 @@ function onSubmit(isValid) {
                 title: 'Uploaded renewals records has been stored',
                 position: 'top',
             });
+            files =[];
+            uploadForm.setError([]);
+            uploadForm.errors.file_name = [];
+            uploadForm.errors.type = [];
             uploadForm.csvFile = '';
-            document.getElementById("file_name").value = "";
         })
             .catch(function(error){
                 uploadForm.setError(error.response.data.errors);
@@ -87,18 +94,6 @@ const can = permission => useCan(permission);
         <!--   filters     -->
         <x-form @submit="onSubmit" :auto-focus="false">
             <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
-                <x-input
-                    v-model="uploadForm.csvFile"
-                    type="file"
-                    name="previous_quote_policy_number"
-                    label="File"
-                    class="w-full"
-                    :error="uploadForm.errors.type"
-                    id="full_name"
-                    @change="handleFileUpload( $event )"
-                />
-            </div>
-            <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
                 <x-select
                     v-model="uploadForm.skipPlans"
                     name="previous_quote_policy_number"
@@ -112,15 +107,34 @@ const can = permission => useCan(permission);
                         }))"
                 />
             </div>
-            <div>
-                <span class="text-sm"><strong>Skip Plans - No</strong> - Plans will be fetched/refreshed during fetch plans process.</span>
-                <br/>
-                <span class="text-sm"><strong>Skip Plans - Yes</strong> - <span class="text-red-500">Plans will be not be refreshed during fetch plans process. make sure plans are already fetched for the batch being uploaded.</span></span>
-            </div>
-            <div>
-                <div class="text-red-500 my-6">
-                    <p></p><h4 class="required"><b>Import Instructions must be follow:</b></h4><p></p>
-                    <p></p><ul class="required" style="font-weight:bold;">
+            <Dropzone  v-model="uploadForm.csvFile"
+                       @change="handleFileUpload( $event )"
+                       :error="uploadForm.errors.type"
+            ></Dropzone>
+            <a
+                v-for="uploadFile in files"
+                class="block px-2 py-2 border rounded mt-2 mb-2 text-xs hover:text-primary-600 truncate"
+            >
+                {{uploadFile.file.name}}
+
+            </a>
+            <span class="text-red-500" v-for="error in uploadForm.errors.file_name">
+                                {{error}}
+            </span>
+            <span class="text-red-500" v-for="error in uploadForm.errors.type">
+                                {{error}}
+            </span>
+
+            <x-alert class="my-2 mt-2" >
+                <div>
+                    <span class="text-sm"><strong>Skip Plans - No</strong> - Plans will be fetched/refreshed during fetch plans process.</span>
+                    <br/>
+                    <span class="text-sm"><strong>Skip Plans - Yes</strong> - <span class="text-red-500">Plans will be not be refreshed during fetch plans process. make sure plans are already fetched for the batch being uploaded.</span></span>
+                </div>
+            </x-alert>
+            <x-alert>
+                <h4 class="text-red-500"><b>Import Instructions must be follow:</b></h4>
+                <ul class="list-disc text-sm pl-4" >
                     <li>Download the sample xlsx file, modify the data according to the recommendations for a successful import.</li>
                     <li>File must be a xlsx file with the following fields.</li>
                     <li>Please ensure there are no commas in file.</li>
@@ -131,15 +145,18 @@ const can = permission => useCan(permission);
                     <li>Please ensure all required columns data filled in the xlsx file.</li>
                     <li>Arabic is not supported in xlsx file upload.</li>
                 </ul>
-                    <p></p>
-                </div>
+            </x-alert>
+            <div class="flex justify-end gap-3 my-4">
+                <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
             </div>
-            <div class="flex items-center">
-                <span>Download Sample XLSX</span> <a :href="azureStorageUrl+azureStorageContainer+'/renewals/renewals_upload_create_m3.xlsx'"  ><img src="https://img.icons8.com/color/40/000000/ms-excel.png" alt="xlsx" border="0"></a>
+            <div class="flex items-center my-4">
+                <x-button :href="azureStorageUrl+azureStorageContainer+'/renewals/renewals_upload_create_m3.xlsx'" color="green" icon-right="cells"  >
+                    Download Sample XLSX
+                </x-button>
             </div>
-        <div class="item form-group">
-            <div class="col-md-12 scrollable">
-                <table class="table table-bordered">
+            <div class="vue3-easy-data-table tablefixed">
+                <div class="vue3-easy-data-table__main fixed-header table-fixed hoverable border-cell">
+                    <table class="table table-bordered w-full">
                     <thead class="vue3-easy-data-table__header">
                     <tr><th>Sr No.</th>
                         <th>Field name</th>
@@ -193,9 +210,6 @@ const can = permission => useCan(permission);
                 </table>
             </div>
         </div>
-            <div class="flex justify-end gap-3 my-4">
-                <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
-            </div>
         </x-form>
 
     </div>
