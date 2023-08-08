@@ -37,7 +37,7 @@ class BusinessQuoteExport implements FromCollection, WithHeadings, WithMapping, 
             'PREMIUM',
             'NUMBER OF EMPLOYEES',
             'BUSINESS INSURANCE TYPE',
-            'GENDER'
+            'GENDER',
         ];
     }
 
