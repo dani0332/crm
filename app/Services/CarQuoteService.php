@@ -1171,8 +1171,8 @@ class CarQuoteService extends BaseService
                 $paymentCapturedAt = $carPayment->captured_at;
                 $today = Carbon::today();
 
-                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(7);
-                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(7);
+                $dateLimitForAdvisor = Carbon::parse($paymentCapturedAt)->addDays(6);
+                $dateLimitForManager = Carbon::parse($dateLimitForAdvisor)->addDays(6);
 
                 if (Auth::user()->hasRole(RolesEnum::CarAdvisor) && $today->lte($dateLimitForAdvisor)) {
                     info($logPrefix.' plan modify allowed to advisor for uuid '.$quote->uuid.' and captured days diff is '.$paymentCapturedAt);
