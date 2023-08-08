@@ -20,7 +20,7 @@ class PersonalQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::EXACT,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
@@ -43,7 +43,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function quoteDetail()
     {
@@ -51,11 +51,11 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function advisor()
     {
-        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
 
     /**
@@ -185,6 +185,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Nationality::class);
     }
 
+    public function plans()
+    {
+        return $this->belongsTo(PersonalPlan::class, 'plan_id');
+    }
+
     /**
      * get data by personal quote type.
      *
@@ -226,7 +231,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function currentlyInsuredWith()
     {
-        return $this->belongsTo(InsuranceProvider::class);
+        return $this->belongsTo(InsuranceProvider::class, 'currently_insured_with_id');
     }
 
     /**

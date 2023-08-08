@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\LeadAllocation::class,
+        Commands\AddBatchNumber::class,
     ];
 
     /**
@@ -34,8 +35,6 @@ class Kernel extends ConsoleKernel
             ->withoutOverlapping(1);
 
         //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
-
-        $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 
         $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 

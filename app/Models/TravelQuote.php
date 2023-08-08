@@ -19,7 +19,7 @@ class TravelQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::EXACT,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
@@ -45,7 +45,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function travelQuoteRequestDetail()
@@ -70,7 +70,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function travelCoverFor()
     {
-        return $this->belongsTo(TravelCoverFor::class, 'travel_cover_for_id');
+        return $this->belongsTo(TravelCoverFor::class);
     }
 
     public function regionCoverFor()
@@ -80,12 +80,12 @@ class TravelQuote extends Model implements AuditableContract
 
     public function currentlyLocatedIn()
     {
-        return $this->belongsTo(CurrentlyLocatedIn::class, 'currently_located_in_id');
+        return $this->belongsTo(CurrentlyLocatedIn::class);
     }
 
     public function nationality()
     {
-        return $this->belongsTo(Nationality::class, 'nationality_id');
+        return $this->belongsTo(Nationality::class);
     }
 
     public function destination()
@@ -100,7 +100,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function paymentStatus()
     {
-        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
+        return $this->belongsTo(PaymentStatus::class);
     }
 
     public function getPreviousPolicyExpiryDateAttribute($table)

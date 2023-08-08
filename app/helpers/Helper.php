@@ -433,7 +433,6 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Business,
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
-            quoteTypeCode::Aml
         ];
     }
 }
@@ -475,7 +474,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
-            QuoteTypes::YACHT->value
+            QuoteTypes::YACHT->value,
         ]);
     }
 }

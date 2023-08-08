@@ -19,7 +19,7 @@ class BusinessQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::EXACT,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
@@ -45,7 +45,7 @@ class BusinessQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function businessQuoteRequestDetail()
@@ -55,12 +55,12 @@ class BusinessQuote extends Model implements AuditableContract
 
     public function typeOfInsurance()
     {
-        return $this->hasOne(BusinessInsuranceType::class, 'id', 'business_type_of_insurance_id');
+        return $this->belongsTo(BusinessInsuranceType::class);
     }
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id');
+        return $this->belongsTo(User::class, 'advisor_id');
     }
-    
+
 }

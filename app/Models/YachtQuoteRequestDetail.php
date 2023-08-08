@@ -38,6 +38,6 @@ class YachtQuoteRequestDetail extends Model implements AuditableContract
 
     public function assignedBy()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_assigned_by_id');
+        return $this->belongsTo(User::class, 'advisor_assigned_by_id');
     }
 }

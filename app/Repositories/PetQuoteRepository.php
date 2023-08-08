@@ -51,7 +51,7 @@ class PetQuoteRepository extends BaseRepository
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
@@ -95,14 +95,12 @@ class PetQuoteRepository extends BaseRepository
             'advisor',
             'petQuote.petQuoteRequestDetail.lostReason:id,text',
         ])
-        ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
-            $query->where(function ($query) {
+            ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
-            });
-        })
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            })
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
 
@@ -110,7 +108,7 @@ class PetQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote =  $this->byQuoteTypeId(QuoteTypes::PET->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
             ->with([
                 'petQuote.accomodationType:id,text',
@@ -121,17 +119,18 @@ class PetQuoteRepository extends BaseRepository
                 'advisor',
                 'quoteDetail.lostReason',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod','paymentStatusLogs', 'insuranceProvider']);
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
                 },
                 'createdBy',
                 'updatedBy',
                 'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }
+                },
             ])->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
-        return  $quote;
+
+        return $quote;
 
     }
 

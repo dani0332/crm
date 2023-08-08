@@ -8,7 +8,6 @@ use App\Facades\Capi;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 
 class LifeQuoteRepository extends BaseRepository
 {
@@ -41,7 +40,7 @@ class LifeQuoteRepository extends BaseRepository
             'othersInfo' => $data['others_info'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin) ) ? auth()->user()->id : null
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
@@ -71,9 +70,7 @@ class LifeQuoteRepository extends BaseRepository
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                });
+                $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter()
             ->withFakeLeadCriteria()
