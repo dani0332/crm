@@ -147,7 +147,7 @@
     <script src="{{ asset('vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 
 
     <!-- iCheck -->
@@ -250,14 +250,19 @@
             }
         });
         $.fn.dataTable.ext.errMode = 'none'; // disable datatables error prompt
-        var pusher = new Pusher("55209d647ceac319ce26", {
-        cluster: "api",
-        });
-        var channel = pusher.subscribe("my-channel");
+        Pusher.logToConsole = true;
 
-        channel.bind("my-event", (data) => {
-            console.log(data);
+        var pusher = new Pusher('55209d647ceac319ce26', {
+        cluster: 'ap1'
         });
+
+        var channel = pusher.subscribe('my-channel');
+        channel.bind('user.status.changed', function(data) {
+            debugger;
+            alert(JSON.stringify(data));
+        });
+
+
 
     </script>
 </body>
