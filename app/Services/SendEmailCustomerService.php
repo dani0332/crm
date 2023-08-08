@@ -120,7 +120,7 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendOcbEmail($emailTemplateId, $emailData, $tag, $isDtt = false)
+    public function sendOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
@@ -129,7 +129,6 @@ class SendEmailCustomerService extends BaseService
                 'Accept' => 'application/json',
                 'api-key' => $this->apiKey,
                 'Content-Type' => 'application/json',
-
             ];
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
@@ -146,8 +145,8 @@ class SendEmailCustomerService extends BaseService
 
             $body = [
                 'sender' => [
-                    'email' => $isDtt ? 'buy@insurancemarket.ae' : strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
-                    'name' => $isDtt ? 'insurance market' : $emailData->advisorName,
+                    'email' => strstr($emailData->advisorEmailAddress, '@', true).'@renewals.insurancemarket.ae',
+                    'name' => $emailData->advisorName,
                 ],
                 'to' => [[
                     'email' => $emailData->customerEmail,
@@ -183,43 +182,31 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $ccAdvisor = [];
-            if ($isDtt) {
+            if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
+                $ccAdvisor = [[
+                    'email' => $emailData->advisorEmailAddress,
+                    'name' => $emailData->advisorName,
+                ]];
                 $body['replyTo'] = [
-                    'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
-                    'name' => 'Post Mark',
+                    'email' => $emailData->advisorEmailAddress,
+                    'name' => $emailData->advisorName,
                 ];
+            }
 
-            } else {
-
-                if (isset($emailData->advisorEmailAddress) && isset($emailData->advisorName)) {
-                    $ccAdvisor = [[
-                        'email' => $emailData->advisorEmailAddress,
-                        'name' => $emailData->advisorName,
-                    ]];
-                    $body['replyTo'] = [
-                        'email' => $emailData->advisorEmailAddress,
-                        'name' => $emailData->advisorName,
+            $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
+            $ccAdditional = [];
+            if ($customer) {
+                $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
+                foreach ($additionalContacts as $additionalContact) {
+                    $ccAdditional[] = [
+                        'email' => $additionalContact->value,
+                        'name' => $emailData->customerName,
                     ];
                 }
             }
-            if (! $isDtt) {
-                $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
-                $ccAdditional = [];
-                if ($customer) {
-                    $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
-                    foreach ($additionalContacts as $additionalContact) {
-                        $ccAdditional[] = [
-                            'email' => $additionalContact->value,
-                            'name' => $emailData->customerName,
-                        ];
-                    }
-                }
 
-                $cc = array_merge($ccAdditional, $ccAdvisor);
-                if (count($cc)) {
-                    $body['cc'] = $cc;
-                }
-            }
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
@@ -435,6 +422,67 @@ class SendEmailCustomerService extends BaseService
             Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
         }
+
+        return $responseCode;
+    }
+
+    public function sendDttEmail($emailData, $tag)
+    {
+        try {
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $body = [
+                'subject' => $emailData->customerName."'s".' Car Insurance with Alfred '.$emailData->quoteCdbId,
+                'sender' => [
+                    'email' => 'no-reply@alert.insurancemarket.email',
+                    'name' => 'insurance market',
+                ],
+                'params' => [
+                    'customerName' => $emailData->customerName,
+                    'quotePlanLink' => $emailData->buttonUrl,
+                ],
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->customerName,
+                ]],
+                'templateId' => $emailData->templateId,
+            ];
+
+            $body['replyTo'] = [
+                'email' => 'b6eb50415ef5751212bee3b17240ee7c@inbound.postmarkapp.com',
+                'name' => 'Post mark',
+            ];
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => 10000,
+                ]
+            );
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 201) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $responseDetail = 'Dtt Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$emailData->code.' Class: '.get_class();
+            info($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
 
         return $responseCode;
     }

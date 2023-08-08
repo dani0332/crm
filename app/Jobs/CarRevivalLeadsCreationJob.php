@@ -10,6 +10,7 @@ use App\Facades\Ken;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,7 +30,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public $timeout = 60;
     public $backoff = 300;
     private $lead = null;
-
+    protected $sendEmailCustomerService;
     /**
      * Create a new job instance.
      *
@@ -38,6 +39,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public function __construct($lead)
     {
         $this->lead = $lead;
+
     }
 
     /**
@@ -45,8 +47,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      *
      * @return void
      */
-    public function handle()
+    public function handle(SendEmailCustomerService $sendEmailCustomerService)
     {
+        $this->sendEmailCustomerService = $sendEmailCustomerService;
         $dataArr = [
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
@@ -81,31 +84,31 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        if (! empty($capiResponse->quoteUID)) {
+        if (! isset($capiResponse->errors) &&  ! empty($capiResponse->quoteUID)) {
             info('CarRevivalLeadsCreationJob - Lead Created -'.$capiResponse->quoteUID.' - CAPI Response:');
-
-            if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-                $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
-
-                //                Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
-
-                dispatch(new SendOCBEmailJob($capiResponse->quoteUID, 1));
-
-                info('CarRevivalLeadsCreationJob - UUID - '.$capiResponse->quoteUID.' - OCB Email Sent');
-
-                $quote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
-
-                DttRevival::insert([
-                    'quote_type_id' => QuoteTypes::CAR->id(),
-                    'quote_id' => $quote->id,
-                    'uuid' => $capiResponse->quoteUID,
-                    'email_sent' => true,
-                ]);
-
-                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
-
-                //                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-            }
+            // $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
+            $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
+            // Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
+            // dispatch(new SendOCBEmailJob($capiResponse->quoteUID, 1));
+            
+            $emailData = (object) [
+                'quoteId' => $carQuote->id,
+                'templateId' => 296,
+                'quoteCdbId' => $carQuote->code,
+                'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+                'customerEmail' => $carQuote->email,
+                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            ];
+            $this->sendEmailCustomerService->sendDttEmail($emailData, 'send-digital-transformation-email');
+            info('CarRevivalLeadsCreationJob - UUID - '.$emailData->customerEmail.' - Email Sent');
+            DttRevival::insert([
+                'quote_type_id' => QuoteTypes::CAR->id(),
+                'quote_id' => $carQuote->id,
+                'uuid' => $capiResponse->quoteUID,
+                'email_sent' => true,
+            ]);
+            info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
+            // CarQuote::find($this->lead->id)->update(['is_revived' => true]);
         } else {
 
             info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));

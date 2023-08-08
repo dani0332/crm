@@ -9,7 +9,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\CarQuote;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CarRevivalQuoteRepository extends BaseRepository
 {
@@ -148,17 +147,16 @@ class CarRevivalQuoteRepository extends BaseRepository
 
     public function fetchupdateQuote($data)
     {
-
         $inbound = new \Postmark\Inbound(file_get_contents('php://input'));
 
-        $payload['Subject'] = $inbound->Subject();
-        //        $subject ='Re: test test’s car insurance renewal with Alfred-S5Z5RMMM';
-        //        $strings = explode('-',$subject);
-        //        Log::info('inbound email Subject '.json_encode($strings[1]));
-        Log::info('inbound email Subject '.json_encode($payload));
-
-        //        $uuid =$strings[1];
-        //        $this->where('uuid',$uuid)->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+        $subject = $inbound->Subject();
+        $strings = explode('-', $subject);
+        if(!empty($strings[1])){
+            $uuid = $strings[1];
+            $this->where('uuid', $uuid)->update(['source' => LeadSourceEnum::REVIVAL_REPLIED]);
+            
+            info('Lead  - UUID - '.$uuid.' - source updated to Revival');
+        }
 
     }
     public function fetchGetReportsData($request)

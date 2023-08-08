@@ -52,7 +52,7 @@ class Dtt extends Command
         try {
             $dateOne = Carbon::now()->subYear(1)->subDays(15)->toDateString();
             $dateTwo = Carbon::now()->subYear(2)->subDays(15)->toDateString();
-
+            
             $datethirtyDaysBefore = Carbon::now()->subDays(30)->toDateString();
 
             $jobs = [];
@@ -80,9 +80,8 @@ class Dtt extends Command
                 })
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->orderBy('id', 'DESC')
-//                ->take(1)
                 ->get();
-
+                
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
 
