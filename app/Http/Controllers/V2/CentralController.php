@@ -74,13 +74,13 @@ class CentralController extends Controller
                 return Excel::download(new HomeQuoteExport, 'home_leads.xlsx');
 
             case QuoteTypes::AMT->value:
-            return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
+                return Excel::download(new AmtQuoteExport, 'amt_leads.xlsx');
 
             case QuoteTypes::BUSINESS->value:
-            return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
+                return Excel::download(new BusinessQuoteExport, 'business_leads.xlsx');
 
             case QuoteTypes::TRAVEL->value:
-            return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
+                return Excel::download(new TravelQuoteExport, 'travel_leads.xlsx');
 
             default:
                 return false;
