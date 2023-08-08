@@ -118,6 +118,13 @@ const advisorOptionsFilter = computed(() => {
     }));
 });
 
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
+
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
@@ -303,7 +310,7 @@ watch(
       <div v-if="quotesSelected.length > 0 && permissionAssignLeads" class="mb-4">
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
-          :advisors="advisors"
+          :advisors="advisorOptions"
           :quoteType="quoteType"
         />
       </div>
