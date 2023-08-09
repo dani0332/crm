@@ -269,7 +269,8 @@ class CRUDService extends BaseService
                     'status' => $request->lost_approval_status,
                     'quote_status_id' => $request->leadStatus,
                     'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
-                    'notes' => $request->lost_notes
+                    'notes' => $request->lost_notes,
+                    'action_by_id' => auth()->user()->id
                 ];
 
                 $carLostQuoteLog->update($lostQuoteLogData);

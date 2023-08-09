@@ -383,7 +383,8 @@ use App\Enums\LeadSourceEnum;
                         </div>
                     </form>
 
-                    @if(isset($paymentEntityModel->carLostQuoteLogs))
+
+                    @if(isset($paymentEntityModel->carLostQuoteLogs) && $paymentEntityModel->source == LeadSourceEnum::RENEWAL_UPLOAD && auth()->user()->hasAnyRole(RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::MarketingOperations))
                     <h2>Car Sold / Uncontactable Logs</h2>
                     <div id="lead-history-div">
                         <table id="carLostQuoteLogsTable" class="table table-striped jambo_table" style="width:100%">
@@ -401,7 +402,13 @@ use App\Enums\LeadSourceEnum;
                                 @foreach($paymentEntityModel->carLostQuoteLogs as $carLostQuoteLog)
                                 <tr>
                                     <td>{{$carLostQuoteLog->created_at}}</td>
-                                    <td>{{$carLostQuoteLog->advisor->email}}</td>
+                                    <td>
+                                        @if(empty($carLostQuoteLog->action_by_id))
+                                            {{$carLostQuoteLog->advisor->email}}
+                                        @else
+                                            Management
+                                        @endif
+                                    </td>
                                     <td>{{$carLostQuoteLog->notes}}</td>
                                     <td>{{$carLostQuoteLog->quoteStatus->text}}</td>
                                     <td>{{$carLostQuoteLog->status}}</td>

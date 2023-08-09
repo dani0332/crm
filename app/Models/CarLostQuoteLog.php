@@ -48,6 +48,6 @@ class CarLostQuoteLog extends Model
      */
     public function actionBy()
     {
-        return $this->belongsTo(User::class, 'action_by');
+        return $this->belongsTo(User::class, 'action_by_id');
     }
 }
