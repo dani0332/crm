@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
+use App\Facades\Capi;
 use App\Models\TravelQuote;
 use App\Traits\CentralTrait;
 
@@ -13,15 +15,37 @@ class TravelQuoteRepository extends BaseRepository
         return TravelQuote::class;
     }
 
-    public function fetchGetData()
-    {
-        return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc')->Paginate();
-    }
 
+    public function fetchGetData($forExport = false)
+    {
+        $query = $this->with([
+            'travelQuoteRequestDetail.lostReason',
+            'quoteStatus',
+            'travelCoverFor',
+            'regionCoverFor',
+            'advisor',
+            'plan',
+            'payments',
+            'currentlyLocatedIn',
+            'nationality',
+            'destination',
+            'paymentStatus',
+            'insuranceProvider'
+        ])
+            ->filter()
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
     public function fetchExport()
     {
         return $this->filter()->with(
             ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::TRAVEL->value).'-quote', 'post', $dataArr);
     }
 }

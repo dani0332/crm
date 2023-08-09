@@ -25,6 +25,11 @@ class HomeQuote extends Model implements AuditableContract
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'uuid' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN,
+        'quote_status_id' => FilterTypes::IN,
+        'advisor_id' => FilterTypes::IN,
     ];
 
     public function getCreatedAtAttribute($table)
@@ -43,17 +48,14 @@ class HomeQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function homeQuoteRequestDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
     }
-    public function advisor()
-    {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
-    }
+
     public function insuranceProvider()
     {
         return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
@@ -61,5 +63,20 @@ class HomeQuote extends Model implements AuditableContract
     public function nationality()
     {
         return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
+    }
+
+    public function accommodationType()
+    {
+        return $this->belongsTo(HomeAccomodationType::class, 'ilivein_accommodation_type_id');
+    }
+
+    public function possessionType()
+    {
+        return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id');
+    }
+
+    public function advisor()
+    {
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
 }

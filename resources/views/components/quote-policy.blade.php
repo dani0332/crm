@@ -55,7 +55,7 @@ use App\Enums\RolesEnum;
                 </div>
                 <div class="item form-group">
                     <div class="col">
-                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_premium"><b>Premium</b></label>
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="quote_premium"><b>Price</b></label>
                         <div class="col-md-6 col-sm-6">
                         <p class="label-align-center">
                         <input type="text" class="form-control" id="quote_premium" name="quote_premium" value="{{ $record->premium }}" onkeypress="return isNumberKey(event,this)">
@@ -67,7 +67,7 @@ use App\Enums\RolesEnum;
                     </div>
                 </div>
                 <!-- Transaction Approved -->
-                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved && ! auth()->user()->hasRole(RolesEnum::PA)) 
+                @if($record->quote_status_id == QuoteStatusEnum::TransactionApproved && ! auth()->user()->hasRole(RolesEnum::PA))
                     <div align="right">
                         <span style="color:red;" id="error-quote-policy-form"></span>
                         <button type="button" class="btn btn-primary btn-sm" id="cancel-quote-policy-btn">Cancel</button>

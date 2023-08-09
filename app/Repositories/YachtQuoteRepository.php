@@ -43,11 +43,8 @@ class YachtQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
-
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $quoteData['advisorId'] = auth()->user()->id;
-        }
 
         info('YachtQuote create data : '.json_encode($quoteData));
 
@@ -90,13 +87,18 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($forExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
+            'quoteStatus',
+            'currentlyInsuredWith',
+            'advisor',
+        ])
             ->filter()
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
     public function fetchExport()

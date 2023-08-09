@@ -32,7 +32,7 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN
     ];
 
     public function getCreatedAtAttribute($table)
@@ -51,7 +51,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function travelQuoteRequestDetail()
@@ -74,23 +74,50 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(TravelPlan::class, 'plan_id');
     }
 
+    public function travelCoverFor()
+    {
+        return $this->belongsTo(TravelCoverFor::class);
+    }
+
+    public function regionCoverFor()
+    {
+        return $this->belongsTo(Regions::class, 'region_cover_for_id');
+    }
+
+    public function currentlyLocatedIn()
+    {
+        return $this->belongsTo(CurrentlyLocatedIn::class);
+    }
+
+    public function nationality()
+    {
+        return $this->belongsTo(Nationality::class);
+    }
+
+    public function destination()
+    {
+        return $this->belongsTo(Nationality::class, 'destination_id');
+    }
+
+    public function advisor()
+    {
+        return $this->belongsTo(User::class, 'advisor_id');
+    }
+
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class);
+    }
+
     public function getPreviousPolicyExpiryDateAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
-    public function advisor()
-    {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
-    }
     public function insuranceProvider()
     {
         return $this->hasOne(InsuranceProvider::class, 'text', 'currently_insured_with')->select(['id', 'text']);
-    }
-    public function nationality()
-    {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id')->select(['id', 'code', 'text']);
     }
     /**
      * get data by personal quote type.
