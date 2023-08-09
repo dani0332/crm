@@ -19,17 +19,10 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-    public $filterables = [
-        'first_name' => FilterTypes::FREE,
-        'last_name' => FilterTypes::FREE,
-        'previous_quote_policy_number' => FilterTypes::EXACT,
-        'code' => FilterTypes::EXACT,
-        'email' => FilterTypes::EXACT,
-    ];
     protected $guarded = [];
     public $filterables = [
         'code' => FilterTypes::EXACT,
-        'first_name' => FilterTypes::EXACT,
+        'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
         'email' => FilterTypes::EXACT,
         'mobile_no' => FilterTypes::EXACT,
@@ -45,6 +38,7 @@ class CarQuote extends BaseModel
         'policy_number' => FilterTypes::NULL_CHECK,
         'advisor_id' => FilterTypes::IN,
         'created_at' => FilterTypes::DATE,
+        'previous_quote_policy_number' => FilterTypes::EXACT,
     ];
 
     public function fullName()
@@ -441,10 +435,5 @@ class CarQuote extends BaseModel
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
-    }
-
-    public function updatedBy()
-    {
-        return $this->belongsTo(User::class, 'updated_by', 'id');
     }
 }

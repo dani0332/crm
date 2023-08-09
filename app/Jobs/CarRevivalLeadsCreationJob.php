@@ -54,7 +54,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
             // 'email' => $this->lead->email,
-            'email' => 'nouman.hussain@insurancemarket.ae',
+            'email' => 'diana.gonzaga@insurancemarket.ae',
             'address' => $this->lead->address,
             'mobileNo' => $this->lead->mobile_no,
             'dob' => $this->lead->dob,
@@ -82,6 +82,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
+        info('CarRevivalLeadsCreationJob - Parent Lead Id  '.$this->lead->id);
+
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
         if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
@@ -108,7 +110,8 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'email_sent' => true,
             ]);
             info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
-            // CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+            CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+            info('CarRevivalLeadsCreationJob- is_revived updated -'.$this->lead->id);
         } else {
 
             info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));

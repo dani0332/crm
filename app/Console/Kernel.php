@@ -34,7 +34,7 @@ class Kernel extends ConsoleKernel
             ->onOneServer()
             ->withoutOverlapping(1);
 
-        $schedule->command('Dtt')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('15:00')->onOneServer()->withoutOverlapping(1);
 
         //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
 
