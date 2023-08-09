@@ -20,7 +20,7 @@ class RenewalBatchController extends Controller
         $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
         $renewalBatches = RenewalBatchRepository::getData();
 
-        return inertia('Renewals/Index', [
+        return inertia('RenewalBatches/Index', [
             'renewalBatches' => $renewalBatches ?? [],
             'leadStatuses' => $quoteStatuses
         ]);
@@ -35,7 +35,7 @@ class RenewalBatchController extends Controller
     {
         $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
 
-        return inertia('Renewals/Form', [
+        return inertia('RenewalBatches/Form', [
             'leadStatuses' => $quoteStatuses
         ]);
     }
@@ -68,7 +68,7 @@ class RenewalBatchController extends Controller
         $renewalBatch = RenewalBatchRepository::getBy('id', $id);
         $quoteStatuses = QuoteStatusRepository::getQuoteStatusesByIds([QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable]);
 
-        return inertia('Renewals/Form', [
+        return inertia('RenewalBatches/Form', [
             'leadStatuses' => $quoteStatuses,
             'renewalBatch' => $renewalBatch
         ]);
