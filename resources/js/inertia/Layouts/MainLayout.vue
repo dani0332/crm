@@ -120,7 +120,7 @@ const onLogout = () => {
                                 : 'box'
                             "
                           />
-                          <span class="pt-1">{{ child.title }} ff {{child.active}}</span>
+                          <span class="pt-1">{{ child.title }}</span>
                         </a>
                       </template>
 
