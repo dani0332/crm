@@ -4,7 +4,7 @@ const loader = reactive({
     table: false,
     export: false,
 });
-
+const notification = useToast();
 const tableHeader = [
     { text: 'SR NO.', value: 'iterator' },
     { text: 'FIELD NAME', value: 'field_name' },
@@ -13,7 +13,22 @@ const tableHeader = [
     { text: 'MAX SIZE', value: 'max_size' },
 ];
 
-const tableData = [];
+const tableData = [
+    {
+        iterator : 1,
+        field_name : 'Customer Name',
+        description : 'Customer Name should only be in letters - no numbers allowed',
+        required : 'Yes',
+        max_size : '100'
+    },
+    {
+        iterator : 2,
+        field_name : 'Email Id',
+        description : 'Customer Email Id',
+        required : 'Yes',
+        max_size : '100'
+    }
+];
 
 const uploadCustomer = useForm({
     file_name : '',
@@ -21,6 +36,20 @@ const uploadCustomer = useForm({
     myalfred_expiry_date : '',
     inviatation_email : ''
 });
+
+function onSubmit(){
+    uploadCustomer.post('/customer-process', {
+        onError: errors => {
+            console.log(uploadCustomer.setError(errors));
+        },
+        onSuccess: () => {
+            notification.success({
+                title: 'Upload customers records has been stored',
+                position: 'top',
+            });
+        },
+    });
+}
 
 </script>
 
@@ -34,13 +63,14 @@ const uploadCustomer = useForm({
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
         <div class="grid sm:grid-cols-3 gap-4">
-            <x-input
-                v-model="uploadCustomer.file_name"
-                type="file"
-                label="Upload File*"
-                class="w-full"
-                :error="uploadCustomer.errors.file_name"
-            />
+            <label class="relative x-input inline-block align-bottom text-left mb-3 w-full" style="--x-input-border: #38bdf8;">
+                <p class="font-medium text-gray-800 mb-1">Upload File*</p>
+                <div class="relative">
+                    <input class="appearance-none block w-full placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 dark:border-gray-700 border shadow-sm rounded-md hover:border-gray-400 dark:hover:border-gray-500 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-[color:var(--x-input-border)] w-full"
+                        type="file" @input="uploadCustomer.file_name = $event.target.files[0]">
+                </div>
+            </label>
+
             <x-input
                 v-model="uploadCustomer.cdb_id"
                 type="text"

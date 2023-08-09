@@ -2,8 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Http\Requests\CustomerUploadRequest;
+use App\Imports\CustomersImport;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Services\SendEmailCustomerService;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerRepository extends BaseRepository
 {
@@ -67,5 +71,19 @@ class CustomerRepository extends BaseRepository
         }
 
         return $additionalContacts;
+    }
+
+    public function fetchCustomerUploadRecordsCreate(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService)
+    {
+        if($customerUploadRequest->hasFile('file_name')){
+            return Excel::import(new CustomersImport(
+                $customerUploadRequest->myalfred_expiry_date,
+                $customerUploadRequest->cdb_id,
+                $customerUploadRequest->inviatation_email,
+                $sendEmailCustomerService
+            ), $customerUploadRequest->file('file_name'));
+        }
+
+        vAbort('Something went wrong while uploading');
     }
 }

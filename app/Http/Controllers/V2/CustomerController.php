@@ -5,9 +5,11 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Http\Requests\CustomerRequest;
+use App\Http\Requests\CustomerUploadRequest;
 use App\Jobs\MAWelcomeJob;
 use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
+use App\Services\SendEmailCustomerService;
 
 class CustomerController extends Controller
 {
@@ -82,6 +84,14 @@ class CustomerController extends Controller
     public function uploadCustomers()
     {
         return inertia('Customer/Upload');
+    }
+
+    public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService)
+    {
+        if($customerUploadRequest->validated())
+            CustomerRepository::customerUploadRecordsCreate($customerUploadRequest, $sendEmailCustomerService);
+
+        return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
     }
 
 
