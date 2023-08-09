@@ -81,7 +81,7 @@ class Dtt extends Command
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->orderBy('id', 'DESC')
                 ->get();
-                
+
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
 
