@@ -140,7 +140,7 @@ const can = permission => useCan(permission);
                 <x-button size="sm" color="#ff5e00" type="submit">Upload</x-button>
             </div>
             <div class="flex items-center my-4">
-                <x-button :href="azureStorageUrl+azureStorageContainer+'/renewals/renewals_upload_create_m3.xlsx'" color="green" icon-right="cells"  >
+                <x-button :href="azureStorageUrl+azureStorageContainer+'/renewals/renewals_upload_update_m4.xlsx'" color="green" icon-right="cells"  >
                     Download Sample XLSX
                 </x-button>
             </div>
