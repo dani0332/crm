@@ -166,6 +166,18 @@ use App\Enums\LeadSourceEnum;
                         $carLostChangeStatus = false;
                         $allowQuoteLogAction = false;
 
+                        //validations for Car Advisor / Deputy Manager Role
+                        if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
+                        {
+                            $allowQuoteLogAction = false;
+
+                            if($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2)
+                            {
+                                $carLostChangeStatus = true;
+                                $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
+                            }
+                        }
+
                         //validations for MO role
                         if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
                         {
@@ -174,18 +186,6 @@ use App\Enums\LeadSourceEnum;
                             {
                                 $allowQuoteLogAction = true;
                                 $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
-                            }
-                        }
-
-                        //validations for Car Advisor / Deputy Manager Role
-                        if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
-                        {
-                            $allowQuoteLogAction = false;
-
-                            if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2)
-                            {
-                                $carLostChangeStatus = true;
-                                $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
                             }
                         }
                     }
