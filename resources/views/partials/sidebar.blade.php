@@ -312,6 +312,9 @@ use App\Enums\PermissionsEnum;
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endhasanyrole
+                <ul class="nav side-menu">
+                    <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy policy</a>
+                </ul>
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">

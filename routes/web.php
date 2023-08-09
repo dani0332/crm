@@ -59,6 +59,7 @@ use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\JetskiQuoteController;
+use App\Http\Controllers\V2\LegacyPolicyController;
 use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
@@ -150,6 +151,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::resource('embedded-products', EmbeddedProductController::class);
+    Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
 
     Route::get('/clear-cache', function () {
