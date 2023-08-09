@@ -81,7 +81,7 @@ class UnconSubmissionReminder //implements ShouldQueue
         $cc = implode(',' , ['muhammad.shajiuddin@insurancemarket.ae']);
 
         info('Sending Uncontactable Submissions reminder email');
-        
+
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
         info('Uncontactable Submission reminder email is sent');
