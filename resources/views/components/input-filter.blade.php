@@ -1,7 +1,14 @@
 <div class="col-md-3" >
     @if (strpos($value, 'input') !== false && !str_contains($value, 'range'))
-        <span style="font-size: 11px;"
-            class="col-form-label col-md-12 col-sm-12" for="name">
+        @php
+            $textDecorations = $tooltip = "";
+            if((strpos($value, 'title') && strtoupper($customtitles[$property]) == 'REF-ID')){
+                $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                $tooltip = 'Reference ID';
+            }
+            @endphp
+        <span style="font-size: 11px; {{ $textDecorations }}"
+              class="col-form-label col-md-12 col-sm-12" for="name" data-toggle="tooltip" data-placement="top" title="{{ $tooltip }}">
             @if (strpos($value, 'title'))
                 {{ strtoupper($customtitles[$property]) }}
             @else

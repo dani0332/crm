@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
@@ -27,6 +28,7 @@ use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
 use App\Http\Controllers\LeadAllocationController;
 use App\Http\Controllers\LeadAssignmentController;
+use App\Http\Controllers\LoginController;
 use App\Http\Controllers\MembersDetailController;
 use App\Http\Controllers\PaymentModeController;
 use App\Http\Controllers\QuoteDocumentController;
@@ -51,6 +53,7 @@ use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
+use App\Http\Controllers\V2\AMLController as V2AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
 use App\Http\Controllers\V2\CentralController;
@@ -82,6 +85,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
+if (config('constants.APP_ENV') == EnvEnum::STAGING) {
+    Route::middleware('throttle:50,10')->group(function () {
+        Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
+        Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
+    });
+}
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
@@ -94,7 +103,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return view('home');
+        return inertia('Home/Home');
     });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
@@ -360,13 +369,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'kyc'], function () {
-        Route::resource('aml', AMLController::class);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
-        Route::get('aml/download/history', [AMLController::class, 'sanctionListHistory'])->name('sanctionListHistory');
-        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
-        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
+        $controller = in_array('Aml', newUi()) ? V2AMLController::class : AMLController::class;
+        Route::resource('aml', $controller);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [$controller, 'amlQuoteDetails']);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [$controller, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [$controller, 'quoteUpdate'])->name('quoteUpdate');
+        Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');
+        Route::get('aml/upload/uae', [$controller, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
+        Route::post('aml/upload/uae-list', [$controller, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
     Route::group(['prefix' => 'medical'], function () {
@@ -425,9 +435,6 @@ Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'Proce
 /***** RestAPI */
 
 Route::group(['middleware' => ['auth.rest']], function () {
-    // ftc-form-delete schedule on 7th June 2023
-    //    Route::resource('ftcform', FtcFormController::class);
-    //    Route::resource('assignOE', FtcFormController::class);
     Route::group(['prefix' => 'form'], function () {
         Route::GET('/{form}', [FormController::class, 'index']);
         Route::GET('/{form}/{form_id}', [FormController::class, 'getFormDetail']);

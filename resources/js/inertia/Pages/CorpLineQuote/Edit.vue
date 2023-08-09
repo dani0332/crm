@@ -172,7 +172,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.premium"
           type="text"
-          label="PREMIUM"
+          label="PRICE"
           :rules="[isRequired, isDecimal]"
           class="w-full"
           :error="quoteForm.errors.premium"

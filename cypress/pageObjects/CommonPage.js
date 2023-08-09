@@ -155,7 +155,7 @@ class CommonPage {
 
   //Delete Additional Contact
   getDeleteAdditionalContactButton() {
-    return cy.get('button.btn.btn-danger.btn-sm').should('be.visible').click()
+    return cy.get('.btn.btn-danger.btn-sm').contains('Delete').should('be.visible').click()
   }
 
   //Load History Data 

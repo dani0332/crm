@@ -394,95 +394,13 @@ class CarQuote extends BaseModel
         if (Auth::user()->hasRole('pa') && $request->has('action')) {
             $request->request->add(['pa_id' => Auth::user()->id]);
 
-            // ftc-form-delete schedule on 7th June 2023
-            //            $carQuote = self::where(['id' => $request->form_id])->whereNull('pa_id')->first();
-            //            if ($carQuote) {
-            //                $templateParams = [
-            //                    'notes' => 'Your approval request has been assigned to a Production team member',
-            //                    'first_name' => $carQuote->first_name,
-            //                    'last_name' => $carQuote->last_name,
-            //                    'code' => $carQuote->code,
-            //                ];
-            //
-            //                $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-            //                if ($advisorEmail) {
-            //                    $params = [
-            //                        'to' => $advisorEmail,
-            //                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
-            //                        'templateName' => 'notification',
-            //                        'templateParams' => $templateParams,
-            //                    ];
-            //
-            //                    $oeId = $carQuote->oe_id()->first();
-            //                    if ($oeId && $oeId->email) {
-            //                        $params['cc'] = $oeId->email;
-            //                    }
-            //
-            //                    dispatch(new FTCMailServiceJob($params));
-            //                }
-            //            }
-
             return parent::saveForm($request, true);
         } elseif (Auth::user()->hasRole('payment') && $request->has('action')) {
             $request->request->add(['payment_id' => Auth::user()->id]);
 
-            // ftc-form-delete schedule on 7th June 2023
-            //            $carQuote = self::where(['id' => $request->form_id])->whereNull('payment_id')->first();
-            //            if ($carQuote) {
-            //                $templateParams = [
-            //                    'notes' => 'Lead has been assigned to a Payment team member',
-            //                    'first_name' => $carQuote->first_name,
-            //                    'last_name' => $carQuote->last_name,
-            //                    'code' => $carQuote->code,
-            //                ];
-            //
-            //                $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-            //                if ($advisorEmail) {
-            //                    $params = [
-            //                        'to' => $advisorEmail,
-            //                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
-            //                        'templateName' => 'notification',
-            //                        'templateParams' => $templateParams,
-            //                    ];
-            //
-            //                    $oeId = $carQuote->oe_id()->first();
-            //                    if ($oeId && $oeId->email) {
-            //                        $params['cc'] = $oeId->email;
-            //                    }
-            //                    dispatch(new FTCMailServiceJob($params));
-            //                }
-            //            }
-
             return parent::saveForm($request, true);
         } elseif (Auth::user()->hasRole('invoicing') && $request->has('action')) {
             $request->request->add(['invoicing' => Auth::user()->id]);
-
-            // ftc-form-delete schedule on 7th June 2023
-            //            $carQuote = self::where(['id' => $request->form_id])->whereNull('invoicing')->first();
-            //            if ($carQuote) {
-            //                $templateParams = [
-            //                    'notes' => 'Lead has been assigned to a Invoicing team member',
-            //                    'first_name' => $carQuote->first_name,
-            //                    'last_name' => $carQuote->last_name,
-            //                    'code' => $carQuote->code,
-            //                ];
-            //
-            //                $advisorEmail = $carQuote->advisor_id()->get()->first()->email;
-            //                if ($advisorEmail) {
-            //                    $params = [
-            //                        'to' => $advisorEmail,
-            //                        'subject' => LookUpModel::subjectForFTCEmailCarQuote($carQuote),
-            //                        'templateName' => 'notification',
-            //                        'templateParams' => $templateParams,
-            //                    ];
-            //
-            //                    $oeId = $carQuote->oe_id()->first();
-            //                    if ($oeId && $oeId->email) {
-            //                        $params['cc'] = $oeId->email;
-            //                    }
-            //                    dispatch(new FTCMailServiceJob($params));
-            //                }
-            //            }
 
             return parent::saveForm($request, true);
         } else {

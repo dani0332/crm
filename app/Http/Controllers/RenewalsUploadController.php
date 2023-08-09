@@ -49,7 +49,7 @@ class RenewalsUploadController extends Controller
     {
         $result = $this->renewalsUploadFileService->renewalsUploadCreate($request->validated());
 
-        return redirect()->route('renewals-upload-create')->with('success', 'Uploaded renewals records has been stored');
+        return $result;
     }
 
     /**
@@ -61,7 +61,7 @@ class RenewalsUploadController extends Controller
     {
         $result = $this->renewalsUploadFileService->renewalsUploadUpdate($request->validated());
 
-        return redirect()->route('renewals-upload-update')->with('success', 'Uploaded renewals records has been updated');
+        return $result;
     }
 
     /**
@@ -105,7 +105,6 @@ class RenewalsUploadController extends Controller
      */
     public function renewalsUploadProcess(Request $request)
     {
-        // validate the file extension
         $this->validate($request, [
             'file_name' => 'required|file|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
         ]);
@@ -208,7 +207,11 @@ class RenewalsUploadController extends Controller
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
 
-        return view('renewals.upload', compact('azureStorageUrl', 'azureStorageContainer'));
+        return inertia('Renewals/Upload', [
+            'azureStorageUrl' => $azureStorageUrl,
+            'azureStorageContainer' => $azureStorageContainer,
+        ]);
+
     }
 
     /**
@@ -248,12 +251,14 @@ class RenewalsUploadController extends Controller
     {
         $azureStorageUrl = config('constants.AZURE_IM_STORAGE_URL');
         $azureStorageContainer = config('constants.AZURE_IM_STORAGE_CONTAINER');
-
         $renewalsUploads = RenewalsUploadLeads::where('renewal_import_type', '=', RenewalsUploadType::CREATE_LEADS)
             ->where('renewal_import_code', '!=', '')
             ->orderBy('created_at', 'desc')->get();
 
-        return view('renewals.update', compact('azureStorageUrl', 'azureStorageContainer', 'renewalsUploads'));
+        return inertia('Renewals/Index', [
+            'azureStorageUrl' => $azureStorageUrl,
+            'azureStorageContainer' => $azureStorageContainer,
+        ]);
     }
 
     public function listRenewalBatches(Request $request, Datatables $datatables)
