@@ -10843,6 +10843,106 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
 
 /***/ }),
 
+/***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=script&setup=true&lang=js":
+/*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=script&setup=true&lang=js ***!
+  \***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* unplugin-vue-components disabled */
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  __name: 'Show',
+  props: {
+    quote: Object,
+    leadStatuses: Array,
+    //
+    ecomDetails: Object,
+    membersDetail: Array,
+    memberCategories: Array,
+    salaryBands: Array,
+    nationalities: Array,
+    emirates: Array,
+    advisors: Array,
+    listQuotePlans: Array,
+    //
+    quoteDocuments: Object,
+    documentTypes: Object,
+    cdnPath: String,
+    ecomHealthInsuranceQuoteUrl: String,
+    activities: Array,
+    customerAdditionalContacts: Array,
+    lostReasons: Array,
+    quoteStatusEnum: Object,
+    modelType: String,
+    notProductionApproval: Boolean,
+    allowedDuplicateLOB: Array,
+    permissions: Object,
+    genderOptions: Object,
+    isQuoteDocumentEnabled: Boolean,
+    isBetaUser: Boolean,
+    payments: Array,
+    quoteRequest: Object,
+    can: Object,
+    paymentMethods: Object,
+    sendPolicy: Boolean,
+    //
+    record: Object,
+    isRenewalUser: Boolean
+  },
+  setup: function setup(__props, _ref) {
+    var __expose = _ref.expose;
+    __expose();
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.usePage)();
+    var is = function is(role) {
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_1__.useHasRole)(role);
+    };
+    var rolesEnum = page.props.rolesEnum;
+    var leadStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
+      modelType: 'Car',
+      leadId: page.props.record.id,
+      quote_uuid: page.props.record.uuid,
+      assigned_to_user_id: page.props.record.advisor_id,
+      leadStatus: null,
+      //   leadStatus: page.props.record.quote_status_id || null,
+      notes: page.props.record.notes || null,
+      trans_code: page.props.record.transapp_code || null,
+      lostReason: page.props.record.lost_reason_id || null
+    });
+    var leadStatusOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
+      return page.props.leadStatuses.map(function (status) {
+        return {
+          value: status.id,
+          label: status.text
+        };
+      });
+    });
+    var __returned__ = {
+      page: page,
+      is: is,
+      rolesEnum: rolesEnum,
+      leadStatusForm: leadStatusForm,
+      leadStatusOptions: leadStatusOptions
+    };
+    Object.defineProperty(__returned__, '__isScriptSetup', {
+      enumerable: false,
+      value: true
+    });
+    return __returned__;
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=script&setup=true&lang=js":
 /*!******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=script&setup=true&lang=js ***!
@@ -32079,6 +32179,548 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 /***/ }),
 
+/***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=template&id=592f0349":
+/*!****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=template&id=592f0349 ***!
+  \****************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render)
+/* harmony export */ });
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* unplugin-vue-components disabled */
+
+
+var _hoisted_1 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", {
+  "class": "flex justify-between items-center flex-wrap gap-2"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h2", {
+  "class": "text-xl font-semibold"
+}, "E-COM Detail")], -1 /* HOISTED */);
+var _hoisted_2 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_3 = {
+  "class": "text-sm"
+};
+var _hoisted_4 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
+var _hoisted_5 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_6 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PREMIUM", -1 /* HOISTED */);
+var _hoisted_7 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_8 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PAID AT", -1 /* HOISTED */);
+var _hoisted_9 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_10 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PAYMENT STATUS", -1 /* HOISTED */);
+var _hoisted_11 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_12 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PROVIDER NAME", -1 /* HOISTED */);
+var _hoisted_13 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_14 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PAYMENT METHOD", -1 /* HOISTED */);
+var _hoisted_15 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_16 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PLAN NAME", -1 /* HOISTED */);
+var _hoisted_17 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_18 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ECOMMERCE", -1 /* HOISTED */);
+var _hoisted_19 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_20 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "QUOTE LINK", -1 /* HOISTED */);
+var _hoisted_21 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_22 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ORDER REFERENCE", -1 /* HOISTED */);
+var _hoisted_23 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_24 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PAYMENT REFERENCE", -1 /* HOISTED */);
+var _hoisted_25 = {
+  "class": "grid sm:grid-cols-1"
+};
+var _hoisted_26 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ADDONS", -1 /* HOISTED */);
+var _hoisted_27 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_28 = {
+  "class": "flex justify-between items-center mb-4"
+};
+var _hoisted_29 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800 text-lg"
+}, "Car Details", -1 /* HOISTED */);
+var _hoisted_30 = {
+  "class": "text-sm"
+};
+var _hoisted_31 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
+var _hoisted_32 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_33 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CDB ID", -1 /* HOISTED */);
+var _hoisted_34 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_35 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "BATCH", -1 /* HOISTED */);
+var _hoisted_36 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_37 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "FIRST NAME", -1 /* HOISTED */);
+var _hoisted_38 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_39 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "LAST NAME", -1 /* HOISTED */);
+var _hoisted_40 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_41 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "DATE OF BIRTH", -1 /* HOISTED */);
+var _hoisted_42 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_43 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CUSTOMER AGE", -1 /* HOISTED */);
+var _hoisted_44 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_45 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PHONE NUMBER", -1 /* HOISTED */);
+var _hoisted_46 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_47 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "EMAIL", -1 /* HOISTED */);
+var _hoisted_48 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_49 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "LEAD SOURCE", -1 /* HOISTED */);
+var _hoisted_50 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_51 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "NATIONALITY", -1 /* HOISTED */);
+var _hoisted_52 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_53 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "UAE LICENCE HELD FOR", -1 /* HOISTED */);
+var _hoisted_54 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_55 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "HOME COUNTRY DRIVING LICENSE HELD FOR", -1 /* HOISTED */);
+var _hoisted_56 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_57 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CAR MAKE", -1 /* HOISTED */);
+var _hoisted_58 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_59 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CAR MODEL", -1 /* HOISTED */);
+var _hoisted_60 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_61 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CYLINDER", -1 /* HOISTED */);
+var _hoisted_62 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_63 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "TRIM", -1 /* HOISTED */);
+var _hoisted_64 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_65 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CAR MODEL YEAR", -1 /* HOISTED */);
+var _hoisted_66 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_67 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "FIRST REGISTRATION DATE", -1 /* HOISTED */);
+var _hoisted_68 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_69 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CAR VALUE", -1 /* HOISTED */);
+var _hoisted_70 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_71 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CAR VALUE (AT ENQUIRY)", -1 /* HOISTED */);
+var _hoisted_72 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_73 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "VEHICLE TYPE", -1 /* HOISTED */);
+var _hoisted_74 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_75 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "SEAT CAPACITY", -1 /* HOISTED */);
+var _hoisted_76 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_77 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "EMIRATE OF REGISTRATION", -1 /* HOISTED */);
+var _hoisted_78 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_79 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "TYPE OF CAR INSURANCE", -1 /* HOISTED */);
+var _hoisted_80 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_81 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CURRENTLY INSURED WITH", -1 /* HOISTED */);
+var _hoisted_82 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_83 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CLAIM HISTORY", -1 /* HOISTED */);
+var _hoisted_84 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_85 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, " CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS? ", -1 /* HOISTED */);
+var _hoisted_86 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_87 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CREATED DATE", -1 /* HOISTED */);
+var _hoisted_88 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_89 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ADVISOR ASSIGNED DATE", -1 /* HOISTED */);
+var _hoisted_90 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_91 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "LEAD COST", -1 /* HOISTED */);
+var _hoisted_92 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_93 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "FOLLOW UP DATE", -1 /* HOISTED */);
+var _hoisted_94 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_95 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "LAST MODIFIED DATE", -1 /* HOISTED */);
+var _hoisted_96 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_97 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "UPDATED BY", -1 /* HOISTED */);
+var _hoisted_98 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_99 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ADDITIONAL NOTES", -1 /* HOISTED */);
+var _hoisted_100 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_101 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ADVISOR", -1 /* HOISTED */);
+var _hoisted_102 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_103 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "ADVISOR/PROMO CODE", -1 /* HOISTED */);
+var _hoisted_104 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_105 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "DEVICE", -1 /* HOISTED */);
+var _hoisted_106 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_107 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CALCULATED VALUE", -1 /* HOISTED */);
+var _hoisted_108 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_109 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "CREATED BY", -1 /* HOISTED */);
+var _hoisted_110 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_111 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "PARENT CDB ID", -1 /* HOISTED */);
+var _hoisted_112 = {
+  "class": "flex justify-end mb-4"
+};
+var _hoisted_113 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_114 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", {
+  "class": "flex justify-between items-center mb-4"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800 text-lg"
+}, " Last Year's Policy Details ")], -1 /* HOISTED */);
+var _hoisted_115 = {
+  "class": "text-sm"
+};
+var _hoisted_116 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
+var _hoisted_117 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_118 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Renewal Batch#", -1 /* HOISTED */);
+var _hoisted_119 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_120 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Previous Policy Number", -1 /* HOISTED */);
+var _hoisted_121 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_122 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Previous Policy Expiry Date", -1 /* HOISTED */);
+var _hoisted_123 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_124 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Previous Policy Premium", -1 /* HOISTED */);
+var _hoisted_125 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_126 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Previous Import Code", -1 /* HOISTED */);
+var _hoisted_127 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", {
+  "class": "grid sm:grid-cols-2"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd")], -1 /* HOISTED */);
+var _hoisted_128 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_129 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Policy Number", -1 /* HOISTED */);
+var _hoisted_130 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_131 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Renewal Expiry Date", -1 /* HOISTED */);
+var _hoisted_132 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_133 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Lost reason", -1 /* HOISTED */);
+var _hoisted_134 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_135 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800 text-lg"
+}, "Lead Status", -1 /* HOISTED */);
+var _hoisted_136 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full"
+};
+var _hoisted_137 = {
+  "class": "w-full md:w-2/3"
+};
+var _hoisted_138 = {
+  "class": "w-full md:w-1/3"
+};
+var _hoisted_139 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_140 = {
+  "class": "flex justify-end"
+};
+function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _$props$record$premiu, _$props$record$paid_a, _$props$record$paymen, _$props$record$car_pl, _$props$record$quote_, _$props$record$order_, _$props$record$paymen2, _$props$record$back_h, _$props$record$calcul, _$props$record$parent, _$props$record$previo, _$props$record$previo2, _$props$record$previo3;
+  var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.Head;
+  var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-divider");
+  var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-button");
+  var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.Link;
+  var _component_x_textarea = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-textarea");
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-select");
+  return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Head, {
+    title: "Car Detail"
+  }), _hoisted_1, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "my-4"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <x-modal v-model=\"modals.duplicate\" size=\"lg\" show-close backdrop>\n      <template #header> Duplicate Lead </template>\n      <x-form @submit=\"onCreateDuplicate\" :auto-focus=\"false\">\n        <div class=\"grid gap-4\">\n          <x-select\n            v-model=\"leadDuplicateForm.lob_team\"\n            label=\"LOBs\"\n            :options=\"\n              allowedDuplicateLOB.map(lob => ({\n                value: lob,\n                label: lob,\n              }))\n            \"\n            :rules=\"[isRequired]\"\n            placeholder=\"Select LOB For Duplication\"\n            class=\"w-full\"\n            multiple\n          />\n          <x-select\n            v-model=\"leadDuplicateForm.lob_team_sub_selection\"\n            label=\"Reason\"\n            :rules=\"[isRequired]\"\n            class=\"w-full\"\n            :options=\"[\n              { value: 'new_enquiry', label: 'New enquiry' },\n              { value: 'record_only', label: 'Record purposes only' },\n            ]\"\n          />\n\n          <x-button\n            color=\"orange\"\n            type=\"submit\"\n            :loading=\"leadDuplicateForm.processing\"\n          >\n            Create Duplicate\n          </x-button>\n        </div>\n      </x-form>\n    </x-modal>\n\n    <x-divider class=\"my-4\" />\n    <div\n      v-if=\"!$page.props.can.isAdvisor\"\n      class=\"p-4 rounded shadow mb-6 bg-primary-50/50 saad\"\n    >\n      <div class=\"flex flex-wrap md:flex-nowrap gap-6 w-full\">\n        <div class=\"w-full md:w-1/2 flex gap-2 items-end\">\n          <x-select\n            v-model=\"assignSubteam\"\n            label=\"Assign Subteam\"\n            :options=\"subTeamOptions\"\n            placeholder=\"Select Subteam\"\n            class=\"w-auto flex-1\"\n          />\n          <div>\n            <x-button\n              color=\"orange\"\n              size=\"sm\"\n              @click.prevent=\"onTeamAssign\"\n              :loading=\"isDisabled\"\n            >\n              Assign Team\n            </x-button>\n          </div>\n        </div>\n        <div\n          v-if=\"!hasRole($page.props.rolesEnum.HealthWCUAdvisor)\"\n          class=\"w-full md:w-1/2 flex gap-2 items-end\"\n        >\n          <x-select\n            v-model=\"assignLead\"\n            label=\"Assign Lead\"\n            :options=\"advisorOptions\"\n            placeholder=\"Select Lead\"\n            class=\"w-auto flex-1\"\n          />\n          <div>\n            <x-button\n              color=\"orange\"\n              size=\"sm\"\n              @click.prevent=\"onAssignLead\"\n              :loading=\"isDisabled\"\n            >\n              Assign\n            </x-button>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-white\">\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n        <div v-if=\"hasRole($page.props.rolesEnum.Engineering)\" class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">ID</dt>\n            <dd>{{ quote.id }}</dd>\n        </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CDB ID</dt>\n            <dd>{{ quote.code }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CREATED DATE</dt>\n            <dd>{{ quote.created_at }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SUBTEAM</dt>\n            <dd>{{ quote.health_team_type }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">ADVISOR</dt>\n            <dd>{{ quote.advisor_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SOURCE</dt>\n            <dd>{{ quote.source }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LAST MODIFIED DATE</dt>\n            <dd>{{ quote.updated_at }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PARENT CDB ID</dt>\n            <dd>{{ quote.parent_duplicate_quote_id }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">IS ECOMMERCE</dt>\n            <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">IS EBP RENEWAL</dt>\n            <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">RENEWAL BATCH</dt>\n            <dd>{{ quote.renewal_batch }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LOST REASON</dt>\n            <dd>{{ quote.lost_reason }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TRANSAPP CODE</dt>\n            <dd>{{ quote.transapp_code }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DEVICE</dt>\n            <dd>{{ quote.device }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Customer Profile</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">FIRST NAME</dt>\n            <dd>{{ quote.first_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LAST NAME</dt>\n            <dd>{{ quote.last_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MOBILE NUMBER</dt>\n            <dd>{{ quote.mobile_no }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMAIL</dt>\n            <dd>{{ quote.email }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">GENDER</dt>\n            <dd>{{ genderText(quote.gender).value }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MARITAL STATUS</dt>\n            <dd>{{ quote.marital_status_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NATIONALITY</dt>\n            <dd>{{ quote.nationality_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DATE OF BIRTH</dt>\n            <dd>{{ quote.dob }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMIRATE OF VISA</dt>\n            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MEMBER CATEGORY</dt>\n            <dd>{{ quote.member_category_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SALARY BAND</dt>\n            <dd>{{ quote.salary_band_id_text }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Quote Details</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">\n              FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?\n            </dt>\n            <dd>{{ quote.cover_for_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CURRENTLY INSURED WITH</dt>\n            <dd>{{ quote.currently_insured_with_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TYPE OF PLAN</dt>\n            <dd>{{ quote.plan_id }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NEXT FOLLOWUP DATE</dt>\n            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DETAILS</dt>\n            <dd>{{ quote.details }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">Additional Notes</dt>\n            <dd>{{ quote.additional_notes }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">\n          Last Year's Policy Details\n        </h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY NUMBER</dt>\n            <dd>{{ quote.previous_quote_policy_number }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY PREMIUM</dt>\n            <dd>{{ quote.previous_quote_policy_premium }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY EXPIRY DATE</dt>\n            <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>\n          </div>\n        </dl>\n      </div>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-white\">\n      <div class=\"flex justify-between items-center mb-4\">\n        <h3 class=\"font-semibold text-primary-800 text-lg\">\n          Member Details\n          <x-tag size=\"sm\">{{ membersDetail.length || 0 }}</x-tag>\n        </h3>\n        <x-button @click.prevent=\"onAddMemberModal\" size=\"sm\" color=\"orange\">\n          Add Member\n        </x-button>\n      </div>\n\n      <DataTable\n        table-class-name=\"tablefixed compact\"\n        :headers=\"memberDetailsTable.columns\"\n        :items=\"membersDetail || []\"\n        show-index\n        border-cell\n        hide-rows-per-page\n        hide-footer\n      >\n        <template #item-index=\"{ index }\">\n          <div>Member {{ index }}</div>\n        </template>\n        <template #item-gender=\"{ gender }\">\n          {{ genderText(gender).value }}\n        </template>\n        <template #item-dob=\"{ dob }\">\n          {{ dateFormat(dob) }}\n        </template>\n        <template #item-nationality=\"{ nationality }\">\n          {{ nationality?.text }}\n        </template>\n        <template #item-emirate=\"{ emirate }\">\n          {{ emirate?.text }}\n        </template>\n        <template #item-member_category_id=\"{ member_category_id }\">\n          {{ memberCategoryText(member_category_id).value }}\n        </template>\n        <template #item-action=\"item\">\n          <div class=\"flex gap-2\">\n            <x-button\n              size=\"xs\"\n              color=\"primary\"\n              outlined\n              @click.prevent=\"onEditMember(item)\"\n            >\n              Edit\n            </x-button>\n            <x-button\n              size=\"xs\"\n              color=\"error\"\n              outlined\n              @click.prevent=\"memberDelete(item.id)\"\n            >\n              Delete\n            </x-button>\n          </div>\n        </template>\n      </DataTable>\n\n      <x-modal v-model=\"modals.member\" size=\"lg\" show-close backdrop>\n        <template #header>\n          {{ memberActionEdit ? 'Edit' : 'Add' }} Member\n        </template>\n\n        <x-form @submit=\"onMemberSubmit\" :auto-focus=\"false\">\n          <div class=\"grid md:grid-cols-2 gap-4\">\n            <input type=\"hidden\" :value=\"memberForm.id\" />\n\n            <ComboBox\n              v-model=\"memberForm.nationality_id\"\n              label=\"Nationality\"\n              :options=\"nationalityOptions\"\n              placeholder=\"Select Nationality\"\n              :single=\"true\"\n              :hasError=\"memberFieldReq.nationality\"\n            />\n\n            <x-select\n              v-model=\"memberForm.emirate_of_your_visa_id\"\n              label=\"Emirate of Visa\"\n              :options=\"emiratesOptions\"\n              :rules=\"[isRequired]\"\n              placeholder=\"Select Emirate of Visa\"\n              class=\"w-full\"\n            />\n\n            <x-select\n              v-model=\"memberForm.gender\"\n              label=\"Gender\"\n              :options=\"genderSelect\"\n              :rules=\"[isRequired]\"\n              placeholder=\"Select Gender\"\n              class=\"w-full\"\n            />\n\n            <DatePicker\n              v-model=\"memberForm.dob\"\n              label=\"DOB\"\n              :hasError=\"memberFieldReq.dob\"\n            />\n\n            <x-select\n              v-model=\"memberForm.member_category_id\"\n              label=\"Member Category\"\n              :options=\"memberCategoriesOptions\"\n              :rules=\"[isRequired]\"\n              placeholder=\"Select Member Category\"\n              class=\"w-full\"\n            />\n\n            <x-select\n              v-model=\"memberForm.salary_band_id\"\n              label=\"Salary Band\"\n              :options=\"salaryBandsOptions\"\n              placeholder=\"Select Salary Band\"\n              class=\"w-full\"\n            />\n          </div>\n\n          <div class=\"text-right space-x-4 mt-8\">\n            <x-button size=\"sm\" @click.prevent=\"modals.member = false\">\n              Cancel\n            </x-button>\n\n            <x-button\n              size=\"sm\"\n              color=\"emerald\"\n              :loading=\"memberForm.processing\"\n              type=\"submit\"\n            >\n              {{ memberActionEdit ? 'Update' : 'Save' }}\n            </x-button>\n          </div>\n        </x-form>\n      </x-modal>\n\n      <x-modal v-model=\"modals.memberConfirm\" show-close backdrop>\n        <template #header> Delete Member Detail </template>\n        <p>Are you sure you want to delete this?</p>\n        <template #actions>\n          <div class=\"text-right space-x-4\">\n            <x-button\n              size=\"sm\"\n              ghost\n              @click.prevent=\"modals.memberConfirm = false\"\n            >\n              Cancel\n            </x-button>\n            <x-button\n              size=\"sm\"\n              color=\"error\"\n              @click.prevent=\"memberDeleteConfirmed\"\n              :loading=\"memberForm.processing\"\n            >\n              Delete\n            </x-button>\n          </div>\n        </template>\n      </x-modal>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-primary-50/25\">\n      <div>\n        <h3 class=\"font-semibold text-primary-800 text-lg\">Lead Status</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n      <div class=\"flex flex-wrap md:flex-nowrap gap-6 w-full\">\n        <div class=\"w-full md:w-2/3\">\n          <x-textarea\n            v-model=\"leadStatusForm.notes\"\n            type=\"text\"\n            label=\"Notes\"\n            placeholder=\"Lead Notes\"\n            class=\"w-full\"\n            :disabled=\"quote.quote_status_id == 15\"\n          />\n        </div>\n        <div class=\"w-full md:w-1/3\">\n          <div class=\"flex flex-col gap-4\">\n            <x-select\n              v-model=\"leadStatusForm.leadStatus\"\n              label=\"Status\"\n              :options=\"leadStatusOptions\"\n              :disabled=\"quote.quote_status_id == 15\"\n              placeholder=\"Lead Status\"\n              class=\"w-full\"\n            />\n            <x-input\n              v-if=\"leadStatusForm.leadStatus == 15\"\n              v-model=\"leadStatusForm.trans_code\"\n              label=\"TransApp Code\"\n              placeholder=\"TransApp Code is required\"\n              class=\"w-full\"\n              :error=\"leadStatusForm.errors.trans_code\"\n            />\n            <x-select\n              v-if=\"leadStatusForm.leadStatus == 17\"\n              v-model=\"leadStatusForm.lostReason\"\n              label=\"Lost Reason\"\n              :options=\"\n                lostReasons?.map(item => ({\n                  value: item.id,\n                  label: item.text,\n                }))\n              \"\n              placeholder=\"Lost Reason is required\"\n              class=\"w-full\"\n              :error=\"leadStatusForm.errors.lostReason\"\n            />\n          </div>\n\n          <div class=\"flex justify-end\">\n            <x-button\n              class=\"mt-4\"\n              color=\"emerald\"\n              size=\"sm\"\n              :loading=\"leadStatusForm.processing\"\n              @click.prevent=\"onLeadStatus\"\n            >\n              Change Status\n            </x-button>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-white\">\n      <div>\n        <h3 class=\"font-semibold text-primary-800 text-lg\">E-COM Details</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PLAN NAME</dt>\n            <dd>{{ ecomDetails.planName }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PROVIDER NAME</dt>\n            <dd>{{ ecomDetails.providerName }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PAYMENT STATUS</dt>\n            <dd>{{ ecomDetails.paymentStatus }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PAID AT</dt>\n            <dd>{{ ecomDetails.paidAt }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NETWORK</dt>\n            <dd>{{ ecomDetails.network }}</dd>\n          </div>\n        <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TOTAL PRICE (with VAT)</dt>\n            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>\n        </div>\n        </dl>\n      </div>\n    </div> "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_5, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$premiu = $props.record.premium) !== null && _$props$record$premiu !== void 0 ? _$props$record$premiu : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paid_a = $props.record.paid_at) !== null && _$props$record$paid_a !== void 0 ? _$props$record$paid_a : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paymen = $props.record.payment_status_id_text) !== null && _$props$record$paymen !== void 0 ? _$props$record$paymen : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_11, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$car_pl = $props.record.car_plan_provider_id_text) !== null && _$props$record$car_pl !== void 0 ? _$props$record$car_pl : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.payment_gateway === 'NGENIUS' ? 'CREDIT CARD' : $props.record.payment_gateway), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.plan_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.is_ecommerce == 1 ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$quote_ = $props.record.quote_link) !== null && _$props$record$quote_ !== void 0 ? _$props$record$quote_ : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_21, [_hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$order_ = $props.record.order_reference) !== null && _$props$record$order_ !== void 0 ? _$props$record$order_ : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_23, [_hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paymen2 = $props.record.payment_reference) !== null && _$props$record$paymen2 !== void 0 ? _$props$record$paymen2 : ''), 1 /* TEXT */)])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_25, [_hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.payment_reference), 1 /* TEXT */)])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Customer Profile</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">FIRST NAME</dt>\n            <dd>{{ quote.first_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LAST NAME</dt>\n            <dd>{{ quote.last_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MOBILE NUMBER</dt>\n            <dd>{{ quote.mobile_no }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMAIL</dt>\n            <dd>{{ quote.email }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">GENDER</dt>\n            <dd>{{ genderText(quote.gender).value }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MARITAL STATUS</dt>\n            <dd>{{ quote.marital_status_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NATIONALITY</dt>\n            <dd>{{ quote.nationality_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DATE OF BIRTH</dt>\n            <dd>{{ quote.dob }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMIRATE OF VISA</dt>\n            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MEMBER CATEGORY</dt>\n            <dd>{{ quote.member_category_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SALARY BAND</dt>\n            <dd>{{ quote.salary_band_id_text }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Quote Details</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">\n              FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?\n            </dt>\n            <dd>{{ quote.cover_for_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CURRENTLY INSURED WITH</dt>\n            <dd>{{ quote.currently_insured_with_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TYPE OF PLAN</dt>\n            <dd>{{ quote.plan_id }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NEXT FOLLOWUP DATE</dt>\n            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DETAILS</dt>\n            <dd>{{ quote.details }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">Additional Notes</dt>\n            <dd>{{ quote.additional_notes }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">\n          Last Year's Policy Details\n        </h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY NUMBER</dt>\n            <dd>{{ quote.previous_quote_policy_number }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY PREMIUM</dt>\n            <dd>{{ quote.previous_quote_policy_premium }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY EXPIRY DATE</dt>\n            <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>\n          </div>\n        </dl>\n      </div> ")]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_27, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_28, [_hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    "class": "mr-2",
+    size: "sm",
+    color: "#ff5e00",
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.openDuplicate, ["prevent"])
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Duplicate Lead ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <Link :href=\"route('health.index')\" preserve-scroll>\n              <x-button size=\"sm\" color=\"primary\" tag=\"div\"> Health List </x-button>\n            </Link> "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Link, {
+    href: _ctx.route('car.index')
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "sm",
+        tag: "div"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)("Car List")];
+        }),
+        _: 1 /* STABLE */
+      })];
+    }),
+
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["href"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "mb-4 mt-1"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_30, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_31, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_32, [_hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_34, [_hoisted_35, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.quote_batch_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_36, [_hoisted_37, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_38, [_hoisted_39, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_40, [_hoisted_41, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.dob), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_42, [_hoisted_43, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.customer_age), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_44, [_hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_46, [_hoisted_47, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_48, [_hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.source), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_50, [_hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.nationality_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_52, [_hoisted_53, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.uae_license_held_for_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_54, [_hoisted_55, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$back_h = $props.record.back_home_license_held_for_id_text) !== null && _$props$record$back_h !== void 0 ? _$props$record$back_h : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_56, [_hoisted_57, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.car_make_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_58, [_hoisted_59, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.car_model_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_60, [_hoisted_61, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.cylinder), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_62, [_hoisted_63, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.trim), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_64, [_hoisted_65, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.year_of_manufacture), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_66, [_hoisted_67, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.year_of_first_registration), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_68, [_hoisted_69, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.car_value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_70, [_hoisted_71, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.car_value_tier), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_72, [_hoisted_73, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.vehicle_type_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_74, [_hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.seat_capacity), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_76, [_hoisted_77, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.dob), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_78, [_hoisted_79, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.current_insurance_status), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_80, [_hoisted_81, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.currently_insured_with_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_82, [_hoisted_83, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.claim_history_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_84, [_hoisted_85, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.has_ncd_supporting_documents ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_86, [_hoisted_87, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_88, [_hoisted_89, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.advisor_assigned_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_90, [_hoisted_91, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.cost_per_lead), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_92, [_hoisted_93, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.next_followup_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_94, [_hoisted_95, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_96, [_hoisted_97, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.updated_by), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_98, [_hoisted_99, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.additional_notes), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_100, [_hoisted_101, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.advisor_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_102, [_hoisted_103, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.promo_code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_104, [_hoisted_105, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.device), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_106, [_hoisted_107, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$calcul = $props.record.calculated_value) !== null && _$props$record$calcul !== void 0 ? _$props$record$calcul : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_108, [_hoisted_109, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.created_by), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_110, [_hoisted_111, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$parent = $props.record.parent_duplicate_quote_id) !== null && _$props$record$parent !== void 0 ? _$props$record$parent : ''), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "mb-4 mt-4"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_112, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Link, {
+    href: _ctx.route('car.edit', $props.record.uuid)
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "sm",
+        tag: "div"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)("Edit")];
+        }),
+        _: 1 /* STABLE */
+      })];
+    }),
+
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["href"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_113, [_hoisted_114, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "mb-4 mt-1"
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_115, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_116, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_117, [_hoisted_118, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.renewal_batch), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_119, [_hoisted_120, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$previo = $props.record.previous_quote_policy_number) !== null && _$props$record$previo !== void 0 ? _$props$record$previo : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_121, [_hoisted_122, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$previo2 = $props.record.previous_policy_expiry_date) !== null && _$props$record$previo2 !== void 0 ? _$props$record$previo2 : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_123, [_hoisted_124, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$previo3 = $props.record.previous_quote_policy_premium) !== null && _$props$record$previo3 !== void 0 ? _$props$record$previo3 : ''), 1 /* TEXT */)]), $setup.is($setup.rolesEnum.Admin) ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, {
+    key: 0
+  }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_125, [_hoisted_126, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.renewal_import_code), 1 /* TEXT */)]), _hoisted_127], 64 /* STABLE_FRAGMENT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_128, [_hoisted_129, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_130, [_hoisted_131, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.renewal_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_132, [_hoisted_133, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.lost_reason), 1 /* TEXT */)])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_134, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [_hoisted_135, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "mb-4 mt-1"
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_136, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_137, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.leadStatusForm.notes,
+    "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
+      return $setup.leadStatusForm.notes = $event;
+    }),
+    type: "text",
+    label: "Notes",
+    placeholder: "Lead Notes",
+    "class": "w-full",
+    disabled: $props.record.quote_status_id == 15
+  }, null, 8 /* PROPS */, ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_138, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_139, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+    modelValue: $setup.leadStatusForm.leadStatus,
+    "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+      return $setup.leadStatusForm.leadStatus = $event;
+    }),
+    label: "Status",
+    options: $setup.leadStatusOptions,
+    disabled: $props.record.quote_status_id == 15,
+    placeholder: "Lead Status",
+    "class": "w-full"
+  }, null, 8 /* PROPS */, ["modelValue", "options", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_140, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    "class": "mt-4",
+    color: "emerald",
+    size: "sm",
+    loading: $setup.leadStatusForm.processing,
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onLeadStatus, ["prevent"])
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Change Status ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["loading", "onClick"])])])])])]);
+}
+
+/***/ }),
+
 /***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=template&id=484a3bd4":
 /*!***********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=template&id=484a3bd4 ***!
@@ -41074,6 +41716,34 @@ if (false) {}
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue":
+/*!***************************************************************!*\
+  !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue ***!
+  \***************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _Show_vue_vue_type_template_id_592f0349__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Show.vue?vue&type=template&id=592f0349 */ "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=template&id=592f0349");
+/* harmony import */ var _Show_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Show.vue?vue&type=script&setup=true&lang=js */ "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=script&setup=true&lang=js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/vue-loader/dist/exportHelper.js */ "./node_modules/vue-loader/dist/exportHelper.js");
+/* unplugin-vue-components disabled */
+
+
+
+;
+const __exports__ = /*#__PURE__*/(0,_home_usmanejaz_usman_projects_afia_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_Show_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_Show_vue_vue_type_template_id_592f0349__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"resources/js/inertia/Pages/PersonalQuote/Car/Show.vue"]])
+/* hot reload */
+if (false) {}
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (__exports__);
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue":
 /*!**********************************************************************************!*\
   !*** ./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue ***!
@@ -42698,6 +43368,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=script&setup=true&lang=js":
+/*!**************************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=script&setup=true&lang=js ***!
+  \**************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* reexport safe */ _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Show_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Show_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!../../../../../../node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Show.vue?vue&type=script&setup=true&lang=js */ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=script&setup=true&lang=js");
+/* unplugin-vue-components disabled */ 
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=script&setup=true&lang=js":
 /*!*********************************************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=script&setup=true&lang=js ***!
@@ -44026,6 +44712,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=template&id=592f0349":
+/*!*********************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=template&id=592f0349 ***!
+  \*********************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_4_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Show_vue_vue_type_template_id_592f0349__WEBPACK_IMPORTED_MODULE_0__.render)
+/* harmony export */ });
+/* harmony import */ var _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_4_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_Show_vue_vue_type_template_id_592f0349__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!../../../../../../node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!../../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./Show.vue?vue&type=template&id=592f0349 */ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue?vue&type=template&id=592f0349");
+/* unplugin-vue-components disabled */
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=template&id=484a3bd4":
 /*!****************************************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue?vue&type=template&id=484a3bd4 ***!
@@ -44576,6 +45278,8 @@ var map = {
 	"./PersonalQuote/Car/Form.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/Form.vue",
 	"./PersonalQuote/Car/LeadList": "./resources/js/inertia/Pages/PersonalQuote/Car/LeadList.vue",
 	"./PersonalQuote/Car/LeadList.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/LeadList.vue",
+	"./PersonalQuote/Car/Show": "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue",
+	"./PersonalQuote/Car/Show.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/Show.vue",
 	"./PersonalQuote/Partials/AdditionalContacts": "./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue",
 	"./PersonalQuote/Partials/AdditionalContacts.vue": "./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue",
 	"./PersonalQuote/Partials/LeadAssignment": "./resources/js/inertia/Pages/PersonalQuote/Partials/LeadAssignment.vue",
