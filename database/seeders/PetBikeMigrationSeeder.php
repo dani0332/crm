@@ -65,8 +65,11 @@ class PetBikeMigrationSeeder extends Seeder
                         'updated_at' => $petRecords->updated_at
                     ]);
 
-                    $petRecords->personal_quote_id = $quote->id;
-                    $petRecords->save();
+                    if($petQuote = PetQuote::where('uuid', $petRecords->uuid)->first())
+                    {
+                        $petQuote->personal_quote_id = $quote->id;
+                        $petQuote->save();
+                    }
                 }
             });
 
@@ -140,8 +143,11 @@ class PetBikeMigrationSeeder extends Seeder
                         'updated_at' => $bikeRecord->updated_at
                     ]);
 
-                   $bikeRecord->personal_quote_id = $quote->id;
-                   $bikeRecord->save();
+                   if($bikeQuote = BikeQuote::where('uuid', $bikeRecord->uuid)->first())
+                   {
+                       $bikeQuote->personal_quote_id = $quote->id;
+                       $bikeQuote->save();
+                   }
                 }
             });
 
