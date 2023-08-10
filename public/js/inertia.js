@@ -10854,10 +10854,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
 /* unplugin-vue-components disabled */
+
+
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
@@ -10897,17 +10899,22 @@ __webpack_require__.r(__webpack_exports__);
     sendPolicy: Boolean,
     //
     record: Object,
+    paymentEntityModel: Object,
     isRenewalUser: Boolean
   },
   setup: function setup(__props, _ref) {
     var __expose = _ref.expose;
     __expose();
-    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.usePage)();
-    var is = function is(role) {
-      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_1__.useHasRole)(role);
-    };
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.usePage)();
+    var permissionEnum = page.props.permissionsEnum;
     var rolesEnum = page.props.rolesEnum;
-    var leadStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
+    var is = function is(role) {
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__.useHasRole)(role);
+    };
+    var can = function can(permission) {
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__.useCan)(permission);
+    };
+    var leadStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
       modelType: 'Car',
       leadId: page.props.record.id,
       quote_uuid: page.props.record.uuid,
@@ -10918,7 +10925,113 @@ __webpack_require__.r(__webpack_exports__);
       trans_code: page.props.record.transapp_code || null,
       lostReason: page.props.record.lost_reason_id || null
     });
-    var leadStatusOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
+    var paymentDetailsTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
+      isLoading: false,
+      columns: [{
+        text: 'Payment ID',
+        value: 'code'
+      }, {
+        text: 'Payment Status',
+        value: 'payment_status'
+      }, {
+        text: 'Plan Name',
+        value: 'plan_name'
+      }, {
+        text: 'Captured Amount',
+        value: 'captured_amount'
+      }, {
+        text: 'Status Change Date',
+        value: 'created_at'
+      }, {
+        text: 'Captured At',
+        value: 'captured_at'
+      }, {
+        text: 'Authorized At',
+        value: 'authorized_at'
+      }, {
+        text: 'Payment method',
+        value: 'payment_method_name'
+      }, {
+        text: 'Reference',
+        value: 'reference'
+      }, {
+        text: 'Action',
+        value: 'action'
+      }]
+    });
+    var availablePlansTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
+      columns: [{
+        text: 'Provider Name',
+        value: 'providerName'
+      }, {
+        text: 'Plan Name',
+        value: ''
+      }, {
+        text: 'Repair Type',
+        value: ''
+      }, {
+        text: 'Insurer Quote No.',
+        value: ''
+      }, {
+        text: 'TPL Limit',
+        value: ''
+      }, {
+        text: 'Car Trim',
+        value: ''
+      }, {
+        text: 'PAB cover',
+        value: ''
+      }, {
+        text: 'Roadside assistance',
+        value: ''
+      }, {
+        text: 'Oman cover TPL',
+        value: ''
+      }, {
+        text: 'Actual Premium',
+        value: ''
+      }, {
+        text: 'Discounted Premium',
+        value: ''
+      }, {
+        text: 'Premium with VAT.',
+        value: ''
+      }, {
+        text: 'Excess',
+        value: ''
+      }, {
+        text: 'Action',
+        value: ''
+      }]
+    });
+    var availablePlansItems = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      if (!Array.isArray(page.props.listQuotePlans)) {
+        return [];
+      }
+      return page.props.listQuotePlans.filter(function (plan) {
+        return plan.id;
+      }).map(function (plan) {
+        return {
+          providerName: plan.providerName
+        };
+      });
+    });
+    var paymentItems = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return page.props.payments.map(function (payment) {
+        return {
+          code: payment.code,
+          payment_status: payment.payment_status.text,
+          plan_name: page.props.plan.text,
+          captured_amount: payment.captured_amount,
+          created_at: payment.payment_status_logs.length > 0 ? payment.payment_status_logs.at(-1).created_at : null,
+          captured_at: payment.captured_at,
+          authorized_at: payment.authorized_at,
+          payment_method_name: payment.payment_method.name,
+          reference: payment.reference
+        };
+      });
+    });
+    var leadStatusOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       return page.props.leadStatuses.map(function (status) {
         return {
           value: status.id,
@@ -10926,12 +11039,56 @@ __webpack_require__.r(__webpack_exports__);
         };
       });
     });
+    var assumptionsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
+      cylinder: page.props.record.cylinder || null,
+      seat_capacity: page.props.record.seat_capacity || null,
+      vehicleType: page.props.record.vehicle_type_id || null,
+      is_modified: page.props.paymentEntityModel.is_modified || null,
+      is_bank_financed: page.props.paymentEntityModel.is_bank_financed || null,
+      is_gcc_standard: page.props.paymentEntityModel.is_gcc_standard || null,
+      current_insurance_status: page.props.record.current_insurance_status || null,
+      year_of_first_registration: page.props.record.year_of_first_registration || null
+    });
+    var vehicleTypeOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return page.props.vehicleTypes.map(function (type) {
+        return {
+          value: type.id,
+          label: type.text
+        };
+      });
+    });
+    var isOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return [{
+        value: 0,
+        label: 'No'
+      }, {
+        value: 1,
+        label: 'Yes'
+      }];
+    });
+    var policyDetailsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
+      policy_number: page.props.record.policy_number || null,
+      policy_start_date: page.props.record.policy_start_date || null,
+      previous_policy_expiry_date: page.props.record.previous_policy_expiry_date || null,
+      premium: page.props.record.premium || null
+    });
     var __returned__ = {
       page: page,
-      is: is,
+      permissionEnum: permissionEnum,
       rolesEnum: rolesEnum,
+      is: is,
+      can: can,
       leadStatusForm: leadStatusForm,
-      leadStatusOptions: leadStatusOptions
+      paymentDetailsTable: paymentDetailsTable,
+      availablePlansTable: availablePlansTable,
+      availablePlansItems: availablePlansItems,
+      paymentItems: paymentItems,
+      leadStatusOptions: leadStatusOptions,
+      assumptionsForm: assumptionsForm,
+      vehicleTypeOptions: vehicleTypeOptions,
+      isOptions: isOptions,
+      policyDetailsForm: policyDetailsForm,
+      computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -32621,6 +32778,105 @@ var _hoisted_139 = {
 var _hoisted_140 = {
   "class": "flex justify-end"
 };
+var _hoisted_141 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_142 = {
+  "class": "flex justify-between items-center mb-4"
+};
+var _hoisted_143 = {
+  "class": "font-semibold text-primary-800 text-lg"
+};
+var _hoisted_144 = {
+  "class": "flex gap-2"
+};
+var _hoisted_145 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_146 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800 text-lg"
+}, "Assumptions", -1 /* HOISTED */);
+var _hoisted_147 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_148 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_149 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_150 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_151 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_152 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_153 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_154 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_155 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_156 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_157 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_158 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_159 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_160 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_161 = {
+  "class": "flex justify-between items-center mb-4"
+};
+var _hoisted_162 = {
+  "class": "font-semibold text-primary-800 text-lg"
+};
+var _hoisted_163 = {
+  "class": "flex gap-2"
+};
+var _hoisted_164 = {
+  "class": "p-4 rounded shadow mb-6 bg-white"
+};
+var _hoisted_165 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800 text-lg"
+}, "Policy Details", -1 /* HOISTED */);
+var _hoisted_166 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_167 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_168 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_169 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_170 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_171 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_172 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full"
+};
+var _hoisted_173 = {
+  "class": "w-full md:w-1/2"
+};
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _$props$record$premiu, _$props$record$paid_a, _$props$record$paymen, _$props$record$car_pl, _$props$record$quote_, _$props$record$order_, _$props$record$paymen2, _$props$record$back_h, _$props$record$calcul, _$props$record$parent, _$props$record$previo, _$props$record$previo2, _$props$record$previo3;
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.Head;
@@ -32629,11 +32885,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.Link;
   var _component_x_textarea = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-textarea");
   var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-select");
+  var _component_x_tag = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-tag");
+  var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("DataTable");
   return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Head, {
     title: "Car Detail"
   }), _hoisted_1, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
     "class": "my-4"
-  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <x-modal v-model=\"modals.duplicate\" size=\"lg\" show-close backdrop>\n      <template #header> Duplicate Lead </template>\n      <x-form @submit=\"onCreateDuplicate\" :auto-focus=\"false\">\n        <div class=\"grid gap-4\">\n          <x-select\n            v-model=\"leadDuplicateForm.lob_team\"\n            label=\"LOBs\"\n            :options=\"\n              allowedDuplicateLOB.map(lob => ({\n                value: lob,\n                label: lob,\n              }))\n            \"\n            :rules=\"[isRequired]\"\n            placeholder=\"Select LOB For Duplication\"\n            class=\"w-full\"\n            multiple\n          />\n          <x-select\n            v-model=\"leadDuplicateForm.lob_team_sub_selection\"\n            label=\"Reason\"\n            :rules=\"[isRequired]\"\n            class=\"w-full\"\n            :options=\"[\n              { value: 'new_enquiry', label: 'New enquiry' },\n              { value: 'record_only', label: 'Record purposes only' },\n            ]\"\n          />\n\n          <x-button\n            color=\"orange\"\n            type=\"submit\"\n            :loading=\"leadDuplicateForm.processing\"\n          >\n            Create Duplicate\n          </x-button>\n        </div>\n      </x-form>\n    </x-modal>\n\n    <x-divider class=\"my-4\" />\n    <div\n      v-if=\"!$page.props.can.isAdvisor\"\n      class=\"p-4 rounded shadow mb-6 bg-primary-50/50 saad\"\n    >\n      <div class=\"flex flex-wrap md:flex-nowrap gap-6 w-full\">\n        <div class=\"w-full md:w-1/2 flex gap-2 items-end\">\n          <x-select\n            v-model=\"assignSubteam\"\n            label=\"Assign Subteam\"\n            :options=\"subTeamOptions\"\n            placeholder=\"Select Subteam\"\n            class=\"w-auto flex-1\"\n          />\n          <div>\n            <x-button\n              color=\"orange\"\n              size=\"sm\"\n              @click.prevent=\"onTeamAssign\"\n              :loading=\"isDisabled\"\n            >\n              Assign Team\n            </x-button>\n          </div>\n        </div>\n        <div\n          v-if=\"!hasRole($page.props.rolesEnum.HealthWCUAdvisor)\"\n          class=\"w-full md:w-1/2 flex gap-2 items-end\"\n        >\n          <x-select\n            v-model=\"assignLead\"\n            label=\"Assign Lead\"\n            :options=\"advisorOptions\"\n            placeholder=\"Select Lead\"\n            class=\"w-auto flex-1\"\n          />\n          <div>\n            <x-button\n              color=\"orange\"\n              size=\"sm\"\n              @click.prevent=\"onAssignLead\"\n              :loading=\"isDisabled\"\n            >\n              Assign\n            </x-button>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-white\">\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n        <div v-if=\"hasRole($page.props.rolesEnum.Engineering)\" class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">ID</dt>\n            <dd>{{ quote.id }}</dd>\n        </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CDB ID</dt>\n            <dd>{{ quote.code }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CREATED DATE</dt>\n            <dd>{{ quote.created_at }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SUBTEAM</dt>\n            <dd>{{ quote.health_team_type }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">ADVISOR</dt>\n            <dd>{{ quote.advisor_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SOURCE</dt>\n            <dd>{{ quote.source }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LAST MODIFIED DATE</dt>\n            <dd>{{ quote.updated_at }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PARENT CDB ID</dt>\n            <dd>{{ quote.parent_duplicate_quote_id }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">IS ECOMMERCE</dt>\n            <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">IS EBP RENEWAL</dt>\n            <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">RENEWAL BATCH</dt>\n            <dd>{{ quote.renewal_batch }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LOST REASON</dt>\n            <dd>{{ quote.lost_reason }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TRANSAPP CODE</dt>\n            <dd>{{ quote.transapp_code }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DEVICE</dt>\n            <dd>{{ quote.device }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Customer Profile</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">FIRST NAME</dt>\n            <dd>{{ quote.first_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LAST NAME</dt>\n            <dd>{{ quote.last_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MOBILE NUMBER</dt>\n            <dd>{{ quote.mobile_no }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMAIL</dt>\n            <dd>{{ quote.email }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">GENDER</dt>\n            <dd>{{ genderText(quote.gender).value }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MARITAL STATUS</dt>\n            <dd>{{ quote.marital_status_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NATIONALITY</dt>\n            <dd>{{ quote.nationality_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DATE OF BIRTH</dt>\n            <dd>{{ quote.dob }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMIRATE OF VISA</dt>\n            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MEMBER CATEGORY</dt>\n            <dd>{{ quote.member_category_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SALARY BAND</dt>\n            <dd>{{ quote.salary_band_id_text }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Quote Details</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">\n              FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?\n            </dt>\n            <dd>{{ quote.cover_for_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CURRENTLY INSURED WITH</dt>\n            <dd>{{ quote.currently_insured_with_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TYPE OF PLAN</dt>\n            <dd>{{ quote.plan_id }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NEXT FOLLOWUP DATE</dt>\n            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DETAILS</dt>\n            <dd>{{ quote.details }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">Additional Notes</dt>\n            <dd>{{ quote.additional_notes }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">\n          Last Year's Policy Details\n        </h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY NUMBER</dt>\n            <dd>{{ quote.previous_quote_policy_number }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY PREMIUM</dt>\n            <dd>{{ quote.previous_quote_policy_premium }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY EXPIRY DATE</dt>\n            <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>\n          </div>\n        </dl>\n      </div>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-white\">\n      <div class=\"flex justify-between items-center mb-4\">\n        <h3 class=\"font-semibold text-primary-800 text-lg\">\n          Member Details\n          <x-tag size=\"sm\">{{ membersDetail.length || 0 }}</x-tag>\n        </h3>\n        <x-button @click.prevent=\"onAddMemberModal\" size=\"sm\" color=\"orange\">\n          Add Member\n        </x-button>\n      </div>\n\n      <DataTable\n        table-class-name=\"tablefixed compact\"\n        :headers=\"memberDetailsTable.columns\"\n        :items=\"membersDetail || []\"\n        show-index\n        border-cell\n        hide-rows-per-page\n        hide-footer\n      >\n        <template #item-index=\"{ index }\">\n          <div>Member {{ index }}</div>\n        </template>\n        <template #item-gender=\"{ gender }\">\n          {{ genderText(gender).value }}\n        </template>\n        <template #item-dob=\"{ dob }\">\n          {{ dateFormat(dob) }}\n        </template>\n        <template #item-nationality=\"{ nationality }\">\n          {{ nationality?.text }}\n        </template>\n        <template #item-emirate=\"{ emirate }\">\n          {{ emirate?.text }}\n        </template>\n        <template #item-member_category_id=\"{ member_category_id }\">\n          {{ memberCategoryText(member_category_id).value }}\n        </template>\n        <template #item-action=\"item\">\n          <div class=\"flex gap-2\">\n            <x-button\n              size=\"xs\"\n              color=\"primary\"\n              outlined\n              @click.prevent=\"onEditMember(item)\"\n            >\n              Edit\n            </x-button>\n            <x-button\n              size=\"xs\"\n              color=\"error\"\n              outlined\n              @click.prevent=\"memberDelete(item.id)\"\n            >\n              Delete\n            </x-button>\n          </div>\n        </template>\n      </DataTable>\n\n      <x-modal v-model=\"modals.member\" size=\"lg\" show-close backdrop>\n        <template #header>\n          {{ memberActionEdit ? 'Edit' : 'Add' }} Member\n        </template>\n\n        <x-form @submit=\"onMemberSubmit\" :auto-focus=\"false\">\n          <div class=\"grid md:grid-cols-2 gap-4\">\n            <input type=\"hidden\" :value=\"memberForm.id\" />\n\n            <ComboBox\n              v-model=\"memberForm.nationality_id\"\n              label=\"Nationality\"\n              :options=\"nationalityOptions\"\n              placeholder=\"Select Nationality\"\n              :single=\"true\"\n              :hasError=\"memberFieldReq.nationality\"\n            />\n\n            <x-select\n              v-model=\"memberForm.emirate_of_your_visa_id\"\n              label=\"Emirate of Visa\"\n              :options=\"emiratesOptions\"\n              :rules=\"[isRequired]\"\n              placeholder=\"Select Emirate of Visa\"\n              class=\"w-full\"\n            />\n\n            <x-select\n              v-model=\"memberForm.gender\"\n              label=\"Gender\"\n              :options=\"genderSelect\"\n              :rules=\"[isRequired]\"\n              placeholder=\"Select Gender\"\n              class=\"w-full\"\n            />\n\n            <DatePicker\n              v-model=\"memberForm.dob\"\n              label=\"DOB\"\n              :hasError=\"memberFieldReq.dob\"\n            />\n\n            <x-select\n              v-model=\"memberForm.member_category_id\"\n              label=\"Member Category\"\n              :options=\"memberCategoriesOptions\"\n              :rules=\"[isRequired]\"\n              placeholder=\"Select Member Category\"\n              class=\"w-full\"\n            />\n\n            <x-select\n              v-model=\"memberForm.salary_band_id\"\n              label=\"Salary Band\"\n              :options=\"salaryBandsOptions\"\n              placeholder=\"Select Salary Band\"\n              class=\"w-full\"\n            />\n          </div>\n\n          <div class=\"text-right space-x-4 mt-8\">\n            <x-button size=\"sm\" @click.prevent=\"modals.member = false\">\n              Cancel\n            </x-button>\n\n            <x-button\n              size=\"sm\"\n              color=\"emerald\"\n              :loading=\"memberForm.processing\"\n              type=\"submit\"\n            >\n              {{ memberActionEdit ? 'Update' : 'Save' }}\n            </x-button>\n          </div>\n        </x-form>\n      </x-modal>\n\n      <x-modal v-model=\"modals.memberConfirm\" show-close backdrop>\n        <template #header> Delete Member Detail </template>\n        <p>Are you sure you want to delete this?</p>\n        <template #actions>\n          <div class=\"text-right space-x-4\">\n            <x-button\n              size=\"sm\"\n              ghost\n              @click.prevent=\"modals.memberConfirm = false\"\n            >\n              Cancel\n            </x-button>\n            <x-button\n              size=\"sm\"\n              color=\"error\"\n              @click.prevent=\"memberDeleteConfirmed\"\n              :loading=\"memberForm.processing\"\n            >\n              Delete\n            </x-button>\n          </div>\n        </template>\n      </x-modal>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-primary-50/25\">\n      <div>\n        <h3 class=\"font-semibold text-primary-800 text-lg\">Lead Status</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n      <div class=\"flex flex-wrap md:flex-nowrap gap-6 w-full\">\n        <div class=\"w-full md:w-2/3\">\n          <x-textarea\n            v-model=\"leadStatusForm.notes\"\n            type=\"text\"\n            label=\"Notes\"\n            placeholder=\"Lead Notes\"\n            class=\"w-full\"\n            :disabled=\"quote.quote_status_id == 15\"\n          />\n        </div>\n        <div class=\"w-full md:w-1/3\">\n          <div class=\"flex flex-col gap-4\">\n            <x-select\n              v-model=\"leadStatusForm.leadStatus\"\n              label=\"Status\"\n              :options=\"leadStatusOptions\"\n              :disabled=\"quote.quote_status_id == 15\"\n              placeholder=\"Lead Status\"\n              class=\"w-full\"\n            />\n            <x-input\n              v-if=\"leadStatusForm.leadStatus == 15\"\n              v-model=\"leadStatusForm.trans_code\"\n              label=\"TransApp Code\"\n              placeholder=\"TransApp Code is required\"\n              class=\"w-full\"\n              :error=\"leadStatusForm.errors.trans_code\"\n            />\n            <x-select\n              v-if=\"leadStatusForm.leadStatus == 17\"\n              v-model=\"leadStatusForm.lostReason\"\n              label=\"Lost Reason\"\n              :options=\"\n                lostReasons?.map(item => ({\n                  value: item.id,\n                  label: item.text,\n                }))\n              \"\n              placeholder=\"Lost Reason is required\"\n              class=\"w-full\"\n              :error=\"leadStatusForm.errors.lostReason\"\n            />\n          </div>\n\n          <div class=\"flex justify-end\">\n            <x-button\n              class=\"mt-4\"\n              color=\"emerald\"\n              size=\"sm\"\n              :loading=\"leadStatusForm.processing\"\n              @click.prevent=\"onLeadStatus\"\n            >\n              Change Status\n            </x-button>\n          </div>\n        </div>\n      </div>\n    </div>\n\n    <div class=\"p-4 rounded shadow mb-6 bg-white\">\n      <div>\n        <h3 class=\"font-semibold text-primary-800 text-lg\">E-COM Details</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PLAN NAME</dt>\n            <dd>{{ ecomDetails.planName }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PROVIDER NAME</dt>\n            <dd>{{ ecomDetails.providerName }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PAYMENT STATUS</dt>\n            <dd>{{ ecomDetails.paymentStatus }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PAID AT</dt>\n            <dd>{{ ecomDetails.paidAt }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NETWORK</dt>\n            <dd>{{ ecomDetails.network }}</dd>\n          </div>\n        <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TOTAL PRICE (with VAT)</dt>\n            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>\n        </div>\n        </dl>\n      </div>\n    </div> "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_5, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$premiu = $props.record.premium) !== null && _$props$record$premiu !== void 0 ? _$props$record$premiu : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paid_a = $props.record.paid_at) !== null && _$props$record$paid_a !== void 0 ? _$props$record$paid_a : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paymen = $props.record.payment_status_id_text) !== null && _$props$record$paymen !== void 0 ? _$props$record$paymen : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_11, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$car_pl = $props.record.car_plan_provider_id_text) !== null && _$props$record$car_pl !== void 0 ? _$props$record$car_pl : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.payment_gateway === 'NGENIUS' ? 'CREDIT CARD' : $props.record.payment_gateway), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.plan_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.is_ecommerce == 1 ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$quote_ = $props.record.quote_link) !== null && _$props$record$quote_ !== void 0 ? _$props$record$quote_ : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_21, [_hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$order_ = $props.record.order_reference) !== null && _$props$record$order_ !== void 0 ? _$props$record$order_ : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_23, [_hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paymen2 = $props.record.payment_reference) !== null && _$props$record$paymen2 !== void 0 ? _$props$record$paymen2 : ''), 1 /* TEXT */)])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_25, [_hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.payment_reference), 1 /* TEXT */)])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Customer Profile</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">FIRST NAME</dt>\n            <dd>{{ quote.first_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">LAST NAME</dt>\n            <dd>{{ quote.last_name }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MOBILE NUMBER</dt>\n            <dd>{{ quote.mobile_no }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMAIL</dt>\n            <dd>{{ quote.email }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">GENDER</dt>\n            <dd>{{ genderText(quote.gender).value }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MARITAL STATUS</dt>\n            <dd>{{ quote.marital_status_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NATIONALITY</dt>\n            <dd>{{ quote.nationality_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DATE OF BIRTH</dt>\n            <dd>{{ quote.dob }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">EMIRATE OF VISA</dt>\n            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">MEMBER CATEGORY</dt>\n            <dd>{{ quote.member_category_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">SALARY BAND</dt>\n            <dd>{{ quote.salary_band_id_text }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">Quote Details</h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">\n              FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?\n            </dt>\n            <dd>{{ quote.cover_for_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">CURRENTLY INSURED WITH</dt>\n            <dd>{{ quote.currently_insured_with_id_text }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">TYPE OF PLAN</dt>\n            <dd>{{ quote.plan_id }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">NEXT FOLLOWUP DATE</dt>\n            <dd>{{ dateFormat(quote.next_followup_date) }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">DETAILS</dt>\n            <dd>{{ quote.details }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">Additional Notes</dt>\n            <dd>{{ quote.additional_notes }}</dd>\n          </div>\n        </dl>\n      </div>\n\n      <div class=\"mt-6\">\n        <h3 class=\"font-semibold text-primary-800\">\n          Last Year's Policy Details\n        </h3>\n        <x-divider class=\"mb-4 mt-1\" />\n      </div>\n\n      <div class=\"text-sm\">\n        <dl class=\"grid md:grid-cols-2 gap-x-6 gap-y-4\">\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY NUMBER</dt>\n            <dd>{{ quote.previous_quote_policy_number }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY PREMIUM</dt>\n            <dd>{{ quote.previous_quote_policy_premium }}</dd>\n          </div>\n          <div class=\"grid sm:grid-cols-2\">\n            <dt class=\"font-medium\">PREVIOUS POLICY EXPIRY DATE</dt>\n            <dd>{{ dateFormat(quote.previous_policy_expiry_date) }}</dd>\n          </div>\n        </dl>\n      </div> ")]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_27, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_28, [_hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+  }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_5, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$premiu = $props.record.premium) !== null && _$props$record$premiu !== void 0 ? _$props$record$premiu : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paid_a = $props.record.paid_at) !== null && _$props$record$paid_a !== void 0 ? _$props$record$paid_a : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paymen = $props.record.payment_status_id_text) !== null && _$props$record$paymen !== void 0 ? _$props$record$paymen : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_11, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$car_pl = $props.record.car_plan_provider_id_text) !== null && _$props$record$car_pl !== void 0 ? _$props$record$car_pl : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.payment_gateway === 'NGENIUS' ? 'CREDIT CARD' : $props.record.payment_gateway), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.plan_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.is_ecommerce == 1 ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$quote_ = $props.record.quote_link) !== null && _$props$record$quote_ !== void 0 ? _$props$record$quote_ : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_21, [_hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$order_ = $props.record.order_reference) !== null && _$props$record$order_ !== void 0 ? _$props$record$order_ : ''), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_23, [_hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$record$paymen2 = $props.record.payment_reference) !== null && _$props$record$paymen2 !== void 0 ? _$props$record$paymen2 : ''), 1 /* TEXT */)])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_25, [_hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.record.payment_reference), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_27, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_28, [_hoisted_29, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
     "class": "mr-2",
     size: "sm",
     color: "#ff5e00",
@@ -32716,7 +32974,261 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Change Status ")];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["loading", "onClick"])])])])])]);
+  }, 8 /* PROPS */, ["loading", "onClick"])])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_141, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_142, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", _hoisted_143, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Payments "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_tag, {
+    size: "sm"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.payments.length || 0), 1 /* TEXT */)];
+    }),
+
+    _: 1 /* STABLE */
+  })]), $setup.is($setup.rolesEnum.PA) && _ctx.$page.props.plan && !$setup.can($setup.permissionEnum.ApprovePayments) && $setup.can($setup.permissionEnum.PaymentsCreate) ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)(_component_x_button, {
+    key: 0,
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onAddPaymentModal, ["prevent"]),
+    size: "sm",
+    color: "orange"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Add Payment ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["onClick"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_DataTable, {
+    "table-class-name": "tablefixed compact",
+    headers: $setup.paymentDetailsTable.columns,
+    items: $setup.paymentItems || [],
+    "show-index": "",
+    "border-cell": "",
+    "hide-rows-per-page": "",
+    "hide-footer": ""
+  }, {
+    "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_144, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "xs",
+        color: "primary",
+        outlined: "",
+        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(function ($event) {
+          return _ctx.onEditMember(item);
+        }, ["prevent"])
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Edit ")];
+        }),
+        _: 2 /* DYNAMIC */
+      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "xs",
+        color: "error",
+        outlined: "",
+        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(function ($event) {
+          return _ctx.memberDelete(item.id);
+        }, ["prevent"])
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Delete ")];
+        }),
+        _: 2 /* DYNAMIC */
+      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"])])];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["headers", "items"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_145, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [_hoisted_146, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "mb-4 mt-1"
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_147, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_148, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.assumptionsForm.cylinder,
+    "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+      return $setup.assumptionsForm.cylinder = $event;
+    }),
+    type: "text",
+    label: "cylinder",
+    placeholder: "cylinder",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_149, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.assumptionsForm.seat_capacity,
+    "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
+      return $setup.assumptionsForm.seat_capacity = $event;
+    }),
+    type: "text",
+    label: "Seat Capacity",
+    placeholder: "Seat Capacity",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_150, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_151, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_152, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+    modelValue: $setup.assumptionsForm.vehicleType,
+    "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+      return $setup.assumptionsForm.vehicleType = $event;
+    }),
+    label: "Vehicle Body Type",
+    options: $setup.vehicleTypeOptions,
+    placeholder: "Vehicle Body Type",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue", "options"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_153, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_154, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+    modelValue: $setup.assumptionsForm.is_modified,
+    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+      return $setup.assumptionsForm.is_modified = $event;
+    }),
+    label: "Is Vehicle modified?",
+    options: $setup.isOptions,
+    placeholder: "Is Modified",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue", "options"])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_155, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_156, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_157, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+    modelValue: $setup.assumptionsForm.is_bank_financed,
+    "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
+      return $setup.assumptionsForm.is_bank_financed = $event;
+    }),
+    label: "Is Bank Financed",
+    options: $setup.isOptions,
+    placeholder: "Is Bank Financed",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue", "options"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_158, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_159, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_select, {
+    modelValue: $setup.assumptionsForm.is_gcc_standard,
+    "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+      return $setup.assumptionsForm.is_gcc_standard = $event;
+    }),
+    label: "Is GCC Standard?",
+    options: $setup.isOptions,
+    placeholder: "Is GCC Standard",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue", "options"])])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_160, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_161, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h3", _hoisted_162, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Available Plans "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_tag, {
+    size: "sm"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($props.listQuotePlans.length || 0), 1 /* TEXT */)];
+    }),
+
+    _: 1 /* STABLE */
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onAddPaymentModal, ["prevent"]),
+    size: "sm",
+    color: "orange",
+    "class": "mr-2"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Send OCB Email to Customer ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onAddPaymentModal, ["prevent"]),
+    size: "sm",
+    color: "emerald",
+    "class": "mr-2"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Download PDF ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onAddPaymentModal, ["prevent"]),
+    size: "sm",
+    color: "orange",
+    "class": "mr-2"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Create Quote ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(_ctx.onAddPaymentModal, ["prevent"]),
+    size: "sm",
+    color: "emerald"
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Copy Link ")];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_DataTable, {
+    "table-class-name": "tablefixed compact",
+    headers: $setup.availablePlansTable.columns,
+    items: $setup.availablePlansItems || [],
+    "show-index": "",
+    "border-cell": "",
+    "fixed-checkbox": "",
+    "hide-rows-per-page": "",
+    "hide-footer": ""
+  }, {
+    "item-action": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_163, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "xs",
+        color: "primary",
+        outlined: "",
+        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(function ($event) {
+          return _ctx.onEditMember(item);
+        }, ["prevent"])
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Edit ")];
+        }),
+        _: 2 /* DYNAMIC */
+      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
+        size: "xs",
+        color: "error",
+        outlined: "",
+        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_1__.withModifiers)(function ($event) {
+          return _ctx.memberDelete(item.id);
+        }, ["prevent"])
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Delete ")];
+        }),
+        _: 2 /* DYNAMIC */
+      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"])])];
+    }),
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["headers", "items"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_164, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [_hoisted_165, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_divider, {
+    "class": "mb-4 mt-1"
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_166, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_167, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.policyDetailsForm.policy_number,
+    "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+      return $setup.policyDetailsForm.policy_number = $event;
+    }),
+    type: "text",
+    label: "Policy Number",
+    placeholder: "Policy Number",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_168, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.policyDetailsForm.policy_issuance_date,
+    "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
+      return $setup.policyDetailsForm.policy_issuance_date = $event;
+    }),
+    type: "text",
+    label: "Issuance Date",
+    placeholder: "Issuance Date",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_169, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_170, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.policyDetailsForm.policy_start_date,
+    "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
+      return $setup.policyDetailsForm.policy_start_date = $event;
+    }),
+    type: "text",
+    label: "Policy Start Date",
+    placeholder: "Policy Start Date",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_171, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.policyDetailsForm.previous_policy_expiry_date,
+    "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+      return $setup.policyDetailsForm.previous_policy_expiry_date = $event;
+    }),
+    type: "text",
+    label: "Expiry Date",
+    placeholder: "Expiry Date",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_172, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_173, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_textarea, {
+    modelValue: $setup.policyDetailsForm.premium,
+    "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
+      return $setup.policyDetailsForm.premium = $event;
+    }),
+    type: "text",
+    label: "premium",
+    placeholder: "premium",
+    "class": "w-full",
+    disabled: "true"
+  }, null, 8 /* PROPS */, ["modelValue"])])])])]);
 }
 
 /***/ }),
