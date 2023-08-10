@@ -11,6 +11,11 @@ class QuoteStatusRepository extends BaseRepository
         return QuoteStatus::class;
     }
 
+    public function fetchGetList()
+    {
+        return $this->withActive()->orderBy('sort_order')->get();
+    }
+
     public function fetchByQuoteTypeId($quoteTypeId)
     {
         return $this->select('quote_status.id as id', 'quote_status.text as text', 'quote_status.code as code')

@@ -61,7 +61,7 @@
                             </div>
                         </div>
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="code"><b> CDB ID</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="code"><b> Ref-ID</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{ $record->code }}</p>
                             </div>
@@ -206,7 +206,7 @@
                     </div>
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="parent_duplicate_quote_id"><b>PARENT CDB ID</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="parent_duplicate_quote_id"><b>PARENT Ref-ID</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">{{$record->parent_duplicate_quote_id}}</p>
                             </div>
@@ -236,7 +236,7 @@
     :status="$record->quote_status_id"
     :statuses="$leadStatuses"
     :lostreasons="$lostReasons"
-    :selectedlostreason="$selectedLostReasonId" 
+    :selectedlostreason="$selectedLostReasonId"
     :quoteTypeId="$quoteTypeId"
     :tiers="$tiers" />
 
@@ -271,12 +271,12 @@
     </div>
 </div>
 
-<x-customer-additional-contact 
-    :record="$record" 
-    :quoteType="$quoteType" 
+<x-customer-additional-contact
+    :record="$record"
+    :quoteType="$quoteType"
     :customerAdditionalContacts="$customerAdditionalContacts" />
-<x-customer-additional-contact-modal 
-    :record="$record" 
+<x-customer-additional-contact-modal
+    :record="$record"
     :quoteType="$quoteType" />
 
 
