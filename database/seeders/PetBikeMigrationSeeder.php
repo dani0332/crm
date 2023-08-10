@@ -6,6 +6,7 @@ use App\Enums\QuoteTypeId;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\BikeQuote;
+use App\Models\InsuranceProvider;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
@@ -21,16 +22,20 @@ class PetBikeMigrationSeeder extends Seeder
     public function run()
     {
 
+
         // Pet Data Migration
         // Fetch Old Pet Records from pet_quote_request table and Dump into personal_quote table
-        PetQuote::join('pet_quote_request_detail', 'pet_quote_request.id', '=', 'pet_quote_request_detail.pet_quote_request_id')
-            ->whereNull('pet_quote_request.personal_quote_id')
-            ->groupBy('pet_quote_request.id')
-            ->chunk(100, function ($petChunkRecords){
+
+        PetQuote::leftJoin('pet_quote_request_detail', 'pet_quote_request.id', '=', 'pet_quote_request_detail.pet_quote_request_id')
+            //->whereNull('pet_quote_request.personal_quote_id')
+            ->whereNotNull('pet_quote_request.code')
+            //->groupBy('pet_quote_request.id')
+            ->chunk(100, function ($petChunkRecords)  {
                 foreach ($petChunkRecords as $petRecords){
-                    PersonalQuote::firstOrCreate([
+                    $quote = null;
+                   $quote =  PersonalQuote::firstOrCreate(['uuid' => trim($petRecords->uuid)],
+                       [
                         'quote_type_id' => QuoteTypeId::Pet,
-                        'uuid' => $petRecords->uuid,
                         'code' => $petRecords->code,
                         'first_name' => $petRecords->first_name,
                         'last_name' => $petRecords->last_name,
@@ -59,73 +64,25 @@ class PetBikeMigrationSeeder extends Seeder
                         'created_at' => $petRecords->created_at,
                         'updated_at' => $petRecords->updated_at
                     ]);
+
+                    $petRecords->personal_quote_id = $quote->id;
+                    $petRecords->save();
                 }
             });
 
-        // Fetch Old Pet Records from personal_quotes table and Dump into pet_quote_request table
-        PersonalQuote::join('pet_quote_request', function ($petQuoteJoin){
-                $petQuoteJoin->on('personal_quotes.uuid','=','pet_quote_request.uuid')
-                    ->andOn('personal_quotes.code','=','pet_quote_request.code');
-            })
-            ->whereNull('pet_quote_request.personal_quote_id')
-            ->groupBy('personal_quotes.uuid')
-            ->chunk(100, function ($personalQuoteRecords){
-                foreach ($personalQuoteRecords as $personalQuoteRecord){
-                    PetQuoteRequest::firstOrCreate([
-                        'gender' => $personalQuoteRecord->gender,
-                        'address' => $personalQuoteRecord->address,
-                        'customer_id' => $personalQuoteRecord->customer_id,
-                        'lang' => $personalQuoteRecord->lang,
-                        'is_synced' => $personalQuoteRecord->is_synced,
-                        'additional_notes' => $personalQuoteRecord->additional_notes,
-                        'reviver_name' => $personalQuoteRecord->reviver_name,
-                        'promo_code' => $personalQuoteRecord->promo_code,
-                        'code' => $personalQuoteRecord->code,
-                        'no_of_pets_to_insure' => $personalQuoteRecord->no_of_pets_to_insure,
-                        'type_of_pet1' => $personalQuoteRecord->type_of_pet1,
-                        'age_of_pet1' => $personalQuoteRecord->age_of_pet1,
-                        'breed_of_pet1' => $personalQuoteRecord->breed_of_pet1,
-                        'type_of_pet2' => $personalQuoteRecord->type_of_pet2,
-                        'age_of_pet2' => $personalQuoteRecord->age_of_pet2,
-                        'breed_of_pet2' => $personalQuoteRecord->breed_of_pet2,
-                        'ilivein_accommodation_type_id' => $personalQuoteRecord->ilivein_accommodation_type_id,
-                        'iam_possession_type_id' => $personalQuoteRecord->iam_possession_type_id,
-                        'has_contents' => $personalQuoteRecord->has_contents,
-                        'contents_aed' => $personalQuoteRecord->contents_aed,
-                        'has_personal_belongings' => $personalQuoteRecord->has_personal_belongings,
-                        'personal_belongings_aed' => $personalQuoteRecord->personal_belongings_aed,
-                        'has_building' => $personalQuoteRecord->has_building,
-                        'building_aed' => $personalQuoteRecord->building_aed,
-                        'created_at' => $personalQuoteRecord->created_at,
-                        'updated_at' => $personalQuoteRecord->updated_at,
-                        'uuid' => $personalQuoteRecord->uuid,
-                        'insurer_quote_no' => $personalQuoteRecord->insurer_quote_no,
-                        'is_microchipped' => $personalQuoteRecord->is_microchipped,
-                        'microchip_no' => $personalQuoteRecord->microchip_no,
-                        'is_neutered' => $personalQuoteRecord->is_neutered,
-                        'is_mixed_breed' => $personalQuoteRecord->is_mixed_breed,
-                        'has_injury' => $personalQuoteRecord->has_injury,
-                        'previous_quote_id' => $personalQuoteRecord->previous_quote_id,
-                        'pa_id' => $personalQuoteRecord->pa_id,
-                        'parent_duplicate_quote_id' => $personalQuoteRecord->parent_duplicate_quote_id,
-                        'personal_quote_id' => $personalQuoteRecord->id,
-                        'pet_type_id' => $personalQuoteRecord->pet_type_id,
-                        'pet_age_id' => $personalQuoteRecord->pet_age_id,
-                    ]);
-                }
-            });
+
+
 
         // Fetch data from pet_quote_details table and migrate into personal_quote_details table
         PersonalQuote::join('pet_quote_request', function ($petQuoteJoin){
-            $petQuoteJoin->on('personal_quotes.uuid','=','pet_quote_request.uuid')
-                ->andOn('personal_quotes.code','=','pet_quote_request.code');
+            $petQuoteJoin->on('personal_quotes.uuid','=','pet_quote_request.uuid');
             })
             ->join('pet_quote_request_detail', 'pet_quote_request.id', '=', 'pet_quote_request_detail.pet_quote_request_id')
             ->groupBy('personal_quotes.uuid')
             ->chunk(100, function ($petRequestDetailsRecord){
                 foreach ($petRequestDetailsRecord as $petRequestDetailRecord){
-                    PersonalQuoteDetail::firstOrCreate([
-                        'personal_quote_id' => $petRequestDetailRecord->id,
+                    PersonalQuoteDetail::firstOrCreate(['personal_quote_id' => $petRequestDetailRecord->id],
+                        [
                         'pa_id' => $petRequestDetailRecord->pa_id,
                         'advisor_assigned_date' => $petRequestDetailRecord->advisor_assigned_date,
                         'advisor_assigned_by_id' => $petRequestDetailRecord->advisor_assigned_by_id,
@@ -142,14 +99,18 @@ class PetBikeMigrationSeeder extends Seeder
 
         // Bike Data Migration
         // Fetch Old Bike Records from bike_quote_request table and Dump into personal_quote table
-        BikeQuote::join('bike_quote_request_detail', 'bike_quote_request.id', '=', 'bike_quote_request_detail.bike_quote_request_id')
-            ->whereNull('bike_quote_request.personal_quote_id')
+        BikeQuote::leftJoin('bike_quote_request_detail', 'bike_quote_request.id', '=', 'bike_quote_request_detail.bike_quote_request_id')
+           // ->whereNull('bike_quote_request.personal_quote_id')
+               ->whereNotNull('bike_quote_request.code')
             ->groupBy('bike_quote_request.id')
             ->chunk(100, function ($bikeRecords){
                 foreach ($bikeRecords as $bikeRecord){
-                    BikeQuoteRequest::firstOrCreate([
+
+                    $insurer = InsuranceProvider::where('code', $bikeRecord->currently_insured_with)->first();
+
+                   $quote = PersonalQuote::firstOrCreate(['uuid' => $bikeRecord->uuid],
+                        [
                         'quote_type_id' => QuoteTypeId::Bike,
-                        'uuid' => $bikeRecord->uuid,
                         'code' => $bikeRecord->code,
                         'first_name' => $bikeRecord->first_name,
                         'last_name' => $bikeRecord->last_name,
@@ -158,7 +119,7 @@ class PetBikeMigrationSeeder extends Seeder
                         'email' => $bikeRecord->email,
                         'mobile_no' => $bikeRecord->mobile_no,
                         'source' => $bikeRecord->source,
-                        'currently_insured_with' => $bikeRecord->currently_insured_with,
+                        'currently_insured_with_id' => $insurer->id ?? null,
                         'customer_id' => $bikeRecord->customer_id,
                         'reference_url' => $bikeRecord->reference_url,
                         'policy_number' => $bikeRecord->policy_number,
@@ -178,52 +139,21 @@ class PetBikeMigrationSeeder extends Seeder
                         'created_at' => $bikeRecord->created_at,
                         'updated_at' => $bikeRecord->updated_at
                     ]);
-                }
-            });
 
-        // Fetch Old Bike Records from personal_quotes table and Migrate into bike_quote_request table
-        PersonalQuote::join('bike_quote_request', function ($bikeQuoteJoin){
-                $bikeQuoteJoin->on('personal_quotes.uuid','=','bike_quote_request.uuid')
-                    ->andOn('personal_quotes.code','=','bike_quote_request.code');
-            })
-            ->whereNull('bike_quote_request.personal_quote_id')
-            ->groupBy('personal_quotes.uuid')
-            ->chunk(100, function ($personalQuoteRecords){
-                foreach ($personalQuoteRecords as $personalQuoteRecord){
-                    BikeQuoteRequest::firstOrCreate([
-                        'bike_company_to_insure' => $personalQuoteRecord->bike_company_to_insure,
-                        'bike_value' => $personalQuoteRecord->bike_value,
-                        'year_of_manufacture' => $personalQuoteRecord->year_of_manufacture,
-                        'uae_license_held_for_id' => $personalQuoteRecord->uae_license_held_for_id,
-                        'gender' => $personalQuoteRecord->gender,
-                        'lang' => $personalQuoteRecord->lang,
-                        'customer_id' => $personalQuoteRecord->customer_id,
-                        'is_synced' => $personalQuoteRecord->is_synced,
-                        'additional_notes' => $personalQuoteRecord->additional_notes,
-                        'reviver_name' => $personalQuoteRecord->reviver_name,
-                        'promo_code' => $personalQuoteRecord->promo_code,
-                        'code' => $personalQuoteRecord->code,
-                        'uuid' => $personalQuoteRecord->uuid,
-                        'previous_quote_id' => $personalQuoteRecord->previous_quote_id,
-                        'pa_id' => $personalQuoteRecord->pa_id,
-                        'other_email_addresses' => $personalQuoteRecord->pet_type_id,
-                        'previous_advisor_id' => $personalQuoteRecord->pet_age_id,
-                        'personal_quote_id' => $personalQuoteRecord->id,
-                    ]);
+                   $bikeRecord->personal_quote_id = $quote->id;
+                   $bikeRecord->save();
                 }
             });
 
         // Fetch data from pet_quote_details table and migrate into personal_quote_details table
         PersonalQuote::join('bike_quote_request', function ($bikeQuoteJoin){
-                $bikeQuoteJoin->on('personal_quotes.uuid','=','bike_quote_request.uuid')
-                    ->andOn('personal_quotes.code','=','bike_quote_request.code');
+                $bikeQuoteJoin->on('personal_quotes.uuid','=','bike_quote_request.uuid');
             })
             ->join('bike_quote_request_detail', 'bike_quote_request.id', '=', 'bike_quote_request_detail.bike_quote_request_id')
             ->groupBy('personal_quotes.uuid')
             ->chunk(100, function ($bikeRequestDetailsRecords){
                 foreach ($bikeRequestDetailsRecords as $bikeRequestDetailsRecord){
-                    PersonalQuoteDetail::firstOrCreate([
-                        'personal_quote_id' => $bikeRequestDetailsRecord->id,
+                    PersonalQuoteDetail::firstOrCreate(['personal_quote_id' => $bikeRequestDetailsRecord->id],[
                         'pa_id' => $bikeRequestDetailsRecord->pa_id,
                         'advisor_assigned_date' => $bikeRequestDetailsRecord->advisor_assigned_date,
                         'advisor_assigned_by_id' => $bikeRequestDetailsRecord->advisor_assigned_by_id,
@@ -236,7 +166,6 @@ class PetBikeMigrationSeeder extends Seeder
                         'utm_campaign' => $bikeRequestDetailsRecord->utm_campaign,
                     ]);
                 }
-
-            });
+        });
     }
 }
