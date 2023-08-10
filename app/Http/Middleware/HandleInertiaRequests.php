@@ -181,7 +181,7 @@ class HandleInertiaRequests extends Middleware
                         ),
                 )
                 ->addIf(
-                    auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering]),
+                    auth()->user()->can(PermissionsEnum::CarRevivalQuoteList),
                     'Car Revival Quotes',
                     '/quotes/carrevival',
                     fn ($s) => $s->attributes(['icon' => 'car'])
