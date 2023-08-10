@@ -531,7 +531,7 @@ class CarQuoteService extends BaseService
                 $title = 'Claim History';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'advisor_id':
                 $title = 'Advisor';
@@ -594,7 +594,7 @@ class CarQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'back_home_license_held_for_id':
                 $title = 'Home country driving license held for';
@@ -603,7 +603,7 @@ class CarQuoteService extends BaseService
                 $title = 'Can you provide no-claims letter from your previous insurers?';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             case 'quote_link':
                 $title = 'Quote Link';
@@ -1410,12 +1410,14 @@ class CarQuoteService extends BaseService
      *
      * @return array|string[]
      */
-    public function exportPlansPdf($quoteType, $data)
+    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
-        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if ($quotePlans == null) {
+            $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        }
 
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];
