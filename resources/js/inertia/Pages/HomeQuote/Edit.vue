@@ -129,7 +129,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.email"
           type="email"
-          label="EMAI*"
+          label="EMAIL*"
           :disabled="true"
           class="w-full"
         />
