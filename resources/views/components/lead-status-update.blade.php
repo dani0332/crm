@@ -134,7 +134,7 @@ use App\Enums\LeadSourceEnum;
                     <input type="hidden" value="{{$lead->advisor_id}}" name="assigned_to_user_id">
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PREMIUM"><b>Lead Status</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="Lead Status"><b>Lead Status</b></label>
                             <div class="col-md-6 col-sm-6">
                                 <select @if(($quoteTypeId == QuoteTypeId::Car && ($lead->quote_status_id == QuoteStatusEnum::TransactionApproved || $lead->quote_status_id == QuoteStatusEnum::Duplicate || $lead->quote_status_id == QuoteStatusEnum::Fake)
                                     && !auth()->user()->hasAnyRole([RolesEnum::LeadPool, RolesEnum::Admin])))
