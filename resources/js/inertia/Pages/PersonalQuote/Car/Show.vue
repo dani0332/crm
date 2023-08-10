@@ -122,6 +122,47 @@ const availablePlansTable = reactive({
 	]
 })
 
+const documentsTable = reactive({
+	columns: [
+		{ text: 'Document Type', value: 'providerName' },
+		{ text: 'Document Name', value: '' },
+		{ text: 'Created At', value: '' },
+		{ text: 'Created By', value: '' },
+		{ text: 'Action', value: '' },
+	]
+})
+
+const notesForCustomer = reactive({
+	columns: [
+		{ text: 'Id', value: '' },
+		{ text: 'Description', value: '' },
+		{ text: 'Created At', value: '' },
+		{ text: 'Created By', value: '' },
+	]
+})
+
+const leadActivities = reactive({
+	columns: [
+		{ text: 'Title', value: '' },
+		{ text: 'Ref-ID', value: '' },
+		{ text: 'Client Name', value: '' },
+		{ text: 'Created By', value: '' },
+	]
+})
+
+const emailStatusTable = reactive({
+	columns: [
+		{ text: 'Email Subject', value: 'providerName' },
+		{ text: 'Email Address', value: '' },
+		{ text: 'Status', value: '' },
+		{ text: 'Reason', value: '' },
+		{ text: 'Template Id', value: '' },
+		{ text: 'Customer Id', value: '' },
+		{ text: 'Created At', value: '' },
+		{ text: 'Updated At', value: '' },
+	]
+})
+
 const availablePlansItems = computed(() => {
 	if (! Array.isArray(page.props.listQuotePlans)) {
 		return [];
@@ -268,7 +309,7 @@ const policyDetailsForm = useForm({
             </Link> -->
 
 					<Link :href="route('car.index')">
-					<x-button size="sm" tag="div">Car List</x-button>
+						<x-button size="sm" tag="div">Car List</x-button>
 					</Link>
 				</div>
 			</div>
@@ -539,188 +580,188 @@ const policyDetailsForm = useForm({
 					</div>
 				</div>
 			</div>
-    </div>
+    	</div>
     
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Payments
-          <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
-        </h3>
-        <x-button v-if="is(rolesEnum.PA) && $page.props.plan && (!can(permissionEnum.ApprovePayments) && can(permissionEnum.PaymentsCreate))" @click.prevent="onAddPaymentModal" size="sm" color="orange">
-          Add Payment
-        </x-button>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="paymentDetailsTable.columns"
-        :items="paymentItems || []"
-        show-index
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-action="item">
-          <div class="flex gap-2">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click.prevent="onEditMember(item)"
-            >
-              Edit
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="memberDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-    </div> 
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-		<div>
-			<h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
-			<x-divider class="mb-4 mt-1" />
-		</div>
-		<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-			<div class="w-full md:w-1/2">
-				<x-textarea
-					v-model="assumptionsForm.cylinder"
-					type="text"
-					label="cylinder"
-					placeholder="cylinder"
-					class="w-full"
-					disabled="true"
-
-				/>
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Payments
+					<x-tag size="sm">{{ payments.length || 0 }}</x-tag>
+				</h3>
+				<x-button v-if="is(rolesEnum.PA) && $page.props.plan && (!can(permissionEnum.ApprovePayments) && can(permissionEnum.PaymentsCreate))" @click.prevent="onAddPaymentModal" size="sm" color="orange">
+					Add Payment
+				</x-button>
 			</div>
-			<div class="w-full md:w-1/2">
-				<x-textarea
-					v-model="assumptionsForm.seat_capacity"
-					type="text"
-					label="Seat Capacity"
-					placeholder="Seat Capacity"
-					class="w-full"
-					disabled="true"
-				/>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="paymentDetailsTable.columns"
+				:items="paymentItems || []"
+				show-index
+				border-cell
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+				<div class="flex gap-2">
+					<x-button
+					size="xs"
+					color="primary"
+					outlined
+					@click.prevent="onEditMember(item)"
+					>
+					Edit
+					</x-button>
+					<x-button
+					size="xs"
+					color="error"
+					outlined
+					@click.prevent="memberDelete(item.id)"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+			</DataTable>
+		</div> 
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div>
+				<h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
+				<x-divider class="mb-4 mt-1" />
 			</div>
-		</div>
-      	<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        	<div class="w-full md:w-1/2">
-				<div class="flex flex-col gap-4">
-					<x-select
-						v-model="assumptionsForm.vehicleType"
-						label="Vehicle Body Type"
-						:options="vehicleTypeOptions"
-						placeholder="Vehicle Body Type"
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
+					<x-textarea
+						v-model="assumptionsForm.cylinder"
+						type="text"
+						label="cylinder"
+						placeholder="cylinder"
+						class="w-full"
+						disabled="true"
+
+					/>
+				</div>
+				<div class="w-full md:w-1/2">
+					<x-textarea
+						v-model="assumptionsForm.seat_capacity"
+						type="text"
+						label="Seat Capacity"
+						placeholder="Seat Capacity"
 						class="w-full"
 						disabled="true"
 					/>
 				</div>
 			</div>
-        <div class="w-full md:w-1/2">
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
 					<div class="flex flex-col gap-4">
 						<x-select
-							v-model="assumptionsForm.is_modified"
-							label="Is Vehicle modified?"
-							:options="isOptions"
-							placeholder="Is Modified"
+							v-model="assumptionsForm.vehicleType"
+							label="Vehicle Body Type"
+							:options="vehicleTypeOptions"
+							placeholder="Vehicle Body Type"
 							class="w-full"
-              disabled="true"
+							disabled="true"
 						/>
 					</div>
 				</div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.is_bank_financed"
-							label="Is Bank Financed"
-							:options="isOptions"
-							placeholder="Is Bank Financed"
-							class="w-full"
-              disabled="true"
-						/>
+			<div class="w-full md:w-1/2">
+						<div class="flex flex-col gap-4">
+							<x-select
+								v-model="assumptionsForm.is_modified"
+								label="Is Vehicle modified?"
+								:options="isOptions"
+								placeholder="Is Modified"
+								class="w-full"
+				disabled="true"
+							/>
+						</div>
 					</div>
-
-				</div>
-        <div class="w-full md:w-1/2">
-					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.is_gcc_standard"
-							label="Is GCC Standard?"
-							:options="isOptions"
-							placeholder="Is GCC Standard"
-							class="w-full"
-              disabled="true"
-						/>
-					</div>
-				</div>
-      </div>
-	</div>
-
-	<div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-			Available Plans
-          <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
-        </h3>
-		<div>
-			<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-				Send OCB Email to Customer
-			</x-button>
-			<x-button @click.prevent="onAddPaymentModal" size="sm" color="emerald" class="mr-2">
-				Download PDF
-			</x-button>
-			<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-				Create Quote
-			</x-button>
-			<x-button @click.prevent="onAddPaymentModal" size="sm" color="emerald" >
-				Copy Link
-			</x-button>
 		</div>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="availablePlansTable.columns"
-        :items="availablePlansItems || []"
-        show-index
-        border-cell
-		fixed-checkbox
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-action="item">
-          <div class="flex gap-2">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click.prevent="onEditMember(item)"
-            >
-              Edit
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="memberDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-    </div> 
+		<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+			<div class="w-full md:w-1/2">
+						<div class="flex flex-col gap-4">
+							<x-select
+								v-model="assumptionsForm.is_bank_financed"
+								label="Is Bank Financed"
+								:options="isOptions"
+								placeholder="Is Bank Financed"
+								class="w-full"
+				disabled="true"
+							/>
+						</div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+					</div>
+			<div class="w-full md:w-1/2">
+						<div class="flex flex-col gap-4">
+							<x-select
+								v-model="assumptionsForm.is_gcc_standard"
+								label="Is GCC Standard?"
+								:options="isOptions"
+								placeholder="Is GCC Standard"
+								class="w-full"
+				disabled="true"
+							/>
+						</div>
+					</div>
+		</div>
+		</div>
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Available Plans
+				<x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
+				</h3>
+				<div>
+					<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Send OCB Email to Customer
+					</x-button>
+					<x-button @click.prevent="onAddPaymentModal" size="sm" color="emerald" class="mr-2">
+						Download PDF
+					</x-button>
+					<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Create Quote
+					</x-button>
+					<x-button @click.prevent="onAddPaymentModal" size="sm" color="emerald" >
+						Copy Link
+					</x-button>
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="availablePlansTable.columns"
+				:items="availablePlansItems || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+				<div class="flex gap-2">
+					<x-button
+					size="xs"
+					color="primary"
+					outlined
+					@click.prevent="onEditMember(item)"
+					>
+					Edit
+					</x-button>
+					<x-button
+					size="xs"
+					color="error"
+					outlined
+					@click.prevent="memberDelete(item.id)"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+			</DataTable>
+		</div> 
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
 				<h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
 				<x-divider class="mb-4 mt-1" />
@@ -733,22 +774,21 @@ const policyDetailsForm = useForm({
 						label="Policy Number"
 						placeholder="Policy Number"
 						class="w-full"
-            disabled="true"
-
+						disabled="true"
 					/>
 				</div>
-        <div class="w-full md:w-1/2">
+				<div class="w-full md:w-1/2">
 					<x-textarea
 						v-model="policyDetailsForm.policy_issuance_date"
 						type="text"
 						label="Issuance Date"
 						placeholder="Issuance Date"
 						class="w-full"
-            disabled="true"
+						disabled="true"
 					/>
 				</div>
 			</div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<x-textarea
 						v-model="policyDetailsForm.policy_start_date"
@@ -756,22 +796,21 @@ const policyDetailsForm = useForm({
 						label="Policy Start Date"
 						placeholder="Policy Start Date"
 						class="w-full"
-            disabled="true"
-
+						disabled="true"
 					/>
 				</div>
-        <div class="w-full md:w-1/2">
+				<div class="w-full md:w-1/2">
 					<x-textarea
 						v-model="policyDetailsForm.previous_policy_expiry_date"
 						type="text"
 						label="Expiry Date"
 						placeholder="Expiry Date"
 						class="w-full"
-            disabled="true"
+						disabled="true"
 					/>
 				</div>
 			</div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 				<div class="w-full md:w-1/2">
 					<x-textarea
 						v-model="policyDetailsForm.premium"
@@ -779,11 +818,54 @@ const policyDetailsForm = useForm({
 						label="premium"
 						placeholder="premium"
 						class="w-full"
-            disabled="true"
-
+						disabled="true"
 					/>
 				</div>
 			</div>
 		</div>
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Documents
+				</h3>
+				<div>
+					<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Copy upload Link
+					</x-button>
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="availablePlansTable.columns"
+				:items="availablePlansItems || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+				<div class="flex gap-2">
+					<x-button
+					size="xs"
+					color="primary"
+					outlined
+					@click.prevent="onEditMember(item)"
+					>
+					Edit
+					</x-button>
+					<x-button
+					size="xs"
+					color="error"
+					outlined
+					@click.prevent="memberDelete(item.id)"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+			</DataTable>
+		</div> 
 	</div>
 </template>

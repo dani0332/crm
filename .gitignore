@@ -4,8 +4,8 @@
 /docker/var/nginx/logs
 /public/storage
 /storage/*.key
-/public/js./inertia.js
-/public/js./vendor.js
+/public/js/inertia.js
+/public/js/vendor.js
 /public/*.json
 /public/css/app.css
 /vendor
