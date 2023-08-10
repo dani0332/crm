@@ -134,8 +134,4 @@ class Payment extends Model
         return $this->hasMany(PaymentStatusLog::class, 'payment_code', 'code')->latest();
     }
 
-    public function insuranceProvider()
-    {
-        return $this->belongsTo(InsuranceProvider::class);
-    }
 }
