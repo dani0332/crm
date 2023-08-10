@@ -102,6 +102,7 @@ class TmLeadController extends Controller
                 isset($request->searchType) && ! empty($request->searchType)
                 && isset($request->tmLeadsStartDate) && ! empty($request->tmLeadsStartDate)
                 && isset($request->tmLeadsEndDate) && ! empty($request->tmLeadsEndDate)
+                && ($request->searchType != 'cdbID' && $request->searchType != 'emailAddress' && $request->searchType != 'phoneNumber')
             ) {
                 if ($request->tmLeadsEndDate >= $request->tmLeadsStartDate) {
                     $tmLeadsDateFrom = Carbon::createFromFormat('Y-m-d', $request->tmLeadsStartDate)->startOfDay()->toDateTimeString();
@@ -206,10 +207,8 @@ class TmLeadController extends Controller
     public function show(TmLead $tmlead)
     {
         $customerCorrectPhoneNo = mapPhoneNumber($tmlead->phone_number);
-        if (Auth::user()->hasRole('TM_ADVISOR')) {
-            if (Auth::user()->id != $tmlead->assigned_to_id) {
-                return redirect()->route('tmleads.index')->with('message', "You don't have access to view this lead");
-            }
+        if (Auth::user()->hasRole('TM_ADVISOR') && Auth::user()->id != $tmlead->assigned_to_id) {
+            return redirect()->route('tmleads.index')->with('message', "You don't have access to view this lead");
         }
 
         $tmLeadStatusCode = TmLeadStatus::where('id', '=', $tmlead->tm_lead_statuses_id)->value('code');

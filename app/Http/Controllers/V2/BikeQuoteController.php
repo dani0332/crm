@@ -25,12 +25,13 @@ class BikeQuoteController extends Controller
     public function index()
     {
         $personalQuotes = BikeQuoteRepository::getData();
-
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -56,7 +57,7 @@ class BikeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Quote created successfully');
+        return redirect('personal-quotes/bike/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
@@ -121,8 +122,8 @@ class BikeQuoteController extends Controller
      */
     public function update($uuid, BikeQuoteRequest $request)
     {
-        $response = BikeQuoteRepository::update($uuid, $request->validated());
+        BikeQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/bike/'.$uuid)->with('message', 'Quote updated successfully');
     }
 }

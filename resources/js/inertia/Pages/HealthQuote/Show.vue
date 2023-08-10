@@ -47,9 +47,12 @@ const dateFormat = date =>
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
-    return number;
+    return number.toLocaleString();
   } else {
-    return number.toFixed(2);
+    return number.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 };
 
@@ -85,7 +88,7 @@ const openDuplicate = () => {
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -213,7 +216,7 @@ const onTeamAssign = () => {
     return;
   }
   router.post(
-    `/quotes/health/healthTeamAssign`,
+    route('healthTeamAssign'),
     {
       modelType: 'Health',
       entityId: page.props.quote.id,
@@ -246,7 +249,7 @@ const onAssignLead = () => {
     return;
   }
   router.post(
-    `/quotes/health/manualLeadAssign`,
+    route('manualLeadAssign', { quoteType: 'Health' }),
     {
       modelType: 'Health',
       entityId: page.props.quote.id,
@@ -342,7 +345,7 @@ const memberForm = useForm({
     : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
-    update_lead_against_member: null
+  update_lead_against_member: null,
 });
 
 function onEditMember(data) {
@@ -457,7 +460,7 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
-      text: 'Base Premium',
+      text: 'Base Price',
       value: 'actualPremium',
     },
     {
@@ -469,7 +472,7 @@ const plansTable = reactive({
       value: 'policyFee',
     },
     {
-      text: 'Total Indicative Premium (with VAT)',
+      text: 'Total Indicative Price (with VAT)',
       value: 'total',
     },
     {
@@ -537,7 +540,7 @@ const onTogglePlans = toggle => {
   ).value;
 
   axios
-    .post('/quotes/health/manual-plan-toggle', {
+    .post(route('manualPlanToggle', { quoteType: 'Health' }), {
       modelType: 'Health',
       planIds: planIds,
       quote_uuid: page.props.quote.uuid,
@@ -610,10 +613,6 @@ const quoteDocumentsTable = reactive({
       text: 'Created By',
       value: 'created_by_name',
     },
-    {
-      text: 'Action',
-      value: 'action',
-    },
   ],
 });
 
@@ -677,7 +676,7 @@ const addActivity = () => {
 
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -964,11 +963,11 @@ onMounted(() => {
           Duplicate Lead
         </x-button>
 
-        <Link href="/quotes/health" preserve-scroll>
+        <Link :href="route('health.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Health List </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link :href="route('health.edit', quote.uuid)">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
@@ -1067,9 +1066,23 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div
+            v-if="hasRole($page.props.rolesEnum.Engineering)"
+            class="grid sm:grid-cols-2"
+          >
+            <dt class="font-medium">ID</dt>
+            <dd>{{ quote.id }}</dd>
+          </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quote.code }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Ref-ID
+                      </label>
+                      <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
@@ -1092,8 +1105,15 @@ onMounted(() => {
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
-            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Parent Ref-ID
+                      </label>
+                      <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">IS ECOMMERCE</dt>
@@ -1205,6 +1225,10 @@ onMounted(() => {
             <dt class="font-medium">DETAILS</dt>
             <dd>{{ quote.details }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Additional Notes</dt>
+            <dd>{{ quote.additional_notes }}</dd>
+          </div>
         </dl>
       </div>
 
@@ -1222,7 +1246,7 @@ onMounted(() => {
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1487,11 +1511,15 @@ onMounted(() => {
             <dt class="font-medium">NETWORK</dt>
             <dd>{{ ecomDetails.network }}</dd>
           </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">TOTAL PRICE (with VAT)</dt>
+            <dd>{{ fixedValue(ecomDetails.priceWithVAT) }}</dd>
+          </div>
         </dl>
       </div>
     </div>
 
-    <!-- <PaymentTable
+    <PaymentTable
       v-if="isBetaUser"
       :payments="payments"
       :can="can"
@@ -1499,7 +1527,7 @@ onMounted(() => {
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
       :quote="quote"
-    /> -->
+    />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>
@@ -1612,7 +1640,7 @@ onMounted(() => {
             </x-button>
           </x-button-group>
 
-          <!-- <x-button
+          <x-button
             v-if="selectedPlans.length > 0"
             size="sm"
             color="emerald"
@@ -1620,16 +1648,16 @@ onMounted(() => {
             :loading="exportLoader"
           >
             Download PDF
-          </x-button> -->
+          </x-button>
 
-          <!-- hide create quote button for rm deployment -->
+          <!-- hide add plan button for rm deployment -->
           <x-button
             size="sm"
             color="primary"
             v-show="false"
             @click.prevent="modals.createPlan = true"
           >
-            Create Quote
+            Add Plan
           </x-button>
 
           <x-button
@@ -1641,6 +1669,14 @@ onMounted(() => {
             "
           >
             Copy Link
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Add Plan
           </x-button>
         </div>
       </div>
@@ -1713,17 +1749,19 @@ onMounted(() => {
         <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
+          :members="membersDetail"
+          :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
         />
       </x-modal>
     </div>
 
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -1807,7 +1845,7 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
-    </div> -->
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

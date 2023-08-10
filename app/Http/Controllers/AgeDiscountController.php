@@ -23,8 +23,6 @@ class AgeDiscountController extends Controller
             return DataTables::of($data)
                 ->addIndexColumn()
                 ->make(true);
-
-            return view('agediscount.view');
         }
 
         return view('agediscount.view');

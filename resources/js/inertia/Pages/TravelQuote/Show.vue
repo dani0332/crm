@@ -40,6 +40,11 @@ const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY');
 };
 
+const dateTimeFormat = date => {
+  if (!date) return '';
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss');
+};
+
 const notification = useNotifications('toast');
 
 const {
@@ -534,11 +539,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Premium',
+      text: 'Actual Price',
       value: 'actualPremium',
     },
     {
-      text: 'Premium with VAT',
+      text: 'Price with VAT',
       value: 'discountPremium',
     },
     {
@@ -968,7 +973,23 @@ onMounted(() => {
             v-for="field in travelFields"
             :key="field"
           >
-            <dt class="font-medium">{{ field.title.toUpperCase() }}</dt>
+              <dt v-if="field.title == 'Ref-ID'">
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          {{ field.title }}
+                      </label>
+                      <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+              </dt>
+              <dt v-else-if="field.title == 'Parent Ref-ID'">
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          {{ field.title }}
+                      </label>
+                      <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+              </dt>
+            <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
         </dl>
@@ -988,7 +1009,7 @@ onMounted(() => {
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1081,7 +1102,7 @@ onMounted(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ ecomDetails.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1125,11 +1146,11 @@ onMounted(() => {
         <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
 
         <template #item-created_at="{ created_at }">
-          {{ dateFormat(created_at).value }}
+          {{ dateTimeFormat(created_at).value }}
         </template>
 
         <template #item-updated_at="{ updated_at }">
-          {{ dateFormat(updated_at).value }}
+          {{ dateTimeFormat(updated_at).value }}
         </template>
 
         <template #item-action="item">
@@ -1271,7 +1292,7 @@ onMounted(() => {
             <x-input
               v-model="policyDetails.premium"
               :disabled="!policyDetails.editMode"
-              label="PREMIUM"
+              label="PRICE"
               :rules="[isRequired, premium]"
               class="w-full"
             />
@@ -1449,7 +1470,15 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <div v-if="listQuotePlans.length > 0">
+      <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
+        <p
+          class="text-center text-primary-600"
+          v-if="typeof listQuotePlans == 'string'"
+        >
+          {{ listQuotePlans?.toUpperCase() }}
+        </p>
+      </div>
+      <div v-else>
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
@@ -1484,14 +1513,6 @@ onMounted(() => {
             </div>
           </template>
         </DataTable>
-      </div>
-      <div v-else>
-        <p
-          class="text-center text-primary-600"
-          v-if="typeof listQuotePlans == 'string'"
-        >
-          {{ listQuotePlans?.toUpperCase() }}
-        </p>
       </div>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>

@@ -55,11 +55,7 @@ const genderOptions = [
 
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.post(`/quotes/business/`, {
-      onSuccess: () => {
-        router.get(`/quotes/business/`);
-      },
-    });
+    quoteForm.post(`/quotes/business/`);
   }
 }
 </script>
@@ -199,7 +195,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.premium"
           type="text"
-          label="PREMIUM"
+          label="PRICE"
           :rules="[emptyOrDecimal]"
           class="w-full"
           :error="quoteForm.errors.premium"

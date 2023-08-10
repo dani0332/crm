@@ -22,12 +22,13 @@ let availableFilters = {
   created_at_start: '',
   created_at_end: '',
   quote_status: [],
-  advisors: [],
+  advisor_id: [],
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
 };
 
+const canExport = ref(false);
 const filters = reactive(availableFilters);
 
 function onSubmit(isValid) {
@@ -66,19 +67,16 @@ function onReset() {
 onMounted(() => {});
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'uuid' },
+  { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
-  { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
-  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'LOST REASON', value: 'lost_reason' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'TYPE OF PET', value: 'type_of_pet' },
   { text: 'BREED OF PET', value: 'breed_of_pet1' },
@@ -90,6 +88,8 @@ const tableHeader = [
   { text: 'HAS INJURY', value: 'has_injury' },
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
+  { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
 ];
 
 const can = permission => useCan(permission);
@@ -111,7 +111,7 @@ const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
     label: advisor.roles[0].name
-      ? advisor.name + '-' + advisor.roles[0]?.name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
   }));
 });
@@ -154,6 +154,27 @@ function onAssignLead(isValid) {
       });
   }
 }
+
+
+const onDataExport = () => {
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'pet');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
+
+
 </script>
 
 <template>
@@ -175,14 +196,21 @@ function onAssignLead(isValid) {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
+          <div>
+              <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+                      Ref-ID
+                  </label>
+                  <template #tooltip> Reference ID </template>
+              </x-tooltip>
+              <x-input
+                  v-model="filters.code"
+                  type="search"
+                  name="code"
+                  class="w-full"
+                  placeholder="Search by Ref-ID"
+              />
+          </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -242,7 +270,7 @@ function onAssignLead(isValid) {
           "
         />
         <ComboBox
-          v-model="filters.advisors"
+          v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptions"
@@ -259,11 +287,33 @@ function onAssignLead(isValid) {
           class="w-full"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+              <x-button
+                  v-if="canExport"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="onDataExport"
+                  class="justify-self-start"
+              >
+                  Export
+              </x-button>
+              <x-tooltip v-else position="right">
+                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+                  <template #tooltip>
+            <span class="font-medium">
+              Created dates are required to export data.
+            </span>
+                  </template>
+              </x-tooltip>
+          </div>
+          <div v-else />
+          <div class="flex justify-self-end gap-3">
+              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+              <x-button size="sm" color="primary" @click.prevent="onReset">
+                  Reset
+              </x-button>
+          </div>
       </div>
     </x-form>
 
@@ -312,7 +362,7 @@ function onAssignLead(isValid) {
     >
       <template #item-uuid="{ code, uuid }">
         <Link
-          v-if="can(permissionsEnum.PetQuotesView)"
+          v-if="can(permissionsEnum.PetQuotesShow)"
           :href="`/personal-quotes/pet/${uuid}`"
           class="text-primary-500 hover:underline"
         >
@@ -322,7 +372,7 @@ function onAssignLead(isValid) {
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">
@@ -331,14 +381,6 @@ function onAssignLead(isValid) {
 
       <template #item-currently_insured_with="{ currently_insured_with }">
         {{ currently_insured_with?.text }}
-      </template>
-
-      <template #item-is_ecommerce="{ is_ecommerce }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
       </template>
 
       <template #item-policy_number="{ pet_quote }">
@@ -353,6 +395,11 @@ function onAssignLead(isValid) {
       <template #item-is_neutered="{ pet_quote }">
         {{ pet_quote?.is_neutered ? 'Yes' : 'No' }}
       </template>
+
+      <template #item-breed_of_pet1="{ pet_quote }">
+        {{ pet_quote?.breed_of_pet1 }}
+     </template>
+
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
       </template>
@@ -370,6 +417,11 @@ function onAssignLead(isValid) {
       </template>
       <template #item-possesion_type="{ pet_quote }">
         {{ pet_quote?.possession_type?.text }}
+      </template>
+      <template #item-is_ecommerce="{ is_ecommerce }">
+        <div class="text-center">
+            {{ is_ecommerce ? 'Yes' : 'No' }}
+        </div>
       </template>
     </DataTable>
 

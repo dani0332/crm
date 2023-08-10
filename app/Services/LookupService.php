@@ -39,7 +39,7 @@ class LookupService extends BaseService
 
     public function getBackHomeLicensed()
     {
-        return UAELicenseHeldFor::isBackHomeActive()->get();
+        return UAELicenseHeldFor::isBackHomeActive()->where('is_active', true)->get();
     }
 
     public function getMemberCategories()
@@ -131,5 +131,10 @@ class LookupService extends BaseService
         })->toArray();
 
         return $paymentOptions;
+    }
+
+    public function getNationalities()
+    {
+        return Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
     }
 }

@@ -166,7 +166,7 @@ const submitpolicyForm = isValid => {
           <x-input
             v-model="policyForm.premium"
             :disabled="!policyForm.editMode"
-            label="Premium"
+            label="Price"
             :rules="[rules.isRequired, rules.premium]"
             class="w-full"
           />

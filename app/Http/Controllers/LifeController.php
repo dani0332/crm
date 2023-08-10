@@ -149,7 +149,6 @@ class LifeController extends Controller
         abort_if(! $quote, 404);
         $quoteType = strtolower($this->genericModel->modelType);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
-        $dropdownSource = $this->lifeQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isRenewalUser = false;

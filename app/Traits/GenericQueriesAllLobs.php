@@ -30,7 +30,7 @@ trait GenericQueriesAllLobs
     public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = $nameSpace.ucwords($quoteType).'Quote';
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
         if (! class_exists($model)) {
             return false;
@@ -56,6 +56,17 @@ trait GenericQueriesAllLobs
         }
 
         return $model::find($id);
+    }
+
+    public function getRepositoryObject($quoteType)
+    {
+        $repository = '\\App\\Repositories\\'.ucwords($quoteType).'QuoteRepository';
+
+        if (! class_exists($repository)) {
+            return false;
+        }
+
+        return $repository;
     }
 
     public function createDuplicateRecord($lob, $parentRecord)

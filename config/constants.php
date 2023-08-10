@@ -7,6 +7,8 @@ return [
     'CENTRAL_API_ENDPOINT' => env('CENTRAL_API_ENDPOINT', ''),
     'CENTRAL_API_TOKEN' => env('CENTRAL_API_TOKEN', ''),
     'CENTRAL_API_TIMEOUT' => env('CENTRAL_API_TIMEOUT', ''),
+    'CENTRAL_API_USER' => env('CENTRAL_API_USER', ''),
+    'CENTRAL_API_PWD' => env('CENTRAL_API_PWD', ''),
     'datetime_format' => env('DATETIME_FORMAT', ''),
     'CLAIMS_UPLOAD_MIME_TYPES' => env('CLAIMS_UPLOAD_MIME_TYPES', ''),
     'valuation_api_route' => env('VALUATION_API_URL'),
@@ -32,9 +34,6 @@ return [
     'KEN_API_PWD' => env('KEN_API_PWD'),
     'MAIL_FROM_ADDRESS_AML' => env('MAIL_FROM_ADDRESS_AML'),
     'MAIL_FROM_NAME_AML' => env('MAIL_FROM_NAME_AML'),
-    // ftc-form-delete schedule on 7th June 2023
-    //    'MAIL_NOTIFICATION_FTC' => env('MAIL_FROM_ADDRESS'),
-    //    'FTC_EMAIL_FORMAT' => 'd F Y g:i A',
     'ECOM_CAR_INSURANCE_QUOTE_URL' => env('ECOM_CAR_INSURANCE_QUOTE_URL'),
     'CONFIRM_EMAIL_LINK' => env('CONFIRM_EMAIL_LINK'),
     'AZURE_STORAGE_CONTAINER' => env('AZURE_STORAGE_CONTAINER'),
@@ -97,4 +96,7 @@ return [
     'CAR_LEAD_ALLOCATION_MASTER_SWITCH' => env('CAR_LEAD_ALLOCATION_MASTER_SWITCH', 0),
     'CAMMY_END_POINT' => env('CAMMY_END_POINT', null),
     'CAMMY_BASIC_AUTH_TOKEN' => env('CAMMY_BASIC_AUTH_TOKEN', null),
+    'DATE_FORMAT_ONLY' => env('DATE_FORMAT_ONLY', null),
+    'CU_DATETIME_FORMAT' => env('CU_DATETIME_FORMAT', null),
+    'TIER_ASSIGNMENT_MASTER_SWITCH' => env('TIER_ASSIGNMENT_MASTER_SWITCH', 0),
 ];

@@ -14,6 +14,7 @@ final class RolesEnum extends Enum
     public const HomeAdvisor = 'HOME_ADVISOR';
     public const LifeAdvisor = 'LIFE_ADVISOR';
     public const TravelAdvisor = 'TRAVEL_ADVISOR';
+    public const TravelManager = 'TRAVEL_MANAGER';
     public const GMAdvisor = 'GM_ADVISOR';
     public const RMAdvisor = 'RM_ADVISOR';
     public const RMManager = 'RM_MANAGER';

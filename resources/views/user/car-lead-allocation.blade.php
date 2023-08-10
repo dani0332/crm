@@ -2,7 +2,7 @@
 @section('title', 'CAR Lead Allocation Management')
 @section('content')
 @php
-    use App\Enums\RolesEnum;
+use App\Enums\RolesEnum;
 @endphp
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <link href="{{ asset('css/bootstrap-toggle.css') }}" rel="stylesheet">
@@ -22,7 +22,7 @@
     let columns = [{
         data: 'userId',
         name: 'userId',
-        orderable: true,
+        orderable: false,
         searchable: false
     },
         {
@@ -34,8 +34,8 @@
         {
             data: 'tiers',
             name: 'tiers',
-            orderable: true,
-            searchable: false
+            orderable: false,
+            searchable: false,
         },
         {
             data: 'quads',
@@ -46,39 +46,32 @@
         {
             data: 'allocationCount',
             name: 'allocationCount',
-            orderable: true,
+            orderable: false,
             searchable: false
         },
         {
             data: 'manualAllocationCount',
             name: 'manualAllocationCount',
-            orderable: true,
+            orderable: false,
             searchable: false
         },
         {
             data: 'autoAllocationCount',
             name: 'autoAllocationCount',
-            orderable: true,
+            orderable: false,
             searchable: false
         },
         {
             data: 'lastAllocation',
             name: 'lastAllocation',
-            orderable: true,
+            orderable: false,
             searchable: false,
-            render: function(data, type, row) {
-                if (data == null) {
-                    return '-';
-                } else {
-                    return new Date(data * 1000).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' '); // add leading zero to hour;
-                }
-            }
         },
         {
             class: 'td-max-cap',
             data: 'maxCapacity',
             name: 'maxCapacity',
-            orderable: true,
+            orderable: false,
             searchable: false
         }
     ];
@@ -87,14 +80,16 @@
         columns.push({
             data: 'isAvailable',
             name: 'isAvailable',
-            orderable: true,
+            orderable: false,
             searchable: false,
             render: function(data, type, row) {
                 if (data == 1) {
-                    var html = `<span class="status-text">Available</span><label class="switch " style="margin-left: 20px;">
-                                                <input type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
-                                                <span class="slider round"></span>
-                                            </label>`;
+                    var html = `
+                    <span class="status-text">Available</span><label class="switch" style="margin-left: 20px;">
+                                <input data-toggle="toggle"  data-size="lg" type="checkbox" data-id="${row.id}" data-aid="${row.userId}" checked="checked" class="chk success" id="is_active" name="is_active">
+                                <span class="slider round"></span>
+                            </label>`;
+
                     return html;
                 } else {
                     var html = `<span class="status-text">UnAvailable</span><label class="switch " style="margin-left: 20px;">
@@ -109,7 +104,7 @@
         columns.push({
             data: 'isAvailable',
             name: 'isAvailable',
-            orderable: true,
+            orderable: false,
             searchable: false,
             render: function(data, type, row) {
                 return '<span class="status-text">'+ ((data == 1) ? 'Available' : 'Unavailable') + '</span>';
@@ -121,15 +116,8 @@
     columns.push({
         data: 'lastLogin',
         name: 'lastLogin',
-        orderable: true,
+        orderable: false,
         searchable: false,
-        render: function(data, type, row) {
-            if (data == null) {
-                return '-';
-            } else {
-                return new Date(data).toLocaleString('en-US', dateOptions).replace(',', '').replace(/ /, ' ');;
-            }
-        }
     })
     @endif
 
@@ -137,87 +125,166 @@
 
 <script>
     var leadAllocationDataTable = null;
-    $(document).ready(function() {
-        setTimeout(function() {
-        window.location.reload(1);
-        }, 80000);
-        var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
-        var indexLastColumn = $(".car_lead_allocation_table").find('tr')[0].cells.length-1;
-        leadAllocationDataTable = $('.car_lead_allocation_table').DataTable({
-                info: true,
-                serverSide: true,
-                searching: false,
-                paging: true,
-                processing: true,
-                lengthChange: false,
-                ordering: false,
-                ajax: config.routes.car_lead_allocation_index_route,
-                columns: columns,
-                drawCallback: function (settings) {
-                    $('.car_lead_allocation_table tr').each(function(){
-                        $(this).find('td:last').attr('style', 'float:left;');
-                    });
-                    if(isAutoAllocationWorking == '0') {
-                        $inputs = $('.chk');
-                        $inputs.each(function(){ $(this).attr('disabled', true); });
-                    }
+        var maxCapKeyValue = [];
+        var userOriginalCaps = [];
+        let refreshTimeout;
+
+        function enableRefresh() {
+            const refreshSwitch = document.getElementById('refresh-switch');
+            if(!refreshSwitch.checked){
+                refreshSwitch.checked = true;
+            }
+            refreshTimeout = setTimeout(function() {
+                window.location.reload(1);
+            }, 80000);
+        }
+
+        function disableRefresh() {
+            const refreshSwitch = document.getElementById('refresh-switch');
+            if(refreshSwitch.checked){
+                refreshSwitch.checked = false;
+            }
+            clearTimeout(refreshTimeout);
+        }
+
+        function revertCap(userId, element)
+        {
+            var maxCap = fetchOriginalCap(userId);
+
+            $(element).parent().removeAttr("style").html(maxCap);
+
+            maxCapKeyValue = maxCapKeyValue.filter(function( obj ) {
+                return parseInt(obj.userId) !== userId;
+            });
+
+            if(maxCapKeyValue.length == 0) {
+                $('#submitBtn').hide();
+                enableRefresh();
+            }
+        }
+
+        function fetchOriginalCap(userId)
+        {
+            var result = userOriginalCaps.filter(obj => {
+                return parseInt(obj.userId) === parseInt(userId)
+            });
+
+            return result[0].maxCap;
+        }
+
+        $(document).ready(function() {
+
+            const refreshSwitch = document.getElementById('refresh-switch');
+
+            refreshSwitch.addEventListener('change', function() {
+                if (refreshSwitch.checked) {
+                    enableRefresh();
+                } else {
+                    disableRefresh();
                 }
             });
 
-            @if(auth()->user()->hasRole(RolesEnum::LeadPool))
-                $('body').on('dblclick', 'table:first td.td-max-cap', function() {
-                    var maxCapValue = parseInt($(this).text());
-                    if(maxCapValue !== NaN){
-                        $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
-                    }else{
-                        $(this).html(`<input type="text" class="form-control" value="0" />`);
+            enableRefresh();
+
+            var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
+            var indexLastColumn = $(".car_lead_allocation_table").find('tr')[0].cells.length-1;
+            leadAllocationDataTable = $('.car_lead_allocation_table').DataTable({
+                    info: true,
+                    serverSide: true,
+                    searching: false,
+                    paging: false,
+                    processing: true,
+                    lengthChange: false,
+                    ordering: true,
+                    ajax: config.routes.car_lead_allocation_index_route,
+                    columns: columns,
+                    drawCallback: function (settings) {
+                        $('.car_lead_allocation_table tr').each(function(){
+                            $(this).find('td:last').attr('style', 'float:left;');
+                        });
+                        if(isAutoAllocationWorking == '0') {
+                            $inputs = $('.chk');
+                            $inputs.each(function(){ $(this).attr('disabled', true); });
+                        }
+                    },
+                    initComplete :function( settings, json){
+                        json.data.forEach(element => {
+                            userOriginalCaps.push({
+                                userId: element.userId,
+                                maxCap: element.maxCapacity,
+                            });
+                        });
                     }
-                    $(this).focusout(function() {
-                        var activeElement = $(this);
-                        var maxCap = parseInt($(this).find('input').val());
-                        if(maxCap < -1 || maxCap == 0){
-                            alert('Please enter valid value for max capacity');
-                            leadAllocationDataTable.draw();
-                            return false;
-                        }else{
-                            var aid = $(this).next().find('input').attr('data-aid');
-                            var id = $(this).next().find('input').attr('data-id');
-                            var data = {
-                                'max_cap': maxCap,
-                                'aid': aid,
-                                'id': id,
-                                '_token': $('meta[name="csrf-token"]').attr('content')
-                            };
+                });
+
+                $('#submitBtn').on('click', function(){
+                    if(maxCapKeyValue.length > 0){
+
+                        var data = {
+                                    'max_cap': maxCapKeyValue,
+                                    '_token': $('meta[name="csrf-token"]').attr('content')
+                                };
                             $.ajax({
-                                url: '/lead-allocation/updateAvailability',
+                                url: '/lead-allocation/update-cap',
                                 type: 'POST',
                                 data: data,
                                 success: function(data) {
-                                    $(activeElement).html(maxCap);
+                                    window.location.reload(1);
                                 }
                             });
-                        }
-
-                    });
-                    $(this).focus();
-                    $(this).blur(endEdition);
+                    }
                 });
-            @endif
 
-            function endEdition() {
-                var el = $(this);
-                myTable.cell(el).invalidate().draw();
-                el.attr('contenteditable', 'false');
-                el.off('blur', endEdition);
-            }
-    });
-    function changeAvailabilityInputs(ischecked){
-        $inputs = $('.chk');
-        $inputs.each(function(){
-            ischecked ? $(this).attr('disabled', false) : $(this).attr('disabled', true);
+                $('body').on('dblclick', 'table:first td.td-max-cap', function() {
+                        var maxCapValue = parseInt($(this).text());
+                        if(maxCapValue !== NaN){
+                            $(this).html(`<input type="text" class="form-control" value="${maxCapValue}" />`);
+                        }else{
+                            $(this).html(`<input type="text" class="form-control" value="0" />`);
+                        }
+                        $(this).focusout(function() {
+                            var activeElement = $(this);
+                            var maxCap = parseInt($(this).find('input').val());
+                            if(!maxCap || maxCap == 0 ){
+                                $(activeElement).html(maxCapValue);
+                                if(maxCapKeyValue.length > 0 ) {
+                                    disableRefresh();
+                                }else{
+                                    enableRefresh();
+                                    $(activeElement).html(maxCapValue);
+                                    $('#submitBtn').hide();
+                                    $(activeElement).unbind('focusout');
+                                }
+                                return false;
+                            } else {
+                                var userId = $(this).next().find('input').attr('data-aid');
+                                var id = $(this).next().find('input').attr('data-id');
+                                var originalMaxCap = fetchOriginalCap(userId);
+                                if(originalMaxCap != maxCap){
+                                    maxCapKeyValue.push({
+                                        'userId' : $(this).next().find('input').attr('data-aid'),
+                                        'maxCap' : maxCap
+                                    });
+                                    disableRefresh();
+                                    $('#submitBtn').show();
+                                    $(activeElement).html('<label>'+maxCap+'</label><span style="margin-left:25px;" onclick="revertCap('+userId+', this)"><i class="fa fa-undo" aria-hidden="true"></i></span>');
+                                    $(activeElement).attr('style', 'border: 2px solid #facb197d;color:back;font-weight:900;background-color:#facb197d;');
+                                    $(activeElement).unbind('focusout');
+                                }else{
+                                    (activeElement).html(maxCapValue);
+                                }
+
+                            }
+                        });
+                    });
         });
-    }
-    $(document).on("change", "input:checkbox.chk", function() {
+        function changeAvailabilityInputs(ischecked){
+            $inputs = $('.chk');
+            $inputs.each(function(){
+                ischecked ? $(this).attr('disabled', false) : $(this).attr('disabled', true);
+            });
+        }
+        $(document).on("change", "input:checkbox.chk", function() {
             var ischecked = $(this).is(':checked');
             if(ischecked){
                 $('#availableUsers').text(parseInt($('#availableUsers').text())+1);
@@ -234,7 +301,7 @@
                 $(this).addClass('danger');
             }
             $.ajax({
-                url: '/lead-allocation/updateAvailability',
+                url: '/lead-allocation/update-availability',
                 type: 'POST',
                 data: {
                     'aid': $(this).data('aid'),
@@ -248,7 +315,6 @@
                 }
             });
         });
-
         $(document).on("change", "input:checkbox.carLeadSwitch", function() {
             if(confirm("Are you sure you want to change Car Lead Allocation Status?")){
                 var ischecked = $(this).is(':checked');
@@ -267,7 +333,6 @@
                 return false;
             }
         });
-
         $(document).on("change", "input:checkbox.carRenewalLeadSwitch", function() {
             if(confirm("Are you sure you want to change Renewal Leads Assignment Status?")){
                 var ischecked = $(this).is(':checked');
@@ -301,35 +366,41 @@
             }
         });
 </script>
-
-
 <div class="row">
     <div class="col-md-12 col-sm-12 ">
         <div class="x_panel">
             <div class="x_title">
 
                 @if(Auth::user()->hasRole(RolesEnum::Admin))
-                    <h2>Car Lead Allocation Management</h2>
-                    <span class="status-text"></span>
-                    <label class="switch "
-                        style="margin-left: 20px;float: left;margin-top: 5px;">
-                        <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
-                            class="carLeadSwitch success" id="jobSwitch" name="jobSwitch">
-                        <span class="slider round"></span>
-                    </label>
+                <h2>Car Lead Allocation Management</h2>
+                <span class="status-text"></span>
+                <label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
+                    <input type="checkbox" @if($isAutoAllocationWorking=='1' ) checked="checked" @endif
+                        class="carLeadSwitch success" id="jobSwitch" name="jobSwitch">
+                    <span class="slider round"></span>
+                </label>
                 @endif
 
 
                 @if(Auth::user()->hasRole(RolesEnum::LeadPool) || Auth::user()->hasRole(RolesEnum::Admin))
-                    <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
-                    <span class="status-text"></span>
-                    <label class="switch "
-                        style="margin-left: 20px;float: left;margin-top: 5px;">
-                        <input type="checkbox" @if($isFIFO=='1' ) checked="checked" @endif
-                            class="carLeadFIFOSwitch success">
-                        <span class="slider round"></span>
-                    </label>
+                <h2 style="margin-left:  80px !important">Pickup Sequence : FIFO</h2>
+                <span class="status-text"></span>
+                <label class="switch " style="margin-left: 20px;float: left;margin-top: 5px;">
+                    <input type="checkbox" @if($isFIFO=='1' ) checked="checked" @endif
+                        class="carLeadFIFOSwitch success">
+                    <span class="slider round"></span>
+                </label>
                 @endif
+
+                @if(Auth::user()->hasRole(RolesEnum::LeadPool) || Auth::user()->hasRole(RolesEnum::Admin))
+                <h2 style="margin-left:  80px !important">Auto Refresh : </h2>
+                <span class="status-text"></span>
+                <label class="switch" style="margin-left: 20px;float: left;margin-top: 5px;">
+                    <input id="refresh-switch" type="checkbox" checked="checked" class="success">
+                    <span class="slider round"></span>
+                </label>
+                @endif
+
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -354,25 +425,11 @@
                         <b><span style="color: black;">{{$totalAssignedLeadCount}}</span></b>
                     </div>
                     <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #3015ca;    margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Total Advisors</span>
-                        <br />
-                        <b><span style="color: black;">{{ $unAvailableUsers + $availableUsers}}</span></b>
-                    </div>
-                    <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
                         <span style="font-size: 21px">Available / UnAvailable</span>
                         <br />
                         <b><span style="color: black;"><label id="availableUsers">{{$availableUsers}} </label> /
                                 <label id="UnavailableUsers">{{$unAvailableUsers}}</label></span></b>
-                    </div>
-                </div>
-                <div class="col-md-12" style="margin-left:8px;">
-                    <div class="col-md-3"
-                        style="border-radius: 10px;float: left;border-left: 3px solid #A1C86B;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 250px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
-                        <span style="font-size: 21px">Total Leads Today </span>
-                        <br />
-                        <b><span style="color: black;">{{ $todayTotalLeadCount}}</span></b>
                     </div>
                     <div class="col-md-3"
                         style="border-radius: 10px;float: left;border-left: 3px solid #facb19; margin-left: 70px;margin-bottom: 50px;font-size: 26px;background: whitesmoke;width: 350px;height: 120px;padding-left: 15px;padding-top: 18px;text-align:center;">
@@ -381,23 +438,30 @@
                         <b><span style="color: black;">{{ $todayTotalUnAssignedLeadCount}}</span></b>
                     </div>
                 </div>
-                <table class="table table-striped jambo_table  car_lead_allocation_table" style="width:100%">
+                <div>
+                    <button id="submitBtn" style="display: none;float: right;margin-right: 18px;" type="button"
+                        class="btn btn-success">Submit
+                        Cap Changes</button>
+                </div>
+                <table class="table table-striped jambo_table car_lead_allocation_table" style="width:100%">
                     <thead>
                         <tr>
-                            <th>User Id</th>
-                            <th>Name</th>
-                            <th>Tiers</th>
-                            <th>Quads</th>
-                            <th>Total Assigned</th>
-                            <th>Manual Assigned</th>
-                            <th>Auto Assigned</th>
-                            <th>Last Allocation</th>
-                            <th>Max Cap Limit <i class="fa fa-info-circle" id="tooltip" data-toggle="tooltip"
-                                    data-placement="top" title="For Unlimited Capactiy Add ( -1 )"></i>
+                            <th style="width: 15px;">ID</th>
+                            <th style="width: 90px;">Name</th>
+                            <th style="width: 200px;">Tiers</th>
+                            <th style="width: 55px;">Quads</th>
+                            <th style="width: 50px;">Total Assigned</th>
+                            <th style="width: 50px;">Manual Assigned</th>
+                            <th style="width: 50px;">Auto Assigned</th>
+                            <th style="width: 130px;">Last Allocation</th>
+                            <th style="width: 115px;">Max Cap Limit <i class="fa fa-info-circle" id="tooltip"
+                                    data-toggle="tooltip" data-placement="top"
+                                    title="For Unlimited Capactiy Add ( -1 )"></i>
                             </th>
-                            <th>Status</th>
-                            @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager, RolesEnum::LeadPool]))
-                                <th>Last Login</th>
+                            <th style="width: 150px;">Status</th>
+                            @if(auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarDeputyManager,
+                            RolesEnum::LeadPool]))
+                            <th style="width: 130px;">Last Login</th>
                             @endif
                         </tr>
                     </thead>

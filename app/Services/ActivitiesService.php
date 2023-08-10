@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\QuoteTypeId;
 use App\Models\Activities;
 use App\Models\QuoteStatus;
-use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -68,7 +67,6 @@ class ActivitiesService extends BaseService
                     $activities = $activities->whereBetween('due_date', [Carbon::now()->startOfMonth()->startOfDay()->toDateTimeString(), Carbon::now()->endOfMonth()->endOfDay()->toDateTimeString()]);
                     break;
                 default:
-                    $activities = $activities;
                     break;
             }
         }
@@ -78,9 +76,16 @@ class ActivitiesService extends BaseService
         if (isset($request->status) && $request->status != '') {
             $activities = $activities->where('status', $request->status);
         }
-        $rawActivities = $activities->get()->sortBy('status');
-        foreach ($rawActivities as $act) {
-            $act->assignee_name = User::where('id', $act->assignee_id)->first()->name;
+        $rawActivities = $activities->select(
+            'activities.id as id',
+            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
+        )->get()->sortBy('status');
+
+        foreach ($rawActivities as $activity) {
+            $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+            $dueDate = Carbon::createFromFormat($dateFormat, $activity->due_date);
+            $now = now()->format($dateFormat);
+            $activity->is_overdue = $dueDate->lt($now);
         }
 
         return $rawActivities;
@@ -147,10 +152,16 @@ class ActivitiesService extends BaseService
             case 'business':
                 $quoteTypeId = QuoteTypeId::Business;
                 break;
-            default:
-                break;
             case 'pet':
                 $quoteTypeId = QuoteTypeId::Pet;
+                break;
+            case 'cycle':
+                $quoteTypeId = QuoteTypeId::Cycle;
+                break;
+            case 'jetski':
+                $quoteTypeId = QuoteTypeId::Jetski;
+                break;
+            default:
                 break;
         }
 
@@ -173,7 +184,6 @@ class ActivitiesService extends BaseService
                 $activities = $activities->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()])->orWhereBetween('updated_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
                 break;
             default:
-                $activities = $activities;
                 break;
         }
     }
@@ -182,7 +192,7 @@ class ActivitiesService extends BaseService
     {
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        $activities = Activities::whereIn('assignee_id', $subOrdinateIds);
+        $activities = Activities::leftJoin('users', 'users.id', 'activities.assignee_id')->whereIn('assignee_id', $subOrdinateIds);
 
         return $activities;
     }

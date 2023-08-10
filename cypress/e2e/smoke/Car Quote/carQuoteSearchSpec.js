@@ -9,13 +9,13 @@ describe('Car qoutes', () => {
   const carLeadPage = new CarLeadPage()
 
   beforeEach(() => {
-    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+    cy.loginByCookies()
     cy.runRoutes()
   })
 
   it('Should search car quote using different methods', () => {
     cy.visit('/quotes/car')
-    //Search view using CDB ID
+    //Search view using Ref ID
     carLeadPage.searchUsingCDBID(carLeadData.carLeadData.cdbId)
     carLeadPage.getSearchButton()
     carLeadPage.getResetButton()

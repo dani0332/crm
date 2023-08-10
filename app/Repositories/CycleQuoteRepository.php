@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
@@ -42,10 +43,11 @@ class CycleQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id,
+            'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
-        info('bikeQuote:'.json_encode($quoteData));
+        info('cycleQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
@@ -53,12 +55,21 @@ class CycleQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($forExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        $query = $this->byQuoteTypeCode(QuoteTypes::CYCLE)->with([
+            'quoteStatus',
+            'currentlyInsuredWith',
+            'advisor',
+        ])
+            ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
             ->filter()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 
     /**
@@ -102,10 +113,15 @@ class CycleQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
             ->where($column, $value)
-            ->with(['cycleQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'cycleQuote.yearOfManufacture',
+                'advisor',
+                'nationality',
+                'quoteDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                }])->firstOrFail();
     }
 }

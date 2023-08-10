@@ -1,11 +1,19 @@
 <script setup>
+import LeadAssignment from "../PersonalQuote/Partials/LeadAssignment.vue";
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+    quoteType: {
+        type: String,
+        default: 'cycle',
+    }
 });
 
 const page = usePage();
+const notification = useToast();
+const { isRequired } = useRules();
 const loader = reactive({
   table: false,
   export: false,
@@ -27,6 +35,15 @@ let availableFilters = {
 };
 
 const filters = reactive(availableFilters);
+const quotesSelected = ref([]);
+const canExport = ref(false);
+
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -74,13 +91,15 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+    if (hasRole(rolesEnum.CycleAdvisor)) {
+        quotesSelected.value = null;
+    }
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'uuid' },
+  { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -88,13 +107,33 @@ const tableHeader = [
   { text: 'PREMIUM', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
-  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
 const can = permission => useCan(permission);
 const canAny = permissions => useCanAny(permissions);
 const permissionsEnum = page.props.permissionsEnum;
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
+const onDataExport = () => {
+  const data = useObjToUrl(filters);
+  const url = route('data-extraction', 'cycle');
+  window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+watch(
+  () => filters,
+  () => {
+    if (filters.created_at_start && filters.created_at_end) {
+      canExport.value = true;
+    } else {
+      canExport.value = false;
+    }
+  },
+  { deep: true, immediate: true },
+);
 
 </script>
 
@@ -112,14 +151,21 @@ const permissionsEnum = page.props.permissionsEnum;
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
+          <div>
+              <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+                      Ref-ID
+                  </label>
+                  <template #tooltip> Reference ID </template>
+              </x-tooltip>
+              <x-input
+                  v-model="filters.code"
+                  type="search"
+                  name="code"
+                  class="w-full"
+                  placeholder="Search by Ref-ID"
+              />
+          </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -211,15 +257,47 @@ const permissionsEnum = page.props.permissionsEnum;
           class="w-full"
         />
       </div>
-      <div class="flex justify-end gap-3 mb-4">
-        <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-        <x-button size="sm" color="primary" @click.prevent="onReset">
-          Reset
-        </x-button>
+      <div class="flex justify-between gap-3 mb-4 mt-1">
+          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+              <x-button
+                  v-if="canExport"
+                  size="sm"
+                  color="emerald"
+                  @click.prevent="onDataExport"
+                  class="justify-self-start"
+              >
+                  Export
+              </x-button>
+              <x-tooltip v-else position="right">
+                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+                  <template #tooltip>
+            <span class="font-medium">
+              Created dates are required to export data.
+            </span>
+                  </template>
+              </x-tooltip>
+          </div>
+          <div v-else />
+          <div class="flex justify-self-end gap-3">
+              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+              <x-button size="sm" color="primary" @click.prevent="onReset">
+                  Reset
+              </x-button>
+          </div>
       </div>
     </x-form>
 
+      <Transition name="fade" >
+          <div v-if="quotesSelected?.length > 0" class="mb-4">
+              <LeadAssignment
+                  :selected="quotesSelected.map(e => e.id)"
+                  :advisors="advisorOptions"
+                  :quoteType="quoteType"
+              />
+          </div>
+      </Transition>
     <DataTable
+        v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -240,15 +318,11 @@ const permissionsEnum = page.props.permissionsEnum;
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
-      </template>
-
-      <template #item-currently_insured_with="{ currently_insured_with }">
-        {{ currently_insured_with?.text }}
       </template>
 
       <template #item-is_ecommerce="{ is_ecommerce }">

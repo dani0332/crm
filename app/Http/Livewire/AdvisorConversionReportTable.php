@@ -257,31 +257,31 @@ class AdvisorConversionReportTable extends DataTableComponent
         if (! auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
             array_push($filters, MultiSelectFilter::make('Lead Source')
                 ->options($this->leadSources)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.source', $value);
-            }));
+                    $builder->whereIn('car_quote_request.source', $value);
+                }));
 
             array_push($filters, MultiSelectFilter::make('Teams')
                 ->config([
                     'placeholder' => 'SELECT ALL TEAMS',
                 ])
                 ->options($this->teams)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('users.id', function ($query) use ($value) {
-                    $query->distinct()
-                        ->select('users.id')
-                        ->from('users')
-                        ->join('user_team', 'user_team.user_id', 'users.id')
-                        ->join('teams', 'teams.id', 'user_team.team_id')
-                        ->whereIn('teams.id', $value);
-                });
-            }));
+                    $builder->whereIn('users.id', function ($query) use ($value) {
+                        $query->distinct()
+                            ->select('users.id')
+                            ->from('users')
+                            ->join('user_team', 'user_team.user_id', 'users.id')
+                            ->join('teams', 'teams.id', 'user_team.team_id')
+                            ->whereIn('teams.id', $value);
+                    });
+                }));
 
             array_push($filters, MultiSelectFilter::make('Advisors')
                 ->config([
                     'placeholder' => 'SELECT ALL ADVISORS',
                 ])
                 ->options($this->advisors)->filter(function (Builder $builder, $value) {
-                $builder->whereIn('car_quote_request.advisor_id', $value);
-            }));
+                    $builder->whereIn('car_quote_request.advisor_id', $value);
+                }));
         }
 
         return $filters;

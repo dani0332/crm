@@ -1,4 +1,4 @@
-+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -249,6 +249,7 @@
 
 @php
 
+
     $websitURL = config('constants.AFIA_WEBSITE_DOMAIN');
     $plans = [];
 
@@ -304,7 +305,14 @@
         $plans[$quotePlan->id] = $quotePlan;
     }
 
-    $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+    $plans = collect($plans);
+
+    if(!isset($quotePlans->isDataSorted)) {
+        $plans->sortByDesc('isRenewal');
+    }
+
+    $planIds = $plans->pluck('id')->toArray();
+
 
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
@@ -318,7 +326,7 @@
         ["code" => "emergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => ["inclusion", "exclusion"]],
         ["code" => "personalBelongings", "title" => "Personal belongings", "type" => ["inclusion", "exclusion"]],
         ["code" => "omanCover", "title" => "Oman Cover (Orange card not Included)", "type" => ["inclusion", "exclusion"]],//also exists in addons, discussed with mujeeb to show from include/exclusion
-        ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => "roadSideAssistance"],
+        ["code" => "offRoadCover", "title" => "Off-road Cover", "type" => ["addons", "inclusion", "inclusion", "roadSideAssistance"]],
         ["code" => "guaranteedRepairs", "title" => "Guaranteed Repairs", "type" => ["inclusion", "exclusion"]],
         ["code" => "breakdownCover", "title" => "24 Hour Accident and Breakdown Recovery", "type" => "addons"],
         ["code" => "ambulanceCover", "title" => "Ambulance Cover", "type" => ["inclusion", "exclusion"]],
@@ -328,7 +336,7 @@
         ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
         ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
         ["code" => "spacer"],
-        ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
@@ -343,7 +351,7 @@
 
 @endphp
 
-<img src="{{public_path('images/quote_plans_pages/P1-1.png')}}" class="full-page-image" />
+<img src="{{public_path('images/quote_plans_pages/P1-1.jpg')}}" class="full-page-image" />
 
 <footer>
     <table class="tbl-footer">
@@ -520,7 +528,7 @@
                                     @else
                                         {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
                                     @endif
-                                    
+
                                 @elseif($feature['type'] == 'prop')
 
                                     {!!  $plans[$planId]->{$feature['code']} !!}

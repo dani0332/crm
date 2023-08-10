@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
@@ -45,7 +46,8 @@ class JetskiQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id,
+            'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         info('JetSki Quote Create :'.json_encode($quoteData));
@@ -106,11 +108,18 @@ class JetskiQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($forExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
+        $query = $this->byQuoteTypeCode(QuoteTypes::JETSKI)->with([
+            'quoteStatus',
+            'currentlyInsuredWith',
+            'advisor',
+        ])
             ->filter()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
+
 }

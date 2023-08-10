@@ -5,7 +5,9 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\OCBEmailRequest;
+use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
+use App\Models\CarQuote;
 use App\Services\CarQuoteService;
 use App\Services\HealthQuoteService;
 
@@ -45,6 +47,15 @@ class GenericLobController extends Controller
     {
         dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
 
+        $this->dispatchCarRenewalEmail($OCBEmailRequest->quoteUuId);
+
         return response()->json(['message' => 'OCB Email Job dispatched against UUID: '.$OCBEmailRequest->quoteUuId]);
+    }
+
+    public function dispatchCarRenewalEmail(string $uuid)
+    {
+        $lead = CarQuote::where('uuid', $uuid)->first();
+
+        dispatch(new CarRenewalEmailJob($lead));
     }
 }

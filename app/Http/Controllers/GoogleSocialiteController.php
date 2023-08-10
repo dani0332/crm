@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Enums\RolesEnum;
 use App\Models\User;
+use Exception;
 use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\InvalidStateException;
 
 class GoogleSocialiteController extends Controller
 {
@@ -27,8 +27,8 @@ class GoogleSocialiteController extends Controller
     public function handleCallback()
     {
         try {
-            $socialUser = Socialite::driver(config('constants.social_driver'))->stateless()->user();
-        } catch (InvalidStateException $exception) {
+            $socialUser = Socialite::driver(config('constants.social_driver'))->user();
+        } catch (Exception $exception) {
             return redirect()->route('login')->with('status', 'Google login failed. Please try again.');
         }
 
@@ -38,7 +38,8 @@ class GoogleSocialiteController extends Controller
             return redirect()->route('login')->with('status', 'You are not authorized to login. Please contact admin.');
         }
 
-        auth()->login($requestingUser);
+        $remember = in_array($requestingUser->email, getAutomationUser()) ? true : false;
+        auth()->login($requestingUser, $remember);
 
         $requestingUser->last_login = now();
         $requestingUser->save();
@@ -47,6 +48,6 @@ class GoogleSocialiteController extends Controller
             return redirect()->intended('/quotes/car');
         }
 
-        return redirect()->intended('/leadsearch');
+        return redirect()->intended('/home');
     }
 }

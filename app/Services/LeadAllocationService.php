@@ -11,7 +11,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
-use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -86,6 +85,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
+
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -112,6 +112,7 @@ class LeadAllocationService extends BaseService
             if (isset($isAvailable)) {
                 $leadAllocation->is_available = $isAvailable;
             }
+
             $leadAllocation->save();
             DB::commit();
         } catch (\Exception $e) {
@@ -155,10 +156,9 @@ class LeadAllocationService extends BaseService
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
 
-                if (str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
+                if (str_starts_with($lead->code, 'CAR-')) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
-
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
@@ -258,7 +258,7 @@ class LeadAllocationService extends BaseService
             $byPassUsersForAssignment = $this->getAppStorageValueByKey(ApplicationStorageEnums::HEALTH_MANUAL_ASSIGNMENT_USER_BYPASS);
 
             if (in_array($advisor->email, explode(',', $byPassUsersForAssignment))) {
-            return true;
+                return true;
             }
 
             info('checkIfAdvisorCanTakeLead -- started');
@@ -475,17 +475,6 @@ class LeadAllocationService extends BaseService
             foreach ($carUnAllocatedLead as $carLead) {
                 info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
 
-                if ($this->checkIfLeadIsRenewal($carLead)) {
-                    info('Renewal found against quote Id : '.$carLead->uuid);
-
-                    if (! $carLead->is_renewal_tier_email_sent) {
-                        info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
-
-                        CarRenewalEmailJob::dispatch($carLead);
-                    }
-
-                    continue; // since we found renewal against current lead we will skip advisor assignment
-                }
                 info('trying to check tier against the current lead : '.$carLead->code);
 
                 // we will find tier as per the value of the lead and if already assigned then we will simply find the tier,
@@ -541,7 +530,7 @@ class LeadAllocationService extends BaseService
                             $carQuote->advisor_id = $userId;
                             $carQuote->tier_id = $selectedTier->id;
                             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-
+                            $carQuote->auto_assigned = true;
                             if ($carQuote->quote_batch_id == null) {
                                 $quoteBatch = QuoteBatches::latest()->first();
                                 info('About to assign quote batch with id : '.$quoteBatch->id.' and with name : '.$quoteBatch->name.' to quote : '.$carLead->uuid);
@@ -592,9 +581,10 @@ class LeadAllocationService extends BaseService
     public function buildEmailDateForLMSIntroEmail($userId, $carQuote)
     {
         $user = User::where('id', $userId)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $emailData = (object) [
             'customerEmail' => $carQuote->email,
-            'documentUrl' => ['https://insurancemarket.blob.core.windows.net/imcrmdev/myAlfred%20Offers%20Flyer_Jan2023.pdf'], // this will be replace with a generic URL once document upload section is done
+            'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
@@ -651,7 +641,7 @@ class LeadAllocationService extends BaseService
         return CarQuote::whereNull('advisor_id')
             ->where('is_renewal_tier_email_sent', 0) // this check make sure that Tier R leads are excluded bcz we only send email for Tier R and not assign advisor
             ->whereBetween('created_at', [$from, $to])
-            ->where('quote_status_id', '!=', QuoteStatusEnum::Fake) // excluding all Fake leads
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]) // excluding all Fake leads
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD]) // leads created from IMCRM are excluded because they get assigned to the creator right away
             ->orderBy('created_at', $isFIFO ? 'asc' : 'desc') // pickup order
             ->skip(0)->take($carLeadPickupLimit)->get();
@@ -761,10 +751,10 @@ class LeadAllocationService extends BaseService
 
         info('tiers query is : '.$tiers->toSql().' with binding of : '.json_encode($tiers->getBindings()));
 
-        info('First tier after filtration is : '.json_encode($tiers->first()->name));
-
         $tiers = $tiers->get();
         if ($tiers != null) {
+            info('First tier after filtration is : '.json_encode($tiers->first()->name));
+
             return $tiers->first();
         }
 

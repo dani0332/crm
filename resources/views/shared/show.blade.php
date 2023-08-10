@@ -76,6 +76,11 @@ use App\Enums\GenericRequestEnum;
       });
     });
 </script>
+@php
+    $updatedTitles = [
+        'premium' => 'price'
+    ];
+@endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             @if ($model->modelType == quoteTypeCode::Car)
@@ -294,11 +299,18 @@ use App\Enums\GenericRequestEnum;
                             @endif
                             <div class="col">
                                 @if (strpos($value, 'title'))
-                                    <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
+                                    @php
+                                        $textDecorations = $tooltip = "";
+                                        if(in_array(strtoupper($customTitles[$property]), ['REF-ID', 'PARENT REF-ID'])){
+                                            $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                                            $tooltip = strtoupper($customTitles[$property]) == 'REF-ID' ? 'Reference ID' : 'Parent Reference-ID';
+                                        }
+                                    @endphp
+                                    <label style="{{$textDecorations}}" class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
+                                        for="Status Description"><b>{{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property]) ) }}</b></label>
                                 @else
                                     <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
+                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper((array_key_exists(strtolower($property), $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}</b></label>
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
@@ -464,7 +476,9 @@ use App\Enums\GenericRequestEnum;
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" />
+
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -530,15 +544,6 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
-        <x-health-quote-ecom-details :data="$ecomDetails" />
-        <x-health-quote-plans
-            :record="$record"
-            :listQuotePlans="$listQuotePlans"
-            :uuidModal="$record->uuid"
-            :quoteRequestId="$record->id"
-            :ecomHealthInsuranceQuoteUrl="$ecomHealthInsuranceQuoteUrl. $record->uuid" />
-            <x-health-quote-members-detail :members="$membersDetail" />
-        <x-health-quote-members-modal :categories="$memberCategories" :salaries="$salaryBands" :id="$record->id" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
             <x-quote-documents :displaySendPolicyButton="$displaySendPolicyButton" :record="$record" :quoteDocuments="$quoteDocuments" :quoteType="$quoteType" />
@@ -559,20 +564,21 @@ use App\Enums\GenericRequestEnum;
                 </div>
                 <div class="x_content">
                     <div id="lead-history-div">
-                        <table id="leadhistorydatatable" class="table table-striped jambo_table" style="width:100%">
+                        <table id="quoteStatusLogsTable" class="table table-striped jambo_table" style="width:100%">
                             <thead>
-                                <tr>
-                                    <th>Modified At</th>
-                                    <th>Modified By</th>
-                                    <th>Notes</th>
-                                    <th>Lead Status</th>
-                                </tr>
+                            <tr>
+                                <th>Modified At</th>
+                                <th>Modified By</th>
+                                <th>Lead Status From</th>
+                                <th>Lead Status To</th>
+                                <th>Notes</th>
+                            </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="5" style="text-align: center"> <button id="loadHistoryDataBtn"
-                                            class="btn btn-success btn-sm">Load History Data</button></td>
-                                </tr>
+                            <tr>
+                                <td colspan="5" style="text-align: center"> <button id="loadQuoteStatusLog" data-quote-type-id="{{$quoteTypeId}}"
+                                                                                    class="btn btn-success btn-sm">Load History Data</button></td>
+                            </tr>
                             </tbody>
                         </table>
                     </div>

@@ -96,12 +96,12 @@ const onSearch = id => {
     <Head title="Health List ~ Card View" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
-      <div class="space-x-3">
-        <Link href="/quotes/health">
+      <div class="space-x-2">
+        <Link :href="route('health.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/quotes/health/create">
+        <Link :href="route('health.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -123,6 +123,27 @@ const onSearch = id => {
           <div class="flex justify-between gap-1">
             <span>Total Leads</span>
             <span>{{ quote.data.total_leads }}</span>
+          </div>
+          <div class="flex justify-between gap-1">
+            <x-popover hover position="right" align="top" class="arrow-l">
+              <span
+                class="underline decoration-dotted decoration-primary-700 cursor-help"
+              >
+                Total Opportunity
+              </span>
+              <template #content>
+                <div
+                  class="p-2 bg-white rounded text-xs w-36 border border-primary-500 x-popover-container"
+                >
+                  Total Opportunity shows the sum of the minimum price of all
+                  leads at a specific stage, giving you an overview of the
+                  potential business to close
+                </div>
+              </template>
+            </x-popover>
+            <span>
+              {{ Number(quote.data.total_opportunity).toLocaleString() }}</span
+            >
           </div>
           <div class="flex justify-between gap-1">
             <span>Total Premium</span>

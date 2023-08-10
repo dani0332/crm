@@ -1,11 +1,13 @@
 {
     "cSpell.words": [
         "afia",
+        "backoff",
         "Corpline",
         "Dispatchable",
         "ecommerce",
         "endregion",
         "IMCRM",
-        "leftjoin"
+        "leftjoin",
+        "Queueable"
     ]
 }

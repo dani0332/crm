@@ -146,7 +146,7 @@
                                     name: "id",
                                     render: function(data, type, row, meta) {
                                         if (row.quote_status_id !=
-                                            '{{ QuoteStatusEnum::TransactionApproved }}') {
+                                            '{{ QuoteStatusEnum::TransactionApproved }}' || isLeadPool) {
                                             return (
                                                 '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
                                                 data + '">'
@@ -365,6 +365,7 @@
                 changeMonth: true,
                 changeYear: true,
             });
+            $('.date-search-field').prop('readonly', true);
         });
         var ENDPOINT = "{{ url('/') }}";
         var page;
@@ -445,6 +446,22 @@
                     });
             }
         }
+        $(document).on("click", ".const-create-car-lead", function(e){
+            e.preventDefault();
+            $('#createCarLeadModal').modal('show');
+            $('.const-car-lead-cnfrm-btn').on('click', function (e) {
+                var confirm = $("input[name='reason-manual-lead']:checked").attr('data-confirmation');
+                if(confirm)
+                {
+                    window.location.href = "{{ url('quotes/' . strtolower($model->modelType) . '/create') }}";
+                    localStorage.setItem('throughConfirmation', true);
+                    $('#createCarLeadModal').modal('hide');
+                }else{
+                    $('#createCarLeadModal').modal('hide');
+                }
+            });
+        });
+
         window.onload = function() {
             window.localStorage.clear();
         }
@@ -491,7 +508,11 @@
                             @if (strtolower($model->modelType) != strtolower(quoteTypeCode::Business))
                                 @can(strtolower($model->modelType) . '-quotes-create')
                                     <li><a href="{{ url('quotes/' . strtolower($model->modelType) . '/create') }}"
-                                            class="btn btn-warning btn-sm">Create
+                                           @class(['btn', 'btn-warning', 'btn-sm',
+                                                'const-create-car-lead' => collect([ strtolower(quoteTypeCode::Car)])
+                                                ->contains(strtolower($model->modelType))
+                                           ])
+                                            >Create
                                             {{ str_contains(strtolower($model->modelType), 'team')
                                                 ? 'Team'
                                                 : (str_contains(strtolower($model->modelType), 'leadstatus')
@@ -677,6 +698,9 @@
                             <input type="hidden" id="isManualAllocationAllowed" name="isManualAllocationAllowed"
                                 value="{{ $isManualAllocationAllowed }}">
                         </form>
+                        @php
+                            $updatedTitles = ['premium' => 'price'];
+                        @endphp
                         <table id="dtBasicExample" class="table-striped jambo_table table" style="table-layout: fixed;"
                             width="100%">
                             <thead>
@@ -698,12 +722,19 @@
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Team')
                                             @if ($property != 'id')
                                                 @if (!in_array($property, explode(',', $skipProperties['list'])))
-                                                    <th data-type="{{ explode('|', $value)[1] }}"
-                                                        style="width: 180px !important">
+                                                    @php
+                                                        $textDecorations = $tooltip = "";
+                                                        if((strpos($value, 'title') && strtoupper($customTitles[$property]) == 'REF-ID')){
+                                                            $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                                                            $tooltip = 'Reference ID';
+                                                        }
+                                                    @endphp
+                                                    <th data-type="{{ explode('|', $value)[1] }}" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
+                                                        style="width: 180px !important; {{$textDecorations}}">
                                                         @if (strpos($value, 'title'))
-                                                            {{ strtoupper($customTitles[$property]) }}
+                                                            {{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property])) }}
                                                         @else
-                                                            {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                            {{ str_replace('_', ' ', strtoupper((array_key_exists(strtolower($property), $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}
                                                         @endif
                                                     </th>
                                                 @endif
@@ -713,9 +744,9 @@
                                                 <th data-type="{{ explode('|', $value)[1] }}"
                                                     style="width: 180px !important">
                                                     @if (strpos($value, 'title'))
-                                                        {{ strtoupper($customTitles[$property]) }}
+                                                        {{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property])) }}
                                                     @else
-                                                        {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                        {{ str_replace('_', ' ', strtoupper((array_key_exists($property, $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}
                                                     @endif
                                                 </th>
                                             @endif
@@ -726,11 +757,15 @@
                             <tbody>
                             </tbody>
                         </table>
-
                     </div>
                 </div>
             </div>
         </div>
     </div>
     </div>
+
+    @if(collect([ strtolower(quoteTypeCode::Car)])->contains(strtolower($model->modelType)))
+        @include('components.car-create-lead-modal')
+    @endif
+
 @endsection

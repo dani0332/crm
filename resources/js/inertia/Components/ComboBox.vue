@@ -28,6 +28,22 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  selectAll: {
+    type: Boolean,
+    default: false,
+  },
+  deselectAll: {
+    type: Boolean,
+    default: false,
+  },
+  maxLimit: {
+    type: Number,
+    default: 0,
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -37,34 +53,56 @@ const selectedValue = computed({
     if (props.single) return [];
 
     return props.options.filter(option =>
-      props.modelValue.includes(option.value),
+      props.modelValue?.includes(option.value),
     );
   },
   set(newValue) {
-    if (props.single) {
+    const { single, maxLimit, selectAll } = props;
+    if (single) {
       emit('update:modelValue', newValue.value);
       return;
     }
     const values = newValue.map(item => item.value);
+
+    if (maxLimit > 0 && values.length > maxLimit && !selectAll) {
+      values.splice(0, values.length - maxLimit);
+    }
     emit('update:modelValue', values);
   },
 });
 const query = ref('');
 
-const filteredList = computed(() =>
-  query.value === ''
+const filteredList = computed(() => {
+  return query.value === ''
     ? props.options
     : props.options.filter(option => {
         return option.label.toLowerCase().includes(query.value.toLowerCase());
-      }),
+      });
+});
+
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(
+  filteredList,
+  {
+    itemHeight: 34,
+    overscan: 10,
+  },
 );
+
+const onSelectAll = () => {
+  const values = props.options.map(item => item.value);
+  emit('update:modelValue', values);
+};
+
+const onDeselectAll = () => {
+  emit('update:modelValue', []);
+};
 </script>
 
 <template>
   <label
     class="group relative x-select inline-block align-bottom text-left focus:outline-none mb-3 w-full"
   >
-    <p class="font-medium text-gray-800 mb-1">
+    <p v-if="props.label" class="font-medium text-gray-800 mb-1">
       {{ props.label }}
     </p>
     <Combobox
@@ -84,7 +122,11 @@ const filteredList = computed(() =>
           props.single
             ? props.options.find(option => option.value === props.modelValue)
                 ?.label
-            : `${selectedValue.length} Selected`
+            : `${selectedValue.length} Selected ${
+                props.maxLimit && !props.selectAll
+                  ? '| max: ' + props.maxLimit
+                  : ''
+              }`
         "
         readonly
       />
@@ -96,14 +138,15 @@ const filteredList = computed(() =>
         @after-leave="query = ''"
       >
         <ComboboxOptions
-          class="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
+          class="absolute z-10 mt-1 max-h-64 h-auto w-full overflow-hidden rounded-md bg-white text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm"
         >
-          <li class="pt-1 px-2 -mb-2">
+          <li class="pt-2 pb-1 px-2 -mb-2">
             <x-input
               size="xs"
               v-model="query"
-              :placeholder="props.searchPlaceholder"
+              :placeholder="`${props.searchPlaceholder} (${props.options.length})`"
               class="w-full"
+              @update:modelValue="scrollTo(0)"
             />
           </li>
 
@@ -113,41 +156,75 @@ const filteredList = computed(() =>
           >
             No results found
           </li>
-          <ComboboxOption
-            as="template"
-            v-slot="{ selected }"
-            v-for="list in filteredList"
-            :key="list.label"
-            :value="list"
-          >
-            <li
-              :class="{ 'text-primary': selected }"
-              class="relative flex items-center whitespace-nowrap px-3 text-sm cursor-pointer py-1.5 hover:bg-primary-50"
-            >
-              <span class="flex-1 truncate py-px">{{ list.label }}</span>
-              <span class="ml-1 shrink-0">
-                <svg
-                  v-if="selected"
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="shrink-0 inline h-5 w-5 stroke-2"
-                  stroke-linejoin="round"
-                  stroke-linecap="round"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  data-v-27199701=""
+          <div v-bind="containerProps" class="max-h-40 overflow-auto h-full">
+            <div v-bind="wrapperProps">
+              <ComboboxOption
+                as="template"
+                v-for="{ data: item } of list"
+                v-slot="{ selected }"
+                :key="`${item.value}-${item.label}`"
+                :value="item"
+              >
+                <li
+                  :class="{
+                    'text-primary': props.single
+                      ? props.modelValue == item.value
+                      : selected,
+                  }"
+                  class="relative flex items-center whitespace-nowrap px-3 text-sm cursor-pointer py-1.5 hover:bg-primary-50"
                 >
-                  <path d="M5 13l4 4L19 7"></path>
-                </svg>
-              </span>
-            </li>
-          </ComboboxOption>
+                  <span class="flex-1 truncate py-px">{{ item.label }}</span>
+                  <span class="ml-1 shrink-0">
+                    <svg
+                      v-if="
+                        props.single ? props.modelValue == item.value : selected
+                      "
+                      xmlns="http://www.w3.org/2000/svg"
+                      class="shrink-0 inline h-5 w-5 stroke-2"
+                      stroke-linejoin="round"
+                      stroke-linecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      data-v-27199701=""
+                    >
+                      <path d="M5 13l4 4L19 7"></path>
+                    </svg>
+                  </span>
+                </li>
+              </ComboboxOption>
+            </div>
+          </div>
+          <div v-if="props.selectAll || props.deselectAll" class="p-2">
+            <div class="flex flex-row justify-between gap-2">
+              <x-button
+                v-if="props.selectAll"
+                size="xs"
+                color="primary"
+                light
+                @click="onSelectAll"
+              >
+                Select All
+              </x-button>
+              <x-button
+                v-if="props.deselectAll"
+                size="xs"
+                color="error"
+                light
+                @click="onDeselectAll"
+              >
+                Deselect All
+              </x-button>
+            </div>
+          </div>
         </ComboboxOptions>
       </TransitionRoot>
       <div
         class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2"
       >
+        <x-spinner v-if="props.loading" size="sm" class="text-primary" />
         <svg
+          v-else
           xmlns="http://www.w3.org/2000/svg"
           class="shrink-0 x-icon inline h-5 w-5 stroke-2 text-gray-500"
           stroke-linejoin="round"

@@ -156,15 +156,8 @@
         // global app configuration object
         var config = {
             routes: {
-                partner_datatable_route: "{{ route('partner.index') }}",
                 user_datatable_route: "{{ route('users.index') }}",
                 role_datatable_route: "{{ route('roles.index') }}",
-                carquote_datatable_route: "{{ route('carquotes.index') }}",
-                carquote_resubmitap_route: "{{ url('quotes/carquotes/resubmit_api') }}",
-                healthquote_datatable_route: "{{ route('healthquotes.index') }}",
-                reward_datatable_route: "{{ route('reward.index') }}",
-                reward_categories_datatable_route: "{{ route('reward-categories.index') }}",
-                reward_tags_datatable_route: "{{ route('reward-tags.index') }}",
                 claim_datatable_route: "{{ route('claims.index') }}",
                 typeofinsurance_datatable_route: "{{ route('typeofinsurance.index') }}",
                 vehicledepreciation_datatable_route: "{{ route('vehicledepreciation.index') }}",
@@ -173,7 +166,7 @@
                 carrepaircoverage_datatable_route: "{{ route('carrepaircoverage.index') }}",
                 carrepairtype_datatable_route: "{{ route('carrepairtype.index') }}",
                 rentacar_datatable_route: "{{ route('rentacar.index') }}",
-                customer_data_table_route: "{{ route('customer.index') }}",
+                customer_data_table_route: "{{ route('customers-list') }}",
                 discount_base_data_table_route: "{{ route('base.index') }}",
                 load_auditable: "{{ url('auditable') }}",
                 load_dashboard_stats: "{{ url('dashboard-stats') }}",
@@ -193,24 +186,20 @@
                 tmlead_datatable_route: "{{ route('tmleads.index') }}",
                 tmuploadlead_datatable_route: "{{ route('tmuploadlead.index') }}",
                 age_discount_datatable_route: "{{ route('age.index') }}",
-                renewals_leads_datatable_route: "{{ route('uploaded-leads.index') }}",
+                renewals_leads_datatable_route: "{{ route('renewals-uploaded-leads-list') }}",
                 sanction_list_downloads_datatable_route: "{{ url('kyc/aml/download/history') }}",
-                reward_sliders_datatable_route: "{{ route('reward-sliders.index') }}",
-                searchLeadsDataTable: "{{ route('leadsearch.index') }}",
                 leadassignmentDataTable: "{{ route('leadassignment.index') }}",
                 amtDataTable: "{{ route('amt.index') }}",
                 activitiesDataTable: "{{ route('activities.index') }}",
-                renewals_batches_datatable_route: "{{ url('renewals/batches') }}",
+                renewals_batches_datatable_route: "{{ route('renewals-batches') }}",
                 lead_allocation_index_route: "{{ route('lead-allocation.index') }}",
-                renewal_uploaded_leads: "{{ url('renewals/uploaded-leads') }}",
+                renewal_uploaded_leads: "{{ route('renewals-uploaded-leads-list') }}",
                 renewal_base_url: "{{ url('renewals') }}",
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
                 advisor_conversion_report_route: "{{ url('reports/advisor-conversion')  }}",
                 teams_datatable_route: "{{ route('team.index') }}",
             },
-            _token: "{{ csrf_token() }}",
-            image_path: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/' }}",
-            image_path_rewards_slider: "{{ \Config::get('constants.azure_storage_url') . 'myrewards/rewards-slider/' }}"
+            _token: "{{ csrf_token() }}"
         };
         // TM Leads: Expost data into csv
         function newexportaction(e, dt, button, config) {

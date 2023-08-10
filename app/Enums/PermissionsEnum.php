@@ -123,10 +123,12 @@ final class PermissionsEnum extends Enum
     const AgeDiscountCreate = 'age-discount-create';
     const AgeDiscountList = 'age-discount-list';
     const AMLAudit = 'aml-audit';
-    const RenewalsUpload = 'renewals-upload';
+    const RenewalsUpload = 'renewals-upload-create';
     const CustomersUpload = 'customers-upload';
     const TravelQuotesList = 'travel-quotes-list';
+    const TravelQuotesShow = 'travel-quotes-show';
     const LifeQuotesList = 'life-quotes-list';
+    const LifeQuotesShow = 'life-quotes-show';
     const HomeQuotesList = 'home-quotes-list';
     const BusinessQuotesList = 'business-quotes-list';
     const TeamsList = 'teams-list';
@@ -167,6 +169,7 @@ final class PermissionsEnum extends Enum
     const PetQuotesUpdate = 'pet-quotes-update';
     const PetQuotesDelete = 'pet-quotes-delete';
     const PetQuotesView = 'pet-quotes-view';
+    const PetQuotesShow = 'pet-quotes-show';
     const PetQuotesEdit = 'pet-quotes-edit';
     const DashboardView = 'dashboard-view';
     const LeadAllocationView = 'lead-allocation-view';
@@ -205,4 +208,10 @@ final class PermissionsEnum extends Enum
     const JetskiQuotesShow = 'jetski-quotes-show';
     const RenewalBatchUpdate = 'renewal-batch-update';
     const CarRevivalQuoteList = 'carrevival-quotes-list';
+    const ActivitiesAssignedToView = 'activities-assigned-to-view';
+    const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
+    const RenewalsUploadUpdate = 'renewals-upload-update';
+    const RenewalsBatches = 'renewals-batches';
+    const CarQuoteSearch = 'car-quotes-search';
+    const UtmLeadsSalesReport = 'utm-leads-sales-report';
 }

@@ -32,6 +32,11 @@ class QuoteStatus extends BaseModel
         ],
     ];
 
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
     public function relations()
     {
         return [];
