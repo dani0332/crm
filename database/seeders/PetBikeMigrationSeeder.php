@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use App\Enums\QuoteTypeId;
+use App\Http\Requests\BikeQuoteRequest;
+use App\Http\Requests\PetQuoteRequest;
 use App\Models\BikeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
@@ -24,38 +26,40 @@ class PetBikeMigrationSeeder extends Seeder
         PetQuote::join('pet_quote_request_detail', 'pet_quote_request.id', '=', 'pet_quote_request_detail.pet_quote_request_id')
             ->whereNull('pet_quote_request.personal_quote_id')
             ->groupBy('pet_quote_request.id')
-            ->chunk(100)->each(function ($petRecords){
-                \DB::table('personal_quotes')->insert([
-                    'quote_type_id' => QuoteTypeId::Pet,
-                    'uuid' => $petRecords->uuid,
-                    'code' => $petRecords->code,
-                    'first_name' => $petRecords->first_name,
-                    'last_name' => $petRecords->last_name,
-                    'dob' => $petRecords->dob,
-                    'nationality_id' => $petRecords->nationality_id,
-                    'email' => $petRecords->email,
-                    'mobile_no' => $petRecords->mobile_no,
-                    'source' => $petRecords->source,
-                    'customer_id' => $petRecords->customer_id,
-                    'device' => $petRecords->device,
-                    'reference_url' => $petRecords->reference_url,
-                    'policy_number' => $petRecords->policy_number,
-                    'advisor_id' => $petRecords->advisor_id,
-                    'premium' => $petRecords->premium,
-                    'renewal_batch' => $petRecords->renewal_batch,
-                    'renewal_expiry_date' => $petRecords->renewal_expiry_date,
-                    'previous_quote_policy_number' => $petRecords->previous_quote_policy_number,
-                    'renewal_import_code' => $petRecords->renewal_import_code,
-                    'previous_policy_expiry_date' => $petRecords->previous_policy_expiry_date,
-                    'previous_quote_policy_premium' => $petRecords->previous_quote_policy_premium,
-                    'policy_start_date' => $petRecords->policy_start_date,
-                    'policy_issuance_date' => $petRecords->policy_issuance_date,
-                    'payment_status_id' => $petRecords->payment_status_id,
-                    'quote_status_id' => $petRecords->quote_status_id,
-                    'notes' => $petRecords->notes,
-                    'created_at' => $petRecords->created_at,
-                    'updated_at' => $petRecords->updated_at
-                ]);
+            ->chunk(100, function ($petChunkRecords){
+                foreach ($petChunkRecords as $petRecords){
+                    PersonalQuote::firstOrCreate([
+                        'quote_type_id' => QuoteTypeId::Pet,
+                        'uuid' => $petRecords->uuid,
+                        'code' => $petRecords->code,
+                        'first_name' => $petRecords->first_name,
+                        'last_name' => $petRecords->last_name,
+                        'dob' => $petRecords->dob,
+                        'nationality_id' => $petRecords->nationality_id,
+                        'email' => $petRecords->email,
+                        'mobile_no' => $petRecords->mobile_no,
+                        'source' => $petRecords->source,
+                        'customer_id' => $petRecords->customer_id,
+                        'device' => $petRecords->device,
+                        'reference_url' => $petRecords->reference_url,
+                        'policy_number' => $petRecords->policy_number,
+                        'advisor_id' => $petRecords->advisor_id,
+                        'premium' => $petRecords->premium,
+                        'renewal_batch' => $petRecords->renewal_batch,
+                        'renewal_expiry_date' => $petRecords->renewal_expiry_date,
+                        'previous_quote_policy_number' => $petRecords->previous_quote_policy_number,
+                        'renewal_import_code' => $petRecords->renewal_import_code,
+                        'previous_policy_expiry_date' => $petRecords->previous_policy_expiry_date,
+                        'previous_quote_policy_premium' => $petRecords->previous_quote_policy_premium,
+                        'policy_start_date' => $petRecords->policy_start_date,
+                        'policy_issuance_date' => $petRecords->policy_issuance_date,
+                        'payment_status_id' => $petRecords->payment_status_id,
+                        'quote_status_id' => $petRecords->quote_status_id,
+                        'notes' => $petRecords->notes,
+                        'created_at' => $petRecords->created_at,
+                        'updated_at' => $petRecords->updated_at
+                    ]);
+                }
             });
 
         // Fetch Old Pet Records from personal_quotes table and Dump into pet_quote_request table
@@ -65,49 +69,51 @@ class PetBikeMigrationSeeder extends Seeder
             })
             ->whereNull('pet_quote_request.personal_quote_id')
             ->groupBy('personal_quotes.uuid')
-            ->chunk(100)->each(function ($personalQuoteRecords){
-            \DB::table('pet_quote_request')->insert([
-                'gender' => $personalQuoteRecords->gender,
-                'address' => $personalQuoteRecords->address,
-                'customer_id' => $personalQuoteRecords->customer_id,
-                'lang' => $personalQuoteRecords->lang,
-                'is_synced' => $personalQuoteRecords->is_synced,
-                'additional_notes' => $personalQuoteRecords->additional_notes,
-                'reviver_name' => $personalQuoteRecords->reviver_name,
-                'promo_code' => $personalQuoteRecords->promo_code,
-                'code' => $personalQuoteRecords->code,
-                'no_of_pets_to_insure' => $personalQuoteRecords->no_of_pets_to_insure,
-                'type_of_pet1' => $personalQuoteRecords->type_of_pet1,
-                'age_of_pet1' => $personalQuoteRecords->age_of_pet1,
-                'breed_of_pet1' => $personalQuoteRecords->breed_of_pet1,
-                'type_of_pet2' => $personalQuoteRecords->type_of_pet2,
-                'age_of_pet2' => $personalQuoteRecords->age_of_pet2,
-                'breed_of_pet2' => $personalQuoteRecords->breed_of_pet2,
-                'ilivein_accommodation_type_id' => $personalQuoteRecords->ilivein_accommodation_type_id,
-                'iam_possession_type_id' => $personalQuoteRecords->iam_possession_type_id,
-                'has_contents' => $personalQuoteRecords->has_contents,
-                'contents_aed' => $personalQuoteRecords->contents_aed,
-                'has_personal_belongings' => $personalQuoteRecords->has_personal_belongings,
-                'personal_belongings_aed' => $personalQuoteRecords->personal_belongings_aed,
-                'has_building' => $personalQuoteRecords->has_building,
-                'building_aed' => $personalQuoteRecords->building_aed,
-                'created_at' => $personalQuoteRecords->created_at,
-                'updated_at' => $personalQuoteRecords->updated_at,
-                'uuid' => $personalQuoteRecords->uuid,
-                'insurer_quote_no' => $personalQuoteRecords->insurer_quote_no,
-                'is_microchipped' => $personalQuoteRecords->is_microchipped,
-                'microchip_no' => $personalQuoteRecords->microchip_no,
-                'is_neutered' => $personalQuoteRecords->is_neutered,
-                'is_mixed_breed' => $personalQuoteRecords->is_mixed_breed,
-                'has_injury' => $personalQuoteRecords->has_injury,
-                'previous_quote_id' => $personalQuoteRecords->previous_quote_id,
-                'pa_id' => $personalQuoteRecords->pa_id,
-                'parent_duplicate_quote_id' => $personalQuoteRecords->parent_duplicate_quote_id,
-                'personal_quote_id' => $personalQuoteRecords->id,
-                'pet_type_id' => $personalQuoteRecords->pet_type_id,
-                'pet_age_id' => $personalQuoteRecords->pet_age_id,
-            ]);
-        });
+            ->chunk(100, function ($personalQuoteRecords){
+                foreach ($personalQuoteRecords as $personalQuoteRecord){
+                    PetQuoteRequest::firstOrCreate([
+                        'gender' => $personalQuoteRecord->gender,
+                        'address' => $personalQuoteRecord->address,
+                        'customer_id' => $personalQuoteRecord->customer_id,
+                        'lang' => $personalQuoteRecord->lang,
+                        'is_synced' => $personalQuoteRecord->is_synced,
+                        'additional_notes' => $personalQuoteRecord->additional_notes,
+                        'reviver_name' => $personalQuoteRecord->reviver_name,
+                        'promo_code' => $personalQuoteRecord->promo_code,
+                        'code' => $personalQuoteRecord->code,
+                        'no_of_pets_to_insure' => $personalQuoteRecord->no_of_pets_to_insure,
+                        'type_of_pet1' => $personalQuoteRecord->type_of_pet1,
+                        'age_of_pet1' => $personalQuoteRecord->age_of_pet1,
+                        'breed_of_pet1' => $personalQuoteRecord->breed_of_pet1,
+                        'type_of_pet2' => $personalQuoteRecord->type_of_pet2,
+                        'age_of_pet2' => $personalQuoteRecord->age_of_pet2,
+                        'breed_of_pet2' => $personalQuoteRecord->breed_of_pet2,
+                        'ilivein_accommodation_type_id' => $personalQuoteRecord->ilivein_accommodation_type_id,
+                        'iam_possession_type_id' => $personalQuoteRecord->iam_possession_type_id,
+                        'has_contents' => $personalQuoteRecord->has_contents,
+                        'contents_aed' => $personalQuoteRecord->contents_aed,
+                        'has_personal_belongings' => $personalQuoteRecord->has_personal_belongings,
+                        'personal_belongings_aed' => $personalQuoteRecord->personal_belongings_aed,
+                        'has_building' => $personalQuoteRecord->has_building,
+                        'building_aed' => $personalQuoteRecord->building_aed,
+                        'created_at' => $personalQuoteRecord->created_at,
+                        'updated_at' => $personalQuoteRecord->updated_at,
+                        'uuid' => $personalQuoteRecord->uuid,
+                        'insurer_quote_no' => $personalQuoteRecord->insurer_quote_no,
+                        'is_microchipped' => $personalQuoteRecord->is_microchipped,
+                        'microchip_no' => $personalQuoteRecord->microchip_no,
+                        'is_neutered' => $personalQuoteRecord->is_neutered,
+                        'is_mixed_breed' => $personalQuoteRecord->is_mixed_breed,
+                        'has_injury' => $personalQuoteRecord->has_injury,
+                        'previous_quote_id' => $personalQuoteRecord->previous_quote_id,
+                        'pa_id' => $personalQuoteRecord->pa_id,
+                        'parent_duplicate_quote_id' => $personalQuoteRecord->parent_duplicate_quote_id,
+                        'personal_quote_id' => $personalQuoteRecord->id,
+                        'pet_type_id' => $personalQuoteRecord->pet_type_id,
+                        'pet_age_id' => $personalQuoteRecord->pet_age_id,
+                    ]);
+                }
+            });
 
         // Fetch data from pet_quote_details table and migrate into personal_quote_details table
         PersonalQuote::join('pet_quote_request', function ($petQuoteJoin){
@@ -116,60 +122,64 @@ class PetBikeMigrationSeeder extends Seeder
             })
             ->join('pet_quote_request_detail', 'pet_quote_request.id', '=', 'pet_quote_request_detail.pet_quote_request_id')
             ->groupBy('personal_quotes.uuid')
-            ->chunk(100)->each(function ($petRequestDetailsRecord){
-                PersonalQuoteDetail::firstOrCreate([
-                    'personal_quote_id' => $petRequestDetailsRecord->id,
-                    'pa_id' => $petRequestDetailsRecord->pa_id,
-                    'advisor_assigned_date' => $petRequestDetailsRecord->advisor_assigned_date,
-                    'advisor_assigned_by_id' => $petRequestDetailsRecord->advisor_assigned_by_id,
-                    'next_followup_date' => $petRequestDetailsRecord->next_followup_date,
-                    'lost_reason_id' => $petRequestDetailsRecord->lost_reason_id,
-                    'transapp_code' => $petRequestDetailsRecord->transapp_code,
-                    'additional_notes' => $petRequestDetailsRecord->additional_notes,
-                    'utm_source' => $petRequestDetailsRecord->utm_source,
-                    'utm_medium' => $petRequestDetailsRecord->utm_medium,
-                    'utm_campaign' => $petRequestDetailsRecord->utm_campaign,
-                ]);
-        });
+            ->chunk(100, function ($petRequestDetailsRecord){
+                foreach ($petRequestDetailsRecord as $petRequestDetailRecord){
+                    PersonalQuoteDetail::firstOrCreate([
+                        'personal_quote_id' => $petRequestDetailRecord->id,
+                        'pa_id' => $petRequestDetailRecord->pa_id,
+                        'advisor_assigned_date' => $petRequestDetailRecord->advisor_assigned_date,
+                        'advisor_assigned_by_id' => $petRequestDetailRecord->advisor_assigned_by_id,
+                        'next_followup_date' => $petRequestDetailRecord->next_followup_date,
+                        'lost_reason_id' => $petRequestDetailRecord->lost_reason_id,
+                        'transapp_code' => $petRequestDetailRecord->transapp_code,
+                        'additional_notes' => $petRequestDetailRecord->additional_notes,
+                        'utm_source' => $petRequestDetailRecord->utm_source,
+                        'utm_medium' => $petRequestDetailRecord->utm_medium,
+                        'utm_campaign' => $petRequestDetailRecord->utm_campaign,
+                    ]);
+                }
+            });
 
         // Bike Data Migration
         // Fetch Old Bike Records from bike_quote_request table and Dump into personal_quote table
         BikeQuote::join('bike_quote_request_detail', 'bike_quote_request.id', '=', 'bike_quote_request_detail.bike_quote_request_id')
             ->whereNull('bike_quote_request.personal_quote_id')
             ->groupBy('bike_quote_request.id')
-            ->chunk(100)->each(function ($bikeRecords){
-                \DB::table('personal_quotes')->insert([
-                    'quote_type_id' => QuoteTypeId::Bike,
-                    'uuid' => $bikeRecords->uuid,
-                    'code' => $bikeRecords->code,
-                    'first_name' => $bikeRecords->first_name,
-                    'last_name' => $bikeRecords->last_name,
-                    'dob' => $bikeRecords->dob,
-                    'nationality_id' => $bikeRecords->nationality_id,
-                    'email' => $bikeRecords->email,
-                    'mobile_no' => $bikeRecords->mobile_no,
-                    'source' => $bikeRecords->source,
-                    'currently_insured_with' => $bikeRecords->currently_insured_with,
-                    'customer_id' => $bikeRecords->customer_id,
-                    'reference_url' => $bikeRecords->reference_url,
-                    'policy_number' => $bikeRecords->policy_number,
-                    'advisor_id' => $bikeRecords->advisor_id,
-                    'premium' => $bikeRecords->premium,
-                    'renewal_batch' => $bikeRecords->renewal_batch,
-                    'renewal_expiry_date' => $bikeRecords->renewal_expiry_date,
-                    'previous_quote_policy_number' => $bikeRecords->previous_quote_policy_number,
-                    'renewal_import_code' => $bikeRecords->renewal_import_code,
-                    'previous_policy_expiry_date' => $bikeRecords->previous_policy_expiry_date,
-                    'previous_quote_policy_premium' => $bikeRecords->previous_quote_policy_premium,
-                    'policy_start_date' => $bikeRecords->policy_start_date,
-                    'policy_issuance_date' => $bikeRecords->policy_issuance_date,
-                    'payment_status_id' => $bikeRecords->payment_status_id,
-                    'quote_status_id' => $bikeRecords->quote_status_id,
-                    'notes' => $bikeRecords->notes,
-                    'created_at' => $bikeRecords->created_at,
-                    'updated_at' => $bikeRecords->updated_at
-                ]);
-        });
+            ->chunk(100, function ($bikeRecords){
+                foreach ($bikeRecords as $bikeRecord){
+                    BikeQuoteRequest::firstOrCreate([
+                        'quote_type_id' => QuoteTypeId::Bike,
+                        'uuid' => $bikeRecord->uuid,
+                        'code' => $bikeRecord->code,
+                        'first_name' => $bikeRecord->first_name,
+                        'last_name' => $bikeRecord->last_name,
+                        'dob' => $bikeRecord->dob,
+                        'nationality_id' => $bikeRecord->nationality_id,
+                        'email' => $bikeRecord->email,
+                        'mobile_no' => $bikeRecord->mobile_no,
+                        'source' => $bikeRecord->source,
+                        'currently_insured_with' => $bikeRecord->currently_insured_with,
+                        'customer_id' => $bikeRecord->customer_id,
+                        'reference_url' => $bikeRecord->reference_url,
+                        'policy_number' => $bikeRecord->policy_number,
+                        'advisor_id' => $bikeRecord->advisor_id,
+                        'premium' => $bikeRecord->premium,
+                        'renewal_batch' => $bikeRecord->renewal_batch,
+                        'renewal_expiry_date' => $bikeRecord->renewal_expiry_date,
+                        'previous_quote_policy_number' => $bikeRecord->previous_quote_policy_number,
+                        'renewal_import_code' => $bikeRecord->renewal_import_code,
+                        'previous_policy_expiry_date' => $bikeRecord->previous_policy_expiry_date,
+                        'previous_quote_policy_premium' => $bikeRecord->previous_quote_policy_premium,
+                        'policy_start_date' => $bikeRecord->policy_start_date,
+                        'policy_issuance_date' => $bikeRecord->policy_issuance_date,
+                        'payment_status_id' => $bikeRecord->payment_status_id,
+                        'quote_status_id' => $bikeRecord->quote_status_id,
+                        'notes' => $bikeRecord->notes,
+                        'created_at' => $bikeRecord->created_at,
+                        'updated_at' => $bikeRecord->updated_at
+                    ]);
+                }
+            });
 
         // Fetch Old Bike Records from personal_quotes table and Migrate into bike_quote_request table
         PersonalQuote::join('bike_quote_request', function ($bikeQuoteJoin){
@@ -178,28 +188,30 @@ class PetBikeMigrationSeeder extends Seeder
             })
             ->whereNull('bike_quote_request.personal_quote_id')
             ->groupBy('personal_quotes.uuid')
-            ->chunk(100)->each(function ($personalQuoteRecords){
-                \DB::table('bike_quote_request')->insert([
-                    'bike_company_to_insure' => $personalQuoteRecords->bike_company_to_insure,
-                    'bike_value' => $personalQuoteRecords->bike_value,
-                    'year_of_manufacture' => $personalQuoteRecords->year_of_manufacture,
-                    'uae_license_held_for_id' => $personalQuoteRecords->uae_license_held_for_id,
-                    'gender' => $personalQuoteRecords->gender,
-                    'lang' => $personalQuoteRecords->lang,
-                    'customer_id' => $personalQuoteRecords->customer_id,
-                    'is_synced' => $personalQuoteRecords->is_synced,
-                    'additional_notes' => $personalQuoteRecords->additional_notes,
-                    'reviver_name' => $personalQuoteRecords->reviver_name,
-                    'promo_code' => $personalQuoteRecords->promo_code,
-                    'code' => $personalQuoteRecords->code,
-                    'uuid' => $personalQuoteRecords->uuid,
-                    'previous_quote_id' => $personalQuoteRecords->previous_quote_id,
-                    'pa_id' => $personalQuoteRecords->pa_id,
-                    'other_email_addresses' => $personalQuoteRecords->pet_type_id,
-                    'previous_advisor_id' => $personalQuoteRecords->pet_age_id,
-                    'personal_quote_id' => $personalQuoteRecords->id,
-                ]);
-        });
+            ->chunk(100, function ($personalQuoteRecords){
+                foreach ($personalQuoteRecords as $personalQuoteRecord){
+                    BikeQuoteRequest::firstOrCreate([
+                        'bike_company_to_insure' => $personalQuoteRecord->bike_company_to_insure,
+                        'bike_value' => $personalQuoteRecord->bike_value,
+                        'year_of_manufacture' => $personalQuoteRecord->year_of_manufacture,
+                        'uae_license_held_for_id' => $personalQuoteRecord->uae_license_held_for_id,
+                        'gender' => $personalQuoteRecord->gender,
+                        'lang' => $personalQuoteRecord->lang,
+                        'customer_id' => $personalQuoteRecord->customer_id,
+                        'is_synced' => $personalQuoteRecord->is_synced,
+                        'additional_notes' => $personalQuoteRecord->additional_notes,
+                        'reviver_name' => $personalQuoteRecord->reviver_name,
+                        'promo_code' => $personalQuoteRecord->promo_code,
+                        'code' => $personalQuoteRecord->code,
+                        'uuid' => $personalQuoteRecord->uuid,
+                        'previous_quote_id' => $personalQuoteRecord->previous_quote_id,
+                        'pa_id' => $personalQuoteRecord->pa_id,
+                        'other_email_addresses' => $personalQuoteRecord->pet_type_id,
+                        'previous_advisor_id' => $personalQuoteRecord->pet_age_id,
+                        'personal_quote_id' => $personalQuoteRecord->id,
+                    ]);
+                }
+            });
 
         // Fetch data from pet_quote_details table and migrate into personal_quote_details table
         PersonalQuote::join('bike_quote_request', function ($bikeQuoteJoin){
@@ -208,20 +220,23 @@ class PetBikeMigrationSeeder extends Seeder
             })
             ->join('bike_quote_request_detail', 'bike_quote_request.id', '=', 'bike_quote_request_detail.bike_quote_request_id')
             ->groupBy('personal_quotes.uuid')
-            ->chunk(100)->each(function ($bikeRequestDetailsRecord){
-                PersonalQuoteDetail::firstOrCreate([
-                    'personal_quote_id' => $bikeRequestDetailsRecord->id,
-                    'pa_id' => $bikeRequestDetailsRecord->pa_id,
-                    'advisor_assigned_date' => $bikeRequestDetailsRecord->advisor_assigned_date,
-                    'advisor_assigned_by_id' => $bikeRequestDetailsRecord->advisor_assigned_by_id,
-                    'next_followup_date' => $bikeRequestDetailsRecord->next_followup_date,
-                    'lost_reason_id' => $bikeRequestDetailsRecord->lost_reason_id,
-                    'transapp_code' => $bikeRequestDetailsRecord->transapp_code,
-                    'additional_notes' => $bikeRequestDetailsRecord->additional_notes,
-                    'utm_source' => $bikeRequestDetailsRecord->utm_source,
-                    'utm_medium' => $bikeRequestDetailsRecord->utm_medium,
-                    'utm_campaign' => $bikeRequestDetailsRecord->utm_campaign,
-                ]);
+            ->chunk(100, function ($bikeRequestDetailsRecords){
+                foreach ($bikeRequestDetailsRecords as $bikeRequestDetailsRecord){
+                    PersonalQuoteDetail::firstOrCreate([
+                        'personal_quote_id' => $bikeRequestDetailsRecord->id,
+                        'pa_id' => $bikeRequestDetailsRecord->pa_id,
+                        'advisor_assigned_date' => $bikeRequestDetailsRecord->advisor_assigned_date,
+                        'advisor_assigned_by_id' => $bikeRequestDetailsRecord->advisor_assigned_by_id,
+                        'next_followup_date' => $bikeRequestDetailsRecord->next_followup_date,
+                        'lost_reason_id' => $bikeRequestDetailsRecord->lost_reason_id,
+                        'transapp_code' => $bikeRequestDetailsRecord->transapp_code,
+                        'additional_notes' => $bikeRequestDetailsRecord->additional_notes,
+                        'utm_source' => $bikeRequestDetailsRecord->utm_source,
+                        'utm_medium' => $bikeRequestDetailsRecord->utm_medium,
+                        'utm_campaign' => $bikeRequestDetailsRecord->utm_campaign,
+                    ]);
+                }
+
             });
     }
 }
