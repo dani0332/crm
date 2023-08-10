@@ -34,8 +34,12 @@ defineProps({
 	sendPolicy: Boolean,
 	//
 	record: Object,
-  paymentEntityModel: Object,
+	quoteType: String,
+  	paymentEntityModel: Object,
+	displaySendPolicyButton: Number,
 	isRenewalUser: Boolean,
+	emailStatuses: Array,
+	carQuotePlanAddons: Array
 });
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
@@ -132,6 +136,14 @@ const documentsTable = reactive({
 	]
 })
 
+const documentsTableItems = computed(() => {
+	return page.props.quoteDocuments.map(doc => {
+		return {
+			document_type_text: doc.document_type_text
+		}
+	})
+})
+
 const notesForCustomer = reactive({
 	columns: [
 		{ text: 'Id', value: '' },
@@ -152,14 +164,15 @@ const leadActivities = reactive({
 
 const emailStatusTable = reactive({
 	columns: [
-		{ text: 'Email Subject', value: 'providerName' },
-		{ text: 'Email Address', value: '' },
-		{ text: 'Status', value: '' },
-		{ text: 'Reason', value: '' },
-		{ text: 'Template Id', value: '' },
-		{ text: 'Customer Id', value: '' },
-		{ text: 'Created At', value: '' },
-		{ text: 'Updated At', value: '' },
+		{ text: 'Id', value: 'id' },
+		{ text: 'Email Subject', value: 'email_subject' },
+		{ text: 'Email Address', value: 'email_address' },
+		{ text: 'Status', value: 'email_status' },
+		{ text: 'Reason', value: 'reason' },
+		{ text: 'Template Id', value: 'template_id' },
+		{ text: 'Customer Id', value: 'customer_id' },
+		{ text: 'Created At', value: 'created_at' },
+		{ text: 'Updated At', value: 'updated_at' },
 	]
 })
 
@@ -289,9 +302,25 @@ const policyDetailsForm = useForm({
 						<dd>{{ record.payment_reference ?? '' }}</dd>
 					</div>
 				</dl>
-				<div class="grid sm:grid-cols-1">
-					<dt class="font-medium">ADDONS</dt>
-					<dd>{{ record.payment_reference }}</dd>
+				<div class="grid sm:grid-cols-1 mt-3">
+					<dt class="font-medium mb-3">ADDONS</dt>
+					<dd>
+						<table style="width: 100%;">
+							<thead></thead>
+							<tbody>
+								<tr v-for="(addon, index) in carQuotePlanAddons" :key="addon" class="flex justify-between w-100">
+									<td style="width: 20%;">{{ index + 1 }}</td>
+									<td style="width: 20%;">{{ addon.car_addon_text }}</td>
+									<td style="width: 20%;">{{ addon.car_addon_option_value }}</td>
+									<td style="width: 20%;">{{ addon.car_quote_request_addon_price == 0 ? 'Free' : addon.car_quote_request_addon_price }}</td>
+									<td>
+										<input v-if="addon.car_quote_request_addon_price" type="checkbox" disabled checked class="car-quote-ecom-non-free-plan-check">
+										<input v-else type="checkbox" checked class="car-quote-ecom-free-plan-check" disabled>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+					</dd>
 				</div>
 			</div>
 		</div>
@@ -761,7 +790,7 @@ const policyDetailsForm = useForm({
 			</DataTable>
 		</div> 
 
-		<div class="p-4 rounded shadow mb-6 bg-white">
+		<div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
 			<div>
 				<h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
 				<x-divider class="mb-4 mt-1" />
@@ -824,21 +853,30 @@ const policyDetailsForm = useForm({
 			</div>
 		</div>
 
-		<div class="p-4 rounded shadow mb-6 bg-white">
+		<div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Documents
 				</h3>
 				<div>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+
+						<template v-if="displaySendPolicyButton">
+							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+						</template>
+
+					</template>
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
 						Copy upload Link
 					</x-button>
 				</div>
 			</div>
 			<DataTable
 				table-class-name="tablefixed compact"
-				:headers="availablePlansTable.columns"
-				:items="availablePlansItems || []"
+				:headers="documentsTable.columns"
+				:items="documentsTableItems || []"
 				show-index
 				border-cell
 				fixed-checkbox
@@ -846,24 +884,325 @@ const policyDetailsForm = useForm({
 				hide-footer
 			>
 				<template #item-action="item">
-				<div class="flex gap-2">
-					<x-button
-					size="xs"
-					color="primary"
-					outlined
-					@click.prevent="onEditMember(item)"
-					>
-					Edit
-					</x-button>
-					<x-button
-					size="xs"
-					color="error"
-					outlined
-					@click.prevent="memberDelete(item.id)"
-					>
-					Delete
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
+				</template>
+			</DataTable>
+		</div> 
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Email Status
+				</h3>
+				<div>
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+
+						<template v-if="displaySendPolicyButton">
+							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+						</template>
+
+					</template>
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Copy upload Link
 					</x-button>
 				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="emailStatusTable.columns"
+				:items="emailStatuses || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
+				</template>
+			</DataTable>
+		</div> 
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Notes for Customer
+				</h3>
+				<div>
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+							Send Notes to Customer
+						</x-button>
+					</template>
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="notesForCustomer.columns"
+				:items="emailStatuses || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<!-- <template #item-action="item">
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
+				</template> -->
+			</DataTable>
+		</div> 
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Lead Activities
+				</h3>
+				<div>
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+							Add Activity
+						</x-button>
+					</template>					
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="leadActivities.columns"
+				:items="activities || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
+				</template>
+			</DataTable>
+		</div> 
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Customer Additional Contacts
+				</h3>
+				<div>
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+
+						<template v-if="displaySendPolicyButton">
+							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+						</template>
+
+					</template>
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Copy upload Link
+					</x-button>
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="emailStatusTable.columns"
+				:items="emailStatuses || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
+				</template>
+			</DataTable>
+		</div> 
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Lead History
+				</h3>
+				<div>
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+
+						<template v-if="displaySendPolicyButton">
+							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+						</template>
+
+					</template>
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Copy upload Link
+					</x-button>
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="emailStatusTable.columns"
+				:items="emailStatuses || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
+				</template>
+			</DataTable>
+		</div> 
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div class="flex justify-between items-center mb-4">
+				<h3 class="font-semibold text-primary-800 text-lg">
+					Audit Logs
+				</h3>
+				<div>
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+
+						<template v-if="displaySendPolicyButton">
+							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
+                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+						</template>
+
+					</template>
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Copy upload Link
+					</x-button>
+				</div>
+			</div>
+			<DataTable
+				table-class-name="tablefixed compact"
+				:headers="emailStatusTable.columns"
+				:items="emailStatuses || []"
+				show-index
+				border-cell
+				fixed-checkbox
+				hide-rows-per-page
+				hide-footer
+			>
+				<template #item-action="item">
+					<div class="flex gap-2">
+						<x-button
+							size="xs"
+							color="primary"
+							outlined
+							@click.prevent="onEditMember(item)"
+						>
+							Edit
+						</x-button>
+						<x-button
+							size="xs"
+							color="error"
+							outlined
+							@click.prevent="memberDelete(item.id)"
+						>
+							Delete
+						</x-button>
+					</div>
 				</template>
 			</DataTable>
 		</div> 
