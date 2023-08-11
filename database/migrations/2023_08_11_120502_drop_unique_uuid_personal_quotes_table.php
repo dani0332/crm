@@ -14,7 +14,9 @@ class DropUniqueUuidPersonalQuotesTable extends Migration
     public function up()
     {
         Schema::table('personal_quotes', function (Blueprint $table) {
+            $table->string('uuid', 100)->change();
             $table->dropUnique(['uuid']);
+            $table->unique(['uuid', 'quote_type_id']);
             $table->index(['uuid']);
         });
     }
