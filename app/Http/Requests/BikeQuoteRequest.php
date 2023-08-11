@@ -37,4 +37,16 @@ class BikeQuoteRequest extends FormRequest
             'currently_insured_with_id' => 'required|exists:insurance_provider,id',
         ];
     }
+
+    /**
+     * Prepare the data for validation.
+     *
+     * @return void
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'dob' => isset($this->dob) ? Carbon::parse($this->dob)->format('Y-m-d') : null,
+        ]);
+    }
 }
