@@ -7,12 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
+use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
+
 class Activities extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+
+    use HasFactory, Auditable, FilterCriteria;
 
     protected $guarded = [];
     protected $table = 'activities';
+    public $filterables = [
+        'status'        => FilterTypes::EXACT,
+        'assignee_id'   => FilterTypes::EXACT,
+        'due_date'   => FilterTypes::DATE_BETWEEN,
+    ];
 
     public function getCreatedAtAttribute($date)
     {

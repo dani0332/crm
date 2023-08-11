@@ -5,9 +5,53 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityRequest;
 use App\Repositories\ActivityRepository;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Activities;
+use App\Services\ActivitiesService;
+use App\Models\User;
+use App\Traits\GetUserTreeTrait;
+
 
 class ActivityController extends Controller
 {
+    
+    use GetUserTreeTrait;
+    protected $activitiesService;
+   
+
+    public function __construct(ActivitiesService $activitiesService)
+    {
+        $this->activitiesService = $activitiesService;
+        
+    }
+
+     /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function index()
+    {
+        //$activities = ActivityRepository::simplePaginate()->withQueryString();
+        
+        $advisors = [];
+        $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
+        $activities = ActivityRepository::getData();
+        // echo "<pre>"; print_r($advisors); exit;
+        return inertia('Activities/Index', [
+            'activities' => $activities,
+            'advisors' => $advisors
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+       return inertia('Activities/Form', []);
+    }
+ 
     /**
      * @return \Illuminate\Http\RedirectResponse
      */

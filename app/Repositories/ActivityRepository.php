@@ -14,6 +14,17 @@ class ActivityRepository extends BaseRepository
 
     /**
      * @return mixed
+    */
+    public function fetchGetData()
+    {
+        return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->select(
+            'activities.id as id',
+            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
+        )->filter()->whereIn('assignee_id', [874])->simplePaginate()->withQueryString();
+    }
+
+    /**
+     * @return mixed
      */
     public function fetchCreate($data)
     {
