@@ -25,11 +25,11 @@ class PetBikeMigrationSeeder extends Seeder
         // Pet Data Migration
         // Fetch Old Pet Records from pet_quote_request table and Dump into personal_quote table
         PetQuote::with('petQuoteRequestDetail')->whereNotNull('code')
-            ->chunk(100, function ($petChunkRecords)  {
+            ->chunk(100, function ($petChunkRecords) {
                 foreach ($petChunkRecords as $petChunkRecord) {
                     $customer = Customer::where('email', $petChunkRecord->email)->first();
                     $nationality = Nationality::where('id', $petChunkRecord->nationality_id)->first();
-                    $quote =  PersonalQuote::firstOrCreate([ 'uuid' => trim($petChunkRecord->uuid),'quote_type_id' => QuoteTypeId::Pet],
+                    $quote = PersonalQuote::firstOrCreate(['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet],
                         [
                             'quote_type_id' => QuoteTypeId::Pet,
                             'code' => $petChunkRecord->code,
@@ -58,16 +58,14 @@ class PetBikeMigrationSeeder extends Seeder
                             'quote_status_id' => $petChunkRecord->quote_status_id,
                             'notes' => $petChunkRecord->petQuoteRequestDetail?->notes ?? null,
                             'created_at' => $petChunkRecord->created_at,
-                            'updated_at' => $petChunkRecord->updated_at
+                            'updated_at' => $petChunkRecord->updated_at,
                         ]);
 
-
-                    if($petQuote = PetQuote::where('uuid', $petChunkRecord->uuid)->first())
-                    {
+                    if ($petQuote = PetQuote::where('uuid', $petChunkRecord->uuid)->first()) {
                         $petQuote->personal_quote_id = $quote->id;
                         $petQuote->save();
 
-                        if (isset($petChunkRecord->petQuoteRequestDetail->id)){
+                        if (isset($petChunkRecord->petQuoteRequestDetail->id)) {
                             PersonalQuoteDetail::firstOrCreate(['personal_quote_id' => $quote->id],
                                 [
                                     'pa_id' => $petChunkRecord->pa_id ?? null,
@@ -87,17 +85,16 @@ class PetBikeMigrationSeeder extends Seeder
                 }
             });
 
-
         // Bike Data Migration
         // Fetch Old Bike Records from bike_quote_request table and Dump into personal_quote table
         BikeQuote::with('bikeQuoteRequestDetail')->whereNotNull('code')
-            ->chunk(100, function ($bikeChunkRecords){
-                foreach ($bikeChunkRecords as $bikeChunkRecord){
+            ->chunk(100, function ($bikeChunkRecords) {
+                foreach ($bikeChunkRecords as $bikeChunkRecord) {
                     $insurer = InsuranceProvider::where('code', $bikeChunkRecord->currently_insured_with)->first();
                     $customer = Customer::where('email', $bikeChunkRecord->email)->first();
                     $nationality = Nationality::where('id', $bikeChunkRecord->nationality_id)->first();
                     $advisor = User::where('id', $bikeChunkRecord->advisor_id)->first();
-                    $quote = PersonalQuote::firstOrCreate([ 'uuid' => trim($bikeChunkRecord->uuid),'quote_type_id' => QuoteTypeId::Bike],
+                    $quote = PersonalQuote::firstOrCreate(['uuid' => trim($bikeChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Bike],
                         [
                             'quote_type_id' => QuoteTypeId::Bike,
                             'code' => $bikeChunkRecord->code,
@@ -126,29 +123,28 @@ class PetBikeMigrationSeeder extends Seeder
                             'quote_status_id' => $bikeChunkRecord->quote_status_id,
                             'notes' => $bikeChunkRecord->bikeQuoteRequestDetail?->notes ?? null,
                             'created_at' => $bikeChunkRecord->created_at,
-                            'updated_at' => $bikeChunkRecord->updated_at
+                            'updated_at' => $bikeChunkRecord->updated_at,
                         ]);
 
-                   if($bikeQuote = BikeQuote::where('uuid', $bikeChunkRecord->uuid)->first())
-                   {
-                       $bikeQuote->personal_quote_id = $quote->id;
-                       $bikeQuote->save();
+                    if ($bikeQuote = BikeQuote::where('uuid', $bikeChunkRecord->uuid)->first()) {
+                        $bikeQuote->personal_quote_id = $quote->id;
+                        $bikeQuote->save();
 
-                       if(isset($bikeChunkRecord->bikeQuoteRequestDetail->id)){
-                           PersonalQuoteDetail::firstOrCreate(['personal_quote_id' => $quote->id],[
-                               'pa_id' => $bikeChunkRecord->pa_id ?? null,
-                               'advisor_assigned_date' => $bikeChunkRecord->bikeQuoteRequestDetail?->advisor_assigned_date ?? null,
-                               'advisor_assigned_by_id' => $bikeChunkRecord->bikeQuoteRequestDetail?->advisor_assigned_by_id ?? null,
-                               'next_followup_date' => $bikeChunkRecord->bikeQuoteRequestDetail?->next_followup_date ?? null,
-                               'lost_reason_id' => $bikeChunkRecord->bikeQuoteRequestDetail?->lost_reason_id ?? null,
-                               'transapp_code' => $bikeChunkRecord->bikeQuoteRequestDetail?->transapp_code ?? null,
-                               'additional_notes' => $bikeChunkRecord->additional_notes ?? null,
-                               'utm_source' => $bikeChunkRecord->bikeQuoteRequestDetail?->utm_source ?? null,
-                               'utm_medium' => $bikeChunkRecord->bikeQuoteRequestDetail?->utm_medium ?? null,
-                               'utm_campaign' => $bikeChunkRecord->bikeQuoteRequestDetail?->utm_campaign ?? null,
-                           ]);
-                       }
-                   }
+                        if (isset($bikeChunkRecord->bikeQuoteRequestDetail->id)) {
+                            PersonalQuoteDetail::firstOrCreate(['personal_quote_id' => $quote->id], [
+                                'pa_id' => $bikeChunkRecord->pa_id ?? null,
+                                'advisor_assigned_date' => $bikeChunkRecord->bikeQuoteRequestDetail?->advisor_assigned_date ?? null,
+                                'advisor_assigned_by_id' => $bikeChunkRecord->bikeQuoteRequestDetail?->advisor_assigned_by_id ?? null,
+                                'next_followup_date' => $bikeChunkRecord->bikeQuoteRequestDetail?->next_followup_date ?? null,
+                                'lost_reason_id' => $bikeChunkRecord->bikeQuoteRequestDetail?->lost_reason_id ?? null,
+                                'transapp_code' => $bikeChunkRecord->bikeQuoteRequestDetail?->transapp_code ?? null,
+                                'additional_notes' => $bikeChunkRecord->additional_notes ?? null,
+                                'utm_source' => $bikeChunkRecord->bikeQuoteRequestDetail?->utm_source ?? null,
+                                'utm_medium' => $bikeChunkRecord->bikeQuoteRequestDetail?->utm_medium ?? null,
+                                'utm_campaign' => $bikeChunkRecord->bikeQuoteRequestDetail?->utm_campaign ?? null,
+                            ]);
+                        }
+                    }
                 }
             });
     }
