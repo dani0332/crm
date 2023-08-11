@@ -1,6 +1,4 @@
 <script setup>
-import {XButton} from "@indielayer/ui";
-
 defineProps({
     emailBatches: Object,
     batch: String,
