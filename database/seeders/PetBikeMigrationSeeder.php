@@ -32,7 +32,6 @@ class PetBikeMigrationSeeder extends Seeder
                     $quote = PersonalQuote::firstOrCreate(
                         ['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet],
                         [
-                            'quote_type_id' => QuoteTypeId::Pet,
                             'code' => $petChunkRecord->code,
                             'first_name' => $petChunkRecord->first_name,
                             'last_name' => $petChunkRecord->last_name,
@@ -63,27 +62,24 @@ class PetBikeMigrationSeeder extends Seeder
                         ]
                     );
 
-                    if ($petQuote_ = PetQuote::where('uuid', $petChunkRecord->uuid)->first()) {
-                        $petQuote_->personal_quote_id = $quote->id;
-                        $petQuote_->save();
+                    PetQuote::where('uuid', $petChunkRecord->uuid)->update(['personal_quote_id' => $quote->id]);
 
-                        if (isset($petChunkRecord->petQuoteRequestDetail->id)) {
-                            PersonalQuoteDetail::firstOrCreate(
-                                ['personal_quote_id' => $quote->id],
-                                [
-                                    'pa_id' => $petChunkRecord->pa_id ?? null,
-                                    'advisor_assigned_date' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_date ?? null,
-                                    'advisor_assigned_by_id' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_by_id ?? null,
-                                    'next_followup_date' => $petChunkRecord->petQuoteRequestDetail?->next_followup_date ?? null,
-                                    'lost_reason_id' => $petChunkRecord->petQuoteRequestDetail?->lost_reason_id ?? null,
-                                    'transapp_code' => $petChunkRecord->petQuoteRequestDetail?->transapp_code ?? null,
-                                    'additional_notes' => $petChunkRecord->additional_notes ?? null,
-                                    'utm_source' => $petChunkRecord->petQuoteRequestDetail?->utm_source ?? null,
-                                    'utm_medium' => $petChunkRecord->petQuoteRequestDetail?->utm_medium ?? null,
-                                    'utm_campaign' => $petChunkRecord->petQuoteRequestDetail?->utm_campaign ?? null,
-                                ]
-                            );
-                        }
+                    if (isset($petChunkRecord->petQuoteRequestDetail->id)) {
+                        PersonalQuoteDetail::firstOrCreate(
+                            ['personal_quote_id' => $quote->id],
+                            [
+                                'pa_id' => $petChunkRecord->pa_id ?? null,
+                                'advisor_assigned_date' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_date ?? null,
+                                'advisor_assigned_by_id' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_by_id ?? null,
+                                'next_followup_date' => $petChunkRecord->petQuoteRequestDetail?->next_followup_date ?? null,
+                                'lost_reason_id' => $petChunkRecord->petQuoteRequestDetail?->lost_reason_id ?? null,
+                                'transapp_code' => $petChunkRecord->petQuoteRequestDetail?->transapp_code ?? null,
+                                'additional_notes' => $petChunkRecord->additional_notes ?? null,
+                                'utm_source' => $petChunkRecord->petQuoteRequestDetail?->utm_source ?? null,
+                                'utm_medium' => $petChunkRecord->petQuoteRequestDetail?->utm_medium ?? null,
+                                'utm_campaign' => $petChunkRecord->petQuoteRequestDetail?->utm_campaign ?? null,
+                            ]
+                        );
                     }
                 }
             });
