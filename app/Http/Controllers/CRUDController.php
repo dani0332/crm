@@ -749,6 +749,16 @@ class CRUDController extends Controller
             ]);
         }
 
+        if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+            return inertia('PersonalQuote/Car/Form', [
+                'quote' => $record,
+                'homePossessionTypeEnum' => HomePossessionType::asArray(),
+                'dropdownSource' => $dropdownSource,
+                'isRenewalUser' => $isRenewalUser,
+                'model' => json_encode($model->properties),
+            ]);
+        }
+
         return view('shared.edit', compact(['record', 'model', 'dropdownSource', 'customTitles', 'customLists', 'isRenewalUser']));
     }
 
