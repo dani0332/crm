@@ -2,35 +2,37 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CarTypeOfInsuranceIdEnum;
+use Carbon\Carbon;
+use App\Models\Rule;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\User;
+use App\Jobs\CammyJob;
+use App\Enums\RolesEnum;
+use App\Models\CarQuote;
+use App\Models\TierUser;
+use App\Models\LeadSource;
+use App\Models\RuleDetail;
 use App\Enums\DaysNameEnum;
+use App\Jobs\IntroEmailJob;
+use App\Models\HealthQuote;
+use App\Enums\quoteTypeCode;
+use App\Models\QuoteBatches;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\RolesEnum;
-use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
-use App\Jobs\IntroEmailJob;
-use App\Jobs\SyncSIBContactJob;
-use App\Models\ApplicationStorage;
-use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
-use App\Models\HealthQuote;
-use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
-use App\Models\LeadSource;
-use App\Models\QuoteBatches;
-use App\Models\RuleLeadSource;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\TierUser;
-use App\Models\User;
+use App\Jobs\SyncSIBContactJob;
 use App\Traits\GetUserTreeTrait;
-use Carbon\Carbon;
+use App\Models\CommercialKeyword;
+use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\CarQuoteRequestDetail;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarTypeOfInsuranceIdEnum;
+use App\Models\HealthQuoteRequestDetail;
 
 class LeadAllocationService extends BaseService
 {
@@ -487,7 +489,10 @@ class LeadAllocationService extends BaseService
 
                     info('Available and Login users against selected tier are : '.json_encode($loginAndAvailableUserIds));
 
-                    $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
+                    $matchedRuleRecords = $this->getRulesByLeadSource($carLead);
+
+                    info("count of matched records =====******======");
+                    info(count($matchedRuleRecords));
 
                     if (count($matchedRuleRecords) > 0) {
                         $ruleUserIds = [];
@@ -503,7 +508,15 @@ class LeadAllocationService extends BaseService
 
                         info('After intersection of users and rules, output is : '.json_encode($finalAvailableAndLoginAdvisorIds));
                     } else {
-                        $ruleUsers = RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')->where('rules.is_active', 1)->distinct()->pluck('rule_lead_sources.user_id')->toArray();
+                        $ruleUsers = RuleDetail::join('rules', 'rules.id', 'rule_details.rule_id')
+                            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+                            ->where('rules.is_active', 1)
+                            ->distinct()
+                            ->pluck('rule_users.user_id')
+                            ->toArray();
+
+                        info("Plucked users ====> ");
+                        info(json_encode($ruleUsers));
 
                         info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
                         $finalAvailableAndLoginAdvisorIds = [];
@@ -646,22 +659,58 @@ class LeadAllocationService extends BaseService
             ->skip(0)->take($carLeadPickupLimit)->get();
     }
 
-    public function getRulesByLeadSource($source)
+    public function getRulesByLeadSource($carLead)
     {
-        $records = LeadSource::join('rule_lead_sources', 'rule_lead_sources.lead_source_id', 'lead_sources.id')
-            ->join('users', 'users.id', 'rule_lead_sources.user_id')
-            ->join('rules', 'rule_lead_sources.rule_id', 'rules.id')
-            ->where('lead_sources.name', $source)
-            ->where('rules.is_active', 1)
-            ->where('lead_sources.is_applicable_for_rules', 1)
-            ->groupBy('rule_lead_sources.lead_source_id')
-            ->select(
-                'lead_sources.name AS leadSourceName',
-                'lead_sources.id AS leadSourceId',
-                DB::raw('group_concat(rule_lead_sources.user_id) AS leadSourceUsers')
-            );
+
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+
+        foreach ($commercialKeywords as $keyword) {
+            info("keyword = ". json_encode($keyword->name));
+            if (
+                str_contains(
+                    strtolower(trim($carLead->full_name)),
+                    strtolower(trim($keyword->name))
+                )
+            ) {
+                $carMake = $carLead->car_make_id;
+                $carModel = $carLead->car_model_id;
+
+                $records = Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+                    ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+                    ->join('users', 'users.id', 'rule_users.user_id')
+                    ->where('rule_details.car_make_id', $carMake)
+                    ->where('rule_details.car_model_id', $carModel)
+                    ->where('rules.is_active', 1)
+                    ->groupBy('rule_details.rule_id')
+                    ->select(
+                        DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+                    );
+
+                    info('Corporate motor records: ' . json_encode($records->get()));
+
+                    return $records->get();
+
+            }
+        }
+
+        $records = LeadSource::join('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
+        ->join('rules',  'rules.id', 'rule_details.rule_id',)
+        ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+        ->join('users', 'users.id', 'rule_users.user_id')
+        ->where('lead_sources.name', $carLead->source)
+        ->where('rules.is_active', 1)
+        ->where('lead_sources.is_applicable_for_rules', 1)
+        ->groupBy('rule_details.lead_source_id')
+        ->select(
+            'lead_sources.name AS leadSourceName',
+            'lead_sources.id AS leadSourceId',
+            DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+        );
+
+        info('lead source records: ' . json_encode($records->get()));
 
         return $records->get();
+
     }
 
     public function checkIfLeadIsRenewal($lead)

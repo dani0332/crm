@@ -18,7 +18,8 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
-            CommercialKeywordsSeeder::class
+            CommercialKeywordsSeeder::class,
+            RuleTypeSeeder::class,
         ]);
     }
 }

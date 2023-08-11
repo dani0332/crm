@@ -12,13 +12,13 @@ use BenSampo\Enum\Enum;
 final class RuleTypeEnum extends Enum
 {
     public const LEAD_SOURCE        =   '1';
-    public const MOTOR_CORPORATE    =   '2';
+    public const CAR_MAKE_MODEL     =   '2';
 
     /**
      * const @var array
      */
     const RULE_TYPE_LIST = [
         self::LEAD_SOURCE,
-        self::MOTOR_CORPORATE
+        self::CAR_MAKE_MODEL
     ];
 }

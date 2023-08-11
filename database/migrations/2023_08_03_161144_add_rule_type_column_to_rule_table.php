@@ -17,7 +17,7 @@ class AddRuleTypeColumnToRuleTable extends Migration
         Schema::table('rules', function (Blueprint $table) {
             if (! Schema::hasColumn('rules', 'rule_type')) {
                 $table->enum('rule_type', RuleTypeEnum::RULE_TYPE_LIST)
-                    ->default(null)
+                    ->default(1)
                     ->after('is_active')
                     ->nullable();
             }

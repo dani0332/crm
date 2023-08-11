@@ -28,7 +28,7 @@ use App\Models\PaymentStatus;
 use App\Models\Quadrants;
 use App\Models\QuoteStatus;
 use App\Models\Regions;
-use App\Models\RuleMotorCorporate;
+use App\Models\RuleDetail;
 use App\Models\RuleType;
 use App\Models\Team;
 use App\Models\Tier;
@@ -304,8 +304,8 @@ class DropdownSourceService extends BaseService
                 $ruleID = explode('/', request()->path());
                 $data = [];
                 if (isset($ruleID[2])) {
-                    $carMake = RuleMotorCorporate::where('rule_id', $ruleID[2])->select('car_make_id')->first();
-                    if ($carMake){
+                    $carMake = RuleDetail::where('rule_id', $ruleID[2])->select('car_make_id')->first();
+                    if ($carMake && $carMake->car_make_id != null){
                         $makeCode = CarMake::whereId($carMake->car_make_id)
                             ->where('is_active', true)
                             ->where('is_commercial', true)

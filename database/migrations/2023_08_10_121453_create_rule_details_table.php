@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateRuleMotorCorporatesTable extends Migration
+class CreateRuleDetailsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateRuleMotorCorporatesTable extends Migration
      */
     public function up()
     {
-        Schema::create('rule_motor_corporates', function (Blueprint $table) {
+        Schema::create('rule_details', function (Blueprint $table) {
             $table->id();
             $table->foreignId('rule_id')
                 ->constrained('rules')
@@ -27,18 +27,18 @@ class CreateRuleMotorCorporatesTable extends Migration
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
-            $table->integer('car_model_id');
+            $table->integer('car_model_id')->nullable();
             $table->foreign('car_model_id')
                 ->references('id')
                 ->on('car_model')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
 
-            $table->foreignId('user_id')
-                ->constrained('users')
+            $table->foreignId('lead_source_id')->nullable()
+                ->constrained('lead_sources')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-
+                
             $table->timestamps();
         });
     }
@@ -50,6 +50,6 @@ class CreateRuleMotorCorporatesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('rule_motor_corporates');
+        Schema::dropIfExists('rule_details');
     }
 }

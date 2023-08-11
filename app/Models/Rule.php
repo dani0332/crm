@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 use OwenIt\Auditing\Auditable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Rule extends Model implements AuditableContract
@@ -20,16 +23,34 @@ class Rule extends Model implements AuditableContract
      */
 
     /**
-     * get rule motor corporates function
+     * get rule details function
      *
-     * @return void
+     * @return HasOne
      */
-    public function motorCoporates()
+    public function ruleDetail():HasOne
     {
-        return $this->hasMany(
-            RuleMotorCorporate::class,
+        return $this->hasOne(
+            RuleDetail::class,
             'rule_id',
             'id'
         );
+    }
+
+    /**
+     * get rule users function
+     *
+     * @return BelongsToMany
+     */
+    public function ruleUsers():BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'rule_users',
+            'rule_id',
+            'user_id',
+            'id',
+            'id',
+            'ruleUsers'
+        )->withTimestamps();
     }
 }

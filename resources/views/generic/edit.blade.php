@@ -102,9 +102,7 @@
                                                 <span class='required'>*</span>
                                                 @endif
                                             </span>
-                                            <select @if(strpos($value, 'multiple')) data-mdb-filter="true" multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}"
-                                                @if($property === 'rule_type') disabled @endif
-                                            >
+                                            <select @if(strpos($value, 'multiple')) data-mdb-filter="true" multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}">
                                                 @if(strpos($value, 'title'))
                                                     <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                                 @else
@@ -136,7 +134,8 @@
                                                         $itemName = $item->name ?? $item->text;
                                                     @endphp
                                                     @if(gettype($record->$property) != 'string')
-                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $itemName }}</option>
+                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}
+                                                            @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif>{{ $itemName }}</option>
                                                     @elseif (str_contains($record->$property, ','))
                                                         @if(str_contains($record->$property, $itemName))
                                                         <option value="{{$item->id}}" selected="selected">{{ $itemName }}</option>
@@ -145,9 +144,9 @@
                                                         @endif
                                                     @else
                                                         <option value="{{$item->id}}" {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}
-                                                            @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif
-                                                            @if($property === 'rule_type') disabled @endif
-                                                            >{{ $itemName }}</option>
+                                                            @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif>
+                                                            {{ $itemName }}
+                                                        </option>
                                                     @endif
                                                 @endforeach
 
