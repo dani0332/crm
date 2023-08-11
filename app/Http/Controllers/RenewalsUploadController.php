@@ -224,29 +224,30 @@ class RenewalsUploadController extends Controller
     public function index(Request $request, RenewalsUploadLeads $renewalsUploadLeads, Datatables $datatables)
     {
 
-            $dataRenewalUpload = $renewalsUploadLeads::select(
-                'renewals_upload_leads.id as id',
-                'renewals_upload_leads.renewal_import_type as renewal_import_type',
-                'renewals_upload_leads.renewal_import_code as renewal_import_code',
-                'renewals_upload_leads.file_name as file_name',
-                'renewals_upload_leads.total_records as total_records',
-                'renewals_upload_leads.good as good',
-                'renewals_upload_leads.cannot_upload as cannot_upload',
-                'renewals_upload_leads.status as status',
-                'renewals_upload_leads.created_at as created_at',
-                'renewals_upload_leads.updated_at as updated_at',
-                'users.name as uploaded_by',
-                'renewals_upload_leads.skip_plans'
-            )
-                ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
-                ->orderBy('renewals_upload_leads.created_at', 'desc');
-                $dataRenewalUpload = $dataRenewalUpload->simplePaginate();
-              return inertia('Renewals/UploadedLeads', [
-                  'leads' => $dataRenewalUpload,
-                   'EnumGenericNo'=>GenericRequestEnum::No,
-                   'EnumGenericYes'=>GenericRequestEnum::Yes,
-                   'EnumSkipPlansNonGCC'=>SkipPlansEnum::NON_GCC,
-              ]);
+        $dataRenewalUpload = $renewalsUploadLeads::select(
+            'renewals_upload_leads.id as id',
+            'renewals_upload_leads.renewal_import_type as renewal_import_type',
+            'renewals_upload_leads.renewal_import_code as renewal_import_code',
+            'renewals_upload_leads.file_name as file_name',
+            'renewals_upload_leads.total_records as total_records',
+            'renewals_upload_leads.good as good',
+            'renewals_upload_leads.cannot_upload as cannot_upload',
+            'renewals_upload_leads.status as status',
+            'renewals_upload_leads.created_at as created_at',
+            'renewals_upload_leads.updated_at as updated_at',
+            'users.name as uploaded_by',
+            'renewals_upload_leads.skip_plans'
+        )
+            ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
+            ->orderBy('renewals_upload_leads.created_at', 'desc');
+        $dataRenewalUpload = $dataRenewalUpload->simplePaginate();
+
+        return inertia('Renewals/UploadedLeads', [
+            'leads' => $dataRenewalUpload,
+            'EnumGenericNo' => GenericRequestEnum::No,
+            'EnumGenericYes' => GenericRequestEnum::Yes,
+            'EnumSkipPlansNonGCC' => SkipPlansEnum::NON_GCC,
+        ]);
 
     }
 
@@ -269,7 +270,7 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-         $renewalQuotes = RenewalQuoteProcess::query()
+        $renewalQuotes = RenewalQuoteProcess::query()
             ->select('batch as renewal_batch')
             ->where([
                 'quote_type' => QuoteTypeShortCode::CAR,
@@ -277,8 +278,9 @@ class RenewalsUploadController extends Controller
             ])
             ->groupBy('batch');
         $renewalQuotes = $renewalQuotes->simplePaginate();
+
         return inertia('Renewals/Batches', [
-            'batches' => $renewalQuotes
+            'batches' => $renewalQuotes,
         ]);
     }
 
@@ -297,11 +299,11 @@ class RenewalsUploadController extends Controller
                 'batch' => $batch,
             ])->with('createdby');
         $process = $process->simplePaginate();
+
         return inertia('Renewals/PlanProcesses', [
             'process' => $process,
-            'batch'=>$batch
+            'batch' => $batch,
         ]);
-
 
     }
 
@@ -323,8 +325,8 @@ class RenewalsUploadController extends Controller
 
         return inertia('Renewals/BatchDetail', [
             'emailBatches' => $emailBatches,
-            'hideSendEmailButton'=>$hideSendEmailButton,
-            'batch'=>$batch
+            'hideSendEmailButton' => $hideSendEmailButton,
+            'batch' => $batch,
         ]);
     }
 
