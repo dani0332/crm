@@ -87,7 +87,8 @@ class PetBikeMigrationSeeder extends Seeder
 
         // Bike Data Migration
         // Fetch Old Bike Records from bike_quote_request table and Dump into personal_quote table
-        BikeQuote::with('bikeQuoteRequestDetail')->whereNotNull('code')
+
+       /* BikeQuote::with('bikeQuoteRequestDetail')->whereNotNull('code')
             ->chunk(100, function ($bikeChunkRecords) {
                 foreach ($bikeChunkRecords as $bikeChunkRecord) {
                     $insurer = InsuranceProvider::where('code', $bikeChunkRecord->currently_insured_with)->first();
@@ -146,6 +147,6 @@ class PetBikeMigrationSeeder extends Seeder
                         }
                     }
                 }
-            });
+            });*/
     }
 }
