@@ -29,57 +29,61 @@ class PetBikeMigrationSeeder extends Seeder
                 foreach ($petChunkRecords as $petChunkRecord) {
                     $customer = Customer::where('email', $petChunkRecord->email)->first();
                     $nationality = Nationality::where('id', $petChunkRecord->nationality_id)->first();
-                    $quote = PersonalQuote::firstOrCreate(
-                        ['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet],
-                        [
-                            'code' => $petChunkRecord->code,
-                            'first_name' => $petChunkRecord->first_name,
-                            'last_name' => $petChunkRecord->last_name,
-                            'dob' => $petChunkRecord->dob,
-                            'nationality_id' => $nationality->id ?? null,
-                            'email' => $petChunkRecord->email,
-                            'mobile_no' => $petChunkRecord->mobile_no,
-                            'source' => $petChunkRecord->source,
-                            'customer_id' => $customer->id ?? null,
-                            'device' => $petChunkRecord->device,
-                            'reference_url' => $petChunkRecord->reference_url,
-                            'policy_number' => $petChunkRecord->policy_number,
-                            'advisor_id' => $petChunkRecord->advisor_id,
-                            'premium' => $petChunkRecord->premium,
-                            'renewal_batch' => $petChunkRecord->renewal_batch,
-                            'renewal_expiry_date' => $petChunkRecord->renewal_expiry_date,
-                            'previous_quote_policy_number' => $petChunkRecord->previous_quote_policy_number,
-                            'renewal_import_code' => $petChunkRecord->renewal_import_code,
-                            'previous_policy_expiry_date' => $petChunkRecord->previous_policy_expiry_date,
-                            'previous_quote_policy_premium' => $petChunkRecord->previous_quote_policy_premium,
-                            'policy_start_date' => $petChunkRecord->policy_start_date,
-                            'policy_issuance_date' => $petChunkRecord->policy_issuance_date,
-                            'payment_status_id' => $petChunkRecord->payment_status_id,
-                            'quote_status_id' => $petChunkRecord->quote_status_id,
-                            'notes' => $petChunkRecord->petQuoteRequestDetail?->notes ?? null,
-                            'created_at' => $petChunkRecord->created_at,
-                            'updated_at' => $petChunkRecord->updated_at,
-                        ]
-                    );
 
-                    PetQuote::where('uuid', $petChunkRecord->uuid)->update(['personal_quote_id' => $quote->id]);
-
-                    if (isset($petChunkRecord->petQuoteRequestDetail->id)) {
-                        PersonalQuoteDetail::firstOrCreate(
-                            ['personal_quote_id' => $quote->id],
+                    if (! PersonalQuote::where(['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet])->first())
+                    {
+                        $quote = PersonalQuote::updateOrCreate(
+                            ['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet],
                             [
-                                'pa_id' => $petChunkRecord->pa_id ?? null,
-                                'advisor_assigned_date' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_date ?? null,
-                                'advisor_assigned_by_id' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_by_id ?? null,
-                                'next_followup_date' => $petChunkRecord->petQuoteRequestDetail?->next_followup_date ?? null,
-                                'lost_reason_id' => $petChunkRecord->petQuoteRequestDetail?->lost_reason_id ?? null,
-                                'transapp_code' => $petChunkRecord->petQuoteRequestDetail?->transapp_code ?? null,
-                                'additional_notes' => $petChunkRecord->additional_notes ?? null,
-                                'utm_source' => $petChunkRecord->petQuoteRequestDetail?->utm_source ?? null,
-                                'utm_medium' => $petChunkRecord->petQuoteRequestDetail?->utm_medium ?? null,
-                                'utm_campaign' => $petChunkRecord->petQuoteRequestDetail?->utm_campaign ?? null,
+                                'code' => $petChunkRecord->code,
+                                'first_name' => $petChunkRecord->first_name,
+                                'last_name' => $petChunkRecord->last_name,
+                                'dob' => $petChunkRecord->dob,
+                                'nationality_id' => $nationality->id ?? null,
+                                'email' => $petChunkRecord->email,
+                                'mobile_no' => $petChunkRecord->mobile_no,
+                                'source' => $petChunkRecord->source,
+                                'customer_id' => $customer->id ?? null,
+                                'device' => $petChunkRecord->device,
+                                'reference_url' => $petChunkRecord->reference_url,
+                                'policy_number' => $petChunkRecord->policy_number,
+                                'advisor_id' => $petChunkRecord->advisor_id,
+                                'premium' => $petChunkRecord->premium,
+                                'renewal_batch' => $petChunkRecord->renewal_batch,
+                                'renewal_expiry_date' => $petChunkRecord->renewal_expiry_date,
+                                'previous_quote_policy_number' => $petChunkRecord->previous_quote_policy_number,
+                                'renewal_import_code' => $petChunkRecord->renewal_import_code,
+                                'previous_policy_expiry_date' => $petChunkRecord->previous_policy_expiry_date,
+                                'previous_quote_policy_premium' => $petChunkRecord->previous_quote_policy_premium,
+                                'policy_start_date' => $petChunkRecord->policy_start_date,
+                                'policy_issuance_date' => $petChunkRecord->policy_issuance_date,
+                                'payment_status_id' => $petChunkRecord->payment_status_id,
+                                'quote_status_id' => $petChunkRecord->quote_status_id,
+                                'notes' => $petChunkRecord->petQuoteRequestDetail?->notes ?? null,
+                                'created_at' => $petChunkRecord->created_at,
+                                'updated_at' => $petChunkRecord->updated_at,
                             ]
                         );
+
+                        PetQuote::where('uuid', $petChunkRecord->uuid)->update(['personal_quote_id' => $quote->id]);
+
+                        if (isset($petChunkRecord->petQuoteRequestDetail->id)) {
+                            PersonalQuoteDetail::firstOrCreate(
+                                ['personal_quote_id' => $quote->id],
+                                [
+                                    'pa_id' => $petChunkRecord->pa_id ?? null,
+                                    'advisor_assigned_date' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_date ?? null,
+                                    'advisor_assigned_by_id' => $petChunkRecord->petQuoteRequestDetail?->advisor_assigned_by_id ?? null,
+                                    'next_followup_date' => $petChunkRecord->petQuoteRequestDetail?->next_followup_date ?? null,
+                                    'lost_reason_id' => $petChunkRecord->petQuoteRequestDetail?->lost_reason_id ?? null,
+                                    'transapp_code' => $petChunkRecord->petQuoteRequestDetail?->transapp_code ?? null,
+                                    'additional_notes' => $petChunkRecord->additional_notes ?? null,
+                                    'utm_source' => $petChunkRecord->petQuoteRequestDetail?->utm_source ?? null,
+                                    'utm_medium' => $petChunkRecord->petQuoteRequestDetail?->utm_medium ?? null,
+                                    'utm_campaign' => $petChunkRecord->petQuoteRequestDetail?->utm_campaign ?? null,
+                                ]
+                            );
+                        }
                     }
                 }
             });
