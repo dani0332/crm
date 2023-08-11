@@ -14,7 +14,9 @@ class UpdatePersonalQuotesTable extends Migration
     public function up()
     {
         Schema::table('personal_quotes', function (Blueprint $table) {
+
             $table->string('uuid', 100)->change();
+
         });
     }
 
