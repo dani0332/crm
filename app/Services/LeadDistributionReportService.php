@@ -21,6 +21,8 @@ class LeadDistributionReportService extends BaseService
     public function getReportData($request)
     {
         $query = CarQuote::leftJoin('tiers', 'tiers.id', '=', 'car_quote_request.tier_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->select(DB::raw('(
 
@@ -108,6 +110,14 @@ class LeadDistributionReportService extends BaseService
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
             info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial == "true") {
+            $query->where('car_make.is_commercial', '=', true)
+                ->where('car_model.is_commercial', '=', true);
+        }else{
+            $query->where('car_make.is_commercial', '=', false)
+                ->where('car_model.is_commercial', '=', false);
         }
 
         return $query;

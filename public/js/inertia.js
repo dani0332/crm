@@ -12288,6 +12288,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       leadSources: [],
       advisors: [],
       teams: [],
+      isCommercial: false,
       page: 1
     });
     function onSubmit(isValid) {
@@ -12619,6 +12620,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       advisorAssignedDates: [],
       tiers: [],
       teams: [],
+      isCommercial: false,
       page: 1
     });
     function onSubmit(isValid) {
@@ -12782,6 +12784,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       advisorAssignedDates: [],
       tiers: [],
       teams: [],
+      isCommercial: false,
       page: 1
     });
     var calculateTotalSum = function calculateTotalSum(data, key) {
@@ -12935,6 +12938,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
     var filters = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
       createdAtDates: [],
       tiers: [],
+      isCommercial: false,
       page: 1
     });
     function onSubmit(isValid) {
@@ -33239,7 +33243,21 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "select-all": ((_$setup$filters$advis = $setup.filters.advisors) === null || _$setup$filters$advis === void 0 ? void 0 : _$setup$filters$advis.length) > 0,
         "deselect-all": ((_$setup$filters$advis2 = $setup.filters.advisors) === null || _$setup$filters$advis2 === void 0 ? void 0 : _$setup$filters$advis2.length) > 0,
         loading: $setup.loaders.advisorOptions
-      }, null, 8 /* PROPS */, ["modelValue", "label", "options", "select-all", "deselect-all", "loading"])], 64 /* STABLE_FRAGMENT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_4, [$setup.isDirty ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_5, " Please click search, to show updated records based on the selected filters ")) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+      }, null, 8 /* PROPS */, ["modelValue", "label", "options", "select-all", "deselect-all", "loading"])], 64 /* STABLE_FRAGMENT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.isCommercial,
+        "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+          return $setup.filters.isCommercial = $event;
+        }),
+        label: "Commercial",
+        placeholder: "Select any option",
+        options: [{
+          value: true,
+          label: 'Yes'
+        }, {
+          value: false,
+          label: 'No'
+        }]
+      }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_4, [$setup.isDirty ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_5, " Please click search, to show updated records based on the selected filters ")) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"
@@ -33399,7 +33417,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["disabled", "onClick"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.totalLeads.modal,
-    "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+    "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
       return $setup.totalLeads.modal = $event;
     }),
     size: "xl",
@@ -33532,6 +33550,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-divider");
   var _component_DatePicker = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_2__["default"];
   var _component_ComboBox = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_1__["default"];
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-select");
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-button");
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-form");
   var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("DataTable");
@@ -33582,7 +33601,21 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             label: $props.filterOptions.teams[key]
           };
         })
-      }, null, 8 /* PROPS */, ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.isCommercial,
+        "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
+          return $setup.filters.isCommercial = $event;
+        }),
+        label: "Commercial",
+        placeholder: "Select any option",
+        options: [{
+          value: true,
+          label: 'Yes'
+        }, {
+          value: false,
+          label: 'No'
+        }]
+      }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"
@@ -33707,6 +33740,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-divider");
   var _component_DatePicker = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_2__["default"];
   var _component_ComboBox = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_1__["default"];
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-select");
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-button");
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-form");
   var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("DataTable");
@@ -33776,7 +33810,21 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         "max-limit": 3,
         "deselect-all": ""
-      }, null, 8 /* PROPS */, ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.isCommercial,
+        "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+          return $setup.filters.isCommercial = $event;
+        }),
+        label: "Commercial",
+        placeholder: "Select any option",
+        options: [{
+          value: true,
+          label: 'Yes'
+        }, {
+          value: false,
+          label: 'No'
+        }]
+      }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"
@@ -33892,6 +33940,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-divider");
   var _component_DatePicker = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_DatePicker_vue__WEBPACK_IMPORTED_MODULE_2__["default"];
   var _component_ComboBox = _Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Components_ComboBox_vue__WEBPACK_IMPORTED_MODULE_1__["default"];
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-select");
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-button");
   var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("x-form");
   var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_4__.resolveComponent)("DataTable");
@@ -33931,7 +33980,21 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         "deselect-all": "",
         "select-all": ""
-      }, null, 8 /* PROPS */, ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
+      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+        modelValue: $setup.filters.isCommercial,
+        "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+          return $setup.filters.isCommercial = $event;
+        }),
+        label: "Commercial",
+        placeholder: "Select any option",
+        options: [{
+          value: true,
+          label: 'Yes'
+        }, {
+          value: false,
+          label: 'No'
+        }]
+      }, null, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         color: "#ff5e00",
         type: "submit"
