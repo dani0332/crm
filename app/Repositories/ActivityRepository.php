@@ -4,9 +4,13 @@ namespace App\Repositories;
 
 use App\Models\Activities;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use App\Traits\GetUserTreeTrait;
 
 class ActivityRepository extends BaseRepository
 {
+    use GetUserTreeTrait;
+    
     public function model()
     {
         return Activities::class;
@@ -17,10 +21,12 @@ class ActivityRepository extends BaseRepository
     */
     public function fetchGetData()
     {
+        $subOrdinateIds = $this->walkTree(Auth::user()->id);
+        array_push($subOrdinateIds, Auth::user()->id);
         return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->select(
             'activities.id as id',
             'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
-        )->filter()->whereIn('assignee_id', [874])->simplePaginate()->withQueryString();
+        )->filter()->whereIn('assignee_id', $subOrdinateIds)->simplePaginate()->withQueryString();
     }
 
     /**
