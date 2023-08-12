@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
+use App\Jobs\CarJob;
 use App\Jobs\LeadAllocationJob;
 use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
@@ -28,13 +29,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        $schedule
-            ->command('LeadAllocation:cron')
-            ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        // $schedule->job(new ProcessFrequentTask)->everyMinute();
 
-        //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+        $schedule->job(new CarJob(app(CarAllocationService::class)))->everyMinute()->withoutOverlapping(1)->onOneServer();
 
         $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 

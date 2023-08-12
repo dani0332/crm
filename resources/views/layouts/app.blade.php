@@ -149,12 +149,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 
-
+    @php
+        $pusherAppKey = config('constants.PUSHER_APP_KEY');
+    @endphp
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
     <script src="{{ asset('build/js/custom.js') }}"></script>
     <script>
+
+
+        // Use the PHP variable in your JavaScript code
+        var pusherAppKey = @json($pusherAppKey);
+        Pusher.logToConsole = true;
+        var pusher = new Pusher(pusherAppKey, {
+            cluster: 'ap1'
+        });
+
+        var channel = pusher.subscribe('activity.user');
+        channel.bind('user.status.changed', function(data) {
+            console.log(JSON.stringify(data));
+        });
         // global app configuration object
         var config = {
             routes: {
@@ -250,20 +265,6 @@
             }
         });
         $.fn.dataTable.ext.errMode = 'none'; // disable datatables error prompt
-        Pusher.logToConsole = true;
-
-        var pusher = new Pusher('55209d647ceac319ce26', {
-        cluster: 'ap1'
-        });
-
-        var channel = pusher.subscribe('my-channel');
-        channel.bind('user.status.changed', function(data) {
-            debugger;
-            alert(JSON.stringify(data));
-        });
-
-
-
     </script>
 </body>
 

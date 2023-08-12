@@ -2,13 +2,13 @@
 
 namespace App\Events;
 
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UserStatusChanged implements ShouldBroadcast
+class UserStatusChanged implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -23,7 +23,7 @@ class UserStatusChanged implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new PrivateChannel('user.'.$this->userId);
+        return new Channel('activity.user');
     }
 
     public function broadcastAs()

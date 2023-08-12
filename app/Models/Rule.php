@@ -13,4 +13,15 @@ class Rule extends Model implements AuditableContract
 
     protected $table = 'rules';
     protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active'];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'rule_users');
+    }
+
+    public function leadSources()
+    {
+        return $this->hasMany(RuleLeadSource::class, 'rule_id');
+    }
+
 }

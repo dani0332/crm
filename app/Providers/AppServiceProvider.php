@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\CarAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
@@ -14,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-
+        $this->app->bind(CarAllocationService::class, function ($app) {
+            return new CarAllocationService();
+        });
     }
 
     /**

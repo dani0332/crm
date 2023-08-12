@@ -7,14 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class LeadSource extends Model implements AuditableContract
+class RuleDetail extends Model implements AuditableContract
 {
     use HasFactory, Auditable;
 
-    protected $table = 'lead_sources';
+    protected $table = 'rule_details';
 
-    public function ruleDetails()
+    public function rule()
     {
-        return $this->hasMany(RuleDetail::class, 'lead_source_id');
+        return $this->belongsTo(Rule::class);
     }
+
 }

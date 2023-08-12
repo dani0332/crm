@@ -12,6 +12,7 @@
         "arielmejiadev/larapex-charts": "^5.2",
         "barryvdh/laravel-dompdf": "^2.0",
         "bensampo/laravel-enum": "^v4.2.0",
+        "beyondcode/laravel-websockets": "^1.14",
         "doctrine/dbal": "^3.3",
         "fideloper/proxy": "^4.4",
         "fruitcake/laravel-cors": "^2.0",
