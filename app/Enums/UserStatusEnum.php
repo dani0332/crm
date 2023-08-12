@@ -11,8 +11,6 @@ final class UserStatusEnum extends Enum
     public const UNAVAILABLE = 3;
     public const SICK = 4;
     public const LEAVE = 5;
-
-
     const UserStatusList = [
         self::ONLINE,
         self::OFFLINE,

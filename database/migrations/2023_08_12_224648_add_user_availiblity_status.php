@@ -2,7 +2,6 @@
 
 use App\Enums\UserStatusEnum;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 class AddUserAvailiblityStatus extends Migration
@@ -18,7 +17,7 @@ class AddUserAvailiblityStatus extends Migration
             Schema::table('users', function ($table) {
                 if (! Schema::hasColumn('users', 'status')) {
                     $table->enum('status', UserStatusEnum::UserStatusList)
-                    ->default(UserStatusEnum::UNAVAILABLE);
+                        ->default(UserStatusEnum::UNAVAILABLE);
                 }
             });
         }

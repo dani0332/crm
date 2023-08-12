@@ -43,23 +43,16 @@ class CarJob extends JobInterface
                 }
             } else {
                 // Log that tier was not found for the lead and skip processing
-                info('Tier not found for lead: ' . $lead->uuid . '. Skipping for now.');
+                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
         }
     }
 
-    /**
-     * @return mixed
-     */
     protected function fetchLeads(): mixed
     {
         return $this->carAllocationService->fetchLeads();
     }
 
-    /**
-     * @param $lead
-     * @return Tier
-     */
     protected function findTier($lead): Tier
     {
         if ($lead->tier_id == null) {
@@ -69,52 +62,26 @@ class CarJob extends JobInterface
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    /**
-     * @param $tierId
-     * @return array
-     */
     protected function findAvailableUsers($tierId): array
     {
         return $this->carAllocationService->getEligibleUsersForAllocation($tierId);
     }
 
-    /**
-     * @param $lead
-     * @return array
-     */
     protected function findRules($lead): array
     {
-       return $this->carAllocationService->getRules($lead);
+        return $this->carAllocationService->getRules($lead);
     }
 
-    /**
-     * @param $lead
-     * @param $tier
-     * @param $users
-     * @param $rules
-     * @return int
-     */
     protected function finalizeAdvisors($lead, $tier, $users, $rules): int
     {
         return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
     }
 
-    /**
-     * @param $lead
-     * @param $userId
-     * @param $tier
-     * @return void
-     */
     protected function assignLeadAndSendEmail($lead, $userId, $tier): void
     {
         $this->carAllocationService->processLeadAssignmentAndSendEmail($lead, $userId, $tier);
     }
 
-    /**
-     * @param $lead
-     * @param $tier
-     * @return void
-     */
     private function updateLeadTier($lead, $tier): void
     {
         $this->carAllocationService->updateLeadTier($lead, $tier);

@@ -27,10 +27,6 @@ class AllocationService
         return Tier::where('id', $tierId)->first();
     }
 
-    /**
-     * @param $userId
-     * @return void
-     */
     public function updateLeadAllocationCounts($userId): void
     {
         $timestamp = Carbon::now()->timestamp;
@@ -44,6 +40,6 @@ class AllocationService
                 'updated_at' => now(),
             ]);
 
-        info('Count updated for user Id: ' . $userId);
+        info('Count updated for user Id: '.$userId);
     }
 }

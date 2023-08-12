@@ -25,20 +25,19 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLeads()
     {
-        list($from, $to, $limit, $isFIFO) = $this->getAppStorageValuesForCarLeads();
+        [$from, $to, $limit, $isFIFO] = $this->getAppStorageValuesForCarLeads();
 
-        info('Car leads fetch start date is: ' . $from . ' and end datetime is: ' . $to . ' and pickup limit is: ' . $limit . ' and Pickup direction FIFO is: ' . $isFIFO);
+        info('Car leads fetch start date is: '.$from.' and end datetime is: '.$to.' and pickup limit is: '.$limit.' and Pickup direction FIFO is: '.$isFIFO);
 
         $unassignedLeadsCount = $this->getUnassignedLeadsCount();
 
         $leadsQuery = CarQuote::whereNull('advisor_id')
-                    ->where('is_renewal_tier_email_sent', 0)->where('deferred', 0)
-                    ->whereBetween('created_at', [$from, $to])
-                    ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                    ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                    ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-                    ->limit($limit);
-
+            ->where('is_renewal_tier_email_sent', 0)->where('deferred', 0)
+            ->whereBetween('created_at', [$from, $to])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
+            ->limit($limit);
 
         $this->addDeferredLeadsIfNeeded($unassignedLeadsCount, $limit, $leadsQuery);
 
@@ -46,36 +45,25 @@ class CarAllocationService extends AllocationService
 
     }
 
-    /**
-     * @return mixed
-     */
     protected function getUnassignedLeadsCount(): mixed
     {
         return CarQuote::whereNull('advisor_id')->count();
     }
 
-    /**
-     * @param $limit
-     * @return mixed
-     */
     private function fetchDeferredLeads($limit): mixed
     {
         return CarQuote::where('deferred', 1)
-                ->orderBy('deferred_at')
-                ->limit($limit);
+            ->orderBy('deferred_at')
+            ->limit($limit);
     }
 
-    /**
-     * @param $carLead
-     * @return Tier|null
-     */
     public function findTier($carLead): Tier|null
     {
-        info('Started searching tier for car lead: ' . json_encode($carLead->code));
+        info('Started searching tier for car lead: '.json_encode($carLead->code));
 
         $tiersQuery = Tier::where('is_active', 1); // Query to get all active tiers
 
-        info('Car ecommerce info is: ' . json_encode($carLead->is_ecommerce));
+        info('Car ecommerce info is: '.json_encode($carLead->is_ecommerce));
 
         if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::ThirdPartyOnly) {
             info('Selecting tier which can handle TPL leads');
@@ -96,10 +84,11 @@ class CarAllocationService extends AllocationService
             $highestValueTier = Tier::where('is_active', 1)->orderByDesc('max_price')->first();
 
             if ($carLead->car_value > $highestValueTier->max_price) {
-                info('Lead ' . $carLead->uuid . ' has value higher than all tiers, selecting tier ' . $highestValueTier->name);
+                info('Lead '.$carLead->uuid.' has value higher than all tiers, selecting tier '.$highestValueTier->name);
+
                 return $highestValueTier;
             } else {
-                info('Filtering tiers based on car value: ' . $carLead->car_value);
+                info('Filtering tiers based on car value: '.$carLead->car_value);
                 $tiersQuery->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
             }
         }
@@ -116,44 +105,40 @@ class CarAllocationService extends AllocationService
         $tiersSql = $tiersQuery->toSql();
         $tiersBindings = $tiersQuery->getBindings();
 
-        info('Tiers query: ' . $tiersSql . ' with bindings: ' . json_encode($tiersBindings));
+        info('Tiers query: '.$tiersSql.' with bindings: '.json_encode($tiersBindings));
 
         $tiers = $tiersQuery->get();
 
         if ($tiers->isNotEmpty()) {
-            info('First tier after filtration: ' . json_encode($tiers->first()->name));
+            info('First tier after filtration: '.json_encode($tiers->first()->name));
+
             return $tiers->first();
         }
 
         return null;
     }
 
-    /**
-     * @param $tierId
-     * @return array
-     */
     public function getEligibleUsersForAllocation($tierId): array
     {
         $tierUserIds = TierUser::where('tier_id', $tierId)->pluck('user_id');
 
-        info('Tier users: ' . json_encode($tierUserIds));
+        info('Tier users: '.json_encode($tierUserIds));
 
         $eligibleUsers = LeadAllocation::with('leadAllocationUser')
-        ->whereHas('leadAllocationUser', function ($query) {
-            $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                ->where('is_available', 1);
-        })
-        ->where(function ($query) {
-            $query->whereRaw('allocation_count < max_capacity')
-                ->orWhere('max_capacity', -1);
-        })
-        ->where('leadAllocationUser.status', UserStatusEnum::ONLINE)
-        ->whereIn('user_id', $tierUserIds)
-        ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
+            ->whereHas('leadAllocationUser', function ($query) {
+                $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                    ->where('is_available', 1);
+            })
+            ->where(function ($query) {
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->where('leadAllocationUser.status', UserStatusEnum::ONLINE)
+            ->whereIn('user_id', $tierUserIds)
+            ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
 
         return $eligibleUsers;
     }
-
 
     public function getRules($carLead)
     {
@@ -168,24 +153,16 @@ class CarAllocationService extends AllocationService
         return $this->getRulesForLeadSource($carLead->source);
     }
 
-    /**
-     * @return array
-     */
     public function getAppStorageValuesForCarLeads(): array
     {
         $from = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS');
         $to = now()->subMinutes(2)->toDateTimeString();
         $limit = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_LIMIT');
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
-        return array($from, $to, $limit, $isFIFO);
+
+        return [$from, $to, $limit, $isFIFO];
     }
 
-    /**
-     * @param $unassignedLeadsCount
-     * @param mixed $limit
-     * @param $leadsQuery
-     * @return void
-     */
     public function addDeferredLeadsIfNeeded($unassignedLeadsCount, mixed $limit, $leadsQuery): void
     {
         if ($unassignedLeadsCount < $limit) {
@@ -194,11 +171,6 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    /**
-     * @param $leadsQuery
-     * @param mixed $limit
-     * @return mixed
-     */
     public function applyPriority($leadsQuery, mixed $limit): mixed
     {
         // Prioritize leads with payment_status_id of Authorized and Paid
@@ -240,69 +212,54 @@ class CarAllocationService extends AllocationService
                 $leadSource->leadSourceUsers = $leadSource->ruleDetails->flatMap(function ($detail) {
                     return $detail->rule->users->pluck('id');
                 });
+
                 return $leadSource;
             });
     }
 
-
-    /**
-     * @param $lead
-     * @param $eligibleUsers
-     * @param $rules
-     * @return mixed
-     */
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
     {
         if (count($rules) > 0) {
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
             $finalEligibleUserIds = array_intersect($eligibleUsers, $ruleUserIds);
 
-            info('Rule found and users against rule are: ' . json_encode($finalEligibleUserIds));
+            info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
         } else {
             $ruleUsers = $this->getRuleUsers();
             $finalEligibleUserIds = array_filter($eligibleUsers, function ($loginId) use ($ruleUsers) {
-                return !in_array($loginId, $ruleUsers);
+                return ! in_array($loginId, $ruleUsers);
             });
 
-            info('No rule found against this lead: ' . $lead->uuid . ' so filtering rule users: ' . json_encode($ruleUsers));
-            info('Final login and available users after rule exclusion are: ' . json_encode($finalEligibleUserIds));
+            info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
+            info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : null;
     }
 
     /**
-     * @param $matchedRuleRecords
      * @return array|int[]
      */
     private function getUserIdsFromRuleRecords($matchedRuleRecords): array
     {
         $leadSourceUsers = $matchedRuleRecords->first()->leadSourceUsers;
+
         return str_contains($leadSourceUsers, ',')
             ? array_map('intval', explode(',', $leadSourceUsers))
             : [(int) $leadSourceUsers];
     }
 
-    /**
-     * @return mixed
-     */
     private function getRuleUsers(): mixed
     {
         return Rule::where('is_active', 1)
-        ->with('leadSources')->get()
-        ->pluck('leadSources.user_id')->flatten()->unique()
-        ->toArray();
+            ->with('leadSources')->get()
+            ->pluck('leadSources.user_id')->flatten()->unique()
+            ->toArray();
     }
 
-    /**
-     * @param $lead
-     * @param $userId
-     * @param $tier
-     * @return void
-     */
     public function processLeadAssignmentAndSendEmail($lead, $userId, $tier): void
     {
-        info('About to assign car lead: ' . $lead->uuid . ' to user with id: ' . $userId);
+        info('About to assign car lead: '.$lead->uuid.' to user with id: '.$userId);
 
         $carQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier);
 
@@ -318,15 +275,9 @@ class CarAllocationService extends AllocationService
 
         $this->sendIntroEmailForLeadAssignment($carQuote->code, $emailData);
 
-        info('Completed assignment of lead and lead count update is done for quote: ' . $carQuote->code);
+        info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
     }
 
-    /**
-     * @param $lead
-     * @param $userId
-     * @param $tier
-     * @return mixed
-     */
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier): mixed
     {
         $carQuote = CarQuote::findOrFail($lead->id);
@@ -338,23 +289,19 @@ class CarAllocationService extends AllocationService
 
         if ($carQuote->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();
-            info('About to assign quote batch with id: ' . $quoteBatch->id . ' and name: ' . $quoteBatch->name . ' to quote: ' . $lead->uuid);
+            info('About to assign quote batch with id: '.$quoteBatch->id.' and name: '.$quoteBatch->name.' to quote: '.$lead->uuid);
             $carQuote->quote_batch_id = $quoteBatch->id;
         } else {
-            info('Quote batch currently attached to quote: ' . $carQuote->uuid . ' and quote id is: ' . $carQuote->quote_batch_id);
+            info('Quote batch currently attached to quote: '.$carQuote->uuid.' and quote id is: '.$carQuote->quote_batch_id);
         }
 
         $carQuote->save();
 
-        info('Advisor and tier assignment done for: ' . $lead->uuid . ' to user with id: ' . $userId . ' and tier id: ' . $tier->name);
+        info('Advisor and tier assignment done for: '.$lead->uuid.' to user with id: '.$userId.' and tier id: '.$tier->name);
 
         return $carQuote;
     }
 
-    /**
-     * @param $leadId
-     * @return void
-     */
     public function updateCarLeadDetailRecord($leadId): void
     {
         info('---- Inside updateCarLeadDetailRecord');
@@ -368,10 +315,6 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    /**
-     * @param $carQuoteDetail
-     * @return void
-     */
     private function updateExistingCarQuoteDetail($carQuoteDetail): void
     {
         $carQuoteDetail->advisor_assigned_date = now();
@@ -381,10 +324,6 @@ class CarAllocationService extends AllocationService
         info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
     }
 
-    /**
-     * @param $leadId
-     * @return void
-     */
     private function createNewCarQuoteDetail($leadId): void
     {
         CarQuoteRequestDetail::create([
@@ -398,10 +337,6 @@ class CarAllocationService extends AllocationService
         info('---- updateCarLeadDetailRecord - record not found, creating new entry');
     }
 
-    /**
-     * @param $userId
-     * @return void
-     */
     public function updateLeadAllocationOnCarAutoAssignment($userId): void
     {
         $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
@@ -410,15 +345,9 @@ class CarAllocationService extends AllocationService
             $this->updateLeadAllocationCounts($userId, $leadAllocation);
         }
 
-        info('Count updated for user Id: ' . $userId . ', total count = ' . $leadAllocation->allocation_count . ' and auto count = ' . $leadAllocation->auto_assignment_count);
+        info('Count updated for user Id: '.$userId.', total count = '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
     }
 
-
-    /**
-     * @param $userId
-     * @param $carQuote
-     * @return object
-     */
     private function buildEmailDataForLMSIntroEmail($userId, $carQuote): object
     {
         $user = User::findOrFail($userId);
@@ -427,20 +356,16 @@ class CarAllocationService extends AllocationService
         return (object) [
             'customerEmail' => $carQuote->email,
             'documentUrl' => [$documentUrl], // Replace with a generic URL once document upload section is done
-            'clientFullName' => $carQuote->first_name . ' ' . $carQuote->last_name,
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
             'carQuoteId' => $carQuote->code,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
         ];
     }
 
-    /**
-     * @param $emailData
-     * @return void
-     */
     private function sendIntroEmailForLeadAssignment($emailData): void
     {
         $emailTemplateId = $this->getLMSIntroEmailTemplateId();
@@ -448,27 +373,16 @@ class CarAllocationService extends AllocationService
         IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email');
     }
 
-    /**
-     * @return string
-     */
     private function getLMSIntroEmailAttachmentUrl(): string
     {
         return $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
     }
 
-    /**
-     * @return int
-     */
     private function getLMSIntroEmailTemplateId(): int
     {
         return (int) $this->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
     }
 
-    /**
-     * @param $lead
-     * @param $tier
-     * @return void
-     */
     public function updateLeadTier($lead, $tier): void
     {
         info('login users not found for selected lead so will try to assign only tier');

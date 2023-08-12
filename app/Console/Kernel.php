@@ -4,7 +4,6 @@ namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
 use App\Jobs\CarJob;
-use App\Jobs\LeadAllocationJob;
 use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
