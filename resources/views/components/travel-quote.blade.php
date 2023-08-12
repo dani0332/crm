@@ -28,8 +28,8 @@
                                             <th>Provider Name</th>
                                             <th>Plan Name</th>
                                             <th>Travel Type</th>
-                                            <th>Actual Premium</th>
-                                            <th>Premium with VAT</th>
+                                            <th>Actual Price</th>
+                                            <th>Price with VAT</th>
                                             <th>Action</th>
                                         </tr>
                                     </thead>
@@ -58,8 +58,8 @@
                                         <th>Provider Name</th>
                                         <th>Plan Name</th>
                                         <th>Travel Type</th>
-                                        <th>Actual Premium</th>
-                                        <th>Premium with VAT</th>
+                                        <th>Actual Price</th>
+                                        <th>Price with VAT</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
