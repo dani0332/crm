@@ -3,7 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
-use App\Jobs\CarJob;
+use App\Jobs\CarAllocationJob;
 use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
@@ -30,7 +30,7 @@ class Kernel extends ConsoleKernel
 
         // $schedule->job(new ProcessFrequentTask)->everyMinute();
 
-        $schedule->job(new CarJob(app(CarAllocationService::class)))->everyMinute()->withoutOverlapping(1)->onOneServer();
+        $schedule->job(new CarAllocationJob(app(CarAllocationService::class)))->everyMinute()->withoutOverlapping(1)->onOneServer();
 
         $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 

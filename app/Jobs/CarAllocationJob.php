@@ -5,7 +5,7 @@ namespace App\Jobs;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 
-class CarJob extends JobInterface
+class CarAllocationJob extends LeadAllocationJobInterface
 {
     protected CarAllocationService $carAllocationService;
 

@@ -6,7 +6,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 
-abstract class JobInterface implements ShouldQueue
+abstract class LeadAllocationJobInterface implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
