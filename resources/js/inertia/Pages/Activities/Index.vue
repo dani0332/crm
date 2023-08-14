@@ -2,7 +2,9 @@
 
 defineProps({
   activities: Object,
-  advisors: Object
+  advisors: Object,
+  cannot_use_assignee: Boolean,
+  total_activities: Number   
 });
 
 const page = usePage();
@@ -21,7 +23,8 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  status: null,
+  assignee_id: null,
+  status: null,  
   activity_id: null,
 });
 
@@ -46,21 +49,13 @@ const loader = reactive({
 
 const activityTable = [
   { text: 'Title', value: 'title' },
+  { text: 'CDBID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee.email' },
   { text: 'Done', value: 'status', width: 60, align: 'center' },
   { text: 'Action', value: 'action' },
 ];
-
-
-const handleEdit = (item) => {
-  // Implement the edit functionality here
-};
-
-const handleDelete = (item) => {
-  // Implement the delete functionality here
-};
 
 function filterActivities(isValid) {
   if (!isValid) {
@@ -159,6 +154,32 @@ function applyCustomDates() {
   }
 }
 
+function buildCdbidLink(quote_uuid, quote_type_id) { 
+    if (quote_uuid) {
+      var url = '/quotes/' + getQuoteType(quote_type_id,'id') + '/' + quote_uuid;
+        var quoteTypeCode = getQuoteType(quote_type_id);
+        var CDBID = quoteTypeCode + '-' + quote_uuid.toUpperCase();
+        return "<a target='_blank' href='" + url + "'>" + CDBID +"</a>";
+    } else {
+        return '';
+    }  
+}
+
+function getQuoteType(id, returnType = 'code') {
+  const types = {
+    1: { code: 'CAR-', id: 'car' },
+    2: { code: 'HOM-', id: 'home' },
+    3: { code: 'HEA-', id: 'health' },
+    4: { code: 'LIF-', id: 'life' },
+    5: { code: 'BUS-', id: 'business' },
+    6: { code: 'BIK-', id: 'bike' },
+    7: { code: 'YAC-', id: 'yacht' },
+    8: { code: 'TRA-', id: 'travel' },
+  };
+  return types[id][returnType] || '';
+}
+
+
 const confirmDelete = id => {
   modals.activityConfirm = true;
   deleteData.activity_id = id;
@@ -170,7 +191,6 @@ const deleteData = reactive({
 
 const onDeleteConfirmation = () => {
   router.delete(`/activities/v2/${deleteData.activity_id}/`, {
-    //quote_uuid: page.props.quote.uuid,
     preserveScroll: true,
     onSuccess: () => {
       modals.activityConfirm = false;
@@ -258,9 +278,13 @@ watch(
   { deep: true, immediate: true },
 );
 
+onBeforeMount(() => { //will trigger before the component is mounted for the first time
+  resetDates('today');
+});
 onMounted(() => {
   setQueryFilters();
 });
+
 </script>
 
 <template>
@@ -283,6 +307,7 @@ onMounted(() => {
           v-model="filters.assignee_id"
           label="Assigned To"
           placeholder="Select Assigned To"
+          :disabled="cannot_use_assignee"
           :options="[
             // Loop through advisorArray to generate options
             ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
@@ -377,6 +402,10 @@ onMounted(() => {
       </div>
       <x-divider class="my-2" />
     </div>
+    <p class="text-md font-semibold text-gray-700">
+      Total Activities: {{ total_activities }}
+    </p>
+    <x-divider class="my-2" />
     <DataTable
       table-class-name="tablefixed"
       :loading="loader.table"
@@ -387,10 +416,30 @@ onMounted(() => {
       hide-footer
       fixed-checkbox
     >
-     <!-- Customizing the "Title" column width -->
+    
     <template #item-title="{ title }">
       <div class="truncate w-32">{{ title }}</div>
     </template>
+
+    <template #item-client_name="{ client_name }">
+      <div class="truncate w-32">{{ client_name }}</div>
+    </template>
+
+    <template #item-cdbid="item">
+      <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
+    </template>
+
+    <template #item-due_date="item">
+      <td
+        :class="{
+          'bg-red-500': item.is_overdue === true,
+          'rounded': item.is_overdue === true,
+          'flex items-center justify-center w-full h-full': true
+        }">
+        {{ item.due_date }}
+      </td>
+    </template>
+
     <template #item-status="{ status, id }">
         <x-checkbox
           color="emerald"
@@ -424,7 +473,7 @@ onMounted(() => {
           </x-button>
         </div>
       </template>
-</DataTable>
+  </DataTable>
     <Pagination
       :links="{
         next: activities.next_page_url,
@@ -434,7 +483,7 @@ onMounted(() => {
         to: activities.to,
       }"
     />
-    
+
     <x-modal v-model="modals.activity" size="lg" show-close backdrop>
       <template #header>
         {{ activityActionEdit ? 'Edit' : 'Add' }} Activity

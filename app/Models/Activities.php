@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Carbon\Carbon;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
@@ -22,6 +23,7 @@ class Activities extends Model implements AuditableContract
         'assignee_id'   => FilterTypes::EXACT,
         'due_date'   => FilterTypes::DATE_BETWEEN,
     ];
+    protected $appends = array('is_overdue');
 
     public function getCreatedAtAttribute($date)
     {
@@ -36,6 +38,15 @@ class Activities extends Model implements AuditableContract
     public function getDueDateAttribute($date)
     {
         return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));
+    }
+    //Added custom field to verify over due date
+    public function getIsOverdueAttribute()
+    {
+        $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
+        $dueDate = Carbon::createFromFormat($dateFormat, $this->due_date);
+        $now = now()->format($dateFormat);
+        $is_overdue = $dueDate->lt($now);
+        return $is_overdue;        
     }
 
     public function assignee()

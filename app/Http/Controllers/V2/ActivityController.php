@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Activities;
 use App\Models\User;
 use App\Traits\GetUserTreeTrait;
+use App\Enums\PermissionsEnum;
 
 class ActivityController extends Controller
 {   
@@ -21,9 +22,13 @@ class ActivityController extends Controller
         $advisors = [];
         $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
         $activities = ActivityRepository::getData();
+        $total_activities = ActivityRepository::countActivities();
+        $cannot_use_assignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);
         return inertia('Activities/Index', [
             'activities' => $activities,
-            'advisors' => $advisors
+            'advisors' => $advisors,
+            'cannot_use_assignee' => $cannot_use_assignee,
+            'total_activities' => $total_activities
         ]);
     }
 

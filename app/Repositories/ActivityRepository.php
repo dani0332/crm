@@ -24,29 +24,40 @@ class ActivityRepository extends BaseRepository
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
         return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->select(
-            'activities.id as id',
+            'activities.id as id','description',
             'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
         )->filter()->whereIn('assignee_id', $subOrdinateIds)->simplePaginate()->withQueryString();
     }
 
+     /**
+     * @return total records
+    */
+    public function fetchCountActivities()
+    {
+        $subOrdinateIds = $this->walkTree(Auth::user()->id);
+        array_push($subOrdinateIds, Auth::user()->id);
+        return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->filter()->whereIn('assignee_id', $subOrdinateIds)->count();
+    }
     /**
      * @return mixed
      */
     public function fetchCreate($data)
     {
-        $quote = PersonalQuoteRepository::where('id', $data['quote_id'])->firstOrFail();
-
         $activityData = [
             'uuid' => generateUuid(),
-            'client_name' => $quote->first_name.' '.$quote->last_name,
-            'quote_request_id' => $quote->id,
-            'quote_type_id' => $quote->quote_type_id,
-            'quote_uuid' => $quote->uuid,
             'assignee_id' => $data['assignee_id'],
             'due_date' => $data['due_date'],
             'description' => $data['description'],
             'title' => $data['title'],
         ];
+        
+        if (isset($data['quote_id'])) {
+            $quote = PersonalQuoteRepository::where('id', $data['quote_id'])->firstOrFail();
+            $activityData['client_name'] = $quote->first_name . ' ' . $quote->last_name;
+            $activityData['quote_request_id'] = $quote->id;
+            $activityData['quote_type_id'] = $quote->quote_type_id;
+            $activityData['quote_uuid'] = $quote->uuid;
+        } 
 
         return ActivityRepository::create($activityData);
     }
