@@ -27,7 +27,7 @@ class HomeQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
     ];
 
-     public function quoteStatus()
+    public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
     }
