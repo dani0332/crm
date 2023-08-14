@@ -27,20 +27,46 @@
                                         <label for="formGroupExampleInput">Batch Start <span
                                                 class="required">*</span></label>
                                         <input type="date" class="form-control" name="start_date"
-                                            value="{{ $renewalBatch->start_date }}" min="{{ date('Y-m-d') }}"
-                                            max="{{ date('Y-m-d', strtotime('now +31 days')) }}"
+                                            value="{{ $renewalBatch->start_date }}"
                                             placeholder="Batch Start Date">
                                     </div>
                                     <div class="col">
                                         <label for="formGroupExampleInput">Batch End <span class="required">*</span></label>
                                         <input type="date" class="form-control" name="end_date"
-                                            value="{{ $renewalBatch->end_date }}" min="{{ date('Y-m-d') }}"
-                                            max="{{ date('Y-m-d', strtotime('now +92 days')) }}"
+                                            value="{{ $renewalBatch->end_date }}"
                                             placeholder="Batch Start Date">
                                     </div>
                                 </div>
                             </div>
                         </div>
+
+                        {{-- =================== DEADLINES =========================== --}}
+
+                        <div class="card mb-3">
+                            <h5 class="card-header">Renewal Batch Deadlines</h5>
+                            <div class="card-body">
+                                <div class="form-row">
+                                    <div class="col">
+                                        <label for="formGroupExampleInput"> <b> {{ \App\Enums\quoteStatusCode::CAR_SOLD}} Deadline </b> <span
+                                                class="required">*</span></label>
+                                        <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::CarSold}}]"
+                                            value="{{ $carSoldDeadline ?: old('deadline_date[]') }}"
+                                            placeholder="Batch Start Date">
+                                        <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::CarSold}}">
+                                    </div>
+                                    <div class="col">
+                                        <label for="formGroupExampleInput"> <b>{{ \App\Enums\quoteStatusCode::UNCONTACTABLE}} Deadline </b> <span
+                                                class="required">*</span></label>
+                                        <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::uncontactable}}]"
+                                            value="{{ $uncontactableDeadline ?: old('deadline_date[]') }}"
+                                            placeholder="Batch Start Date">
+                                        <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::uncontactable}}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- ========================================================= --}}
 
                         <div class="card mb-3">
                             <h5 class="card-header">Teamswise Slabs</h5>

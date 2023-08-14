@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuoteStatusEnum;
 use App\Models\Slab;
 use App\Models\Team;
 use App\Enums\quoteTypeCode;
@@ -114,6 +115,8 @@ class RenewalBatchController extends Controller
         $lastBatchSlabs = $params['lastBatchSlabs'];
         $carAdvisors = $params['carAdvisors'];
         $slabs = $params['slabs'];
+        $carSoldDeadline = $params['carSoldDeadline'];
+        $uncontactableDeadline = $params['uncontactableDeadline'];
 
         return view('renewalbatch.config-views.edit',
             compact(
@@ -123,7 +126,9 @@ class RenewalBatchController extends Controller
                 'valueSegmentAdvisorsId',
                 'lastBatchSlabs',
                 'carAdvisors',
-                'slabs'
+                'slabs',
+                'carSoldDeadline',
+                'uncontactableDeadline'
             ));
     }
 
@@ -185,6 +190,19 @@ class RenewalBatchController extends Controller
             });
         }
 
+        if (!empty($renewalBatch->deadlines))
+        {
+            $carSoldDeadline = $renewalBatch->deadlines()
+                ->where('quote_status_id', QuoteStatusEnum::CarSold)
+                ->pluck('deadline_date')
+                ->first();
+
+            $uncontactableDeadline = $renewalBatch->deadlines()
+                ->where('quote_status_id', QuoteStatusEnum::uncontactable)
+                ->pluck('deadline_date')
+                ->first();
+        }
+
         $carAdvisors = $this->crudService->getAdvisorsByModelType(strtolower(quoteTypeCode::Car));
 
         $teams = Team::select(['id', 'name', 'slabs_count'])
@@ -202,7 +220,9 @@ class RenewalBatchController extends Controller
             'valueSegmentAdvisorsId' => $valueSegmentAdvisorsId,
             'lastBatchSlabs' => $lastBatchSlabs,
             'carAdvisors' => $carAdvisors,
-            'slabs' => $slabs
+            'slabs' => $slabs,
+            'carSoldDeadline' => isset($carSoldDeadline) ? $carSoldDeadline : null,
+            'uncontactableDeadline' => isset($uncontactableDeadline) ? $uncontactableDeadline : null
         ];
     }
 }

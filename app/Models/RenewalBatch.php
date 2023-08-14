@@ -120,4 +120,17 @@ class RenewalBatch extends Model implements AuditableContract
             'segmentAdvisors'
         )->withTimestamps()->withPivot('segment_type');
     }
+
+    public function deadlines()
+    {
+        return $this->belongsToMany(
+            QuoteStatus::class,
+            'renewal_batch_deadlines',
+            'renewal_batch_id',
+            'quote_status_id',
+            'id',
+            'id',
+            'deadlines'
+        )->withTimestamps()->withPivot('deadline_date');
+    }
 }

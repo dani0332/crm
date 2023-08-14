@@ -114,7 +114,27 @@ class RenewalBatchRequest extends FormRequest
             'segment_value.*' => [
                 'numeric',
                 'different:segment_volume.*',
-            ]
+            ],
+            'deadline_date'  => [
+                'required',
+                'array',
+                'min:2',
+                'max:2'
+            ],
+            'deadline_date.*'  => [
+                'required',
+                'date'
+            ],
+            'quote_status_id'  => [
+                'required',
+                'array',
+                'min:2',
+                'max:2'
+            ],
+            'quote_status_id.*'  => [
+                'required',
+                'integer'
+            ],
         ];
 
         $finalRulesSet = array_merge($rules, $simpleRules);
@@ -128,6 +148,8 @@ class RenewalBatchRequest extends FormRequest
     {
         return [
             'name.unique' => 'Batch :attribute is already taken.',
+            'deadline_date.52.required' => 'Car Sold Deadline date is required.',
+            'deadline_date.53.required' => 'Uncontactable Deadline date is required.',
         ];
     }
 }

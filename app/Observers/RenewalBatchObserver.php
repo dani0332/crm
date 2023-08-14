@@ -22,18 +22,18 @@ class RenewalBatchObserver
      */
     public function created(RenewalBatch $renewalBatch)
     {
-        $this->postOps($renewalBatch);
+        //
     }
 
     /**
-     * Handle the RenewalBatch "updated" event.
+     * Handle the RenewalBatch "saved" event.
      *
      * @param  \App\Models\RenewalBatch  $renewalBatch
      * @return void
      */
-    public function updated(RenewalBatch $renewalBatch)
+    public function saved(RenewalBatch $renewalBatch)
     {
-        $this->postOps($renewalBatch, 'update');
+        $this->postOps($renewalBatch);
     }
 
     /**
@@ -75,47 +75,65 @@ class RenewalBatchObserver
      * @param RenewalBatch $renewalBatch
      * @return void
      */
-    public function postOps(RenewalBatch $renewalBatch, $event=null)
+    public function postOps(RenewalBatch $renewalBatch)
     {
         // delete previous associations in case of update event
-        if ($event === 'update') {
+        if ($renewalBatch->wasRecentlyCreated === false) {
             $renewalBatch->slabs()->detach();
             $renewalBatch->segmentAdvisors()->detach();
+            $renewalBatch->deadlines()->detach();
         }
         // create renewal batch slabs
-        foreach ($this->attributes['slab'] as $key => $teams) {
-            foreach ($teams as $team => $valueTypes) {
-                $pivotColumnsData = array(
-                    'team_id' => null,
-                    'max' => null,
-                    'min' => null,
-                );
+        if ($this->attributes['slab']) {
+            foreach ($this->attributes['slab'] as $key => $teams) {
+                foreach ($teams as $team => $valueTypes) {
+                    $pivotColumnsData = [
+                        'team_id' => null,
+                        'max' => null,
+                        'min' => null,
+                    ];
 
-                $pivotColumnsData['team_id'] = $team;
+                    $pivotColumnsData['team_id'] = $team;
 
-                foreach ($valueTypes as $type =>  $value) {
-                    $pivotColumnsData[strtolower($type)] = $value;
+                    foreach ($valueTypes as $type =>  $value) {
+                        $pivotColumnsData[strtolower($type)] = $value;
+                    }
+
+                    $renewalBatch->slabs()->attach($key, $pivotColumnsData);
                 }
-
-                $renewalBatch->slabs()->attach($key, $pivotColumnsData);
             }
         }
 
         // create renewal batch segmentwise advisors
         // segment volume
-        foreach ($this->attributes['segment_volume'] as $key => $value) {
-            $pivotColumnsData = [
-                'segment_type' => RenewalBatch::SEGMENT_TYPE_VOLUME,
-            ];
-            $renewalBatch->segmentAdvisors()->attach($value, $pivotColumnsData);
+        if ($this->attributes['segment_volume']) {
+            foreach ($this->attributes['segment_volume'] as $key => $value) {
+                $pivotColumnsData = [
+                    'segment_type' => RenewalBatch::SEGMENT_TYPE_VOLUME,
+                ];
+
+                $renewalBatch->segmentAdvisors()->attach($value, $pivotColumnsData);
+            }
         }
         //segment value
-        foreach ($this->attributes['segment_value'] as $key => $value) {
-            $pivotColumnsData = [
-                'segment_type' => RenewalBatch::SEGMENT_TYPE_VALUE,
-            ];
+        if ($this->attributes['segment_value']) {
+            foreach ($this->attributes['segment_value'] as $key => $value) {
+                $pivotColumnsData = [
+                    'segment_type' => RenewalBatch::SEGMENT_TYPE_VALUE,
+                ];
 
-            $renewalBatch->segmentAdvisors()->attach($value, $pivotColumnsData);
+                $renewalBatch->segmentAdvisors()->attach($value, $pivotColumnsData);
+            }
+        }
+
+        // renewal batch deadlines
+        if ($this->attributes['quote_status_id']) {
+            foreach ($this->attributes['quote_status_id'] as $quoteStatusId) {
+                $pivotColumnsData = [
+                    'deadline_date' => $this->attributes['deadline_date'][$quoteStatusId],
+                ];
+                $renewalBatch->deadlines()->attach($quoteStatusId, $pivotColumnsData);
+            }
         }
     }
 }
