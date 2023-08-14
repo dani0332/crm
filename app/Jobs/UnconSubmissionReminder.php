@@ -60,7 +60,7 @@ class UnconSubmissionReminder //implements ShouldQueue
                 ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
             }])
             ->limit(3)->get();
-        
+
         $emailData['batches'][] = [
             'batch' => $upcomingBatch->name,
             'deadline_date' => Carbon::parse($upcomingBatch->deadline->deadline_date)->format('jS M Y'),
@@ -71,7 +71,7 @@ class UnconSubmissionReminder //implements ShouldQueue
         {
             $emailData['batches'][] = [
                 'batch' => $batch->name,
-                'deadline_date' => Carbon::parse($batch->deadline_date)->format('jS M Y'),
+                'deadline_date' => Carbon::parse($batch->deadline->deadline_date)->format('jS M Y'),
                 'highlight' => false
             ];
         }
