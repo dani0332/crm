@@ -465,7 +465,7 @@ class CRUDController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
-        $access= $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel,$record);
+        $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
@@ -494,7 +494,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment','access',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
             ]));
         }
 
@@ -521,7 +521,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers','access',
+                'quoteTypeId', 'tiers', 'access',
             ]));
         }
 
@@ -657,7 +657,7 @@ class CRUDController extends Controller
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers','access',
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers', 'access',
             ]));
         }
     }
@@ -878,13 +878,13 @@ class CRUDController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
 
-        $access= $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel,$record);
+        $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive','access']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access']));
         }
     }
 
