@@ -198,7 +198,7 @@ class RenewalBatchController extends Controller
                 ->first();
 
             $uncontactableDeadline = $renewalBatch->deadlines()
-                ->where('quote_status_id', QuoteStatusEnum::uncontactable)
+                ->where('quote_status_id', QuoteStatusEnum::Uncontactable)
                 ->pluck('deadline_date')
                 ->first();
         }

@@ -57,10 +57,10 @@
                                     <div class="col">
                                         <label for="formGroupExampleInput"> <b>{{ \App\Enums\quoteStatusCode::UNCONTACTABLE}} Deadline </b> <span
                                                 class="required">*</span></label>
-                                        <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::uncontactable}}]"
+                                        <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::Uncontactable}}]"
                                             value="{{ $uncontactableDeadline ?: old('deadline_date[]') }}"
                                             placeholder="Batch Start Date">
-                                        <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::uncontactable}}">
+                                        <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::Uncontactable}}">
                                     </div>
                                 </div>
                             </div>

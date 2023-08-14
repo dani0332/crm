@@ -173,14 +173,14 @@ class RenewalBatchReportService extends BaseService
                 DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ( "' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . '" ) THEN 1 ELSE 0 END) as renewed'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::CarSold . '" THEN 1 ELSE 0 END) as car_sold'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::uncontactable . '" THEN 1 ELSE 0 END) as uncontactable'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::Uncontactable . '" THEN 1 ELSE 0 END) as uncontactable'),
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
                 DB::raw('SUM(IF(car_quote_request.advisor_id = "' . $authUserId . '", 1, 0)) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ( "' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . '" ) and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as renewed'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::CarSold . '" and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as car_sold'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::uncontactable . '" and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as uncontactable'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::Uncontactable . '" and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as uncontactable'),
             );
         }
 
