@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdatePersonalQuotesTable extends Migration
+class DropUniqueUuidPersonalQuotesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -14,9 +14,8 @@ class UpdatePersonalQuotesTable extends Migration
     public function up()
     {
         Schema::table('personal_quotes', function (Blueprint $table) {
-
-            $table->string('uuid', 100)->change();
-
+            $table->dropUnique(['uuid']);
+            $table->index(['uuid']);
         });
     }
 

@@ -4,10 +4,13 @@ namespace Database\Seeders;
 
 use App\Enums\QuoteTypeId;
 use App\Models\BikeQuote;
+use App\Models\Customer;
 use App\Models\InsuranceProvider;
+use App\Models\Nationality;
 use App\Models\PersonalQuote;
 use App\Models\PersonalQuoteDetail;
 use App\Models\PetQuote;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class PetBikeMigrationSeeder extends Seeder
@@ -19,6 +22,7 @@ class PetBikeMigrationSeeder extends Seeder
      */
     public function run()
     {
+
 
         // Pet Data Migration
         // Fetch Old Pet Records from pet_quote_request table and Dump into personal_quote table
@@ -88,6 +92,7 @@ class PetBikeMigrationSeeder extends Seeder
                             'utm_medium' => $petRequestDetailRecord->utm_medium,
                             'utm_campaign' => $petRequestDetailRecord->utm_campaign,
                         ]);
+
                 }
             });
 
@@ -161,5 +166,6 @@ class PetBikeMigrationSeeder extends Seeder
                     ]);
                 }
             });
+
     }
 }
