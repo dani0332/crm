@@ -109,26 +109,6 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return string
-     */
-    public function getCreatedAtAttribute($date)
-    {
-        if (! empty($date)) {
-            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
-        }
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdatedAtAttribute($date)
-    {
-        if (! empty($date)) {
-            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
-        }
-    }
-
-    /**
      * @param $date
      * @return string
      */

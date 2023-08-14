@@ -83,10 +83,9 @@ class TravelController extends Controller
     {
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-
-        if(!$record)
-            vAbort("Lead not found. Please try again.");
-
+        if (! $record) {
+            abort(404);
+        }
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
