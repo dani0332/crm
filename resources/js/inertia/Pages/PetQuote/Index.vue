@@ -1,8 +1,15 @@
 <script setup>
+import { ref } from 'vue';
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+    quoteType: {
+        type: String,
+        default: 'pet',
+    },
 });
 
 const { isRequired } = useRules();
@@ -119,42 +126,6 @@ const advisorOptions = computed(() => {
 const notification = useNotifications('toast');
 
 const quotesSelected = ref([]);
-
-const assignForm = useForm({
-  assigned_to_id_new: null,
-  modelType: 'Pet',
-  selectTmLeadId: '',
-  isManagerOrDeputy: isManager,
-  isLeadPool: false,
-  isManualAllocationAllowed: isManualAllocationAllowed,
-});
-
-function onAssignLead(isValid) {
-  if (isValid) {
-    const selected = quotesSelected.value.map(e => e.id);
-    assignForm
-      .transform(data => ({
-        ...data,
-        selectTmLeadId: `${selected}`,
-      }))
-      .post('/quotes/pet/manualLeadAssign', {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          let title =
-            quotesSelected.value.length > 1
-              ? 'Pet Leads Assigned'
-              : 'Pet Lead Assigned';
-          quotesSelected.value = [];
-          notification.success({
-            title: title,
-            position: 'top',
-          });
-        },
-      });
-  }
-}
-
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -317,37 +288,15 @@ watch(
       </div>
     </x-form>
 
-    <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div
-          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="isManualAllocationAllowed"
-        >
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
+      <Transition name="fade">
+          <div v-if="quotesSelected.length > 0 && isManualAllocationAllowed" class="mb-4">
+              <LeadAssignment
+                  :selected="quotesSelected.map(e => e.id)"
+                  :advisors="advisorOptions"
+                  :quoteType="quoteType"
               />
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
-        </div>
-      </div>
-    </Transition>
+          </div>
+      </Transition>
 
     <DataTable
       v-model:items-selected="quotesSelected"

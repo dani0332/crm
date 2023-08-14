@@ -46,8 +46,8 @@ class HealthQuoteService extends BaseService
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
-            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%b-%Y %r") as created_at'),
+            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%b-%Y %r") as updated_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
             'hqr.email',
@@ -1118,7 +1118,7 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['basmah'] + $plan['policyFee'] + $plan['vat'];
+                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
