@@ -86,11 +86,7 @@ class UnconSubmissionReminder //implements ShouldQueue
         $cc = implode(',', $advisors->pluck('managers.*.email')->unique()->flatten()->all());
 
         $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE)->value('value');
-
-        //todo: remove temp code
-        $to = implode(',' , ['faisal.abbas@insurancemarket.ae']);
-        $cc = implode(',' , ['muhammad.shajiuddin@insurancemarket.ae']);
-
+        
         info('Sending Uncontactable Submissions reminder email');
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
