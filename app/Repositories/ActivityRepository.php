@@ -26,7 +26,7 @@ class ActivityRepository extends BaseRepository
         return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->select(
             'activities.id as id','description',
             'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
-        )->filter()->whereIn('assignee_id', $subOrdinateIds)->simplePaginate()->withQueryString();
+        )->filter()->whereIn('assignee_id', $subOrdinateIds)->orderBy('status')->simplePaginate()->withQueryString();
     }
 
      /**
