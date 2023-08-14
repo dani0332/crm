@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UtmLeadsSalesReportSeeder::class,
             CarLostStorageSeeder::class,
             AddPersonalLobsProducts::class,
+            // PetBikeMigrationSeeder::class
         ]);
     }
 }

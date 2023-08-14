@@ -58,7 +58,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-                    $price->update(['is_active' => false]);
+                    $price->delete();
                 }
             }
 
