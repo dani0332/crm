@@ -2,7 +2,8 @@
 
 namespace App\Models;
 
-use Config;
+use App\Enums\FilterTypes;
+use App\Traits\FilterCriteria;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -10,32 +11,44 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HomeQuote extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use HasFactory, FilterCriteria, Auditable;
 
     protected $table = 'home_quote_request';
     protected $guarded = [];
-
-    public function getCreatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
-    public function getUpdatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
+    public $filterables = [
+        'first_name' => FilterTypes::EXACT,
+        'last_name' => FilterTypes::EXACT,
+        'uuid' => FilterTypes::EXACT,
+        'code' => FilterTypes::EXACT,
+        'email' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
+        'created_at' => FilterTypes::DATE_BETWEEN,
+        'quote_status_id' => FilterTypes::IN,
+        'advisor_id' => FilterTypes::IN,
+    ];
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function homeQuoteRequestDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
+    }
+
+    public function accommodationType()
+    {
+        return $this->belongsTo(HomeAccomodationType::class, 'ilivein_accommodation_type_id');
+    }
+
+    public function possessionType()
+    {
+        return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id');
+    }
+
+    public function advisor()
+    {
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
 }

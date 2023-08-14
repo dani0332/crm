@@ -33,7 +33,9 @@ const quoteForm = useForm({
 });
 
 const { isRequired, isEmail } = useRules();
-
+const editMode = computed(() => {
+    return props.quote ? true : false;
+});
 function onSubmit(isValid) {
   if (isValid) {
     let method = 'post';
@@ -103,6 +105,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="EMAIL  *"
+          :disabled="editMode"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.email"
@@ -112,6 +115,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="MOBILE NUMBER *"
+          :disabled="editMode"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
@@ -120,7 +124,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.premium"
           type="number"
-          label="PREMIUM"
+          label="PRICE"
           class="w-full"
           :error="quoteForm.errors.premium"
         />

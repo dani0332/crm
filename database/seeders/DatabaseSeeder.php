@@ -18,7 +18,9 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
-            SlabsTableSeeder::class
+            SlabsTableSeeder::class,
+            AddPersonalLobsProducts::class,
+            // PetBikeMigrationSeeder::class
         ]);
     }
 }

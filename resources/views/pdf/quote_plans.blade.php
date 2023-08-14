@@ -1,4 +1,4 @@
-+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -305,7 +305,14 @@
         $plans[$quotePlan->id] = $quotePlan;
     }
 
-    $planIds = collect($plans)->sortByDesc('isRenewal')->pluck('id')->toArray();
+    $plans = collect($plans);
+
+    if(!isset($quotePlans->isDataSorted)) {
+        $plans->sortByDesc('isRenewal');
+    }
+
+    $planIds = $plans->pluck('id')->toArray();
+
 
     $features = [
         ["code" => "heading", "title" => "BENEFITS"],
@@ -329,7 +336,7 @@
         ["code" => "passengerCover", "title" => "Passengers Cover", "type" => "addons"],
         ["code" => "carHire", "title" => "Hire car Benefit", "type" => "addons"],
         ["code" => "spacer"],
-        ["code" => "discountPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
+        ["code" => "discountPremium", "title" => "Price", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],
         ["code" => "vat", "title" => "VAT Amount", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
         ["code" => "spacer"],

@@ -197,7 +197,7 @@ function onSubmit(isValid) {
 
         <label>
           <p>
-            PREMIUM
+            PRICE
             <sup class="text-red-500">*</sup>
           </p>
           <x-input

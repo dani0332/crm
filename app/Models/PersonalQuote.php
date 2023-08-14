@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -20,7 +19,7 @@ class PersonalQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::EXACT,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
@@ -43,7 +42,7 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return void
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
      */
     public function quoteDetail()
     {
@@ -51,11 +50,11 @@ class PersonalQuote extends Model implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
     public function advisor()
     {
-        return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
+        return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
 
     /**
@@ -106,26 +105,6 @@ class PersonalQuote extends Model implements AuditableContract
     public function yachtQuote()
     {
         return $this->hasOne(YachtQuote::class);
-    }
-
-    /**
-     * @return string
-     */
-    public function getCreatedAtAttribute($date)
-    {
-        if (! empty($date)) {
-            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
-        }
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdatedAtAttribute($date)
-    {
-        if (! empty($date)) {
-            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
-        }
     }
 
     /**
@@ -185,6 +164,11 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->belongsTo(Nationality::class);
     }
 
+    public function plans()
+    {
+        return $this->belongsTo(PersonalPlan::class, 'plan_id');
+    }
+
     /**
      * get data by personal quote type.
      *
@@ -226,7 +210,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function currentlyInsuredWith()
     {
-        return $this->belongsTo(InsuranceProvider::class);
+        return $this->belongsTo(InsuranceProvider::class, 'currently_insured_with_id');
     }
 
     /**

@@ -53,7 +53,7 @@ const selectedValue = computed({
     if (props.single) return [];
 
     return props.options.filter(option =>
-      props.modelValue.includes(option.value),
+      props.modelValue?.includes(option.value),
     );
   },
   set(newValue) {

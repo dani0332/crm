@@ -13,6 +13,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
+use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -384,9 +385,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if (! $record) {
-            abort(404);
-        }
+        abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -720,7 +719,6 @@ class CRUDController extends Controller
      */
     public function update(Request $request, $id)
     {
-
         $modelPropertiesList = json_decode($request->all()['model'], true);
         $modelType = json_decode($request->all()['modelType'], true);
         $validateArray = [];
@@ -968,7 +966,7 @@ class CRUDController extends Controller
         if (count($result) > 0) {
             $msg = '';
             foreach ($result as $item) {
-                $msg = $msg.'Lead with CDBID '.$item['leadId'].' is not assigned. <span style="color:black;">Reason : '.$item['msg'].'</span> <br>';
+                $msg = $msg.'Lead with Ref-ID '.$item['leadId'].' is not assigned. <span style="color:black;">Reason : '.$item['msg'].'</span> <br>';
             }
             Log::warning('WCU Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
 
@@ -993,7 +991,7 @@ class CRUDController extends Controller
         if (count($assignmentResult) > 0) {
             $msg = '';
             foreach ($assignmentResult as $assignmentResultItem) {
-                $msg = $msg.' Lead with CDBID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
+                $msg = $msg.' Lead with Ref-ID'.$assignmentResultItem['leadId'].' is not assigned, Reason : '.$assignmentResultItem['msg'].' <br>';
             }
             Log::warning('Manual Lead Assignment Failed for '.$request->modelType.' Quote , selected id was '.$request->selectTmLeadId);
 
@@ -1100,7 +1098,20 @@ class CRUDController extends Controller
                 }
             }
         }
+        $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
+        // courtesy email
+        $lobs = [quoteTypeCode::Business];
+        if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
+
+            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
+            $quoteData['quoteTypeId'] = $quoteTypeId;
+            $quoteData['quoteUID'] = $request->quote_uuid;
+
+            $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
+
+            info('Courtesy Email CAPI Response - : '.json_encode($response));
+        }
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');
         }
@@ -1488,6 +1499,5 @@ class CRUDController extends Controller
      */
     public function destroy()
     {
-
     }
 }
