@@ -672,7 +672,7 @@ class HealthQuoteService extends BaseService
                 $title = 'Marital Status';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'cover_for_id':
                 $title = 'Who would you like cover for?';
@@ -747,13 +747,13 @@ class HealthQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'currently_insured_with_id':
                 $title = 'Currently Insured With';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             case 'device':
                 $title = 'Device';
@@ -1082,7 +1082,7 @@ class HealthQuoteService extends BaseService
                     info('Lead: '.$leadId.' assigned to advisor: '.$userId);
                 } else {
                     info('Advisor : '.$userId.' cannot take lead: '.$leadId);
-                    $msg = 'Advisor is not allowed to take lead with CDBID : '.$lead->code;
+                    $msg = 'Advisor is not allowed to take lead with Ref-ID : '.$lead->code;
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
                     continue;

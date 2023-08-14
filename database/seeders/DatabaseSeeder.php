@@ -18,7 +18,9 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
-            InsurerQuoteTypeMappingSeeder::class
+            InsurerQuoteTypeMappingSeeder::class,
+            AddPersonalLobsProducts::class
+            // PetBikeMigrationSeeder::class
         ]);
     }
 }

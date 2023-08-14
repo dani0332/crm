@@ -35,7 +35,7 @@
                                 <div class="col-md-6 col-sm-6">
                                     <select class="form-control" id="searchType" name="searchType">
                                         <option value=""></option>
-                                        <option value="cdbId">CDB ID</option>
+                                        <option value="cdbId">Ref-ID</option>
                                         <option value="customerEmail">Customer Email</option>
                                         <option value="id">AML ID</option>
                                     </select>
@@ -105,7 +105,7 @@
                         <tr>
                         <th>AML Id</th>
                         <th>Quote Type</th>
-                        <th>CDB Id</th>
+                        <th data-toggle="tooltip" data-align="center" title="Reference ID" style="text-decoration: underline; text-decoration-style: dotted;">Ref-ID</th>
                         <th>Input</th>
                         <th>Screenshot</th>
                         <th>Created At</th>

@@ -482,7 +482,7 @@ class LifeQuoteService extends BaseService
         $title = '';
         switch ($propertyName) {
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'purpose_of_insurance_id':
                 $title = 'Purpose of Insurance';
@@ -545,10 +545,10 @@ class LifeQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             default:
                 break;

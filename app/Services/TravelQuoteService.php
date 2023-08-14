@@ -492,7 +492,7 @@ class TravelQuoteService extends BaseService
                 $title = 'Lead Status';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'created_at':
                 $title = 'Created Date';
@@ -546,13 +546,13 @@ class TravelQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'premium':
-                $title = 'Premium';
+                $title = 'Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             default:
                 break;
