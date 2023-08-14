@@ -683,11 +683,11 @@ use App\Repositories\UserRepository;
 
 
                     @if(auth()->user()->hasRole(RolesEnum::CarAdvisor) &&
-                    isset($upcomingBatch->id) &&
+                    isset($upcomingBatch->deadline->deadline_date) &&
                     UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS] ))
                     <div class="row">
                         <div class="col-sm-12 text-center">
-                            <span class="text-danger">Alert! Deadline for submission for Batch {{$upcomingBatch->name}} uncontactable is on {{$upcomingBatch->deadline_date}}</span>
+                            <span class="text-danger">Alert! Deadline for submission for Batch {{$upcomingBatch->name}} uncontactable is on {{$upcomingBatch->deadline->deadline_date}}</span>
                         </div>
                     </div>
                     @endif
