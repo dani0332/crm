@@ -369,6 +369,9 @@ use App\Enums\PermissionsEnum;
                                     @can(PermissionsEnum::RULE_CONFIG_LIST)
                                         <li><a href="{{ url('generic/rule') }}">Rules</a></li>
                                     @endcan
+                                    @can(PermissionsEnum::COMMERCIAL_KEYWORDS)
+                                        <li><a href="{{ route('admin.commercial.keywords') }}">Commerical Keywords</a></li>
+                                    @endcan
                                 </ul>
                             </li>
                             @endcanany
