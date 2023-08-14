@@ -43,16 +43,27 @@ class UnconSubmissionReminder //implements ShouldQueue
     public function handle()
     {
         //get next uncontactable batch
-        $upcomingBatch = RenewalBatchRepository::GetUpcomingBatch(QuoteStatusEnum::Uncontactable);
+        $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
+
+        if(!isset($upcomingBatch->id))
+        {
+            info('No upcoming batch available for uncontactable resubmission reminder. no need to send email');
+            return true;
+        }
 
         //include next 3 more batches for information
-        $nextBatches = RenewalBatch::where('id', '>', $upcomingBatch->id)
-            ->where('quote_status_id', QuoteStatusEnum::Uncontactable)
+        $nextBatches = RenewalBatch::whereHas('deadline', function($q) use($upcomingBatch) {
+                $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
+                ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
+            })->with(['deadline' => function($q) use($upcomingBatch) {
+                $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
+                ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
+            }])
             ->limit(3)->get();
-
+        
         $emailData['batches'][] = [
             'batch' => $upcomingBatch->name,
-            'deadline_date' => Carbon::parse($upcomingBatch->deadline_date)->format('jS M Y'),
+            'deadline_date' => Carbon::parse($upcomingBatch->deadline->deadline_date)->format('jS M Y'),
             'highlight' => true
         ];
 
