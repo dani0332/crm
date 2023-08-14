@@ -160,6 +160,8 @@ class DashboardController extends Controller
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -180,6 +182,15 @@ class DashboardController extends Controller
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->where('teams.id', $tplTeam->id);
             });
+        }
+
+        if (isset($request->isCommercial) && $request->isCommercial == "true") {
+            $records->where('car_make.is_commercial', '=', true)
+                ->where('car_model.is_commercial', '=', true);
+        }
+        else{
+            $records->where('car_make.is_commercial', '=', false)
+                ->where('car_model.is_commercial', '=', false);
         }
 
         $labels = [];

@@ -75,12 +75,70 @@
     }
     $(function() {
         createLeadRcdSummaryByTierPieChart(tplDashboardStats);
+        $('#commercial-filter').on('change', function(e) {
+            var commercialFilterValue = $('#commercial-filter').val();
+
+            tplDashboardStatsBarChart.showLoading();
+            $.ajax({
+                url: "/get-tpl-filter-stats",
+                type: "post",
+                data: {
+                    'isCommercial': commercialFilterValue
+                },
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(result) {
+                    if (result) {
+                        var labels = (typeof result[0]) == 'string' ? JSON.parse(result[0]) : result[0];
+                        var data = (typeof result[1]) == 'string' ? JSON.parse(result[1]) : result[1];
+                        var numbers = [];
+                        for (let index = 0; index < data.length; index++) {
+                            numbers.push(Number(data[index]));
+                        }
+                        if (labels.length > 0) {
+                            tplDashboardStatsBarChart.destroy();
+                            createLeadRcdSummaryByTierPieChart([labels, numbers]);
+                        } else {
+                            tplDashboardStatsBarChart.destroy();
+                            createLeadRcdSummaryByTierPieChart([
+                                [''],
+                                [0]
+                            ]);
+                        }
+                    }
+                    tplDashboardStatsBarChart.hideLoading();
+                },
+                error: function(jqXHR, textStatus, errorThrown) {
+                    comprehensiveDashboardStatChart.hideLoading();
+                    console.log(textStatus, errorThrown);
+                }
+            });
+        });
+    });
+
+    new SlimSelect({
+        select: '#commercial-filter',
+        settings: {
+            allowDeselect: false,
+            placeholderText: 'Commercial filter',
+        }
     });
 
 </script>
 @endpush
 
 <div>
+    <div class="flex gap-4 justify-end mb-4">
+        <div class="md:w-1/4">
+            <label>Commercial</label>
+            <select name="isCommercial" id="commercial-filter">
+                <option data-placeholder="true"></option>
+                <option value="true">Yes</option>
+                <option value="false" selected>No</option>
+            </select>
+        </div>
+    </div>
     <div style="min-height: 700px;">
         <div id="tplConversionDiv"></div>
     </div>
