@@ -265,7 +265,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppCreate),
                         'Create Transaction',
-                        '/transapp/create',
+                        '/transapp/transaction/create',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
