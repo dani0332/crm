@@ -75,10 +75,11 @@
     }
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter, #user-filter, #team-filter , #excludeManualFilter').on('change', function(e) {
+        $('#tier-filter, #user-filter, #team-filter , #excludeManualFilter, #commercial-filter').on('change', function(e) {
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
+            var commercialFilterValue = $('#commercial-filter').val();
             if (e.target.id == 'team-filter') {
                 $.ajax({
                     url: "/get-users-by-team",
@@ -114,7 +115,8 @@
                     'tier_filter': tierFilterValue,
                     'team_filter': teamFilterValue,
                     'userFilter': userFilterValue,
-                    'excludeFilter': excludeFilterValue
+                    'excludeFilter': excludeFilterValue,
+                    'isCommercial': commercialFilterValue
                 },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -169,11 +171,26 @@
             placeholderText: 'Select Teams',
         }
     })
+    new SlimSelect({
+        select: '#commercial-filter',
+        settings: {
+            allowDeselect: false,
+            placeholderText: 'Commercial filter',
+        }
+    })
 </script>
 @endpush
 
 <div>
     <div class="flex gap-4 justify-end mb-4">
+        <div class="md:w-1/4">
+            <label>Commercial</label>
+            <select name="isCommercial" id="commercial-filter">
+                <option data-placeholder="true"></option>
+                <option value="true">Yes</option>
+                <option value="false" selected>No</option>
+            </select>
+        </div>
         <div class="md:w-1/4">
             <label>Advisor Filter</label>
             <select multiple name="users[]" id="user-filter">
