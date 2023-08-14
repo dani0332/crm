@@ -30,8 +30,7 @@ class PetBikeMigrationSeeder extends Seeder
                     $customer = Customer::where('email', $petChunkRecord->email)->first();
                     $nationality = Nationality::where('id', $petChunkRecord->nationality_id)->first();
 
-                    if (! PersonalQuote::where(['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet])->first())
-                    {
+                    if (! PersonalQuote::where(['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet])->first()) {
                         $quote = PersonalQuote::updateOrCreate(
                             ['uuid' => trim($petChunkRecord->uuid), 'quote_type_id' => QuoteTypeId::Pet],
                             [
