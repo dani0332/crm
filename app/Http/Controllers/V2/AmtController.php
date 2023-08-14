@@ -233,7 +233,7 @@ class AmtController extends Controller
     {
         $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        $record = BusinessQuote::with('advisor')->where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
         abort_if(! $record, 404);
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
