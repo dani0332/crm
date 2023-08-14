@@ -539,11 +539,11 @@ const availablePlansTable = reactive({
       value: 'travelType',
     },
     {
-      text: 'Actual Premium',
+      text: 'Actual Price',
       value: 'actualPremium',
     },
     {
-      text: 'Premium with VAT',
+      text: 'Price with VAT',
       value: 'discountPremium',
     },
     {
@@ -973,7 +973,23 @@ onMounted(() => {
             v-for="field in travelFields"
             :key="field"
           >
-            <dt class="font-medium">{{ field.title.toUpperCase() }}</dt>
+              <dt v-if="field.title == 'Ref-ID'">
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          {{ field.title }}
+                      </label>
+                      <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+              </dt>
+              <dt v-else-if="field.title == 'Parent Ref-ID'">
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          {{ field.title }}
+                      </label>
+                      <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+              </dt>
+            <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
         </dl>
@@ -993,7 +1009,7 @@ onMounted(() => {
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1086,7 +1102,7 @@ onMounted(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ ecomDetails.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1224,7 +1240,6 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        03
         <x-divider class="mb-4 mt-1" />
       </div>
       <x-form @submit="submitPolicyDetails" :auto-focus="false">
@@ -1276,7 +1291,7 @@ onMounted(() => {
             <x-input
               v-model="policyDetails.premium"
               :disabled="!policyDetails.editMode"
-              label="PREMIUM"
+              label="PRICE"
               :rules="[isRequired, premium]"
               class="w-full"
             />

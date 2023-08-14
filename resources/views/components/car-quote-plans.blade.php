@@ -9,6 +9,8 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
+$coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+$halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC'];
 @endphp
 <div class="row">
 	<div class="col-md-12 col-sm-12">
@@ -125,9 +127,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<th>PAB cover</th>
 							<th>Roadside assistance</th>
 							<th>Oman cover TPL</th>
-							<th>Actual Premium</th>
-							<th>Discounted Premium</th>
-							<th>Premium with VAT.</th>
+							<th>Actual Price</th>
+							<th>Discounted Price</th>
+							<th>Price with VAT.</th>
 							<th>Excess</th>
 							<th>Action</th>
 						</tr>
@@ -163,7 +165,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{
 									ucwords($quotePlan->name) }}</a></td>
-							<td>{{ $quotePlan->repairType == CarPlanType::COMP ? 'NON-AGENCY' : $quotePlan->repairType
+							<td>{{ $quotePlan->repairType == CarPlanType::COMP ?
+									(in_array($quotePlan->providerCode, $coreInsurer) ? 'Premium workshop' : (in_array($quotePlan->providerCode, $halfLiveInsurer) ? 'Non-Agency workshop' : 'NON-AGENCY'))
+									 : $quotePlan->repairType
 								}}</td>
 							<td>
 								@isset($quotePlan->insurerQuoteNo)
@@ -317,9 +321,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<th>PAB cover</th>
 							<th>Roadside assistance</th>
 							<th>Oman cover TPL</th>
-							<th>Actual Premium</th>
-							<th>Discounted Premium</th>
-							<th>Premium with VAT.</th>
+							<th>Actual Price</th>
+							<th>Discounted Price</th>
+							<th>Price with VAT.</th>
 							<th>Excess</th>
 							<th>Action</th>
 						</tr>

@@ -939,7 +939,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								</td>
 								<td>Ancillary Excess:</td>
 								<td><select class="form-control" id='ancillary_excess' name="ancillary_excess">
-										@for ($i = 0; $i <= 20; $i++) <option value="{{$i}}" {{ $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
+										@for ($i = 0; $i <= 20; $i++) <option value="{{$i}}" {{ isset($ancillaryExcess) && $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
 											@endfor
 									</select>
 								</td>

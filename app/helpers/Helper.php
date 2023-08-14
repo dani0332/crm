@@ -136,7 +136,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     if (! $modelType) {
         return $result;
     }
-    $nameSpace = '\\App\\Models\\';
+    $nameSpace = 'App\\Models\\';
     $modelType = $nameSpace.$modelType.'Quote';
 
     if ($myleads) {
@@ -425,6 +425,14 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
+            quoteTypeCode::Travel,
+            quoteTypeCode::Home,
+            quoteTypeCode::Life,
+            quoteTypeCode::Pet,
+            quoteTypeCode::CORPLINE,
+            quoteTypeCode::Business,
+            quoteTypeCode::Cycle,
+            quoteTypeCode::Bike,
         ];
     }
 }
@@ -466,9 +474,7 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::PET->value,
-            QuoteTypes::YACHT->value
+            QuoteTypes::YACHT->value,
         ]);
     }
 }
-
-
