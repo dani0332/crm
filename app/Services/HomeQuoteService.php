@@ -480,7 +480,7 @@ class HomeQuoteService extends BaseService
                 $title = 'Mobile Number';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'next_followup_date':
                 $title = 'Next Followup Date';
@@ -501,10 +501,10 @@ class HomeQuoteService extends BaseService
                 $title = 'Is Property Rented Holiday Home ?';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Quote Premium';
+                $title = 'Previous Quote Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             default:
                 break;

@@ -102,7 +102,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return view('home');
+        return inertia('Home/Home');
     });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);

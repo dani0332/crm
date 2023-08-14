@@ -402,7 +402,7 @@
 
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">CDB ID</label>
+                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Ref-ID</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
                                         <input type="text" class="form-control" name="code" id="code" >
@@ -517,7 +517,7 @@
 
                             <div class="item form-group">
                                 <div class="col">
-                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY PREMIUM</label>
+                                    <label class="col-form-label col-md-2 col-sm-2" for="searchfield">PREVIOUS POLICY PRICE</label>
                                     <div class="col-md-6 col-sm-6">
                                         <div class="input-group">
                                         <input type="text" class="form-control" name="previous_quote_policy_premium" id="previous_quote_policy_premium" >
@@ -610,12 +610,12 @@
                                     <th style="width: 15px;"><input type="checkbox" id="checkAllAMT"
                                             name="checkAllAMT" value=""></th>
                                 @endif
-                                <th>CDB ID</th>
+                                <th>Ref-ID</th>
                                 <th>First Name</th>
                                 <th>Last Name</th>
                                 <th>Lead Status</th>
                                 <th>Advisor</th>
-                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Premium</th>@endif
+                                @if (!Auth::user()->isRenewalAdvisor() && !Auth::user()->isRenewalManager())<th>Price</th>@endif
                                 <th>Company Name</th>
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Premium</th>@endif
                                 @if (Auth::user()->isRenewalAdvisor() || Auth::user()->isRenewalManager())<th>Previous Quote Expiry Date</th>@endif
