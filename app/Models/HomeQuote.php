@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -11,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HomeQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable;
+    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
     protected $table = 'home_quote_request';
     protected $guarded = [];
