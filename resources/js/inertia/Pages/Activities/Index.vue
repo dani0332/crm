@@ -1,5 +1,5 @@
 <script setup>
-
+// Component Props and State Initialization
 defineProps({
   activities: Object,
   advisors: Object,
@@ -7,6 +7,7 @@ defineProps({
   total_activities: Number   
 });
 
+// Vue Composition API
 const page = usePage();
 const selectedOption  = ref('');
 const customStartDate = ref(null);
@@ -16,9 +17,7 @@ const activityActionEdit = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
-
 const notification = useNotifications('toast');
-
 const activityForm = useForm({
   title: null,
   description: null,
@@ -27,36 +26,34 @@ const activityForm = useForm({
   status: null,  
   activity_id: null,
 });
-
-
 const modals = reactive({
   activity: false,
   activityConfirm: false,
 });
-
 const filters = reactive({
   assignee_id: '',
   status: '',
   due_date_start: '',  
   due_date_end: '',  
+  due_date_time_start: '',  
+  due_date_time_end: '',    
   page: 1,
 });
-
 const loader = reactive({
   table: false,
   export: false,
 });
-
 const activityTable = [
   { text: 'Title', value: 'title' },
   { text: 'CDBID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'assignee.email' },
+  { text: 'Assigned To', value: 'name' },
   { text: 'Done', value: 'status', width: 60, align: 'center' },
   { text: 'Action', value: 'action' },
 ];
 
+// Filter Functions
 function filterActivities(isValid) {
   if (!isValid) {
     return;
@@ -66,7 +63,6 @@ function filterActivities(isValid) {
       delete filters[key];
     }
   }
-
   router.visit('/activities', {
     method: 'get',
     data: {
@@ -83,7 +79,6 @@ function filterActivities(isValid) {
     },
   });
 }
-
 function resetFilters() {
   router.visit('/activities', {
     method: 'get',
@@ -93,7 +88,6 @@ function resetFilters() {
     onSuccess: () => (loader.table = false),
   });
 }
-
 function setQueryFilters() {
   let query = router.page.url.split('?')[1];
   if (query) {
@@ -104,7 +98,6 @@ function setQueryFilters() {
     });
   }
 }
-
 function resetDates(option) {
   const today = new Date();
   let startDate, endDate;
@@ -139,21 +132,25 @@ function resetDates(option) {
     customEndDate.value = null;
   }
   if (option != 'custom') {
+    filters.due_date_time_start  = '';
+    filters.due_date_time_end    = '';
     filters.due_date_start  = startDate;
     filters.due_date_end    = endDate;
     filterActivities(1); // Call the filterActivities function
   }
 }
-
 function applyCustomDates() {
   if (customStartDate.value && customEndDate.value) {
     // Update the filters with the selected custom dates
-    filters.due_date_start = customStartDate.value;
-    filters.due_date_end = customEndDate.value;
+    filters.due_date_start  = '';
+    filters.due_date_end    = '';
+    filters.due_date_time_start = customStartDate.value;
+    filters.due_date_time_end = customEndDate.value;
     filterActivities(1); // Call the filterActivities function
   }
 }
 
+// Helper Functions
 function buildCdbidLink(quote_uuid, quote_type_id) { 
     if (quote_uuid) {
       var url = '/quotes/' + getQuoteType(quote_type_id,'id') + '/' + quote_uuid;
@@ -164,7 +161,6 @@ function buildCdbidLink(quote_uuid, quote_type_id) {
         return '';
     }  
 }
-
 function getQuoteType(id, returnType = 'code') {
   const types = {
     1: { code: 'CAR-', id: 'car' },
@@ -179,16 +175,14 @@ function getQuoteType(id, returnType = 'code') {
   return types[id][returnType] || '';
 }
 
-
+// CRUD Functions
 const confirmDelete = id => {
   modals.activityConfirm = true;
   deleteData.activity_id = id;
 };
-
 const deleteData = reactive({
   activity_id: null,
 });
-
 const onDeleteConfirmation = () => {
   router.delete(`/activities/v2/${deleteData.activity_id}/`, {
     preserveScroll: true,
@@ -204,7 +198,6 @@ const onDeleteConfirmation = () => {
     },
   });
 };
-
 const onStatusUpdate = id => {
   activityLoader.value = true;
   activityForm.activity_id = id;
@@ -220,13 +213,11 @@ const onStatusUpdate = id => {
     },
   });
 };
-
 const addActivity = () => {
   activityForm.reset();
   activityActionEdit.value = false;
   modals.activity = true;
 };
-
 const onEdit = activity => {
   activityActionEdit.value = true;
   modals.activity = true;
@@ -240,18 +231,14 @@ const onEdit = activity => {
     : null;
   activityForm.assignee_id = activity.assignee_id;
 };
-
 const onSubmit = isValid => {
   if (!isValid) return;
-
   let url = `/activities/v2/`;
   let method = `post`;
-
   if (activityActionEdit.value) {
     url += activityForm.activity_id;
     method = 'patch';
   }
-
   activityForm.submit(method, url, {
     preserveScroll: true,
     onSuccess: () => {
@@ -273,12 +260,12 @@ const onSubmit = isValid => {
   });
 };
 
+// Component hooks
 watch(
   () => filters,
   { deep: true, immediate: true },
 );
-
-onBeforeMount(() => { //will trigger before the component is mounted for the first time
+onBeforeMount(() => { 
   resetDates('today');
 });
 onMounted(() => {
@@ -309,6 +296,7 @@ onMounted(() => {
           placeholder="Select Assigned To"
           :disabled="cannot_use_assignee"
           :options="[
+            { value: null, label: 'All' },
             // Loop through advisorArray to generate options
             ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
           ]"
@@ -382,18 +370,19 @@ onMounted(() => {
 </div>
  <!-- Custom Date Range Picker -->
   <div v-if="selectedOption === 'custom'">
-      <div class="flex gap-3">        
-        <DatePicker
-          v-model="customStartDate"
-          name="created_at_start"
-          label="Start Date"
-        />
-        <DatePicker
-          v-model="customEndDate"
-          name="created_at_end"
-          label="End Date"
-        />  
-        
+      <div class="flex gap-3">
+        <x-input
+            v-model="customStartDate"
+            label="Start Date"
+            type="datetime-local"
+            class="w-full"
+          />
+        <x-input
+            v-model="customEndDate"
+            label="End Date"
+            type="datetime-local"
+            class="w-full"
+          />
       </div>
       <div class="flex justify-end gap-3 mb-4 mt-1">
         <div class="flex gap-3"> 
