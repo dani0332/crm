@@ -30,7 +30,7 @@ class TravelQuoteRepository extends BaseRepository
             'destination',
             'paymentStatus',
         ])
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
