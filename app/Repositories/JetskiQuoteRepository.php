@@ -115,7 +115,7 @@ class JetskiQuoteRepository extends BaseRepository
             'currentlyInsuredWith',
             'advisor',
         ])
-            ->filter(!$forExport)
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
