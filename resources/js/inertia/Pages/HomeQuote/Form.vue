@@ -113,7 +113,7 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="{{ isEdit ? 'Edit' : 'Create' }} Home" />
+    <Head :title="isEdit ? 'Edit Home' : 'Create Home'" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">{{ isEdit ? 'Edit' : 'Create' }} Home</h2>
       <div class="space-x-4">
