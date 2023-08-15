@@ -4,7 +4,6 @@
 /docker/var/nginx/logs
 /public/storage
 /storage/*.key
-/public/css/app.css
 /vendor
 .env
 .env.backup
