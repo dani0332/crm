@@ -243,6 +243,7 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -276,7 +277,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HomeQuote/Create', [
+            return inertia('HomeQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -361,10 +362,11 @@ class CRUDController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
+            return 'aaaaaaaaaaaaaa';
             if (! isset($record->quoteUID)) {
-                return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
+            //    return redirect('/quotes/'.strtolower($modelType))->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : $modelType))).' has been stored');
             } else {
-                return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
+             //   return redirect('/quotes/'.strtolower($modelType).'/'.$record->quoteUID)->with('success', ((str_contains(strtolower($modelType), 'team') ? 'Team' : (str_contains(strtolower($modelType), 'leadstatus') ? 'Lead Status' : 'Lead'))).' has been created');
             }
         }
     }
@@ -699,7 +701,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HomeQuote/Edit', [
+            return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
                 'dropdownSource' => $dropdownSource,
