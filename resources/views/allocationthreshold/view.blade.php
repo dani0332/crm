@@ -1,11 +1,11 @@
 @extends('layouts.app')
-@section('title','View Allocation Threshold')
+@section('title','View Allocation Threshold ')
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}" />
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <script>
     $(function(){
-        $('.range-input').on("blur", function(){
+        $('.range-input').on('blur', function(){
             var clickedInput = $(this);
             debugger;
         });
