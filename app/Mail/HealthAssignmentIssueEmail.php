@@ -15,7 +15,7 @@ class HealthAssignmentIssueEmail extends Mailable
     public $priceStartingFrom;
 
     /**
-     * Create a new message instance.
+     * Create a new message instance .
      *
      * @return void
      */
