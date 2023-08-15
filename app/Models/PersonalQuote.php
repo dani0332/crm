@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;

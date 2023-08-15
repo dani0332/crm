@@ -944,12 +944,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Car Trim</td>
-								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
-										@foreach($insurerAvailableTrims as $trim)
-										<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
-											'selected="selected"' : '' }}>{{$trim->description}}</option>
-										@endforeach
-									</select>
+								<td>
+									@if(isset($insurerAvailableTrims))
+										<select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
+											@foreach($insurerAvailableTrims as $trim)
+											<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
+												'selected="selected"' : '' }}>{{$trim->description}}</option>
+											@endforeach
+										</select>
+									@endif
 								</td>
 								<td valign="top"></td>
 								<td align="right">
