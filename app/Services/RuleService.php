@@ -107,10 +107,7 @@ class RuleService extends BaseService
         if (isset($request->rule_end_date)) {
             $rule->rule_end_date = $request->rule_end_date;
         }
-        if (isset($request->rule_type)) {
-            $rule->rule_type = $request->rule_type;
-        }
-
+        
         $rule->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $rule->save();
 

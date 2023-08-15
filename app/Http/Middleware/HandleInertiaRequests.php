@@ -436,6 +436,8 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
                             PermissionsEnum::TIER_CONFIG_LIST,
+                            PermissionsEnum::COMMERCIAL_KEYWORDS,
+                            PermissionsEnum::CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION
                         ]),
                         'Allocation Config',
                         url('generic/tier'),
@@ -457,6 +459,18 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                                 'Rules',
                                 url('generic/rule'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::COMMERCIAL_KEYWORDS),
+                                'Commerical Keywords',
+                                route('admin.commercial.keywords'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION),
+                                'Configure Commercial Vehicles',
+                                route('admin.configure.commerical.vehicles'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

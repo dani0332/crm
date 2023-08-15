@@ -372,6 +372,9 @@ use App\Enums\PermissionsEnum;
                                     @can(PermissionsEnum::COMMERCIAL_KEYWORDS)
                                         <li><a href="{{ route('admin.commercial.keywords') }}">Commerical Keywords</a></li>
                                     @endcan
+                                    @can(PermissionsEnum::CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION)
+                                        <li><a href="{{ route('admin.configure.commerical.vehicles') }}">Configure Commercial Vehicles</a></li>
+                                    @endcan
                                 </ul>
                             </li>
                             @endcanany

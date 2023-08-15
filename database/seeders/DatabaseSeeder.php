@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UtmLeadsSalesReportSeeder::class,
             CommercialKeywordsSeeder::class,
             RuleTypeSeeder::class,
+            CommercialMakeModelKeywordsPermissionsSeeder::class,
         ]);
     }
 }

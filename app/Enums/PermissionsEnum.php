@@ -214,4 +214,5 @@ final class PermissionsEnum extends Enum
     const CarQuoteSearch = 'car-quotes-search';
     const UtmLeadsSalesReport = 'utm-leads-sales-report';
     const COMMERCIAL_KEYWORDS    =   'commercial-keywords';
+    const CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION  =   'car-make-model-commercial-allocation';
 }

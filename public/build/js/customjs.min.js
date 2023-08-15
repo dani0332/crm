@@ -2783,6 +2783,81 @@ var teamsDataTable = $('.teams-data-table').DataTable({
   ],
 });
 
+/**
+ * Commercial keywords datatable
+ */
+var commercialKeywordsDataTable = $('.commercial-keywords-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_keywords_datatable_route,
+      data: function (d) {
+        d.name = $('#name').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_keywords_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'key', name: 'key' },
+      { data: 'name', name: 'name' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
+    ],
+  });
+
+/**
+ * Commercial vehicles datatable
+ */
+var commercialVehiclesDataTable = $('.commercial-vehicles-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_vehicles_datatable_route,
+      data: function (d) {
+        d.text = $('#text').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_vehicles_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'text', name: 'text' },
+      { data: 'code', name: 'code' },
+      { data: 'car_models', name: 'car_models' , title: 'Commercial Car Models'},
+    ],
+  });
+
 $('#search-teams').submit(function (e) {
   e.preventDefault();
   $('.loader').show();
@@ -2791,6 +2866,24 @@ $('#search-teams').submit(function (e) {
     $('.loader').hide();
   }, 1000);
 });
+
+$('#search-keywords').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialKeywordsDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+  $('#search-car-make').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialVehiclesDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
 
 // Listen for change events on select1
 $('#rule_type').change(function() {

@@ -1,14 +1,14 @@
 @extends('layouts.app')
-@section('title', 'View Teams')
+@section('title', 'View Commercial Vehicles')
 @section('content')
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>Commercial Keywords</h2>
+                    <h2>Commercial Vehicles</h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        <li><a href="{{ route('admin.commercial.keywords.create') }}" class="btn btn-warning btn-sm">Add new
-                                Keyword</a></li>
+                        <li><a href="{{ route('admin.configure.commerical.vehicles.create') }}"
+                                class="btn btn-warning btn-sm">Assign More Vehicles</a></li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
@@ -19,14 +19,14 @@
                     @if (session()->has('message'))
                         <div class="alert alert-warning">{{ session()->get('message') }}</div>
                     @endif
-                    <form method="POST" id="search-keywords" class="form-horizontal form-label-left" role="form"
+                    <form method="POST" id="search-car-make" class="form-horizontal form-label-left" role="form"
                         data-parsley-validate="" novalidate="" autocomplete="off">
                         <div class="item form-group">
                             <div class="col">
-                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Keyword Name</label>
+                                <label class="col-form-label col-md-2 col-sm-2" for="searchfield">Seach by Car Make</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <input type="text" class="form-control" name="name" id="name"
+                                        <input type="text" class="form-control" name="text" id="text"
                                             placeholder="Search here...">
                                     </div>
                                 </div>
@@ -42,14 +42,13 @@
                     @if (session()->has('message'))
                         <div class="alert alert-danger">{{ session()->get('message') }}</div>
                     @endif
-                    <table class="table table-striped jambo_table commercial-keywords-data-table" style="width:100%">
+                    <table class="table table-striped jambo_table commercial-vehicles-data-table" style="width:100%">
                         <thead>
                             <tr>
                                 <th>Id</th>
-                                <th>Key</th>
-                                <th>Name</th>
-                                <th>Created At</th>
-                                <th>Updated At</th>
+                                <th>Text</th>
+                                <th>Code</th>
+                                <th>Commercial Car Models</th>
                             </tr>
                         </thead>
 
