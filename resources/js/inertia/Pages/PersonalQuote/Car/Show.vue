@@ -128,27 +128,30 @@ const availablePlansTable = reactive({
 
 const documentsTable = reactive({
 	columns: [
-		{ text: 'Document Type', value: 'providerName' },
-		{ text: 'Document Name', value: '' },
-		{ text: 'Created At', value: '' },
-		{ text: 'Created By', value: '' },
-		{ text: 'Action', value: '' },
+		{ text: 'Document Type', value: 'document_type_text' },
+		{ text: 'Document Name', value: 'document_name_text' },
+		{ text: 'Created At', value: 'created_at' },
+		{ text: 'Created By', value: 'created_by' },
+		{ text: 'Action', value: 'action' },
 	]
 })
 
 const documentsTableItems = computed(() => {
 	return page.props.quoteDocuments.map(doc => {
 		return {
-			document_type_text: doc.document_type_text
+			document_type_text: doc.document_type_text.length > 0 ? doc.document_type_text : "",
+			document_name_text: doc.doc_name,
+			created_at: doc.created_at,
+			created_by: doc.createdBy ? doc.createdBy.name : "",
 		}
 	})
 })
 
 const notesForCustomer = reactive({
 	columns: [
-		{ text: 'Id', value: '' },
+		{ text: 'Id', value: 'id' },
 		{ text: 'Description', value: '' },
-		{ text: 'Created At', value: '' },
+		{ text: 'Created At', value: 'created_at' },
 		{ text: 'Created By', value: '' },
 	]
 })
@@ -156,9 +159,12 @@ const notesForCustomer = reactive({
 const leadActivities = reactive({
 	columns: [
 		{ text: 'Title', value: '' },
-		{ text: 'Ref-ID', value: '' },
 		{ text: 'Client Name', value: '' },
-		{ text: 'Created By', value: '' },
+		{ text: 'Followup Date', value: '' },
+		{ text: 'Assigned To', value: '' },
+		{ text: 'Done', value: '' },
+		{ text: 'Action', value: '' },
+
 	]
 })
 
@@ -173,6 +179,49 @@ const emailStatusTable = reactive({
 		{ text: 'Customer Id', value: 'customer_id' },
 		{ text: 'Created At', value: 'created_at' },
 		{ text: 'Updated At', value: 'updated_at' },
+	]
+})
+
+const customerAdditionalContactsTable = reactive({
+	columns: [
+		{ text: 'Type', value: 'key' },
+		{ text: 'Value', value: 'value' },
+		{ text: 'Created At', value: 'created_at' },
+		{text: 'Action', value: 'action' },
+	]
+})
+
+// history data
+const historyData = ref(null);
+const historyLoading = ref(false);
+
+const onLoadHistoryData = async () => {
+  historyLoading.value = true;
+  const res = await fetch(
+    `/quotes/getLeadHistory?modelType=car&recordId=${page.props.paymentEntityModel.id}`,
+  );
+  const finalRes = await res.json();
+  historyData.value = finalRes;
+  historyLoading.value = false;
+};
+
+const historyDataTable = [
+  { text: 'Modified At', value: 'ModifiedAt' },
+  { text: 'Modified By', value: 'ModifiedBy' },
+  { text: 'Lead Status', value: 'NewStatus' },
+  { text: 'Advisor', value: '' },
+  { text: 'Notes', value: 'NewNotes' },
+];
+
+const auditLogTable = reactive({
+	columns: [  
+		{ text: 'Id', value: '' },
+		{ text: 'User', value: '' },
+		{ text: 'Event', value: '' },
+		{ text: 'Old Values', value: '' },
+		{ text: 'New Values', value: '' },
+		{ text: 'Ip Address', value: '' },
+		{ text: 'Logged At', value: '' },
 	]
 })
 
@@ -860,7 +909,7 @@ const policyDetailsForm = useForm({
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+						<Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
 
 						<template v-if="displaySendPolicyButton">
 							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
@@ -913,7 +962,6 @@ const policyDetailsForm = useForm({
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
 
 						<template v-if="displaySendPolicyButton">
 							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
@@ -1057,8 +1105,9 @@ const policyDetailsForm = useForm({
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
-
+						<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+							Add Additional Contacts
+						</x-button>
 						<template v-if="displaySendPolicyButton">
 							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
                             data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
@@ -1072,8 +1121,8 @@ const policyDetailsForm = useForm({
 			</div>
 			<DataTable
 				table-class-name="tablefixed compact"
-				:headers="emailStatusTable.columns"
-				:items="emailStatuses || []"
+				:headers="customerAdditionalContactsTable.columns"
+				:items="customerAdditionalContacts || []"
 				show-index
 				border-cell
 				fixed-checkbox
@@ -1088,7 +1137,7 @@ const policyDetailsForm = useForm({
 							outlined
 							@click.prevent="onEditMember(item)"
 						>
-							Edit
+							Make Primary
 						</x-button>
 						<x-button
 							size="xs"
@@ -1102,109 +1151,36 @@ const policyDetailsForm = useForm({
 				</template>
 			</DataTable>
 		</div> 
+
 		<div class="p-4 rounded shadow mb-6 bg-white">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">
-					Lead History
-				</h3>
-				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
-
-						<template v-if="displaySendPolicyButton">
-							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
-                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
-						</template>
-
-					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-						Copy upload Link
-					</x-button>
-				</div>
-			</div>
-			<DataTable
-				table-class-name="tablefixed compact"
-				:headers="emailStatusTable.columns"
-				:items="emailStatuses || []"
-				show-index
-				border-cell
-				fixed-checkbox
-				hide-rows-per-page
-				hide-footer
+		<div>
+			<h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+			<x-divider class="mb-4 mt-1" />
+		</div>
+		<div v-if="historyData === null" class="text-center py-3">
+			<x-button
+			size="sm"
+			color="primary"
+			outlined
+			@click.prevent="onLoadHistoryData"
+			:loading="historyLoading"
 			>
-				<template #item-action="item">
-					<div class="flex gap-2">
-						<x-button
-							size="xs"
-							color="primary"
-							outlined
-							@click.prevent="onEditMember(item)"
-						>
-							Edit
-						</x-button>
-						<x-button
-							size="xs"
-							color="error"
-							outlined
-							@click.prevent="memberDelete(item.id)"
-						>
-							Delete
-						</x-button>
-					</div>
-				</template>
-			</DataTable>
-		</div> 
-		<div class="p-4 rounded shadow mb-6 bg-white">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">
-					Audit Logs
-				</h3>
-				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<Link :href="`quotes/${quoteType}/${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
+			Load History Data
+			</x-button>
+		</div>
+		<DataTable
+			v-else
+			table-class-name="compact"
+			:headers="historyDataTable"
+			:items="historyData || []"
+			border-cell
+			hide-rows-per-page
+			:rows-per-page="15"
+			:hide-footer="historyData.length < 15"
+		/>
+		</div>
 
-						<template v-if="displaySendPolicyButton">
-							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
-                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
-						</template>
-
-					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-						Copy upload Link
-					</x-button>
-				</div>
-			</div>
-			<DataTable
-				table-class-name="tablefixed compact"
-				:headers="emailStatusTable.columns"
-				:items="emailStatuses || []"
-				show-index
-				border-cell
-				fixed-checkbox
-				hide-rows-per-page
-				hide-footer
-			>
-				<template #item-action="item">
-					<div class="flex gap-2">
-						<x-button
-							size="xs"
-							color="primary"
-							outlined
-							@click.prevent="onEditMember(item)"
-						>
-							Edit
-						</x-button>
-						<x-button
-							size="xs"
-							color="error"
-							outlined
-							@click.prevent="memberDelete(item.id)"
-						>
-							Delete
-						</x-button>
-					</div>
-				</template>
-			</DataTable>
-		</div> 
 	</div>
+	<AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.quoteTypeId" />
+
 </template>
