@@ -17,7 +17,7 @@ class addTeamThresholdViewPermission extends Seeder
      */
     public function run()
     {
-        $permissions[] = Permission::findOrCreate(PermissionsEnum::TeamThresholdView, 'web' )->id;
+        $permissions[] = Permission::findOrCreate(PermissionsEnum::TeamThresholdView, 'web')->id;
 
         $adminRole = Role::findOrCreate(RolesEnum::Admin, 'web');
         foreach ($permissions as $permission) {

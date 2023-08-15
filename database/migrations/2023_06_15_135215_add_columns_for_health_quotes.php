@@ -13,7 +13,7 @@ class AddColumnsForHealthQuotes extends Migration
      */
     public function up()
     {
-        Schema::table('health_quote_request' , function (Blueprint $table) {
+        Schema::table('health_quote_request', function (Blueprint $table) {
             if (! Schema::hasColumn('health_quote_request', 'price_starting_from')) {
                 $table->decimal('price_starting_from', 14, 2)->nullable();
             }
