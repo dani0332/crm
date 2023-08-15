@@ -54,7 +54,7 @@ function onSubmit(isValid){
         });
     }else{
         notification.error({
-            title: "Error while submitting quote. Please try again",
+            title: "Error while submitting customer. Please try again",
             position: 'top',
         });
     }
