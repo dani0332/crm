@@ -54,10 +54,6 @@ function onAssignLead(isValid) {
         preserveState: true,
         onSuccess: () => {
           emit('success');
-          assignForm.reset();
-          router.reload({
-            preserveScroll: true,
-          });
         },
         onError: () => {
           emit('error');

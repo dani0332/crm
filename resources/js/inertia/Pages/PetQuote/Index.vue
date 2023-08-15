@@ -11,8 +11,6 @@ defineProps({
   },
 });
 
-const { isRequired } = useRules();
-
 const page = usePage();
 const loader = reactive({
   table: false,
@@ -122,14 +120,16 @@ const advisorOptions = computed(() => {
   }));
 });
 
-const notification = useNotifications('toast');
-
 const quotesSelected = ref([]);
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'pet');
   window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
 };
 
 watch(
@@ -296,6 +296,7 @@ watch(
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          @success="onLeadAssigned"
         />
       </div>
     </Transition>
