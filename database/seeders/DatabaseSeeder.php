@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
             AddPersonalLobsProducts::class,
-            PetBikeMigrationSeeder::class
+            // PetBikeMigrationSeeder::class
         ]);
     }
 }
