@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
@@ -106,26 +105,6 @@ class PersonalQuote extends Model implements AuditableContract
     public function yachtQuote()
     {
         return $this->hasOne(YachtQuote::class);
-    }
-
-    /**
-     * @return string
-     */
-    public function getCreatedAtAttribute($date)
-    {
-        if (! empty($date)) {
-            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
-        }
-    }
-
-    /**
-     * @return string
-     */
-    public function getUpdatedAtAttribute($date)
-    {
-        if (! empty($date)) {
-            return Carbon::parse($date)->timezone(config('app.timezone'))->format(Config::get('constants.datetime_format'));
-        }
     }
 
     /**

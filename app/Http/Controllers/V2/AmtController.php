@@ -75,8 +75,8 @@ class AmtController extends Controller
                 'bqr.first_name',
                 'bqr.last_name',
                 'qs.text as leadStatus',
-                DB::raw('DATE_FORMAT(bqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-                DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+                DB::raw('DATE_FORMAT(bqr.created_at, "%d-%b-%Y %r") as created_at'),
+                DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
                 'bit.text as leadType',
                 'bqr.advisor_id',
                 'bqr.source',
@@ -233,7 +233,7 @@ class AmtController extends Controller
     {
         $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        $record = BusinessQuote::with('advisor')->where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
         abort_if(! $record, 404);
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
