@@ -1,15 +1,14 @@
 <script setup>
-import { ref } from 'vue';
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
-    quoteType: {
-        type: String,
-        default: 'pet',
-    },
+  quoteType: {
+    type: String,
+    default: 'pet',
+  },
 });
 
 const { isRequired } = useRules();
@@ -144,8 +143,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
-
 </script>
 
 <template>
@@ -167,21 +164,23 @@ watch(
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-              <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-              </x-tooltip>
-              <x-input
-                  v-model="filters.code"
-                  type="search"
-                  name="code"
-                  class="w-full"
-                  placeholder="Search by Ref-ID"
-              />
-          </div>
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -259,44 +258,47 @@ watch(
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="onReset">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
-      <Transition name="fade">
-          <div v-if="quotesSelected.length > 0 && isManualAllocationAllowed" class="mb-4">
-              <LeadAssignment
-                  :selected="quotesSelected.map(e => e.id)"
-                  :advisors="advisorOptions"
-                  :quoteType="quoteType"
-              />
-          </div>
-      </Transition>
+    <Transition name="fade">
+      <div
+        v-if="quotesSelected.length > 0 && isManualAllocationAllowed"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+        />
+      </div>
+    </Transition>
 
     <DataTable
       v-model:items-selected="quotesSelected"
@@ -347,7 +349,7 @@ watch(
 
       <template #item-breed_of_pet1="{ pet_quote }">
         {{ pet_quote?.breed_of_pet1 }}
-     </template>
+      </template>
 
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
@@ -369,7 +371,7 @@ watch(
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
+          {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
       </template>
     </DataTable>
