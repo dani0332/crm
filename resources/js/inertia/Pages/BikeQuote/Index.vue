@@ -130,6 +130,10 @@ const quotesSelected = ref([]),
   assignmentType = ref(null),
   isDisabled = ref(false);
 
+const onLeadAssigned = () => {
+    quotesSelected.value = [];
+};
+
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'bike');
@@ -319,6 +323,7 @@ watch(
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          @success="onLeadAssigned"
         />
       </div>
     </Transition>
