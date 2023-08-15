@@ -66,7 +66,6 @@ class UserController extends Controller
                                             ,u1.name
                                             ,u1.email
                                             ,u2.roles
-                                            ,teams.name
                                             ,u1.created_at
                                             ,u1.updated_at');
             $filteredData = $users;
