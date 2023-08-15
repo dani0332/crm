@@ -357,7 +357,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/team') }}">Teams</a></li>
                             @endcan
-                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
+                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
                                     @can(PermissionsEnum::TIER_CONFIG_LIST)
