@@ -4,8 +4,6 @@ defineProps({
     customers : Object
 });
 
-const page = usePage();
-
 let availableFilters = {
     search_type : '',
     search_value : '',

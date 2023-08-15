@@ -66,7 +66,7 @@ function onSubmit(){
             <label class="relative x-input inline-block align-bottom text-left mb-3 w-full" style="--x-input-border: #38bdf8;">
                 <p class="font-medium text-gray-800 mb-1">Upload File*</p>
                 <div class="relative">
-                    <input class="appearance-none block w-full placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 dark:border-gray-700 border shadow-sm rounded-md hover:border-gray-400 dark:hover:border-gray-500 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-[color:var(--x-input-border)] w-full"
+                    <input class="appearance-none block w-full placeholder-gray-400 outline-transparent outline outline-2 outline-offset-[-1px] transition-all duration-150 ease-in-out border-gray-300 dark:border-gray-700 border shadow-sm rounded-md hover:border-gray-400 dark:hover:border-gray-500 px-3 py-1.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 focus:outline-[color:var(--x-input-border)]"
                         type="file" @input="uploadCustomer.file_name = $event.target.files[0]">
                 </div>
             </label>

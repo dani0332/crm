@@ -29,28 +29,35 @@ const nationalityOptions = computed(() => {
     }));
 });
 
-function onSubmit(){
-    let method = 'post';
-    let url = `/customer/`;
-    let title = 'Customer saved successfully';
+function onSubmit(isValid){
+    if(isValid) {
+        let method = 'post';
+        let url = `/customer/`;
+        let title = 'Customer saved successfully';
 
-    if (page.props.customer) {
-        method = 'put';
-        url = url + page.props.customer.uuid;
-        title = 'Customer updated successfully';
+        if (page.props.customer) {
+            method = 'put';
+            url = url + page.props.customer.uuid;
+            title = 'Customer updated successfully';
+        }
+
+        customerForm.submit(method, url, {
+            onError: errors => {
+                console.log(customerForm.setError(errors));
+            },
+            onSuccess: () => {
+                notification.success({
+                    title: title,
+                    position: 'top',
+                });
+            },
+        });
+    }else{
+        notification.error({
+            title: "Error while submitting quote. Please try again",
+            position: 'top',
+        });
     }
-
-    customerForm.submit(method, url, {
-        onError: errors => {
-            console.log(customerForm.setError(errors));
-        },
-        onSuccess: () => {
-            notification.success({
-                title: title,
-                position: 'top',
-            });
-        },
-    });
 }
 
 </script>
@@ -73,30 +80,33 @@ function onSubmit(){
             {{ customerForm?.errors?.error }}
         </x-alert>
         <div class="grid sm:grid-cols-2 gap-4">
-            <x-input
-                v-model="customerForm.first_name"
-                type="text"
-                label="First Name*"
-                :rules="[isRequired]"
-                class="w-full"
-                :error="customerForm.errors.first_name"
-            />
-            <x-input
-                v-model="customerForm.last_name"
-                type="text"
-                label="Last Name*"
-                :rules="[isRequired]"
-                class="w-full"
-                :error="customerForm.errors.last_name"
-            />
-            <x-input
-                v-model="customerForm.email"
-                type="email"
-                label="Email*"
-                :rules="[isRequired, isEmail]"
-                class="w-full"
-                :error="customerForm.errors.email"
-            />
+            <x-field label="First Name" required>
+                <x-input
+                    v-model="customerForm.first_name"
+                    :rules="[isRequired]"
+                    class="w-full"
+                    type="text"
+                    :error="customerForm.errors.first_name"
+                />
+            </x-field>
+            <x-field label="Last Name" required>
+                <x-input
+                    v-model="customerForm.last_name"
+                    :rules="[isRequired]"
+                    class="w-full"
+                    type="text"
+                    :error="customerForm.errors.last_name"
+                />
+            </x-field>
+            <x-field label="Email" required>
+                <x-input
+                    v-model="customerForm.email"
+                    :rules="[isRequired, isEmail]"
+                    class="w-full"
+                    type="email"
+                    :error="customerForm.errors.email"
+                />
+            </x-field>
             <x-input
                 v-model="customerForm.mobile_no"
                 type="tel"
