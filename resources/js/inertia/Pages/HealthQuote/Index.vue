@@ -15,7 +15,7 @@ const loader = reactive({
 });
 
 const canExport = ref(false);
-
+const objToUrl = obj => useObjToUrl(obj);
 const quotesSelected = ref([]);
 
 const assignForm = useForm({
@@ -30,7 +30,7 @@ const assignForm = useForm({
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'code' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
@@ -41,7 +41,8 @@ const tableHeader = [
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'STARTING FROM', value: 'price_starting_from' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LEAD TYPE', value: 'lead_type_id_text' },
@@ -151,20 +152,6 @@ function onAssignLead(isValid) {
   }
 }
 
-const objToUrl = obj => {
-  Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
-  );
-  return Object.keys(obj)
-    .map(key => {
-      if (Array.isArray(obj[key])) {
-        return obj[key].map(value => `${key}[]=${value}`).join('&');
-      }
-      return `${key}=${obj[key]}`;
-    })
-    .join('&');
-};
-
 function setQueryStringFilters() {
   for (const [key] of Object.entries(params)) {
     if (key.includes('[]')) {
@@ -175,6 +162,16 @@ function setQueryStringFilters() {
   }
 }
 
+const fixedValue = numberString => {
+  const number = parseFloat(numberString);
+  if (isNaN(number)) {
+    return "Invalid number";
+  } else if (number === Math.floor(number)) {
+    return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
+  } else {
+    return parseFloat(number.toFixed(2)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+};
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -213,14 +210,21 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
+      <div>
+          <x-tooltip position="bottom">
+              <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+                  Ref-ID
+              </label>
+              <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+              v-model="filters.code"
+              type="search"
+              name="code"
+              class="w-full"
+              placeholder="Search by Ref-ID"
+          />
+      </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -313,7 +317,7 @@ onMounted(() => {
             v-if="canExport"
             size="sm"
             color="emerald"
-            :href="`/quotes/health-export?${objToUrl(filters)}`"
+            :href="`/quotes/health-export?${ objToUrl(filters)}`"
             class="justify-self-start"
           >
             Export
@@ -404,6 +408,13 @@ onMounted(() => {
             {{ is_ecommerce ? 'Yes' : 'No' }}
           </x-tag>
         </div>
+      </template>
+      <template #item-price_starting_from="item">
+        <p v-if="item.price_starting_from != null">{{ fixedValue(item.price_starting_from) }}</p>
+      </template>
+
+      <template #item-premium="item">
+        <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
       </template>
     </DataTable>
 

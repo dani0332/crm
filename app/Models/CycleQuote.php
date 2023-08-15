@@ -25,4 +25,9 @@ class CycleQuote extends Model
             ],
         ];
     }
+
+    public function yearOfManufacture()
+    {
+        return $this->belongsTo(YearOfManufacture::class);
+    }
 }

@@ -15,7 +15,7 @@ describe('Car qoutes', () => {
   })
 
   beforeEach(() => {
-    cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+    cy.loginByCookies()
     cy.runRoutes()
   })
 
@@ -44,7 +44,7 @@ describe('Car qoutes', () => {
     carLeadPage.getCurrentInsurance(carLeadData.carLeadData.currentInsurance)
     carLeadPage.getClaimHistory(carLeadData.carLeadData.claimHistory)
     carLeadPage.getCreateButton().click()
-    cy.wait(4000)
+    commonPage.getApiIntercept(`@createLead`, 200)
     cy.url().then(data => {
       leadUrl = `/${data.substring(data.lastIndexOf('quotes/car/'))}`
       quoteId = `${(data.substring(data.lastIndexOf('/'))).replace('/', '')}`
@@ -66,7 +66,7 @@ describe('Car qoutes', () => {
     commonPage.getLastNameField("Abdullah Updated")
     commonPage.getDOB("Feb", "1999", "15")
     commonPage.getNationalityId("Pakistani")
-    carLeadPage.getUaeLicenseHeldFor("10")
+    carLeadPage.getUaeLicenseHeldFor("5 years and above")
     carLeadPage.getBackHomeLicense("3")
     carLeadPage.getCarMakeId("AUDI")
     carLeadPage.getCarModelId("A4")

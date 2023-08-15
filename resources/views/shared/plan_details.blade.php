@@ -89,6 +89,13 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 			var carPlanTypeTpl = JSON.parse(
 				'<?php echo json_encode(CarPlanType::TPL) ?>');
 			var is_manual_update = $('#is_manual_update').is(':checked');
+            let insurer_quote_no = $('#insurer_quote_no').val();
+
+            if(insurer_quote_no.length > 50) {
+                validationDivText('red', '.car-quote-plan-validation-div',
+                    'Maximum allowed length for insurer quote no is 50.');
+                return false;
+            }
 
 			if (repair_type == carPlanTypeComp) { // if non-tpl
 				// Car Value should be within the given min/max range
@@ -200,8 +207,8 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 		});
 
 		// Show total on load
-		totalPremium('.car-quote-plan-total-premium', 
-				'{{ isset($discountPremium) ? $discountPremium : 0 }}', '{{ isset($vat) ? $vat : 0 }}', 
+		totalPremium('.car-quote-plan-total-premium',
+				'{{ isset($discountPremium) ? $discountPremium : 0 }}', '{{ isset($vat) ? $vat : 0 }}',
 				'{{ isset($totalSelectedAddonsPriceWithVat) ? $totalSelectedAddonsPriceWithVat : 0 }}');
 
 		// Conditionally lock fields
@@ -638,9 +645,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
-									@if(! auth()->user()->hasRole(RolesEnum::PA))
-										<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
-									@endif
+                                    @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
+                                        <button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                        <button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+                                    @endif
 								</td>
 							</tr>
 							<tr>
@@ -904,50 +913,55 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td>Provider Name:</td>
 								<td>{{ isset($providerName) ? $providerName : NULL }}</td>
 								<td>Repair Type:</td>
-								<td>{{ isset($repairType) && $repairType == CarPlanType::COMP ? 'NON-AGENCY' : $repairType }}</td>
+								<td>{{ isset($repairType) && $repairType == CarPlanType::COMP ? 'NON-AGENCY' : @$repairType }}</td>
 							</tr>
 							<tr>
 								<td>Insurer Quote No.:</td>
-								<td><input type="text" id="insurer_quote_no" name="insurer_quote_no" value="{{ $insurerQuoteNo }}" data-value="{{ $insurerQuoteNo }}" class="form-control"></td>
+								<td><input type="text" maxlength="50" id="insurer_quote_no" name="insurer_quote_no" value="{{ isset($insurerQuoteNo) ? $insurerQuoteNo : NULL }}" data-value="{{ isset($insurerQuoteNo) ? $insurerQuoteNo : NULL }}" class="form-control"></td>
 								<td>Actual Premium:</td>
-								<td><input type="text" id="actual_premium" name="actual_premium" value="{{ $actualPremium }}" data-value="{{ $actualPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)"></td>
+								<td><input type="text" id="actual_premium" name="actual_premium" value="{{ isset($actualPremium) ? $actualPremium : 0 }}" data-value="{{ isset($actualPremium) ? $actualPremium : 0 }}" class="form-control" onkeypress="return isNumberKey(event,this)"></td>
 							</tr>
 							<tr>
 								<td>Discounted Premium:</td>
 								<td>
-									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ $discountPremium }}" data-value="{{ $discountPremium }}" class="form-control" onkeypress="return isNumberKey(event,this)">
-									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ $vat }}">
+									<input type="text" id="discounted_premium" name="discounted_premium" value="{{ isset($discountPremium) ? $discountPremium : 0 }}" data-value="{{ isset($discountPremium) ? $discountPremium : 0 }}" class="form-control" onkeypress="return isNumberKey(event,this)">
+									<input type="hidden" id="premium_vat" name="premium_vat" value="{{ isset($vat) ? $vat : 0 }}">
 								</td>
 								<td>Car value:</td>
-								<td><input type="text" id="car_value" name="car_value" value="{{ $carValue }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
-									<span id="car-value-range-validation-text" style="font-size: 10px;">Min: AED {{ number_format($carValueLowerLimit) }} -
-										Max: AED {{ number_format($carValueUpperLimit) }}</span>
+								<td><input type="text" id="car_value" name="car_value" value="{{ isset($carValue) ? $carValue : 0 }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+									<span id="car-value-range-validation-text" style="font-size: 10px;">Min: AED {{ isset($carValueLowerLimit) ? number_format($carValueLowerLimit) : 0 }} -
+										Max: AED {{ isset($carValueUpperLimit) ? number_format($carValueUpperLimit) : 0 }}</span>
 								</td>
 							</tr>
 							<tr>
 								<td>Excess:</td>
-								<td><input type="text" id="excess" name="excess" value="{{ $excess }}" data-value="{{ $excess }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
+								<td><input type="text" id="excess" name="excess" value="{{ isset($excess) ? $excess : 0 }}" data-value="{{ isset($excess) ? $excess : 0 }}" class="form-control" style="{{ $readonlyFieldCss }}" onkeypress="return isNumberKey(event,this)">
 								</td>
 								<td>Ancillary Excess:</td>
 								<td><select class="form-control" id='ancillary_excess' name="ancillary_excess">
-										@for ($i = 0; $i <= 20; $i++) <option value="{{$i}}" {{ $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
+										@for ($i = 0; $i <= 20; $i++) <option value="{{$i}}" {{ isset($ancillaryExcess) && $i == $ancillaryExcess ? 'selected="selected"' : '' }}>{{$i}}%</option>
 											@endfor
 									</select>
 								</td>
 							</tr>
 							<tr>
 								<td>Car Trim</td>
-								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
-										@foreach($insurerAvailableTrims as $trim)
-										<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
-											'selected="selected"' : '' }}>{{$trim->description}}</option>
-										@endforeach
-									</select>
+								<td>
+									@if(isset($insurerAvailableTrims))
+										<select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
+											@foreach($insurerAvailableTrims as $trim)
+											<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
+												'selected="selected"' : '' }}>{{$trim->description}}</option>
+											@endforeach
+										</select>
+									@endif
 								</td>
 								<td valign="top"></td>
 								<td align="right">
-									@if(! auth()->user()->hasRole(RolesEnum::PA))
+									@if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
 										<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
 									@endif
 								</td>
 							</tr>
@@ -1013,9 +1027,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 										</tr>
 										<tr>
 											<td colspan="4" align="right">
-												@if(! auth()->user()->hasRole(RolesEnum::PA))
-													<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
-												@endif
+                                                    @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
+                                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                                    @endif
 											</td>
 										</tr>
 										<tr>

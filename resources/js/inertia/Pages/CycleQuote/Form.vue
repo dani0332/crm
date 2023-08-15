@@ -32,18 +32,18 @@ const quoteForm = useForm({
 const { isRequired, isEmail } = useRules();
 
 const isEmptyField = ref(false);
-
+const editMode = computed(() => {
+    return props.quote ? true : false;
+});
 function onSubmit(isValid) {
   if (isValid) {
     let method = 'post';
     let url = `/personal-quotes/cycle/`;
     let title = 'Quote saved successfully';
-    let redirectUrl = '/personal-quotes/cycle';
     if (props.quote) {
       method = 'put';
       url = url + props.quote.uuid;
       title = 'Quote updated successfully';
-      redirectUrl = `/personal-quotes/cycle/${props.quote?.uuid}`;
     }
 
     quoteForm.submit(method, url, {
@@ -53,13 +53,9 @@ function onSubmit(isValid) {
 
       onSuccess: () => {
         notification.success({
-          title: title,
-          position: 'top',
+            title: title,
+            position: 'top',
         });
-
-        setTimeout(function () {
-          router.get(redirectUrl);
-        }, 500);
       },
     });
   }
@@ -108,6 +104,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
+          :disabled="editMode"
           :rules="[isRequired, isEmail]"
           class="w-full"
           :error="quoteForm.errors.email"
@@ -117,6 +114,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
+          :disabled="editMode"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\PersonalQuote;
 use Illuminate\Support\Arr;
@@ -41,7 +42,8 @@ class YachtQuoteRepository extends BaseRepository
             'device' => 'DESKTOP',
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
-            'createdById' => Auth::user()->id,
+            'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         info('YachtQuote create data : '.json_encode($quoteData));
@@ -85,12 +87,17 @@ class YachtQuoteRepository extends BaseRepository
     /**
      * @return mixed
      */
-    public function fetchGetData()
+    public function fetchGetData($forExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::YACHT)->with(['quoteStatus', 'currentlyInsuredWith', 'advisor'])
-            ->filter()
+        $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
+            'quoteStatus',
+            'currentlyInsuredWith',
+            'advisor',
+        ])
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate();
+            ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate();
     }
 }

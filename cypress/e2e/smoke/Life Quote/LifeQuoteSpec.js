@@ -10,7 +10,7 @@ describe('Life qoutes', () => {
     const LifePage = new lifePage()
 
     beforeEach(() => {
-        cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+        cy.loginByCookies()
         cy.runRoutes()
     })
     const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/
@@ -83,7 +83,7 @@ describe('Life qoutes', () => {
         commonPage.getPopUpAssertion(" Activity has been Created")
         //Delete Activity
         commonPage.getDeleteActivityButton()
-        cy.wait(4000)
+        commonPage.getApiIntercept(`@deleteLifeActivity`, 200)
         //Add Additional Contact
         commonPage.getAdditionalContactButton()
         commonPage.getContactType("Mobile Number")

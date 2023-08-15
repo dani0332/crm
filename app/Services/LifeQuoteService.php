@@ -33,8 +33,8 @@ class LifeQuoteService extends BaseService
                 'lqr.id',
                 'lqr.uuid',
                 'lqr.code',
-                DB::raw('DATE_FORMAT(lqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-                DB::raw('DATE_FORMAT(lqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+                DB::raw('DATE_FORMAT(lqr.created_at, "%d-%m-%y %H:%i") as created_at'),
+                DB::raw('DATE_FORMAT(lqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
                 'lqr.first_name',
                 'lqr.last_name',
                 'lqr.email',
@@ -200,8 +200,8 @@ class LifeQuoteService extends BaseService
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
             $this->query->whereBetween(DB::raw('DATE(lqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
         }
-        if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
-            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
+        if (! empty($request->created_at) && ! empty($request->created_at_end)) {
+            $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
             $this->query->whereBetween(DB::raw('DATE(lqr.created_at)'), [$dateFrom, $dateTo]);
         }
@@ -482,7 +482,7 @@ class LifeQuoteService extends BaseService
         $title = '';
         switch ($propertyName) {
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'purpose_of_insurance_id':
                 $title = 'Purpose of Insurance';
@@ -545,10 +545,10 @@ class LifeQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             default:
                 break;

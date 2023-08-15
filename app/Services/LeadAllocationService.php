@@ -11,7 +11,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
-use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
@@ -86,6 +85,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
+
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -112,6 +112,7 @@ class LeadAllocationService extends BaseService
             if (isset($isAvailable)) {
                 $leadAllocation->is_available = $isAvailable;
             }
+
             $leadAllocation->save();
             DB::commit();
         } catch (\Exception $e) {
@@ -155,10 +156,9 @@ class LeadAllocationService extends BaseService
                     $lead->quote_status_id = QuoteStatusEnum::Qualified;
                 }
 
-                if (str_contains(strtolower($lead->code), strtolower(quoteTypeCode::Car))) {
+                if (str_starts_with($lead->code, 'CAR-')) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
-
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
@@ -475,17 +475,6 @@ class LeadAllocationService extends BaseService
             foreach ($carUnAllocatedLead as $carLead) {
                 info('----------------------- CAR LEAD ALLOCATION STARTED FOR LEAD '.$carLead->uuid.' -----------------------');
 
-                if ($this->checkIfLeadIsRenewal($carLead)) {
-                    info('Renewal found against quote Id : '.$carLead->uuid.' skipping it now');
-
-                    // if (! $carLead->is_renewal_tier_email_sent) {
-                    //     info('About to send Renewal Tier R email for quote Id : '.$carLead->uuid);
-
-                    //     CarRenewalEmailJob::dispatch($carLead);
-                    // }
-
-                    continue; // since we found renewal against current lead we will skip advisor assignment
-                }
                 info('trying to check tier against the current lead : '.$carLead->code);
 
                 // we will find tier as per the value of the lead and if already assigned then we will simply find the tier,

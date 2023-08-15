@@ -205,6 +205,11 @@
         <div class="col-md-12 col-sm-12">
             <div class="x_panel">
                 <div class="x_title">
+
+                    @if($model->modelType == quoteTypeCode::Car && \Illuminate\Support\Facades\Auth::user()->hasRole(RolesEnum::CarManager))
+                        <div class="alert alert-info"> Only Renewal Batch # field will be updated </div>
+                    @endif
+
                     <h2>{{'Edit '.(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType))}}</h2>
                     <ul class="nav navbar-right panel_toolbox">
                         <li><a href="{{ url('quotes/'.strtolower($model->modelType)) }}" class="btn btn-warning btn-sm">{{(str_contains(strtolower($model->modelType), 'team') ? 'Team' : (str_contains(strtolower($model->modelType), 'leadstatus') ? 'Lead Status' : $model->modelType)).' List'}}</a></li>
@@ -267,7 +272,7 @@
                                                 @if(explode("|", $value)[1] == "date") readonly="readonly" @endif
                                                 @if(explode("|", $value)[1] != 'date') type={{ explode("|", $value)[1] }} @endif
                                                 id={{$property}} name={{$property}}
-                                                @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || $property == DatabaseColumnsString::CAR_VALUE_TIER) style="background-color: #e9ecef !important;" disabled="disabled" @endif
+                                                @if($property == DatabaseColumnsString::EMAIL || $property == DatabaseColumnsString::MOBILE || ($property == DatabaseColumnsString::CAR_VALUE_TIER && !Auth::user()->hasRole(RolesEnum::LeadPool))) style="background-color: #e9ecef !important;" disabled="disabled" @endif
                                                 value="{{ old($property, $record->$property) }}" class="form-control"
                                                 value="{{ old($property, $record->$property) }}" class="form-control"
                                                 @if(strpos($value, 'max') !== false) maxlength="{{explode(":", $value)[1]}}" @endif

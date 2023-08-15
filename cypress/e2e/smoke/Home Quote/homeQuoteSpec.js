@@ -10,7 +10,7 @@ describe('Home qoutes', () => {
     const HomePage = new homePage()
 
     beforeEach(() => {
-        cy.loginByCookies(Cypress.env('imcrm_session'), Cypress.env('XSRF-TOKEN'))
+        cy.loginByCookies()
         cy.runRoutes()
     })
     const resizeObserverLoopErrRe = /^[^(ResizeObserver loop limit exceeded)]/
@@ -82,7 +82,7 @@ describe('Home qoutes', () => {
 
         //Delete Activity
         commonPage.getDeleteActivityButton()
-        cy.wait(3000)
+        commonPage.getApiIntercept(`@deleteHomeActivity`, 200)
 
         //Add Additional Contact
         commonPage.getAdditionalContactButton()

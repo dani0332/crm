@@ -9,51 +9,54 @@ const props = defineProps({
     default: () => [],
   },
   quoteType: {
-    type : String
-  }
+    type: String,
+  },
 });
 
 const emit = defineEmits(['success', 'error']);
 
-
 if (!String.prototype.hasOwnProperty('capitalizeFirstChar')) {
   Object.defineProperty(String.prototype, 'capitalizeFirstChar', {
-    get: function() {
-      return function() {
+    get: function () {
+      return function () {
         return this.charAt(0).toUpperCase() + this.slice(1);
       };
     },
-    enumerable: false
+    enumerable: false,
   });
 }
 
 const { isRequired } = useRules();
 
 const assignForm = useForm({
-  assigned_to_id_new: null,
+  assigned_advisor_id: null,
+  assigned_lead_id: '',
   manual_assignment_email_flag: '1',
   modelType: props.quoteType,
-  selectTmLeadId: '',
 });
 
 function onAssignLead(isValid) {
+  const postUrl =
+    props.quoteType.toLowerCase() == 'car'
+      ? `/quotes/car/manualLeadAssign`
+      : `/quotes/${props.quoteType}/leadAssign`;
   if (isValid) {
     assignForm
       .transform(data => ({
         ...data,
         selectTmLeadId: `${props.selected}`,
+        assigned_lead_id: `${props.selected}`,
+        assigned_to_id_new: assignForm.assigned_advisor_id,
         assignment_type: assignForm.manual_assignment_email_flag,
       }))
-      .post(`/quotes/${props.quoteType}/manualLeadAssign`, {
+      .post(postUrl, {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
-            assignForm.processing = false;
-            emit('success');
+          emit('success');
         },
         onError: () => {
-            assignForm.processing = false;
-            emit('error');
+          emit('error');
         },
       });
   }
@@ -68,7 +71,7 @@ function onAssignLead(isValid) {
       <x-form @submit="onAssignLead" :auto-focus="false">
         <div class="w-full flex flex-col md:flex-row gap-4">
           <ComboBox
-            v-model="assignForm.assigned_to_id_new"
+            v-model="assignForm.assigned_advisor_id"
             label="Assign Advisor"
             :options="props.advisors"
             placeholder="Select Advisor"
@@ -98,6 +101,18 @@ function onAssignLead(isValid) {
           </div>
         </div>
       </x-form>
+      <x-alert
+        v-if="Object.keys($page.props.errors).length > 0"
+        color="error"
+        outlined
+        light
+      >
+        <ul class="list-disc list-inside">
+          <li v-for="error in $page.props.errors" :key="error">
+            {{ error }}
+          </li>
+        </ul>
+      </x-alert>
     </div>
   </section>
 </template>

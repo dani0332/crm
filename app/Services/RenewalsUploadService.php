@@ -50,7 +50,6 @@ use DateTime;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class RenewalsUploadService
@@ -361,12 +360,12 @@ class RenewalsUploadService
 
             $query->chunkById(50, function ($leads) use ($renewalStatusProcess, &$jobs, $logPrefix, &$totalSkipped) {
                 foreach ($leads as $lead) {
-                    if ($lead->renewalUploadLead->skip_plans) {
+                    if (! $lead->renewalUploadLead->skip_plans) {
+                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
+                    } else {
                         info($logPrefix.' skipping fetch plans for uuid : '.$lead->carQuote->uuid);
                         $lead->update(['status' => RenewalProcessStatuses::PLANS_FETCHED, 'fetch_plans_status' => FetchPlansStatuses::FETCHED]);
                         $totalSkipped++;
-                    } else {
-                        $jobs[] = new FetchPlansForRenewalsQuoteJob($lead, $renewalStatusProcess);
                     }
                 }
             });
@@ -1253,6 +1252,20 @@ class RenewalsUploadService
                 'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
             ];
 
+            if ($quotePlansCount > 0) {
+                $pdfData = [
+                    'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
+                    'quote_uuid' => $carQuote->uuid,
+                ];
+
+                $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+                if (isset($pdf['error'])) {
+                    info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+                } else {
+                    $emailData->pdfAttachment = (object) $pdf;
+                }
+            }
+
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if ($responseCode == 201) {
@@ -1410,9 +1423,8 @@ class RenewalsUploadService
                             if ($leadData->claim_history && ! ClaimHistory::where('text', $leadData->claim_history)->first()) {
                                 $leadValidationErrors->push('Invalid Claim History');
                             }
-                            if (! $leadData->driving_experience) {
-                                $leadValidationErrors->push('Driving Experience is required');
-                            } elseif (! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
+
+                            if (! empty($leadData->driving_experience) && ! UAELicenseHeldFor::where('text', $leadData->driving_experience)->first()) {
                                 $leadValidationErrors->push('Invalid Driving Experience');
                             }
 
@@ -1516,9 +1528,7 @@ class RenewalsUploadService
                                     }
                                 }
                             }
-                            if (! $leadData->registration_location) {
-                                $leadValidationErrors->push('Registration Location is required');
-                            } elseif (! Emirate::where('text', $leadData->registration_location)->first()) {
+                            if (! empty($leadData->registration_location) && ! Emirate::where('text', $leadData->registration_location)->first()) {
                                 $leadValidationErrors->push('Invalid Registration Location');
                             }
                             if ($leadData->previous_advisor && ! User::where('email', $leadData->previous_advisor)->first()) {

@@ -14,7 +14,12 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call([
+            RenewalsPermissionSeeder::class,
             addCarQuoteSearchPermission::class,
+            QuoteStatusTableSeeder::class,
+            UtmLeadsSalesReportSeeder::class,
+            AddPersonalLobsProducts::class,
+            // PetBikeMigrationSeeder::class
         ]);
     }
 }

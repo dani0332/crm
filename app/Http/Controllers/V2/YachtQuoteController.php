@@ -56,7 +56,7 @@ class YachtQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return back()->with('message', 'Yacht quote created successfully');
+        return redirect('personal-quotes/yacht/'.$response->quoteUID)->with('message', 'Quote created successfully');
     }
 
     /**
@@ -121,6 +121,6 @@ class YachtQuoteController extends Controller
     {
         YachtQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote updated successfully');
+        return redirect('personal-quotes/yacht/'.$uuid)->with('message', 'Quote updated successfully');
     }
 }

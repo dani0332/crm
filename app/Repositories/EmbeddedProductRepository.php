@@ -3,7 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\EmbeddedProduct;
-use Illuminate\Support\Arr;
+use App\Models\GenericDocument;
 use Illuminate\Support\Facades\DB;
 
 class EmbeddedProductRepository extends BaseRepository
@@ -14,7 +14,7 @@ class EmbeddedProductRepository extends BaseRepository
     }
 
     /**
-     * get all dropdown options required for form
+     * get all dropdown options required for form.
      *
      * @return array
      */
@@ -35,7 +35,7 @@ class EmbeddedProductRepository extends BaseRepository
         return DB::transaction(function () use ($data) {
             $product = $this->create($data);
 
-            $product->placements()->createMany($data['positions']);
+            $product->placements()->createMany($data['placements']);
             $product->prices()->createMany($data['pricings']);
 
             return $product;
@@ -50,14 +50,25 @@ class EmbeddedProductRepository extends BaseRepository
         return DB::transaction(function () use ($id, $data) {
             $product = $this->where('id', $id)->firstOrFail();
 
-            $productData = Arr::only($data, ['insurance_provider_id', 'product_name', 'short_code', 'display_name', 'product_type',  'description',  'description2',  'commission_type',  'commission_value',  'email_template_id',  'company_documents', 'pricing_type', 'removel_confirmation', 'logic']);
-
-            $product->update($productData);
+            $product->update($data);
             $product->placements()->delete();
-            $product->placements()->createMany($data['positions']);
+            $product->placements()->createMany($data['placements']);
 
-            $product->prices()->delete();
-            $product->prices()->createMany($data['pricings']);
+            $prices = $product->prices()->get();
+
+            foreach ($prices as $price) {
+                if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
+                    $price->delete();
+                }
+            }
+
+            foreach ($data['pricings'] as $price) {
+                if (isset($price['id'])) {
+                    $product->prices()->where('id', $price['id'])->update($price);
+                } else {
+                    $product->prices()->create($price);
+                }
+            }
 
             return $product;
         });
@@ -77,5 +88,40 @@ class EmbeddedProductRepository extends BaseRepository
     public function fetchGetData()
     {
         return $this->with(['insuranceProvider'])->orderBy('created_at', 'desc')->simplePaginate();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function fetchUploadDocument($file, $title)
+    {
+        $type = 'embedded_product';
+        $originalName = $file->getClientOriginalName();
+        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $fileMimeType = $file->getClientMimeType();
+
+        $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
+        $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
+
+        //generate unique uuid
+        $docUuid = uniqid();
+        while (GenericDocument::where('uuid', $docUuid)->first()) {
+            $docUuid = uniqid().rand(1, 100);
+        }
+
+        GenericDocument::create([
+            'uuid' => $docUuid,
+            'name' => $originalName,
+            'path' => $filePathAzure,
+            'mime_type' => $fileMimeType,
+            'title' => $title,
+            'documentable_type' => 'App\Models\EmbeddedProduct',
+            'created_by_id' => auth()->id(),
+        ]);
+
+        return [
+            'path' => $filePathAzure,
+            'title' => $title,
+        ];
     }
 }
