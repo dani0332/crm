@@ -14,19 +14,19 @@ class AddTravelFormOptimizationColumnsToTravelQouteRequestTable extends Migratio
     public function up()
     {
         Schema::table('travel_quote_request', function (Blueprint $table) {
-            if (!Schema::hasColumn('travel_quote_request', 'travelling_where')) {
-                $table->string('travelling_where', 20)->nullable();
-                $table->foreign('travelling_where')->references('code')->on('lookups');
+            if (!Schema::hasColumn('travel_quote_request', 'direction_code')) {
+                $table->string('direction_code', 20)->nullable();
+                $table->foreign('direction_code')->references('code')->on('lookups');
             }
-            if (!Schema::hasColumn('travel_quote_request', 'travel_coverage')) {
-                $table->string('travel_coverage', 20)->nullable();
-                $table->foreign('travel_coverage')->references('code')->on('lookups');
+            if (!Schema::hasColumn('travel_quote_request', 'coverage_code')) {
+                $table->string('coverage_code', 20)->nullable();
+                $table->foreign('coverage_code')->references('code')->on('lookups');
             }
-            if (!Schema::hasColumn('travel_quote_request', 'travel_start_date')) {
-                $table->date('travel_start_date')->nullable(); 
+            if (!Schema::hasColumn('travel_quote_request', 'start_date')) {
+                $table->date('start_date')->nullable(); 
             }
-            if (!Schema::hasColumn('travel_quote_request', 'travel_end_date')) {
-                $table->date('travel_end_date')->nullable(); 
+            if (!Schema::hasColumn('travel_quote_request', 'end_date')) {
+                $table->date('end_date')->nullable(); 
             }
             if (!Schema::hasColumn('travel_quote_request', 'has_arrived_uae')) {
                 $table->boolean('has_arrived_uae')->nullable();
