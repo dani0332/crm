@@ -15,8 +15,8 @@ class QuoteInsuranceProvider extends Migration
     {
         Schema::dropIfExists('insurer_quote_type_mapping');
 
-        if (! Schema::hasTable('quote_insurance_provider')) {
-            Schema::create('quote_insurance_provider', function (Blueprint $table) {
+        if (! Schema::hasTable('insurance_provider_quote_type')) {
+            Schema::create('insurance_provider_quote_type', function (Blueprint $table) {
                 $table->integer('quote_type_id');
                 $table->integer('insurance_provider_id');
             });

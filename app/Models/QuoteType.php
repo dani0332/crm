@@ -32,6 +32,6 @@ class QuoteType extends Model
 
     public function insurerProviders()
     {
-        return $this->belongsToMany(InsuranceProvider::class, 'quote_insurance_provider');
+        return $this->belongsToMany(InsuranceProvider::class, 'insurance_provider_quote_type');
     }
 }

@@ -18,7 +18,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
     public function run()
     {
 
-        if (Schema::hasTable('quote_insurance_provider')) {
+        if (Schema::hasTable('insurance_provider_quote_type')) {
 
             InsuranceProvider::updateOrCreate(['code' => 'OUNB'], ['text' => 'Orient UNB', 'text_lms' => 'Orient UNB']);
             InsuranceProvider::updateOrCreate(['code' => 'ASCANA'], ['text' => 'ASCANA Takaful', 'text_lms' => 'ASCANA Takaful']);
@@ -282,9 +282,9 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
     protected function insertMappingRecords($quoteTypeId, $insuranceProviderId)
     {
-        $getMappedValue = \DB::table('quote_insurance_provider')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId])->count();
+        $getMappedValue = \DB::table('insurance_provider_quote_type')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId])->count();
         if (! $getMappedValue) {
-            \DB::table('quote_insurance_provider')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId]);
+            \DB::table('insurance_provider_quote_type')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId]);
         }
     }
 }

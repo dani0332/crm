@@ -64,6 +64,6 @@ class InsuranceProvider extends BaseModel implements AuditableContract
 
     public function quoteTypes()
     {
-        return $this->belongsToMany(QuoteType::class, 'quote_insurance_provider');
+        return $this->belongsToMany(QuoteType::class, 'insurance_provider_quote_type');
     }
 }
