@@ -24,7 +24,7 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
             QuoteTypes::YACHT->value,
             QuoteTypes::JETSKI->value,
             QuoteTypes::LIFE->value,
-            QuoteTypes::PET->value
+            QuoteTypes::PET->value,
         ];
 
         $permissions = ['-quotes-list', '-quotes-show', '-quotes-create', '-quotes-edit'];
