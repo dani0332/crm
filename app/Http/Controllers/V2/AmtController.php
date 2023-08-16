@@ -233,7 +233,10 @@ class AmtController extends Controller
         $record = BusinessQuote::with(
             'advisor',
             'businessQuoteRequestDetail.lostReason'
-        )->where([['uuid', $id],  ['business_type_of_insurance_id', 5]])->first();
+        )->where([
+            'uuid' =>  $id,
+            'business_type_of_insurance_id' => 5
+        ])->first();
         abort_if(! $record, 404);
 
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
