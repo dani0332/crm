@@ -2,9 +2,6 @@
 
 namespace App\Console;
 
-use App\Jobs\CarLeadAllocationJob;
-use App\Jobs\HealthLeadAllocationJob;
-use App\Jobs\TierAssignmentJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
