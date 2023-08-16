@@ -153,7 +153,7 @@ class PersonalQuote extends Model implements AuditableContract
      */
     public function getPreviousPolicyExpiryDateAttribute($date)
     {
-        return $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT'));
+        return ($date) ? $this->asDateTime($date)->timezone(config('app.timezone'))->format(Config::get('constants.DATE_FORMAT')) : null;
     }
 
     /**
