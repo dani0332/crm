@@ -31,6 +31,7 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  ept: Array,
 });
 
 const page = usePage();
@@ -973,22 +974,26 @@ onMounted(() => {
             v-for="field in travelFields"
             :key="field"
           >
-              <dt v-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </dt>
-              <dt v-else-if="field.title == 'Parent Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </dt>
+            <dt v-if="field.title == 'Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </dt>
+            <dt v-else-if="field.title == 'Parent Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </dt>
             <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
@@ -1140,6 +1145,7 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="travelers.length < 15"
         show-index
       >
         <template #item-name="item"> Traveler {{ item.index }} </template>
@@ -1154,7 +1160,7 @@ onMounted(() => {
         </template>
 
         <template #item-action="item">
-          <div class="flex gap-2 pr-2">
+          <div class="flex gap-2 justify-center">
             <x-button
               size="xs"
               color="primary"
@@ -1184,7 +1190,6 @@ onMounted(() => {
         backdrop
       >
         <template #header>
-          <i class="fa fa-user"></i>
           {{ travelerForm.id ? 'Edit: ' + travelerName : 'New Member' }}
         </template>
         <x-form @submit="submitTraveler" :auto-focus="false">
@@ -1337,6 +1342,7 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="emailStatuses.length < 15"
       >
         <template #item-email_status="item">
           <span class="text-primary-600">{{
@@ -1485,6 +1491,7 @@ onMounted(() => {
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
+          :hide-footer="listQuotePlans.length < 15"
         >
           <template #item-providerName="item">
             <span class="text-primary-600">{{
@@ -1519,6 +1526,8 @@ onMounted(() => {
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <EmbeddedProducts :data="ept" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

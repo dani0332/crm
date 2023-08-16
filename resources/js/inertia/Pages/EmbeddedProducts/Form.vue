@@ -321,7 +321,7 @@ const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
                   v-model="form.company_documents[index].path"
                   upload-route="embedded-products.upload-document"
                   accept=".pdf"
-                  title="product_wordings"
+                  :title="`product_wordings`"
                 />
               </template>
               <template v-else>

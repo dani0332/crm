@@ -115,6 +115,8 @@ class TravelController extends Controller
             unset($fields['id']);
         }
 
+        $embeddedProducts = $this->travelQuoteService->getEPtransactions($record->id);
+
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'fieldsToDisplay' => $fields,
@@ -139,6 +141,7 @@ class TravelController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            'ept' => $embeddedProducts,
             'message' => session('message'),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),

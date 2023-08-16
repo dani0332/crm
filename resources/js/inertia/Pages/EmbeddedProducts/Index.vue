@@ -3,13 +3,10 @@ defineProps({
   embeddedProducts: Object,
 });
 
-const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
 });
-
-onMounted(() => {});
 
 const tableHeader = [
   { text: 'ID', value: 'id' },
@@ -19,12 +16,9 @@ const tableHeader = [
   { text: 'Shortcode', value: 'short_code' },
   { text: 'Display name', value: 'display_name' },
   { text: 'Product Type', value: 'product_type' },
-  { text: 'Active', value: 'is_active' },
+  { text: 'Status', value: 'is_active' },
   { text: 'Actions', value: 'actions' },
 ];
-
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
 </script>
 
 <template>
@@ -65,30 +59,16 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #item-is_active="{ is_active }">
         <div class="text-center">
           <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-            {{ is_active ? 'Yes' : 'No' }}
+            {{ is_active ? 'Active' : 'Inactive' }}
           </x-tag>
         </div>
       </template>
 
       <template #item-actions="{ id }">
         <div class="flex gap-1.5 justify-end">
-          <!-- <Link :href="route('embedded-products.show', id)">
-            <x-button tag="div" size="xs" outlined> View </x-button>
-          </Link> -->
           <Link :href="route('embedded-products.edit', id)">
             <x-button color="primary" size="xs" outlined> Edit </x-button>
           </Link>
-          <!-- <x-button
-                            color="red"
-                            size="xs"
-                            outlined
-                            @click.prevent="
-                                deleteAction.id = id;
-                                showDeleteModal = true;
-                            "
-                        >
-                            Delete
-                        </x-button> -->
         </div>
       </template>
     </DataTable>

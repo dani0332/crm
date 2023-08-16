@@ -111,10 +111,9 @@ class EmbeddedProductRepository extends BaseRepository
 
         GenericDocument::create([
             'uuid' => $docUuid,
-            'name' => $originalName,
+            'name' => $title.'_'.$originalName,
             'path' => $filePathAzure,
             'mime_type' => $fileMimeType,
-            'title' => $title,
             'documentable_type' => 'App\Models\EmbeddedProduct',
             'created_by_id' => auth()->id(),
         ]);
