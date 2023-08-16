@@ -29,8 +29,8 @@ class TravelQuoteService extends BaseService
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
-            DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-            DB::raw('DATE_FORMAT(tqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(tqr.created_at, "%d-%m-%y %H:%i") as created_at'),
+            DB::raw('DATE_FORMAT(tqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
             'tqr.code',
             'tqr.days_cover_for',
             'tqr.details',
