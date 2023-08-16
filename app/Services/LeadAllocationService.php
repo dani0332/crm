@@ -867,4 +867,18 @@ class LeadAllocationService extends BaseService
             Mail::send(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
         }
     }
+
+    public function shouldHealthAllocationProceed()
+    {
+        $masterSwitchConfigValue = (int) config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
+        if ($masterSwitchConfigValue == 0) {
+            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(false));
+
+            return false;
+        } else {
+            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(true));
+
+            return true;
+        }
+    }
 }
