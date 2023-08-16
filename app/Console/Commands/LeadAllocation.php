@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\LeadAllocation as LeadAllocationModel;
 use App\Services\LeadAllocationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -73,7 +74,9 @@ class LeadAllocation extends Command
                 $unAllocatedLeads = $leadAllocationService->getHealthUnallocatedLeads();
 
                 foreach ($unAllocatedLeads as $unAllocatedLead) {
-                    $leadAllocationService->assignHealthTeamBasedOnStartingPrice($unAllocatedLead);
+                    if (! $unAllocatedLead->health_team_type) {
+                        $leadAllocationService->assignHealthTeamBasedOnStartingPrice($unAllocatedLead);
+                    }
                 }
 
                 if (count($unAllocatedLeads) > 0) {
@@ -102,7 +105,7 @@ class LeadAllocation extends Command
                                 info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR LEAD '.$lead->uuid.' -----------------------');
                             }
                             foreach ($filteredUsersByHealthTeam as $user) {
-                                LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
+                                LeadAllocationModel::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
                             }
                         } else {
                             info($healthTeam.' Leads count is '.count($filteredLeadsByHealthTeam).' and available users count is '.count($filteredUsersByHealthTeam));
