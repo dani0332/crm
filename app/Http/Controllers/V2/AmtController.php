@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -235,7 +236,7 @@ class AmtController extends Controller
             'businessQuoteRequestDetail.lostReason'
         )->where([
             'uuid' =>  $id,
-            'business_type_of_insurance_id' => 5
+            'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical)
         ])->first();
         abort_if(! $record, 404);
 
