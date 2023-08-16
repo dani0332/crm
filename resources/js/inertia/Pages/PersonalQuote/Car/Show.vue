@@ -60,6 +60,16 @@ const leadStatusForm = useForm({
   lostReason: page.props.record.lost_reason_id || null,
 });
 
+
+const bookingDetailForm = useForm({
+  requestType: 'Car',
+  
+});
+
+
+
+
+
 const paymentDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -327,7 +337,7 @@ const policyDetailsForm = useForm({
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
+				<h3 class="font-semibold text-primary-800 text-lg">Car Details </h3>
 				<div>
 					<x-button class="mr-2" size="sm" color="#ff5e00" @click.prevent="openDuplicate">
 						Duplicate Lead
@@ -905,6 +915,110 @@ const policyDetailsForm = useForm({
 				</template>
 			</DataTable>
 		</div> 
+
+
+
+
+		<div class="p-4 rounded shadow mb-6 bg-white">
+			<div>
+				<h3 class="font-semibold text-primary-800 text-lg">Booking Details</h3>
+				<x-divider class="mb-4 mt-1" />
+			</div>
+
+
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+				<div class="w-full md:w-2/2">
+					<x-textarea
+						v-model="bookingDetailForm.requestType"
+						type="text"
+						label="Request Type"
+						placeholder="Request Type"
+						class="w-full"						
+					/>
+				</div>
+				<div class="w-full md:w-2/2">
+					<x-textarea
+						v-model="bookingDetailForm.bookingDate"
+						type="text"
+						label="Booking Date"
+						placeholder="Booking Date"
+						class="w-full"						
+					/>
+				</div>
+			</div>
+
+
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+				<div class="w-full md:w-2/2">
+					<x-textarea
+						v-model="bookingDetailForm.requestType"
+						type="text"
+						label="Request Type"
+						placeholder="Request Type"
+						class="w-full"						
+					/>
+				</div>
+				<div class="w-full md:w-2/2">
+					<x-textarea
+						v-model="bookingDetailForm.bookingDate"
+						type="text"
+						label="Booking Date"
+						placeholder="Booking Date"
+						class="w-full"						
+					/>
+				</div>
+			</div>
+
+
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+				<div class="w-full md:w-2/2">
+					<x-textarea
+						v-model="leadStatusForm.notes"
+						type="text"
+						label="Notes"
+						placeholder="Lead Notes"
+						class="w-full"
+						:disabled="record.quote_status_id == 15"
+					/>
+				</div>
+				
+				<div class="w-full md:w-2/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="leadStatusForm.leadStatus"
+							label="Status"
+							:options="leadStatusOptions"
+							:disabled="record.quote_status_id == 15"
+							placeholder="Lead Status"
+							class="w-full"
+						/>
+					</div>
+
+					<div class="flex justify-end">
+						<x-button
+							class="mt-4"
+							color="orange"
+							size="sm"
+							:loading="leadStatusForm.processing"
+							@click.prevent="onLeadStatus"
+						>
+							Send Policy
+						</x-button>
+					</div>
+				</div>
+			</div>
+    	</div>
+
+
+
+
+
+
+
+
+
+
+
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
