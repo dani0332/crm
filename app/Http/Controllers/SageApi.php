@@ -110,6 +110,9 @@ class SageApi extends Controller
     }
     public function processSagePost(SageRequest $request)
     {
+      //  return back()->with('message', 'Activity created successfully'); 
+        echo "here"; die();
+        
         $endPoint = "AR/ARInvoiceBatches";
         $payLoad  = "";
         $jsonResponse = $this->sageApiService->postToSage300($endPoint,$payLoad);

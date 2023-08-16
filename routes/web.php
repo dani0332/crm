@@ -98,11 +98,15 @@ Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTie
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
+
+
+
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('leadsearch', function () {
         return redirect('home');
     });
-
+    Route::get('verify-sage', [SageApi::class, 'index']);
+    Route::post('/post-sage-data', [SageApi::class, 'processSagePost']);
     Route::get('home', function () {
         return inertia('Home/Home');
     });
@@ -175,8 +179,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'destroy' => 'leadassignment.destroy',
     ]);
 
-    Route::get('verify-sage', [SageApi::class, 'index']);
-    Route::post('post-sage-data', [SageApi::class, 'processSagePost']);
+   
 
     Route::post('activities/v2', [ActivityController::class, 'store']);
     Route::patch('activities/v2/{id}', [ActivityController::class, 'update']);

@@ -47,6 +47,7 @@ const rolesEnum = page.props.rolesEnum;
 
 const is = role => useHasRole(role);
 const can = permission => useCan(permission);
+const notification = useNotifications('toast');
 
 const leadStatusForm = useForm({
   modelType: 'Car',
@@ -67,7 +68,31 @@ const bookingDetailForm = useForm({
 });
 
 
-
+const onSubmitBookingDetails = isValid => {
+  if (!isValid) return;
+  let url = `/post-sage-data`;
+  let method = `post`;
+  
+  bookingDetailForm.submit(method, url, {
+    preserveScroll: true,
+    onSuccess: () => {
+      //activityForm.reset();
+      notification.success({
+        title: 'Booking detail submitted',
+        position: 'top',
+      });
+    }, onError: (errors) => {
+      //console.error('Form submission error:', errors);
+      notification.error({
+        title: 'Booking detail error',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      //modals.activity = false;
+    },
+  });
+};
 
 
 const paymentDetailsTable = reactive({
@@ -916,97 +941,190 @@ const policyDetailsForm = useForm({
 			</DataTable>
 		</div> 
 
-
-
-
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
 				<h3 class="font-semibold text-primary-800 text-lg">Booking Details</h3>
 				<x-divider class="mb-4 mt-1" />
 			</div>
-
-
-			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-				<div class="w-full md:w-2/2">
-					<x-textarea
-						v-model="bookingDetailForm.requestType"
-						type="text"
-						label="Request Type"
-						placeholder="Request Type"
-						class="w-full"						
-					/>
-				</div>
-				<div class="w-full md:w-2/2">
-					<x-textarea
-						v-model="bookingDetailForm.bookingDate"
-						type="text"
-						label="Booking Date"
-						placeholder="Booking Date"
-						class="w-full"						
-					/>
-				</div>
-			</div>
-
-
-			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-				<div class="w-full md:w-2/2">
-					<x-textarea
-						v-model="bookingDetailForm.requestType"
-						type="text"
-						label="Request Type"
-						placeholder="Request Type"
-						class="w-full"						
-					/>
-				</div>
-				<div class="w-full md:w-2/2">
-					<x-textarea
-						v-model="bookingDetailForm.bookingDate"
-						type="text"
-						label="Booking Date"
-						placeholder="Booking Date"
-						class="w-full"						
-					/>
-				</div>
-			</div>
-
-
-			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-				<div class="w-full md:w-2/2">
-					<x-textarea
-						v-model="leadStatusForm.notes"
-						type="text"
-						label="Notes"
-						placeholder="Lead Notes"
-						class="w-full"
-						:disabled="record.quote_status_id == 15"
-					/>
-				</div>
-				
-				<div class="w-full md:w-2/2">
-					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="leadStatusForm.leadStatus"
-							label="Status"
-							:options="leadStatusOptions"
-							:disabled="record.quote_status_id == 15"
-							placeholder="Lead Status"
-							class="w-full"
+			<x-form @submit="onSubmitBookingDetails" :auto-focus="false">
+			
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.requestType"
+							type="text"
+							label="Request Type"
+							placeholder="Request Type"
+							class="w-full"						
 						/>
 					</div>
-
-					<div class="flex justify-end">
-						<x-button
-							class="mt-4"
-							color="orange"
-							size="sm"
-							:loading="leadStatusForm.processing"
-							@click.prevent="onLeadStatus"
-						>
-							Send Policy
-						</x-button>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.bookingDate"
+							type="text"
+							label="Booking Date"
+							placeholder="Booking Date"
+							class="w-full"						
+						/>
 					</div>
 				</div>
-			</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.invoiceDescription"
+							type="text"
+							label="Invoice Description"
+							placeholder="Invoice Description"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.mainClassInsurance"
+							type="text"
+							label="Main Class of Insurance"
+							placeholder="Main Class of Insurance"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.invoicePaymentStatus"
+							type="text"
+							label="Invoice Payment Status"
+							placeholder="Invoice Payment Status"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.subClass"
+							type="text"
+							label="Sub Class"
+							placeholder="Sub Class"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.insurerInvoiceDate"
+							type="text"
+							label="Insurer Invoice Date"
+							placeholder="Insurer Invoice Date"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.brokerInvoiceNumber"
+							type="text"
+							label="Broker Invoice Number"
+							placeholder="Broker Invoice Number"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.insurerPremiumTaxInvoiceNumber"
+							type="text"
+							label="Insurer Premium Tax Invoice Number"
+							placeholder="Insurer Premium Tax Invoice Number"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.discount"
+							type="text"
+							label="Discount"
+							placeholder="Discount"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.insurerCommissionTaxInvoiceNumber"
+							type="text"
+							label="Insurer Commission Tax Invoice Number"
+							placeholder="Insurer Commission Tax Invoice Number"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.commissionPercentage"
+							type="text"
+							label="Commission(%)"
+							placeholder="Commission(%)"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.commission"
+							type="text"
+							label="Commission (VAT not applicable)"
+							placeholder="Commission (VAT not applicable)"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.vatOnCommission"
+							type="text"
+							label="VAT on Commission"
+							placeholder="VAT on Commission"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.commissionhVatApplicable"
+							type="text"
+							label="Commission (VAT applicable)"
+							placeholder="Commission (VAT applicable)"
+							class="w-full"						
+						/>
+					</div>
+					<div class="w-full md:w-2/2">
+						<x-textarea
+							v-model="bookingDetailForm.commissionIncludingVat"
+							type="text"
+							label="Commission (incld VAT)"
+							placeholder="Commission (incld VAT)"
+							class="w-full"						
+						/>
+					</div>
+				</div>
+
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">				
+					<div class="w-full">
+						<div class="flex justify-end">
+							<x-button
+								class="mt-4"
+								color="orange"
+								size="sm"
+								:loading="bookingDetailForm.processing"
+								type="submit"
+							>
+								Send Policy
+							</x-button>
+						</div>
+					</div>
+				</div>
+			</x-form>
     	</div>
 
 
