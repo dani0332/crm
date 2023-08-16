@@ -27,36 +27,17 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        // Schedule CarLeadAllocationJob to run every minute without overlapping on one server
-        $schedule->job(new CarLeadAllocationJob)
-            ->everyMinute()
-            ->withoutOverlapping(1)
-            ->onOneServer();
+        $schedule
+            ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        // Schedule HealthLeadAllocationJob to run every minute without overlapping on one server
-        $schedule->job(new HealthLeadAllocationJob)
-            ->everyMinute()
-            ->withoutOverlapping(1)
-            ->onOneServer();
+        $schedule
+            ->command('TierAssignment:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        // Schedule TierAssignmentJob to run every two minutes without overlapping on one server
-        $schedule->job(new TierAssignmentJob)
-            ->everyTwoMinutes()
-            ->withoutOverlapping(1)
-            ->onOneServer();
+        $schedule
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
-        // Schedule AddBatchNumber:cron command to run every Monday at midnight in Asia/Dubai timezone without overlapping on one server
-        $schedule->command('AddBatchNumber:cron')
-            ->timezone('Asia/Dubai')
-            ->weeklyOn(1, '0:00')
-            ->onOneServer()
-            ->withoutOverlapping(1);
-
-        // Schedule telescope:prune command to run daily without overlapping on one server
-        $schedule->command('telescope:prune --hours=48')
-            ->daily()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        $schedule
+            ->command('telescope:prune --hours=48')->daily()->onOneServer()->withoutOverlapping(1);
     }
 
     /**
