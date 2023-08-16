@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\InsuranceProvider;
 use Illuminate\Support\Facades\DB;
+
 class InsuranceProviderRepository extends BaseRepository
 {
     public function model()
