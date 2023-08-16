@@ -53,8 +53,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
               <td>
                 <div>
                 <button class="btn btn-success btn-sm">
-                   Send Documents {{ $transaction->product->embeddedProduct->company_documents }}
+                   Send Documents 
                 </button>
+                <!-- {{ $transaction->product->embeddedProduct->company_documents }} -->
                 <button class="btn btn-warning btn-sm">
                 Download Certificate
                 </button>
