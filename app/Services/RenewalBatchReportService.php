@@ -4,7 +4,6 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use App\Models\User;
-use App\Models\Teams;
 use App\Enums\RolesEnum;
 use App\Models\CarQuote;
 use App\Enums\quoteTypeCode;
@@ -92,12 +91,12 @@ class RenewalBatchReportService extends BaseService
         $segments  = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
         //teams listing as per auth roles
         if ($authUserIsCEO || $authUserIsAccounts) {
-            $authUserSubTeams = Teams::where('is_active', true)
+            $authUserSubTeams = Team::where('is_active', true)
                 ->where('type', TeamTypeEnum::SUB_TEAM)
                 ->pluck('name', 'id')
                 ->toArray();
 
-            $authUserTeams = Teams::where('is_active', true)
+            $authUserTeams = Team::where('is_active', true)
                 ->where('type', TeamTypeEnum::TEAM)
                 ->pluck('name', 'id')
                 ->toArray();
@@ -259,7 +258,9 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('users.sub_team_id', $subTeamsIds);
         } else if (!isset($filters->subTeams) && ( $authUserIsManager || $authUserIsRenewalsManager )&& !$authUserIsCEO && !$authUserIsAccounts) {
             $subTeamsIds = array_keys($authUserSubTeams);
-            $query->whereIn('users.sub_team_id', $subTeamsIds);
+            if(count($subTeamsIds) > 0) {
+                $query->whereIn('users.sub_team_id', $subTeamsIds);
+            }
         }
 
         return $query;
