@@ -16,12 +16,19 @@ class ApiController extends Controller
         $this->apiService = $service;
     }
 
-    public function fetchSignupUrl(APiFetchUrl $request)
+    public function fetchSignupUrl (APiFetchUrl $request)
     {
         return $this->apiService->fetchSignupUrl($request);
     }
 
     public function sibHealthQuoteCallBack(Request $request)
+    {
+        if ($request->has('attributes') && isset($request['attributes']['CDBID'])) {
+            return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
+        }
+    }
+
+    public function assignLeads(Request $request)
     {
         if ($request->has('attributes') && isset($request['attributes']['CDBID'])) {
             return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);

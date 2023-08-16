@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -27,7 +28,7 @@ class CarAllocationService extends AllocationService
     {
         [$from, $to, $limit, $isFIFO] = $this->getAppStorageValuesForCarLeads();
 
-        info('Car leads fetch start date is: '.$from.' and end datetime is: '.$to.' and pickup limit is: '.$limit.' and Pickup direction FIFO is: '.$isFIFO);
+        info('Car leads fetch start date is: ' . $from . ' and end datetime is: ' . $to . ' and pickup limit is: ' . $limit . ' and Pickup direction FIFO is: ' . $isFIFO);
 
         $unassignedLeadsCount = $this->getUnassignedLeadsCount();
 
@@ -42,7 +43,6 @@ class CarAllocationService extends AllocationService
         $this->addDeferredLeadsIfNeeded($unassignedLeadsCount, $limit, $leadsQuery);
 
         return $this->applyPriority($leadsQuery, $limit);
-
     }
 
     protected function getUnassignedLeadsCount(): mixed
@@ -59,11 +59,11 @@ class CarAllocationService extends AllocationService
 
     public function findTier($carLead): Tier|null
     {
-        info('Started searching tier for car lead: '.json_encode($carLead->code));
+        info('Started searching tier for car lead: ' . json_encode($carLead->code));
 
         $tiersQuery = Tier::where('is_active', 1); // Query to get all active tiers
 
-        info('Car ecommerce info is: '.json_encode($carLead->is_ecommerce));
+        info('Car ecommerce info is: ' . json_encode($carLead->is_ecommerce));
 
         if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::ThirdPartyOnly) {
             info('Selecting tier which can handle TPL leads');
@@ -74,8 +74,10 @@ class CarAllocationService extends AllocationService
             }
         }
 
-        if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive
-            && ($carLead->car_value === null || $carLead->car_value <= 0 || in_array($carLead->car_value, ['?', '']))) {
+        if (
+            $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive
+            && ($carLead->car_value === null || $carLead->car_value <= 0 || in_array($carLead->car_value, ['?', '']))
+        ) {
             info('Selecting tier which can handle null value leads');
             $tiersQuery->where('can_handle_null_value', 1);
         }
@@ -84,11 +86,11 @@ class CarAllocationService extends AllocationService
             $highestValueTier = Tier::where('is_active', 1)->orderByDesc('max_price')->first();
 
             if ($carLead->car_value > $highestValueTier->max_price) {
-                info('Lead '.$carLead->uuid.' has value higher than all tiers, selecting tier '.$highestValueTier->name);
+                info('Lead ' . $carLead->uuid . ' has value higher than all tiers, selecting tier ' . $highestValueTier->name);
 
                 return $highestValueTier;
             } else {
-                info('Filtering tiers based on car value: '.$carLead->car_value);
+                info('Filtering tiers based on car value: ' . $carLead->car_value);
                 $tiersQuery->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
             }
         }
@@ -105,12 +107,12 @@ class CarAllocationService extends AllocationService
         $tiersSql = $tiersQuery->toSql();
         $tiersBindings = $tiersQuery->getBindings();
 
-        info('Tiers query: '.$tiersSql.' with bindings: '.json_encode($tiersBindings));
+        info('Tiers query: ' . $tiersSql . ' with bindings: ' . json_encode($tiersBindings));
 
         $tiers = $tiersQuery->get();
 
         if ($tiers->isNotEmpty()) {
-            info('First tier after filtration: '.json_encode($tiers->first()->name));
+            info('First tier after filtration: ' . json_encode($tiers->first()->name));
 
             return $tiers->first();
         }
@@ -118,11 +120,16 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUsersForAllocation($tierId): array
+    public function getEligibleUsersForAllocation($tierId, $advisorId = null): array
     {
-        $tierUserIds = TierUser::where('tier_id', $tierId)->pluck('user_id');
+        if ($advisorId) {
+            $tierUserIds = TierUser::where('tier_id', $tierId)->where('user_id', '!=', $advisorId)->pluck('user_id');
+        } else {
+            $tierUserIds = TierUser::where('tier_id', $tierId)->pluck('user_id');
+        }
 
-        info('Tier users: '.json_encode($tierUserIds));
+
+        info('Tier users: ' . json_encode($tierUserIds));
 
         $eligibleUsers = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) {
@@ -223,15 +230,15 @@ class CarAllocationService extends AllocationService
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
             $finalEligibleUserIds = array_intersect($eligibleUsers, $ruleUserIds);
 
-            info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
+            info('Rule found and users against rule are: ' . json_encode($finalEligibleUserIds));
         } else {
             $ruleUsers = $this->getRuleUsers();
             $finalEligibleUserIds = array_filter($eligibleUsers, function ($loginId) use ($ruleUsers) {
-                return ! in_array($loginId, $ruleUsers);
+                return !in_array($loginId, $ruleUsers);
             });
 
-            info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
-            info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
+            info('No rule found against this lead: ' . $lead->uuid . ' so filtering rule users: ' . json_encode($ruleUsers));
+            info('Final login and available users after rule exclusion are: ' . json_encode($finalEligibleUserIds));
         }
 
         return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : null;
@@ -259,15 +266,15 @@ class CarAllocationService extends AllocationService
 
     public function processLeadAssignmentAndSendEmail($lead, $userId, $tier): void
     {
-        info('About to assign car lead: '.$lead->uuid.' to user with id: '.$userId);
+        info('About to assign car lead: ' . $lead->uuid . ' to user with id: ' . $userId);
 
         $carQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier);
 
-        info('advisor and tier assignment done for : '.$carQuote->uuid.' to user with id : '.$userId.' and tier name : '.$tier->name);
+        info('advisor and tier assignment done for : ' . $carQuote->uuid . ' to user with id : ' . $userId . ' and tier name : ' . $tier->name);
 
         $this->updateCarLeadDetailRecord($lead->id);
 
-        info('updating user record in lead allocation table with count increment userId: '.$userId);
+        info('updating user record in lead allocation table with count increment userId: ' . $userId);
 
         $this->updateLeadAllocationOnCarAutoAssignment($userId);
 
@@ -275,7 +282,7 @@ class CarAllocationService extends AllocationService
 
         $this->sendIntroEmailForLeadAssignment($carQuote->code, $emailData);
 
-        info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
+        info('Completed assignment of lead and lead count update is done for quote: ' . $carQuote->code);
     }
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier): mixed
@@ -286,18 +293,19 @@ class CarAllocationService extends AllocationService
         $carQuote->tier_id = $tier->id;
         $carQuote->cost_per_lead = $tier->cost_per_lead;
         $carQuote->auto_assigned = true;
+        $carQuote->assignment_type = AssignmentTypeEnum::SYSTEM_ASSIGNED;
 
         if ($carQuote->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();
-            info('About to assign quote batch with id: '.$quoteBatch->id.' and name: '.$quoteBatch->name.' to quote: '.$lead->uuid);
+            info('About to assign quote batch with id: ' . $quoteBatch->id . ' and name: ' . $quoteBatch->name . ' to quote: ' . $lead->uuid);
             $carQuote->quote_batch_id = $quoteBatch->id;
         } else {
-            info('Quote batch currently attached to quote: '.$carQuote->uuid.' and quote id is: '.$carQuote->quote_batch_id);
+            info('Quote batch currently attached to quote: ' . $carQuote->uuid . ' and quote id is: ' . $carQuote->quote_batch_id);
         }
 
         $carQuote->save();
 
-        info('Advisor and tier assignment done for: '.$lead->uuid.' to user with id: '.$userId.' and tier id: '.$tier->name);
+        info('Advisor and tier assignment done for: ' . $lead->uuid . ' to user with id: ' . $userId . ' and tier id: ' . $tier->name);
 
         return $carQuote;
     }
@@ -345,7 +353,7 @@ class CarAllocationService extends AllocationService
             $this->updateLeadAllocationCounts($userId, $leadAllocation);
         }
 
-        info('Count updated for user Id: '.$userId.', total count = '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
+        info('Count updated for user Id: ' . $userId . ', total count = ' . $leadAllocation->allocation_count . ' and auto count = ' . $leadAllocation->auto_assignment_count);
     }
 
     private function buildEmailDataForLMSIntroEmail($userId, $carQuote): object
@@ -356,13 +364,13 @@ class CarAllocationService extends AllocationService
         return (object) [
             'customerEmail' => $carQuote->email,
             'documentUrl' => [$documentUrl], // Replace with a generic URL once document upload section is done
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'clientFullName' => $carQuote->first_name . ' ' . $carQuote->last_name,
             'advisorName' => $user->name,
             'landLine' => $user->landline_no,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
             'carQuoteId' => $carQuote->code,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
         ];
     }
 
@@ -395,10 +403,14 @@ class CarAllocationService extends AllocationService
             $carQuote->deferred = 1;
             $carQuote->deferred_at = now();
             $carQuote->save();
-            info('Tier with name : '.$tier->name.' and id : '.$tier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
+            info('Tier with name : ' . $tier->name . ' and id : ' . $tier->id . ' is assigned to car lead with uuid : ' . $carQuote->uuid);
         } else {
-            info('Tier ('.$tier->name.')is already assigned against car lead with uuid : '.$carQuote->uuid);
+            info('Tier (' . $tier->name . ')is already assigned against car lead with uuid : ' . $carQuote->uuid);
         }
     }
 
+    public function fetchLeadsForReAssignment($advisorId)
+    {
+        return CarQuote::where('advisor_id', $advisorId)->where('quote_status_id', QuoteStatusEnum::NewLead);
+    }
 }
