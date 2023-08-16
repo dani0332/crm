@@ -157,11 +157,9 @@
     <!-- Custom Theme Scripts -->
     <script src="{{ asset('build/js/custom.js') }}"></script>
     <script>
-
-
-        // Use the PHP variable in your JavaScript code
         var pusherAppKey = @json($pusherAppKey);
-        Pusher.logToConsole = true;
+            Pusher.logToConsole = true;
+
         var pusher = new Pusher(pusherAppKey, {
             cluster: 'ap1'
         });
@@ -170,7 +168,7 @@
         channel.bind('user.status.changed', function(data) {
             console.log(JSON.stringify(data));
         });
-        // global app configuration object
+
         var config = {
             routes: {
                 user_datatable_route: "{{ route('users.index') }}",

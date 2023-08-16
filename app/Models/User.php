@@ -263,4 +263,9 @@ class User extends Authenticatable implements AuditableContract
             return User::where('name', 'System User')->first()->email;
         }
     }
+
+    public function sessions()
+    {
+        return $this->hasMany(Sessions::class);
+    }
 }
