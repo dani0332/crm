@@ -3,23 +3,10 @@
 namespace App\Listeners;
 
 use App\Events\AdvisorAssigned;
-use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 
 class AdvisorAssignedListener
 {
-    protected $healthQuoteService;
-
-    /**
-     * Create the event listener.
-     *
-     * @return void
-     */
-    public function __construct(HealthQuoteService $healthService)
-    {
-        $this->healthQuoteService = $healthService;
-    }
-
     /**
      * Handle the event.
      *

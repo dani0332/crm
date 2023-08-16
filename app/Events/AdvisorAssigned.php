@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\CarQuote;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -16,7 +17,7 @@ class AdvisorAssigned
      *
      * @return void
      */
-    public function __construct($lead)
+    public function __construct(CarQuote $lead)
     {
         $this->lead = $lead;
     }

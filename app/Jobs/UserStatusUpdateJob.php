@@ -24,39 +24,39 @@ class UserStatusUpdateJob implements ShouldQueue
 
     public function handle()
     {
-        list($userInactiveThreshold, $inactiveThreshold) = $this->getInactiveThreshold();
+        [$userInactiveThreshold, $inactiveThreshold] = $this->getInactiveThreshold();
 
-        info('Inactive Threshold right now is : ' . $userInactiveThreshold . ' and last activity time matched will be : ' . $inactiveThreshold);
+        info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
 
         $sessions = $this->getSessions();
 
         foreach ($sessions as $session) {
-            list($userId, $lastActivity, $currentUserStatus) = $this->extractUserInformation($session);
+            [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
 
             if ($lastActivity < $inactiveThreshold && $currentUserStatus == UserStatusEnum::ONLINE) {
-                info('going to send inactive notification for user : ' . $session->user->name);
+                info('going to send inactive notification for user : '.$session->user->name);
                 $unAvailableTime = now()->subHours(2);
                 $offlineTime = now()->subMinutes(5);
                 if ($lastActivity < $unAvailableTime) {
-                    info('updating user as unavailable as the last activity was : ' . $lastActivity);
+                    info('updating user as unavailable as the last activity was : '.$lastActivity);
                     User::where('id', $userId)->update(['status' => UserStatusEnum::UNAVAILABLE]);
                     event(new UserStatusChanged($userId, 'unavailable'));
                     // since its been 2 hours of inactivity, reassigning leads to other advisors
                     event(new ReAssignCarLeadsJob(app(CarAllocationService::class), $userId));
-                } else if ($lastActivity < $offlineTime) {
-                    info('updating user as offline as the last activity was : ' . $lastActivity);
+                } elseif ($lastActivity < $offlineTime) {
+                    info('updating user as offline as the last activity was : '.$lastActivity);
                     User::where('id', $userId)->update(['status' => UserStatusEnum::OFFLINE]);
                     event(new UserStatusChanged($userId, 'offline'));
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {
-                info('going to send active notification for user : ' . $session->user->name);
+                info('going to send active notification for user : '.$session->user->name);
                 event(new UserStatusChanged($userId, 'online'));
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
         }
     }
 
-    public function getSessions(): array | Collection
+    public function getSessions(): array|Collection
     {
         return Sessions::with('user:id,status,name')
             ->whereHas('user', function ($query) {
@@ -67,39 +67,34 @@ class UserStatusUpdateJob implements ShouldQueue
             ->get();
     }
 
-    /**
-     * @return array
-     */
     public function getInactiveThreshold(): array
     {
         $userInactiveThreshold = ApplicationStorage::where('key_name', ApplicationStorageEnums::USER_INACTIVE_THRESHOLD)->first();
         if ($userInactiveThreshold) {
-            $userInactiveThreshold = (int)$userInactiveThreshold->value;
+            $userInactiveThreshold = (int) $userInactiveThreshold->value;
         } else {
             // default is 30 seconds if app storage doesn't exist
             $userInactiveThreshold = 30;
         }
         $inactiveThreshold = now()->subSeconds($userInactiveThreshold);
-        return array($userInactiveThreshold, $inactiveThreshold);
+
+        return [$userInactiveThreshold, $inactiveThreshold];
     }
 
-    /**
-     * @param mixed $session
-     * @return array
-     */
     public function extractUserInformation(mixed $session): array
     {
         $userId = $session->user_id;
         $userName = $session->user->name;
 
-        info('Running status job for user : ' . $userName);
+        info('Running status job for user : '.$userName);
         $lastActivity = Carbon::createFromTimestamp($session->last_activity);
 
-        info('Last activity for user : ' . $session->user->name . ' was at : ' . $lastActivity);
-        info('user table status right now is : ' . $session->user->status);
+        info('Last activity for user : '.$session->user->name.' was at : '.$lastActivity);
+        info('user table status right now is : '.$session->user->status);
 
         $currentUserStatus = $session->user->status ?? UserStatusEnum::UNAVAILABLE;
-        info('Current Status for user : ' . $session->user->name . ' is : ' . $currentUserStatus);
-        return array($userId, $lastActivity, $currentUserStatus);
+        info('Current Status for user : '.$session->user->name.' is : '.$currentUserStatus);
+
+        return [$userId, $lastActivity, $currentUserStatus];
     }
 }

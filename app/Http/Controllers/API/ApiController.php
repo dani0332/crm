@@ -16,7 +16,7 @@ class ApiController extends Controller
         $this->apiService = $service;
     }
 
-    public function fetchSignupUrl (APiFetchUrl $request)
+    public function fetchSignupUrl(APiFetchUrl $request)
     {
         return $this->apiService->fetchSignupUrl($request);
     }
