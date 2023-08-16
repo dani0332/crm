@@ -21,7 +21,7 @@ class InsuranceProviderRepository extends BaseRepository
     {
         $quote = QuoteType::find($quoteTypeId);
 
-        if (!empty($quote) && count($quote->insurerProviders)) {
+        if (! empty($quote) && count($quote->insurerProviders)) {
             return $quote->insurerProviders;
         }
     }
