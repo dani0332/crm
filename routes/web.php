@@ -70,6 +70,8 @@ use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\SageApi;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -172,6 +174,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
+
+    Route::get('verify-sage', [SageApi::class, 'index']);
+    Route::post('post-sage-data', [SageApi::class, 'processSagePost']);
 
     Route::post('activities/v2', [ActivityController::class, 'store']);
     Route::patch('activities/v2/{id}', [ActivityController::class, 'update']);
