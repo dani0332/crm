@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import { Head, router, useForm, Link } from '@inertiajs/vue3';
 import { useNotifications } from '@indielayer/ui';
 
 const notification = useNotifications('toast');
@@ -36,12 +35,7 @@ const quoteForm = useForm({
 const isEdit = computed(() => {
     return route().current().includes('edit');
 });
-const rules = {
-  isEmail: v =>
-    /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
-    'E-mail must be valid',
-  isRequired: v => !!v || 'This field is required',
-};
+const { isRequired, isEmail } = useRules();
 
 const handleConditionalFields = () => {
   if (
@@ -133,7 +127,7 @@ function onSubmit(isValid) {
               v-model="quoteForm.first_name"
               type="text"
               maxLength="255"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </x-field>
@@ -142,7 +136,7 @@ function onSubmit(isValid) {
               v-model="quoteForm.last_name"
               type="text"
               maxLength="255"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               class="w-full"
             />
           </x-field>
@@ -182,7 +176,7 @@ function onSubmit(isValid) {
           <x-field label="I AM" required>
             <x-select
               v-model="quoteForm.iam_possesion_type_id"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               :options="
                 dropdownSource.iam_possesion_type_id.map(item => ({
                   value: item.id,
@@ -196,7 +190,7 @@ function onSubmit(isValid) {
           <x-field label="I LIVE IN" required>
             <x-select
               v-model="quoteForm.ilivein_accommodation_type_id"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
               :options="
                 dropdownSource.ilivein_accommodation_type_id.map(item => ({
                   value: item.id,
@@ -253,7 +247,7 @@ function onSubmit(isValid) {
               v-model="quoteForm.contents_aed"
               type="number"
               class="w-full"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="PERSONAL BELONGINGS AED" v-if="quoteForm.has_personal_belongings" required>
@@ -262,7 +256,7 @@ function onSubmit(isValid) {
               v-model="quoteForm.personal_belongings_aed"
               type="number"
               class="w-full"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
             />
           </x-field>
           <x-field label="BUILDING AED"  v-if="quoteForm.has_building" required>
@@ -270,7 +264,7 @@ function onSubmit(isValid) {
               v-model="quoteForm.building_aed"
               type="number"
               class="w-full"
-              :rules="[rules.isRequired]"
+              :rules="[isRequired]"
             />
           </x-field>
 
