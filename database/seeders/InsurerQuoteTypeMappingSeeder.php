@@ -18,7 +18,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
     public function run()
     {
 
-        if (Schema::hasTable('insurer_quote_type_mapping')) {
+        if (Schema::hasTable('quote_insurance_provider')) {
 
             InsuranceProvider::updateOrCreate(['code' => 'OUNB'], ['text' => 'Orient UNB', 'text_lms' => 'Orient UNB']);
             InsuranceProvider::updateOrCreate(['code' => 'ASCANA'], ['text' => 'ASCANA Takaful', 'text_lms' => 'ASCANA Takaful']);
@@ -60,34 +60,34 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Fidelity United
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::FID) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Pet, QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Pet, QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Orient Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::OI2) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Watania Takaful
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::NT) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Sukoon (Oman Insurance)
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::OIC) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // AL WHATBA
-                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::Al_Jalil) {
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::ALJALIL) {
                         if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Travel])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
@@ -95,14 +95,14 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Abu Dhabi National Takaful
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::ADNT) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // GIG Gulf (AXA)
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::AXA) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -116,14 +116,14 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Dubai Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::DIC) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Dubai National Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::DNIRC) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Car, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Car, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -137,7 +137,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // National General Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::NGI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -151,21 +151,21 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Alliance Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::ALNC) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Travel, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Travel, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // RAK Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::RAK) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Salama Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::SI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Car, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Pet, QuoteTypeId::Car, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -179,35 +179,35 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Oriental Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::OI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Takaful Emarat Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::TE) {
-                        if (in_array($quoteKey, [QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Cigna Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::CIG) {
-                        if (in_array($quoteKey, [QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // BUPA
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::BUP) {
-                        if (in_array($quoteKey, [QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Orient UNB
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::OUNB) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -221,7 +221,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Emirates Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::EI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -242,35 +242,35 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Al Sagr Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::ASI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::Travel, QuoteTypeId::Health, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Medgulf
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::MDG) {
-                        if (in_array($quoteKey, [QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Metlife
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::MTL) {
-                        if (in_array($quoteKey, [QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // Saico
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::SAICO) {
-                        if (in_array($quoteKey, [QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
 
                     // NLGIC
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::NLGIC) {
-                        if (in_array($quoteKey, [QuoteTypeId::Group_Medical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -282,9 +282,9 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
     protected function insertMappingRecords($quoteTypeId, $insuranceProviderId)
     {
-        $getMappedValue = \DB::table('insurer_quote_type_mapping')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId])->count();
+        $getMappedValue = \DB::table('quote_insurance_provider')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId])->count();
         if (! $getMappedValue) {
-            \DB::table('insurer_quote_type_mapping')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId]);
+            \DB::table('quote_insurance_provider')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId]);
         }
     }
 }

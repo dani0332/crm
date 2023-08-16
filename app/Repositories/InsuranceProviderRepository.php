@@ -2,8 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Models\HealthRatingEligibility;
 use App\Models\InsuranceProvider;
-use Illuminate\Support\Facades\DB;
+use App\Models\QuoteType;
 
 class InsuranceProviderRepository extends BaseRepository
 {
@@ -18,26 +19,19 @@ class InsuranceProviderRepository extends BaseRepository
     }
     public function fetchByQuoteTypeMapping($quoteTypeId)
     {
-        return \DB::table('insurer_quote_type_mapping')
-            ->select([
-                'insurance_provider.id',
-                'insurance_provider.code',
-                'insurance_provider.text',
-                'insurance_provider.text_lms',
-                'insurer_quote_type_mapping.insurance_provider_id',
-                'insurer_quote_type_mapping.quote_type_id',
-            ])
-            ->where('quote_type_id', $quoteTypeId)
-            ->join('insurance_provider', 'insurance_provider.id', '=', 'insurer_quote_type_mapping.insurance_provider_id')
-            ->get();
+        $quote = QuoteType::find($quoteTypeId);
+
+        if (count($quote->insurerProviders)) {
+            return $quote->insurerProviders;
+        }
     }
 
-    public function fetchNetworksByInsuranceProviders($insuranceProvidersIds)
+    public function fetchNetworksByInsuranceProviders($request)
     {
         $networks = [];
+        $insuranceProvidersIds = explode(',', $request['insuranceProviderId']);
         if (! empty($insuranceProvidersIds)) {
-            $data = DB::table('health_rating_eligibilities')
-                ->whereIn('insurance_provider_id', $insuranceProvidersIds)
+            $data = HealthRatingEligibility::whereIn('insurance_provider_id', $insuranceProvidersIds)
                 ->get();
             $networks = $data->map(function ($item) {
                 return [

@@ -61,4 +61,9 @@ class InsuranceProvider extends BaseModel implements AuditableContract
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function quoteTypes()
+    {
+        return $this->belongsToMany(QuoteType::class, 'quote_insurance_provider');
+    }
 }
