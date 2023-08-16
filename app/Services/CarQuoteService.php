@@ -15,6 +15,7 @@ use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\EmbeddedTransaction;
 use App\Models\Payment;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
@@ -1557,5 +1558,13 @@ class CarQuoteService extends BaseService
 
             return false;
         }
+    }
+
+    public function getEpTransactions($id)
+    {
+        return EmbeddedTransaction::with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', QuoteTypeId::Car)
+            ->where('quote_request_id', $id)
+            ->get();
     }
 }

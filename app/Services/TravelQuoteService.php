@@ -739,7 +739,7 @@ class TravelQuoteService extends BaseService
         return $listQuotePlans;
     }
 
-    public function getEPtransactions($id)
+    public function getEpTransactions($id)
     {
         return EmbeddedTransaction::with('product.embeddedProduct', 'paymentStatus')
             ->where('quote_type_id', QuoteTypeId::Travel)

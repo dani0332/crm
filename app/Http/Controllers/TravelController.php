@@ -115,7 +115,7 @@ class TravelController extends Controller
             unset($fields['id']);
         }
 
-        $embeddedProducts = $this->travelQuoteService->getEPtransactions($record->id);
+        $embeddedProducts = $this->travelQuoteService->getEpTransactions($record->id);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,

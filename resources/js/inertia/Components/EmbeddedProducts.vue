@@ -75,16 +75,13 @@ const ppDoc = str => {
 
       <template #item-actions="item">
         <div class="flex flex-col gap-1">
-          <x-button size="xs" color="emerald" href="#">
-            Send Documents
-          </x-button>
-          <x-button size="xs" color="#ff5e00" href="#">
-            Download Certificate
-          </x-button>
+          <x-button size="xs" color="emerald"> Send Documents </x-button>
+          <x-button size="xs" color="#ff5e00"> Download Certificate </x-button>
           <x-button
             size="xs"
             color="primary"
             :href="ppDoc(item.product.embedded_product.company_documents)"
+            target="_blank"
             :disabled="
               ppDoc(item.product.embedded_product.company_documents) === ''
             "

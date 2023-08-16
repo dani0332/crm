@@ -485,6 +485,8 @@ class CRUDController extends Controller
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
 
+            $epTransactions = $this->carQuoteService->getEpTransactions($record->id);
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -492,7 +494,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'epTransactions',
             ]));
         }
 
@@ -1111,7 +1113,6 @@ class CRUDController extends Controller
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
             $quoteData['quoteTypeId'] = $quoteTypeId;
             $quoteData['quoteUID'] = $request->quote_uuid;
