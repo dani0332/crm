@@ -236,7 +236,7 @@ class AmtController extends Controller
             'businessQuoteRequestDetail.lostReason'
         )->where([
             'uuid' => $id,
-            'business_type_of_insurance_id' => QuoteTypeId::Business,
+            'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ])->first();
         abort_if(! $record, 404);
 
