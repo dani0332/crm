@@ -21,12 +21,22 @@ class ActivityRepository extends BaseRepository
     */
     public function fetchGetData()
     {
+        
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->select(
-            'activities.id as id','description',
-            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'name', 'title', 'status', 'assignee_id', 'uuid'
-        )->filter()->whereIn('assignee_id', $subOrdinateIds)->orderBy('status')->simplePaginate()->withQueryString();
+
+        return $this->with(['assignee'])
+            ->select(
+                'activities.id as id', 'description',
+                'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'users.name as assignee_name', 'title', 'status', 'assignee_id', 'uuid'
+            )
+            ->leftJoin('users', 'users.id', 'activities.assignee_id')
+            ->filter()
+            ->whereIn('assignee_id', $subOrdinateIds)
+            ->orderBy('status')
+            ->simplePaginate()
+            ->withQueryString();
+
     }
 
      /**
@@ -34,9 +44,14 @@ class ActivityRepository extends BaseRepository
     */
     public function fetchCountActivities()
     {
+        
         $subOrdinateIds = $this->walkTree(Auth::user()->id);
         array_push($subOrdinateIds, Auth::user()->id);
-        return $this->leftJoin('users', 'users.id', 'activities.assignee_id')->filter()->whereIn('assignee_id', $subOrdinateIds)->count();
+        return $this->with(['assignee'])
+            ->filter()
+            ->whereIn('assignee_id', $subOrdinateIds)
+            ->count();
+
     }
     /**
      * @return mixed

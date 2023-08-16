@@ -48,7 +48,7 @@ const activityTable = [
   { text: 'CDBID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
-  { text: 'Assigned To', value: 'name' },
+  { text: 'Assigned To', value: 'assignee_name' },
   { text: 'Done', value: 'status', width: 60, align: 'center' },
   { text: 'Action', value: 'action' },
 ];
