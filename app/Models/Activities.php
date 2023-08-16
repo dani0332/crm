@@ -45,8 +45,7 @@ class Activities extends Model implements AuditableContract
         $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
         $dueDate = Carbon::createFromFormat($dateFormat, $this->due_date);
         $now = now()->format($dateFormat);
-        $is_overdue = $dueDate->lt($now);
-        return $is_overdue;        
+        return $dueDate->lt($now);       
     }
 
     public function assignee()

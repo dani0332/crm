@@ -3,8 +3,8 @@
 defineProps({
   activities: Object,
   advisors: Object,
-  cannot_use_assignee: Boolean,
-  total_activities: Number   
+  cannotUseAssignee: Boolean,
+  totalActivities: Number   
 });
 
 // Vue Composition API
@@ -294,7 +294,7 @@ onMounted(() => {
           v-model="filters.assignee_id"
           label="Assigned To"
           placeholder="Select Assigned To"
-          :disabled="cannot_use_assignee"
+          :disabled="cannotUseAssignee"
           :options="[
             { value: null, label: 'All' },
             // Loop through advisorArray to generate options
@@ -392,7 +392,7 @@ onMounted(() => {
       <x-divider class="my-2" />
     </div>
     <p class="text-md font-semibold text-gray-700">
-      Total Activities: {{ total_activities }}
+      Total Activities: {{ totalActivities }}
     </p>
     <x-divider class="my-2" />
     <DataTable

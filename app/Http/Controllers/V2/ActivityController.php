@@ -22,13 +22,13 @@ class ActivityController extends Controller
         $advisors = [];
         $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
         $activities = ActivityRepository::getData();
-        $total_activities = ActivityRepository::countActivities();
-        $cannot_use_assignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);
+        $totalActivities = ActivityRepository::countActivities();
+        $cannotUseAssignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);
         return inertia('Activities/Index', [
             'activities' => $activities,
             'advisors' => $advisors,
-            'cannot_use_assignee' => $cannot_use_assignee,
-            'total_activities' => $total_activities
+            'cannotUseAssignee' => $cannotUseAssignee,
+            'totalActivities' => $totalActivities
         ]);
     }
 
