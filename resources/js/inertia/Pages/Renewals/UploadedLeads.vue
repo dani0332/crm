@@ -61,22 +61,25 @@ const permissionsEnum = page.props.permissionsEnum;
             hide-footer
         >
             <template #item-good="{ id , good }">
-
-                <Link
+                <x-button
+                    size="xs"
+                    light
+                    color="success"
                     :href="`/renewals/uploaded-leads/${id}/validation-passed`"
-                    class="text-primary-500 hover:underline btn-passed"
                 >
-                    <x-tag color="success">{{ good }}</x-tag>
-                </Link>
+                    {{ good }}
+                </x-button>
             </template>
             <template #item-cannot_upload="{ id , cannot_upload }">
 
-                <Link
-                    :href="`/renewals/uploaded-leads/${id}/validation-failed`"
-                    class="text-primary-500 hover:underline btn-passed"
+                <x-button
+                    size="xs"
+                    light
+                    color="error"
+                    :href="route('renewal-validation-failed', id)"
                 >
-                    <x-tag color="pink">{{ cannot_upload }}</x-tag>
-                </Link>
+                    {{ cannot_upload }}
+                </x-button>
             </template>
             <template #item-skip_plans="{ skip_plans }">
                 {{ (! skip_plans) ? EnumGenericNo: ((skip_plans == EnumSkipPlansNonGCC) ? 'YES - NON GCC' : EnumGenericYes) }}
