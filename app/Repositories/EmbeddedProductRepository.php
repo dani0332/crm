@@ -87,7 +87,7 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->with(['insuranceProvider'])->orderBy('created_at', 'desc')->simplePaginate();
+        return $this->with(['insuranceProvider'])->latest('updated_at')->simplePaginate();
     }
 
     /**

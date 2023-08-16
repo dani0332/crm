@@ -3,6 +3,9 @@ defineProps({
   embeddedProducts: Object,
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const loader = reactive({
   table: false,
   export: false,
@@ -17,6 +20,7 @@ const tableHeader = [
   { text: 'Display name', value: 'display_name' },
   { text: 'Product Type', value: 'product_type' },
   { text: 'Status', value: 'is_active' },
+  { text: 'Last Modified Date', value: 'updated_at' },
   { text: 'Actions', value: 'actions' },
 ];
 </script>
@@ -62,6 +66,10 @@ const tableHeader = [
             {{ is_active ? 'Active' : 'Inactive' }}
           </x-tag>
         </div>
+      </template>
+
+      <template #item-updated_at="{ updated_at }">
+        {{ dateFormat(updated_at) }}
       </template>
 
       <template #item-actions="{ id }">

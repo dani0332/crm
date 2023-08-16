@@ -153,9 +153,6 @@ function onSubmit(isValid) {
       .submit(method, url, options);
   }
 }
-
-// TODO: Remove this after testing
-const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
 </script>
 
 <template>
@@ -165,7 +162,7 @@ const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
       <h2 class="text-xl font-semibold">Embedded Products</h2>
       <div>
         <Link :href="route('embedded-products.index')">
-          <x-button size="sm" color="#ff5e00">
+          <x-button size="sm" color="primary">
             Embedded products List
           </x-button>
         </Link>
@@ -299,7 +296,9 @@ const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
                     size="sm"
                     outlined
                     color="success"
-                    :href="tempfileUrl + form.company_documents[index].path"
+                    :href="
+                      $page.props.cdnPath + form.company_documents[index].path
+                    "
                     target="_blank"
                     download
                     class="flex-1"
@@ -590,7 +589,7 @@ const tempfileUrl = 'https://insurancemarket.blob.core.windows.net/imcrmdev/';
           class="px-6"
           :loading="form.processing"
         >
-          Save
+          {{ isEdit ? 'Update' : 'Save' }}
         </x-button>
       </div>
     </x-form>
