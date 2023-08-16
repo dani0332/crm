@@ -27,14 +27,12 @@
                                                 class="required">*</span></label>
                                         <input type="date" class="form-control" name="start_date"
                                             value="{{ old('start_date') }}" min="{{ date('Y-m-d') }}"
-                                            max="{{ date('Y-m-d', strtotime('now +31 days')) }}"
                                             placeholder="Batch Start Date">
                                     </div>
                                     <div class="col">
                                         <label for="formGroupExampleInput">Batch End <span class="required">*</span></label>
                                         <input type="date" class="form-control" name="end_date"
                                             value="{{ old('end_date') }}" min="{{ date('Y-m-d') }}"
-                                            max="{{ date('Y-m-d', strtotime('now +92 days')) }}"
                                             placeholder="Batch Start Date">
                                     </div>
                                 </div>
@@ -51,7 +49,6 @@
                                                 class="required">*</span></label>
                                         <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::CarSold}}]"
                                             value="{{ old('deadline_date[]') }}" min="{{ date('Y-m-d') }}"
-                                            max="{{ date('Y-m-d', strtotime('now +31 days')) }}"
                                             placeholder="Batch Start Date">
                                         <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::CarSold}}">
                                     </div>
@@ -60,7 +57,6 @@
                                                 class="required">*</span></label>
                                         <input type="date" class="form-control" name="deadline_date[{{\App\Enums\QuoteStatusEnum::Uncontactable}}]"
                                             value="{{ old('deadline_date[]') }}" min="{{ date('Y-m-d') }}"
-                                            max="{{ date('Y-m-d', strtotime('now +92 days')) }}"
                                             placeholder="Batch Start Date">
                                         <input type="hidden" name="quote_status_id[]" value="{{ \App\Enums\QuoteStatusEnum::Uncontactable}}">
                                     </div>
@@ -102,6 +98,7 @@
                                                                             <input type="number"
                                                                                 name="slab[{{ $slab->id }}][{{ $team->id }}][Min]"
                                                                                 class="form-control" placeholder="min"
+                                                                                step="0.01"
                                                                                 min="0" max="100"
                                                                                 value="{{ !empty($lastBatchSlabs) && isset($lastBatchSlabs[$slab->id][$team->id]) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['min'] : old("slab.$slab->id.$team->id.Min") }}"
                                                                                 required>
@@ -110,6 +107,7 @@
                                                                             <input type="number"
                                                                                 name="slab[{{ $slab->id }}][{{ $team->id }}][Max]"
                                                                                 class="form-control" placeholder="max"
+                                                                                step="0.01"
                                                                                 min="0" max="100"
                                                                                 value="{{ !empty($lastBatchSlabs) && isset($lastBatchSlabs[$slab->id][$team->id]) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['max'] : old("slab.$slab->id.$team->id.Max") }}"
                                                                                 required>

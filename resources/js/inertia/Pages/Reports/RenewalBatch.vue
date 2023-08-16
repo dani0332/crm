@@ -473,16 +473,16 @@ watch(
                     :deselect-all="filters.teams?.length > 0" />
 
                 <ComboBox
-                    v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                    v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
                     v-model="filters.advisors" label="Advisors" placeholder="Search by Advisors" :options="advisorOptions"
                     :loading="loaders.advisorOptions" :select-all="filters.advisors?.length > 0"
                     :deselect-all="filters.advisors?.length > 0" />
 
-                <ComboBox v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.SeniorManagement])" v-model="filters.subTeams"
+                <ComboBox v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement])" v-model="filters.subTeams"
                     label="Sub Team" placeholder="Search by Sub Team" class="w-full" :options="subTeamsOptions"
                     :select-all="filters.subTeams?.length > 0" :deselect-all="filters.subTeams?.length > 0" />
 
-                <x-select v-if="hasRole(rolesEnum.CarManager)" v-model="filters.segment" label="Segment"
+                <x-select v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager])" v-model="filters.segment" label="Segment"
                     placeholder="Search by Segment" class="w-full" :options="Object.keys(filterOptions.segments).map(key => ({
                         value: filterOptions.segments[key],
                         label: filterOptions.segments[key].toUpperCase(),

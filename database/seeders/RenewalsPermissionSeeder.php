@@ -38,5 +38,18 @@ class RenewalsPermissionSeeder extends Seeder
                 $renewalsManagerRole->givePermissionTo($permission);
             }
         }
+
+        $reportPermission = Permission::findOrCreate(PermissionsEnum::RenewalBatchReport, 'web')->id;
+
+        $carManagerRole = Role::findOrCreate(RolesEnum::CarManager, 'web');
+        if (! $carManagerRole->hasPermissionTo($reportPermission)) {
+            $carManagerRole->givePermissionTo($reportPermission);
+        }
+
+        $carDeputyManagerRole = Role::findOrCreate(RolesEnum::CarDeputyManager, 'web');
+        if (! $carDeputyManagerRole->hasPermissionTo($reportPermission)) {
+            $carDeputyManagerRole->givePermissionTo($reportPermission);
+        }
+
     }
 }

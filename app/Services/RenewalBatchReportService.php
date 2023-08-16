@@ -66,6 +66,7 @@ class RenewalBatchReportService extends BaseService
          * get auth user roles
          */
         $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
+        $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
         $authUserIsDeputyManager = auth()->user()->hasRole(RolesEnum::CarDeputyManager);
         $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
         $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
@@ -79,7 +80,7 @@ class RenewalBatchReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
         // filteration of valid advisores based on roles
-        if ($authUserIsDeputyManager && !$authUserIsManager) {
+        if ($authUserIsDeputyManager && !$authUserIsManager && !$authUserIsRenewalsManager) {
             $userIds = $this->walkTree($authUserId);
             foreach ($carAdvisors as $key => $value) {
                 if (!in_array($key, $userIds)) {
@@ -151,6 +152,7 @@ class RenewalBatchReportService extends BaseService
          * check auth user roles
          */
         $authUserIsManager  =   auth()->user()->hasRole(RolesEnum::CarManager);
+        $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
         $authUserIsAdvisor  =   auth()->user()->hasRole(RolesEnum::CarAdvisor);
         $authUserIsDeputyManager  =   auth()->user()->hasRole(RolesEnum::CarDeputyManager);
         $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
@@ -203,10 +205,10 @@ class RenewalBatchReportService extends BaseService
         // advisor filter
         if (isset($filters->advisors) && count($filters->advisors) > 0) {
             $query->whereIn('car_quote_request.advisor_id', $filters->advisors);
-        } else if (!isset($filters->advisors) && $authUserIsDeputyManager && !$authUserIsManager) {
+        } else if (!isset($filters->advisors) && $authUserIsDeputyManager && !$authUserIsManager && !$authUserIsRenewalsManager) {
             $userIds = $this->walkTree($authUserId);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        } else if (!isset($filters->advisors) && $authUserIsAdvisor && !$authUserIsManager) {
+        } else if (!isset($filters->advisors) && $authUserIsAdvisor && !$authUserIsManager && !$authUserIsRenewalsManager) {
             $query->where('car_quote_request.advisor_id', $authUserId);
         }
         // segment wise advisors filter
@@ -255,7 +257,7 @@ class RenewalBatchReportService extends BaseService
         if (isset($filters->subTeams)) {
             $subTeamsIds = $filters->subTeams;
             $query->whereIn('users.sub_team_id', $subTeamsIds);
-        } else if (!isset($filters->subTeams) && $authUserIsManager && !$authUserIsCEO && !$authUserIsAccounts) {
+        } else if (!isset($filters->subTeams) && ( $authUserIsManager || $authUserIsRenewalsManager )&& !$authUserIsCEO && !$authUserIsAccounts) {
             $subTeamsIds = array_keys($authUserSubTeams);
             $query->whereIn('users.sub_team_id', $subTeamsIds);
         }

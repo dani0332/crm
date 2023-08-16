@@ -100,6 +100,7 @@
                                                                             <input type="number"
                                                                                 name="slab[{{ $slab->id }}][{{ $team->id }}][Min]"
                                                                                 class="form-control" placeholder="min"
+                                                                                step="0.01"
                                                                                 min="0" max="100"
                                                                                 value="{{ !empty($lastBatchSlabs) && isset($lastBatchSlabs[$slab->id][$team->id]) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['min'] : old("slab.$slab->id.$team->id.Min") }}"
                                                                                 required>
@@ -108,6 +109,7 @@
                                                                             <input type="number"
                                                                                 name="slab[{{ $slab->id }}][{{ $team->id }}][Max]"
                                                                                 class="form-control" placeholder="max"
+                                                                                step="0.01"
                                                                                 min="0" max="100"
                                                                                 value="{{ !empty($lastBatchSlabs) && isset($lastBatchSlabs[$slab->id][$team->id]) ? $lastBatchSlabs[$slab->id][$team->id]['pivot']['max'] : old("slab.$slab->id.$team->id.Max") }}"
                                                                                 required>
