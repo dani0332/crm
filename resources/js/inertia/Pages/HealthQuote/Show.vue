@@ -615,7 +615,6 @@ watch(
   value => {
     if (value) {
       options.loading = true;
-      console.log(planFilters.insurer);
       const ids = planFilters.insurer.map(item => {
         return item;
       });
@@ -1913,7 +1912,7 @@ onMounted(() => {
                 : 'Network'
             "
             :options="options.network"
-            :disabled="planFilters.insurer.length == 0"
+            :disabled="planFilters.insurer?.length == 0"
             select-all
             deselect-all
           />
