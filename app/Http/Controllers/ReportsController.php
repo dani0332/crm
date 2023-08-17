@@ -2,22 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\CarQuote;
-use Illuminate\Http\Request;
-use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
-use App\Services\ReportService;
-use App\Enums\PaymentStatusEnum;
 use App\Models\RenewalBatch;
+use App\Models\User;
+use App\Services\AdvisorConversionReportService;
+use App\Services\AdvisorDistributionReportService;
+use App\Services\AdvisorPerformanceReportService;
+use App\Services\LeadDistributionReportService;
+use App\Services\RenewalBatchReportService;
+use App\Services\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
-use Illuminate\Support\Facades\DB;
-use App\Services\LeadDistributionReportService;
-use App\Services\AdvisorConversionReportService;
-use App\Services\AdvisorPerformanceReportService;
-use App\Services\AdvisorDistributionReportService;
-use App\Services\RenewalBatchReportService;
+use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
@@ -115,11 +110,12 @@ class ReportsController extends Controller
         $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->toArray();
 
         $subTeams = array_reduce($subTeams, function ($carry, $item) {
-                $carry[$item['id']] = $item['name'];
-                return $carry;
-            }, []);
+            $carry[$item['id']] = $item['name'];
 
-        $advisors =  User::whereIn('id', $advisorIdsByTeam)
+            return $carry;
+        }, []);
+
+        $advisors = User::whereIn('id', $advisorIdsByTeam)
             ->select('name', 'id')
             ->orderBy('name')
             ->where('is_active', 1)
@@ -128,7 +124,7 @@ class ReportsController extends Controller
 
         return [
             'advisors' => $advisors,
-            'subTeams' => $subTeams
+            'subTeams' => $subTeams,
         ];
     }
 
@@ -145,20 +141,19 @@ class ReportsController extends Controller
     /**
      * generate renewal reports function
      *
-     * @param Request $request
-     * @param RenewalBatchReportService $renewalBatchReportService
      * @return void
      */
     public function renderRenewalReport(Request $request, RenewalBatchReportService $renewalBatchReportService)
     {
-        $renewalBatches = RenewalBatch::with(['slabs', 'teams' => function ($qry){
+        $renewalBatches = RenewalBatch::with(['slabs', 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
         }])->get();
+
         return inertia('Reports/RenewalBatch', [
             'reportData' => $renewalBatchReportService->getReportData($request),
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
             'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
-            'renewalBatchesList' => $renewalBatches
+            'renewalBatchesList' => $renewalBatches,
         ]);
     }
 }

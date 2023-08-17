@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use OwenIt\Auditing\Auditable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class RenewalBatch extends Model implements AuditableContract
@@ -15,15 +15,17 @@ class RenewalBatch extends Model implements AuditableContract
     /**
      * @var mixed
      */
-    const RENEWALS_VOLUME    =   'Renewals Volume';
-    const RENEWALS_VALUE     =   'Renewals Value';
-    const BDM                =   'BDM';
+    const RENEWALS_VOLUME = 'Renewals Volume';
+
+    const RENEWALS_VALUE = 'Renewals Value';
+    const BDM = 'BDM';
 
     /**
      * @var mixed
      */
-    const SEGMENT_TYPE_VOLUME   =   'volume';
-    const SEGMENT_TYPE_VALUE    =   'value';
+    const SEGMENT_TYPE_VOLUME = 'volume';
+
+    const SEGMENT_TYPE_VALUE = 'value';
 
     /**
      * Const teams list
@@ -34,7 +36,7 @@ class RenewalBatch extends Model implements AuditableContract
     [
         self::RENEWALS_VALUE,
         self::RENEWALS_VOLUME,
-        self::BDM
+        self::BDM,
     ];
 
     /**
@@ -56,21 +58,16 @@ class RenewalBatch extends Model implements AuditableContract
     protected $fillable = [
         'name',
         'start_date',
-        'end_date'
+        'end_date',
     ];
-
 
     /**
      * RELATIONS
      */
 
-
     /**
      * get renewal batch team wise slabs function
-     *
-     * @return BelongsToMany
      */
-
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -86,10 +83,7 @@ class RenewalBatch extends Model implements AuditableContract
 
     /**
      * get renewal batch slab wise teams function
-     *
-     * @return BelongsToMany
      */
-
     public function slabs(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -105,8 +99,6 @@ class RenewalBatch extends Model implements AuditableContract
 
     /**
      * get renewal batch segment wise advisors function
-     *
-     * @return BelongsToMany
      */
     public function segmentAdvisors(): BelongsToMany
     {
