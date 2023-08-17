@@ -7,7 +7,6 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
-import { useCan } from '../../Composables/can';
 
 defineProps({
   quote: Object,
@@ -59,15 +58,17 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -110,10 +111,10 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.device }}</dd>
           </div>
 
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">IS ECOMMERCE</dt>
             <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
-        </div>
+          </div>
         </dl>
       </div>
 
@@ -149,17 +150,19 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote?.currently_insured_with?.text }}</dd>
           </div>
 
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <div>
-                <x-tooltip position="bottom">
-                    <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                        Parent Ref-ID
-                    </label>
-                    <template #tooltip> Parent Reference ID </template>
-                </x-tooltip>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
             </div>
             <div>{{ quote.parent_duplicate_quote_id }}</div>
-        </div>
+          </div>
         </dl>
       </div>
 
@@ -304,6 +307,8 @@ const permissionsEnum = page.props.permissionsEnum;
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
     />
+
+    <EmbeddedProducts :data="epTransactions" />
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" />
 
