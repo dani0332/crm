@@ -2,6 +2,7 @@
 
 namespace App\Exports;
 
+use Illuminate\Support\Facades\Config;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -56,8 +57,8 @@ class HealthQuotesExport implements FromQuery, WithHeadings, WithMapping, Should
             $quote->quote_status_id_text,
             $quote->advisor_id_text,
             $quote->wcu_id_text,
-            date('d-m-Y H:i:s', strtotime($quote->created_at)),
-            date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+            date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
+            date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->health_team_type,
             $quote->transapp_code,
             $quote->lost_reason,

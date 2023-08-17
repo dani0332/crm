@@ -8,6 +8,7 @@ use App\Repositories\CycleQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
+use Illuminate\Support\Facades\Config;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -153,8 +154,8 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->dob_formatted,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium,
                     $quote->policy_number,
                     $quote->source,
@@ -169,8 +170,8 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->last_name,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->source,
                     optional($quote->petQuoteRequestDetail)->lostReason?->text,
                     $quote->premium,
@@ -196,8 +197,8 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->last_name,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium,
                     $quote->policy_number,
                     $quote->source,
