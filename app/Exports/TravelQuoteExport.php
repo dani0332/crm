@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Repositories\TravelQuoteRepository;
-use Illuminate\Support\Facades\Config;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -51,8 +50,8 @@ class TravelQuoteExport implements FromCollection, WithHeadings, WithMapping, Sh
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
-            date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
-            date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->dob,
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,

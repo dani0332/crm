@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Repositories\LifeQuoteRepository;
-use Illuminate\Support\Facades\Config;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -45,8 +44,8 @@ class LifeQuotesExport implements FromCollection, WithHeadings, WithMapping, Sho
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
-            date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
-            date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->transapp_code,
             $quote->premium,
             $quote->policy_number,

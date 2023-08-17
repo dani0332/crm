@@ -4,7 +4,6 @@ namespace App\Exports;
 
 use App\Enums\QuoteTypes;
 use App\Repositories\BusinessQuoteRepository;
-use Illuminate\Support\Facades\Config;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -55,8 +54,8 @@ class BusinessQuoteExport implements FromCollection, WithHeadings, WithMapping, 
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             optional($quote->advisor)->name,
             optional($quote->quoteStatus)->text,
-            date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
-            date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->premium,
             $quote->number_of_employees,
             optional($quote->businessTypeOfInsurance)->text,

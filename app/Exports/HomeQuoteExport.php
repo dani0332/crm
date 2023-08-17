@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Repositories\HomeQuoteRepository;
-use Illuminate\Support\Facades\Config;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -44,8 +43,8 @@ class HomeQuoteExport implements FromCollection, WithHeadings, WithMapping, Shou
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
-            date(Config::get('constants.datetime_format'), strtotime($quote->created_at)),
-            date(Config::get('constants.datetime_format'), strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             optional($quote->homeQuoteRequestDetail)->transapp_code,
             $quote->source,
             optional($quote->homeQuoteRequestDetail)->lostReason?->text,
