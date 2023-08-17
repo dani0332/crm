@@ -3,7 +3,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
-$websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
+$websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 @endphp
 <div class="row">
   <div class="col-md-12 col-sm-12">
@@ -40,6 +40,10 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							@if(!isset($transaction->id))
 								@continue;
 							@endif
+              @php
+                $pwDoc = json_decode($transaction->product->embeddedProduct->company_documents)[0]->path;
+                $pwDoc = $pwDoc !== '' ? $websiteURL.$pwDoc: '';
+              @endphp
             <tr>
               <td>
                 <input type="checkbox" class="car_ep_checkbox" name="toggle_plans_checkbox" value="" />
@@ -47,7 +51,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
               <td>{{ $transaction->code}}</td>
               <td>{{ $transaction->product->embeddedProduct->display_name }}</td>
               <td>{{ $transaction->price_with_vat }}</td>
-              <td></td>
+              <td>N/A</td>
               <td>{{ $transaction->updated_at->format('d-m-Y h:m:s') }}</td>
               <td>{{ $transaction->paymentStatus->text }}</td>
               <td>
@@ -55,13 +59,12 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                 <button class="btn btn-success btn-sm">
                    Send Documents 
                 </button>
-                <!-- {{ $transaction->product->embeddedProduct->company_documents }} -->
                 <button class="btn btn-warning btn-sm">
                 Download Certificate
                 </button>
-                <button class="btn btn-info btn-sm">
-                Download Product Wordings
-                </button>
+                <a href="{{$pwDoc}}" target="_blank" class="btn btn-info btn-sm {{ $pwDoc == '' ? 'disabled': ''}}">
+                  Download Product Wordings
+                </a>
                 </div>
               </td>
             </tr>

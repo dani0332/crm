@@ -28,7 +28,7 @@ const epTable = reactive({
     },
     {
       text: 'EP Status',
-      value: '',
+      value: 'ep_status',
     },
     {
       text: 'Last Updated Date',
@@ -56,7 +56,9 @@ const ppDoc = str => {
     <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Embedded Products</h3>
       <div class="flex flex-wrap gap-3">
-        <x-button size="sm"> Copy Payment Link </x-button>
+        <x-button v-if="selectedItems.length > 0" size="sm">
+          Copy Payment Link
+        </x-button>
       </div>
     </div>
 
@@ -69,6 +71,8 @@ const ppDoc = str => {
       hide-rows-per-page
       hide-footer
     >
+      <template #item-ep_status="{ ep_status }"> N/A </template>
+
       <template #item-updated_at="{ updated_at }">
         {{ dateFormat(updated_at) }}
       </template>
