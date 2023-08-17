@@ -35,9 +35,10 @@ class ApiController extends Controller
         $quoteType = $request['attributes']['quoteType'];
         $quoteId = $request['attributes']['CDBID'];
         if ($request->has('attributes') && isset($quoteType) && isset($quoteId)) {
-            if($quoteType == CarQuote::class){
+            if ($quoteType == CarQuote::class) {
                 dispatch(new CarAllocationJob(app(CarAllocationService::class), $quoteId));
             }
+
             return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
         }
     }
