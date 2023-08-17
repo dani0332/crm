@@ -62,7 +62,7 @@ class CommercialKeywordsController extends Controller
     public function store(Request $request)
     {
         $validateArray = [
-            'name' => 'required|max:255',
+            'name' => 'required|max:255|unique:commercial_keywords,name',
         ];
 
         $this->validate($request, $validateArray);
@@ -110,7 +110,7 @@ class CommercialKeywordsController extends Controller
     public function update(Request $request, $id)
     {
         $validateArray = [
-            'name' => 'required',
+            'name' => 'required|max:255|unique:commercial_keywords,name,except,id',
         ];
         $this->validate($request, $validateArray);
 

@@ -409,7 +409,8 @@ class HandleInertiaRequests extends Middleware
         }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList,
+            PermissionsEnum::TeamsList,PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
@@ -437,7 +438,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::QUAD_CONFIG_LIST,
                             PermissionsEnum::TIER_CONFIG_LIST,
                             PermissionsEnum::COMMERCIAL_KEYWORDS,
-                            PermissionsEnum::CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION
+                            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES
                         ]),
                         'Allocation Config',
                         url('generic/tier'),
@@ -468,7 +469,7 @@ class HandleInertiaRequests extends Middleware
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                             ->addIf(
-                                auth()->user()->can(PermissionsEnum::CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION),
+                                auth()->user()->can(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES),
                                 'Configure Commercial Vehicles',
                                 route('admin.configure.commerical.vehicles'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])

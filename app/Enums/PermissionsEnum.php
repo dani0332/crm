@@ -213,6 +213,16 @@ final class PermissionsEnum extends Enum
     const RenewalsBatches = 'renewals-batches';
     const CarQuoteSearch = 'car-quotes-search';
     const UtmLeadsSalesReport = 'utm-leads-sales-report';
-    const COMMERCIAL_KEYWORDS    =   'commercial-keywords';
-    const CAR_MAKE_MODEL_COMMERCIAL_ALLOCATION  =   'car-make-model-commercial-allocation';
+    const COMMERCIAL_KEYWORDS    =   'admin-commercial-keywords';
+    const COMMERCIAL_KEYWORDS_SHOW    =   'admin-commercial-keywords-show';
+    const COMMERCIAL_KEYWORDS_CREATE    =   'admin-commercial-keywords-create';
+    const COMMERCIAL_KEYWORDS_STORE    =   'admin-commercial-keywords-store';
+    const COMMERCIAL_KEYWORDS_EDIT    =   'admin-commercial-keywords-edit';
+    const COMMERCIAL_KEYWORDS_UPDATE    =   'admin-commercial-keywords-update';
+    const CONFIGURE_COMMERCIAL_VEHICLES  =   'admin-configure-commerical-vehicles';
+    const CONFIGURE_COMMERCIAL_VEHICLES_SHOW  =   'admin-configure-commerical-vehicles-show';
+    const CONFIGURE_COMMERCIAL_VEHICLES_CREATE  =   'admin-configure-commerical-vehicles-create';
+    const CONFIGURE_COMMERCIAL_VEHICLES_STORE  =   'admin-configure-commerical-vehicles-store';
+    const CONFIGURE_COMMERCIAL_VEHICLES_EDIT  =   'admin-configure-commerical-vehicles-edit';
+
 }
