@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -96,6 +97,11 @@ class PetQuoteController extends Controller
 
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
 
+        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', QuoteTypes::PET->id())
+            ->where('quote_request_id', $quote->id)
+            ->get();
+
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
@@ -111,6 +117,7 @@ class PetQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
+            'epTransactions' => $epTransactions,
         ]);
     }
 

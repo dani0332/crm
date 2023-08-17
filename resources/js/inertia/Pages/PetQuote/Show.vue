@@ -24,6 +24,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
+  epTransactions: Array,
 });
 
 const page = usePage();

@@ -23,6 +23,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  epTransactions: Array,
 });
 
 const page = usePage();
@@ -311,6 +312,8 @@ const permissionsEnum = page.props.permissionsEnum;
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
     />
+
+    <EmbeddedProducts :data="epTransactions" />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
 

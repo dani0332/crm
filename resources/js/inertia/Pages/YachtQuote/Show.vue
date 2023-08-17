@@ -21,6 +21,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  epTransactions: Array,
 });
 
 const page = usePage();

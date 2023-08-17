@@ -95,7 +95,10 @@ class YachtQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $epTransactions = EmbeddedTransactionRepository::byQuoteTypeId(QuoteTypes::YACHT->id(), $quote->id)->get();
+        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', QuoteTypes::YACHT->id())
+            ->where('quote_request_id', $quote->id)
+            ->get();
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
@@ -111,6 +114,7 @@ class YachtQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'epTransactions' => $epTransactions,
         ]);
     }
 

@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-// import axios from 'axios';
-
 defineProps({
   quote: Object,
   leadStatuses: Array,
@@ -17,6 +12,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   isBetaUser: Boolean,
   can: Object,
+  epTransactions: Array,
 });
 
 const page = usePage();

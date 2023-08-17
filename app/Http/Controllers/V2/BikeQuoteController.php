@@ -10,6 +10,7 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -69,9 +70,11 @@ class BikeQuoteController extends Controller
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('BikeQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
+        return inertia(
+            'BikeQuote/Form',
+            array_merge($data, [
+                'quote' => $quote,
+            ])
         );
     }
 
@@ -98,6 +101,11 @@ class BikeQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
+        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', QuoteTypes::BIKE->id())
+            ->where('quote_request_id', $quote->id)
+            ->get();
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
@@ -112,6 +120,7 @@ class BikeQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'epTransactions' => $epTransactions,
         ]);
     }
 

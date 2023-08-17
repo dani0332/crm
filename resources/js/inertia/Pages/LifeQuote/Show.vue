@@ -11,6 +11,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   lostReasons: Array,
   quoteStatusEnum: Object,
+  epTransactions: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');

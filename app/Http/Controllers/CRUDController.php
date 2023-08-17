@@ -606,14 +606,14 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
+            $paymentMethods = $paymentMethods?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->code,
                     'label' => $paymentMethod->name,
                 ];
             });
 
-            $insuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
                     'label' => $paymentMethod->text,
