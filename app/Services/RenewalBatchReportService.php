@@ -79,7 +79,7 @@ class RenewalBatchReportService extends BaseService
             ->map(fn ($users) => $users->name)
             ->toArray();
         // filteration of valid advisores based on roles
-        if ($authUserIsDeputyManager && !$authUserIsManager && !$authUserIsRenewalsManager) {
+        if ($authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
             $userIds = $this->walkTree($authUserId);
             foreach ($carAdvisors as $key => $value) {
                 if (!in_array($key, $userIds)) {
@@ -204,7 +204,7 @@ class RenewalBatchReportService extends BaseService
         // advisor filter
         if (isset($filters->advisors) && count($filters->advisors) > 0) {
             $query->whereIn('car_quote_request.advisor_id', $filters->advisors);
-        } else if (!isset($filters->advisors) && $authUserIsDeputyManager && !$authUserIsManager && !$authUserIsRenewalsManager) {
+        } else if (!isset($filters->advisors) && $authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
             $userIds = $this->walkTree($authUserId);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         } else if (!isset($filters->advisors) && $authUserIsAdvisor && !$authUserIsManager && !$authUserIsRenewalsManager) {
@@ -256,12 +256,13 @@ class RenewalBatchReportService extends BaseService
         if (isset($filters->subTeams)) {
             $subTeamsIds = $filters->subTeams;
             $query->whereIn('users.sub_team_id', $subTeamsIds);
-        } else if (!isset($filters->subTeams) && ( $authUserIsManager || $authUserIsRenewalsManager )&& !$authUserIsCEO && !$authUserIsAccounts) {
-            $subTeamsIds = array_keys($authUserSubTeams);
-            if(count($subTeamsIds) > 0) {
-                $query->whereIn('users.sub_team_id', $subTeamsIds);
-            }
         }
+        // else if (!isset($filters->subTeams) && ( $authUserIsManager || $authUserIsRenewalsManager )&& !$authUserIsCEO && !$authUserIsAccounts) {
+        //     $subTeamsIds = array_keys($authUserSubTeams);
+        //     if(count($subTeamsIds) > 0) {
+        //         $query->whereIn('users.sub_team_id', $subTeamsIds);
+        //     }
+        // }
 
         return $query;
     }
