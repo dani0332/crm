@@ -19,11 +19,11 @@ use Throwable;
 
 class TierAssignmentJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
-    public $tries = 3;
-    public $timeout = 117;
-    public $backoff = 3;
+    public $tries = 2;
+    public $timeout = 55;
+    public $backoff = 20;
 
     /**
      * Execute the job.
