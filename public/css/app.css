@@ -1082,6 +1082,9 @@ html.dark{
 .min-h-screen{
   min-height: 100vh;
 }
+.min-h-\[18rem\]{
+  min-height: 18rem;
+}
 .w-10{
   width: 2.5rem;
 }
@@ -2105,6 +2108,10 @@ html.dark{
 .py-px{
   padding-top: 1px;
   padding-bottom: 1px;
+}
+.py-8{
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 .\!pl-10{
   padding-left: 2.5rem !important;

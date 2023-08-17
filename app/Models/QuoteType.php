@@ -29,4 +29,9 @@ class QuoteType extends Model
 
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
+
+    public function insurerProviders()
+    {
+        return $this->belongsToMany(InsuranceProvider::class, 'insurance_provider_quote_type');
+    }
 }
