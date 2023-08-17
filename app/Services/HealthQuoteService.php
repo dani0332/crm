@@ -7,9 +7,11 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
 use App\Models\HealthQuote;
@@ -1301,5 +1303,13 @@ class HealthQuoteService extends BaseService
 
             return $response;
         }
+    }
+
+    public function getEpTransactions($id)
+    {
+        return EmbeddedTransaction::with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', QuoteTypeId::Health)
+            ->where('quote_request_id', $id)
+            ->get();
     }
 }

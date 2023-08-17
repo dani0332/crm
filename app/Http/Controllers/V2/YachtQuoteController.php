@@ -10,6 +10,7 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -93,6 +94,8 @@ class YachtQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $epTransactions = EmbeddedTransactionRepository::byQuoteTypeId(QuoteTypes::YACHT->id(), $quote->id)->get();
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
