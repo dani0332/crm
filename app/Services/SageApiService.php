@@ -18,9 +18,6 @@ class SageApiService
         $this->sageLogin        = env('SAGE_300_LOGIN');
         $this->sagePassword     = env('SAGE_300_PASSWORD');
         $this->sageRequestUrl   = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION'); 
-        //$this->sageLogin        = '';
-        //$this->sagePassword     = '';
-        //$this->sageRequestUrl   ='';
        }
 
 
@@ -28,8 +25,6 @@ class SageApiService
        {
            // Create the payload data for the POST request           
             $sageEndPoint = $this->sageRequestUrl.$endPoint;
-        
-            // echo $this->sageLogin."==".$this->sagePassword."==".$sageEndPoint;   exit;      
         
             $ch = curl_init($sageEndPoint);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -59,12 +54,8 @@ class SageApiService
                     $response = response()->json(['error' => 'Verify sage api credentials', 'code' => $httpCode], $httpCode);
                 }
 
-            } else {
-                $responseData = json_decode($response, true);
-                $response = response()->json(['success' => $responseData]);            
             }
             curl_close($ch);
-
             // Return response or handle errors
             return $response;
         }

@@ -39,7 +39,7 @@ defineProps({
 	displaySendPolicyButton: Number,
 	isRenewalUser: Boolean,
 	emailStatuses: Array,
-	carQuotePlanAddons: Array
+	carQuotePlanAddons: Array,
 });
 const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
@@ -63,19 +63,35 @@ const leadStatusForm = useForm({
 
 
 const bookingDetailForm = useForm({
-  requestType: 'Car',
-  
+  requestType: page.props.record.id,
+  bookingDate: '',
+  invoiceDescription: '',
+  mainClassInsurance: '',
+  invoicePaymentStatus: '',
+  subClass: '',
+  insurerInvoiceDate: '',
+  brokerInvoiceNumber: '',
+  insurerPremiumTaxInvoiceNumber: '',
+  discount: '',
+  insurerCommissionTaxInvoiceNumber: '',
+  commissionPercentage: '',
+  commission: '',
+  vatOnCommission: '',
+  commissionhVatApplicable: '',
+  commissionIncludingVat: ''  
 });
 
 
 const onSubmitBookingDetails = isValid => {
   if (!isValid) return;
-  let url = `/post-sage-data`;
+  let url = `/quotes/car/post-sage-data`;
   let method = `post`;
   
   bookingDetailForm.submit(method, url, {
     preserveScroll: true,
-    onSuccess: () => {
+    onSuccess: (response) => {
+
+		//console.log('hafeez-'+JSON.stringify(response));
       //activityForm.reset();
       notification.success({
         title: 'Booking detail submitted',
@@ -84,7 +100,7 @@ const onSubmitBookingDetails = isValid => {
     }, onError: (errors) => {
       //console.error('Form submission error:', errors);
       notification.error({
-        title: 'Booking detail error',
+        title: 'Booking detail error, Enter Insurer Premium Tax Invoice Number',
         position: 'top',
       });
     },
