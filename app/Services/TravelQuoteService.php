@@ -5,8 +5,6 @@ namespace App\Services;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Models\EmbeddedTransaction;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuoteRequestDetail;
@@ -737,13 +735,5 @@ class TravelQuoteService extends BaseService
         }
 
         return $listQuotePlans;
-    }
-
-    public function getEpTransactions($id)
-    {
-        return EmbeddedTransaction::with('product.embeddedProduct', 'paymentStatus')
-            ->where('quote_type_id', QuoteTypeId::Travel)
-            ->where('quote_request_id', $id)
-            ->get();
     }
 }

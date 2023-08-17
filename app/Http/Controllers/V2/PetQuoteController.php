@@ -97,10 +97,7 @@ class PetQuoteController extends Controller
 
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
 
-        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
-            ->where('quote_type_id', QuoteTypes::PET->id())
-            ->where('quote_request_id', $quote->id)
-            ->get();
+        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::PET->id(), $quote->id);
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,

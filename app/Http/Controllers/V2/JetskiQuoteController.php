@@ -105,10 +105,7 @@ class JetskiQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
-            ->where('quote_type_id', QuoteTypes::JETSKI->id())
-            ->where('quote_request_id', $quote->id)
-            ->get();
+        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::JETSKI->id(), $quote->id);
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,

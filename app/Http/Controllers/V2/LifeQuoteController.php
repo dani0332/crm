@@ -82,10 +82,7 @@ class LifeQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
-            ->where('quote_type_id', QuoteTypes::LIFE->id())
-            ->where('quote_request_id', $quote->id)
-            ->get();
+        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::LIFE->id(), $quote->id);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),

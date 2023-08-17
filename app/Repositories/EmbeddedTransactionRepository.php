@@ -10,4 +10,12 @@ class EmbeddedTransactionRepository extends BaseRepository
     {
         return EmbeddedTransaction::class;
     }
+
+    public function fetchEpTransactions($quoteTypeId, $id)
+    {
+        return $this->with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', $quoteTypeId)
+            ->where('quote_request_id', $id)
+            ->get();
+    }
 }

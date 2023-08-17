@@ -12,6 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -115,7 +116,7 @@ class TravelController extends Controller
             unset($fields['id']);
         }
 
-        $epTransactions = $this->travelQuoteService->getEpTransactions($record->id);
+        $epTransactions = EmbeddedTransactionRepository::epTransactions(self::TYPE_ID, $record->id);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,

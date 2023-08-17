@@ -117,10 +117,7 @@ class CycleQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
 
-        $epTransactions = EmbeddedTransactionRepository::with('product.embeddedProduct', 'paymentStatus')
-            ->where('quote_type_id', QuoteTypes::CYCLE->id())
-            ->where('quote_request_id', $quote->id)
-            ->get();
+        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::CYCLE->id(), $quote->id);
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,

@@ -11,6 +11,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
@@ -27,6 +28,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\EmbeddedTransactionRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -486,7 +488,7 @@ class CRUDController extends Controller
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
 
-            $epTransactions = $this->carQuoteService->getEpTransactions($record->id);
+            $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::CAR->id(), $record->id);
 
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
@@ -532,6 +534,7 @@ class CRUDController extends Controller
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+            $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::HOME->id(), $record->id);
 
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
@@ -551,6 +554,7 @@ class CRUDController extends Controller
                 'notProductionApproval' => $notProductionApproval,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
+                'epTransactions' => $epTransactions,
             ]);
         }
 
@@ -620,7 +624,7 @@ class CRUDController extends Controller
                 ];
             })->sortBy('label')->values();
 
-            $epTransactions = $this->healthQuoteService->getEpTransactions($record->id);
+            $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::HEALTH->id(), $record->id);
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
