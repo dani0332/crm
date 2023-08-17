@@ -78,6 +78,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PRICE', value: 'premium' },
@@ -326,6 +327,10 @@ watch(
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
       </template>
+
+        <template #item-transapp_code="{ pet_quote }">
+            {{ pet_quote?.pet_quote_request_detail?.transapp_code }}
+        </template>
 
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
