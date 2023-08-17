@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-
+import LazyDocumentUploader from '../Partials/QuoteDocuments.vue';
 defineProps({
 	quote: Object,
 	leadStatuses: Array, //
@@ -39,22 +39,25 @@ defineProps({
 	displaySendPolicyButton: Number,
 	isRenewalUser: Boolean,
 	emailStatuses: Array,
-	carQuotePlanAddons: Array
+	carQuotePlanAddons: Array,
+	notesForCustomers:Array,
 });
 const page = usePage();
+const notification = useNotifications('toast');
+
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
 const is = role => useHasRole(role);
 const can = permission => useCan(permission);
+const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
 const leadStatusForm = useForm({
   modelType: 'Car',
   leadId: page.props.record.id,
   quote_uuid: page.props.record.uuid,
   assigned_to_user_id: page.props.record.advisor_id,
-  leadStatus:  null,
-//   leadStatus: page.props.record.quote_status_id || null,
+  leadStatus: page.props.record.quote_status_id || null,
   notes: page.props.record.notes || null,
   trans_code: page.props.record.transapp_code || null,
   lostReason: page.props.record.lost_reason_id || null,
@@ -147,23 +150,34 @@ const documentsTableItems = computed(() => {
 	})
 })
 
-const notesForCustomer = reactive({
+const notesForCustomersTable = reactive({
 	columns: [
 		{ text: 'Id', value: 'id' },
-		{ text: 'Description', value: '' },
+		{ text: 'Description', value: 'description' },
 		{ text: 'Created At', value: 'created_at' },
-		{ text: 'Created By', value: '' },
+		{ text: 'Created By', value: 'created_by' },
 	]
+})
+
+const notesForCustomersTableItems = computed(() => {
+	return page.props.notesForCustomers.map(notesForCustomer => {
+		return {
+			id: notesForCustomer.id,
+			description: notesForCustomer.description,
+			created_at: notesForCustomer.created_at,
+			created_by: notesForCustomer.createdby ? notesForCustomer.createdby.name : "",
+		}
+	})
 })
 
 const leadActivities = reactive({
 	columns: [
-		{ text: 'Title', value: '' },
-		{ text: 'Client Name', value: '' },
-		{ text: 'Followup Date', value: '' },
-		{ text: 'Assigned To', value: '' },
-		{ text: 'Done', value: '' },
-		{ text: 'Action', value: '' },
+		{ text: 'Title', value: 'title' },
+		{ text: 'Client Name', value: 'client_name' },
+		{ text: 'Followup Date', value: 'due_date' },
+		{ text: 'Assigned To', value: 'assignee' },
+		{ text: 'Done', value: 'status', width: 60, align: 'center' },
+		{ text: 'Action', value: 'action' },
 
 	]
 })
@@ -194,6 +208,7 @@ const customerAdditionalContactsTable = reactive({
 // history data
 const historyData = ref(null);
 const historyLoading = ref(false);
+
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
@@ -284,6 +299,7 @@ const isOptions = computed(() => {
         { value: 1, label: 'Yes' },
       ];
 });
+
 const policyDetailsForm = useForm({
   policy_number: page.props.record.policy_number || null,
   policy_start_date: page.props.record.policy_start_date || null,
@@ -291,6 +307,297 @@ const policyDetailsForm = useForm({
   premium: page.props.record.premium || null,
 });
 
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+};
+
+const modals = reactive({
+  duplicate: false,
+  doc: false,
+  addContact: false,
+  contactPrimaryConfirm: false,
+  contactDeleteConfirm:false,
+  activity:false,
+  activityConfirm:false,
+
+});
+
+const confirmData = reactive({
+  contactPrimary: null,
+});
+
+const leadDuplicateForm = useForm({
+  modelType: 'car',
+  parentType: 'car',
+  entityId: page.props.record.id,
+  entityCode: page.props.record.code,
+  entityUId: page.props.record.uid,
+  lob_team: [],
+  lob_team_sub_selection: null,
+});
+
+const openDuplicate = () => {
+  modals.duplicate = true;
+  leadDuplicateForm.reset();
+};
+
+const onCreateDuplicate = isValid => {
+  if (!isValid) return;
+  leadDuplicateForm.post('/quotes/createDuplicate', {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Quote duplicated successfully',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.duplicate = false;
+    },
+  });
+};
+
+const memberCategoryText = memberCategoryId =>
+  computed(() => {
+    return page.props.memberCategories.find(
+      category => category.id === memberCategoryId,
+    )?.text;
+  });
+
+const memberDataDocs = membersDetail => {
+  return membersDetail
+    .map(member => ({
+      id: member.id,
+      name: memberCategoryText(member.member_category_id).value,
+    }))
+    .filter(member => member.name !== undefined);
+};
+const contactLoader = ref(false);
+
+const additionalContact = useForm({
+  id: null,
+  additional_contact_type: null,
+  additional_contact_val: null,
+  quote_id: page.props.record.id,
+  customer_id: page.props.record.customer_id,
+  quote_type: 'car',
+});
+
+const onAdditionalContactSubmit = isValid => {
+  if (!isValid) return;
+  additionalContact
+    .transform(data => ({
+      ...data,
+      isInertia: true,
+    }))
+    .post(`/customer-additional-contact/add`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        additionalContact.reset();
+        notification.success({
+          title: 'Additional Contact Added',
+          position: 'top',
+        });
+      },
+      onError: err => {
+        notification.error({ title: err.error, position: 'top' });
+      },
+      onFinish: () => {
+        modals.addContact = false;
+      },
+    });
+};
+
+const additionalContactPrimary = data => {
+  modals.contactPrimaryConfirm = true;
+  confirmData.contactPrimary = data;
+};
+
+const additionalContactDelete = id => {
+  modals.contactDeleteConfirm = true;
+  confirmDeleteData.contact = id;
+};
+
+const confirmDeleteData = reactive({
+  contact: null,
+  activity: null,
+});
+
+const additionalContactPrimaryConfirmed = () => {
+  const isEmail = confirmData.contactPrimary.key === 'email';
+  router.post(
+    `/customer-additional-contact/${
+      isEmail ? confirmData.contactPrimary.id : 0
+    }/make-primary`,
+    {
+      isInertia: true,
+      quote_id: page.props.record.id,
+      key: confirmData.contactPrimary.key,
+      value: confirmData.contactPrimary.value,
+      quote_type: 'car',
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Primary Contact Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactPrimaryConfirm = false;
+      },
+    },
+  );
+};
+
+const additionalContactDeleteConfirmed = () => {
+  router.post(
+    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
+    {
+      isInertia: true,
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.error({
+          title: 'Additional Contact Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactDeleteConfirm = false;
+      },
+    },
+  );
+};
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const activityActionEdit = ref(false);
+
+const activityForm = useForm({
+  entityUId: page.props.record.uuid,
+  entityId: page.props.record.id,
+  modelType: 'Car',
+  parentType: 'Car',
+  quoteType: 1,
+  title: null,
+  description: null,
+  due_date: null,
+  assignee_id: null,
+  status: null,
+  activity_id: null,
+  uuid: null,
+});
+
+const addActivity = () => {
+  activityForm.reset();
+  activityActionEdit.value = false;
+  modals.activity = true;
+};
+
+const onActivitySubmit = isValid => {
+  if (!isValid) return;
+  if (activityActionEdit.value) {
+    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        activityForm.reset();
+        notification.success({
+          title: 'Activity Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  } else {
+    activityForm.post(`/activities/create-activity`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        activityForm.reset();
+        notification.success({
+          title: 'Activity Added',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activity = false;
+      },
+    });
+  }
+};
+
+const onActivityStatusUpdate = id => {
+  activityForm.activity_id = id;
+  activityForm.post(route('activities.updateStatus'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Lead Activity Done',
+        position: 'top',
+      });
+    },
+  });
+};
+
+const activityEdit = data => {
+  activityActionEdit.value = true;
+  modals.activity = true;
+  activityForm.activity_id = data.id;
+  activityForm.uuid = data.uuid;
+  activityForm.title = data.title;
+  activityForm.description = data.description;
+  activityForm.due_date = data.due_date
+    ? data.due_date.split(' ')[0].split('-').reverse().join('-') +
+      'T' +
+      data.due_date.split(' ')[1]
+    : null;
+  activityForm.assignee_id = data.assignee_id;
+  activityForm.status = data.status;
+};
+
+const activityDelete = id => {
+  modals.activityConfirm = true;
+  confirmDeleteData.activity = id;
+};
+
+const activityDeleteConfirmed = () => {
+  router.post(
+    `/activities/${confirmDeleteData.activity}/delete`,
+    {
+      isInertia: true,
+      quote_uuid: page.props.record.uuid,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.error({
+          title: 'Activity Deleted',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.activityConfirm = false;
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -565,7 +872,45 @@ const policyDetailsForm = useForm({
 				</Link>
 			</div>
 		</div>
+		<x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+		<template #header> Duplicate Lead </template>
+			<x-form @submit="onCreateDuplicate" :auto-focus="false">
+				<div class="grid gap-4">
+				<x-select
+					v-model="leadDuplicateForm.lob_team"
+					label="LOBs"
+					:options="
+					allowedDuplicateLOB.map(lob => ({
+						value: lob,
+						label: lob,
+					}))
+					"
+					:rules="[isRequired]"
+					placeholder="Select LOB For Duplication"
+					class="w-full"
+					multiple
+				/>
+				<!-- <x-select
+					v-model="leadDuplicateForm.lob_team_sub_selection"
+					label="Reason"
+					:rules="[rules.isRequired]"
+					class="w-full"
+					:options="[
+					{ value: 'new_enquiry', label: 'New enquiry' },
+					{ value: 'record_only', label: 'Record purposes only' },
+					]"
+				/> -->
 
+				<x-button
+					color="orange"
+					type="submit"
+					:loading="leadDuplicateForm.processing"
+				>
+					Create Duplicate
+				</x-button>
+				</div>
+			</x-form>
+		</x-modal>
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
@@ -909,8 +1254,10 @@ const policyDetailsForm = useForm({
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link>
-
+						<!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
+						<x-button @click.prevent="modals.doc = true" size="sm" color="orange">
+							Upload Documents
+						</x-button>
 						<template v-if="displaySendPolicyButton">
 							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
                             data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
@@ -953,6 +1300,15 @@ const policyDetailsForm = useForm({
 					</div>
 				</template>
 			</DataTable>
+			<x-modal v-model="modals.doc" size="xl" show-close backdrop>
+				<template #header> Upload Documents </template>
+				<LazyDocumentUploader
+				:members="memberDataDocs(membersDetail)"
+				:doc-types="documentTypes"
+				:docs="quoteDocuments || []"
+				:cdn="cdnPath"
+				/>
+			</x-modal>
 		</div> 
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -1011,6 +1367,7 @@ const policyDetailsForm = useForm({
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Notes for Customer
+					<x-tag size="sm">{{ notesForCustomers.length || 0 }}</x-tag>
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
@@ -1022,8 +1379,8 @@ const policyDetailsForm = useForm({
 			</div>
 			<DataTable
 				table-class-name="tablefixed compact"
-				:headers="notesForCustomer.columns"
-				:items="emailStatuses || []"
+				:headers="notesForCustomersTable.columns"
+				:items="notesForCustomersTableItems || []"
 				show-index
 				border-cell
 				fixed-checkbox
@@ -1057,10 +1414,11 @@ const policyDetailsForm = useForm({
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Lead Activities
+				<x-tag size="sm">{{ activities.length || 0 }}</x-tag>
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						<x-button @click.prevent="addActivity" size="sm" color="orange" class="mr-2">
 							Add Activity
 						</x-button>
 					</template>					
@@ -1076,13 +1434,23 @@ const policyDetailsForm = useForm({
 				hide-rows-per-page
 				hide-footer
 			>
+			<template #item-status="{ status, id }">
+			<x-checkbox
+				color="emerald"
+				size="xl"
+				:modelValue="status === 1"
+				:disabled="status === 1"
+				@change="onActivityStatusUpdate(id)"
+			/>
+			</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
 						<x-button
 							size="xs"
 							color="primary"
 							outlined
-							@click.prevent="onEditMember(item)"
+							:disabled="item.status === 1"
+							@click.prevent="activityEdit(item)"
 						>
 							Edit
 						</x-button>
@@ -1090,23 +1458,111 @@ const policyDetailsForm = useForm({
 							size="xs"
 							color="error"
 							outlined
-							@click.prevent="memberDelete(item.id)"
+							:disabled="item.status === 1"
+							@click.prevent="activityDelete(item.id)"
 						>
 							Delete
 						</x-button>
 					</div>
 				</template>
 			</DataTable>
+			<x-modal v-model="modals.activityConfirm" show-close backdrop>
+				<template #header> Delete Activity </template>
+				<p>Are you sure you want to delete this activity?</p>
+				<template #actions>
+				<div class="text-right space-x-4">
+					<x-button
+					size="sm"
+					ghost
+					@click.prevent="modals.activityConfirm = false"
+					>
+					Cancel
+					</x-button>
+					<x-button
+					size="sm"
+					color="error"
+					:loading="activityForm.processing"
+					@click.prevent="activityDeleteConfirmed"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+      		</x-modal>
+			<x-modal v-model="modals.activity" size="lg" show-close backdrop>
+				<template #header>
+				{{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
+				</template>
+
+				<x-form @submit="onActivitySubmit" :auto-focus="false">
+				<div class="grid gap-4">
+					<x-input
+					v-model="activityForm.title"
+					label="Title"
+					:rules="[isRequired]"
+					class="w-full"
+					/>
+
+					<x-textarea
+					v-model="activityForm.description"
+					label="Description"
+					:adjust-to-text="false"
+					class="w-full"
+					/>
+
+					<x-select
+					v-model="activityForm.assignee_id"
+					label="Assignee"
+					:options="advisorOptions"
+					:rules="[isRequired]"
+					placeholder="Select Assignee"
+					class="w-full"
+					/>
+
+					<date-picker
+					v-model="activityForm.due_date"
+					label="Due Date"
+					:rules="[isRequired]"
+					class="w-full"
+					withTime
+					:timezone="'UTC'"
+					/>
+				</div>
+
+				<div class="text-right space-x-4 mt-12">
+					<x-button size="sm" @click.prevent="modals.activity = false">
+					Cancel
+					</x-button>
+
+					<x-button
+					size="sm"
+					color="emerald"
+					:loading="activityForm.processing"
+					type="submit"
+					>
+					{{ activityActionEdit ? 'Update' : 'Save' }}
+					</x-button>
+				</div>
+				</x-form>
+      		</x-modal>
 		</div> 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Customer Additional Contacts
+					<x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
 				</h3>
 				<div>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-							Add Additional Contacts
+						<x-button
+						size="sm"
+						color="orange"
+						@click.prevent="
+							additionalContact.reset();
+							modals.addContact = true;
+						"
+						>
+						Add Additional Contacts
 						</x-button>
 						<template v-if="displaySendPolicyButton">
 							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
@@ -1135,7 +1591,7 @@ const policyDetailsForm = useForm({
 							size="xs"
 							color="primary"
 							outlined
-							@click.prevent="onEditMember(item)"
+							@click.prevent="additionalContactPrimary(item)"
 						>
 							Make Primary
 						</x-button>
@@ -1143,13 +1599,105 @@ const policyDetailsForm = useForm({
 							size="xs"
 							color="error"
 							outlined
-							@click.prevent="memberDelete(item.id)"
+							@click.prevent="additionalContactDelete(item.id)"
 						>
 							Delete
 						</x-button>
 					</div>
 				</template>
 			</DataTable>
+			<x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
+			<template #header> Delete Additional Contact </template>
+			<p>Are you sure you want to delete this?</p>
+				<template #actions>
+					<div class="text-right space-x-4">
+					<x-button
+						size="sm"
+						ghost
+						@click.prevent="modals.contactDeleteConfirm = false"
+					>
+						Cancel
+					</x-button>
+					<x-button
+						size="sm"
+						color="error"
+						@click.prevent="additionalContactDeleteConfirmed"
+						:loading="contactLoader"
+					>
+						Delete
+					</x-button>
+					</div>
+				</template>
+			</x-modal>
+			<x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+				<template #header> Primary Additional Contact </template>
+				<p>Are you sure you want to make this information as Primary?</p>
+				<template #actions>
+				<div class="text-right space-x-4">
+					<x-button
+					size="sm"
+					ghost
+					@click.prevent="modals.contactPrimaryConfirm = false"
+					>
+					Cancel
+					</x-button>
+					<x-button
+					size="sm"
+					color="emerald"
+					@click.prevent="additionalContactPrimaryConfirmed"
+					:loading="contactLoader"
+					>
+					Confirm
+					</x-button>
+				</div>
+				</template>
+      		</x-modal>
+			<x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+				<template #header> Add Additional Contacts </template>
+
+				<x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+					<div class="grid gap-4">
+						<x-select
+						v-model="additionalContact.additional_contact_type"
+						label="Type"
+						:options="[
+							{ value: 'email', label: 'Email' },
+							{ value: 'mobile_no', label: 'Mobile Number' },
+						]"
+						:rules="[isRequired]"
+						placeholder="Select Type"
+						class="w-full"
+						/>
+
+						<x-input
+						v-model="additionalContact.additional_contact_val"
+						label="Value"
+						:rules="[
+							isRequired,
+							additionalContact.additional_contact_type === 'email'
+							? isEmail
+							: isNumber,
+						]"
+						class="w-full"
+						/>
+					</div>
+
+					<div class="text-right space-x-4 mt-12">
+						<x-button size="sm" @click.prevent="modals.addContact = false">
+						Cancel
+						</x-button>
+
+						<x-button
+						size="sm"
+						color="emerald"
+						:loading="additionalContact.processing"
+						type="submit"
+						>
+						Save
+						</x-button>
+					</div>
+				</x-form>
+      		</x-modal>
 		</div> 
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
