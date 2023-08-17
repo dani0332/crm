@@ -4,7 +4,9 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
+use App\Jobs\CarAllocationJob;
 use App\Services\ApiService;
+use App\Services\CarAllocationService;
 use Illuminate\Http\Request;
 
 class ApiController extends Controller
@@ -33,6 +35,9 @@ class ApiController extends Controller
         $quoteType = $request['attributes']['quoteType'];
         $quoteId = $request['attributes']['CDBID'];
         if ($request->has('attributes') && isset($quoteType) && isset($quoteId)) {
+            if($quoteType == CarQuote::class){
+                dispatch(new CarAllocationJob(app(CarAllocationService::class), $quoteId));
+            }
             return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
         }
     }
