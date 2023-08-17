@@ -857,7 +857,7 @@ class LeadAllocationService extends BaseService
         if ($healthTeam) {
             info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
             $healthQuote->update([
-                'health_team_type' => strtolower($healthTeam->name),
+                'health_team_type' => $healthTeam->name,
             ]);
         } else {
             info('assignHealthTeamBasedOnStartingPrice team not found against : '.$healthQuote->uuid);
