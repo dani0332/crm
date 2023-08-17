@@ -31,7 +31,7 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
-  ept: Array,
+  epTransactions: Array,
 });
 
 const page = usePage();
@@ -1527,7 +1527,7 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <EmbeddedProducts :data="ept" />
+    <EmbeddedProducts :data="epTransactions" />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

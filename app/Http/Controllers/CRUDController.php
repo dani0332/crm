@@ -620,6 +620,8 @@ class CRUDController extends Controller
                 ];
             })->sortBy('label')->values();
 
+            $epTransactions = $this->healthQuoteService->getEpTransactions($record->id);
+
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -655,6 +657,7 @@ class CRUDController extends Controller
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
+                'epTransactions' => $epTransactions,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),

@@ -54,7 +54,9 @@ const ppDoc = str => {
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">Embedded Products</h3>
+      <h3 class="font-semibold text-primary-800 text-lg">
+        Embedded Products <x-tag size="sm">{{ data.length || 0 }}</x-tag>
+      </h3>
       <div class="flex flex-wrap gap-3">
         <x-button v-if="selectedItems.length > 0" size="sm">
           Copy Payment Link
@@ -79,8 +81,12 @@ const ppDoc = str => {
 
       <template #item-actions="item">
         <div class="flex flex-col gap-1">
-          <x-button size="xs" color="emerald"> Send Documents </x-button>
-          <x-button size="xs" color="#ff5e00"> Download Certificate </x-button>
+          <x-button size="xs" color="emerald" disabled>
+            Send Documents
+          </x-button>
+          <x-button size="xs" color="#ff5e00" disabled>
+            Download Certificate
+          </x-button>
           <x-button
             size="xs"
             color="primary"

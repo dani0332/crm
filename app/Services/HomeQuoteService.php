@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Models\EmbeddedTransaction;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -658,5 +660,13 @@ class HomeQuoteService extends BaseService
         }
 
         return 'true';
+    }
+
+    public function getEpTransactions($id)
+    {
+        return EmbeddedTransaction::with('product.embeddedProduct', 'paymentStatus')
+            ->where('quote_type_id', QuoteTypeId::Health)
+            ->where('quote_request_id', $id)
+            ->get();
     }
 }
