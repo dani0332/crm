@@ -30,7 +30,9 @@ class ApiController extends Controller
 
     public function assignLeads(Request $request)
     {
-        if ($request->has('attributes') && isset($request['attributes']['CDBID'])) {
+        $quoteType = $request['attributes']['quoteType'];
+        $quoteId = $request['attributes']['CDBID'];
+        if ($request->has('attributes') && isset($quoteType) && isset($quoteId)) {
             return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
         }
     }

@@ -8,10 +8,11 @@ use App\Services\CarAllocationService;
 class CarAllocationJob extends LeadAllocationJobInterface
 {
     protected CarAllocationService $carAllocationService;
-
-    public function __construct(CarAllocationService $carAllocationService)
+    protected int $quoteId;
+    public function __construct(CarAllocationService $carAllocationService, $quoteId)
     {
         $this->carAllocationService = $carAllocationService;
+        $this->quoteId = $quoteId;
     }
 
     public function handle()
@@ -50,7 +51,7 @@ class CarAllocationJob extends LeadAllocationJobInterface
 
     protected function fetchLeads(): mixed
     {
-        return $this->carAllocationService->fetchLeads();
+        return $this->carAllocationService->fetchLeads($this->quoteId);
     }
 
     protected function findTier($lead): Tier

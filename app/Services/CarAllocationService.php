@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 
 class CarAllocationService extends AllocationService
 {
-    public function fetchLeads()
+    public function fetchLeads($quoteId)
     {
         [$from, $to, $limit, $isFIFO] = $this->getAppStorageValuesForCarLeads();
 

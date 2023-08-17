@@ -29,8 +29,6 @@ class Kernel extends ConsoleKernel
 
         $schedule->job(new UserStatusUpdateJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
 
-        // $schedule->job(new CarAllocationJob(app(CarAllocationService::class)))->everyMinute()->withoutOverlapping(1)->onOneServer();
-
         $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 
         $schedule
