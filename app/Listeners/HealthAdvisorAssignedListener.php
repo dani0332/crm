@@ -2,17 +2,30 @@
 
 namespace App\Listeners;
 
-use App\Events\AdvisorAssigned;
+use App\Events\HealthAdvisorAssigned;
+use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 
-class AdvisorAssignedListener
+class HealthAdvisorAssignedListener
 {
+    protected $healthQuoteService;
+
+    /**
+     * Create the event listener.
+     *
+     * @return void
+     */
+    public function __construct(HealthQuoteService $healthService)
+    {
+        $this->healthQuoteService = $healthService;
+    }
+
     /**
      * Handle the event.
      *
      * @return void
      */
-    public function handle(AdvisorAssigned $event)
+    public function handle(HealthAdvisorAssigned $event)
     {
         info('With in AdvisorAssignedListener');
         if ($event->lead) {

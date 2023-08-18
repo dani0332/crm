@@ -7,7 +7,7 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class AdvisorAssigned
+class HealthAdvisorAssigned
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -17,7 +17,7 @@ class AdvisorAssigned
      *
      * @return void
      */
-    public function __construct(CarQuote $lead)
+    public function __construct($lead)
     {
         $this->lead = $lead;
     }
