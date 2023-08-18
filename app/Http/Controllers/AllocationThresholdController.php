@@ -13,7 +13,7 @@ class AllocationThresholdController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index()
     {
         $teams = Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB])->get();
         $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB];
@@ -30,8 +30,10 @@ class AllocationThresholdController extends Controller
     public function updateAllocation(Request $request)
     {
         $teams = $request->teams;
-        foreach ($teams as $team) {
-            Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
+        if($teams){
+            foreach ($teams as $team) {
+                Team::where('id', $team['id'])->update(['min_price' => $team['min'], 'max_price' => $team['max'], 'allocation_threshold_enabled' => true]);
+            }
         }
 
         return true;
