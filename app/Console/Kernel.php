@@ -29,7 +29,7 @@ class Kernel extends ConsoleKernel
             ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule
-            ->command('TierAssignment:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+            ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);
 
         $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
