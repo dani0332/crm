@@ -26,10 +26,6 @@ class ActivityRepository extends BaseRepository
         array_push($subOrdinateIds, Auth::user()->id);
 
         return $this->with(['assignee'])
-        ->select(
-            'activities.id as id', 'description',
-            'client_name', 'client_email', 'quote_request_id', 'quote_uuid', 'quote_type_id', 'due_date', 'title', 'status', 'assignee_id', 'uuid'
-        )
         ->whereIn('assignee_id', $subOrdinateIds)
         ->filter()
         ->orderBy('status')
