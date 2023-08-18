@@ -43,11 +43,13 @@ class Kernel extends ConsoleKernel
         $schedule->job(new UnconSubmissionReminder)
             ->tuesdays()
             ->fridays()
+            ->withoutOverlapping(1)->onOneServer()
             ->at('9:00');
 
         //send leads which are resubmitted for car sold approval yesterday
         $schedule->job((new CarSoldResubmissions))
             ->daily()
+            ->withoutOverlapping(1)->onOneServer()
             ->at('9:00');
 
         $schedule
