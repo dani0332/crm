@@ -1,12 +1,15 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ActivitesController;
+use App\Http\Controllers\AgeDiscountController;
+use App\Http\Controllers\AjaxController;
+use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\AMTController;
 use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\RoleController;
@@ -21,13 +24,11 @@ use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\RentACarController;
-use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\FailedJobsController;
 use App\Http\Controllers\V2\CentralController;
-use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HealthQuoteController;
 use App\Http\Controllers\InsuranceCompanyController;
@@ -110,6 +111,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
 
     Route::group(['middleware' => ['check_route_access']], function () {
+        Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
         Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
@@ -321,6 +323,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
+        Route::resource('allocation-threshold', AllocationThresholdController::class);
         Route::resource('team', TeamController::class);
         Route::resource('renewal-batch', RenewalBatchController::class);
         Route::resource('tier', GenericCrudController::class);

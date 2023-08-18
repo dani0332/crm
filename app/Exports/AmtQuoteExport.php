@@ -50,8 +50,8 @@ class AmtQuoteExport implements FromCollection, WithHeadings, WithMapping, Shoul
             $quote->policy_number,
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             $quote->source,
-            date('d-m-Y H:i:s', strtotime($quote->created_at)),
-            date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
         ];
     }
 }
