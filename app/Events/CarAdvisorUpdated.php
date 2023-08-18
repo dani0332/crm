@@ -11,10 +11,10 @@ class CarAdvisorUpdated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $model;
+    public $lead;
 
-    public function __construct(CarQuote $model)
+    public function __construct(CarQuote $lead)
     {
-        $this->model = $model;
+        $this->lead = $lead;
     }
 }

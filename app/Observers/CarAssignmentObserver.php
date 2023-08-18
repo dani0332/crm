@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Events\AdvisorAssigned;
+use App\Events\CarAdvisorUpdated;
 use App\Models\CarQuote;
 use Illuminate\Support\Facades\Event;
 
@@ -14,11 +14,15 @@ class CarAssignmentObserver
 
         foreach ($lead->getDirty() as $attribute => $value) {
             if ($lead->isDirty($attribute)) {
-                $changes[] = $attribute;
+                $changes[$attribute] = [
+                    'old' => $lead->getOriginal($attribute),
+                    'new' => $value,
+                ];
             }
         }
-        if ($lead->isDirty('advisor_id')) {
-            Event::dispatch(new AdvisorAssigned($lead));
+        info('following properties were changes. '.json_encode($changes));
+        if ($lead->isDirty('advisor_id') || $lead->isDirty('quote_status_id')) {
+            Event::dispatch(new CarAdvisorUpdated($lead));
         }
     }
 }

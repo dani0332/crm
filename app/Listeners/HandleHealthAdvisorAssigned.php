@@ -6,7 +6,7 @@ use App\Events\HealthAdvisorAssigned;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 
-class HealthAdvisorAssignedListener
+class HandleHealthAdvisorAssigned
 {
     protected $healthQuoteService;
 

@@ -27,20 +27,20 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        $schedule->job(new UserStatusUpdateJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+        // $schedule->job(new UserStatusUpdateJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
 
-        $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
+        // $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 
-        $schedule
-            ->command('AddBatchNumber:cron')
-            ->timezone('Asia/Dubai')
-            ->weeklyOn(1, '0:00')
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        // $schedule
+        //     ->command('AddBatchNumber:cron')
+        //     ->timezone('Asia/Dubai')
+        //     ->weeklyOn(1, '0:00')
+        //     ->onOneServer()
+        //     ->withoutOverlapping(1);
 
-        $schedule->command('telescope:prune --hours=48')->daily()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        // $schedule->command('telescope:prune --hours=48')->daily()
+        //     ->onOneServer()
+        //     ->withoutOverlapping(1);
     }
 
     /**

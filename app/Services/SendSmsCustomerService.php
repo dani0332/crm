@@ -41,29 +41,7 @@ class SendSmsCustomerService extends BaseService
         }
 
         $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$inviteCode.' to sign up! optoutMA4741';
-        try {
-            $smsEndpoint = config('constants.SMS_ENDPOINT');
-            $smsSender = config('constants.SMS_SENDER_ID');
-            $smsUsername = config('constants.SMS_USERNAME');
-            $smsPassword = config('constants.SMS_PASSWORD');
-
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->request('POST', $smsEndpoint, ['query' => [
-                'username' => $smsUsername,
-                'password' => $smsPassword,
-                'senderid' => $smsSender,
-                'to' => $customerMobile,
-                'text' => $smsMessage,
-                'type' => 'text',
-            ]]);
-
-            $responseCode = $clientRequest->getStatusCode();
-
-            info('sendMAInviteSMS - Sent - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode);
-        } catch (Exception $ex) {
-            $responseCode = $ex->getCode();
-            info('sendMAInviteSMS - Error - Response Code: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode.' | class: '.get_class());
-        }
+        $responseCode = $this->sendSMS($customerMobile, $smsMessage, $customer, $inviteCode);
 
         return $responseCode;
     }
@@ -75,36 +53,23 @@ class SendSmsCustomerService extends BaseService
             $smsUsername = config('constants.SMS_USERNAME');
             $smsPassword = config('constants.SMS_PASSWORD');
 
-            $headers = [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ];
+            $response = (new \GuzzleHttp\Client())->post($smsEndpoint, [
+                'json' => [
+                    'username' => $smsUsername,
+                    'password' => $smsPassword,
+                    'long_url' => $url,
+                    'type' => 'unique',
+                ],
+                'timeout' => 10000,
+            ]);
 
-            $body = json_encode([
-                'username' => $smsUsername,
-                'password' => $smsPassword,
-                'long_url' => $url,
-                'type' => 'unique',
-            ], JSON_UNESCAPED_SLASHES);
-
-            $client = new \GuzzleHttp\Client();
-            $clientRequest = $client->post(
-                $smsEndpoint,
-                [
-                    'headers' => $headers,
-                    'body' => $body,
-                    'timeout' => 10000,
-                ]
-            );
-
-            $response = json_decode($clientRequest->getBody()->getContents());
-            $response = $response->short_url;
-        } catch (Exception $ex) {
-            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            return json_decode($response->getBody()->getContents())->short_url;
+        } catch (\Exception $ex) {
+            $response = $ex->getCode().' '.$ex->getMessage();
             info($response);
-        }
 
-        return $response;
+            return json_encode($response);
+        }
     }
 
     private function isAfiaEmail($email)
@@ -118,5 +83,52 @@ class SendSmsCustomerService extends BaseService
         }
 
         return $isAfiaEmail;
+    }
+
+    /**
+     * @return int|mixed
+     *
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function sendSMS(mixed $customerMobile, string $smsMessage, Customer $customer, ?string $inviteCode = null): mixed
+    {
+        try {
+            $smsEndpoint = config('constants.SMS_ENDPOINT');
+            $smsSender = config('constants.SMS_SENDER_ID');
+            $smsUsername = config('constants.SMS_USERNAME');
+            $smsPassword = config('constants.SMS_PASSWORD');
+
+            $client = new \GuzzleHttp\Client();
+            $query = [
+                'username' => $smsUsername,
+                'password' => $smsPassword,
+                'senderid' => $smsSender,
+                'to' => $customerMobile,
+                'text' => $smsMessage,
+                'type' => 'text',
+            ];
+            if ($inviteCode !== null) {
+                $query['invite_code'] = $inviteCode;
+            }
+            $clientRequest = $client->request('POST', $smsEndpoint, ['query' => $query]);
+
+            $responseCode = $clientRequest->getStatusCode();
+
+            $logMessage = 'sendSMS - Sent - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email;
+            if ($inviteCode !== null) {
+                $logMessage .= ' | Invite Code: '.$inviteCode;
+            }
+            info($logMessage);
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $logMessage = 'sendSMS - Error - Response Code: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email;
+            if ($inviteCode !== null) {
+                $logMessage .= ' | Invite Code: '.$inviteCode;
+            }
+            $logMessage .= ' | class: '.get_class();
+            info($logMessage);
+        }
+
+        return $responseCode;
     }
 }
