@@ -70,7 +70,7 @@ class UpdateLeadStatusRequest extends FormRequest
 
             if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::MarketingOperations, RolesEnum::CarDeputyManager]) &&
                 isset($batch->deadline) ) {
-                if ( now()->gt($batch->deadline->deadline_date)) {
+                if ( now()->gt(($batch->deadline->deadline_date . ' 23:59:59'))) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
                 }
             }
