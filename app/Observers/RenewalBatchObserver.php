@@ -4,7 +4,6 @@ namespace App\Observers;
 
 use App\Http\Requests\RenewalBatchRequest;
 use App\Models\RenewalBatch;
-use Illuminate\Http\Request;
 
 class RenewalBatchObserver
 {
@@ -17,7 +16,6 @@ class RenewalBatchObserver
     /**
      * Handle the RenewalBatch "created" event.
      *
-     * @param  \App\Models\RenewalBatch  $renewalBatch
      * @return void
      */
     public function created(RenewalBatch $renewalBatch)
@@ -28,7 +26,6 @@ class RenewalBatchObserver
     /**
      * Handle the RenewalBatch "saved" event.
      *
-     * @param  \App\Models\RenewalBatch  $renewalBatch
      * @return void
      */
     public function saved(RenewalBatch $renewalBatch)
@@ -39,7 +36,6 @@ class RenewalBatchObserver
     /**
      * Handle the RenewalBatch "deleted" event.
      *
-     * @param  \App\Models\RenewalBatch  $renewalBatch
      * @return void
      */
     public function deleted(RenewalBatch $renewalBatch)
@@ -50,7 +46,6 @@ class RenewalBatchObserver
     /**
      * Handle the RenewalBatch "restored" event.
      *
-     * @param  \App\Models\RenewalBatch  $renewalBatch
      * @return void
      */
     public function restored(RenewalBatch $renewalBatch)
@@ -61,7 +56,6 @@ class RenewalBatchObserver
     /**
      * Handle the RenewalBatch "force deleted" event.
      *
-     * @param  \App\Models\RenewalBatch  $renewalBatch
      * @return void
      */
     public function forceDeleted(RenewalBatch $renewalBatch)
@@ -72,7 +66,6 @@ class RenewalBatchObserver
     /**
      * perform necesarry operations on model creation adn deletion function
      *
-     * @param RenewalBatch $renewalBatch
      * @return void
      */
     public function postOps(RenewalBatch $renewalBatch)
@@ -95,7 +88,7 @@ class RenewalBatchObserver
 
                     $pivotColumnsData['team_id'] = $team;
 
-                    foreach ($valueTypes as $type =>  $value) {
+                    foreach ($valueTypes as $type => $value) {
                         $pivotColumnsData[strtolower($type)] = $value;
                     }
 

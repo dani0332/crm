@@ -2,19 +2,19 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\User;
-use App\Enums\RolesEnum;
-use App\Models\CarQuote;
-use App\Enums\quoteTypeCode;
-use App\Models\RenewalBatch;
 use App\Enums\LeadSourceEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
+use App\Models\CarQuote;
+use App\Models\RenewalBatch;
 use App\Models\Team;
+use App\Models\User;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class RenewalBatchReportService extends BaseService
@@ -25,7 +25,7 @@ class RenewalBatchReportService extends BaseService
     /**
      * get report data function
      *
-     * @param Request $request
+     * @param  Request  $request
      * @return void
      */
     public function getReportData($request)
@@ -87,13 +87,13 @@ class RenewalBatchReportService extends BaseService
         if ($authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
             $userIds = $this->walkTree($authUserId);
             foreach ($carAdvisors as $key => $value) {
-                if (!in_array($key, $userIds)) {
+                if (! in_array($key, $userIds)) {
                     unset($carAdvisors[$key]);
                 }
             }
         }
         // get all available segments list
-        $segments  = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
+        $segments = array_merge(['all'], RenewalBatch::SGEMENT_TYPES_LIST);
         //teams listing as per auth roles
         if ($authUserIsCEO || $authUserIsAccounts) {
             $authUserSubTeams = Team::where('is_active', true)
@@ -112,6 +112,7 @@ class RenewalBatchReportService extends BaseService
 
             $authUserSubTeams = array_reduce($authUserSubTeams, function ($carry, $item) {
                 $carry[$item['id']] = $item['name'];
+
                 return $carry;
             }, []);
         }
@@ -131,19 +132,19 @@ class RenewalBatchReportService extends BaseService
             ->toArray();
 
         return [
-            'advisors'  =>  $carAdvisors,
-            'segments'  =>  $segments,
-            'subTeams'  =>  $authUserSubTeams,
-            'teams'     =>  $authUserTeams,
-            'batches'   =>  $batches,
+            'advisors' => $carAdvisors,
+            'segments' => $segments,
+            'subTeams' => $authUserSubTeams,
+            'teams' => $authUserTeams,
+            'batches' => $batches,
         ];
     }
 
     /**
      * apply all relevant filters function
      *
-     * @param Query $query
-     * @param Request $filters
+     * @param  Query  $query
+     * @param  Request  $filters
      * @return void
      */
     public function applyFilters($query, $filters)
@@ -155,10 +156,10 @@ class RenewalBatchReportService extends BaseService
         /**
          * check auth user roles
          */
-        $authUserIsManager  =   auth()->user()->hasRole(RolesEnum::CarManager);
+        $authUserIsManager = auth()->user()->hasRole(RolesEnum::CarManager);
         $authUserIsRenewalsManager = auth()->user()->hasRole(RolesEnum::RenewalsManager);
-        $authUserIsAdvisor  =   auth()->user()->hasRole(RolesEnum::CarAdvisor);
-        $authUserIsDeputyManager  =   auth()->user()->hasRole(RolesEnum::CarDeputyManager);
+        $authUserIsAdvisor = auth()->user()->hasRole(RolesEnum::CarAdvisor);
+        $authUserIsDeputyManager = auth()->user()->hasRole(RolesEnum::CarDeputyManager);
         $authUserIsCEO = auth()->user()->hasRole(RolesEnum::SeniorManagement);
         $authUserIsAccounts = auth()->user()->hasRole(RolesEnum::Accounts);
         /**
@@ -168,13 +169,14 @@ class RenewalBatchReportService extends BaseService
         $authUserSubTeams = $this->getSubTeamsByTeamIds($authUserTeamsIds)->toArray();
         $authUserSubTeams = array_reduce($authUserSubTeams, function ($carry, $item) {
             $carry[$item['id']] = $item['name'];
+
             return $carry;
         }, []);
 
         /**
          * query as per auth roles
          */
-        if (!$authUserIsAdvisor) {
+        if (! $authUserIsAdvisor) {
             $query->addSelect(
                 DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') THEN 1 ELSE 0 END) as renewed'),
@@ -225,37 +227,37 @@ class RenewalBatchReportService extends BaseService
         // advisor filter
         if (isset($filters->advisors) && count($filters->advisors) > 0) {
             $query->whereIn('car_quote_request.advisor_id', $filters->advisors);
-        } else if (!isset($filters->advisors) && $authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
+        } elseif (! isset($filters->advisors) && $authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
             $userIds = $this->walkTree($authUserId);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        } else if (!isset($filters->advisors) && $authUserIsAdvisor && !$authUserIsManager && !$authUserIsRenewalsManager) {
+        } elseif (! isset($filters->advisors) && $authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager) {
             $query->where('car_quote_request.advisor_id', $authUserId);
         }
         // segment wise advisors filter
         $volumeSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
-            $qry->where('segment_type',  RenewalBatch::SEGMENT_TYPE_VOLUME);
+            $qry->where('segment_type', RenewalBatch::SEGMENT_TYPE_VOLUME);
         })
             ->select('id')
             ->pluck('id')
             ->toArray();
 
-        $volumeSegmentAdvisorsIdString = !empty($volumeSegmentAdvisorsId) ? implode(',', $volumeSegmentAdvisorsId) : '0';
+        $volumeSegmentAdvisorsIdString = ! empty($volumeSegmentAdvisorsId) ? implode(',', $volumeSegmentAdvisorsId) : '0';
 
         $valueSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
-            $qry->where('segment_type',  RenewalBatch::SEGMENT_TYPE_VALUE);
+            $qry->where('segment_type', RenewalBatch::SEGMENT_TYPE_VALUE);
         })
             ->select('id')
             ->pluck('id')
             ->toArray();
 
-        $valueSegmentAdvisorsIdString = !empty($valueSegmentAdvisorsId) ? implode(',', $valueSegmentAdvisorsId) : '0';
+        $valueSegmentAdvisorsIdString = ! empty($valueSegmentAdvisorsId) ? implode(',', $valueSegmentAdvisorsId) : '0';
 
         if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
             $query->addSelect(
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as total_by_volume_segment_advisors')
             );
-        } else if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
+        } elseif (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
             $query->addSelect(
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
                 DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as total_by_value_segment_advisors')

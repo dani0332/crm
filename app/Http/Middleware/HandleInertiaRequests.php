@@ -121,7 +121,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
-            PermissionsEnum::RenewalBatchReport
+            PermissionsEnum::RenewalBatchReport,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
@@ -414,7 +414,7 @@ class HandleInertiaRequests extends Middleware
         }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList, PermissionsEnum::RenewalBatchConfigs
+            PermissionsEnum::TeamsList, PermissionsEnum::RenewalBatchConfigs,
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section

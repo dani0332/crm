@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Enums\RolesEnum;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class RenewalBatchRequest extends FormRequest
 {
@@ -42,14 +42,13 @@ class RenewalBatchRequest extends FormRequest
             while ($i >= 1) {
 
                 if (in_array($i, $optionalSlabsId)) {
-                    $rules['slab.' . $i . ''] = 'nullable|sometimes|array';
+                    $rules['slab.'.$i.''] = 'nullable|sometimes|array';
                 } else {
-                    $rules['slab.' . $i . ''] = 'required|array';
+                    $rules['slab.'.$i.''] = 'required|array';
                 }
 
                 $previousSlabIndex = $i - 1;
                 $teamIds = array_keys($slabArray[$i]);
-
 
                 foreach ($teamIds as $teamId) {
 
@@ -57,10 +56,10 @@ class RenewalBatchRequest extends FormRequest
                         in_array($i, $optionalSlabsId)
                     ) ?
                         ['sometimes', 'nullable'] : ($previousSlabIndex === 0 ? ['required', 'numeric'] :
-                            ['required', 'numeric', 'gt:' . $slabArray[$previousSlabIndex][$teamId]['Max'], 'lt:' . ($slabArray[$previousSlabIndex][$teamId]['Max'] + 2)]
+                            ['required', 'numeric', 'gt:'.$slabArray[$previousSlabIndex][$teamId]['Max'], 'lt:'.($slabArray[$previousSlabIndex][$teamId]['Max'] + 2)]
                         );
 
-                    $rules['slab.' . $i . '.' . $teamId . '.Min'] = $flexRequired;
+                    $rules['slab.'.$i.'.'.$teamId.'.Min'] = $flexRequired;
                 }
 
                 $teamIds = array_keys($slabArray[$i]);
@@ -70,14 +69,14 @@ class RenewalBatchRequest extends FormRequest
                         in_array($i, $optionalSlabsId)
                     ) ?
                         ['sometimes', 'nullable'] :
-                        ['required', 'numeric', 'gt:' . $slabArray[$i][$teamId]['Min']];
+                        ['required', 'numeric', 'gt:'.$slabArray[$i][$teamId]['Min']];
 
-                    $rules['slab.' . $i . '.' . $teamId . '.Max'] = $flexRequired;
+                    $rules['slab.'.$i.'.'.$teamId.'.Max'] = $flexRequired;
                 }
 
                 $i--;
                 if ($i === 1) {
-                    $rules['slab.' . $i . ''] = 'required|array';
+                    $rules['slab.'.$i.''] = 'required|array';
                 }
             }
         }
@@ -95,12 +94,12 @@ class RenewalBatchRequest extends FormRequest
             'end_date' => [
                 'required',
                 'date',
-                'after:start_date'
+                'after:start_date',
             ],
             'segment_volume' => [
                 'required',
                 'array',
-                'min:1'
+                'min:1',
             ],
             'segment_volume.*' => [
                 'numeric',
@@ -109,35 +108,36 @@ class RenewalBatchRequest extends FormRequest
             'segment_value' => [
                 'required',
                 'array',
-                'min:1'
+                'min:1',
             ],
             'segment_value.*' => [
                 'numeric',
                 'different:segment_volume.*',
             ],
-            'deadline_date'  => [
+            'deadline_date' => [
                 'required',
                 'array',
                 'min:2',
-                'max:2'
+                'max:2',
             ],
-            'deadline_date.*'  => [
+            'deadline_date.*' => [
                 'required',
-                'date'
+                'date',
             ],
-            'quote_status_id'  => [
+            'quote_status_id' => [
                 'required',
                 'array',
                 'min:2',
-                'max:2'
+                'max:2',
             ],
-            'quote_status_id.*'  => [
+            'quote_status_id.*' => [
                 'required',
-                'integer'
+                'integer',
             ],
         ];
 
         $finalRulesSet = array_merge($rules, $simpleRules);
+
         return $finalRulesSet;
     }
 

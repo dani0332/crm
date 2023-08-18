@@ -16,19 +16,21 @@ class SlabsTableSeeder extends Seeder
     {
         $slabs = Slab::all();
 
-        if (count($slabs) > 0) return;
+        if (count($slabs) > 0) {
+            return;
+        }
 
         Slab::create([
-            'title' => 'Slab 1'
+            'title' => 'Slab 1',
         ]);
         Slab::create([
-            'title' => 'Slab 2'
+            'title' => 'Slab 2',
         ]);
         Slab::create([
-            'title' => 'Slab 3'
+            'title' => 'Slab 3',
         ]);
         Slab::create([
-            'title' => 'Slab 4'
+            'title' => 'Slab 4',
         ]);
     }
 }

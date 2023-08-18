@@ -3,14 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Http\Requests\RenewalBatchRequest;
+use App\Models\RenewalBatch;
 use App\Models\Slab;
 use App\Models\Team;
-use App\Enums\quoteTypeCode;
-use App\Models\RenewalBatch;
-use Illuminate\Http\Request;
 use App\Services\CRUDService;
+use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
-use App\Http\Requests\RenewalBatchRequest;
 
 class RenewalBatchController extends Controller
 {
@@ -75,7 +75,6 @@ class RenewalBatchController extends Controller
     /**
      * store renewal batch function
      *
-     * @param RenewalBatchRequest $request
      * @return void
      */
     public function store(RenewalBatchRequest $request)
@@ -84,7 +83,7 @@ class RenewalBatchController extends Controller
 
         RenewalBatch::create($attributes);
 
-        return redirect()->route('renewal-batch.index')->with('message', "Renewal Batch Successfully created");
+        return redirect()->route('renewal-batch.index')->with('message', 'Renewal Batch Successfully created');
     }
 
     /**
@@ -145,7 +144,7 @@ class RenewalBatchController extends Controller
 
         $renewalBatch->update($attributes);
 
-        return redirect()->route('renewal-batch.index')->with('message', "Renewal Batch Successfully updated");
+        return redirect()->route('renewal-batch.index')->with('message', 'Renewal Batch Successfully updated');
     }
 
     /**
@@ -161,18 +160,14 @@ class RenewalBatchController extends Controller
 
     /**
      * get required batch data with preprocessing function
-     *
-     * @param RenewalBatch|null $renewalBatch
-     * @return Array
      */
-    public function getProcessedBatchData(RenewalBatch $renewalBatch=null):Array
+    public function getProcessedBatchData(RenewalBatch $renewalBatch = null): array
     {
-        $volumeSegmentAdvisorsId    = [];
-        $valueSegmentAdvisorsId     = [];
-        $lastBatchSlabs             = [];
+        $volumeSegmentAdvisorsId = [];
+        $valueSegmentAdvisorsId = [];
+        $lastBatchSlabs = [];
 
-        if (!empty($renewalBatch) && !empty($renewalBatch->segmentAdvisors() && !empty($renewalBatch->slabs())))
-        {
+        if (! empty($renewalBatch) && ! empty($renewalBatch->segmentAdvisors() && ! empty($renewalBatch->slabs()))) {
             $volumeSegmentAdvisorsId = $renewalBatch->segmentAdvisors()
                 ->where('segment_type', RenewalBatch::SEGMENT_TYPE_VOLUME)
                 ->pluck('users.id')
@@ -185,13 +180,12 @@ class RenewalBatchController extends Controller
 
             $lastBatchSlabs = $renewalBatch->slabs()->orderBy('id')->get()->groupBy('pivot.slab_id');
 
-            $lastBatchSlabs = $lastBatchSlabs->map(function($lastBatchSlab){
+            $lastBatchSlabs = $lastBatchSlabs->map(function ($lastBatchSlab) {
                 return $lastBatchSlab->keyBy('pivot.team_id');
             });
         }
 
-        if (!empty($renewalBatch->deadlines))
-        {
+        if (! empty($renewalBatch->deadlines)) {
             $carSoldDeadline = $renewalBatch->deadlines()
                 ->where('quote_status_id', QuoteStatusEnum::CarSold)
                 ->pluck('deadline_date')
@@ -222,7 +216,7 @@ class RenewalBatchController extends Controller
             'carAdvisors' => $carAdvisors,
             'slabs' => $slabs,
             'carSoldDeadline' => isset($carSoldDeadline) ? $carSoldDeadline : null,
-            'uncontactableDeadline' => isset($uncontactableDeadline) ? $uncontactableDeadline : null
+            'uncontactableDeadline' => isset($uncontactableDeadline) ? $uncontactableDeadline : null,
         ];
     }
 }

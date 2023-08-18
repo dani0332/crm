@@ -69,7 +69,7 @@ class TeamController extends Controller
         $validateArray = [
             'name' => 'required',
             'type' => 'required',
-            'slabs_count' => 'required|numeric'
+            'slabs_count' => 'required|numeric',
         ];
         if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';
@@ -130,7 +130,7 @@ class TeamController extends Controller
         $validateArray = [
             'name' => 'required',
             'type' => 'required',
-            'slabs_count' => 'required|numeric'
+            'slabs_count' => 'required|numeric',
         ];
         if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';

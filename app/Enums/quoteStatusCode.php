@@ -34,6 +34,6 @@ final class quoteStatusCode extends Enum
     const FAKE = 'Fake';
     const GROUP_MEDICAL = 'Group Medical';
     const QualificationPending = 'Qualification Pending';
-    const CAR_SOLD  =   'Car Sold';
-    const UNCONTACTABLE =   'Uncontactable';
+    const CAR_SOLD = 'Car Sold';
+    const UNCONTACTABLE = 'Uncontactable';
 }

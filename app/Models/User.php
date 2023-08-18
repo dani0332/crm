@@ -2,20 +2,19 @@
 
 namespace App\Models;
 
-use Auth;
 use App\Enums\RolesEnum;
-use OwenIt\Auditing\Auditable;
-use Laravel\Sanctum\HasApiTokens;
-use Laravel\Jetstream\HasProfilePhoto;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Notifications\Notifiable;
-use Laravel\Fortify\TwoFactorAuthenticatable;
+use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
+use Laravel\Fortify\TwoFactorAuthenticatable;
+use Laravel\Jetstream\HasProfilePhoto;
+use Laravel\Sanctum\HasApiTokens;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements AuditableContract
 {
@@ -269,10 +268,8 @@ class User extends Authenticatable implements AuditableContract
 
     /**
      * get renewal batches segment wise for a particularadvisors function
-     *
-     * @return BelongsToMany
      */
-    public function renewalBatch():BelongsToMany
+    public function renewalBatch(): BelongsToMany
     {
         return $this->belongsToMany(
             RenewalBatch::class,
@@ -287,8 +284,6 @@ class User extends Authenticatable implements AuditableContract
 
     /**
      * get user all teams function
-     *
-     * @return BelongsToMany
      */
     public function teams(): BelongsToMany
     {
@@ -306,8 +301,7 @@ class User extends Authenticatable implements AuditableContract
     /**
      * get user all teams id function
      *
-     * @param int $userId
-     * @return Collection
+     * @param  int  $userId
      */
     public function getUserTeamsIds($userId): Collection
     {
