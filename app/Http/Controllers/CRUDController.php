@@ -484,11 +484,15 @@ class CRUDController extends Controller
             $lostRejectReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->get();
             $lostApproveReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_APPROVE_REASONS)->get();
 
+
             if(isCarLostStatus($record->quote_status_id)) {
                 $paymentEntityModel->load(['carLostQuoteLogs' => function($q){
                     $q->with(['advisor', 'quoteStatus', 'documents', 'actionBy'])->orderBy('id', 'desc');
                 }, 'carLostQuoteLog']);
             }
+
+            [$allowQuoteLogAction, $carLostChangeStatus] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel);
+
 
             if($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) {
                 $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
@@ -509,7 +513,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'lostRejectReasons', 'lostApproveReasons', 'daysAfterCapturedPayment'
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'lostRejectReasons', 'lostApproveReasons', 'daysAfterCapturedPayment', 'allowQuoteLogAction', 'carLostChangeStatus'
             ]));
         }
 
