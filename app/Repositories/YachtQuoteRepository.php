@@ -89,7 +89,7 @@ class YachtQuoteRepository extends BaseRepository
                 'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }
+                },
             ])->firstOrFail();
     }
 
