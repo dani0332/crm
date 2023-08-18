@@ -106,7 +106,7 @@ class TierAssignment extends Command
 
             return;
         } else {
-            info('Tier Assignment Job is turned Off');
+            info('Tier Assignment Command is turned Off');
             info('------------------- Tier Assignment Command Finished for '.$currentIteration.' -------------------');
 
             return;
