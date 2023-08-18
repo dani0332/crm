@@ -25,7 +25,6 @@ class HandleCarAdvisorUpdated
     /**
      * Handle the event.
      *
-     * @param  \App\Events\CarAdvisorUpdated  $event
      * @return void
      */
     public function handle(CarAdvisorUpdated $event)
@@ -33,12 +32,12 @@ class HandleCarAdvisorUpdated
         $lead = $event->lead;
         // Trigger emails
 
-        $this->smsService->sendSMS()
+        //$this->smsService->sendSMS();
 
     }
     public function buildSMS($lead)
     {
-        $content = "Hi ";
+        $content = 'Hi ';
         $content .= $lead->firstname;
     }
 }
