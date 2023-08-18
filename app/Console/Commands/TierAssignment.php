@@ -2,7 +2,11 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\TierAssignmentJob;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
+use App\Models\CarQuote;
+use App\Services\ApplicationStorageService;
+use App\Services\LeadAllocationService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -37,9 +41,67 @@ class TierAssignment extends Command
      *
      * @return int
      */
-    public function handle()
+    public function handle(ApplicationStorageService $applicationStorageService, LeadAllocationService $leadAllocationService)
     {
         Log::info('Tier Assignment Cron Triggered');
-        dispatch(new TierAssignmentJob());
+        $currentIteration = now();
+
+        info('------------------- Tier Assignment Job Started At : '.$currentIteration.' -------------------');
+
+        $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
+
+        $masterSwitchConfigValue = (int) config('constants.TIER_ASSIGNMENT_MASTER_SWITCH');
+
+        if ($tierAssignmentSwitch != 0 && $masterSwitchConfigValue != 0) {
+
+            $from = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_PROCESS_START_DATE);
+
+            $isFIFO = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_PICKUP_FIFO);
+
+            $to = now()->subMinutes(2)->toDateTimeString();
+
+            $carLeads = CarQuote::whereNull('tier_id')
+                ->whereBetween('created_at', [$from, $to])
+                ->where('source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
+                ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
+                ->select('id', 'tier_id', 'cost_per_lead', 'code', 'is_ecommerce', 'car_type_insurance_id', 'car_value', 'source', 'uuid',
+                    'previous_policy_expiry_date', 'email', 'mobile_no', 'car_make_id', 'car_model_id', 'is_renewal_tier_email_sent', 'created_at')
+                ->skip(0)->take(1000)
+                ->get();
+
+            foreach ($carLeads as $carLead) {
+
+                info('------------------- Processing Lead : '.$carLead->code.' -------------------');
+
+                $tier = $leadAllocationService->getTierForValue($carLead);
+
+                if ($tier != null) {
+
+                    info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
+
+                    $carLead->tier_id = $tier->id;
+
+                    $carLead->cost_per_lead = $tier->cost_per_lead;
+
+                    $carLead->save();
+
+                    info('Tier : Assignment done '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
+                } else {
+
+                    info('No tier found to car lead : '.$carLead->code);
+                }
+
+            }
+
+            info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
+
+            return;
+
+        } else {
+            info('Tier Assignment Job is turned Off');
+            info('------------------- Tier Assignment Job Finished for '.$currentIteration.' -------------------');
+
+            return;
+        }
     }
 }
