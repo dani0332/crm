@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use App\Models\LeadAllocation as LeadAllocationModel;
 use App\Services\LeadAllocationService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 
 class LeadAllocation extends Command
@@ -41,9 +40,8 @@ class LeadAllocation extends Command
      */
     public function handle(LeadAllocationService $leadAllocationService)
     {
-        Log::info('Lead Allocation Command Started');
         try {
-            info('Lead Allocation Started');
+            info('Lead Allocation Command Started');
 
             if ($leadAllocationService->shouldResetUserAssignmentCountAndAvailability()) {
                 $leadAllocationService->setAdvisorsToUnavailable();
@@ -52,13 +50,13 @@ class LeadAllocation extends Command
             $leadAllocationService->updateAllocationStatusIfNeeded();
 
             if (! $leadAllocationService->shouldCarAllocationProceed()) {
-                info('CAR Lead Allocation Job Switch is OFF');
+                info('CAR Lead Allocation Switch is OFF');
             } else {
-                info('CAR Lead Allocation Job Switch is ON and job is about to start');
+                info('CAR Lead Allocation Switch is ON and job is about to start');
                 $leadAllocationService->processCarLeads();
             }
             if (! $leadAllocationService->shouldHealthAllocationProceed()) {
-                info('Health Lead Allocation Job Switch is OFF');
+                info('Health Lead Allocation Switch is OFF');
 
                 return;
             } else {
@@ -93,7 +91,6 @@ class LeadAllocation extends Command
                         $filteredUsersByHealthTeam = $this->getUsersByHealthTeam($availableUsers, $healthTeam);
 
                         if (count($filteredLeadsByHealthTeam) > 0 && count($filteredUsersByHealthTeam) > 0) {
-
                             foreach ($filteredLeadsByHealthTeam as $lead) {
                                 info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '.$lead->uuid.' -----------------------');
 
@@ -117,10 +114,9 @@ class LeadAllocation extends Command
                 }
 
                 info('--------- Health Lead Allocation Ended ---------');
-
             }
         } catch (TimeoutException $e) {
-            info('**************** Lead Allocation Job is timed out now at : '.now().' **************** ');
+            info('**************** Lead Allocation Command is timed out now at : '.now().' **************** ');
             info('message: '.$e->getMessage());
             $this->delete();
         }
