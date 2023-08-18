@@ -24,6 +24,8 @@ class InsuranceProviderRepository extends BaseRepository
         if (! empty($quote) && count($quote->insurerProviders)) {
             return $quote->insurerProviders;
         }
+
+        return collect([]);
     }
 
     public function fetchNetworksByInsuranceProviders($request)

@@ -109,23 +109,24 @@ const paymentDetailsTable = reactive({
     },
   ],
 });
-
+const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+const selectedPlans = [];
 const availablePlansTable = reactive({
 	columns: [
 		{ text: 'Provider Name', value: 'providerName' },
-		{ text: 'Plan Name', value: '' },
-		{ text: 'Repair Type', value: '' },
-		{ text: 'Insurer Quote No.', value: '' },
-		{ text: 'TPL Limit', value: '' },
-		{ text: 'Car Trim', value: '' },
-		{ text: 'PAB cover', value: '' },
-		{ text: 'Roadside assistance', value: '' },
+		{ text: 'Plan Name', value: 'name' },
+		{ text: 'Repair Type', value: 'repairType' },
+		{ text: 'Insurer Quote No.', value: 'insurerQuoteNo' },
+		{ text: 'TPL Limit', value: 'benefits' },
+		{ text: 'Car Trim', value: 'insurerTrimText' },
+		{ text: 'PAB cover', value: 'addons' },
+		{ text: 'Roadside assistance', value: 'roadSideAssistance' },
 		{ text: 'Oman cover TPL', value: '' },
-		{ text: 'Actual Premium', value: '' },
-		{ text: 'Discounted Premium', value: '' },
-		{ text: 'Premium with VAT.', value: '' },
-		{ text: 'Excess', value: '' },
-		{ text: 'Action', value: '' },
+		{ text: 'Actual Premium', value: 'actualPremium' },
+		{ text: 'Discounted Premium', value: 'discountPremium' },
+		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+		{ text: 'Excess', value: 'excess' },
+		{ text: 'Action', value: 'actions' },
 	]
 })
 
@@ -228,28 +229,11 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
 ];
 
-const auditLogTable = reactive({
-	columns: [  
-		{ text: 'Id', value: '' },
-		{ text: 'User', value: '' },
-		{ text: 'Event', value: '' },
-		{ text: 'Old Values', value: '' },
-		{ text: 'New Values', value: '' },
-		{ text: 'Ip Address', value: '' },
-		{ text: 'Logged At', value: '' },
-	]
-})
-
 const availablePlansItems = computed(() => {
 	if (! Array.isArray(page.props.listQuotePlans)) {
 		return [];
 	}
-	return page.props.listQuotePlans.filter(plan => plan.id).map(plan => {
-		return {
-			providerName: plan.providerName,
-			
-		}
-	})
+	return page.props.listQuotePlans;
 })
 
 const paymentItems = computed(() => {
@@ -1153,34 +1137,74 @@ const activityDeleteConfirmed = () => {
 			</div>
 			<DataTable
 				table-class-name="tablefixed compact"
+				v-model:items-selected="selectedPlans"
 				:headers="availablePlansTable.columns"
 				:items="availablePlansItems || []"
-				show-index
 				border-cell
-				fixed-checkbox
 				hide-rows-per-page
-				hide-footer
+				:rows-per-page="15"
+        		:hide-footer="availablePlansItems.length < 15"
 			>
-				<template #item-action="item">
-				<div class="flex gap-2">
-					<x-button
-					size="xs"
-					color="primary"
-					outlined
-					@click.prevent="onEditMember(item)"
+			<template #item-providerName="{ providerName, isManualPlan, isRenewal, isDisabled }">
+				<p>{{ providerName }}</p>
+				<div class="flex gap-1">
+					<x-tag
+						v-if="isManualPlan"
+						size="xs"
+						color="primary"
+						class="mt-0.5 text-[10px]"
 					>
-					Edit
-					</x-button>
-					<x-button
-					size="xs"
-					color="error"
-					outlined
-					@click.prevent="memberDelete(item.id)"
+						Manual
+					</x-tag>
+					<x-tag
+						v-if="isRenewal"
+						size="xs"
+						color="success"
+						class="mt-0.5 text-[10px]"
 					>
-					Delete
-					</x-button>
+						Renewal
+					</x-tag>
+					<x-tag
+						v-if="isDisabled"
+						size="xs"
+						color="error"
+						class="mt-0.5 text-[10px]"
+					>
+					Hidden
+					</x-tag>
 				</div>
+			</template>
+			<template #item-benefits="{ benefits }">
+				<!-- <span>{{ benefits.feature }}</span> -->
+				<template v-for="feature in benefits.feature" :key="feature">
+					<span v-if="feature.code && (feature.code === permissionEnum.TPL_DAMAGE_LIMIT || feature.code === permissionEnum.DAMAGE_LIMIT)">
+						{{ feature.value }}
+					</span>
+					<span v-else-if="feature.text === permissionEnum.TPL_DAMAGE_LIMIT_TEXT">
+						{{ feature.value }}
+					</span>
 				</template>
+			</template>
+			<template #item-action="item">
+			<div class="flex gap-2">
+				<x-button
+				size="xs"
+				color="primary"
+				outlined
+				@click.prevent="onEditMember(item)"
+				>
+				Edit
+				</x-button>
+				<x-button
+				size="xs"
+				color="error"
+				outlined
+				@click.prevent="memberDelete(item.id)"
+				>
+				Delete
+				</x-button>
+			</div>
+			</template>
 			</DataTable>
 		</div> 
 
