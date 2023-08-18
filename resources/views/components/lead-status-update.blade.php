@@ -149,44 +149,8 @@ use App\Enums\LeadSourceEnum;
             <div class="x_content">
                 @php
 
-                $allowQuoteLogAction = true;
-                $carLostChangeStatus = true;
-
-                if($modeltype == quoteTypeCode::Car)
-                {
-                //mo can only change status when status is car sold / uncontactable, based on condition below
-                if(!isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-                $carLostChangeStatus = false;
-                $allowQuoteLogAction = false;
-                }
-
-                if(isCarLostStatus($lead->quote_status_id))
-                {
-                //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
-                $carLostChangeStatus = false;
-                $allowQuoteLogAction = false;
-
-                //validations for Car Advisor / Deputy Manager Role
-                if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
-                {
-                $allowQuoteLogAction = false;
-
-                if($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) { $carLostChangeStatus=true; $statuses=$statuses->whereIn('id', [$lead->quote_status_id])->all();
-                    }
-                    }
-
-                    //validations for MO role
-                    if(auth()->user()->hasRole(RolesEnum::MarketingOperations))
-                    {
-                    $carLostChangeStatus = false;
-                    if(isCarLostStatus($lead->quote_status_id) && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::PENDING)
-                    {
-                    $allowQuoteLogAction = true;
-                    $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
-                    }
-                    }
-                    }
-                    }
+                    $allowQuoteLogAction = $allowQuoteLogAction ?? true;
+                    $carLostChangeStatus = $carLostChangeStatus ?? true;
 
                     @endphp
                     <form method="POST" action="/quotes/{{$modeltype}}/{{ $lead->id }}/update-lead-status" id="lead-status-form" enctype="multipart/form-data">
