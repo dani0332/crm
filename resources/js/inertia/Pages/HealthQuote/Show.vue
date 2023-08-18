@@ -36,6 +36,7 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  healthPlanTypes: Array,
 });
 
 const page = usePage();
@@ -55,6 +56,10 @@ const fixedValue = number => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const checkPlanType = id => {
+  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
 const modals = reactive({
@@ -1321,7 +1326,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
+            <dd>{{ checkPlanType(quoteRequest.health_plan_type_id) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>

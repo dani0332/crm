@@ -20,6 +20,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
+use App\Models\HealthPlanType;
 use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -611,12 +612,14 @@ class CRUDController extends Controller
                 ];
             });
 
-            $insuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->id,
                     'label' => $paymentMethod->text,
                 ];
             })->sortBy('label')->values();
+
+            $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
@@ -652,6 +655,7 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
+                'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -1122,7 +1126,6 @@ class CRUDController extends Controller
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
             $quoteData['quoteTypeId'] = $quoteTypeId;
             $quoteData['quoteUID'] = $request->quote_uuid;
