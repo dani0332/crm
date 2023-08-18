@@ -130,17 +130,17 @@ class PetQuoteService extends BaseService
 
     public function getEntity($id)
     {
-        return $this->query->where('pqr.uuid', $id)->first();
+        return $this->query->where('pqr.uuid', $id)->firstOrFail();
     }
 
     public function getEntityPlain($id)
     {
-        return PetQuote::where('id', $id)->first();
+        return PetQuote::where('id', $id)->firstOrFail();
     }
 
     public function getSelectedLostReason($id)
     {
-        $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
+        $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->firstOrFail();
         $lostId = 0;
         if (! is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
@@ -151,7 +151,7 @@ class PetQuoteService extends BaseService
 
     public function getDetailEntity($id)
     {
-        $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->first();
+        $entity = PetQuoteRequestDetail::where('pet_quote_request_id', $id)->firstOrFail();
         if (! $entity) {
             $entity = $this->createDetailEntity($id);
         }
@@ -607,7 +607,7 @@ class PetQuoteService extends BaseService
 
     public function getEntityPlainByUUID($uuid)
     {
-        return PetQuote::where('uuid', $uuid)->first();
+        return PetQuote::where('uuid', $uuid)->firstOrFail();
     }
 
     public function validateRequest($request)
