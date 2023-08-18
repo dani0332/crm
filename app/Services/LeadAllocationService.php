@@ -14,6 +14,7 @@ use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
@@ -31,6 +32,7 @@ use App\Traits\GetUserTreeTrait;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class LeadAllocationService extends BaseService
 {
@@ -865,11 +867,51 @@ class LeadAllocationService extends BaseService
         info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
         if (now()->toTimeString() >= $totalResetTime) {
             info('should total reset is true');
-            $shouldProcess = true;
-        } else {
-            info('should total reset is false');
+
+            return true;
         }
 
-        return $shouldProcess;
+        info('should total reset is false');
+
+        return false;
+    }
+
+    public function assignHealthTeamBasedOnStartingPrice($healthQuote)
+    {
+        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$healthQuote->uuid);
+
+        $priceStartingFrom = $healthQuote->price_starting_from;
+
+        $healthTeam = Team::where('allocation_threshold_enabled', true)
+            ->where('min_price', '<=', $priceStartingFrom)
+            ->where('max_price', '>=', $priceStartingFrom)
+            ->first();
+
+        if ($healthTeam) {
+            info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
+            $healthQuote->update([
+                'health_team_type' => $healthTeam->name,
+            ]);
+        } else {
+            info('assignHealthTeamBasedOnStartingPrice team not found against : '.$healthQuote->uuid);
+            $healthQuote->update([
+                'is_error_email_sent' => true,
+            ]);
+            Mail::send(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
+        }
+    }
+
+    public function shouldHealthAllocationProceed()
+    {
+        $masterSwitchConfigValue = (int) config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
+        if ($masterSwitchConfigValue == 0) {
+            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(false));
+
+            return false;
+        } else {
+            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(true));
+
+            return true;
+        }
     }
 }
