@@ -31,14 +31,6 @@ class CommercialMakeModelKeywordsPermissionsSeeder extends Seeder
         $permissions[] = Permission::findOrCreate(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES_EDIT, 'web');
         $permissions[] = Permission::findOrCreate(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES_STORE, 'web');
 
-
-        $leadAllocationManager = Role::findOrCreate(RolesEnum::SuperManagerLeadAllocation, 'web');
-        foreach ($permissions as $permission) {
-            if (! $leadAllocationManager->hasPermissionTo($permission)) {
-                $leadAllocationManager->givePermissionTo($permission);
-            }
-        }
-
         $adminRole = Role::findOrCreate(RolesEnum::Admin, 'web');
         foreach ($permissions as $permission) {
             if (! $adminRole->hasPermissionTo($permission)) {
