@@ -45,6 +45,8 @@ const page = usePage();
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
+
+
 const is = role => useHasRole(role);
 const can = permission => useCan(permission);
 const notification = useNotifications('toast');
@@ -63,22 +65,22 @@ const leadStatusForm = useForm({
 
 
 const bookingDetailForm = useForm({
-  requestType: page.props.record.id,
-  bookingDate: '',
-  invoiceDescription: '',
-  mainClassInsurance: '',
+  requestType: 'New Business',
+  bookingDate: '17-07-2023',
+  invoiceDescription: 'ORI.MOTORFEI-T',
+  mainClassInsurance: 'Motor',
   invoicePaymentStatus: '',
-  subClass: '',
-  insurerInvoiceDate: '',
-  brokerInvoiceNumber: '',
-  insurerPremiumTaxInvoiceNumber: '',
+  subClass: 'Comprehensive',
+  insurerInvoiceDate: '15-01-2023',
+  brokerInvoiceNumber: 'IM-1234-N567892',
+  insurerPremiumTaxInvoiceNumber: 'AM-1234-N567892',
   discount: '',
-  insurerCommissionTaxInvoiceNumber: '',
-  commissionPercentage: '',
-  commission: '',
-  vatOnCommission: '',
-  commissionhVatApplicable: '',
-  commissionIncludingVat: ''  
+  insurerCommissionTaxInvoiceNumber: 'IM-1234-N567892',
+  commissionPercentage: '12',
+  commission: '0',
+  vatOnCommission: '0.00',
+  commissionhVatApplicable: '15.00',
+  commissionIncludingVat: '0.0'  
 });
 
 
@@ -90,11 +92,11 @@ const onSubmitBookingDetails = isValid => {
   bookingDetailForm.submit(method, url, {
     preserveScroll: true,
     onSuccess: (response) => {
-
-		//console.log('hafeez-'+JSON.stringify(response));
+		//console.log('hafeez-'+JSON.stringify(response.message));
+		console.log('hafeez-'+JSON.stringify(response));
       //activityForm.reset();
       notification.success({
-        title: 'Booking detail submitted',
+        title: response.message,
         position: 'top',
       });
     }, onError: (errors) => {
@@ -966,56 +968,60 @@ const policyDetailsForm = useForm({
 			
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.requestType"
 							type="text"
 							label="Request Type"
 							placeholder="Request Type"
-							class="w-full"						
+							class="w-full"
+							:readonly="true"					
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.bookingDate"
 							type="text"
 							label="Booking Date"
 							placeholder="Booking Date"
-							class="w-full"						
+							class="w-full"
+							:readonly="true"					
 						/>
 					</div>
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.invoiceDescription"
 							type="text"
 							label="Invoice Description"
 							placeholder="Invoice Description"
-							class="w-full"						
+							class="w-full"
+							:readonly="true"						
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.mainClassInsurance"
 							type="text"
 							label="Main Class of Insurance"
 							placeholder="Main Class of Insurance"
-							class="w-full"						
+							class="w-full"
+							:readonly="true"					
 						/>
 					</div>
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.invoicePaymentStatus"
 							type="text"
 							label="Invoice Payment Status"
 							placeholder="Invoice Payment Status"
-							class="w-full"						
+							class="w-full"
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.subClass"
 							type="text"
 							label="Sub Class"
@@ -1026,7 +1032,7 @@ const policyDetailsForm = useForm({
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.insurerInvoiceDate"
 							type="text"
 							label="Insurer Invoice Date"
@@ -1035,7 +1041,7 @@ const policyDetailsForm = useForm({
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.brokerInvoiceNumber"
 							type="text"
 							label="Broker Invoice Number"
@@ -1046,7 +1052,7 @@ const policyDetailsForm = useForm({
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.insurerPremiumTaxInvoiceNumber"
 							type="text"
 							label="Insurer Premium Tax Invoice Number"
@@ -1055,7 +1061,7 @@ const policyDetailsForm = useForm({
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.discount"
 							type="text"
 							label="Discount"
@@ -1066,7 +1072,7 @@ const policyDetailsForm = useForm({
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.insurerCommissionTaxInvoiceNumber"
 							type="text"
 							label="Insurer Commission Tax Invoice Number"
@@ -1075,7 +1081,7 @@ const policyDetailsForm = useForm({
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.commissionPercentage"
 							type="text"
 							label="Commission(%)"
@@ -1086,7 +1092,7 @@ const policyDetailsForm = useForm({
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.commission"
 							type="text"
 							label="Commission (VAT not applicable)"
@@ -1095,7 +1101,7 @@ const policyDetailsForm = useForm({
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.vatOnCommission"
 							type="text"
 							label="VAT on Commission"
@@ -1106,7 +1112,7 @@ const policyDetailsForm = useForm({
 				</div>
 				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.commissionhVatApplicable"
 							type="text"
 							label="Commission (VAT applicable)"
@@ -1115,7 +1121,7 @@ const policyDetailsForm = useForm({
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
-						<x-textarea
+						<x-input
 							v-model="bookingDetailForm.commissionIncludingVat"
 							type="text"
 							label="Commission (incld VAT)"

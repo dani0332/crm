@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Services\SageApiService;
 use App\Http\Requests\SageRequest;
 use App\Factories\SagePayloadFactory;
+use Inertia\Inertia; // Import Inertia class
+
 
 class SageApi extends Controller
 {
@@ -27,19 +29,33 @@ class SageApi extends Controller
         $payLoad    = $payLoadOptions['payload'];
 
         $jsonResponse = $this->sageApiService->postToSage300($endPoint, $payLoad);
-
+        
         // Process the JSON response and handle messages
         $message = $this->processJsonResponse($jsonResponse);
+        
+        //echo $message; die();
+        //return back()->with('message', $message);
 
-        echo $message; die();
+        return response()->json(['message' =>  $message]);
 
-        return back()->with('message', $message);
+        //return Inertia::location(route('post-sage-data'))->with('message', $message);
+
+        //return Inertia::location(route('/quotes/car/', ['id' => 'UYKNLNST']))->with('message', $message);
+       
     }
 
-    private function processJsonResponse($responseData)
+    private function processJsonResponse($message)
     {
         // Process the JSON response and extract message
         // ...
+        
+        $responseData = json_decode($message, true);
+        if (isset($responseData['error'])){
+            return $responseData['error']['message']['value'];
+        } else {         
+            return "Batch Number ". $responseData['BatchNumber'] ." created successfully";
+        }
+        
         return $responseData;
     }   
 }

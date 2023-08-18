@@ -17,7 +17,7 @@ class SagePayloadFactory
 
     private static function createApplyDocumentPayload()
     {
-        $payload = [
+        $payLoad = [
             "BatchRecordType" => "CA",
             "ReceiptsAdjustments" => [
                 [
