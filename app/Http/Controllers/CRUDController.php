@@ -495,7 +495,7 @@ class CRUDController extends Controller
                 }, 'carLostQuoteLog']);
             }
 
-            [$allowQuoteLogAction, $carLostChangeStatus] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel);
+            [$allowQuoteLogAction, $carLostChangeStatus, $leadStatuses] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel, $leadStatuses);
 
 
             if($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) {

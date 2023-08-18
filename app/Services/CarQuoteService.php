@@ -1564,7 +1564,7 @@ class CarQuoteService extends BaseService
      * @param $paymentEntityModel
      * @return bool[]
      */
-    public function checkCarLostPermissions($lead, $paymentEntityModel)
+    public function checkCarLostPermissions($lead, $paymentEntityModel, $statuses)
     {
         $carLostChangeStatus = true;
         $allowQuoteLogAction = true;
@@ -1586,7 +1586,9 @@ class CarQuoteService extends BaseService
             {
                 $allowQuoteLogAction = false;
 
-                if($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel->carLostQuoteLog->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) { $carLostChangeStatus=true; $statuses=$statuses->whereIn('id', [$lead->quote_status_id])->all();
+                if($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) {
+                    $carLostChangeStatus =true;
+                    $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
                 }
             }
 
@@ -1602,6 +1604,6 @@ class CarQuoteService extends BaseService
             }
         }
 
-        return [$allowQuoteLogAction, $carLostChangeStatus];
+        return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 }

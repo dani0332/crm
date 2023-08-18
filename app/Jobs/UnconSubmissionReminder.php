@@ -4,10 +4,12 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarTeamType;
+use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\RenewalBatch;
+use App\Models\RenewalStatusProcess;
 use App\Models\User;
 use App\Repositories\RenewalBatchRepository;
 use App\Services\SIBService;
@@ -17,13 +19,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 /**
  * send reminder email for uncontactable renewal batches submission to advisors
  */
-class UnconSubmissionReminder //implements ShouldQueue
+class UnconSubmissionReminder implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 80;
+    public $backoff = 20;
+    public $tries = 3;
 
     /**
      * Create a new job instance.
@@ -92,5 +99,13 @@ class UnconSubmissionReminder //implements ShouldQueue
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
         info('Uncontactable Submission reminder email is sent');
+    }
+
+    /**
+     * @return void
+     */
+    public function failed(Throwable $exception)
+    {
+        info('CL: '.get_class().' FN: failed. Uncontactable submission reminder Job Failed. Error: '.$exception->getMessage());
     }
 }

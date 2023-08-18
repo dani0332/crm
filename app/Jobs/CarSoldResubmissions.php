@@ -14,10 +14,15 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
 
 class CarSoldResubmissions implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public $timeout = 80;
+    public $backoff = 20;
+    public $tries = 3;
 
     /**
      * Create a new job instance.
@@ -80,5 +85,10 @@ class CarSoldResubmissions implements ShouldQueue
 
         info('Car Sold Resubmissions email sent');
 
+    }
+
+    public function failed(Throwable $exception)
+    {
+        info('CL: '.get_class().' FN: failed. Car Solde submission reminder Job Failed. Error: '.$exception->getMessage());
     }
 }
