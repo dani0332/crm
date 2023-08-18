@@ -33,7 +33,6 @@ class IntroEmailJob implements ShouldQueue
         $this->emailTemplateId = $emailTemplateId;
         $this->emailData = $emailData;
         $this->tag = $tag;
-        $this->onQueue('lmsEmails');
     }
 
     /**

@@ -3,13 +3,12 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use Config;
+use App\Traits\FilterCriteria;
+use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use App\Traits\FilterCriteria;
-use App\Traits\QuoteModelTrait;
 
 class HomeQuote extends Model implements AuditableContract
 {
@@ -19,7 +18,7 @@ class HomeQuote extends Model implements AuditableContract
     protected $guarded = [];
     public $filterables = [
         'first_name' => FilterTypes::EXACT,
-        'last_name' => FilterTypes::FREE,
+        'last_name' => FilterTypes::EXACT,
         'uuid' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
@@ -29,23 +28,9 @@ class HomeQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
     ];
 
-    public function getCreatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
-    public function getUpdatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class);
     }
 
     public function homeQuoteRequestDetail()
@@ -55,12 +40,12 @@ class HomeQuote extends Model implements AuditableContract
 
     public function accommodationType()
     {
-        return $this->hasOne(HomeAccomodationType::class, 'id', 'ilivein_accommodation_type_id');
+        return $this->belongsTo(HomeAccomodationType::class, 'ilivein_accommodation_type_id');
     }
 
     public function possessionType()
     {
-        return $this->hasOne(HomePossessionType::class, 'id', 'iam_possesion_type_id');
+        return $this->belongsTo(HomePossessionType::class, 'iam_possesion_type_id');
     }
 
     public function advisor()

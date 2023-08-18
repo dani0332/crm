@@ -43,11 +43,8 @@ class YachtQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
-
-        if (! auth()->user()->hasRole(RolesEnum::Admin)) {
-            $quoteData['advisorId'] = auth()->user()->id;
-        }
 
         info('YachtQuote create data : '.json_encode($quoteData));
 
@@ -62,7 +59,7 @@ class YachtQuoteRepository extends BaseRepository
         return DB::transaction(function () use ($uuid, $data) {
             $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())->where('uuid', $uuid)->firstOrFail();
 
-            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no']);
+            $quoteData = Arr::only($data, ['first_name', 'last_name', 'email', 'mobile_no', 'asset_value']);
             $quoteData['updated_by_id'] = Auth::user()->id;
 
             $quote->update($quoteData);
@@ -80,11 +77,20 @@ class YachtQuoteRepository extends BaseRepository
     {
         return $this->byQuoteTypeId(QuoteTypes::YACHT->id())
             ->where($column, $value)
-            ->with(['yachtQuote', 'advisor', 'nationality', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'yachtQuote',
+                'advisor',
+                'quoteDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])->firstOrFail();
     }
 
     /**
@@ -95,11 +101,11 @@ class YachtQuoteRepository extends BaseRepository
         $query = $this->byQuoteTypeCode(QuoteTypes::YACHT)->with([
             'quoteStatus',
             'currentlyInsuredWith',
-            'advisor'
+            'advisor',
         ])
-        ->filter()
-        ->withFakeLeadCriteria()
-        ->orderBy('created_at', 'desc');
+            ->filter(! $forExport)
+            ->withFakeLeadCriteria()
+            ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }

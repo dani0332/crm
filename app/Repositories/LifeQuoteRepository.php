@@ -2,12 +2,12 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\LifeQuote;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Auth;
 
 class LifeQuoteRepository extends BaseRepository
 {
@@ -40,10 +40,9 @@ class LifeQuoteRepository extends BaseRepository
             'othersInfo' => $data['others_info'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
-        if (! Auth::user()->hasRole(RolesEnum::Admin)) {
-            $lifeData['advisorId'] = Auth::user()->id;
-        }
+
         $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
 
         if (isset($response->quoteUID)) {
@@ -71,9 +70,7 @@ class LifeQuoteRepository extends BaseRepository
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality'])
             ->when(\auth()->user()->hasRole(RolesEnum::LifeAdvisor), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                });
+                $query->where('advisor_id', \auth()->user()->id);
             })
             ->filter()
             ->withFakeLeadCriteria()
@@ -111,9 +108,14 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchExportData()
     {
         return $this->with(['advisor', 'quoteStatus', 'nationality'])
-            ->filter()
+            ->filter(false)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc')
             ->get();
+    }
+
+    public function fetchCreateDuplicate(array $dataArr): object
+    {
+        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::LIFE->value).'-quote', 'post', $dataArr);
     }
 }

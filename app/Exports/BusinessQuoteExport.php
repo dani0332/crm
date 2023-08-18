@@ -37,7 +37,7 @@ class BusinessQuoteExport implements FromCollection, WithHeadings, WithMapping, 
             'PREMIUM',
             'NUMBER OF EMPLOYEES',
             'BUSINESS INSURANCE TYPE',
-            'GENDER'
+            'GENDER',
         ];
     }
 
@@ -54,11 +54,11 @@ class BusinessQuoteExport implements FromCollection, WithHeadings, WithMapping, 
             optional($quote->businessQuoteRequestDetail)->lostReason?->text,
             optional($quote->advisor)->name,
             optional($quote->quoteStatus)->text,
-            date('d-m-Y H:i:s', strtotime($quote->created_at)),
-            date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->premium,
             $quote->number_of_employees,
-            optional($quote->typeOfInsurance)->text,
+            optional($quote->businessTypeOfInsurance)->text,
             $quote->gender,
         ];
     }

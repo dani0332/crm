@@ -16,24 +16,29 @@ class AddPersonalLobsProducts extends Seeder
     public function run()
     {
         $productBike = Team::where('name', QuoteTypes::BIKE->value)->first();
-        if($productBike == null)
+        if ($productBike == null) {
             Team::insert(['name' => QuoteTypes::BIKE->value, 'type' => 1, 'created_at' => now()]);
+        }
 
         $productYacht = Team::where('name', QuoteTypes::YACHT->value)->first();
-        if($productYacht == null)
+        if ($productYacht == null) {
             Team::insert(['name' => QuoteTypes::YACHT->value, 'type' => 1, 'created_at' => now()]);
+        }
 
         $productTravel = Team::where('name', QuoteTypes::TRAVEL->value)->first();
-        if($productTravel == null)
+        if ($productTravel == null) {
             Team::insert(['name' => QuoteTypes::TRAVEL->value, 'type' => 1, 'created_at' => now()]);
+        }
 
         $productCycle = Team::where('name', QuoteTypes::CYCLE->value)->first();
-        if($productCycle == null)
+        if ($productCycle == null) {
             Team::insert(['name' => QuoteTypes::CYCLE->value, 'type' => 1, 'created_at' => now()]);
+        }
 
         $productJetski = Team::where('name', QuoteTypes::JETSKI->value)->first();
-        if($productJetski == null)
+        if ($productJetski == null) {
             Team::insert(['name' => QuoteTypes::JETSKI->value, 'type' => 1, 'created_at' => now()]);
+        }
 
     }
 }

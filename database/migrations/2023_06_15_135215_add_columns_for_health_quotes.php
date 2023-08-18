@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 class AddColumnsForHealthQuotes extends Migration
 {
     /**
-     * Run the migrations.
+     * Run the migrations .
      *
      * @return void
      */

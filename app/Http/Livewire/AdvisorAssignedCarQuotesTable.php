@@ -43,7 +43,7 @@ class AdvisorAssignedCarQuotesTable extends DataTableComponent
     public function columns(): array
     {
         return [
-            Column::make('CDB ID', 'uuid'),
+            Column::make('Ref-ID', 'uuid'),
             Column::make('Customer Name')->label(fn ($row) => $row->fullName),
             Column::make('Lead Status', 'quote_status_id.text'),
         ];

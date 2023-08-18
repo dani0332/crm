@@ -38,6 +38,10 @@ const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
 const canExport = ref(false);
 
+const onLeadAssigned = () => {
+    quotesSelected.value = [];
+};
+
 const advisorOptions = computed(() => {
     return page.props.advisors.map(advisor => ({
         value: advisor.id,
@@ -97,14 +101,14 @@ onMounted(() => {
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'uuid' },
+  { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
@@ -151,14 +155,21 @@ watch(
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
+          <div>
+              <x-tooltip position="bottom">
+                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
+                      Ref-ID
+                  </label>
+                  <template #tooltip> Reference ID </template>
+              </x-tooltip>
+              <x-input
+                  v-model="filters.code"
+                  type="search"
+                  name="code"
+                  class="w-full"
+                  placeholder="Search by Ref-ID"
+              />
+          </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -286,6 +297,7 @@ watch(
                   :selected="quotesSelected.map(e => e.id)"
                   :advisors="advisorOptions"
                   :quoteType="quoteType"
+                  @success="onLeadAssigned"
               />
           </div>
       </Transition>
@@ -311,7 +323,7 @@ watch(
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">

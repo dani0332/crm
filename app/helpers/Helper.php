@@ -2,6 +2,7 @@
 
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use Carbon\Carbon;
@@ -135,7 +136,7 @@ function getDataAgainstStatus($modelType, $statusId, $myleads = null)
     if (! $modelType) {
         return $result;
     }
-    $nameSpace = '\\App\\Models\\';
+    $nameSpace = 'App\\Models\\';
     $modelType = $nameSpace.$modelType.'Quote';
 
     if ($myleads) {
@@ -432,7 +433,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Business,
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
-            quoteTypeCode::Aml
+            quoteTypeCode::Yacht,
         ];
     }
 }
@@ -463,5 +464,18 @@ if (! function_exists('formatMobileNumber')) {
             '$1 $2 $3',
             mapPhoneNumber($mobileNumber)
         );
+    }
+}
+
+if (! function_exists('checkPersonalQuotes')) {
+    function checkPersonalQuotes($quoteType)
+    {
+        return in_array($quoteType, [
+            QuoteTypes::BIKE->value,
+            QuoteTypes::CYCLE->value,
+            QuoteTypes::JETSKI->value,
+            QuoteTypes::PET->value,
+            QuoteTypes::YACHT->value,
+        ]);
     }
 }

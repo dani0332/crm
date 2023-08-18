@@ -38,7 +38,7 @@ class TravelQuoteExport implements FromCollection, WithHeadings, WithMapping, Sh
             'CURRENTLY LOCATED IN',
             'EXPIRY DATE',
             'IS ECOMMERCE',
-            'PAYMENT STATUS'
+            'PAYMENT STATUS',
         ];
     }
 
@@ -50,8 +50,8 @@ class TravelQuoteExport implements FromCollection, WithHeadings, WithMapping, Sh
             $quote->last_name,
             optional($quote->quoteStatus)->text,
             optional($quote->advisor)->name,
-            date('d-m-Y H:i:s', strtotime($quote->created_at)),
-            date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+            date(config('constants.datetime_format'), strtotime($quote->created_at)),
+            date(config('constants.datetime_format'), strtotime($quote->updated_at)),
             $quote->dob,
             optional($quote->travelQuoteRequestDetail)->transapp_code,
             optional($quote->travelQuoteRequestDetail)->lostReason?->text,
@@ -62,7 +62,7 @@ class TravelQuoteExport implements FromCollection, WithHeadings, WithMapping, Sh
             optional($quote->currentlyLocatedIn)->text,
             $quote->expiry_date,
             $quote->is_ecommerce ? 'Yes' : 'No',
-            optional($quote->paymentStatus)->text
+            optional($quote->paymentStatus)->text,
         ];
     }
 }

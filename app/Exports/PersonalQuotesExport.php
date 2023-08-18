@@ -2,15 +2,11 @@
 
 namespace App\Exports;
 
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Repositories\BikeQuoteRepository;
-use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\CycleQuoteRepository;
-use App\Repositories\HomeQuoteRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\PetQuoteRepository;
-use App\Repositories\TravelQuoteRepository;
 use App\Repositories\YachtQuoteRepository;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromCollection;
@@ -22,7 +18,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
 {
     use Exportable;
 
-    private $quoteType = "";
+    private $quoteType = '';
     private $quoteTypes = [];
 
     public function __construct()
@@ -33,7 +29,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
             QuoteTypes::YACHT->value,
             QuoteTypes::PET->value,
             QuoteTypes::CYCLE->value,
-            QuoteTypes::JETSKI->value
+            QuoteTypes::JETSKI->value,
         ];
     }
 
@@ -62,11 +58,11 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
 
     public function headings(): array
     {
-        if(in_array(ucfirst($this->quoteType), $this->quoteTypes)):
+        if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getHeadings($this->quoteType);
-        else:
+        } else {
             return abort(404);
-        endif;
+        }
     }
 
     protected function getHeadings($quoteType)
@@ -88,7 +84,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'POLICY NUMBER',
                     'SOURCE',
                     'CURRENTLY INSURED WITH',
-                    'IS ECOMMERCE'
+                    'IS ECOMMERCE',
                 ];
 
             case QuoteTypes::PET->value:
@@ -115,7 +111,7 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'ACCOMMODATION TYPE',
                     'POSSESION TYPE',
                     'TRANSAPP CODE',
-                    'IS ECOMMERCE'
+                    'IS ECOMMERCE',
                 ];
 
             case QuoteTypes::CYCLE->value:
@@ -130,18 +126,18 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'PREMIUM',
                     'POLICY NUMBER',
                     'SOURCE',
-                    'IS ECOMMERCE'
+                    'IS ECOMMERCE',
                 ];
         }
     }
 
     public function map($quote): array
     {
-        if(in_array(ucfirst($this->quoteType), $this->quoteTypes)):
+        if (in_array(ucfirst($this->quoteType), $this->quoteTypes)) {
             return $this->getValues($this->quoteType, $quote);
-        else:
+        } else {
             return abort(404);
-        endif;
+        }
     }
 
     protected function getValues($quoteType, $quote)
@@ -157,8 +153,8 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->dob_formatted,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium,
                     $quote->policy_number,
                     $quote->source,
@@ -173,8 +169,8 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->last_name,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->source,
                     optional($quote->petQuoteRequestDetail)->lostReason?->text,
                     $quote->premium,
@@ -200,8 +196,8 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     $quote->last_name,
                     optional($quote->quoteStatus)->text,
                     optional($quote->advisor)->name,
-                    date('d-m-Y H:i:s', strtotime($quote->created_at)),
-                    date('d-m-Y H:i:s', strtotime($quote->updated_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->created_at)),
+                    date(config('constants.datetime_format'), strtotime($quote->updated_at)),
                     $quote->premium,
                     $quote->policy_number,
                     $quote->source,

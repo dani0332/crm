@@ -1,11 +1,15 @@
 <script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  quoteType: {
+    type: String,
+    default: 'pet',
+  },
 });
-
-const { isRequired } = useRules();
 
 const page = usePage();
 const loader = reactive({
@@ -67,7 +71,7 @@ function onReset() {
 onMounted(() => {});
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'uuid' },
+  { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
@@ -76,7 +80,7 @@ const tableHeader = [
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'TYPE OF PET', value: 'type_of_pet' },
   { text: 'BREED OF PET', value: 'breed_of_pet1' },
@@ -116,50 +120,16 @@ const advisorOptions = computed(() => {
   }));
 });
 
-const notification = useNotifications('toast');
-
 const quotesSelected = ref([]);
-
-const assignForm = useForm({
-  assigned_to_id_new: null,
-  modelType: 'Pet',
-  selectTmLeadId: '',
-  isManagerOrDeputy: isManager,
-  isLeadPool: false,
-  isManualAllocationAllowed: isManualAllocationAllowed,
-});
-
-function onAssignLead(isValid) {
-  if (isValid) {
-    const selected = quotesSelected.value.map(e => e.id);
-    assignForm
-      .transform(data => ({
-        ...data,
-        selectTmLeadId: `${selected}`,
-      }))
-      .post('/quotes/pet/manualLeadAssign', {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          let title =
-            quotesSelected.value.length > 1
-              ? 'Pet Leads Assigned'
-              : 'Pet Lead Assigned';
-          quotesSelected.value = [];
-          notification.success({
-            title: title,
-            position: 'top',
-          });
-        },
-      });
-  }
-}
-
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'pet');
   window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
 };
 
 watch(
@@ -173,8 +143,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
-
 </script>
 
 <template>
@@ -196,14 +164,23 @@ watch(
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -281,64 +258,46 @@ watch(
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="onReset">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div
-          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="isManualAllocationAllowed"
-        >
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-              />
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
-        </div>
+      <div
+        v-if="quotesSelected.length > 0 && isManualAllocationAllowed"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+          @success="onLeadAssigned"
+        />
       </div>
     </Transition>
 
@@ -391,7 +350,7 @@ watch(
 
       <template #item-breed_of_pet1="{ pet_quote }">
         {{ pet_quote?.breed_of_pet1 }}
-     </template>
+      </template>
 
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
@@ -413,7 +372,7 @@ watch(
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
+          {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
       </template>
     </DataTable>
