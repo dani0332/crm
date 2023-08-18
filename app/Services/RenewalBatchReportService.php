@@ -40,6 +40,11 @@ class RenewalBatchReportService extends BaseService
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
             ->join('user_team', 'user_team.user_id', '=', 'users.id')
+            ->leftJoin('car_lost_quote_logs', function($qry){
+                $qry->on('car_lost_quote_logs.car_quote_request_id', '=', 'car_quote_request.id')
+                    ->whereRaw('car_lost_quote_logs.id IN (select MAX(clql.id) from car_lost_quote_logs as clql
+                    join car_quote_request as cqr on cqr.id = clql.car_quote_request_id group by cqr.id)');
+            })
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.renewal_batch')
@@ -173,15 +178,31 @@ class RenewalBatchReportService extends BaseService
             $query->addSelect(
                 DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') THEN 1 ELSE 0 END) as renewed'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::CarSold . ' THEN 1 ELSE 0 END) as car_sold'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = ' . QuoteStatusEnum::Uncontactable . ' THEN 1 ELSE 0 END) as uncontactable'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_lost_quote_logs.status = "Approved"
+                    THEN 1 ELSE 0 END) as car_sold'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_lost_quote_logs.status = "Approved"
+                    THEN 1 ELSE 0 END) as uncontactable'),
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
                 DB::raw('SUM(IF(car_quote_request.advisor_id = "' . $authUserId . '", 1, 0)) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as renewed'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::CarSold . '" and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as car_sold'),
-                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = "' . QuoteStatusEnum::Uncontactable . '" and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as uncontactable'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_lost_quote_logs.status = "Approved"
+                    and car_quote_request.advisor_id ='. $authUserId .'
+                    THEN 1 ELSE 0 END) as car_sold'),
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_lost_quote_logs.status = "Approved"
+                    and car_quote_request.advisor_id = '. $authUserId .'
+                    THEN 1 ELSE 0 END) as uncontactable'),
             );
         }
 
