@@ -469,7 +469,7 @@ const onLeadStatus = () => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">IS SMOKER</dt>
-            <dd>{{ quote.is_smoker }}</dd>
+            <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">

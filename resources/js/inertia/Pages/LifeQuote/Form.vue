@@ -239,8 +239,8 @@ function onSubmit(isValid) {
           v-model="quoteForm.is_smoker"
           label="Smoker"
           :options="[
-            { value: 0, label: 'Yes' },
-            { value: 1, label: 'No' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :error="quoteForm.errors.is_smoker"
