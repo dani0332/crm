@@ -209,10 +209,11 @@ final class PermissionsEnum extends Enum
     const RenewalBatchUpdate = 'renewal-batch-update';
     const CarSoldList = 'car-sold-list';
     const CarUncontactableList = 'car-uncontactable-list';
-    const ActivitiesAssignedToView = 'activities-assigned-to-view';
-    const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
-    const RenewalsUploadUpdate = 'renewals-upload-update';
-    const RenewalsBatches = 'renewals-batches';
-    const CarQuoteSearch = 'car-quotes-search';
-    const UtmLeadsSalesReport = 'utm-leads-sales-report';
+    public const ActivitiesAssignedToView = 'activities-assigned-to-view';
+    public const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
+    public const RenewalsUploadUpdate = 'renewals-upload-update';
+    public const RenewalsBatches = 'renewals-batches';
+    public const CarQuoteSearch = 'car-quotes-search';
+    public const UtmLeadsSalesReport = 'utm-leads-sales-report';
+    public const TeamThresholdView = 'team-threshold-view';
 }
