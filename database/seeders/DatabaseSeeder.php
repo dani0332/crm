@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             addCarQuoteNewStatuses::class,
             LookupSeeder::class
             // PetBikeMigrationSeeder::class
+            InsurerQuoteTypeMappingSeeder::class,
         ]);
     }
 }

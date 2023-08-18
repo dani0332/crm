@@ -38,6 +38,10 @@ const filters = reactive(availableFilters);
 const quotesSelected = ref([]);
 const canExport = ref(false);
 
+const onLeadAssigned = () => {
+    quotesSelected.value = [];
+};
+
 const advisorOptions = computed(() => {
     return page.props.advisors.map(advisor => ({
         value: advisor.id,
@@ -293,6 +297,7 @@ watch(
                   :selected="quotesSelected.map(e => e.id)"
                   :advisors="advisorOptions"
                   :quoteType="quoteType"
+                  @success="onLeadAssigned"
               />
           </div>
       </Transition>
