@@ -84,7 +84,7 @@ class LeadAllocation extends Command
 
                     info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR '.$currentIteration.' -----------------------');
 
-                    $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
+                    $healthTeams = ['EBP', 'RM-SPEED', 'RM-NB'];
 
                     foreach ($healthTeams as $healthTeam) {
                         info('Health Lead Allocation Started for health team: '.$healthTeam);
