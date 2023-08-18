@@ -168,7 +168,7 @@ return [
         'production' => [
             'supervisor-prod' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals,lms,lmsEmails',
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -179,7 +179,7 @@ return [
         'staging' => [
             'supervisor-stg' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals,lms,lmsEmails',
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -190,7 +190,7 @@ return [
         'development' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals,lms,lmsEmails',
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,
@@ -201,7 +201,7 @@ return [
         'local' => [
             'supervisor-dev' => [
                 'connection' => 'redis',
-                'queue' => 'default,renewals,lms,lmsEmails',
+                'queue' => 'default,renewals',
                 'balance' => 'auto',
                 'maxProcesses' => 3,
                 'processes' => 1,

@@ -198,7 +198,6 @@
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
                 advisor_conversion_report_route: "{{ url('reports/advisor-conversion')  }}",
                 teams_datatable_route: "{{ route('team.index') }}",
-                allocation_threshold_datatable_route: "{{ route('allocation-threshold.index') }}",
             },
             _token: "{{ csrf_token() }}"
         };

@@ -33,6 +33,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  customError: {
+    type: String,
+    default: '',
+  },
 });
 
 const selectedData = computed({
@@ -68,6 +72,7 @@ const selectedData = computed({
         class="w-full"
         :rules="value ? [] : props.rules"
         readonly
+        :error="props.customError ? props.customError : ''"
       />
       <div
         v-if="!props.disabled"

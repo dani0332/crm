@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class AddErrorEmailSentColumn extends Migration
+class UpdatePersonalQuotesTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class AddErrorEmailSentColumn extends Migration
      */
     public function up()
     {
-        Schema::table('health_quote_request', function (Blueprint $table) {
-            if (! Schema::hasColumn('health_quote_request', 'is_error_email_sent')) {
-                $table->boolean('is_error_email_sent')->default(false);
-            }
+        Schema::table('personal_quotes', function (Blueprint $table) {
+
+            $table->string('uuid', 100)->change();
+
         });
     }
 

@@ -11,9 +11,9 @@ use App\Enums\TeamTypeEnum;
     {
         var selectedType = $('#type option:selected').val();
         $('#parent_team_id').empty();
-        if ( selectedType == 1) {
+        if( selectedType == 1) {
             $('#parent_team_id').prop('disabled', true);
-        } else {
+        }else{
             $('#parent_team_id').prop('disabled', false);
             for (let index = 0; index < products.length; index++) {
             const element = products[index];
@@ -84,10 +84,9 @@ use App\Enums\TeamTypeEnum;
                         <div class="col">
                             <span class="col-form-label col-md-6 col-sm-6">Is Active
                                 <br />
-                                <input type="checkbox" style="margin-top:12px" {{ old('is_active', 'on') == 'on' ? 'checked' : '' }} id="is_active" name="is_active">
+                                <input type="checkbox"  style="margin-top:12px" checked id='is_active' name='is_active'>
                             </span>
                         </div>
-
                     </div>
                     <div id='redirect_to_view_div'></div>
                     <div class="ln_solid"></div>
