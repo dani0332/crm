@@ -104,12 +104,12 @@ use App\Enums\PaymentStatusEnum;
             <div class="x_title">
                 <h2>Payments</h2>
                 @if($paymentPlainModel->plan && ! auth()->user()->hasRole(RolesEnum::PA))
-                @cannot(PermissionsEnum::ApprovePayments)
-                @can(PermissionsEnum::PaymentsCreate)
-                    <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
-                    id="add-payment-btn">Add Payment</button>
-                @endcan
-                @endcannot
+                    @cannot(PermissionsEnum::ApprovePayments)
+                        @can(PermissionsEnum::PaymentsCreate)
+                            <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
+                            id="add-payment-btn">Add Payment</button>
+                        @endcan
+                    @endcannot
                 @endif
                 <div class="clearfix"></div>
             </div>

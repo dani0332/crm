@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import LazyDocumentUploader from '../Partials/QuoteDocuments.vue';
+import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 defineProps({
 	quote: Object,
 	leadStatuses: Array, //
@@ -20,6 +21,9 @@ defineProps({
 	customerAdditionalContacts: Array,
 	lostReasons: Array,
 	quoteStatusEnum: Object,
+	carPlanFeaturesCodeEnum: Object,
+	carPlanExclusionsCodeEnum: Object,
+	carPlanAddonsCodeEnum: Object,
 	modelType: String,
 	notProductionApproval: Boolean,
 	allowedDuplicateLOB: Array,
@@ -33,6 +37,7 @@ defineProps({
 	paymentMethods: Object,
 	sendPolicy: Boolean,
 	//
+	access: Object,
 	record: Object,
 	quoteType: String,
   	paymentEntityModel: Object,
@@ -40,7 +45,8 @@ defineProps({
 	isRenewalUser: Boolean,
 	emailStatuses: Array,
 	carQuotePlanAddons: Array,
-	notesForCustomers:Array,
+	notesForCustomers:Object,
+	websiteURL: String
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -48,7 +54,7 @@ const notification = useNotifications('toast');
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
-const is = role => useHasRole(role);
+const hasRole = role => useHasRole(role);
 const can = permission => useCan(permission);
 const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
@@ -111,6 +117,8 @@ const paymentDetailsTable = reactive({
 });
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
 const selectedPlans = [];
+const selectedPlan = ref({});
+
 const availablePlansTable = reactive({
 	columns: [
 		{ text: 'Provider Name', value: 'providerName' },
@@ -121,12 +129,12 @@ const availablePlansTable = reactive({
 		{ text: 'Car Trim', value: 'insurerTrimText' },
 		{ text: 'PAB cover', value: 'addons' },
 		{ text: 'Roadside assistance', value: 'roadSideAssistance' },
-		{ text: 'Oman cover TPL', value: '' },
+		{ text: 'Oman cover TPL', value: 'omanCoverTPL' },
 		{ text: 'Actual Premium', value: 'actualPremium' },
 		{ text: 'Discounted Premium', value: 'discountPremium' },
 		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
 		{ text: 'Excess', value: 'excess' },
-		{ text: 'Action', value: 'actions' },
+		{ text: 'Action', value: 'action' },
 	]
 })
 
@@ -233,7 +241,21 @@ const availablePlansItems = computed(() => {
 	if (! Array.isArray(page.props.listQuotePlans)) {
 		return [];
 	}
-	return page.props.listQuotePlans;
+	return typeof page.props.listQuotePlans !== 'string' ? page.props.listQuotePlans : [];
+})
+
+const totalPriceVAT = computed(() => {
+	let vat = 0;
+	availablePlansItems?.value.forEach(item => {
+		item.addons.forEach(addon => {
+			addon.carAddonOption.forEach(option => {
+				if (option.isSelected && option.price != 0) {
+					vat += option.price + option.vat;
+				}
+			})
+		})		
+	})
+	return vat;
 })
 
 const paymentItems = computed(() => {
@@ -303,7 +325,8 @@ const modals = reactive({
   contactDeleteConfirm:false,
   activity:false,
   activityConfirm:false,
-
+  notes:false,
+  plan: false
 });
 
 const confirmData = reactive({
@@ -582,6 +605,62 @@ const activityDeleteConfirmed = () => {
     },
   );
 };
+
+const notesForm = useForm({
+
+	quote_id: page.props.record.id,
+	quote_type_id:page.props.quoteTypeId,	
+	quote_uuid: page.props.record.uuid,
+	customer_name: page.props.record.first_name,
+	customer_email: page.props.record.email,
+	quote_cdb_id: page.props.record.code,
+	description:null,
+});
+
+const addNotes = () => {
+  notesForm.reset();
+  modals.notes = true;
+};
+
+const onNoteSubmit = isValid => {
+  if (!isValid) return;
+  notesForm
+    .transform(data => ({
+      ...data,
+      isInertia: true,
+    }))
+    .post(`/quotes/car/addNoteForCustomer`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notesForm.reset();
+        notification.success({
+          title: 'Note Send To Customer',
+          position: 'top',
+        });
+      },
+      onError: err => {
+        notification.error({ title: err.error, position: 'top' });
+      },
+      onFinish: () => {
+        modals.notes = false;
+      },
+    });
+};
+const { copy, copied } = useClipboard();
+const copyPlanURL = (item) => {
+	var paymentLink = `${page.props.websiteURL}/car-insurance/quote/${page.props.record.uuid}/payment/?providerCode=${item.providerCode}&planId=${item.id}`;
+	copy(paymentLink);
+  	if (copied)
+		notification.success({
+			title: 'Link copied to clipboard',
+			position: 'top',
+		});
+}
+
+const selectPlan = (item) => {
+	selectedPlan.value = item;
+  	modals.plan = true;
+}
 </script>
 
 <template>
@@ -920,7 +999,7 @@ const activityDeleteConfirmed = () => {
 						<dt class="font-medium">Previous Policy Premium</dt>
 						<dd>{{ record.previous_quote_policy_premium ?? '' }}</dd>
 					</div>
-					<template v-if="is(rolesEnum.Admin)">
+					<template v-if="hasRole(rolesEnum.Admin)">
 						<div class="grid sm:grid-cols-2">
 							<dt class="font-medium">Previous Import Code</dt>
 							<dd>{{ record.renewal_import_code }}</dd>
@@ -995,7 +1074,7 @@ const activityDeleteConfirmed = () => {
 					Payments
 					<x-tag size="sm">{{ payments.length || 0 }}</x-tag>
 				</h3>
-				<x-button v-if="is(rolesEnum.PA) && $page.props.plan && (!can(permissionEnum.ApprovePayments) && can(permissionEnum.PaymentsCreate))" @click.prevent="onAddPaymentModal" size="sm" color="orange">
+				<x-button v-if="! hasRole(rolesEnum.PA) && $page.props.plan && (!can(permissionEnum.ApprovePayments) && can(permissionEnum.PaymentsCreate))" @click.prevent="onAddPayment" size="sm" color="emerald">
 					Add Payment
 				</x-button>
 			</div>
@@ -1118,19 +1197,22 @@ const activityDeleteConfirmed = () => {
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Available Plans
-				<x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
+					<x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
 				</h3>
-				<div>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+				<div v-if="! hasRole(rolesEnum.PA)">
+					<x-button @click.prevent="onSendOCBEmail" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
 						Send OCB Email to Customer
 					</x-button>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="emerald" class="mr-2">
+					<x-button @click.prevent="onDownloadPDF" size="sm" color="emerald" class="mr-2">
 						Download PDF
 					</x-button>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-						Create Quote
+					<x-button @click.prevent="onAddPlan" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
+						Add Plan
 					</x-button>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="emerald" >
+					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+						Add Plan
+					</x-button>
+					<x-button @click.prevent="onAddPaymentModal" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
 						Copy Link
 					</x-button>
 				</div>
@@ -1145,67 +1227,96 @@ const activityDeleteConfirmed = () => {
 				:rows-per-page="15"
         		:hide-footer="availablePlansItems.length < 15"
 			>
-			<template #item-providerName="{ providerName, isManualPlan, isRenewal, isDisabled }">
-				<p>{{ providerName }}</p>
-				<div class="flex gap-1">
-					<x-tag
-						v-if="isManualPlan"
-						size="xs"
-						color="primary"
-						class="mt-0.5 text-[10px]"
-					>
-						Manual
-					</x-tag>
-					<x-tag
-						v-if="isRenewal"
-						size="xs"
-						color="success"
-						class="mt-0.5 text-[10px]"
-					>
-						Renewal
-					</x-tag>
-					<x-tag
-						v-if="isDisabled"
-						size="xs"
-						color="error"
-						class="mt-0.5 text-[10px]"
-					>
-					Hidden
-					</x-tag>
-				</div>
-			</template>
-			<template #item-benefits="{ benefits }">
-				<!-- <span>{{ benefits.feature }}</span> -->
-				<template v-for="feature in benefits.feature" :key="feature">
-					<span v-if="feature.code && (feature.code === permissionEnum.TPL_DAMAGE_LIMIT || feature.code === permissionEnum.DAMAGE_LIMIT)">
-						{{ feature.value }}
-					</span>
-					<span v-else-if="feature.text === permissionEnum.TPL_DAMAGE_LIMIT_TEXT">
-						{{ feature.value }}
-					</span>
+				<template #item-providerName="{ providerName, isManualPlan, isRenewal, isDisabled }">
+					<p>{{ providerName }}</p>
+					<div class="flex gap-1">
+						<x-tag v-if="isManualPlan" size="xs" color="primary" class="mt-0.5 text-[10px]">
+							Manual
+						</x-tag>
+						<x-tag v-if="isRenewal" size="xs" color="success" class="mt-0.5 text-[10px]">
+							Renewal
+						</x-tag>
+						<x-tag v-if="isDisabled" size="xs" color="error" class="mt-0.5 text-[10px]">
+							Hidden
+						</x-tag>
+					</div>
 				</template>
-			</template>
-			<template #item-action="item">
-			<div class="flex gap-2">
-				<x-button
-				size="xs"
-				color="primary"
-				outlined
-				@click.prevent="onEditMember(item)"
-				>
-				Edit
-				</x-button>
-				<x-button
-				size="xs"
-				color="error"
-				outlined
-				@click.prevent="memberDelete(item.id)"
-				>
-				Delete
-				</x-button>
-			</div>
-			</template>
+				<template #item-benefits="{ benefits }">
+					<!-- <span>{{ benefits.feature }}</span> -->
+					<template v-for="feature in benefits.feature" :key="feature">
+						<template v-if="feature.code">
+							<span v-if="feature.code === carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT || feature.code === carPlanFeaturesCodeEnum.DAMAGE_LIMIT">
+								{{ feature.value }}
+							</span>
+						</template>
+						<span v-else-if="feature.text === carPlanFeaturesCodeEnum.TPL_DAMAGE_LIMIT_TEXT">
+							{{ feature.value }}
+						</span>
+					</template>
+				</template>
+				<template #item-addons="{ addons }">
+					<template v-for="addon in addons" :key="addon">
+						<template v-for="option in addon.carAddonOption" :key="option">
+							<span v-if="addon.code">
+								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">									
+									{{ addon.text }}: {{ option.value }} <br />
+								</template>
+							</span>
+							<template v-else-if="addon.text.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER_TEXT.toLowerCase() || addon.text.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER_TEXT.toLowerCase()">
+								{{ addon.text }}: {{ option.value }} <br />
+							</template>
+						</template>
+					</template>
+				</template>
+				<template #item-omanCoverTPL="{ benefits }">
+					<template v-for="planExc in benefits.exclusion" :key="planExc">
+						<span v-if="planExc.code && (planExc.code.toLowerCase() === carPlanExclusionsCodeEnum.TPL_OMAN_COVER.toLowerCase() || planExc.code.toLowerCase() === carPlanExclusionsCodeEnum.OMAN_COVER.toLowerCase())">
+							{{ planExc.text }}: {{ planExc.value }}
+						</span>
+					</template>
+					<template v-for="planInc in benefits.inclusion" :key="planInc">
+						<span v-if="planInc.code && (planInc.code.toLowerCase() === carPlanExclusionsCodeEnum.TPL_OMAN_COVER.toLowerCase() || planInc.code.toLowerCase() === carPlanExclusionsCodeEnum.OMAN_COVER.toLowerCase())">
+							{{ planInc.text }}: {{ planInc.value }}
+						</span>
+					</template>
+				</template>
+				<template #item-roadSideAssistance="{ benefits }">
+					<template v-for="planAss in benefits.roadSideAssistance" :key="planAss.text">
+						{{ planAss.text }}: {{ planAss.value }} <br />
+					</template>
+				</template>
+				<template #item-actualPremium="{ actualPremium }">
+					{{ actualPremium ? parseFloat(actualPremium).toFixed(2) : '0.00' }}
+				</template>
+				<template #item-discountPremium="{ discountPremium }">
+					{{ discountPremium ? parseFloat(discountPremium).toFixed(2) : '0.00' }}
+				</template>
+				<template #item-premiumWithVat="item">
+					{{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+				</template>
+				<template #item-action="item">
+					<div class="flex gap-2">
+						<x-button size="xs" color="primary" outlined @click.prevent="selectPlan(item)">
+							View
+						</x-button>
+						<x-button size="xs" color="error" outlined @click.prevent="copyPlanURL(item)" v-if="(item.discountPremium + item.vat + totalPriceVAT) > 0">
+							Copy
+						</x-button>
+						<template v-if="item.actualPremium > 0 && item.id != record.plan_id">
+							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined>
+								Change Insurer
+							</x-button>
+						</template>
+					</div>
+				</template>
 			</DataTable>
+
+			<x-modal v-model="modals.plan" size="xl" show-close backdrop>
+				<template #header>
+				{{ selectedPlan.providerName }} - {{ selectedPlan.name }}
+				</template>
+				<LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
+			</x-modal>
 		</div> 
 
 		<div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
@@ -1277,7 +1388,7 @@ const activityDeleteConfirmed = () => {
 					Documents
 				</h3>
 				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
 						<!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
 						<x-button @click.prevent="modals.doc = true" size="sm" color="orange">
 							Upload Documents
@@ -1288,7 +1399,7 @@ const activityDeleteConfirmed = () => {
 						</template>
 
 					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! hasRole(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
 						Copy upload Link
 					</x-button>
 				</div>
@@ -1341,7 +1452,7 @@ const activityDeleteConfirmed = () => {
 					Email Status
 				</h3>
 				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
 
 						<template v-if="displaySendPolicyButton">
 							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
@@ -1349,7 +1460,7 @@ const activityDeleteConfirmed = () => {
 						</template>
 
 					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! hasRole(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
 						Copy upload Link
 					</x-button>
 				</div>
@@ -1394,8 +1505,8 @@ const activityDeleteConfirmed = () => {
 					<x-tag size="sm">{{ notesForCustomers.length || 0 }}</x-tag>
 				</h3>
 				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
-						<x-button @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
+						<x-button @click.prevent="addNotes" size="sm" color="orange" class="mr-2">
 							Send Notes to Customer
 						</x-button>
 					</template>
@@ -1432,6 +1543,44 @@ const activityDeleteConfirmed = () => {
 					</div>
 				</template> -->
 			</DataTable>
+			<x-modal v-model="modals.notes" size="lg" show-close backdrop>
+        		<template #header> New Note for Customer </template>
+
+				<x-form @submit="onNoteSubmit" :auto-focus="false">
+				<div class="grid">
+
+					<x-textarea
+					v-model="notesForm.description"
+					label=""
+					placeholder = "Type Here.."
+					rows = 10
+					:adjust-to-text="false"
+					:rules="[
+						isRequired,
+					]"
+					class="w-full"
+					/>
+					<small class = "">Max allowed 500 characters</small>
+
+				</div>
+
+				<div class="text-right space-x-4 mt-12">
+					<small class = "text-red-600">(Note: Once added it cannot be edited or deleted.)</small>
+					<x-button size="sm" @click.prevent="modals.notes = false">
+					Cancel
+					</x-button>
+
+					<x-button
+					size="sm"
+					color="emerald"
+					:loading="notesForm.processing"
+					type="submit"
+					>
+					Send Note
+					</x-button>
+				</div>
+				</x-form>
+          </x-modal>		
 		</div> 
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -1441,7 +1590,7 @@ const activityDeleteConfirmed = () => {
 				<x-tag size="sm">{{ activities.length || 0 }}</x-tag>
 				</h3>
 				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
 						<x-button @click.prevent="addActivity" size="sm" color="orange" class="mr-2">
 							Add Activity
 						</x-button>
@@ -1577,7 +1726,7 @@ const activityDeleteConfirmed = () => {
 					<x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
 				</h3>
 				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! is(rolesEnum.PA)">
+					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
 						<x-button
 						size="sm"
 						color="orange"
@@ -1594,7 +1743,7 @@ const activityDeleteConfirmed = () => {
 						</template>
 
 					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! is(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! hasRole(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
 						Copy upload Link
 					</x-button>
 				</div>
