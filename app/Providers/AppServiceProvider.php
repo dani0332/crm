@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        CarQuote::observe( CarQuoteObserver::class);
+        CarQuote::observe(CarQuoteObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,

@@ -24,7 +24,7 @@ class EventServiceProvider extends ServiceProvider
             SendEmailVerificationNotification::class,
         ],
         CarQuoteAdvisorUpdated::class => [
-            HandleCarAdvisorUpdated::class
+            HandleCarAdvisorUpdated::class,
         ],
         Login::class => [
             LoginListener::class,

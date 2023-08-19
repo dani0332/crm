@@ -43,8 +43,8 @@ class HandleCarAdvisorUpdated
         info('inside buidl sms ');
         $content = 'Hi ';
         $clientNumber = '+923340555850';
-        $customer = Customer::where('id',19811 )->first();
-        $this->smsService->sendSMS($clientNumber,$content, $customer);
+        $customer = Customer::where('id', 19811)->first();
+        $this->smsService->sendSMS($clientNumber, $content, $customer);
 
         info('inside after build sms');
     }
