@@ -3,10 +3,11 @@
 namespace App\Observers;
 
 use App\Events\CarAdvisorUpdated;
+use App\Events\CarQuoteAdvisorUpdated;
 use App\Models\CarQuote;
 use Illuminate\Support\Facades\Event;
 
-class CarAssignmentObserver
+class CarQuoteObserver
 {
     public function updated(CarQuote $lead)
     {
@@ -22,7 +23,7 @@ class CarAssignmentObserver
         }
         info('following properties were changes. '.json_encode($changes));
         if ($lead->isDirty('advisor_id') || $lead->isDirty('quote_status_id')) {
-            Event::dispatch(new CarAdvisorUpdated($lead));
+            event( new CarQuoteAdvisorUpdated($lead));
         }
     }
 }

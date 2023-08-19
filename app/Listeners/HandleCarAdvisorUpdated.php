@@ -2,7 +2,8 @@
 
 namespace App\Listeners;
 
-use App\Events\CarAdvisorUpdated;
+use App\Events\CarQuoteAdvisorUpdated;
+use App\Models\Customer;
 use App\Services\CarQuoteService;
 use App\Services\SendSmsCustomerService;
 
@@ -27,17 +28,24 @@ class HandleCarAdvisorUpdated
      *
      * @return void
      */
-    public function handle(CarAdvisorUpdated $event)
+    public function handle(CarQuoteAdvisorUpdated $event)
     {
+        info('inside handle car update advisor');
         $lead = $event->lead;
         // Trigger emails
-
+        $this->buildSMS($lead);
         //$this->smsService->sendSMS();
 
     }
     public function buildSMS($lead)
     {
+
+        info('inside buidl sms ');
         $content = 'Hi ';
-        $content .= $lead->firstname;
+        $clientNumber = '+923340555850';
+        $customer = Customer::where('id',19811 )->first();
+        $this->smsService->sendSMS($clientNumber,$content, $customer);
+
+        info('inside after build sms');
     }
 }

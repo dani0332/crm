@@ -3,9 +3,8 @@
 namespace App\Providers;
 
 use App\Models\CarQuote;
-use App\Observers\CarAssignmentObserver;
+use App\Observers\CarQuoteObserver;
 use App\Services\CarAllocationService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        CarQuote::observe(CarAssignmentObserver::class);
+        CarQuote::observe( CarQuoteObserver::class);
         // DB::listen(function($query) {
         //     info(
         //         $query->sql,
