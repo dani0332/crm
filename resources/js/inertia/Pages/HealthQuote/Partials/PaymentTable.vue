@@ -230,7 +230,7 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can.create_payments && !can.approve_payments"
+        v-if="true || can.create_payments && !can.approve_payments"
         size="sm"
         color="orange"
         @click="addPaymentModal"

@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import LazyDocumentUploader from '../Partials/QuoteDocuments.vue';
+import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 defineProps({
 	quote: Object,
@@ -24,6 +24,7 @@ defineProps({
 	carPlanFeaturesCodeEnum: Object,
 	carPlanExclusionsCodeEnum: Object,
 	carPlanAddonsCodeEnum: Object,
+	paymentStatusEnum: Object,
 	modelType: String,
 	notProductionApproval: Boolean,
 	allowedDuplicateLOB: Array,
@@ -46,7 +47,8 @@ defineProps({
 	emailStatuses: Array,
 	carQuotePlanAddons: Array,
 	notesForCustomers:Object,
-	websiteURL: String
+	websiteURL: String,
+	docUploadURL: String
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -116,7 +118,7 @@ const paymentDetailsTable = reactive({
   ],
 });
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
-const selectedPlans = [];
+const selectedPlans = ref([]);
 const selectedPlan = ref({});
 
 const availablePlansTable = reactive({
@@ -261,7 +263,7 @@ const totalPriceVAT = computed(() => {
 const paymentItems = computed(() => {
   return page.props.payments.map(payment => {
     return {
-      code: payment.code,
+      code: payment.code.toLowerCase(),
       payment_status: payment.payment_status.text,
       plan_name: page.props.plan.text,
       captured_amount: payment.captured_amount,
@@ -269,7 +271,8 @@ const paymentItems = computed(() => {
       captured_at: payment.captured_at,
       authorized_at: payment.authorized_at,
       payment_method_name: payment.payment_method.name,
-      reference: payment.reference
+      reference: payment.reference,
+	  payment_method_code: payment.payment_method.code,
     }
   })
 })
@@ -657,6 +660,15 @@ const copyPlanURL = (item) => {
 		});
 }
 
+const copyUploadURL = () => {
+	copy(page.props.docUploadURL);
+	if (copied)
+		notification.success({
+			title: 'Link copied to clipboard',
+			position: 'top',
+		});
+}
+
 const selectPlan = (item) => {
 	selectedPlan.value = item;
   	modals.plan = true;
@@ -765,7 +777,7 @@ const selectPlan = (item) => {
 			<div class="text-sm">
 				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">CDB ID</dt>
+						<dt class="font-medium">REF-ID</dt>
 						<dd>{{ record.code }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
@@ -923,7 +935,7 @@ const selectPlan = (item) => {
 						<dd>{{ record.created_by }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">PARENT CDB ID</dt>
+						<dt class="font-medium">PARENT REF-ID</dt>
 						<dd>{{ record.parent_duplicate_quote_id ?? '' }}</dd>
 					</div>
 				</dl>
@@ -1068,7 +1080,7 @@ const selectPlan = (item) => {
 			</div>
     	</div>
     
-		<div class="p-4 rounded shadow mb-6 bg-white">
+		<div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.BetaUser)">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Payments
@@ -1088,24 +1100,37 @@ const selectPlan = (item) => {
 				hide-footer
 			>
 				<template #item-action="item">
-				<div class="flex gap-2">
-					<x-button
-					size="xs"
-					color="primary"
-					outlined
-					@click.prevent="onEditMember(item)"
-					>
-					Edit
-					</x-button>
-					<x-button
-					size="xs"
-					color="error"
-					outlined
-					@click.prevent="memberDelete(item.id)"
-					>
-					Delete
-					</x-button>
-				</div>
+					{{item.payment_method}}
+					<div class="flex gap-2">
+						<template v-if="!can(permissionEnum.ApprovePayments)">
+							<x-button v-if="item.payment_method_code == 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED, paymentStatusEnum.AUTHORISED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
+								size="xs" 
+								color="primary" 
+								outlined 
+								@click.prevent="onEditMember(item)"
+							>
+								Copy Link
+							</x-button>
+							<x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click.prevent="onEdit">
+								Edit
+							</x-button>
+						</template>
+						<template v-if="can(permissionEnum.ApprovePayments)">
+							<x-button v-if="item.payment_method_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
+								size="xs" 
+								color="primary" 
+								outlined 
+								@click.prevent="onEditMember(item)"
+							>
+								Approve
+							</x-button>
+						</template>
+						<template v-if="item.payment_status_id == paymentStatusEnum.PAID">
+							<x-button size="xs" color="primary" outlined disabled>
+								Approve
+							</x-button>
+						</template>
+					</div>
 				</template>
 			</DataTable>
 		</div> 
@@ -1200,12 +1225,34 @@ const selectPlan = (item) => {
 					<x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
 				</h3>
 				<div v-if="! hasRole(rolesEnum.PA)">
+					<x-button-group v-if="selectedPlans.length > 0" size="sm">
+						<x-button
+							@click.prevent="onTogglePlans(false)"
+							:loading="toggleLoader"
+						>
+						Show
+						</x-button>
+						<x-button
+							@click.prevent="onTogglePlans(true)"
+							:loading="toggleLoader"
+						>
+						Hide
+						</x-button>
+					</x-button-group>
+					<x-button
+						v-if="selectedPlans.length > 0"
+						size="sm"
+						color="emerald"
+						class="ml-2 mr-2"
+						@click.prevent="onExportPlans"
+						:loading="exportLoader"
+					>
+						Download PDF
+					</x-button>
 					<x-button @click.prevent="onSendOCBEmail" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
 						Send OCB Email to Customer
 					</x-button>
-					<x-button @click.prevent="onDownloadPDF" size="sm" color="emerald" class="mr-2">
-						Download PDF
-					</x-button>
+					
 					<x-button @click.prevent="onAddPlan" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
@@ -1388,20 +1435,22 @@ const selectPlan = (item) => {
 					Documents
 				</h3>
 				<div>
+					<x-button class="mr-2" v-if="record.payment_status_id === paymentStatusEnum.AUTHORISED && ! hasRole(rolesEnum.PA)" @click.prevent="copyUploadURL" size="sm" color="orange">
+						Copy upload Link
+					</x-button>
 					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
 						<!-- <Link :href="`${record.uuid}/documents`" class="btn btn-primary btn-sm" style="float:right;">Upload Documents</Link> -->
 						<x-button @click.prevent="modals.doc = true" size="sm" color="orange">
 							Upload Documents
 						</x-button>
 						<template v-if="displaySendPolicyButton">
-							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
-                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
+							<x-button class="ml-2 mr-2" size="sm" color="orange" @click.prevent="sendQuoteDocumentsToCustomer">
+								Send Policy
+							</x-button>
 						</template>
 
 					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! hasRole(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-						Copy upload Link
-					</x-button>
+					
 				</div>
 			</div>
 			<DataTable
@@ -1758,6 +1807,9 @@ const selectPlan = (item) => {
 				hide-rows-per-page
 				hide-footer
 			>
+			<template #item-key="item">
+				{{ item.key.replace('_', ' ').toLowerCase().replace(/\b[a-z]/g, (l) => l.toUpperCase()) }}
+			</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
 						<x-button
@@ -1902,6 +1954,6 @@ const selectPlan = (item) => {
 		</div>
 
 	</div>
-	<AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.quoteTypeId" />
+	<AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
 
 </template>
