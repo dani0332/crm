@@ -51,7 +51,7 @@ class TierAssignment extends Command
         $masterSwitchConfigValue = (int) config('constants.TIER_ASSIGNMENT_MASTER_SWITCH');
 
         if ($tierAssignmentSwitch != 0 && $masterSwitchConfigValue != 0) {
-            $from = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_PROCESS_START_DATE);
+            $from = now()->subDays(2)->startOfDay()->toDateTimeString();
 
             $isFIFO = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_PICKUP_FIFO);
 
