@@ -123,8 +123,11 @@ class DashboardController extends Controller
     {
         $tplDashboardStats = $this->getTPLDashboardStats($request);
         $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsByProductId($car->id);
+        $teams = $this->getTeamsByProductId($car->id);        
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        $teams = $teams->filter(function ($item) use ($commonTeams) {
+            return in_array($item->id, $commonTeams); 
+        });
         $tiers = $this->tierService->getTPLTiers();
         $commonTeam = 0;
         if (count($commonTeams) > 0) {
@@ -366,12 +369,10 @@ class DashboardController extends Controller
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
-        // $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        // info('inside renderComprehensiveDashboard common teams are : '.json_encode($commonTeams));
-        // $commonTeam = 0;
-        // if (count($commonTeams) > 0) {
-        //     $commonTeam = $commonTeams[0];
-        // }
+        $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        $teams = $teams->filter(function ($item) use ($commonTeams) {
+            return in_array($item->id, $commonTeams); 
+        });
 
         return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
     }
