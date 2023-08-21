@@ -76,6 +76,11 @@ use App\Enums\GenericRequestEnum;
       });
     });
 </script>
+@php
+    $updatedTitles = [
+        'premium' => 'price'
+    ];
+@endphp
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             @if ($model->modelType == quoteTypeCode::Car)
@@ -294,11 +299,18 @@ use App\Enums\GenericRequestEnum;
                             @endif
                             <div class="col">
                                 @if (strpos($value, 'title'))
-                                    <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ strtoupper($customTitles[$property]) }}</b></label>
+                                    @php
+                                        $textDecorations = $tooltip = "";
+                                        if(in_array(strtoupper($customTitles[$property]), ['REF-ID', 'PARENT REF-ID'])){
+                                            $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                                            $tooltip = strtoupper($customTitles[$property]) == 'REF-ID' ? 'Reference ID' : 'Parent Reference-ID';
+                                        }
+                                    @endphp
+                                    <label style="{{$textDecorations}}" class="col-form-label col-md-6 col-sm-6" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
+                                        for="Status Description"><b>{{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property]) ) }}</b></label>
                                 @else
                                     <label class="col-form-label col-md-6 col-sm-6"
-                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper($property)) }}</b></label>
+                                        for="Status Description"><b>{{ str_replace('_', ' ', strtoupper((array_key_exists(strtolower($property), $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}</b></label>
                                 @endif
                                 @if (str_contains($value, 'select'))
                                     @if (str_contains($value, 'customTable'))
@@ -368,11 +380,15 @@ use App\Enums\GenericRequestEnum;
                                     class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         @endif
-                        @can(strtolower($model->modelType) . '-quotes-edit')
+                            @if( ($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] ) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
+                                <a id="texta"
+                                   href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
+                                   class='btn btn-warning btn-sm'>Edit</a>
+                            @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                 class='btn btn-warning btn-sm'>Edit</a>
-                        @endcan
+                            @endif
                     @endcannot
                 </div>
             </div>
@@ -463,9 +479,9 @@ use App\Enums\GenericRequestEnum;
         @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
-        <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
+        <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :access="$access" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
 
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />

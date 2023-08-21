@@ -34,8 +34,8 @@ class BusinessQuoteService extends BaseService
                 'bqr.id',
                 'bqr.uuid',
                 'bqr.code',
-                DB::raw('DATE_FORMAT(bqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-                DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+                DB::raw('DATE_FORMAT(bqr.created_at, "%d-%b-%Y %r") as created_at'),
+                DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
                 'bqr.first_name',
                 'bqr.last_name',
                 'bqr.email',
@@ -445,7 +445,7 @@ class BusinessQuoteService extends BaseService
                 $title = 'Next Followup Date';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'advisor_id':
                 $title = 'Advisor';
@@ -466,13 +466,13 @@ class BusinessQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'premium':
                 $title = 'Premium';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             case 'device':
                 $title = 'Device';
@@ -496,7 +496,7 @@ class BusinessQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'company_name', 'business_type_of_insurance_id'];
+        return ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'company_name', 'business_type_of_insurance_id', 'advisor_id'];
     }
 
     public function fillRenewalProperties($model)

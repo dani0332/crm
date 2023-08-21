@@ -65,7 +65,7 @@ const onLogout = () => {
             <x-collapse
               show-icon
               :expanded="
-                link.children.some(child => $page.url.startsWith(child.url)) ||
+                link.children.some(child => $page.url.startsWith(child.url)) || link.active ||
                 link.children.some(child =>
                   child.children.some(grandchild =>
                     $page.url.startsWith(grandchild.url),
@@ -147,7 +147,7 @@ const onLogout = () => {
                       :href="child.url"
                       class="pl-4 py-2 flex gap-2 items-center hover:bg-black/10"
                       :class="{
-                        '!bg-primary-800': $page.url.startsWith(child.url),
+                        '!bg-primary-800': $page.url.startsWith(child.url) || child.active,
                       }"
                     >
                       <x-icon

@@ -63,13 +63,15 @@ use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\CarRepairCoverageController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\CommercialKeywordsController;
-use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\V2\EmbeddedProductController;
+use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\VehicleDepreciationController;
 use App\Http\Controllers\RenewalDataProcessingController;
+use App\Http\Controllers\V2\AMLController as V2AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
+use App\Http\Controllers\CommercialVehicleConfigurationContoller;
 
 /*
 |--------------------------------------------------------------------------
@@ -103,12 +105,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return view('home');
+        return inertia('Home/Home');
     });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
 
     Route::group(['middleware' => ['check_route_access']], function () {
+        Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
         Route::get('/tpl-conversion-dashboard', [DashboardController::class, 'renderTplDashboard'])->name('tpl-dashboard-view');
         Route::get('/comprehensive-conversion-dashboard', [DashboardController::class, 'renderComprehensiveDashboard'])->name('comprehensive-dashboard-view');
@@ -219,7 +222,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
         Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('run-batch-process');
-        Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed']);
+        Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed'])->name('renewal-validation-failed');
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);
         Route::get('uploaded-leads/{id}/validation-passed/quote-redirect/{leadId}', [RenewalsUploadController::class, 'viewQuoteRedirect'])->name('viewQuoteRedirect');
@@ -334,6 +337,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'generic'], function () {
+        Route::resource('allocation-threshold', AllocationThresholdController::class);
         Route::resource('team', TeamController::class);
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
@@ -379,13 +383,14 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::group(['prefix' => 'kyc'], function () {
-        Route::resource('aml', AMLController::class);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [AMLController::class, 'amlQuoteDetails']);
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [AMLController::class, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
-        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [AMLController::class, 'quoteUpdate'])->name('quoteUpdate');
-        Route::get('aml/download/history', [AMLController::class, 'sanctionListHistory'])->name('sanctionListHistory');
-        Route::get('aml/upload/uae', [AMLController::class, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
-        Route::post('aml/upload/uae-list', [AMLController::class, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
+        $controller = in_array('Aml', newUi()) ? V2AMLController::class : AMLController::class;
+        Route::resource('aml', $controller);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [$controller, 'amlQuoteDetails']);
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [$controller, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
+        Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [$controller, 'quoteUpdate'])->name('quoteUpdate');
+        Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');
+        Route::get('aml/upload/uae', [$controller, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
+        Route::post('aml/upload/uae-list', [$controller, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
     });
 
     Route::group(['prefix' => 'medical'], function () {
@@ -430,6 +435,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
+    Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
     Route::post('/car-plan-manual-update-process', [ClaimController::class, 'carPlanUpdateManualProcess']);
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);

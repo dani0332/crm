@@ -247,6 +247,7 @@ class AMTController extends Controller
         $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        abort_if(! $record, 404);
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
         $lostReasons = DB::table('lost_reasons')

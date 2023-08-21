@@ -9,19 +9,22 @@ use App\Models\Tier;
 use App\Models\User;
 use App\Jobs\CammyJob;
 use App\Enums\RolesEnum;
-use App\Models\CarQuote;
 use App\Models\TierUser;
 use App\Models\LeadSource;
 use App\Models\RuleDetail;
 use App\Enums\DaysNameEnum;
-use App\Jobs\IntroEmailJob;
-use App\Models\HealthQuote;
 use App\Enums\quoteTypeCode;
 use App\Models\QuoteBatches;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
+use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
+use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Jobs\SyncSIBContactJob;
 use App\Traits\GetUserTreeTrait;
@@ -29,10 +32,7 @@ use App\Models\CommercialKeyword;
 use App\Models\ApplicationStorage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Models\CarQuoteRequestDetail;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CarTypeOfInsuranceIdEnum;
-use App\Models\HealthQuoteRequestDetail;
+use Illuminate\Support\Facades\Mail;
 
 class LeadAllocationService extends BaseService
 {
@@ -87,6 +87,7 @@ class LeadAllocationService extends BaseService
             $leadAllocation->max_capacity = 0;
             $leadAllocation->is_available = false;
             $leadAllocation->save();
+
             DB::commit();
         } catch (\Exception $e) {
             Log::error($e->getMessage());
@@ -113,6 +114,7 @@ class LeadAllocationService extends BaseService
             if (isset($isAvailable)) {
                 $leadAllocation->is_available = $isAvailable;
             }
+
             $leadAllocation->save();
             DB::commit();
         } catch (\Exception $e) {
@@ -124,19 +126,24 @@ class LeadAllocationService extends BaseService
     public function getHealthUnallocatedLeads()
     {
         try {
-            $unAllocatedLeads = [];
-            $to = now();
-            $from = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
-            info('Health Unallocated Leads from date : '.$from.' to date : '.$to);
+            $startDate = $this->getAppStorageValueByKey('LEAD_ALLOCATION_START_DATE_FOR_LEADS');
+            $endDate = now();
+
+            info('Health Unallocated Leads from date: '.$startDate.' to date: '.$endDate);
+
             $unAllocatedLeads = HealthQuote::select('health_quote_request.*')
                 ->join('quote_status', 'quote_status.id', '=', 'health_quote_request.quote_status_id')
                 ->where('quote_status.id', QuoteStatusEnum::Qualified)
-                ->whereNotNull('health_quote_request.health_team_type')
+                ->whereNotNull('health_quote_request.price_starting_from')
+                ->where('health_quote_request.is_error_email_sent', false)
                 ->whereNull('health_quote_request.advisor_id')
-                ->whereBetween('health_quote_request.created_at', [$from, $to])->skip(0)->take(20)->get();
+                ->whereBetween('health_quote_request.created_at', [$startDate, $endDate])
+                ->skip(0)
+                ->take(20)
+                ->get();
 
             return $unAllocatedLeads;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error($e->getMessage());
         }
     }
@@ -159,7 +166,6 @@ class LeadAllocationService extends BaseService
                 if (str_starts_with($lead->code, 'CAR-')) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
-
                 $lead->advisor_id = $advisorId;
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
@@ -913,11 +919,51 @@ class LeadAllocationService extends BaseService
         info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
         if (now()->toTimeString() >= $totalResetTime) {
             info('should total reset is true');
-            $shouldProcess = true;
-        } else {
-            info('should total reset is false');
+
+            return true;
         }
 
-        return $shouldProcess;
+        info('should total reset is false');
+
+        return false;
+    }
+
+    public function assignHealthTeamBasedOnStartingPrice($healthQuote)
+    {
+        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$healthQuote->uuid);
+
+        $priceStartingFrom = $healthQuote->price_starting_from;
+
+        $healthTeam = Team::where('allocation_threshold_enabled', true)
+            ->where('min_price', '<=', $priceStartingFrom)
+            ->where('max_price', '>=', $priceStartingFrom)
+            ->first();
+
+        if ($healthTeam) {
+            info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
+            $healthQuote->update([
+                'health_team_type' => $healthTeam->name,
+            ]);
+        } else {
+            info('assignHealthTeamBasedOnStartingPrice team not found against : '.$healthQuote->uuid);
+            $healthQuote->update([
+                'is_error_email_sent' => true,
+            ]);
+            Mail::send(new HealthAssignmentIssueEmail($healthQuote->code, $priceStartingFrom));
+        }
+    }
+
+    public function shouldHealthAllocationProceed()
+    {
+        $masterSwitchConfigValue = (int) config('constants.HEALTH_LEAD_ALLOCATION_MASTER_SWITCH');
+        if ($masterSwitchConfigValue == 0) {
+            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(false));
+
+            return false;
+        } else {
+            info('shouldHealthAllocationProceed -- Doppler -- output is : '.json_encode(true));
+
+            return true;
+        }
     }
 }

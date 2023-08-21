@@ -7,6 +7,8 @@ return [
     'CENTRAL_API_ENDPOINT' => env('CENTRAL_API_ENDPOINT', ''),
     'CENTRAL_API_TOKEN' => env('CENTRAL_API_TOKEN', ''),
     'CENTRAL_API_TIMEOUT' => env('CENTRAL_API_TIMEOUT', ''),
+    'CENTRAL_API_USER' => env('CENTRAL_API_USER', ''),
+    'CENTRAL_API_PWD' => env('CENTRAL_API_PWD', ''),
     'datetime_format' => env('DATETIME_FORMAT', ''),
     'CLAIMS_UPLOAD_MIME_TYPES' => env('CLAIMS_UPLOAD_MIME_TYPES', ''),
     'valuation_api_route' => env('VALUATION_API_URL'),
@@ -97,4 +99,5 @@ return [
     'DATE_FORMAT_ONLY' => env('DATE_FORMAT_ONLY', null),
     'CU_DATETIME_FORMAT' => env('CU_DATETIME_FORMAT', null),
     'TIER_ASSIGNMENT_MASTER_SWITCH' => env('TIER_ASSIGNMENT_MASTER_SWITCH', 0),
+    'HEALTH_LEAD_ALLOCATION_MASTER_SWITCH' => env('HEALTH_LEAD_ALLOCATION_MASTER_SWITCH', 0),
 ];

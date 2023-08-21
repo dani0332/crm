@@ -43,6 +43,7 @@ class EmbeddedProductRequest extends FormRequest
             'uncheck_message' => 'nullable',
             'logic_description' => 'nullable',
             'company_documents' => 'nullable',
+            'is_active' => 'nullable',
         ];
     }
 }
