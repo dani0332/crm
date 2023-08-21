@@ -3,6 +3,8 @@ const props = defineProps({
   dropdownSource: Object,
   genderOptions: Object,
   fields: Object,
+    quote:Object,
+    travelers: Array,
 });
 
 const genderSelect = computed(() => {
@@ -12,18 +14,42 @@ const genderSelect = computed(() => {
   }));
 });
 
-const formFields = computed(() => {
+    const formFields = computed(() => {
   return Object.keys(props.fields).map(key => ({
     value: key,
     label: props.fields[key].label,
   }));
 });
 
+/*
 const quoteForm = useForm({
   ...formFields.value.reduce((acc, field) => {
     acc[field.value] = '';
     return acc;
   }, {}),
+}); */
+
+const quoteForm = useForm({
+    first_name: props.quote?.first_name || null,
+    last_name: props.quote?.last_name || null,
+    email: props.quote?.email || null,
+    direction_code:props.quote?.direction_code || null,
+    has_arrived_uae:props.quote?.has_arrived_uae?.toString() || null,
+    has_arrived_destination: props.quote?.has_arrived_destination?.toString() || null,
+    coverage_code:props.quote?.coverage_code || null,
+    uuid:props.quote?.uuid || null,
+    mobile_no: props.quote?.mobile_no || null,
+    nationality_id: props.quote?.nationality_id || null,
+    start_date: props.quote?.start_date || null,
+    end_date: props.quote?.end_date || null,
+    region_cover_for_id:props.quote?.region_cover_for_id?.toString() || null,
+    premium: props.quote?.premium || null,
+    policy_number: props.quote?.policy_number || null,
+    iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
+    ilivein_accommodation_type_id: props.quote?.ilivein_accommodation_type_id || null,
+    members:[{ value: 'male', label: 'Male' }]
+
+
 });
 
 const rules = {
@@ -33,7 +59,36 @@ const rules = {
   isRequired: v => !!v || 'This field is required',
   allowEmpty: v => true || 'This field is required',
 };
+const subTeamOptions = [
+    { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
+    { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' }
+];
+const alreadylived = [
+    { value: '1', label: 'Yes' },
+    { value: '0', label: 'No' }
+];
+const genderList = [
+    { value: 'male', label: 'Male' },
+    { value: 'female', label: 'Female' }
+];
+const inboundCoverageCode = [
+    { value: 'singleTrip', label: 'Single Trip' },
+    { value: 'multiTrip', label: 'Multi Trip' }
+];
+const outboundCoverageCode = [
+    { value: 'singleTrip', label: 'Single Trip' },
+    { value: 'annualTrip', label: 'Annual Trip' }
+];
+const outboundRegions = [
+    { value: '1', label: 'Worldwide (excl. US/Canada)' },
+    { value: '2', label: 'Worldwide (incl. US/Canada)' },
+    { value: '4', label: 'Schengen Countries' }
+];
 
+function addTravler(){
+    console.log('add traaaaaaaaaaaaaa');
+    quoteForm.members.push({ dob: '', gender: '' });
+}
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post(`/quotes/travel`, {
@@ -45,7 +100,30 @@ function onSubmit(isValid) {
   }
 }
 
-onMounted(() => {});
+function addUpdatedTraveller(){
+    console.log('propss traveler',props.travelers);
+    let listing = Object.keys(props.travelers).map((key,item) => {
+        console.log('key',key, props.travelers[key]);
+        return { dob: props.travelers[key].dob, gender: '' }
+        //this.travelersList.push({ dob: props.travelers[key].dob, gender: '' });
+     //   value: key,
+      //  label: props.fields[key].label,
+    });
+    console.log('listing this', this);
+   // console.log('add',travelersList);
+    console.log('listing',listing);
+    //console.log('add-----',this.travelersList);
+    // travelersList = listing;
+    quoteForm.members = listing;
+    /* Object.keys(props.travelers).map(key => ({
+        value: key,
+        label: props.fields[key].label,
+    })); */
+}
+
+onMounted(() => {
+    addUpdatedTraveller();
+});
 </script>
 
 <template>
@@ -59,109 +137,158 @@ onMounted(() => {});
         </Link>
       </div>
     </div>
+      {{props.quote?.has_arrived_destination}}
+      ---------------
+      {{props.quote}}
+      =-----------------------------------------------
+      -----------------------------
+      {{props.travelers}}
+      travelers
+      {{travelersList}}
+
+      -----------------
+      {{quoteForm.members}}
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <template v-for="(field, index) in props.fields">
-          <label v-if="field.type == 'text'">
-            <p>
-              {{ field.label }}
-              <sup v-if="field.required" class="text-red-500">*</sup>
-            </p>
-            <x-input
-              v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
-              :disabled="field.disabled"
-              :error="quoteForm.errors[index]"
-              class="w-full"
-            />
-          </label>
+          <x-field label="Traveling Where?" required>
+              <x-select
+                  v-model="quoteForm.direction_code"
+                  :options="subTeamOptions"
+                  class="w-full"
+                  :rules="[rules.isRequired]"
 
-          <label v-if="field.type == 'email'">
-            <p>
-              {{ field.label }}
-              <sup v-if="field.required" class="text-red-500">*</sup>
-            </p>
-            <x-input
-              v-model="quoteForm[index]"
-              type="email"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-                rules.isEmail,
-              ]"
-              :disabled="field.disabled"
-              class="w-full"
-              :error="quoteForm.errors[index]"
-            />
-          </label>
-
-          <label v-if="field.type == 'number'">
-            <p>
-              {{ field.label }}
-              <sup v-if="field.required" class="text-red-500">*</sup>
-            </p>
-            <x-input
-              v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
-              :disabled="field.disabled"
-              class="w-full"
-              :error="quoteForm.errors[index]"
-            />
-          </label>
-
-          <DatePicker
-            v-if="field.type == 'date'"
-            v-model="quoteForm[index]"
-            :label="field.label"
-            :disabled="field.disabled"
-            class="w-full"
-            :hasError="quoteForm.errors[index]"
-          />
-
-          <label v-if="field.type == 'select'">
-            <p>
-              {{ field.label }}
-              <sup v-if="field.required" class="text-red-500">*</sup>
-            </p>
-            <ComboBox
-              v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
-              :disabled="field.disabled"
-              :options="
-                field.options.map(option => ({
-                  value: option.id,
-                  label: option.text,
-                }))
-              "
-              :single="true"
-              class="w-full"
-              :hasError="quoteForm.errors[index]"
-            />
-          </label>
-
-          <label v-if="field.type == 'textarea'">
-            <p>
-              {{ field.label }}
-              <sup v-if="field.required" class="text-red-500">*</sup>
-            </p>
-            <x-textarea
-              v-model="quoteForm[index]"
-              :rules="[
-                field.required === true ? rules.isRequired : rules.allowEmpty,
-              ]"
-              :disabled="field.disabled"
-              class="w-full"
-              :error="quoteForm.errors[index]"
-            />
-          </label>
-        </template>
+              />
+          </x-field>
+          <x-field v-if="quoteForm.direction_code == 'travelUaeInbound'" :label="'Have you already arrived in UAE?'" required>
+              <x-select
+                  v-model="quoteForm.has_arrived_uae"
+                  :options="alreadylived"
+                  class="w-full"
+                  :rules="[rules.isRequired]"
+              />
+          </x-field>
+          <x-field v-else :label="'Have you already arrived at your destination?'" required>
+              <x-select
+                  v-model="quoteForm.has_arrived_destination"
+                  :options="alreadylived"
+                  class="w-full"
+                  :rules="[rules.isRequired]"
+              />
+          </x-field>
       </div>
+        <div class="grid sm:grid-cols-2 gap-4" v-if="quoteForm.has_arrived_uae=='0' || quoteForm.has_arrived_destination == '0'">
+            <x-field label="Travel Coverage" required>
+                <x-select
+                    v-model="quoteForm.coverage_code"
+                    :options="quoteForm.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
+                    class="w-full"
+                    :rules="[rules.isRequired]"
+                />
+            </x-field>
+            <x-field label="Which regions do you need cover for?*" v-if="quoteForm.has_arrived_destination=='0' && quoteForm.direction_code =='travelUaeOutbound'" required>
+                <x-select
+                    v-model="quoteForm.region_cover_for_id"
+                    :options="outboundRegions"
+                    :rules="[rules.isRequired]"
+                    class="w-full"
+                />
+            </x-field>
+          <x-field label="Travel Start Date" required >
+          <DatePicker
+              v-model="quoteForm.start_date"
+              name="created_at_start"
+          />
+          </x-field>
+          <x-field v-if="quoteForm.coverage_code == 'singleTrip'" label="Travel End Date" required >
+              <DatePicker
+                  v-model="quoteForm.end_date"
+                  name="end_date"
+                  :rules="[rules.isRequired]"
+              />
+          </x-field>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+
+        <x-field label="First Name" required>
+
+              <x-input
+                  v-model="quoteForm.first_name"
+                  :rules="[rules.isRequired]"
+                  class="w-full"
+              />
+          </x-field>
+          <x-field label="Last Name" required>
+              <x-input
+                  v-model="quoteForm.last_name"
+                  :rules="[rules.isRequired]"
+                  class="w-full"
+              />
+          </x-field>
+
+          <x-field label="Nationality" required>
+              <ComboBox
+                  v-model="quoteForm.nationality_id"
+                  :options="
+                    fields.nationality_id.options.map(option => ({
+                      value: option.id,
+                      label: option.text,
+                    }))
+                  "
+                  :single="true"
+                  class="w-full"
+                  :rules="[rules.isRequired]"
+                  :hasError="quoteForm.errors[index]"
+              />
+          </x-field>
+          <x-field label="Email" required>
+              <x-input
+                  v-model="quoteForm.email"
+                  class="w-full"
+                  :rules="[rules.isEmail]"
+              />
+          </x-field>
+          <x-field label="Phone number" required>
+              <x-input
+                  v-model="quoteForm.mobile_no"
+                  class="w-full"
+                  :rules="[rules.isRequired]"
+              />
+          </x-field>
+        </div>
+
+        <div v-if="quoteForm.has_arrived_uae=='0' || quoteForm.has_arrived_destination=='0'" class="grid sm:grid-cols-3 gap-4" v-for="(travel,index) in quoteForm.members">
+            <h2>{{travel.primary == true?'Primary Traveler':'Additional Traveler '+index }}</h2>
+            <h2></h2>
+            <h2></h2>
+          <x-field label="Date of Birth" required >
+              <DatePicker
+                  v-model="travel.dob"
+                  name="created_at_start"
+                  :rules="[rules.isRequired]"
+              />
+          </x-field>
+          <x-field label="Gender" required>
+              <x-select
+                  v-model="travel.gender"
+                  placeholder="Gender"
+                  :options="genderList"
+                  :rules="[rules.isRequired]"
+                  class="w-full"
+              />
+          </x-field>
+
+       <!-- -->
+      </div>
+        <x-button
+            v-if="quoteForm.has_arrived_uae=='0' || quoteForm.has_arrived_destination == '0'"
+            size="md"
+            color="emerald"
+            type="button"
+            @click="addTravler()"
+        >
+            Add Traveler
+        </x-button>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
         <x-button

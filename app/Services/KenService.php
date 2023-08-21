@@ -38,7 +38,7 @@ class KenService
 
         $response = $this->client->withBody(json_encode($data), 'application/json')
             ->send($method, $url)->onError(function ($response) {
-                vAbort($response->json()['msg']);
+                dd($response); // vAbort($response->json()['msg']);
             });
 
         return $response->json();

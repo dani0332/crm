@@ -992,6 +992,72 @@ onMounted(() => {
             <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
+
+            <div class="grid sm:grid-cols-2">
+                <dt>
+                    <x-tooltip position="bottom">
+                        <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                            Traveling Where
+                        </label>
+                        <template #tooltip> Traveling Where</template>
+                    </x-tooltip>
+                </dt>
+                <dt  class="font-medium">{{ quote.direction_code.toUpperCase() }}</dt>
+            </div>
+
+            <div v-if="enums.travelQuoteEnum.TravelUaeInbound == quote.direction_code" class="grid sm:grid-cols-2" >
+                <dt>
+
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                            Arrived at UAE
+                        </label>
+
+                </dt>
+                <dt  class="font-medium">{{ quote.has_arrived_uae == 1?'Yes':'No' }}</dt>
+            </div>
+            <div v-if="enums.travelQuoteEnum.TravelUaeOutbound == quote.direction_code" class="grid sm:grid-cols-2" >
+                <dt>
+
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                            Arrived at Destination
+                        </label>
+
+                </dt>
+                <dt  class="font-medium">{{ quote.has_arrived_destination == 1?'Yes':'No' }}</dt>
+            </div>
+            <div class="grid sm:grid-cols-2" v-if="quote.has_arrived_destination == 0 || quote.has_arrived_uae == 0">
+                <dt>
+                    <x-tooltip position="bottom">
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                           Travel Start Date
+                        </label>
+                        <template #tooltip> Travel Start Date</template>
+                    </x-tooltip>
+                </dt>
+                <dt  class="font-medium">{{ quote.start_date }}</dt>
+            </div>
+            <div class="grid sm:grid-cols-2">
+                <dt>
+                    <x-tooltip position="bottom">
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                            Travel Coverage
+                        </label>
+                        <template #tooltip> Travel Coverage</template>
+                    </x-tooltip>
+                </dt>
+                <dt  class="font-medium">{{ quote.coverage_code.toUpperCase() }}</dt>
+            </div>
+            <div class="grid sm:grid-cols-2">
+                <dt>
+                    <x-tooltip position="bottom">
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                            Travel Coverage
+                        </label>
+                        <template #tooltip>Region Cover</template>
+                    </x-tooltip>
+                </dt>
+                <dt  class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
+            </div>
         </dl>
       </div>
 
@@ -1001,7 +1067,6 @@ onMounted(() => {
         </h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">

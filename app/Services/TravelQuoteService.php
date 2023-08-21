@@ -23,9 +23,10 @@ class TravelQuoteService extends BaseService
     use RolePermissionConditions;
     use AddPremiumAllLobs;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, KenService $kenService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->kenService = $kenService;
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -78,7 +79,13 @@ class TravelQuoteService extends BaseService
             'tqr.policy_issuance_date',
             DB::raw('DATE_FORMAT(tqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
             'tqr.customer_id',
-            'tqr.parent_duplicate_quote_id'
+            'tqr.parent_duplicate_quote_id',
+            'tqr.has_arrived_destination',
+            'tqr.has_arrived_uae',
+            'start_date',
+            'end_date',
+            'direction_code',
+            'coverage_code'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -95,26 +102,72 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
+       // dd($request);
+        $members = [];
+        $dob = '';
+        if($request->members){
+            foreach($request->members as $member) {
+               // dd($member);
+                $date = explode("-",$member['dob']);
+                $day = explode("T",$date[2]);
+                $newobj = new \stdClass();//create a new
+
+                $newobj->dob = $member['dob'];
+                $dob = $member['dob'];
+                $newobj->gender = $member['gender'];
+                $newobj->year = $date[0];
+                $newobj->month = $date[1];
+                $newobj->day = $day[0];
+                array_push($members,$newobj);
+            }
+        }
         $dataArr = [
+            'directionCode'=> $request->direction_code,
+            'regionCoverForId'=>3,
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
             'email' => $request->email,
             'mobileNo' => $request->mobile_no,
-            'travelCoverForId' => $request->travel_cover_for_id,
-            'premium' => $request->premium,
+         //   'travelCoverForId' => $request->travel_cover_for_id,
+            //'premium' => $request->premium,
             'nationalityId' => $request->nationality_id,
-            'daysCoverFor' => $request->days_cover_for,
-            'destinationId' => $request->destination_id,
-            'regionCoverForId' => $request->region_cover_for_id,
+           // 'daysCoverFor' => $request->days_cover_for,
+           // 'destinationId' => $request->destination_id,
+           // 'regionCoverForId' => $request->region_cover_for_id,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
-            'currentlyLocatedInId' => $request->currently_located_in_id,
-            'dob' => $request->dob,
-            'policy_start_date' => $request->policy_start_date,
-            'details' => $request->details,
+           // 'currentlyLocatedInId' => $request->currently_located_in_id,
+            'dob' => $dob,
+           // 'policy_start_date' => $request->policy_start_date,
+          //  'details' => $request->details,
         ];
+        //
+        if($request->direction_code == 'travelUaeInbound'){
+            $dataArr['hasArrivedUae']= $request->has_arrived_uae;
+        }else {
+            $dataArr['hasArrivedDestination'] = $request->has_arrived_destination;
+            if($request->has_arrived_destination == '0'){
+                $dataArr['regionCoverForId'] = $request->region_cover_for_id;
+            }
+        }
+        if($request->has_arrived_uae == '0' || $request->has_arrived_destination == '0') {
+            $dataArr['members'] = $members;
+            $dataArr['coverageCode'] = $request->coverage_code;
+            $dataArr['startDate'] = $request->start_date;
+            if($request->coverage_code=='singleTrip'){
+                $dataArr['endDate'] = $request->end_date;
+            }
+        }
+
+
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
+        }
+        if($request->uuid != null) {
+            $dataArr['quoteUID'] = $request->uuid;
+            $response = $this->kenService->request('/get-revised-travel-quote-plans','post',$dataArr);
+            dd($response);
+
         }
 
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
@@ -182,24 +235,25 @@ class TravelQuoteService extends BaseService
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
         ) {
-            $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
+           // dd('44444444');
+           // $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+        //    $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+     //       $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
 
-            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+        //    $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
@@ -453,17 +507,17 @@ class TravelQuoteService extends BaseService
             'source' => 'input|text',
             'premium' => 'input|number|title',
             'policy_number' => 'input|text',
-            'days_cover_for' => 'input|number|title|required',
+            //'days_cover_for' => 'input|number|title|required',
             'nationality_id' => 'select|title|required',
-            'destination_id' => 'select|title|required',
-            'region_cover_for_id' => 'select|title|required',
-            'travel_cover_for_id' => 'select|title|required',
-            'details' => 'textarea|text|required',
-            'currently_located_in_id' => 'select|title|required',
+        //    'destination_id' => 'select|title|required',
+          //  'region_cover_for_id' => 'select|title|required',
+          //  'travel_cover_for_id' => 'select|title|required',
+          //  'details' => 'textarea|text|required',
+           // 'currently_located_in_id' => 'select|title|required',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
-            'currently_located_in_id' => 'select|title|required',
+          //  'currently_located_in_id' => 'select|title|required',
             'is_ecommerce' => '|static|title|Yes,No',
             'renewal_batch' => 'input|number|title',
             'payment_status_id' => 'select|title',

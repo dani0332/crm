@@ -86,7 +86,7 @@ const permissionsEnum = page.props.permissionsEnum;
                                 deleteAction.id = id;
                                 showDeleteModal = true;
                             "
-                        >
+                       >
                             Delete
                         </x-button> -->
         </div>
