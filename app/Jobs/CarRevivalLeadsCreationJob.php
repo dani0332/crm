@@ -7,7 +7,6 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Capi;
 use App\Facades\Ken;
-use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Services\SendEmailCustomerService;
