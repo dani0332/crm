@@ -85,7 +85,8 @@ class TravelQuoteService extends BaseService
             'start_date',
             'end_date',
             'direction_code',
-            'coverage_code'
+            'coverage_code',
+            'tqr.primary_member_id'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -105,15 +106,18 @@ class TravelQuoteService extends BaseService
        // dd($request);
         $members = [];
         $dob = '';
-        if($request->members){
+        if($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')){
             foreach($request->members as $member) {
-               // dd($member);
-                $date = explode("-",$member['dob']);
+
+                $dob_member = explode("T",$member['dob']);
+                $date = explode("-",$dob_member[0]);
                 $day = explode("T",$date[2]);
                 $newobj = new \stdClass();//create a new
-
-                $newobj->dob = $member['dob'];
-                $dob = $member['dob'];
+                if(isset($member['primary'])){
+                    $newobj->primary = true;
+                }
+                $newobj->dob = $dob_member[0];
+                $dob = $dob_member[0];
                 $newobj->gender = $member['gender'];
                 $newobj->year = $date[0];
                 $newobj->month = $date[1];
@@ -137,11 +141,14 @@ class TravelQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
            // 'currentlyLocatedInId' => $request->currently_located_in_id,
-            'dob' => $dob,
+           // 'dob' => $dob,
            // 'policy_start_date' => $request->policy_start_date,
           //  'details' => $request->details,
         ];
         //
+        if($dob!=""){
+            $dataArr['dob'] = $dob;
+        }
         if($request->direction_code == 'travelUaeInbound'){
             $dataArr['hasArrivedUae']= $request->has_arrived_uae;
         }else {
@@ -154,10 +161,14 @@ class TravelQuoteService extends BaseService
             $dataArr['members'] = $members;
             $dataArr['coverageCode'] = $request->coverage_code;
             $dataArr['startDate'] = $request->start_date;
+
             if($request->coverage_code=='singleTrip'){
                 $dataArr['endDate'] = $request->end_date;
             }
         }
+        if($request->region_cover_for_id!=null) {
+            $dataArr['regionCoverForId'] = $request->region_cover_for_id;
+            }
 
 
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
@@ -168,10 +179,13 @@ class TravelQuoteService extends BaseService
             $response = $this->kenService->request('/get-revised-travel-quote-plans','post',$dataArr);
             dd($response);
 
+
         }
-
+       // dd($dataArr);
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
-
+        dd($response);
+        //MUCHC8RP
+        // 7KJF67ZU
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
         }

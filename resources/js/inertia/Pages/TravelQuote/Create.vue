@@ -47,7 +47,7 @@ const quoteForm = useForm({
     policy_number: props.quote?.policy_number || null,
     iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
     ilivein_accommodation_type_id: props.quote?.ilivein_accommodation_type_id || null,
-    members:[{ value: 'male', label: 'Male' }]
+    members:[{ value: 'male', label: 'Male',primary:true }]
 
 
 });
@@ -68,8 +68,8 @@ const alreadylived = [
     { value: '0', label: 'No' }
 ];
 const genderList = [
-    { value: 'male', label: 'Male' },
-    { value: 'female', label: 'Female' }
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' }
 ];
 const inboundCoverageCode = [
     { value: 'singleTrip', label: 'Single Trip' },
@@ -86,9 +86,12 @@ const outboundRegions = [
 ];
 
 function addTravler(){
-    console.log('add traaaaaaaaaaaaaa');
     quoteForm.members.push({ dob: '', gender: '' });
 }
+function removeMember(index) {
+    quoteForm.members.splice(index, 1);
+}
+
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.post(`/quotes/travel`, {
@@ -101,24 +104,16 @@ function onSubmit(isValid) {
 }
 
 function addUpdatedTraveller(){
-    console.log('propss traveler',props.travelers);
-    let listing = Object.keys(props.travelers).map((key,item) => {
-        console.log('key',key, props.travelers[key]);
-        return { dob: props.travelers[key].dob, gender: '' }
-        //this.travelersList.push({ dob: props.travelers[key].dob, gender: '' });
-     //   value: key,
-      //  label: props.fields[key].label,
-    });
-    console.log('listing this', this);
-   // console.log('add',travelersList);
-    console.log('listing',listing);
-    //console.log('add-----',this.travelersList);
-    // travelersList = listing;
-    quoteForm.members = listing;
-    /* Object.keys(props.travelers).map(key => ({
-        value: key,
-        label: props.fields[key].label,
-    })); */
+    if(props.travelers) {
+        let listing = Object.keys(props.travelers).map((key, item) => {
+            if(props.quote.primary_member_id == props.travelers[key].id){
+                console.log('inside primary');
+                return {dob: props.travelers[key].dob, gender: props.travelers[key].gender,primary: true}
+            }
+            return {dob: props.travelers[key].dob, gender: props.travelers[key].gender}
+        });
+        quoteForm.members = listing;
+    }
 }
 
 onMounted(() => {
@@ -137,17 +132,6 @@ onMounted(() => {
         </Link>
       </div>
     </div>
-      {{props.quote?.has_arrived_destination}}
-      ---------------
-      {{props.quote}}
-      =-----------------------------------------------
-      -----------------------------
-      {{props.travelers}}
-      travelers
-      {{travelersList}}
-
-      -----------------
-      {{quoteForm.members}}
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
@@ -277,6 +261,16 @@ onMounted(() => {
                   class="w-full"
               />
           </x-field>
+            <div class="flex items-center justify-end">
+            <x-button
+                v-if="travel.primary != true"
+                size="sm"
+                outlined
+                color="error"
+                icon="xc"
+                @click="removeMember(index)"
+            />
+            </div>
 
        <!-- -->
       </div>
