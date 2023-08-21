@@ -48,7 +48,7 @@ const filters = reactive({
   mobile_no: '',
   created_at_start: '',
   created_at_end: '',
-  quote_status: [],
+  quote_status_id: [],
   advisors: [],
   is_renewal: '',
   page: 1,
@@ -70,6 +70,7 @@ const advisorOptions = computed(() => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
+  console.log(url + '?' + new URLSearchParams(data).toString());
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 function onSubmit(isValid) {
@@ -128,9 +129,9 @@ function setQueryStringFilters() {
   if (urlParams.has('created_at_end')) {
     filters.created_at_end = urlParams.get('created_at_end');
   }
-  if (urlParams.has('quote_status[]')) {
-    filters.quote_status = urlParams
-      .getAll('quote_status[]')
+  if (urlParams.has('quote_status_id[]')) {
+    filters.quote_status_id = urlParams
+      .getAll('quote_status_id[]')
       .map(status => parseInt(status));
   }
   if (urlParams.has('advisors[]')) {
@@ -275,9 +276,9 @@ const permissionsEnum = page.props.permissionsEnum;
           label="Created Date End"
         />
         <ComboBox
-          v-model="filters.quote_status"
+          v-model="filters.quote_status_id"
           label="Lead Status"
-          name="quote_status"
+          name="quote_status_id"
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
