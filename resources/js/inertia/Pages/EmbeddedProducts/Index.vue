@@ -22,22 +22,24 @@ const tableHeader = [
   { text: 'Actions', value: 'actions' },
 ];
 
-const onToggle = ({ id }) => {
+const onToggle = ({ id, active }) => {
   loader.table = true;
-  axios.post(route('embedded-products.toggle-status', id)).then(res => {
-    loader.table = false;
-    if (res.data.success) {
-      notification.success({
-        title: res.data.message,
-        position: 'top',
-      });
-    } else {
-      notification.error({
-        title: 'Something went wrong, please try again later.',
-        position: 'top',
-      });
-    }
-  });
+  axios
+    .post(route('embedded-products.toggle-status', id), { is_active: active })
+    .then(res => {
+      loader.table = false;
+      if (res.data.success) {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Something went wrong, please try again later.',
+          position: 'top',
+        });
+      }
+    });
 };
 </script>
 
@@ -82,23 +84,9 @@ const onToggle = ({ id }) => {
 
       <template #item-actions="{ id }">
         <div class="flex gap-1.5 justify-end">
-          <!-- <Link :href="route('embedded-products.show', id)">
-            <x-button tag="div" size="xs" outlined> View </x-button>
-          </Link> -->
           <Link :href="route('embedded-products.edit', id)">
             <x-button color="primary" size="xs" outlined> Edit </x-button>
           </Link>
-          <!-- <x-button
-                            color="red"
-                            size="xs"
-                            outlined
-                            @click.prevent="
-                                deleteAction.id = id;
-                                showDeleteModal = true;
-                            "
-                        >
-                            Delete
-                        </x-button> -->
         </div>
       </template>
     </DataTable>

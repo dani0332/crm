@@ -94,9 +94,9 @@ class EmbeddedProductController extends Controller
 
     public function toggleStatus($id)
     {
-        $product = EmbeddedProductRepository::findOrFail($id);
-        $product->is_active = ! $product->is_active;
-        $product->save();
+        EmbeddedProductRepository::where('id', $id)->update([
+            'is_active' => request()->input('is_active'),
+        ]);
 
         return response()->json([
             'success' => true,
