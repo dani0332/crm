@@ -71,7 +71,7 @@ class EmbeddedProductController extends Controller
     {
         EmbeddedProductRepository::update($id, $request->validated());
 
-        return back()->with('message', 'Embedded Product updated successfully');
+        return redirect()->route('embedded-products.index')->with('message', 'Embedded Product updated successfully');
     }
 
     public function destroy($id)

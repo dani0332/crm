@@ -3,6 +3,9 @@ defineProps({
   embeddedProducts: Object,
 });
 
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const loader = reactive({
   table: false,
   export: false,
@@ -14,11 +17,12 @@ const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Product name', value: 'product_name' },
   { text: 'Company Name', value: 'company_name' },
-  { text: 'Product Category', value: 'product_category' },
   { text: 'Shortcode', value: 'short_code' },
+  { text: 'Product Category', value: 'product_category' },
   { text: 'Display name', value: 'display_name' },
   { text: 'Product Type', value: 'product_type' },
-  { text: 'Active', value: 'is_active' },
+  { text: 'Status', value: 'is_active' },
+  { text: 'Last Modified Date', value: 'updated_at' },
   { text: 'Actions', value: 'actions' },
 ];
 
@@ -80,6 +84,10 @@ const onToggle = ({ id, active }) => {
 
       <template #item-is_active="{ is_active, id }">
         <ItemToggler :is-active="is_active" :id="id" @toggle="onToggle" />
+      </template>
+
+      <template #item-updated_at="{ updated_at }">
+        <div class="text-sm text-center">{{ dateFormat(updated_at) }}</div>
       </template>
 
       <template #item-actions="{ id }">
