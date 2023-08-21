@@ -486,6 +486,11 @@ class LeadAllocationService extends BaseService
 
                     $loginAndAvailableUserIds = $this->getTierUsersWithLeadAllocationRecord($selectedTier->id); // now we will try to find users based on selected tier
 
+                    if ($carLead->source == LeadSourceEnum::REVIVAL_REPLIED) {
+                        info('Lead source is '.LeadSourceEnum::REVIVAL_REPLIED.' for uuid : '.$carLead->uuid);
+                        $loginAndAvailableUserIds = $this->getUsersForRevivalReplied($loginAndAvailableUserIds);
+                    }
+
                     info('Available and Login users against selected tier are : '.json_encode($loginAndAvailableUserIds));
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead->source);
@@ -871,5 +876,35 @@ class LeadAllocationService extends BaseService
         }
 
         return $shouldProcess;
+    }
+
+    public function getUsersForRevivalReplied($currentLoginAvailableUserIds)
+    {
+        $organicTeam = Team::where('name', 'Organic')->first();
+        if ($organicTeam) {
+            info('getUsersForRevivalReplied - organicTeam found with id '.$organicTeam->id);
+
+            $organicUserIds = $this->getUsersByTeamId($organicTeam->id)->pluck('id')->toArray();
+            info('getUsersForRevivalReplied - users found with organic '.json_encode($organicUserIds));
+
+            $users = LeadAllocation::join('users as u', 'u.id', 'lead_allocation.user_id')
+                ->select('u.id', 'u.email')
+                ->where('u.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                ->where('lead_allocation.is_available', 1) // user must be available
+                ->where(function ($query) {
+                    $query->whereRaw('lead_allocation.allocation_count < lead_allocation.max_capacity')
+                        ->orWhere('lead_allocation.max_capacity', '=', -1);
+                })
+                ->whereIn('u.id', $organicUserIds)
+                ->orderBy('lead_allocation.last_allocated', 'desc')->get()->pluck('id')->toArray();
+
+            $organicUserIdsIntersection = array_intersect($currentLoginAvailableUserIds, $users);
+
+            info('getUsersForRevivalReplied - users after intersection are : '.json_encode($organicUserIdsIntersection));
+
+            return $organicUserIdsIntersection;
+        } else {
+            return $currentLoginAvailableUserIds;
+        }
     }
 }
