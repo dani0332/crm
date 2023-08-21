@@ -12,23 +12,17 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class TierAssignmentJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable;
 
-    public $tries = 3;
-    public $timeout = 117;
-    public $backoff = 3;
-
-    public function __construct()
-    {
-        $this->onQueue('lms');
-    }
+    public $tries = 2;
+    public $timeout = 55;
+    public $backoff = 20;
 
     /**
      * Execute the job.

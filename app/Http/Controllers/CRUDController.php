@@ -20,6 +20,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
+use App\Models\HealthPlanType;
 use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -386,9 +387,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if (! $record) {
-            abort(404);
-        }
+        abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -642,6 +641,8 @@ class CRUDController extends Controller
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
+
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
@@ -668,6 +669,15 @@ class CRUDController extends Controller
                 ];
             })->sortBy('label')->values();
 
+            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+
+            $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -689,6 +699,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -702,6 +713,7 @@ class CRUDController extends Controller
                 'payments' => $payments,
                 'mainPayment' => $mainPayment,
                 'paymentMethods' => $paymentMethods,
+                'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -1172,14 +1184,13 @@ class CRUDController extends Controller
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
             $quoteData['quoteTypeId'] = $quoteTypeId;
             $quoteData['quoteUID'] = $request->quote_uuid;
 
             $response = Capi::request('/api/v1-trigger-courtesy-email-sib-workflow', 'post', $quoteData);
 
-            info('courtesy-email-response-------------- : '.json_encode($response));
+            info('Courtesy Email CAPI Response - : '.json_encode($response));
         }
         if ($entity->health_team_type != null && $entity->quote_status_id == QuoteStatusEnum::Qualified) {
             return redirect()->to('/quotes/health')->with('success', ' Lead status has been updated successfully');

@@ -17,6 +17,7 @@ defineProps({
   permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
+  lostReasons: Object,
 });
 
 const { isRequired } = useRules();
@@ -108,7 +109,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason || null,
+  lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -492,7 +493,7 @@ const onAssignLead = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.lost_reason }}</dd>
+            <dd>{{ quote?.lost_reason }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -511,7 +512,7 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
 
@@ -522,7 +523,7 @@ const onAssignLead = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
-            <dd>Group Medical</dd>
+            <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -646,7 +647,12 @@ const onAssignLead = () => {
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
             label="LOST REASON"
-            :options="lostReasonsOptions"
+            :options="
+              lostReasons?.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
             placeholder="Lost Reason is required"
             class="w-full"
             :error="leadStatusForm.errors.lostReason"

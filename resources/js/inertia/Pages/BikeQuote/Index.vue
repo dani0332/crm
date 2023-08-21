@@ -124,10 +124,21 @@ const advisorOptionsFilter = computed(() => {
     }));
 });
 
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
+
 const quotesSelected = ref([]),
   assignAdvisor = ref(null),
   assignmentType = ref(null),
   isDisabled = ref(false);
+
+const onLeadAssigned = () => {
+    quotesSelected.value = [];
+};
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -318,6 +329,7 @@ watch(
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
           :quoteType="quoteType"
+          @success="onLeadAssigned"
         />
       </div>
     </Transition>

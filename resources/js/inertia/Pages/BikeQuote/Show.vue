@@ -72,7 +72,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor?.email }}</dd>
+            <dd>{{ quote?.advisor?.name }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -148,6 +148,18 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">Currently with</dt>
             <dd>{{ quote?.currently_insured_with?.text }}</dd>
           </div>
+
+        <div class="grid sm:grid-cols-2">
+            <div>
+                <x-tooltip position="bottom">
+                    <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                        Parent Ref-ID
+                    </label>
+                    <template #tooltip> Parent Reference ID </template>
+                </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
+        </div>
         </dl>
       </div>
 

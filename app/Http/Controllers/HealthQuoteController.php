@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Http\Requests\InsurerProviderNetworkRequest;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\HealthQuoteService;
 use Illuminate\Http\Request;
@@ -81,10 +82,9 @@ class HealthQuoteController extends Controller
         return response()->json($healthPlans);
     }
 
-    public function networksByInsuranceProvider(Request $request)
+    public function networksByInsuranceProvider(InsurerProviderNetworkRequest $request)
     {
-        $ids = explode(',', $request->insuranceProviderId);
-        $networks = InsuranceProviderRepository::networksByInsuranceProviders($ids);
+        $networks = InsuranceProviderRepository::networksByInsuranceProviders($request->validated());
 
         return $networks;
     }
@@ -116,7 +116,7 @@ class HealthQuoteController extends Controller
         $quotes[] = [
             'id' => 26,
             'title' => 'Application Pending',
-            'data' => getDataAgainstStatus('health', 26),
+            'data' => getDataAgainstStatus('Health', 26),
         ];
         $quotes[] = [
             'id' => 28,

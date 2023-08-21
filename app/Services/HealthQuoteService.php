@@ -22,11 +22,11 @@ use App\Traits\AddPremiumAllLobs;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\RolePermissionConditions;
+use Auth;
 use Carbon\Carbon;
+use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use PDF;
 
 class HealthQuoteService extends BaseService
@@ -46,8 +46,8 @@ class HealthQuoteService extends BaseService
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
-            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%b-%Y %H:%i:%s") as created_at'),
+            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%b-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
             'hqr.email',
@@ -187,7 +187,7 @@ class HealthQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
             'dob' => $request->dob,
             'gender' => $request->gender,
-            'is_ebp_renewal' => $request->is_ebp_renewal == 'on',
+            'is_ebp_renewal' => $request->is_ebp_renewal == 'on' ? true : false,
             'coverForId' => $request->cover_for_id,
             'nationalityId' => $request->nationality_id,
             'hasDental' => $request->has_dental == 'on' ? true : false,
@@ -630,7 +630,7 @@ class HealthQuoteService extends BaseService
     public function fillModelSkipProperties()
     {
         return [
-            'create' => 'premium,is_ecommerce,policy_start_date,wcu_id,parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
+            'create' => 'is_ecommerce,policy_start_date,wcu_id,parent_duplicate_quote_id,previous_quote_policy_premium,previous_policy_expiry_date,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
             'list' => 'policy_start_date,parent_duplicate_quote_id,previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,gender,previous_quote_id,email,cover_for_id,has_worldwide_cover,has_home,details,preference,mobile_no,dob,next_followup_date,marital_status_id,nationality_id,has_dental,emirate_of_your_visa_id,is_ebp_renewal,renewal_expiry_date,renewal_import_code,device',
             'update' => 'premium,is_ecommerce,wcu_id,parent_duplicate_quote_id,previous_policy_expiry_date,previous_quote_policy_premium,renewal_batch,previous_quote_policy_number,is_renewal,previous_quote_id,created_at,updated_at,id,advisor_id,quote_status_id,code,health_team_type,next_followup_date,lost_reason,source,transapp_code,renewal_expiry_date,renewal_import_code,device',
             'show' => 'wcu_id,is_renewal,id,source,previous_quote_id,quote_status_id',
@@ -1117,11 +1117,10 @@ class HealthQuoteService extends BaseService
                 foreach ($planPayload['plans'] as $plan) {
                     if ($plan['id'] == $data->plan_id) {
                         $response['providerName'] = $plan['providerName'];
-                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['policyFee'] + $plan['basmah'] + $plan['vat'];
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['basmah'] + $plan['policyFee'] + $plan['vat'];
+                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {

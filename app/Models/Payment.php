@@ -90,17 +90,17 @@ class Payment extends Model
 
     public function paymentStatus()
     {
-        return $this->belongsTo('App\Models\PaymentStatus', 'payment_status_id');
+        return $this->belongsTo(PaymentStatus::class);
     }
 
     public function paymentMethod()
     {
-        return $this->belongsTo('App\Models\PaymentMethod', 'payment_methods_code', 'code');
+        return $this->belongsTo(PaymentMethod::class, 'payment_methods_code', 'code');
     }
 
     public function paymentStatusLogs()
     {
-        return $this->hasMany('App\Models\PaymentStatusLog', 'payment_code', 'code');
+        return $this->hasMany(PaymentStatusLog::class, 'payment_code', 'code');
     }
 
     public function getCreatedAtAttribute($date)
@@ -130,12 +130,18 @@ class Payment extends Model
 
     public function healthPlan()
     {
-        return $this->belongsTo('App\Models\HealthPlan', 'plan_id');
+        return $this->belongsTo(HealthPlan::class, 'plan_id');
     }
 
+    // Should be removed because it's already declared above paymentStatusLogs()
     public function paymentStatusLog()
     {
-        return $this->hasOne('App\Models\PaymentStatusLog', 'payment_code', 'code')->latest();
+        return $this->hasMany(PaymentStatusLog::class, 'payment_code', 'code')->latest();
+    }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class);
     }
 
     public function insuranceProvider()

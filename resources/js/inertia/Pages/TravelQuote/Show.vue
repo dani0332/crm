@@ -1250,7 +1250,6 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        03
         <x-divider class="mb-4 mt-1" />
       </div>
       <x-form @submit="submitPolicyDetails" :auto-focus="false">

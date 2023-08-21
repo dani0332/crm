@@ -247,13 +247,13 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
-            $nav = $nav->add('Discount Management', '', function (Section $section) {
-                $section
-                    ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
-            });
-        }
+        // if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
+        //     $nav = $nav->add('Discount Management', '', function (Section $section) {
+        //         $section
+        //             ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
+        //     });
+        // }
 
         if (auth()->user()->can(PermissionsEnum::TransAppList)) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
@@ -267,7 +267,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppCreate),
                         'Create Transaction',
-                        '/transapp/create',
+                        '/transapp/transaction/create',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
@@ -462,12 +462,6 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                                 'Rules',
                                 url('generic/rule'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::TeamThresholdView),
-                                'Team Threshold',
-                                url('generic/allocation-threshold'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

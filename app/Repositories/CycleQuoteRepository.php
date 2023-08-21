@@ -63,11 +63,9 @@ class CycleQuoteRepository extends BaseRepository
             'advisor',
         ])
             ->when(\auth()->user()->hasRole(RolesEnum::CycleAdvisor), function ($query) {
-                $query->where(function ($query) {
-                    $query->where('advisor_id', \auth()->user()->id);
-                });
+                $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 

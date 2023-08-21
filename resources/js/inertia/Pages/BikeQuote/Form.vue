@@ -139,7 +139,8 @@ function onSubmit(isValid) {
         <DatePicker
           v-model="quoteForm.dob"
           name="created_at_start"
-          label="Date of Birth"
+          label="Date of Birth*"
+          :rules="[isRequired]"
           :hasError="quoteForm.errors.dob || formFieldReq.dob"
         />
 

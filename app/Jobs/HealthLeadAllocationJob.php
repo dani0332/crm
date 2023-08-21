@@ -20,7 +20,7 @@ class HealthLeadAllocationJob implements ShouldQueue
     private $leadAllocationJobId = 'health_lead_allocation';
 
     /**
-     * Create a new job instance.
+     * Create a new  job instance.
      *
      * @return void
      */

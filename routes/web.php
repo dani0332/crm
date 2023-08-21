@@ -69,6 +69,7 @@ use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -103,7 +104,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
 
     Route::get('home', function () {
-        return view('home');
+        return inertia('Home/Home');
     });
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
@@ -155,7 +156,13 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
 
-    Route::get('/clear-cache', [FailedJobsController::class, 'clearCache']);
+    Route::get('/clear-cache', function () {
+        Artisan::call('cache:clear');
+        Artisan::call('view:cache');
+        Artisan::call('config:cache');
+
+        return '<h1>All cache cleared and optimized</h1>';
+    });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
 
