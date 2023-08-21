@@ -14,7 +14,7 @@ class SagePayloadFactory
                     $leadStatus == "policy booked" && 
                     strtolower($request->invoicePaymentStatus) != 'paid'
                 ) {
-            return self::createARInvoiceIds();
+            return self::createARInvoiceIds($request);
         } else {
             return self::createARInvoicePremAndComm($request);
         }
@@ -48,7 +48,7 @@ class SagePayloadFactory
     }
 
 
-    private static function createARInvoiceIds()
+    private static function createARInvoiceIds($request)
     {
         // Payload creation logic for CreditNote scenario
         $payLoad = $data = [

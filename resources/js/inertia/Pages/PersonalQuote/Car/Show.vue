@@ -70,9 +70,9 @@ const bookingDetailForm = useForm({
   bookingDate: '17-07-2023',
   invoiceDescription: 'ORI.MOTORFEI-T',
   mainClassInsurance: 'Motor',
-  invoicePaymentStatus: page.props.record.payment_status_id_text ?? '',
+  invoicePaymentStatus: page.props.payments.length > 0 ? page.props.payments[0].payment_status_text : '',
   subClass: 'Comprehensive',
-  insurerInvoiceDate: '15-01-2023',
+  insurerInvoiceDate: page.props.payments.length > 0 ? page.props.payments[0].captured_at : '15-01-2023',
   brokerInvoiceNumber: 'IM-1234-N567892',
   insurerPremiumTaxInvoiceNumber: 'AM-1234-N567892',
   discount: '',
@@ -196,11 +196,15 @@ const documentsTable = reactive({
 })
 
 const documentsTableItems = computed(() => {
-	return page.props.quoteDocuments.map(doc => {
-		return {
-			document_type_text: doc.document_type_text
-		}
-	})
+	if (Array.isArray(page.props.quoteDocuments)) {
+		return page.props.quoteDocuments.map(doc => {
+			return {
+				document_type_text: doc.document_type_text
+			}
+		});
+	} else {
+		return [];
+	}
 })
 
 const notesForCustomer = reactive({
@@ -987,8 +991,8 @@ const policyDetailsForm = useForm({
 						<x-input
 							v-model="bookingDetailForm.bookingDate"
 							type="text"
-							label="Booking Date"
-							placeholder="Booking Date *"
+							label="Booking Date *"
+							placeholder="Booking Date"
 							class="w-full"
 							:readonly="true"					
 						/>
