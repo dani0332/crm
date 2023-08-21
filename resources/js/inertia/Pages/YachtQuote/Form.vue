@@ -19,9 +19,10 @@ const quoteForm = useForm({
 });
 
 const { isRequired, isEmail } = useRules();
-
+const editMode = computed(() => {
+    return !!props.quote;
+});
 const isEmptyField = ref(false);
-
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
@@ -91,6 +92,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.email"
           type="email"
           label="Email*"
+          :disabled="editMode"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.email"
@@ -100,6 +102,7 @@ function onSubmit(isValid) {
           v-model="quoteForm.mobile_no"
           type="tel"
           label="Phone Number*"
+          :disabled="editMode"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.mobile_no"
@@ -135,7 +138,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.asset_value"
           type="number"
-          label="Bike value(AED)*"
+          label="Sum Insured*"
           :rules="[isRequired]"
           class="w-full"
           :error="quoteForm.errors.asset_value"

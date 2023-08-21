@@ -26,12 +26,12 @@ class BusinessQuoteRepository extends BaseRepository
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
-            'typeOfInsurance',
-        ])->whereHas('typeOfInsurance', function ($typeOfInsurance) use ($quoteType) {
-            $typeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
+            'businessTypeOfInsurance',
+        ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
+            $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
             });
-            $typeOfInsurance->when($quoteType == quoteTypeCode::CORPLINE, function ($corpline) {
+            $businessTypeOfInsurance->when($quoteType == quoteTypeCode::CORPLINE, function ($corpline) {
                 $corpline->where('text', '!=', quoteStatusCode::GROUP_MEDICAL);
             });
         })->when(($quoteType == quoteTypeCode::GroupMedical && (

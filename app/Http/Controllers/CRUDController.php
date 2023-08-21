@@ -20,6 +20,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
+use App\Models\HealthPlanType;
 use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -27,6 +28,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -591,6 +593,8 @@ class CRUDController extends Controller
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
+
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
@@ -607,6 +611,15 @@ class CRUDController extends Controller
                     'label' => $paymentMethod->name,
                 ];
             });
+
+            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+
+            $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
@@ -629,6 +642,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -641,6 +655,7 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
+                'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
@@ -1111,7 +1126,6 @@ class CRUDController extends Controller
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
             $quoteData['quoteTypeId'] = $quoteTypeId;
             $quoteData['quoteUID'] = $request->quote_uuid;
