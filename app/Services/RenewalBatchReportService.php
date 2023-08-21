@@ -45,6 +45,11 @@ class RenewalBatchReportService extends BaseService
                     ->whereRaw('car_lost_quote_logs.id IN (select MAX(clql.id) from car_lost_quote_logs as clql
                     join car_quote_request as cqr on cqr.id = clql.car_quote_request_id group by cqr.id)');
             })
+            ->leftJoin('payments', function($qry){
+                $qry->on('payments.paymentable_id', '=', 'car_quote_request.id')
+                    // ->on('payments.paymentable_type', '=', DB::raw("'".CarQuote::class."'" ))
+                    ->whereIn('payments.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
+            })
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
             ->where('car_quote_request.source', LeadSourceEnum::RENEWAL_UPLOAD)
             ->groupBy('car_quote_request.renewal_batch')
@@ -210,13 +215,17 @@ class RenewalBatchReportService extends BaseService
 
         // date filter
         if (isset($filters->reportDate)) {
-            $reportDate = Carbon::parse($filters->reportDate)->startOfDay()->format($dateFormat);
-            $query->where('renewal_batches.end_date', $reportDate);
+            $reportDateStart = Carbon::parse($filters->reportDate)
+                ->startOfDay()->format($dateFormat);
+            $reportDateEnd = Carbon::parse($filters->reportDate)
+                ->endOfDay()->format($dateFormat);
         }
-        // else {
-        //     $reportDate = Carbon::today()->format($dateFormat);
-        // }
-        // $query->where('renewal_batches.end_date', $reportDate);
+        else {
+            $reportDateStart = Carbon::today()->startOfDay()->format($dateFormat);
+            $reportDateEnd = Carbon::today()->endOfDay()->format($dateFormat);
+        }
+        $query->whereBetween('payments.captured_at', [$reportDateStart, $reportDateEnd]);
+
         // batch no filter
         $batchNo = isset($filters->batchNo) ? $filters->batchNo : null;
         if ($batchNo) {
