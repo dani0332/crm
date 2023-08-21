@@ -3,13 +3,12 @@ defineProps({
   embeddedProducts: Object,
 });
 
-const page = usePage();
 const loader = reactive({
   table: false,
   export: false,
 });
 
-onMounted(() => {});
+const notification = useToast();
 
 const tableHeader = [
   { text: 'ID', value: 'id' },
@@ -23,8 +22,23 @@ const tableHeader = [
   { text: 'Actions', value: 'actions' },
 ];
 
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
+const onToggle = ({ id }) => {
+  loader.table = true;
+  axios.post(route('embedded-products.toggle-status', id)).then(res => {
+    loader.table = false;
+    if (res.data.success) {
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    } else {
+      notification.error({
+        title: 'Something went wrong, please try again later.',
+        position: 'top',
+      });
+    }
+  });
+};
 </script>
 
 <template>
@@ -40,7 +54,7 @@ const permissionsEnum = page.props.permissionsEnum;
     <x-divider class="my-4" />
 
     <DataTable
-      table-class-name="tablefixed"
+      table-class-name=""
       :headers="tableHeader"
       :loading="loader.table"
       :items="embeddedProducts.data || []"
@@ -62,12 +76,8 @@ const permissionsEnum = page.props.permissionsEnum;
         {{ insurance_provider?.text }}
       </template>
 
-      <template #item-is_active="{ is_active }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-            {{ is_active ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
+      <template #item-is_active="{ is_active, id }">
+        <ItemToggler :is-active="is_active" :id="id" @toggle="onToggle" />
       </template>
 
       <template #item-actions="{ id }">
