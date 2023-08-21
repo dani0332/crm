@@ -44,7 +44,7 @@ class TierAssignment extends Command
     {
         $currentIteration = now();
 
-        info('------------------- Tier Assignment Command Started At : '.$currentIteration.' -------------------');
+        info('------------------- Tier Assignment Command Started At : ' . $currentIteration . ' -------------------');
 
         $tierAssignmentSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::TIER_ASSIGNMENT_SWITCH);
 
@@ -81,31 +81,31 @@ class TierAssignment extends Command
                     'is_renewal_tier_email_sent',
                     'created_at'
                 )
-            ->chunk($chunkSize, function ($carLeads) use ($leadAllocationService) {
-                foreach ($carLeads as $carLead) {
-                    info('------------------- Processing Lead : '.$carLead->code.' -------------------');
+                ->chunk($chunkSize, function ($carLeads) use ($leadAllocationService) {
+                    foreach ($carLeads as $carLead) {
+                        info('------------------- Processing Lead : ' . $carLead->code . ' -------------------');
 
-                    $tier = $leadAllocationService->getTierForValue($carLead);
+                        $tier = $leadAllocationService->getTierForValue($carLead);
 
-                    if ($tier != null) {
-                        info('Tier : Assignment , found tier '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
+                        if ($tier != null) {
+                            info('Tier : Assignment , found tier ' . $tier->name . ' against car lead : ' . $carLead->code . ' , uuid : ' . $carLead->uuid);
 
-                        $carLead->tier_id = $tier->id;
+                            $carLead->tier_id = $tier->id;
 
-                        $carLead->cost_per_lead = $tier->cost_per_lead;
+                            $carLead->cost_per_lead = $tier->cost_per_lead;
 
-                        $carLead->save();
+                            $carLead->save();
 
-                        info('Tier : Assignment done '.$tier->name.' against car lead : '.$carLead->code.' , uuid : '.$carLead->uuid);
-                    } else {
-                        info('No tier found to car lead : '.$carLead->code);
+                            info('Tier : Assignment done ' . $tier->name . ' against car lead : ' . $carLead->code . ' , uuid : ' . $carLead->uuid);
+                        } else {
+                            info('No tier found to car lead : ' . $carLead->code);
+                        }
                     }
-                }
-            });
-
+                });
         } else {
             info('Tier Assignment Command is turned Off');
-            info('------------------- Tier Assignment Command Finished for '.$currentIteration.' -------------------');
+            info('------------------- Tier Assignment Command Finished for ' . $currentIteration . ' -------------------');
+
             return;
         }
     }
