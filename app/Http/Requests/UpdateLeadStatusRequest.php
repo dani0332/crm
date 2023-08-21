@@ -68,7 +68,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 $q->where('quote_status_id' , request()->leadStatus);
             })->first();
 
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::MarketingOperations, RolesEnum::CarDeputyManager]) &&
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
                 isset($batch->deadline) ) {
                 if ( now()->gt(($batch->deadline->deadline_date . ' 23:59:59'))) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
