@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 
 class BikeQuoteRequest extends FormRequest
 {
@@ -36,5 +37,17 @@ class BikeQuoteRequest extends FormRequest
             'year_of_manufacture' => 'required|exists:year_of_manufacture,text',
             'currently_insured_with_id' => 'required|exists:insurance_provider,id',
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     *
+     * @return void
+     */
+    protected function prepareForValidation()
+    {
+        $this->merge([
+            'dob' => isset($this->dob) ? Carbon::parse($this->dob)->format('Y-m-d') : null,
+        ]);
     }
 }

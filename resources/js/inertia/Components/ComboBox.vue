@@ -44,6 +44,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  disabled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -53,7 +57,7 @@ const selectedValue = computed({
     if (props.single) return [];
 
     return props.options.filter(option =>
-      props.modelValue.includes(option.value),
+      props.modelValue?.includes(option.value),
     );
   },
   set(newValue) {
@@ -110,6 +114,7 @@ const onDeselectAll = () => {
       :multiple="!props.single"
       as="div"
       class="relative"
+      :disabled="props.disabled"
     >
       <ComboboxInput
         :displayValue="list => list?.label"
