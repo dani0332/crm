@@ -15,14 +15,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
 class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 {
-    use Stackable, Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Stackable, Dispatchable, InteractsWithQueue, Queueable;
     use GenericQueriesAllLobs;
 
     public $tries = 3;
@@ -67,7 +66,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'claimHistoryId' => $this->lead->claim_history_id,
             'hasNcdSupportingDocuments' => $this->lead->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
             'additionalNotes' => $this->lead->additional_notes,
-            'carValue' => $this->lead->car_value_tier,
+            'carValue' => $this->lead->car_value,
             'carValueTier' => $this->lead->car_value_tier,
             'seatCapacity' => $this->lead->seat_capacity,
             'cylinder' => $this->lead->cylinder,
@@ -75,7 +74,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'trim' => $this->lead->trim,
             'premium' => $this->lead->premium,
             'carMakeId' => $this->lead->car_make_id,
-            'carModelId' => $this->lead->car_model_id, // ID
             'currentlyInsuredWith' => $this->lead->currently_insured_with,
             'source' => LeadSourceEnum::REVIVAL,
             'isEmailSkip' => true,
