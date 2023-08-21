@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Facades\Capi;
 use App\Models\HomeAccomodationType;
 use App\Models\HomePossessionType;
@@ -50,11 +51,9 @@ class PetQuoteRepository extends BaseRepository
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
             'quoteTypeId' => intval(QuoteTypes::PET->id()),
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
-        if (! Auth::user()->hasRole('ADMIN')) {
-            $dataArr['advisorId'] = Auth::user()->id;
-        }
         $response = Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
 
         if (isset($response->quoteUID)) {
@@ -84,24 +83,55 @@ class PetQuoteRepository extends BaseRepository
         });
     }
 
-    public function fetchGetData()
+    public function fetchGetData($forExport = false)
     {
-        return $this->byQuoteTypeCode(QuoteTypes::PET)->with(['quoteStatus', 'petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'currentlyInsuredWith', 'advisor'])
-            ->filter()
+        $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
+            'quoteStatus',
+            'petQuote.accomodationType:id,text',
+            'petQuote.possessionType:id,text',
+            'petQuote.petAge:id,text',
+            'petQuote.petType:id,text',
+            'currentlyInsuredWith',
+            'advisor',
+            'petQuote.petQuoteRequestDetail.lostReason:id,text',
+        ])
+            ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
-            ->orderBy('created_at', 'desc')
-            ->simplePaginate()->withQueryString();
+            ->orderBy('created_at', 'desc');
+
+        return ($forExport) ? $query->get() : $query->simplePaginate()->withQueryString();
+
     }
 
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::PET->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())
             ->where($column, $value)
-            ->with(['petQuote.accomodationType:id,text', 'petQuote.possessionType:id,text', 'petQuote.petAge:id,text', 'petQuote.petType:id,text', 'advisor', 'quoteDetail.lostReason', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'petQuote.accomodationType:id,text',
+                'petQuote.possessionType:id,text',
+                'petQuote.petAge:id,text',
+                'petQuote.petType:id,text',
+                'plans:id,text',
+                'advisor',
+                'quoteDetail.lostReason',
+                'payments' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])->firstOrFail();
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        return $quote;
+
     }
 
     /**
@@ -125,4 +155,5 @@ class PetQuoteRepository extends BaseRepository
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $dataArr);
     }
+
 }

@@ -4,10 +4,14 @@ use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanType;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
+$coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+$halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC'];
 @endphp
 <div class="row">
 	<div class="col-md-12 col-sm-12">
@@ -47,11 +51,16 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 								<span id="span_pdf_download">
 									<button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
 								</span>
-							@can('car-quotes-plans-create')
-								<a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
-									class="btn btn-primary btn-sm">Create Quote</a>
-							@endcan
-							@if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
+
+								@if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit']) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
+                                <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
+                                   class="btn btn-primary btn-sm">Add Plan</a>
+                            @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
+                                <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
+                                   class="btn btn-primary btn-sm">Add Plan</a>
+                            @endif
+
+                            @if(gettype($listQuotePlans) != GenericRequestEnum::TypeString)
 								@if(count($listQuotePlans) > 0)
 									<button type="button" id="quotePlansGenerateButton" name="quotePlansGenerateButton"
 										class="btn btn-warning btn-sm">Copy link</button>
@@ -119,9 +128,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<th>PAB cover</th>
 							<th>Roadside assistance</th>
 							<th>Oman cover TPL</th>
-							<th>Actual Premium</th>
-							<th>Discounted Premium</th>
-							<th>Premium with VAT.</th>
+							<th>Actual Price</th>
+							<th>Discounted Price</th>
+							<th>Price with VAT.</th>
 							<th>Excess</th>
 							<th>Action</th>
 						</tr>
@@ -157,7 +166,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
 									data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{
 									ucwords($quotePlan->name) }}</a></td>
-							<td>{{ $quotePlan->repairType == CarPlanType::COMP ? 'NON-AGENCY' : $quotePlan->repairType
+							<td>{{ $quotePlan->repairType == CarPlanType::COMP ?
+									(in_array($quotePlan->providerCode, $coreInsurer) ? 'Premium workshop' : (in_array($quotePlan->providerCode, $halfLiveInsurer) ? 'Non-Agency workshop' : 'NON-AGENCY'))
+									 : $quotePlan->repairType
 								}}</td>
 							<td>
 								@isset($quotePlan->insurerQuoteNo)
@@ -289,24 +300,8 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 									@endif --}}
                               
 
-                                @php
-                                    $allowChangeInsurer = (auth()->user()->hasRole(RolesEnum::CarAdvisor)) ? true : false;
-                                    
-                                    if($record->payment_status_id == \App\Enums\PaymentStatusEnum::CAPTURED)
-                                    {
-                                        $allowChangeInsurer = false;
-                                        if((auth()->user()->hasRole(RolesEnum::CarAdvisor) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment <= 7)) {
-                                            $allowChangeInsurer = true;
-                                        }
-                                        elseif((auth()->user()->hasRole(RolesEnum::CarManager) && $daysAfterCapturedPayment !== null && $daysAfterCapturedPayment > 7 && $daysAfterCapturedPayment <= 14))
-                                        {
-                                            $allowChangeInsurer = true;
-                                        }
-                                    }
-
-                                @endphp
-
-                                @if($allowChangeInsurer)
+                                @if($record->plan_id != $quotePlan->id &&  $quotePlan->actualPremium > 0)
+                                    @if(($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) )
                                     <button class="btn btn-info btn-sm btn-change-insurer"
                                             data-planId="{{$quotePlan->id}}"
                                             data-uuid="{{$record->uuid}}"
@@ -314,6 +309,7 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
                                     >
                                         Change Insurer
                                     </button>
+                                    @endif
                                 @endif
 							</td>
 						</tr>
@@ -335,9 +331,9 @@ $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 							<th>PAB cover</th>
 							<th>Roadside assistance</th>
 							<th>Oman cover TPL</th>
-							<th>Actual Premium</th>
-							<th>Discounted Premium</th>
-							<th>Premium with VAT.</th>
+							<th>Actual Price</th>
+							<th>Discounted Price</th>
+							<th>Price with VAT.</th>
 							<th>Excess</th>
 							<th>Action</th>
 						</tr>

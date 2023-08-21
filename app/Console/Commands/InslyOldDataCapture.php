@@ -24,7 +24,7 @@ class InslyOldDataCapture extends Command
      *
      * @var string
      */
-    protected $description = 'This command will run daily in week days after working hours to capture old data from insly and add in CDB';
+    protected $description = 'This command will run daily in week days after working hours to capture old data from insly and add in Ref-ID';
 
     /**
      * Create a new command instance.
