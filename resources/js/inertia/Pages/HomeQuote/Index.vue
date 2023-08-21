@@ -70,7 +70,6 @@ const advisorOptions = computed(() => {
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'home');
-  console.log(url + '?' + new URLSearchParams(data).toString());
   window.open(url + '?' + new URLSearchParams(data).toString());
 };
 function onSubmit(isValid) {
