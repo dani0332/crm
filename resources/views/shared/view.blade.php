@@ -682,7 +682,7 @@ use App\Repositories\UserRepository;
                     </form>
 
 
-                    @if(auth()->user()->hasRole(RolesEnum::CarAdvisor) &&
+                    @if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
                     isset($upcomingBatch->deadline->deadline_date) &&
                     UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS] ))
                     <div class="row">
