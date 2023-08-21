@@ -235,8 +235,8 @@ let currentRowSpan = 0;
 
 const rolesEnum = page.props.rolesEnum;
 
-const avgImRetentionArr = {};
-const avgRawRetentionArr = {};
+let avgImRetentionArr = {};
+let avgRawRetentionArr = {};
 
 let monthlyIMAverages = {};
 let monthlyRawAverages = {};
@@ -362,6 +362,9 @@ function calculateValuesAndHighlight() {
     monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
     monthlyRawAverages = calculateMonthlyAverages(avgRawRetentionArr);
 
+    // reset arrays
+    avgImRetentionArr = {};
+    avgRawRetentionArr = {};
 }
 
 

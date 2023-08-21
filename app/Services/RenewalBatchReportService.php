@@ -215,16 +215,13 @@ class RenewalBatchReportService extends BaseService
 
         // date filter
         if (isset($filters->reportDate)) {
-            $reportDateStart = Carbon::parse($filters->reportDate)
-                ->startOfDay()->format($dateFormat);
             $reportDateEnd = Carbon::parse($filters->reportDate)
                 ->endOfDay()->format($dateFormat);
         }
         else {
-            $reportDateStart = Carbon::today()->startOfDay()->format($dateFormat);
             $reportDateEnd = Carbon::today()->endOfDay()->format($dateFormat);
         }
-        $query->whereBetween('payments.captured_at', [$reportDateStart, $reportDateEnd]);
+        $query->whereDate('payments.captured_at', '<=', $reportDateEnd);
 
         // batch no filter
         $batchNo = isset($filters->batchNo) ? $filters->batchNo : null;
