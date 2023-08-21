@@ -42,6 +42,7 @@ defineProps({
 	carQuotePlanAddons: Array,
 });
 const page = usePage();
+const { isRequired } = useRules();
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -69,7 +70,7 @@ const bookingDetailForm = useForm({
   bookingDate: '17-07-2023',
   invoiceDescription: 'ORI.MOTORFEI-T',
   mainClassInsurance: 'Motor',
-  invoicePaymentStatus: '',
+  invoicePaymentStatus: page.props.record.payment_status_id_text ?? '',
   subClass: 'Comprehensive',
   insurerInvoiceDate: '15-01-2023',
   brokerInvoiceNumber: 'IM-1234-N567892',
@@ -83,7 +84,7 @@ const bookingDetailForm = useForm({
   commissionIncludingVat: '0.0'  
 });
 
-
+let isNotificationOpen = false;
 const onSubmitBookingDetails = isValid => {
   if (!isValid) return;
   let url = `/quotes/car/post-sage-data`;
@@ -91,14 +92,19 @@ const onSubmitBookingDetails = isValid => {
   
   bookingDetailForm.submit(method, url, {
     preserveScroll: true,
-    onSuccess: (response) => {
+    onSuccess: () => {
 		//console.log('hafeez-'+JSON.stringify(response.message));
-		console.log('hafeez-'+JSON.stringify(response));
-      //activityForm.reset();
-      notification.success({
-        title: response.message,
-        position: 'top',
-      });
+		//console.log('hafeez-'+JSON.stringify(response));
+		
+      if(isNotificationOpen){
+		notification.success({
+			title: page.props.flash.message,
+			position: 'top',
+			timeout: 15000 
+		});
+	  }
+	  isNotificationOpen = true;
+	  //bookingDetailForm.reset();
     }, onError: (errors) => {
       //console.error('Form submission error:', errors);
       notification.error({
@@ -971,7 +977,7 @@ const policyDetailsForm = useForm({
 						<x-input
 							v-model="bookingDetailForm.requestType"
 							type="text"
-							label="Request Type"
+							label="Request Type *"
 							placeholder="Request Type"
 							class="w-full"
 							:readonly="true"					
@@ -982,7 +988,7 @@ const policyDetailsForm = useForm({
 							v-model="bookingDetailForm.bookingDate"
 							type="text"
 							label="Booking Date"
-							placeholder="Booking Date"
+							placeholder="Booking Date *"
 							class="w-full"
 							:readonly="true"					
 						/>
@@ -993,7 +999,7 @@ const policyDetailsForm = useForm({
 						<x-input
 							v-model="bookingDetailForm.invoiceDescription"
 							type="text"
-							label="Invoice Description"
+							label="Invoice Description *"
 							placeholder="Invoice Description"
 							class="w-full"
 							:readonly="true"						
@@ -1003,7 +1009,7 @@ const policyDetailsForm = useForm({
 						<x-input
 							v-model="bookingDetailForm.mainClassInsurance"
 							type="text"
-							label="Main Class of Insurance"
+							label="Main Class of Insurance *"
 							placeholder="Main Class of Insurance"
 							class="w-full"
 							:readonly="true"					
@@ -1015,9 +1021,10 @@ const policyDetailsForm = useForm({
 						<x-input
 							v-model="bookingDetailForm.invoicePaymentStatus"
 							type="text"
-							label="Invoice Payment Status"
+							label="Invoice Payment Status *"
 							placeholder="Invoice Payment Status"
 							class="w-full"
+							:rules="[isRequired]"
 						/>
 					</div>
 					<div class="w-full md:w-2/2">
@@ -1055,8 +1062,9 @@ const policyDetailsForm = useForm({
 						<x-input
 							v-model="bookingDetailForm.insurerPremiumTaxInvoiceNumber"
 							type="text"
-							label="Insurer Premium Tax Invoice Number"
+							label="Insurer Premium Tax Invoice Number *"
 							placeholder="Insurer Premium Tax Invoice Number"
+							:rules="[isRequired]"
 							class="w-full"						
 						/>
 					</div>

@@ -6,16 +6,21 @@ class SagePayloadFactory
     public static function createPayload($request, $leadStatus)
     {
         // Logic to create different payloads based on request and leadStatus
-        if (strtolower($request->invoicePaymentStatus) == 'paid' && $leadStatus == "policy booked") {
-            return self::createApplyDocumentPayload();
-        } elseif ($request->discount > 0 && $leadStatus == "policy booked") {
-            return self::createCreditNotePayload();
+        if (strtolower( $request->invoicePaymentStatus) == 'paid' &&
+                        $leadStatus == "policy booked"
+        ) {
+            return self::createPaymontRecieptOneInvoice();
+        } elseif (  $request->discount > 0 &&
+                    $leadStatus == "policy booked" && 
+                    strtolower($request->invoicePaymentStatus) != 'paid'
+                ) {
+            return self::createARInvoiceIds();
         } else {
-            return self::createDefaultPayload($request);
+            return self::createARInvoicePremAndComm($request);
         }
     }
 
-    private static function createApplyDocumentPayload()
+    private static function createPaymontRecieptOneInvoice()
     {
         $payLoad = [
             "BatchRecordType" => "CA",
@@ -43,14 +48,14 @@ class SagePayloadFactory
     }
 
 
-    private static function createCreditNotePayload()
+    private static function createARInvoiceIds()
     {
         // Payload creation logic for CreditNote scenario
         $payLoad = $data = [
             "Invoices" => [
                 [
                     "CustomerNumber" => "IC008",
-                    "DocumentNumber" => "12333344345-DIS",
+                    "DocumentNumber" => $request->insurerPremiumTaxInvoiceNumber,
                     "InvoiceDescription" => "D.ORIUNB.PL.P-10-1002-109-2022-109",
                     "DocumentDate" => "2023-05-16T00:00:00Z",
                     "DocumentType" => "CreditNote",
@@ -167,7 +172,7 @@ class SagePayloadFactory
         ];
     }
 
-    private static function createDefaultPayload($request)
+    private static function createARInvoicePremAndComm($request)
     {
         // Payload creation logic for default scenario
         $payLoad = [

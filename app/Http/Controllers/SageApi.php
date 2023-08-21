@@ -8,6 +8,10 @@ use App\Http\Requests\SageRequest;
 use App\Factories\SagePayloadFactory;
 use Inertia\Inertia; // Import Inertia class
 
+use Inertia\ResponseFactory;
+use Illuminate\Support\Facades\Session;
+
+
 
 class SageApi extends Controller
 {
@@ -32,15 +36,12 @@ class SageApi extends Controller
         
         // Process the JSON response and handle messages
         $message = $this->processJsonResponse($jsonResponse);
-        
-        //echo $message; die();
-        //return back()->with('message', $message);
 
-        return response()->json(['message' =>  $message]);
+        $message .= " SAGE Endpoint= ".$endPoint;
 
-        //return Inertia::location(route('post-sage-data'))->with('message', $message);
+        return back()->with('message',$message);
 
-        //return Inertia::location(route('/quotes/car/', ['id' => 'UYKNLNST']))->with('message', $message);
+       
        
     }
 
