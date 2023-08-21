@@ -7693,7 +7693,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     can: Object,
     paymentMethods: Object,
     sendPolicy: Boolean,
-    insuranceProviders: Array
+    insuranceProviders: Array,
+    healthPlanTypes: Array
   },
   setup: function setup(__props, _ref) {
     var __expose = _ref.expose;
@@ -7715,6 +7716,12 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
           maximumFractionDigits: 2
         });
       }
+    };
+    var checkPlanType = function checkPlanType(id) {
+      var _page$props$healthPla;
+      return (_page$props$healthPla = page.props.healthPlanTypes.find(function (type) {
+        return type.id === id;
+      })) === null || _page$props$healthPla === void 0 ? void 0 : _page$props$healthPla.text;
     };
     var modals = (0,vue__WEBPACK_IMPORTED_MODULE_7__.reactive)({
       duplicate: false,
@@ -8662,6 +8669,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       hasRole: hasRole,
       dateFormat: dateFormat,
       fixedValue: fixedValue,
+      checkPlanType: checkPlanType,
       modals: modals,
       leadDuplicateForm: leadDuplicateForm,
       openDuplicate: openDuplicate,
@@ -18066,6 +18074,9 @@ __webpack_require__.r(__webpack_exports__);
     var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
       isRequired = _useRules.isRequired,
       isEmail = _useRules.isEmail;
+    var editMode = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
+      return !!props.quote;
+    });
     var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)(false);
     function onSubmit(isValid) {
       if (isValid) {
@@ -18097,6 +18108,7 @@ __webpack_require__.r(__webpack_exports__);
       quoteForm: quoteForm,
       isRequired: isRequired,
       isEmail: isEmail,
+      editMode: editMode,
       isEmptyField: isEmptyField,
       onSubmit: onSubmit
     };
@@ -18247,7 +18259,7 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
       text: 'LAST MODIFIED DATE',
       value: 'updated_at'
     }, {
-      text: 'PREMIUM',
+      text: 'PRICE',
       value: 'premium'
     }, {
       text: 'POLICY NO',
@@ -18351,9 +18363,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _PersonalQuote_Partials_QuoteActivities__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../PersonalQuote/Partials/QuoteActivities */ "./resources/js/inertia/Pages/PersonalQuote/Partials/QuoteActivities.vue");
 /* harmony import */ var _PersonalQuote_Partials_QuotePolicy__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../PersonalQuote/Partials/QuotePolicy */ "./resources/js/inertia/Pages/PersonalQuote/Partials/QuotePolicy.vue");
 /* harmony import */ var _PersonalQuote_Partials_LeadHistory__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../PersonalQuote/Partials/LeadHistory */ "./resources/js/inertia/Pages/PersonalQuote/Partials/LeadHistory.vue");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
+/* harmony import */ var _PersonalQuote_Partials_AdditionalContacts_vue__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../PersonalQuote/Partials/AdditionalContacts.vue */ "./resources/js/inertia/Pages/PersonalQuote/Partials/AdditionalContacts.vue");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
 /* unplugin-vue-components disabled */
+
 
 
 
@@ -18384,9 +18398,9 @@ __webpack_require__.r(__webpack_exports__);
   setup: function setup(__props, _ref) {
     var __expose = _ref.expose;
     __expose();
-    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_6__.usePage)();
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_7__.usePage)();
     var can = function can(permission) {
-      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_7__.useCan)(permission);
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_8__.useCan)(permission);
     };
     var permissionsEnum = page.props.permissionsEnum;
     var __returned__ = {
@@ -18413,7 +18427,8 @@ __webpack_require__.r(__webpack_exports__);
       },
       get LeadHistory() {
         return _PersonalQuote_Partials_LeadHistory__WEBPACK_IMPORTED_MODULE_5__["default"];
-      }
+      },
+      AdditionalContacts: _PersonalQuote_Partials_AdditionalContacts_vue__WEBPACK_IMPORTED_MODULE_6__["default"]
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -30365,7 +30380,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dl", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_44, [_hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_46, [_hoisted_47, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_48, [_hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_50, [_hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_52, [_hoisted_53, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.genderText($props.quote.gender).value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_54, [_hoisted_55, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.marital_status_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_56, [_hoisted_57, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.nationality_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_58, [_hoisted_59, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.dob), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_60, [_hoisted_61, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.emirate_of_your_visa_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_62, [_hoisted_63, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.member_category_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_64, [_hoisted_65, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.salary_band_id_text), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_66, [_hoisted_67, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_68, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dl", _hoisted_69, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_70, [_hoisted_71, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.cover_for_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_72, [_hoisted_73, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.currently_insured_with_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_74, [_hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.plan_id), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_76, [_hoisted_77, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.dateFormat($props.quote.next_followup_date)), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_78, [_hoisted_79, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.details), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_80, [_hoisted_81, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.additional_notes), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_82, [_hoisted_83, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_68, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dl", _hoisted_69, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_70, [_hoisted_71, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.cover_for_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_72, [_hoisted_73, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.currently_insured_with_id_text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_74, [_hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.checkPlanType($props.quoteRequest.health_plan_type_id)), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_76, [_hoisted_77, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.dateFormat($props.quote.next_followup_date)), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_78, [_hoisted_79, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.details), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_80, [_hoisted_81, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.additional_notes), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_82, [_hoisted_83, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_84, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dl", _hoisted_85, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_86, [_hoisted_87, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.previous_quote_policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_88, [_hoisted_89, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.previous_quote_policy_premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_90, [_hoisted_91, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.dateFormat($props.quote.previous_policy_expiry_date)), 1 /* TEXT */)])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_92, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_93, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("h3", _hoisted_94, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Member Details "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_tag, {
     size: "sm"
@@ -34814,10 +34829,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         label: "Smoker",
         options: [{
-          value: 0,
+          value: 1,
           label: 'Yes'
         }, {
-          value: 1,
+          value: 0,
           label: 'No'
         }],
         "class": "w-full",
@@ -35807,7 +35822,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [_hoisted_11];
     }),
     _: 1 /* STABLE */
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_12, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_14, [_hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_18, [_hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : _$props$quote2.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_20, [_hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$advisor = $props.quote.advisor) === null || _$props$quote$advisor === void 0 ? void 0 : _$props$quote$advisor.name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_22, [_hoisted_23, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_24, [_hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_26, [_hoisted_27, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.dob), 1 /* TEXT */), _hoisted_28]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_29, [_hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$nationa = $props.quote.nationality) === null || _$props$quote$nationa === void 0 ? void 0 : _$props$quote$nationa.text), 1 /* TEXT */), _hoisted_31]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_32, [_hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.sum_insured_value), 1 /* TEXT */), _hoisted_34]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_35, [_hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$life_qu = $props.quote.life_quote_request_detail) === null || _$props$quote$life_qu === void 0 ? void 0 : _$props$quote$life_qu.next_followup_date), 1 /* TEXT */), _hoisted_37]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_38, [_hoisted_39, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$life_qu2 = $props.quote.life_quote_request_detail) === null || _$props$quote$life_qu2 === void 0 ? void 0 : _$props$quote$life_qu2.transapp_code), 1 /* TEXT */), _hoisted_40]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_41, [_hoisted_42, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.source), 1 /* TEXT */), _hoisted_43]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_44, [_hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$life_qu3 = $props.quote.life_quote_request_detail) === null || _$props$quote$life_qu3 === void 0 ? void 0 : (_$props$quote$life_qu4 = _$props$quote$life_qu3.lost_reason) === null || _$props$quote$life_qu4 === void 0 ? void 0 : _$props$quote$life_qu4.text), 1 /* TEXT */), _hoisted_46]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_47, [_hoisted_48, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.premium), 1 /* TEXT */), _hoisted_49]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_50, [_hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$currenc = $props.quote.currency) === null || _$props$quote$currenc === void 0 ? void 0 : _$props$quote$currenc.text), 1 /* TEXT */), _hoisted_52]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_53, [_hoisted_54, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$purpose = $props.quote.purpose_of_insurance) === null || _$props$quote$purpose === void 0 ? void 0 : _$props$quote$purpose.text), 1 /* TEXT */), _hoisted_55]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_56, [_hoisted_57, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$marital = $props.quote.marital_status) === null || _$props$quote$marital === void 0 ? void 0 : _$props$quote$marital.text), 1 /* TEXT */), _hoisted_58]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_59, [_hoisted_60, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$childer = $props.quote.childern) === null || _$props$quote$childer === void 0 ? void 0 : _$props$quote$childer.text), 1 /* TEXT */), _hoisted_61]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_62, [_hoisted_63, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$insuran = $props.quote.insurance_tenure) === null || _$props$quote$insuran === void 0 ? void 0 : _$props$quote$insuran.text), 1 /* TEXT */), _hoisted_64]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_65, [_hoisted_66, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$number_ = $props.quote.number_of_years) === null || _$props$quote$number_ === void 0 ? void 0 : _$props$quote$number_.text), 1 /* TEXT */), _hoisted_67]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_68, [_hoisted_69, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.gender), 1 /* TEXT */), _hoisted_70]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_71, [_hoisted_72, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.is_smoker), 1 /* TEXT */), _hoisted_73]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_74, [_hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.others_info), 1 /* TEXT */), _hoisted_76]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_77, [_hoisted_78, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.renewal_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_79, [_hoisted_80, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.renewal_batch), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_81, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_tooltip, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_12, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_14, [_hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_18, [_hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : _$props$quote2.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_20, [_hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$advisor = $props.quote.advisor) === null || _$props$quote$advisor === void 0 ? void 0 : _$props$quote$advisor.name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_22, [_hoisted_23, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_24, [_hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_26, [_hoisted_27, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.dob), 1 /* TEXT */), _hoisted_28]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_29, [_hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$nationa = $props.quote.nationality) === null || _$props$quote$nationa === void 0 ? void 0 : _$props$quote$nationa.text), 1 /* TEXT */), _hoisted_31]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_32, [_hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.sum_insured_value), 1 /* TEXT */), _hoisted_34]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_35, [_hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$life_qu = $props.quote.life_quote_request_detail) === null || _$props$quote$life_qu === void 0 ? void 0 : _$props$quote$life_qu.next_followup_date), 1 /* TEXT */), _hoisted_37]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_38, [_hoisted_39, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$life_qu2 = $props.quote.life_quote_request_detail) === null || _$props$quote$life_qu2 === void 0 ? void 0 : _$props$quote$life_qu2.transapp_code), 1 /* TEXT */), _hoisted_40]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_41, [_hoisted_42, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.source), 1 /* TEXT */), _hoisted_43]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_44, [_hoisted_45, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$life_qu3 = $props.quote.life_quote_request_detail) === null || _$props$quote$life_qu3 === void 0 ? void 0 : (_$props$quote$life_qu4 = _$props$quote$life_qu3.lost_reason) === null || _$props$quote$life_qu4 === void 0 ? void 0 : _$props$quote$life_qu4.text), 1 /* TEXT */), _hoisted_46]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_47, [_hoisted_48, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.premium), 1 /* TEXT */), _hoisted_49]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_50, [_hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$currenc = $props.quote.currency) === null || _$props$quote$currenc === void 0 ? void 0 : _$props$quote$currenc.text), 1 /* TEXT */), _hoisted_52]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_53, [_hoisted_54, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$purpose = $props.quote.purpose_of_insurance) === null || _$props$quote$purpose === void 0 ? void 0 : _$props$quote$purpose.text), 1 /* TEXT */), _hoisted_55]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_56, [_hoisted_57, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$marital = $props.quote.marital_status) === null || _$props$quote$marital === void 0 ? void 0 : _$props$quote$marital.text), 1 /* TEXT */), _hoisted_58]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_59, [_hoisted_60, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$childer = $props.quote.childern) === null || _$props$quote$childer === void 0 ? void 0 : _$props$quote$childer.text), 1 /* TEXT */), _hoisted_61]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_62, [_hoisted_63, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$insuran = $props.quote.insurance_tenure) === null || _$props$quote$insuran === void 0 ? void 0 : _$props$quote$insuran.text), 1 /* TEXT */), _hoisted_64]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_65, [_hoisted_66, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((_$props$quote$number_ = $props.quote.number_of_years) === null || _$props$quote$number_ === void 0 ? void 0 : _$props$quote$number_.text), 1 /* TEXT */), _hoisted_67]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_68, [_hoisted_69, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.gender), 1 /* TEXT */), _hoisted_70]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_71, [_hoisted_72, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.is_smoker ? 'Yes' : 'No'), 1 /* TEXT */), _hoisted_73]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_74, [_hoisted_75, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.others_info), 1 /* TEXT */), _hoisted_76]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_77, [_hoisted_78, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.renewal_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_79, [_hoisted_80, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($props.quote.renewal_batch), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_81, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_tooltip, {
     position: "bottom"
   }, {
     tooltip: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
@@ -46633,20 +46648,22 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         type: "email",
         label: "Email*",
+        disabled: $setup.editMode,
         rules: [$setup.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.email
-      }, null, 8 /* PROPS */, ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_input, {
+      }, null, 8 /* PROPS */, ["modelValue", "disabled", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.mobile_no,
         "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
           return $setup.quoteForm.mobile_no = $event;
         }),
         type: "tel",
         label: "Phone Number*",
+        disabled: $setup.editMode,
         rules: [$setup.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.mobile_no
-      }, null, 8 /* PROPS */, ["modelValue", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_input, {
+      }, null, 8 /* PROPS */, ["modelValue", "disabled", "rules", "error"]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_input, {
         modelValue: $setup.quoteForm.boat_details,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.quoteForm.boat_details = $event;
@@ -46682,7 +46699,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return $setup.quoteForm.asset_value = $event;
         }),
         type: "number",
-        label: "Bike value(AED)*",
+        label: "Sum Insured*",
         rules: [$setup.isRequired],
         "class": "w-full",
         error: $setup.quoteForm.errors.asset_value
@@ -47150,184 +47167,189 @@ var _hoisted_23 = {
 };
 var _hoisted_24 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "DEVICE", -1 /* HOISTED */);
+}, "IS ECOMMERCE", -1 /* HOISTED */);
 var _hoisted_25 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_26 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("label", {
+  "class": "font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+}, " Parent Ref-ID ", -1 /* HOISTED */);
+var _hoisted_27 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_28 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "DEVICE", -1 /* HOISTED */);
+var _hoisted_29 = {
   "class": "mt-6"
 };
-var _hoisted_26 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
+var _hoisted_30 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800"
 }, "Quote Details", -1 /* HOISTED */);
-var _hoisted_27 = {
+var _hoisted_31 = {
   "class": "text-sm"
 };
-var _hoisted_28 = {
+var _hoisted_32 = {
   "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
 };
-var _hoisted_29 = {
-  "class": "grid sm:grid-cols-2"
-};
-var _hoisted_30 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
-  "class": "font-medium"
-}, "Boat Details", -1 /* HOISTED */);
-var _hoisted_31 = {
-  "class": "grid sm:grid-cols-2"
-};
-var _hoisted_32 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
-  "class": "font-medium"
-}, "Engine Details", -1 /* HOISTED */);
 var _hoisted_33 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_34 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Claim Experience", -1 /* HOISTED */);
+}, "Boat Details", -1 /* HOISTED */);
 var _hoisted_35 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_36 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Sum Insured", -1 /* HOISTED */);
+}, "Engine Details", -1 /* HOISTED */);
 var _hoisted_37 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_38 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Use", -1 /* HOISTED */);
+}, "Claim Experience", -1 /* HOISTED */);
 var _hoisted_39 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_40 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Operator Experience", -1 /* HOISTED */);
+}, "Sum Insured", -1 /* HOISTED */);
 var _hoisted_41 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_42 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Use", -1 /* HOISTED */);
+var _hoisted_43 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_44 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Operator Experience", -1 /* HOISTED */);
+var _hoisted_45 = {
   "class": "mt-6"
 };
-var _hoisted_42 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
+var _hoisted_46 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800"
 }, "Customer Profile", -1 /* HOISTED */);
-var _hoisted_43 = {
+var _hoisted_47 = {
   "class": "text-sm"
 };
-var _hoisted_44 = {
+var _hoisted_48 = {
   "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
 };
-var _hoisted_45 = {
-  "class": "grid sm:grid-cols-2"
-};
-var _hoisted_46 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
-  "class": "font-medium"
-}, "FIRST NAME", -1 /* HOISTED */);
-var _hoisted_47 = {
-  "class": "grid sm:grid-cols-2"
-};
-var _hoisted_48 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
-  "class": "font-medium"
-}, "LAST NAME", -1 /* HOISTED */);
 var _hoisted_49 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_50 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "MOBILE NUMBER", -1 /* HOISTED */);
+}, "FIRST NAME", -1 /* HOISTED */);
 var _hoisted_51 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_52 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "EMAIL", -1 /* HOISTED */);
+}, "LAST NAME", -1 /* HOISTED */);
 var _hoisted_53 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_54 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "NATIONALITY", -1 /* HOISTED */);
+}, "MOBILE NUMBER", -1 /* HOISTED */);
 var _hoisted_55 = {
-  "class": "mt-6"
-};
-var _hoisted_56 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
-  "class": "font-semibold text-primary-800"
-}, " Last Year's Policy Details ", -1 /* HOISTED */);
-var _hoisted_57 = {
-  "class": "text-sm"
-};
-var _hoisted_58 = {
-  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
-};
-var _hoisted_59 = {
   "class": "grid sm:grid-cols-2"
 };
-var _hoisted_60 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+var _hoisted_56 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREVIOUS POLICY NUMBER", -1 /* HOISTED */);
+}, "EMAIL", -1 /* HOISTED */);
+var _hoisted_57 = {
+  "class": "mt-6"
+};
+var _hoisted_58 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800"
+}, " Last Year's Policy Details ", -1 /* HOISTED */);
+var _hoisted_59 = {
+  "class": "text-sm"
+};
+var _hoisted_60 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
 var _hoisted_61 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_62 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREVIOUS POLICY EXPIRY DATE", -1 /* HOISTED */);
+}, "PREVIOUS POLICY NUMBER", -1 /* HOISTED */);
 var _hoisted_63 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_64 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREVIOUS POLICY PRICE", -1 /* HOISTED */);
+}, "PREVIOUS POLICY EXPIRY DATE", -1 /* HOISTED */);
 var _hoisted_65 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_66 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "RENEWAL BATCH", -1 /* HOISTED */);
+}, "PREVIOUS POLICY PRICE", -1 /* HOISTED */);
 var _hoisted_67 = {
-  "class": "mt-6"
-};
-var _hoisted_68 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
-  "class": "font-semibold text-primary-800"
-}, "Policy Details", -1 /* HOISTED */);
-var _hoisted_69 = {
-  "class": "text-sm"
-};
-var _hoisted_70 = {
-  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
-};
-var _hoisted_71 = {
   "class": "grid sm:grid-cols-2"
 };
-var _hoisted_72 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+var _hoisted_68 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "POLICY NUMBER", -1 /* HOISTED */);
+}, "RENEWAL BATCH", -1 /* HOISTED */);
+var _hoisted_69 = {
+  "class": "mt-6"
+};
+var _hoisted_70 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800"
+}, "Policy Details", -1 /* HOISTED */);
+var _hoisted_71 = {
+  "class": "text-sm"
+};
+var _hoisted_72 = {
+  "class": "grid md:grid-cols-2 gap-x-6 gap-y-4"
+};
 var _hoisted_73 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_74 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "POLICY START DATE", -1 /* HOISTED */);
+}, "POLICY NUMBER", -1 /* HOISTED */);
 var _hoisted_75 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_76 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "POLICY END DATE", -1 /* HOISTED */);
+}, "POLICY START DATE", -1 /* HOISTED */);
 var _hoisted_77 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_78 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "PREMIUM", -1 /* HOISTED */);
+}, "POLICY END DATE", -1 /* HOISTED */);
 var _hoisted_79 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_80 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
   "class": "font-medium"
+}, "PRICE", -1 /* HOISTED */);
+var _hoisted_81 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_82 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dt", {
+  "class": "font-medium"
 }, "TRANSAPP CODE", -1 /* HOISTED */);
 
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  var _$props$quote$advisor, _$props$quote, _$props$quote$created, _$props$quote2, _$props$quote2$update, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote3, _$props$quote3$yacht_, _$props$quote4, _$props$quote4$yacht_, _$props$quote5, _$props$quote5$yacht_, _$props$quote6, _$props$quote6$yacht_, _$props$quote7, _$props$quote7$yacht_, _$props$quote$nationa, _$props$quote8, _$props$quote8$quote_;
+  var _$props$quote$advisor, _$props$quote, _$props$quote$created, _$props$quote2, _$props$quote2$update, _$props$quote$quote_d, _$props$quote$quote_d2, _$props$quote3, _$props$quote3$yacht_, _$props$quote4, _$props$quote4$yacht_, _$props$quote5, _$props$quote5$yacht_, _$props$quote6, _$props$quote6$yacht_, _$props$quote7, _$props$quote7$yacht_, _$props$quote8, _$props$quote8$quote_;
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Head;
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-button");
   var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.Link;
   var _component_x_tooltip = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-tooltip");
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-divider");
-  var _component_AdditionalContacts = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("AdditionalContacts");
   var _component_AuditLogs = _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Components_AuditLogs_vue__WEBPACK_IMPORTED_MODULE_0__["default"];
   return (0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_Head, {
     title: "Yacht Quotes"
@@ -47377,15 +47399,25 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [_hoisted_8];
     }),
     _: 1 /* STABLE */
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$advisor = $props.quote.advisor) === null || _$props$quote$advisor === void 0 ? void 0 : _$props$quote$advisor.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_11, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.source), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : (_$props$quote$created = _$props$quote.created_by) === null || _$props$quote$created === void 0 ? void 0 : _$props$quote$created.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : (_$props$quote2$update = _$props$quote2.updated_by) === null || _$props$quote2$update === void 0 ? void 0 : _$props$quote2$update.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_21, [_hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$quote_d = $props.quote.quote_detail) === null || _$props$quote$quote_d === void 0 ? void 0 : (_$props$quote$quote_d2 = _$props$quote$quote_d.lost_reason) === null || _$props$quote$quote_d2 === void 0 ? void 0 : _$props$quote$quote_d2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_23, [_hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.device), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_25, [_hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$advisor = $props.quote.advisor) === null || _$props$quote$advisor === void 0 ? void 0 : _$props$quote$advisor.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_11, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.source), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.created_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : (_$props$quote$created = _$props$quote.created_by) === null || _$props$quote$created === void 0 ? void 0 : _$props$quote$created.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : (_$props$quote2$update = _$props$quote2.updated_by) === null || _$props$quote2$update === void 0 ? void 0 : _$props$quote2$update.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.updated_at), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_21, [_hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$quote_d = $props.quote.quote_detail) === null || _$props$quote$quote_d === void 0 ? void 0 : (_$props$quote$quote_d2 = _$props$quote$quote_d.lost_reason) === null || _$props$quote$quote_d2 === void 0 ? void 0 : _$props$quote$quote_d2.text), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_23, [_hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.is_ecommerce ? 'Yes' : 'No'), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_25, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_tooltip, {
+    position: "bottom"
+  }, {
+    tooltip: (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)(" Parent Reference ID ")];
+    }),
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
+      return [_hoisted_26];
+    }),
+    _: 1 /* STABLE */
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.parent_duplicate_quote_id), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_27, [_hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.device), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_29, [_hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_27, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_28, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_29, [_hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : (_$props$quote3$yacht_ = _$props$quote3.yacht_quote) === null || _$props$quote3$yacht_ === void 0 ? void 0 : _$props$quote3$yacht_.boat_details), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_31, [_hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : (_$props$quote4$yacht_ = _$props$quote4.yacht_quote) === null || _$props$quote4$yacht_ === void 0 ? void 0 : _$props$quote4$yacht_.engine_details), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_33, [_hoisted_34, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote5 = $props.quote) === null || _$props$quote5 === void 0 ? void 0 : (_$props$quote5$yacht_ = _$props$quote5.yacht_quote) === null || _$props$quote5$yacht_ === void 0 ? void 0 : _$props$quote5$yacht_.claim_experience), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_35, [_hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.asset_value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_37, [_hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote6 = $props.quote) === null || _$props$quote6 === void 0 ? void 0 : (_$props$quote6$yacht_ = _$props$quote6.yacht_quote) === null || _$props$quote6$yacht_ === void 0 ? void 0 : _$props$quote6$yacht_.use), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_39, [_hoisted_40, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote7 = $props.quote) === null || _$props$quote7 === void 0 ? void 0 : (_$props$quote7$yacht_ = _$props$quote7.yacht_quote) === null || _$props$quote7$yacht_ === void 0 ? void 0 : _$props$quote7$yacht_.operator_experience), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_41, [_hoisted_42, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_31, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_32, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_33, [_hoisted_34, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : (_$props$quote3$yacht_ = _$props$quote3.yacht_quote) === null || _$props$quote3$yacht_ === void 0 ? void 0 : _$props$quote3$yacht_.boat_details), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_35, [_hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : (_$props$quote4$yacht_ = _$props$quote4.yacht_quote) === null || _$props$quote4$yacht_ === void 0 ? void 0 : _$props$quote4$yacht_.engine_details), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_37, [_hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote5 = $props.quote) === null || _$props$quote5 === void 0 ? void 0 : (_$props$quote5$yacht_ = _$props$quote5.yacht_quote) === null || _$props$quote5$yacht_ === void 0 ? void 0 : _$props$quote5$yacht_.claim_experience), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_39, [_hoisted_40, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.asset_value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_41, [_hoisted_42, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote6 = $props.quote) === null || _$props$quote6 === void 0 ? void 0 : (_$props$quote6$yacht_ = _$props$quote6.yacht_quote) === null || _$props$quote6$yacht_ === void 0 ? void 0 : _$props$quote6$yacht_.use), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_43, [_hoisted_44, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote7 = $props.quote) === null || _$props$quote7 === void 0 ? void 0 : (_$props$quote7$yacht_ = _$props$quote7.yacht_quote) === null || _$props$quote7$yacht_ === void 0 ? void 0 : _$props$quote7$yacht_.operator_experience), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_45, [_hoisted_46, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_44, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_45, [_hoisted_46, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_47, [_hoisted_48, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_49, [_hoisted_50, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_51, [_hoisted_52, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.email), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_53, [_hoisted_54, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote$nationa = $props.quote.nationality) === null || _$props$quote$nationa === void 0 ? void 0 : _$props$quote$nationa.text), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_55, [_hoisted_56, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_47, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_48, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_49, [_hoisted_50, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.first_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_51, [_hoisted_52, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.last_name), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_53, [_hoisted_54, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.mobile_no), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_55, [_hoisted_56, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.email), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_57, [_hoisted_58, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_57, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_58, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_59, [_hoisted_60, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_61, [_hoisted_62, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_policy_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_63, [_hoisted_64, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_65, [_hoisted_66, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.renewal_batch), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_67, [_hoisted_68, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_59, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_60, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_61, [_hoisted_62, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_63, [_hoisted_64, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_policy_expiry_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_65, [_hoisted_66, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.previous_quote_policy_premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_67, [_hoisted_68, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.renewal_batch), 1 /* TEXT */)])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_69, [_hoisted_70, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_69, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_70, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_71, [_hoisted_72, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_73, [_hoisted_74, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.policy_start_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_75, [_hoisted_76, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.policy_issuance_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_77, [_hoisted_78, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_79, [_hoisted_80, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote8 = $props.quote) === null || _$props$quote8 === void 0 ? void 0 : (_$props$quote8$quote_ = _$props$quote8.quote_detail) === null || _$props$quote8$quote_ === void 0 ? void 0 : _$props$quote8$quote_.transapp_code), 1 /* TEXT */)])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["QuoteActivities"], {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_71, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dl", _hoisted_72, [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_73, [_hoisted_74, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.policy_number), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_75, [_hoisted_76, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.policy_start_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_77, [_hoisted_78, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.policy_issuance_date), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_79, [_hoisted_80, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)($props.quote.premium), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("div", _hoisted_81, [_hoisted_82, (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_$props$quote8 = $props.quote) === null || _$props$quote8 === void 0 ? void 0 : (_$props$quote8$quote_ = _$props$quote8.quote_detail) === null || _$props$quote8$quote_ === void 0 ? void 0 : _$props$quote8$quote_.transapp_code), 1 /* TEXT */)])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["QuoteActivities"], {
     can: $setup.can,
     quote: $props.quote,
     activities: $props.activities,
@@ -47400,7 +47432,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "insurance-providers": $props.insuranceProviders,
     "is-beta-user": $props.isBetaUser,
     "personal-plans": $props.personalPlans
-  }, null, 8 /* PROPS */, ["payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"])) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_AdditionalContacts, {
+  }, null, 8 /* PROPS */, ["payments", "quote-type", "payment-methods", "insurance-providers", "is-beta-user", "personal-plans"])) : (0,vue__WEBPACK_IMPORTED_MODULE_2__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["AdditionalContacts"], {
     quote: $props.quote,
     "quote-type": $props.quoteType
   }, null, 8 /* PROPS */, ["quote", "quote-type"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["QuoteStatus"], {
