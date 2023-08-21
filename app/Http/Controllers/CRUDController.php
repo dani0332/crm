@@ -562,12 +562,16 @@ class CRUDController extends Controller
                 ];
             })->values();
 
-            $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->id,
-                    'label' => $paymentMethod->text,
-                ];
-            })->sortBy('label')->values();
+            $filteredInsuranceProviders =[];
+            if(!empty($insuranceProviders)){
+
+                $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->id,
+                        'label' => $paymentMethod->text,
+                    ];
+                })->sortBy('label')->values();
+            }
 
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
@@ -662,12 +666,15 @@ class CRUDController extends Controller
                 ];
             })->values();
 
-            $insuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->id,
-                    'label' => $paymentMethod->text,
-                ];
-            })->sortBy('label')->values();
+            if(!empty( $insuranceProviders )){
+
+                $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->id,
+                        'label' => $paymentMethod->text,
+                    ];
+                })->sortBy('label')->values();
+            }
 
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
@@ -698,7 +705,6 @@ class CRUDController extends Controller
                 'domainPath' => $domainPath,
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
-                'insuranceProviders' => $insuranceProviders,
                 'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
                 'permissions' => [

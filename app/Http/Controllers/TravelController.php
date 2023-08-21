@@ -103,13 +103,16 @@ class TravelController extends Controller
         })->values();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
+        $filteredInsuranceProviders =[];
+        if(!empty( $insuranceProviders)){
 
-        $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
-            return [
-                'value' => $paymentMethod->id,
-                'label' => $paymentMethod->text,
-            ];
-        })->sortBy('label')->values();
+            $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+        }
         $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
         $payments->each(function ($payment) {

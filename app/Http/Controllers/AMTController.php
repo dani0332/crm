@@ -276,7 +276,7 @@ class AMTController extends Controller
         $payments = $record->payments;
         $mainPayment = $record->payments()->where('code', '=', $record->code)->first();
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Group_Medical);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::GroupMedical);
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
