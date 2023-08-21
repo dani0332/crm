@@ -71,7 +71,7 @@ class EmbeddedProductController extends Controller
     {
         EmbeddedProductRepository::update($id, $request->validated());
 
-        return back()->with('message', 'Embedded Product updated successfully');
+        return redirect()->route('embedded-products.index')->with('message', 'Embedded Product updated successfully');
     }
 
     public function destroy($id)
@@ -90,5 +90,17 @@ class EmbeddedProductController extends Controller
         $data = EmbeddedProductRepository::uploadDocument($file, $title);
 
         return response()->json($data);
+    }
+
+    public function toggleStatus($id)
+    {
+        EmbeddedProductRepository::where('id', $id)->update([
+            'is_active' => request()->input('is_active'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Embedded Product status updated',
+        ]);
     }
 }
