@@ -45,8 +45,6 @@ class StoreTravelRequest extends FormRequest
                 $rule[] = 'email:rfc,dns';
             }
             if ($key == 'mobile_no') {
-                $rule[] = 'regex:/(0)[0-9]/';
-                $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';
             }

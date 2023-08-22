@@ -166,7 +166,7 @@ class TravelQuoteService extends BaseService
                 $dataArr['endDate'] = $request->end_date;
             }
         }
-        if($request->region_cover_for_id!=null) {
+        if($request->region_cover_for_id!=null && $request->direction_code == 'travelUaeOutbound') {
             $dataArr['regionCoverForId'] = $request->region_cover_for_id;
             }
 
@@ -177,15 +177,12 @@ class TravelQuoteService extends BaseService
         if($request->uuid != null) {
             $dataArr['quoteUID'] = $request->uuid;
             $response = $this->kenService->request('/get-revised-travel-quote-plans','post',$dataArr);
-            dd($response);
+            return;
 
 
         }
-       // dd($dataArr);
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
-        dd($response);
-        //MUCHC8RP
-        // 7KJF67ZU
+
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
         }

@@ -149,6 +149,7 @@ onMounted(() => {
                   v-model="quoteForm.has_arrived_uae"
                   :options="alreadylived"
                   class="w-full"
+                  :disabled="quoteForm.uuid != null && quoteForm.has_arrived_uae == '1'"
                   :rules="[rules.isRequired]"
               />
           </x-field>
@@ -157,6 +158,7 @@ onMounted(() => {
                   v-model="quoteForm.has_arrived_destination"
                   :options="alreadylived"
                   class="w-full"
+                  :disabled="quoteForm.uuid != null && quoteForm.has_arrived_destination == '1'"
                   :rules="[rules.isRequired]"
               />
           </x-field>
@@ -289,9 +291,10 @@ onMounted(() => {
           size="md"
           color="emerald"
           type="submit"
+          :disabled="quoteForm.uuid != null && (quoteForm.has_arrived_destination == '1' || quoteForm.has_arrived_uae == '1')"
           :loading="quoteForm.processing"
         >
-          Create
+            {{quoteForm.uuid != null?'Update':'Create'}}
         </x-button>
       </div>
     </x-form>
