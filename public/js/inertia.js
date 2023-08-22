@@ -9377,7 +9377,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       mobile_no: '',
       created_at_start: '',
       created_at_end: '',
-      quote_status: [],
+      quote_status_id: [],
       advisors: [],
       is_renewal: '',
       page: 1
@@ -9464,8 +9464,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       if (urlParams.has('created_at_end')) {
         filters.created_at_end = urlParams.get('created_at_end');
       }
-      if (urlParams.has('quote_status[]')) {
-        filters.quote_status = urlParams.getAll('quote_status[]').map(function (status) {
+      if (urlParams.has('quote_status_id[]')) {
+        filters.quote_status_id = urlParams.getAll('quote_status_id[]').map(function (status) {
           return parseInt(status);
         });
       }
@@ -10666,7 +10666,7 @@ __webpack_require__.r(__webpack_exports__);
       premium: ((_props$quote12 = props.quote) === null || _props$quote12 === void 0 ? void 0 : _props$quote12.premium) || '',
       tenure_of_insurance_id: ((_props$quote13 = props.quote) === null || _props$quote13 === void 0 ? void 0 : _props$quote13.tenure_of_insurance_id) || '',
       number_of_years_id: ((_props$quote14 = props.quote) === null || _props$quote14 === void 0 ? void 0 : _props$quote14.number_of_years_id) || '',
-      is_smoker: ((_props$quote15 = props.quote) === null || _props$quote15 === void 0 ? void 0 : _props$quote15.is_smoker) || '',
+      is_smoker: ((_props$quote15 = props.quote) === null || _props$quote15 === void 0 ? void 0 : _props$quote15.is_smoker) || 0,
       gender: ((_props$quote16 = props.quote) === null || _props$quote16 === void 0 ? void 0 : _props$quote16.gender) || '',
       others_info: ((_props$quote17 = props.quote) === null || _props$quote17 === void 0 ? void 0 : _props$quote17.others_info) || ''
     });
@@ -23108,7 +23108,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_spinner = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-spinner");
   var _component_x_icon = (0,vue__WEBPACK_IMPORTED_MODULE_1__.resolveComponent)("x-icon");
   return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Head, {
-    title: "Medical Amt ~ Card View"
+    title: "Business Quote ~ Card View"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_1, [_hoisted_2, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Link, {
     href: "/medical/amt"
   }, {
@@ -23126,7 +23126,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
     _: 1 /* STABLE */
   }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Link, {
-    href: "/medical/amt/create"
+    href: "/quotes/business/create"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {
@@ -33120,12 +33120,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         name: "created_at_end",
         label: "Created Date End"
       }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createVNode)(_component_ComboBox, {
-        modelValue: $setup.filters.quote_status,
+        modelValue: $setup.filters.quote_status_id,
         "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
-          return $setup.filters.quote_status = $event;
+          return $setup.filters.quote_status_id = $event;
         }),
         label: "Lead Status",
-        name: "quote_status",
+        name: "quote_status_id",
         placeholder: "Search by Lead Status",
         options: $setup.leadStatusOptions
       }, null, 8 /* PROPS */, ["modelValue", "options"]), !$setup.hasRole($setup.rolesEnum.Advisor) ? ((0,vue__WEBPACK_IMPORTED_MODULE_3__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_3__.createBlock)(_component_ComboBox, {

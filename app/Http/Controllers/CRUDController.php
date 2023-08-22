@@ -235,14 +235,14 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
-            
+
             // dd($advisors);
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
                 'advisors' => $advisors,
                 'dropdownSource' => $dropdownSource,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
-                'userMaxCap' => $userMaxCap, 
+                'userMaxCap' => $userMaxCap,
                 'todayAssignmentCount' => $todayAssignmentCount,
             ]);
         }
@@ -533,7 +533,7 @@ class CRUDController extends Controller
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
             $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
             $paymentStatusEnum = PaymentStatusEnum::asArray();
-            $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
+            $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
             $quoteDocuments = array_values($quoteDocuments->toArray());
             $planURL = $ecomCarInsuranceQuoteUrl.$record->uuid;

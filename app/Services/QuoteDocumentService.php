@@ -166,6 +166,7 @@ class QuoteDocumentService extends BaseService
         $quote = app()->make('App\\Models\\'.$quoteType.'Quote')::where('id', $recordId)->first();
         if ($quote && $quote->documents) {
             $quote->documents->load('createdBy:id,name');
+
             return $quote->documents->sortDesc();
         } else {
             return [];

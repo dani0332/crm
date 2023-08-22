@@ -31,7 +31,6 @@ class ECOMController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -64,7 +63,6 @@ class ECOMController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -84,7 +82,7 @@ class ECOMController extends Controller
         //
     }
 
-    private function isAllowedForManualAllocation() : bool 
+    private function isAllowedForManualAllocation(): bool
     {
         return auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool);
     }
