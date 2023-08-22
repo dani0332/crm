@@ -134,8 +134,6 @@ class TravelQuoteService extends BaseService
             'lastName' => $request->last_name,
             'email' => $request->email,
             'mobileNo' => $request->mobile_no,
-         //   'travelCoverForId' => $request->travel_cover_for_id,
-            //'premium' => $request->premium,
             'nationalityId' => $request->nationality_id,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
@@ -241,25 +239,24 @@ class TravelQuoteService extends BaseService
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
             empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
         ) {
-           // dd('44444444');
-           // $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
+            $this->query->where('tqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-        //    $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-     //       $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
 
-        //    $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
@@ -513,17 +510,10 @@ class TravelQuoteService extends BaseService
             'source' => 'input|text',
             'premium' => 'input|number|title',
             'policy_number' => 'input|text',
-            //'days_cover_for' => 'input|number|title|required',
             'nationality_id' => 'select|title|required',
-        //    'destination_id' => 'select|title|required',
-          //  'region_cover_for_id' => 'select|title|required',
-          //  'travel_cover_for_id' => 'select|title|required',
-          //  'details' => 'textarea|text|required',
-           // 'currently_located_in_id' => 'select|title|required',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
-          //  'currently_located_in_id' => 'select|title|required',
             'is_ecommerce' => '|static|title|Yes,No',
             'renewal_batch' => 'input|number|title',
             'payment_status_id' => 'select|title',

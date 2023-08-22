@@ -56,7 +56,6 @@ class TravelController extends Controller
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
          $quotes = $gridData->simplePaginate(10)->withQueryString();
-       // dd($this->genericModel);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isManager = auth()->user()->isManagerOrDeputy();
@@ -86,7 +85,6 @@ class TravelController extends Controller
     {
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-       // dd($record);
         abort_if(! $record, 404);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
@@ -113,7 +111,6 @@ class TravelController extends Controller
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-//dd($record);
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
@@ -266,7 +263,6 @@ class TravelController extends Controller
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
 
-        // return inertia('TravelQuote/Edit', [
         return inertia('TravelQuote/Create', [
             'quote' => $record,
             'travelers' => $this->travelQuoteService->getMembersDetail($record->id),

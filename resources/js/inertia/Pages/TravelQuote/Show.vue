@@ -989,7 +989,7 @@ onMounted(() => {
                       <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
               </dt>
-            <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
+            <dt v-else class="font-medium">{{ field.title?.toUpperCase() }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
 
@@ -1002,7 +1002,7 @@ onMounted(() => {
                         <template #tooltip> Traveling Where</template>
                     </x-tooltip>
                 </dt>
-                <dt  class="font-medium">{{ quote.direction_code.toUpperCase() }}</dt>
+                <dt  class="font-medium">{{ quote.direction_code?.toUpperCase() }}</dt>
             </div>
 
             <div v-if="enums.travelQuoteEnum.TravelUaeInbound == quote.direction_code" class="grid sm:grid-cols-2" >
@@ -1045,7 +1045,7 @@ onMounted(() => {
                         <template #tooltip> Travel Coverage</template>
                     </x-tooltip>
                 </dt>
-                <dt  class="font-medium">{{ quote.coverage_code.toUpperCase() }}</dt>
+                <dt  class="font-medium">{{ quote.coverage_code?.toUpperCase() }}</dt>
             </div>
             <div class="grid sm:grid-cols-2">
                 <dt>
@@ -1405,11 +1405,11 @@ onMounted(() => {
       >
         <template #item-email_status="item">
           <span class="text-primary-600">{{
-            item.email_status.toUpperCase()
+            item.email_status?.toUpperCase()
           }}</span>
         </template>
         <template #item-reason="item">
-          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
+          <span class="text-primary-600">{{ item.reason?.toUpperCase() }}</span>
         </template>
       </DataTable>
     </div>

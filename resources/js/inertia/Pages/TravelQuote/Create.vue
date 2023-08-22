@@ -47,6 +47,7 @@ const quoteForm = useForm({
     policy_number: props.quote?.policy_number || null,
     iam_possesion_type_id: props.quote?.iam_possesion_type_id || null,
     ilivein_accommodation_type_id: props.quote?.ilivein_accommodation_type_id || null,
+    days_cover_for:props.quote?.days_cover_for || null,
     members:[{ value: 'male', label: 'Male',primary:true }]
 
 
@@ -149,7 +150,6 @@ onMounted(() => {
                   v-model="quoteForm.has_arrived_uae"
                   :options="alreadylived"
                   class="w-full"
-                  :disabled="quoteForm.uuid != null && quoteForm.has_arrived_uae == '1'"
                   :rules="[rules.isRequired]"
               />
           </x-field>
@@ -158,7 +158,6 @@ onMounted(() => {
                   v-model="quoteForm.has_arrived_destination"
                   :options="alreadylived"
                   class="w-full"
-                  :disabled="quoteForm.uuid != null && quoteForm.has_arrived_destination == '1'"
                   :rules="[rules.isRequired]"
               />
           </x-field>
@@ -227,6 +226,15 @@ onMounted(() => {
                   :hasError="quoteForm.errors[index]"
               />
           </x-field>
+            <x-field  v-if="quoteForm.uuid != null" label="Days Cover" required>
+                <x-input
+                    :value="quoteForm.days_cover_for"
+                    :disabled="true"
+                    class="w-full"
+
+                />
+            </x-field>
+
           <x-field label="Email" required>
               <x-input
                   v-model="quoteForm.email"
