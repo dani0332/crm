@@ -74,6 +74,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'trim' => $this->lead->trim,
             'premium' => $this->lead->premium,
             'carMakeId' => $this->lead->car_make_id,
+            'carModelId' => $this->lead->car_model_id, 
             'currentlyInsuredWith' => $this->lead->currently_insured_with,
             'source' => LeadSourceEnum::REVIVAL,
             'isEmailSkip' => true,
