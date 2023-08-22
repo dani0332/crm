@@ -157,7 +157,8 @@ const documentsTableItems = computed(() => {
 			document_type_text: doc.document_type_text.length > 0 ? doc.document_type_text : "",
 			document_name_text: doc.doc_name,
 			created_at: doc.created_at,
-			created_by: doc.createdBy ? doc.createdBy.name : "",
+			doc_uuid: doc.doc_uuid,
+			created_by: doc.created_by ? doc.created_by.name : "",
 		}
 	})
 })
@@ -1520,21 +1521,17 @@ const uploadFile = (doc, files) => {
 				hide-rows-per-page
 				hide-footer
 			>
+				<template #item-document_name_text="item">
+					<Link :href="`/documents/${item.doc_uuid}`">{{ item.document_name_text }}</Link>
+				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
 						<x-button
-							size="xs"
-							color="primary"
-							outlined
-							@click.prevent="onEditMember(item)"
-						>
-							Edit
-						</x-button>
-						<x-button
+							v-if="!hasRole(rolesEnum.PA) && !can(permissionEnum.ApprovePayments)"
 							size="xs"
 							color="error"
 							outlined
-							@click.prevent="memberDelete(item.id)"
+							@click.prevent="deleteDocument(item.id)"
 						>
 							Delete
 						</x-button>
