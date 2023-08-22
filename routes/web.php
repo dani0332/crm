@@ -39,6 +39,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
@@ -71,8 +72,6 @@ use App\Http\Controllers\VehicleDepreciationController;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\SageApi;
-
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -99,15 +98,12 @@ Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTie
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
-
-
-
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('leadsearch', function () {
         return redirect('home');
     });
     Route::get('verify-sage', [SageApi::class, 'index']);
-    
+
     Route::get('home', function () {
         return inertia('Home/Home');
     });
@@ -173,7 +169,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
 
     Route::post('/quotes/car/post-sage-data', [SageApi::class, 'processSagePost'])->name('post-sage-data');
-   // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
+    // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
@@ -184,8 +180,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         'update' => 'leadassignment.update',
         'destroy' => 'leadassignment.destroy',
     ]);
-
-   
 
     Route::post('activities/v2', [ActivityController::class, 'store']);
     Route::patch('activities/v2/{id}', [ActivityController::class, 'update']);
