@@ -66,7 +66,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'claimHistoryId' => $this->lead->claim_history_id,
             'hasNcdSupportingDocuments' => $this->lead->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
             'additionalNotes' => $this->lead->additional_notes,
-            'carValue' => $this->lead->car_value,
+            'carValue' => (int)$this->lead->car_value,
             'carValueTier' => $this->lead->car_value_tier,
             'seatCapacity' => $this->lead->seat_capacity,
             'cylinder' => $this->lead->cylinder,
