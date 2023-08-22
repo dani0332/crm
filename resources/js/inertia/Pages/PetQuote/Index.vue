@@ -328,8 +328,8 @@ watch(
         {{ advisor?.name }}
       </template>
 
-        <template #item-transapp_code="{ pet_quote }">
-            {{ pet_quote?.pet_quote_request_detail?.transapp_code }}
+        <template #item-transapp_code="{ quote_detail }">
+            {{ quote_detail?.transapp_code }}
         </template>
 
       <template #item-quote_status="{ quote_status }">
