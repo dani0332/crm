@@ -7124,11 +7124,6 @@ ws@^8.4.2:
   resolved "https://registry.npmjs.org/ws/-/ws-8.8.1.tgz"
   integrity sha512-bGy2JzvzkPowEJV++hF07hAD6niYSr0JzBNo/J29WsB57A2r7Wlc1UFcTR9IzrPvuNVO4B8LGqF8qcpsVOhJCA==
 
-"xlsx@https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz":
-  version "0.19.1"
-  resolved "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
-  integrity sha512-pPh/ybd1bChlhCrtQ9QmRUx2yjQwMbS4tfvV9MSA2Qmm7vRUHQtPDMlLjAvQ2A4v8G92i2RlrNkSOKb1bwY7ww==
-
 xtend@^4.0.0:
   version "4.0.2"
   resolved "https://registry.npmjs.org/xtend/-/xtend-4.0.2.tgz"
