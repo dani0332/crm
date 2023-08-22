@@ -54,12 +54,19 @@ const quoteForm = useForm({
 	has_dental: props.quote?.has_dental || null,
 	has_worldwide_cover: props.quote?.has_worldwide_cover || null,
 	has_home: props.quote?.has_home || null,
-	// car_make_id: props.quote?.car_make_id || 0,
-	car_make_id: 10304342 || 0,
+	car_make_id: props.quote?.car_make_id || 0,
 	trim: props.quote?.trim || '',
 	car_model_id: props.quote?.car_model_id || 0,
 	year_of_manufacture: parseInt(props.quote?.year_of_manufacture) || 0,
 });
+
+const setCarMake = (id) => {
+	axios
+		.get(`/car-make?id=${id}`)
+		.then(({ data }) => {
+			props.dropdownSource.car_make_id = data;
+		});
+}
 
 const setCarModel = (id) => {
 	axios
@@ -96,7 +103,9 @@ function onSubmit(isValid) {
 
 onMounted(() => {
 	if (quoteForm.car_make_id > 0) {
+		setCarMake(quoteForm.car_make_id);
 		setCarModel(quoteForm.car_make_id);
+		//ajaxCallScript(quoteForm.car_model_id);
 	}
 })
 </script>

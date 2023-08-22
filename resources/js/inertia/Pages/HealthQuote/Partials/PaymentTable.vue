@@ -2,12 +2,12 @@
 const notification = useNotifications('toast');
 const page = usePage();
 
-defineProps({
+const props = defineProps({
   payments: Array,
   isBetaUser: Boolean,
   can: Object,
   quoteRequest: Object,
-  paymentMethods: Object,
+  paymentMethods: Array,
   quote: Object,
 });
 
@@ -52,7 +52,7 @@ const collectionTypes = [
 const generateCCLink = async code => {
   try {
     const response = await axios.post('/generate-payment-link', {
-      quoteId: page.props.quoteRequest.id,
+      quoteId: props.quoteRequest.id,
       modelType: page.props.modelType,
       paymentCode: code,
       isInertia: true,
@@ -123,8 +123,8 @@ const addPayment = isValid => {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
     modelType: page.props.modelType,
-    quote_id: page.props.quoteRequest.id,
-    plan_id: page.props.quoteRequest.plan.id,
+    quote_id: props.quoteRequest.id,
+    plan_id: props.quoteRequest.plan.id,
     insurance_provider_id: providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
@@ -184,7 +184,7 @@ const approvePayment = payment => {
   let data = {
     code: payment.code,
     modelType: page.props.modelType,
-    quote_id: page.props.quoteRequest.id,
+    quote_id: props.quoteRequest.id,
   };
   if (confirm('Are you sure you want to approve this payment?')) {
     axios.post('/update-payment-status', data).then(response => {
@@ -204,12 +204,12 @@ const approvePayment = payment => {
 };
 
 const getPlanName = computed(() => {
-  const plan = page.props.quoteRequest.plan;
+  const plan = props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
-  const plan = page.props.quoteRequest.plan;
+  const plan = props.quoteRequest.plan;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.text;
   }
@@ -217,7 +217,7 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = page.props.quoteRequest.plan;
+  const plan = props.quoteRequest.plan;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   }
@@ -230,7 +230,7 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can.create_payments && !can.approve_payments"
+        v-if="true || can.create_payments && !can.approve_payments"
         size="sm"
         color="orange"
         @click="addPaymentModal"

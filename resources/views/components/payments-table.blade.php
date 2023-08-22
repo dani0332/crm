@@ -104,12 +104,12 @@ use App\Enums\PaymentStatusEnum;
             <div class="x_title">
                 <h2>Payments</h2>
                 @if($paymentPlainModel->plan && ! auth()->user()->hasRole(RolesEnum::PA))
-                @cannot(PermissionsEnum::ApprovePayments)
-                @can(PermissionsEnum::PaymentsCreate)
-                    <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
-                    id="add-payment-btn">Add Payment</button>
-                @endcan
-                @endcannot
+                    @cannot(PermissionsEnum::ApprovePayments)
+                        @can(PermissionsEnum::PaymentsCreate)
+                            <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
+                            id="add-payment-btn">Add Payment</button>
+                        @endcan
+                    @endcannot
                 @endif
                 <div class="clearfix"></div>
             </div>
@@ -154,7 +154,7 @@ use App\Enums\PaymentStatusEnum;
                                             data-paymentCode="{{$payment->code}}"
                                             class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
-                                        @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        @if(true || $payment->payment_status_id != PaymentStatusEnum::PAID &&
                                         $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                          @can(PermissionsEnum::PaymentsEdit)
