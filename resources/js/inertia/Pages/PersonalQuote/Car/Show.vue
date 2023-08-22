@@ -49,7 +49,9 @@ defineProps({
 	carQuotePlanAddons: Array,
 	notesForCustomers:Object,
 	websiteURL: String,
-	docUploadURL: String
+	docUploadURL: String,
+	planURL: String,
+	storageUrl: String
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -158,6 +160,7 @@ const documentsTableItems = computed(() => {
 			document_name_text: doc.doc_name,
 			created_at: doc.created_at,
 			doc_uuid: doc.doc_uuid,
+			doc_url: doc.doc_url,
 			created_by: doc.created_by ? doc.created_by.name : "",
 		}
 	})
@@ -332,7 +335,9 @@ const modals = reactive({
   activity:false,
   activityConfirm:false,
   notes:false,
-  plan: false
+  plan: false,
+  docConfirm: false,
+  createPlan:false,
 });
 
 const confirmData = reactive({
@@ -370,23 +375,7 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const memberCategoryText = memberCategoryId =>
-  computed(() => {
-    return page.props.memberCategories.find(
-      category => category.id === memberCategoryId,
-    )?.text;
-  });
-
-const memberDataDocs = membersDetail => {
-  return membersDetail
-    .map(member => ({
-      id: member.id,
-      name: memberCategoryText(member.member_category_id).value,
-    }))
-    .filter(member => member.name !== undefined);
-};
 const contactLoader = ref(false);
-
 const additionalContact = useForm({
   id: null,
   additional_contact_type: null,
@@ -724,6 +713,148 @@ const uploadFile = (doc, files) => {
     });
 };
 
+const confirmDeleteDocData = reactive({
+  docs: null,
+  member: null,
+  activity: null,
+  contact: null,
+});
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteDocData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  documentsTable.isLoading = true;
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteDocData.docs,
+      quoteId: page.props.record.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        documentsTable.isLoading = false;
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
+
+const copyLink = () => {
+	copy(page.props.planURL);
+	if (copied)
+		notification.success({
+			title: 'Link copied to clipboardd',
+			position: 'top',
+		});
+}
+
+const onLeadStatus = () => {
+  leadStatusForm.post(
+    `/quotes/Car/${page.props.record.id}/update-lead-status`,
+    {
+      preserveScroll: true,
+      onError: errors => {
+        console.log(errors);
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Status Updated',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
+const toggleLoader = ref(false);
+ 
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'Car' }), {
+      modelType: 'Car',
+      planIds: planIds,
+      car_quote_uuid: usePage().props.record.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+const exportLoader = ref(false);
+const onExportPlans = () => {
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 3 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+  axios
+    .post(
+      '/api/v1/quotes/car/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.record.uuid,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+
 </script>
 
 <template>
@@ -1016,7 +1147,7 @@ const uploadFile = (doc, files) => {
 					class="w-full"
 					multiple
 				/>
-				<!-- <x-select
+				<x-select
 					v-model="leadDuplicateForm.lob_team_sub_selection"
 					label="Reason"
 					:rules="[rules.isRequired]"
@@ -1025,7 +1156,7 @@ const uploadFile = (doc, files) => {
 					{ value: 'new_enquiry', label: 'New enquiry' },
 					{ value: 'record_only', label: 'Record purposes only' },
 					]"
-				/> -->
+				/>
 
 				<x-button
 					color="orange"
@@ -1311,13 +1442,13 @@ const uploadFile = (doc, files) => {
 						Send OCB Email to Customer
 					</x-button>
 					
-					<x-button @click.prevent="onAddPlan" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
+					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
 					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
 						Add Plan
 					</x-button>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
+					<x-button @click.prevent="copyLink" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
 						Copy Link
 					</x-button>
 				</div>
@@ -1345,6 +1476,9 @@ const uploadFile = (doc, files) => {
 							Hidden
 						</x-tag>
 					</div>
+				</template>
+				<template #item-name="item">
+					<span class="text-primary-600 cursor-pointer" @click.prevent="selectPlan(item)">{{ item.name }}</span>
 				</template>
 				<template #item-benefits="{ benefits }">
 					<!-- <span>{{ benefits.feature }}</span> -->
@@ -1420,7 +1554,12 @@ const uploadFile = (doc, files) => {
 				<template #header>
 				{{ selectedPlan.providerName }} - {{ selectedPlan.name }}
 				</template>
-				<LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
+				<LazyAvailablePlan 
+					:plan="selectedPlan" 
+					:genders="genderOptions" 
+					:record="record"
+					:totalSelectedAddonsPriceWithVat="totalPriceVAT"
+				/>
 			</x-modal>
 		</div> 
 
@@ -1522,7 +1661,7 @@ const uploadFile = (doc, files) => {
 				hide-footer
 			>
 				<template #item-document_name_text="item">
-					<Link :href="`/documents/${item.doc_uuid}`">{{ item.document_name_text }}</Link>
+					<Link :href="storageUrl + item.doc_url">{{ item.document_name_text }}</Link>
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
@@ -1531,13 +1670,32 @@ const uploadFile = (doc, files) => {
 							size="xs"
 							color="error"
 							outlined
-							@click.prevent="deleteDocument(item.id)"
+							@click.prevent="onDocDelete(item.document_name_text)"
 						>
 							Delete
 						</x-button>
 					</div>
 				</template>
 			</DataTable>
+			<x-modal v-model="modals.docConfirm" show-close backdrop>
+				<template #header> Delete Document </template>
+				<p>Are you sure you want to delete this document?</p>
+				<template #actions>
+					<div class="text-right space-x-4">
+					<x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+						Cancel
+					</x-button>
+					<x-button
+						size="sm"
+						color="error"
+						@click.prevent="confirmDeleteDoc"
+						:loading="documentsTable.isLoading"
+					>
+						Delete
+					</x-button>
+					</div>
+				</template>
+			</x-modal>
 			<x-modal v-model="modals.doc" size="xl" show-close backdrop>
       			<template #header> Upload Documents </template>
 

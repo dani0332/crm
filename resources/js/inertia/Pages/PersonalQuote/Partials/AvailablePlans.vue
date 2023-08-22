@@ -1,7 +1,11 @@
 <script setup>
+import { computed } from "vue";
+
 const props = defineProps({
   plan: Object,
   genders: Object,
+  record: Object,
+  totalSelectedAddonsPriceWithVat: Number
 });
 
 const notification = useToast();
@@ -18,6 +22,24 @@ const ipmiBenefits = reactive({
   healthCare: false,
   motherBaby: false,
 });
+
+const ancillaryExcessOptions = computed(() => {
+  let arr = [];
+  for (let i = 0; i <= 20; i++) {
+    arr.push({ value: i, label: `${i}%` });
+  }
+  return arr;
+});
+
+const totalPremiumWithVat = computed(() => {
+  return props.plan.discountPremium + props.plan.vat + props.totalSelectedAddonsPriceWithVat;
+})
+
+const insurerAvailableTrimsOptions = computed(() => {
+  return props.plan.insurerAvailableTrims.map(ins => {
+    return { value: ins.admeId, label: ins.description }
+  })
+})
 
 const hidePlan = ref(props.plan.isHidden),
   isManual = ref(false),
@@ -151,14 +173,8 @@ const onTogglePlans = () => {
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-            <div class="md:col-span-2 text-right select-none border-b pb-2 d-flex justify-between">
-                <x-toggle
-                v-model="hidePlan"
-                color="error"
-                label="Hide Plan"
-                @change="onTogglePlans"
-                :loading="toggleLoader"
-              />
+            <!-- <div class="md:col-span-2 text-right select-none border-b pb-2 d-flex justify-between">
+                
               <x-toggle
                 v-model="hidePlan"
                 color="error"
@@ -166,40 +182,101 @@ const onTogglePlans = () => {
                 @change="onTogglePlans"
                 :loading="toggleLoader"
               />
-            </div>
-            <!-- <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Provider Code</dt>
-              <dd>{{ props.plan.providerCode }}</dd>
             </div> -->
+            <div class="grid sm:grid-cols-2 mb-3">
+              <x-toggle
+                v-model="hidePlan"
+                color="error"
+                label="Hide Plan?"
+                :loading="toggleLoader"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2 mb-3">
+              <x-toggle
+                v-model="isManual"
+                color="error"
+                label="Manual"
+                :loading="toggleLoader"
+              />
+          </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Network Provider</dt>
-              <dd>{{ props.plan.eligibilityName }}</dd>
+              <dt class="font-medium">Repair Type:</dt>
+              <dd>{{ props.plan.repairType }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Base Price</dt>
-              <dd>{{ props.plan.actualPremium }}</dd>
+              <dt class="font-medium mt-2">Insurer Quote No.:</dt>
+              <x-input
+                :value="props.plan.insurerQuoteNo"
+                :disabled="!isManual"
+                size="sm"
+                @update:modelValue="onMemberPremiumUpdate(item, $event)"
+              />
+              <!-- <dd>{{ props.plan.insurerQuoteNo }}</dd> -->
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Basmah</dt>
-              <dd>{{ props.plan.basmah }}</dd>
+              <dt class="font-medium mt-2">Actual Premium:</dt>
+              <x-input
+                :value="props.plan.actualPremium"
+                :disabled="!isManual"
+                size="sm"
+                @update:modelValue="onMemberPremiumUpdate(item, $event)"
+              />
+              <!-- <dd>{{ props.plan.actualPremium }}</dd> -->
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Policy Fee</dt>
-              <dd>{{ props.plan.policyFee }}</dd>
+              <dt class="font-medium mt-2">Discounted Premium:	</dt>
+              <x-input
+                :value="props.plan.discountPremium"
+                size="sm"
+                @update:modelValue="onMemberPremiumUpdate(item, $event)"
+              />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Total (exclusive of VAT)</dt>
-              <dd>
-                {{
-                  props.plan.actualPremium +
-                  (props.plan.basmah || 0) +
-                  (props.plan.policyFee || 0)
-                }}
-              </dd>
+              <dt class="font-medium mt-2">Car value:</dt>
+              <x-input
+                :value="props.record.car_value"  
+                :helper="isManual ? `Min: AED ${props.plan.carValueLowerLimit} - Max: AED ${props.plan.carValueUpperLimit}` : ''"              
+                size="sm"
+                @update:modelValue="onMemberPremiumUpdate(item, $event)"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium mt-2">Excess:</dt>
+              <x-input
+                :value="props.plan.excess || 0"
+                :disabled="!isManual"
+                type="number"
+                size="sm"
+                @update:modelValue="onMemberPremiumUpdate(item, $event)"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium mt-2">Ancillary Excess:</dt>
+              <x-select
+                v-model="props.plan.ancillaryExcess"
+                placeholder="Select Option"
+                :options="ancillaryExcessOptions"
+                class="w-full"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Car Trim</dt>
+              <x-select
+                v-model="props.plan.insurerTrimId"
+                placeholder="Select Option"
+                :options="insurerAvailableTrimsOptions"                
+                class="w-full"
+              />
+            </div>
+            <div class="grid sm:grid-cols-2">
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Total Premium with VAT:</dt>
+              <dd>{{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
           </dl>
         </TabPanel>
