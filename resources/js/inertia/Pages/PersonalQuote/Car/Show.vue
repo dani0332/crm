@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
+import PaymentTable from './../../HealthQuote/Partials/PaymentTable.vue'
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 defineProps({
 	quote: Object,
@@ -13,7 +14,7 @@ defineProps({
 	emirates: Array,
 	advisors: Array,
 	listQuotePlans: Array, //
-	quoteDocuments: Object,
+	quoteDocuments: Array,
 	documentTypes: Object,
 	cdnPath: String,
 	ecomHealthInsuranceQuoteUrl: String,
@@ -35,7 +36,7 @@ defineProps({
 	payments: Array,
 	quoteRequest: Object,
 	can: Object,
-	paymentMethods: Object,
+	paymentMethods: Array,
 	sendPolicy: Boolean,
 	//
 	access: Object,
@@ -70,7 +71,7 @@ const leadStatusForm = useForm({
   trans_code: page.props.record.transapp_code || null,
   lostReason: page.props.record.lost_reason_id || null,
 });
-
+const { copy, copied } = useClipboard();
 const paymentDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -265,7 +266,8 @@ const paymentItems = computed(() => {
     return {
       code: payment.code.toLowerCase(),
       payment_status: payment.payment_status.text,
-      plan_name: page.props.plan.text,
+	  payment_status_id: payment.payment_status_id,
+      plan_name: page.props.paymentEntityModel.plan.text,
       captured_amount: payment.captured_amount,
       created_at: payment.payment_status_logs.length > 0 ? payment.payment_status_logs.at(-1).created_at : null,
       captured_at: payment.captured_at,
@@ -649,7 +651,7 @@ const onNoteSubmit = isValid => {
       },
     });
 };
-const { copy, copied } = useClipboard();
+
 const copyPlanURL = (item) => {
 	var paymentLink = `${page.props.websiteURL}/car-insurance/quote/${page.props.record.uuid}/payment/?providerCode=${item.providerCode}&planId=${item.id}`;
 	copy(paymentLink);
@@ -673,6 +675,54 @@ const selectPlan = (item) => {
 	selectedPlan.value = item;
   	modals.plan = true;
 }
+
+const isUploading = ref(false);
+
+const docForm = useForm({
+  quote_id: usePage().props.record.id || null,
+  quote_uuid: usePage().props.record.code || null,
+  quote_type_id: null,
+  document_type_code: null,
+  file: null,
+});
+
+const uploadFile = (doc, files) => {
+  let url = '/quotes/car/documents/store';
+
+  if (files.length == 0) return;
+  isUploading.value = true;
+  docForm
+    .transform(data => ({
+      ...data,
+      quote_type_id: doc.quote_type_id,
+      document_type_code: doc.code,
+      folder_path: doc.folder_path,
+      file: files[0].file,
+    }))
+    .post(url, {
+      preserveScroll: true,
+      preserveState: true,
+      onError: errors => {
+        docForm.setError(errors.error);
+		console.log("errors");
+        console.log(errors);
+        notification.error({
+          title: 'File upload failed',
+          position: 'top',
+        });
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'File Uploaded',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        isUploading.value = false;
+      },
+    });
+};
+
 </script>
 
 <template>
@@ -1080,7 +1130,15 @@ const selectPlan = (item) => {
 			</div>
     	</div>
     
-		<div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.BetaUser)">
+		<PaymentTable 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:can="{}"
+			:isBetaUser="hasRole(rolesEnum.BetaUser)"
+			:payments="payments"
+			:quoteRequest="paymentEntityModel"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
+		/>
+		<!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.BetaUser)">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Payments
@@ -1100,14 +1158,13 @@ const selectPlan = (item) => {
 				hide-footer
 			>
 				<template #item-action="item">
-					{{item.payment_method}}
 					<div class="flex gap-2">
 						<template v-if="!can(permissionEnum.ApprovePayments)">
-							<x-button v-if="item.payment_method_code == 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED, paymentStatusEnum.AUTHORISED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
+							<x-button v-if="item.payment_method_code == 'CC' && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
 								size="xs" 
 								color="primary" 
 								outlined 
-								@click.prevent="onEditMember(item)"
+								@click.prevent="onCopyPyamentLink(item.code)"
 							>
 								Copy Link
 							</x-button>
@@ -1133,7 +1190,7 @@ const selectPlan = (item) => {
 					</div>
 				</template>
 			</DataTable>
-		</div> 
+		</div>  -->
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
@@ -1485,14 +1542,54 @@ const selectPlan = (item) => {
 				</template>
 			</DataTable>
 			<x-modal v-model="modals.doc" size="xl" show-close backdrop>
-				<template #header> Upload Documents </template>
-				<LazyDocumentUploader
-				:members="memberDataDocs(membersDetail)"
-				:doc-types="documentTypes"
-				:docs="quoteDocuments || []"
-				:cdn="cdnPath"
-				/>
-			</x-modal>
+      			<template #header> Upload Documents </template>
+
+				<x-alert
+						color="error"
+						class="mb-5"
+						v-if="Object.keys(docForm.errors).length"
+					>
+						<ul>
+						<li v-for="error in docForm?.errors" :key="error">{{ error }}</li>
+						</ul>
+				</x-alert>
+
+				<div
+					v-for="documentType in documentTypes"
+					:key="documentType.id"
+					class="grid md:grid-cols-2 gap-2 my-4 border-b"
+				>
+					<div class="flex flex-col gap-1">
+					<h5 class="text-sm font-semibold">
+						{{ documentType.text }}
+					</h5>
+					<p class="text-xs">Max files: {{ documentType.max_files }}</p>
+					<p class="text-xs">Supported: {{ documentType.accepted_files }}</p>
+					<p class="text-xs">Max file size: {{ documentType.max_size }} MB</p>
+					</div>
+					<div class="pb-4">
+					<Dropzone
+						:id="documentType.id"
+						:accept="documentType.accepted_files"
+						:max-files="documentType.max_files"
+						:max-size="documentType.max_size"
+						:loading="docForm.processing"
+						@change="uploadFile(documentType, $event)"
+					/>
+					<a
+						v-for="quoteDocument in page.props.quoteDocuments.filter(
+						d => d.document_type_code == documentType.code,
+						)"
+						:key="quoteDocument.id"
+						:href="storageUrl + quoteDocument.doc_url"
+						target="_blank"
+						class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+					>
+						{{ quoteDocument.original_name || quoteDocument.doc_name }}
+					</a> 
+					</div>
+				</div>
+    		</x-modal>
 		</div> 
 
 		<div class="p-4 rounded shadow mb-6 bg-white">

@@ -518,7 +518,7 @@ class CRUDController extends Controller
             ])->first())) {
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
-            $plan = $paymentEntityModel->plan;
+            $paymentEntityModel->load(['plan.insuranceProvider']);
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -534,6 +534,8 @@ class CRUDController extends Controller
             $carPlanAddonsCodeEnum = CarPlanAddonsCode::asArray();
             $paymentStatusEnum = PaymentStatusEnum::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $record->uuid . '/thankyou';
+            $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
+            $quoteDocuments = array_values($quoteDocuments->toArray());
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum',
@@ -542,7 +544,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'plan', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum'
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes'
             ]));
         }
 
