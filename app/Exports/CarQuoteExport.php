@@ -11,7 +11,7 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 class CarQuoteExport implements FromQuery, WithHeadings, WithMapping, ShouldAutoSize
 {
     use Exportable;
-    
+
     public function __construct($query)
     {
         $this->query = $query;
@@ -89,24 +89,24 @@ class CarQuoteExport implements FromQuery, WithHeadings, WithMapping, ShouldAuto
             $quote->claim_history_id_text,
             date('d-m-Y H:i:s', strtotime($quote->created_at)),
             date('d-m-Y H:i:s', strtotime($quote->advisor_assigned_date)),
-            $quote->cost_per_lead, 
-            $quote->quote_status_id_text, 
-            $quote->payment_status_id_text, 
+            $quote->cost_per_lead,
+            $quote->quote_status_id_text,
+            $quote->payment_status_id_text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->tier_id_text,
             $quote->visit_count,
-            date('d-m-Y H:i:s', strtotime($quote->next_followup_date)), 
+            date('d-m-Y H:i:s', strtotime($quote->next_followup_date)),
             date('d-m-Y H:i:s', strtotime($quote->updated_at)),
             $quote->updated_by,
             $quote->additional_notes,
-            $quote->advisor_id_text, 
-            $quote->policy_number, 
-            date('d-m-Y H:i:s', strtotime($quote->renewal_expiry_date)), 
+            $quote->advisor_id_text,
+            $quote->policy_number,
+            date('d-m-Y H:i:s', strtotime($quote->renewal_expiry_date)),
             $quote->is_gcc_standard ? 'Yes' : 'No',
             $quote->is_modified ? 'Yes' : 'No',
             $quote->premium,
             $quote->lost_reason,
-            $quote->quote_link
+            $quote->quote_link,
         ];
     }
 }
