@@ -1136,10 +1136,7 @@ $(document).ready(function () {
     var amlCreatedEndDate = $('#amlCreatedEndDate').val();
     var searchType = $('#searchType').val();
 
-    if (
-      searchType == '' &&
-      (amlCreatedStartDate == '' || amlCreatedEndDate == '')
-    ) {
+    if ( amlCreatedStartDate == '' || amlCreatedEndDate == '') {
       $('#amlCreatedStartDateMsg').html('Please select start & end dates');
       $('#amlCreatedStartDate').css('border-color', 'red');
       $('#amlCreatedEndDate').css('border-color', 'red');
