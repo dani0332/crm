@@ -1047,6 +1047,15 @@ $(document).ready(function () {
     processing: true,
     ajax: {
       url: config.routes.aml_datatable_route,
+        error: function (json){
+            $(".quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error").html('').css('color', '');
+            if(json.status === 422) {
+                var errors = json.responseJSON;
+                $.each(errors.errors, function (key, value) {
+                    $('.'+key+'-error').html(value).css('color', 'red');
+                });
+            }
+        },
       data: function (d) {
         d.searchType = $('#searchType').val();
         d.searchField = $('input[name=searchField]').val();
@@ -1135,6 +1144,15 @@ $(document).ready(function () {
     var amlCreatedStartDate = $('#amlCreatedStartDate').val();
     var amlCreatedEndDate = $('#amlCreatedEndDate').val();
     var searchType = $('#searchType').val();
+
+    if($('#searchField').val() == ''){
+        $('.searchField-error').html('Please select search value').css('color', 'red');
+        $('#searchField').css('border-color', 'red');
+        return false;
+    }else{
+        $('.searchField-error').html('').css('color', '');
+        $('#searchField').css({ 'border-color' : ''});
+    }
 
     if ( amlCreatedStartDate == '' || amlCreatedEndDate == '') {
       $('#amlCreatedStartDateMsg').html('Please select start & end dates');

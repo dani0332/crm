@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Http\Requests\AMLRequest;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
@@ -54,12 +55,12 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(AMLRequest $AMLRequest)
     {
-        $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $quoteStatuses = QuoteStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $quoteTypes = QuoteType::withActive()->orderBy('sort_order')->get();
+        $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
 
-        if ($request->ajax()) {
+        if ($AMLRequest->ajax()) {
             $dataAml = [];
 
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
