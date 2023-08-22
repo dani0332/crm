@@ -103,7 +103,6 @@ class TravelQuoteService extends BaseService
 
     public function saveTravelQuote(Request $request)
     {
-       // dd($request);
         $members = [];
         $dob = '';
         if($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')){
@@ -115,6 +114,9 @@ class TravelQuoteService extends BaseService
                 $newobj = new \stdClass();//create a new
                 if(isset($member['primary'])){
                     $newobj->primary = true;
+                }
+                if(isset($member['id'])){
+                    $newobj->id = $member['id'];
                 }
                 $newobj->dob = $dob_member[0];
                 $dob = $dob_member[0];
@@ -135,15 +137,8 @@ class TravelQuoteService extends BaseService
          //   'travelCoverForId' => $request->travel_cover_for_id,
             //'premium' => $request->premium,
             'nationalityId' => $request->nationality_id,
-           // 'daysCoverFor' => $request->days_cover_for,
-           // 'destinationId' => $request->destination_id,
-           // 'regionCoverForId' => $request->region_cover_for_id,
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
-           // 'currentlyLocatedInId' => $request->currently_located_in_id,
-           // 'dob' => $dob,
-           // 'policy_start_date' => $request->policy_start_date,
-          //  'details' => $request->details,
         ];
         //
         if($dob!=""){
@@ -177,7 +172,7 @@ class TravelQuoteService extends BaseService
         if($request->uuid != null) {
             $dataArr['quoteUID'] = $request->uuid;
             $response = $this->kenService->request('/get-revised-travel-quote-plans','post',$dataArr);
-            return;
+            return $response;
 
 
         }

@@ -106,11 +106,11 @@ function onSubmit(isValid) {
 function addUpdatedTraveller(){
     if(props.travelers) {
         let listing = Object.keys(props.travelers).map((key, item) => {
+           let listMember = {dob: props.travelers[key].dob, gender: props.travelers[key].gender,id:props.travelers[key].id}
             if(props.quote.primary_member_id == props.travelers[key].id){
-                console.log('inside primary');
-                return {dob: props.travelers[key].dob, gender: props.travelers[key].gender,primary: true}
+                listMember.primary = true;
             }
-            return {dob: props.travelers[key].dob, gender: props.travelers[key].gender}
+            return listMember
         });
         quoteForm.members = listing;
     }
