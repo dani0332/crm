@@ -3,28 +3,48 @@ defineProps({
   embeddedProducts: Object,
 });
 
-const page = usePage();
+const dateFormat = date =>
+  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+
 const loader = reactive({
   table: false,
   export: false,
 });
 
-onMounted(() => {});
+const notification = useToast();
 
 const tableHeader = [
   { text: 'ID', value: 'id' },
   { text: 'Product name', value: 'product_name' },
   { text: 'Company Name', value: 'company_name' },
-  { text: 'Product Category', value: 'product_category' },
   { text: 'Shortcode', value: 'short_code' },
+  { text: 'Product Category', value: 'product_category' },
   { text: 'Display name', value: 'display_name' },
   { text: 'Product Type', value: 'product_type' },
-  { text: 'Active', value: 'is_active' },
+  { text: 'Status', value: 'is_active' },
+  { text: 'Last Modified Date', value: 'updated_at' },
   { text: 'Actions', value: 'actions' },
 ];
 
-const can = permission => useCan(permission);
-const permissionsEnum = page.props.permissionsEnum;
+const onToggle = ({ id, active }) => {
+  loader.table = true;
+  axios
+    .post(route('embedded-products.toggle-status', id), { is_active: active })
+    .then(res => {
+      loader.table = false;
+      if (res.data.success) {
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Something went wrong, please try again later.',
+          position: 'top',
+        });
+      }
+    });
+};
 </script>
 
 <template>
@@ -40,7 +60,7 @@ const permissionsEnum = page.props.permissionsEnum;
     <x-divider class="my-4" />
 
     <DataTable
-      table-class-name="tablefixed"
+      table-class-name=""
       :headers="tableHeader"
       :loading="loader.table"
       :items="embeddedProducts.data || []"
@@ -62,19 +82,16 @@ const permissionsEnum = page.props.permissionsEnum;
         {{ insurance_provider?.text }}
       </template>
 
-      <template #item-is_active="{ is_active }">
-        <div class="text-center">
-          <x-tag size="sm" :color="is_active ? 'success' : 'error'">
-            {{ is_active ? 'Yes' : 'No' }}
-          </x-tag>
-        </div>
+      <template #item-is_active="{ is_active, id }">
+        <ItemToggler :is-active="is_active" :id="id" @toggle="onToggle" />
+      </template>
+
+      <template #item-updated_at="{ updated_at }">
+        <div class="text-sm text-center">{{ dateFormat(updated_at) }}</div>
       </template>
 
       <template #item-actions="{ id }">
         <div class="flex gap-1.5 justify-end">
-          <!-- <Link :href="route('embedded-products.show', id)">
-            <x-button tag="div" size="xs" outlined> View </x-button>
-          </Link> -->
           <Link :href="route('embedded-products.edit', id)">
             <x-button color="primary" size="xs" outlined> Edit </x-button>
           </Link>
