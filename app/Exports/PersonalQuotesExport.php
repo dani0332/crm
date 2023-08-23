@@ -111,7 +111,6 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     'HAS INJURY',
                     'ACCOMMODATION TYPE',
                     'POSSESION TYPE',
-                    'TRANSAPP CODE',
                     'IS ECOMMERCE',
                 ];
 
@@ -187,7 +186,6 @@ class PersonalQuotesExport implements FromCollection, WithHeadings, WithMapping,
                     optional($quote->petQuote)->has_injury ? 'Yes' : 'No',
                     optional($quote->petQuote)->accomodationType?->text,
                     optional($quote->petQuote)->possessionType?->text,
-                    optional($quote->petQuoteRequestDetail)->transapp_code,
                     $quote->is_ecommerce ? 'Yes' : 'No',
                 ];
 
