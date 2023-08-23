@@ -411,7 +411,8 @@ class CarAllocationService extends AllocationService
     public function fetchLeadsForReAssignment($advisorId)
     {
         $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('leads will be picked up in reassignment from : '. $from);
+        info('leads will be picked up in reassignment from : '.$from);
+
         return CarQuote::where('advisor_id', $advisorId)
             ->whereBetween('created_at', [$from, now()])
             ->where('quote_status_id', QuoteStatusEnum::NewLead)->get();
@@ -421,8 +422,9 @@ class CarAllocationService extends AllocationService
     {
         $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'));
         $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'));
-        info('Reassignment job : business start time is : '. $start_time . ' and end time is : '. $end_time);
+        info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
         $shouldProceed = now()->between($start_time, $end_time);
+
         return $shouldProceed;
     }
 }
