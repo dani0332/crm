@@ -67,7 +67,7 @@ class UpdateUserStatus extends Command
                     User::where('id', $userId)->update(['status' => UserStatusEnum::UNAVAILABLE]);
                     event(new UserStatusChanged($userId, UserStatusEnum::UNAVAILABLE));
                     // since its been 2 hours of inactivity, reassigning leads to other advisors
-                    dispatch(new  ReAssignCarLeadsJob(app(CarAllocationJob::class), $userId));
+                    dispatch(new ReAssignCarLeadsJob(app(CarAllocationJob::class), $userId));
                 } elseif ($lastActivity < $offlineTime) {
                     info('updating user as offline as the last activity was : '.$lastActivity);
                     User::where('id', $userId)->update(['status' => UserStatusEnum::OFFLINE]);
