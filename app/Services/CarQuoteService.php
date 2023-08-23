@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -1188,6 +1189,8 @@ class CarQuoteService extends BaseService
             $previousAdvisorId = $lead->advisor_id; // saving previous advisor before updating the new to update the counts
 
             $lead->advisor_id = $userId;
+
+            $lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED;
 
             $quoteBatch = QuoteBatches::latest()->first();
 

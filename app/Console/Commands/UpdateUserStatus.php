@@ -56,7 +56,6 @@ class UpdateUserStatus extends Command
 
         foreach ($sessions as $session) {
             [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
-
             if ($lastActivity < $inactiveThreshold) {
                 info('going to send inactive notification for user : '.$session->user->name);
                 $unAvailableTime = now()->subMinutes(3);

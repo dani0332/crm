@@ -14,6 +14,23 @@ class AddUserStatusLogs extends Migration
      */
     public function up()
     {
+        Schema::create('log_attributes', function (Blueprint $table) {
+            $table->id();
+            $table->string('name')->unique();
+            $table->timestamps();
+        });
+
+        Schema::create('log_attribute_values', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('log_id');
+            $table->unsignedBigInteger('attribute_id');
+            $table->text('value');
+            $table->timestamps();
+
+            $table->foreign('log_id')->references('id')->on('logs')->onDelete('cascade');
+            $table->foreign('attribute_id')->references('id')->on('log_attributes');
+        });
+
         Schema::create('user_status_logs', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');

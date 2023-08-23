@@ -316,12 +316,14 @@ use App\Enums\RolesEnum;
                 $(this).closest('tr').find('.status-text').text('Online');
                 $(this).removeClass('danger');
                 $(this).addClass('success');
+                var userId = $(self).data('userid');
+                var allocationId = $(self).data('id');
                 $.ajax({
                         url: '/lead-allocation/update-availability',
                         type: 'POST',
                         data: {
-                            'userId': $(this).data('userId'),
-                            'id': $(this).data('id'),
+                            'userId': userId,
+                            'id': allocationId,
                             'reason': 1,
                             '_token': $('meta[name="csrf-token"]').attr('content')
                         },
@@ -338,15 +340,18 @@ use App\Enums\RolesEnum;
                     var selectedReasonText = $('#unavailabilityReason').find(':selected').data('text');
                     $('#availableUsers').text(parseInt($('#availableUsers').text()) - 1);
                     $('#UnavailableUsers').text(parseInt($('#UnavailableUsers').text()) +  1);
-                    $(self).closest('tr').find('.status-text').text(selectedReason);
+                    $(self).closest('tr').find('.status-text').text(selectedReasonText);
                     $(this).removeClass('success');
                     $(this).addClass('danger');
+                    var userId = $(self).data('userid');
+                    var allocationId = $(self).data('id');
+                    debugger;
                     $.ajax({
                         url: '/lead-allocation/update-availability',
                         type: 'POST',
                         data: {
-                            'userId': $(this).data('userId'),
-                            'id': $(this).data('id'),
+                            'userId': userId,
+                            'id': allocationId,
                             'reason': selectedReasonId,
                             '_token': $('meta[name="csrf-token"]').attr('content')
                         },

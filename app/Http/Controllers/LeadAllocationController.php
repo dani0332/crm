@@ -9,6 +9,7 @@ use App\Models\LeadAllocation;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
+use App\Services\CarAllocationService;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -130,12 +131,14 @@ class LeadAllocationController extends Controller
         if (isset($request->reason)) {
 
             if ($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE) {
-                dispatch(new ReAssignCarLeadsJob(app(CarAllocationJob::class), $request->userId));
+                dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $request->userId));
             }
-
+            
             $user = User::where('id', $request->userId)->first();
-            $user->status = (UserStatusEnum::class) - $request->reason;
-            $user->save();
+            if($user){
+                $user->status = $request->reason;
+                $user->save();
+            }
         }
 
         if (isset($request->is_available)) {
