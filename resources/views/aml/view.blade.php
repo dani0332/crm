@@ -10,6 +10,7 @@
             </div>
             <div class="x_content">
                 <form method="POST" id="searchAML" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+                    <input type="hidden" name="onLoadCheck" value="1"/>
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" for="Quote Type">Quote Type</label>

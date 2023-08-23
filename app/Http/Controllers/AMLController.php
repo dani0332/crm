@@ -55,12 +55,12 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(AMLRequest $AMLRequest)
+    public function index(AMLRequest $request)
     {
         $quoteTypes = QuoteType::withActive()->orderBy('sort_order')->get();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
 
-        if ($AMLRequest->ajax()) {
+        if ($request->ajax()) {
             $dataAml = [];
 
             if (isset($request->quoteType) && ! empty($request->quoteType)) {

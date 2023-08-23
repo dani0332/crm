@@ -1048,7 +1048,6 @@ $(document).ready(function () {
     ajax: {
       url: config.routes.aml_datatable_route,
         error: function (json){
-            $(".quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error").html('').css('color', '');
             if(json.status === 422) {
                 var errors = json.responseJSON;
                 $.each(errors.errors, function (key, value) {
@@ -1063,6 +1062,8 @@ $(document).ready(function () {
         d.matchFound = $('#matchFound').val();
         d.amlCreatedStartDate = $('#amlCreatedStartDate').val();
         d.amlCreatedEndDate = $('#amlCreatedEndDate').val();
+        d.onLoadCheck = $("input[name='onLoadCheck']").val();
+
       },
     },
     columns: [
@@ -1122,28 +1123,11 @@ $(document).ready(function () {
     ],
   });
 
-  $('#aml-search-submit').hide();
-  $('#aml-search-fields').hide();
-  $('#quoteTypeValue').on('change', function (e) {
-    aml_search_filters_visiblity();
-  });
-
-  function aml_search_filters_visiblity() {
-    var quoteTypeValue = $('#quoteTypeValue').val();
-    console.log('quoteTypeValue1: ', quoteTypeValue);
-    if (quoteTypeValue != '') {
-      $('#aml-search-fields').show(300);
-      $('#aml-search-submit').show(300);
-    } else {
-      $('#aml-search-fields').hide(300);
-      $('#aml-search-submit').hide(300);
-    }
-  }
-
   $('#searchAML').submit(function (e) {
     var amlCreatedStartDate = $('#amlCreatedStartDate').val();
     var amlCreatedEndDate = $('#amlCreatedEndDate').val();
-    var searchType = $('#searchType').val();
+    $("input[name='onLoadCheck']").val(0);
+    $(".quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error").html('').css('color', '');
 
     if($('#searchField').val() == ''){
         $('.searchField-error').html('Please select search value').css('color', 'red');
