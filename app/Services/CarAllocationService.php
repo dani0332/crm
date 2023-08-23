@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
