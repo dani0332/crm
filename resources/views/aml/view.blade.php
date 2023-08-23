@@ -34,7 +34,8 @@
                                 <label class="col-form-label col-md-2 col-sm-2" for="Search By">Search By</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <select class="form-control" id="searchType" required name="searchType">
+                                        <select class="form-control" id="searchType" name="searchType">
+                                            <option value="">Select Search By</option>
                                             <option value="cdbId">Ref-ID</option>
                                             <option value="customerEmail">Customer Email</option>
                                             <option value="id">AML ID</option>
@@ -47,7 +48,7 @@
                                 <label class="col-form-label col-md-2 col-sm-2" for="Search Value">Search Value</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="searchField" required name="searchField" placeholder="Type here...">
+                                        <input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here...">
                                     </div>
                                     <span class="help-block searchField-error"></span>
                                 </div>
@@ -59,7 +60,8 @@
                                 <label class="col-form-label col-md-2 col-sm-2" for="Match found">Match found</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <select class="form-control" id="matchFound" required name="matchFound">
+                                        <select class="form-control" id="matchFound" name="matchFound">
+                                            <option value="">Select Match Found</option>
                                             <option value="False">False</option>
                                             <option value="True">True</option>
                                         </select>
@@ -73,7 +75,7 @@
                                 <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Created Start Date</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <input type="text" required class="form-control" id="amlCreatedStartDate" name="amlCreatedStartDate">
+                                        <input type="text" class="form-control" id="amlCreatedStartDate" name="amlCreatedStartDate">
                                     </div>
                                     <span class="help-block amlCreatedStartDate-error"></span>
                                 </div>
@@ -83,7 +85,7 @@
                                 <label class="col-form-label col-md-2 col-sm-2" for="End Date">Created End Date</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <input type="text" required class="form-control" id="amlCreatedEndDate" name="amlCreatedEndDate">
+                                        <input type="text" class="form-control" id="amlCreatedEndDate" name="amlCreatedEndDate">
                                     </div>
                                     <span class="help-block amlCreatedEndDate-error"></span>
                                 </div>
