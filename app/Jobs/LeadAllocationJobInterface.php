@@ -20,5 +20,5 @@ abstract class LeadAllocationJobInterface implements ShouldQueue
 
     abstract protected function finalizeAdvisors($lead, $tier, $users, $rules);
 
-    abstract protected function assignLeadAndSendEmail($lead, $userId, $tier);
+    abstract protected function assignLead($lead, $userId, $tier);
 }

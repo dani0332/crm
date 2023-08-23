@@ -27,9 +27,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        // $schedule->job(new UserStatusUpdateJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+        $schedule->job(new UserStatusUpdateJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
 
-        // $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
+        //$schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 
         // $schedule
         //     ->command('AddBatchNumber:cron')

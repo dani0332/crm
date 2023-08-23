@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CarAllocationJob extends LeadAllocationJobInterface
 {
@@ -36,8 +38,15 @@ class CarAllocationJob extends LeadAllocationJobInterface
                 $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
                 if ($advisorId) {
-                    // Assign the lead to the advisor and send an email
-                    $this->assignLeadAndSendEmail($lead, $advisorId, $tier);
+                    DB::beginTransaction();
+                    try {
+                        // Assign the lead to the advisor and send an email
+                        $this->assignLead($lead, $advisorId, $tier);
+                        DB::commit();
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        Log::error($e->getMessage());
+                    }
                 } else {
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);
@@ -78,9 +87,9 @@ class CarAllocationJob extends LeadAllocationJobInterface
         return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
     }
 
-    protected function assignLeadAndSendEmail($lead, $userId, $tier): void
+    protected function assignLead($lead, $userId, $tier): void
     {
-        $this->carAllocationService->processLeadAssignmentAndSendEmail($lead, $userId, $tier);
+        $this->carAllocationService->processLeadAssignment($lead, $userId, $tier);
     }
 
     private function updateLeadTier($lead, $tier): void

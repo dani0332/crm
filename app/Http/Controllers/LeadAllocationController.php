@@ -2,7 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserStatusEnum;
+use App\Jobs\CarAllocationJob;
+use App\Jobs\ReAssignCarLeadsJob;
 use App\Models\LeadAllocation;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
 use App\Services\LeadAllocationService;
 use DataTables;
@@ -120,7 +124,19 @@ class LeadAllocationController extends Controller
     public function updateAvailability(Request $request)
     {
         $updateLogString = '----- Update done successfully to change the';
-        $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
+
+        $leadAllocationUser = LeadAllocation::where('user_id', $request->userId)->where('id', $request->id)->first();
+
+        if(isset($request->reason)) {
+
+            if($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE ){
+                dispatch(new ReAssignCarLeadsJob(app(CarAllocationJob::class), $request->userId));
+            }
+
+            $user =  User::where('id', $request->userId)->first();
+            $user->status = (UserStatusEnum::class) -$request->reason;
+            $user->save();
+        }
 
         if (isset($request->is_available)) {
             $updateLogString = $updateLogString.' is_available to : '.$request->is_available;

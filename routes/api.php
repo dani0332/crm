@@ -4,6 +4,7 @@ use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
+use PhpParser\Node\Expr\Assign;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,9 +19,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
-    Route::post('/imcrm/assign/{quoteType}', [ApiController::class, 'assignLeads']);
+    Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 });
-
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
 Route::prefix('v1')->group(function () {

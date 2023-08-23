@@ -20,6 +20,7 @@ use App\Models\Rule;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class CarAllocationService extends AllocationService
@@ -263,7 +264,7 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignmentAndSendEmail($lead, $userId, $tier): void
+    public function processLeadAssignment($lead, $userId, $tier): void
     {
         info('About to assign car lead: '.$lead->uuid.' to user with id: '.$userId);
 
@@ -396,7 +397,7 @@ class CarAllocationService extends AllocationService
 
         $carQuote = CarQuote::where('id', $lead->id)->first();
 
-        if ($carQuote->tier_id == null) {
+        if ($carQuote && $carQuote->tier_id == null) {
             $carQuote->tier_id = $tier->id;
             // Update lead as deferred to snooze assignment while available can be assigned
             $carQuote->deferred = 1;
@@ -410,6 +411,17 @@ class CarAllocationService extends AllocationService
 
     public function fetchLeadsForReAssignment($advisorId)
     {
-        return CarQuote::where('advisor_id', $advisorId)->where('quote_status_id', QuoteStatusEnum::NewLead);
+        $from = now()->subDay()->setTime(18,30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+
+        return CarQuote::where('advisor_id', $advisorId)
+                ->whereBetween('created_at', [$from, now()])
+                ->where('quote_status_id', QuoteStatusEnum::NewLead);
+    }
+
+    public function shouldProceed(): bool
+    {
+        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'));
+        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'));
+        return now()->between($start_time, $end_time);
     }
 }
