@@ -21,7 +21,8 @@ class DatabaseSeeder extends Seeder
             CarLostStorageSeeder::class,
             AddPersonalLobsProducts::class,
             addCarQuoteNewStatuses::class,
-            LookupSeeder::class
+            LookupSeeder::class,
+            CarLostPermissionSeeder::class,
             // PetBikeMigrationSeeder::class
             InsurerQuoteTypeMappingSeeder::class,
         ]);
