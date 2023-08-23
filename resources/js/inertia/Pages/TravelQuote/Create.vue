@@ -151,6 +151,7 @@ onMounted(() => {
                   v-model="quoteForm.has_arrived_uae"
                   :options="alreadylived"
                   class="w-full"
+                  :disabled="quoteForm.uuid != null"
                   :rules="[rules.isRequired]"
               />
           </x-field>
