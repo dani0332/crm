@@ -28,7 +28,7 @@
     }
 
     .unavailable {
-        background-color: #dc3545;
+         background-color: #dc3545;
         /* Red circle for unavailable */
         border-color: #dc3545;
         /* Border color for unavailable */

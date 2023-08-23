@@ -2,8 +2,6 @@
 
 namespace App\Console;
 
-use App\Jobs\TierAssignmentJob;
-use App\Jobs\UserStatusUpdateJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -27,7 +25,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        $schedule->job(new UserStatusUpdateJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+        $schedule
+            ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         //$schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 

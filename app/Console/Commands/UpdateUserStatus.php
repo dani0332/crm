@@ -1,28 +1,53 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
+use App\Jobs\ReAssignCarLeadsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Sessions;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 
-class UserStatusUpdateJob implements ShouldQueue
+class UpdateUserStatus extends Command
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'UpdateUserStatus:cron';
 
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Updates the user status based on last activity';
+
+    /**
+     * Create a new command instance.
+     *
+     * @return void
+     */
+    public function __construct()
+    {
+        parent::__construct();
+    }
+
+    /**
+     * Execute the console command.
+     *
+     * @return int
+     */
     public function handle()
     {
+        info('UpdateHealthStatus Command Started');
         [$userInactiveThreshold, $inactiveThreshold] = $this->getInactiveThreshold();
 
         info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
@@ -42,7 +67,7 @@ class UserStatusUpdateJob implements ShouldQueue
                     User::where('id', $userId)->update(['status' => UserStatusEnum::UNAVAILABLE]);
                     event(new UserStatusChanged($userId, UserStatusEnum::UNAVAILABLE));
                     // since its been 2 hours of inactivity, reassigning leads to other advisors
-                    dispatch(new ReAssignCarLeadsJob(app(CarAllocationJob::class), $userId));
+                    dispatch(new  ReAssignCarLeadsJob(app(CarAllocationJob::class), $userId));
                 } elseif ($lastActivity < $offlineTime) {
                     info('updating user as offline as the last activity was : '.$lastActivity);
                     User::where('id', $userId)->update(['status' => UserStatusEnum::OFFLINE]);
@@ -54,6 +79,9 @@ class UserStatusUpdateJob implements ShouldQueue
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
         }
+        info('UpdateHealthStatus Command Completed');
+
+        return 0;
     }
 
     public function getSessions(): array|Collection
