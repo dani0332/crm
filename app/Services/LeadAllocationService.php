@@ -33,6 +33,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\CarQuoteRequestDetail;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuoteRequestDetail;
 
@@ -501,7 +503,7 @@ class LeadAllocationService extends BaseService
 
                     info("count of matched records =====******======");
                     info(count($matchedRuleRecords));
-
+                    
                     if (count($matchedRuleRecords) > 0) {
                         $ruleUserIds = [];
                         // getting user Ids from rules
@@ -574,6 +576,7 @@ class LeadAllocationService extends BaseService
                             info('completed assignment of lead and lead count update is done for quote : '.$carQuote->code);
                             DB::commit();
                         } catch (\Throwable $th) {
+                            Log::error($th->message);
                             DB::rollBack();
                         }
                     } else {
