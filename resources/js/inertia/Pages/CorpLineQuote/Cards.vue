@@ -96,7 +96,7 @@ const onSearch = id => {
 
 <template>
   <div>
-    <Head title="Medical Amt ~ Card View" />
+    <Head title="Business Quote ~ Card View" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
@@ -104,7 +104,7 @@ const onSearch = id => {
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/medical/amt/create">
+        <Link href="/quotes/business/create">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
