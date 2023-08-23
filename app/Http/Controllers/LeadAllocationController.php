@@ -3,13 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\UserStatusEnum;
-use App\Jobs\CarAllocationJob;
 use App\Jobs\ReAssignCarLeadsJob;
 use App\Models\LeadAllocation;
 use App\Models\User;
 use App\Services\ApplicationStorageService;
-use App\Services\LeadAllocationService;
 use App\Services\CarAllocationService;
+use App\Services\LeadAllocationService;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -133,9 +132,9 @@ class LeadAllocationController extends Controller
             if ($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE) {
                 dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $request->userId));
             }
-            
+
             $user = User::where('id', $request->userId)->first();
-            if($user){
+            if ($user) {
                 $user->status = $request->reason;
                 $user->save();
             }
