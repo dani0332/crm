@@ -144,7 +144,7 @@
                                                         <option value="{{$item->id}}">{{ $itemName }}</option>
                                                         @endif
                                                     @else
-                                                        <option value="{{$item->id}}" {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}
+                                                        <option value="{{$item->id}}" @if($property === 'rule_car_make_id') disabled readonly @endif {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}
                                                             @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif>
                                                             {{ $itemName }}
                                                         </option>

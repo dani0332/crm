@@ -27,8 +27,8 @@ class RuleService extends BaseService
                 'rd.car_model_id as car_model_id',
                 'ls.name as lead_source_id',
                 'cmk.text as rule_car_make_id',
-                'cmdl.text as rule_car_model_id',
                 DB::raw('group_concat(distinct(u.name)) AS rule_users'),
+                DB::raw('group_concat(distinct(cmdl.text)) AS rule_car_model_id'),
                 'r.is_active',
                 'r.updated_at',
                 'r.created_at'
@@ -68,12 +68,11 @@ class RuleService extends BaseService
             }
         } else if (isset($request->name) && isset($request->rule_car_make_id) && isset($request->rule_car_model_id)) {
             $existingRuleCarMakeModel = RuleDetail::where('car_make_id', $request->rule_car_make_id)
-                ->where('car_model_id', $request->rule_car_model_id)
                 ->get();
 
             if (count($existingRuleCarMakeModel) > 0) {
                 $errorResponse = new stdClass();
-                $errorResponse->message = 'Error: Rule against same Car Make & Model already exists';
+                $errorResponse->message = 'Error: Rule against same Car Make already exists';
 
                 return $errorResponse;
             }
@@ -87,12 +86,24 @@ class RuleService extends BaseService
             'is_applicable_for_rules' => false,
             'rule_type' => $request->get('rule_type'),
         ]);
+
         $userIds = $request->rule_users;
-        $rule->ruleDetail()->create([
-            'lead_source_id' => $request->get('lead_source_id'),
-            'car_make_id' => $request->get('rule_car_make_id'),
-            'car_model_id' => $request->get('rule_car_model_id'),
-        ]);
+
+        if (count($request->get('rule_car_model_id'))  > 0) {
+            foreach($request->get('rule_car_model_id') as $carModelId){
+                $rule->ruleDetail()->create([
+                    'lead_source_id' => $request->get('lead_source_id'),
+                    'car_make_id' => $request->get('rule_car_make_id'),
+                    'car_model_id' => $carModelId,
+                ]);
+            }
+        }else{
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Rule car make details not found';
+
+            return $errorResponse;
+        }
+
         $rule->ruleUsers()->attach($userIds);
         return $rule;
     }
@@ -107,17 +118,29 @@ class RuleService extends BaseService
         if (isset($request->rule_end_date)) {
             $rule->rule_end_date = $request->rule_end_date;
         }
-        
+
         $rule->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $rule->save();
 
         $userIds = $request->rule_users;
 
-        $rule->ruleDetail()->update([
-            'lead_source_id' => $request->get('lead_source_id'),
-            'car_make_id' => $request->get('rule_car_make_id'),
-            'car_model_id' => $request->get('rule_car_model_id'),
-        ]);
+        if (count($request->get('rule_car_model_id'))  > 0) {
+            //becuase this will not change
+            $existingCarMake = $rule->ruleDetail->first()->car_make_id;
+            $rule->ruleDetail()->delete();
+            foreach($request->get('rule_car_model_id') as $carModelId){
+                $rule->ruleDetail()->create([
+                    'lead_source_id' => $request->get('lead_source_id'),
+                    'car_make_id' => $existingCarMake,
+                    'car_model_id' => $carModelId,
+                ]);
+            }
+        }else{
+            $errorResponse = new stdClass();
+            $errorResponse->message = 'Error: Rule car make details not found';
+
+            return $errorResponse;
+        }
 
         if (isset($request->rule_users)) {
             RuleUser::where('rule_id', $rule->id)->delete();
@@ -139,7 +162,7 @@ class RuleService extends BaseService
             'rule_type' => 'select|required',
             'lead_source_id' => 'select|title|required_without:rule_car_model_id',
             'rule_car_make_id' => 'select|title|required_without:lead_source_id',
-            'rule_car_model_id' => 'select|title|required_without:lead_source_id',
+            'rule_car_model_id' => 'select|title|multiple|required_without:lead_source_id',
             'rule_users' => 'select|multiple|required|multiSearch',
             'is_active' => 'input|checkbox|title',
             'created_at' => 'input|title|date|range|dateRange',

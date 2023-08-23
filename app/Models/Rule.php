@@ -7,6 +7,7 @@ use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
@@ -27,9 +28,9 @@ class Rule extends Model implements AuditableContract
      *
      * @return HasOne
      */
-    public function ruleDetail():HasOne
+    public function ruleDetail():HasMany
     {
-        return $this->hasOne(
+        return $this->hasMany(
             RuleDetail::class,
             'rule_id',
             'id'

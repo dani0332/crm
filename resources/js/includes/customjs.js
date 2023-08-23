@@ -2924,7 +2924,7 @@ $('#rule_car_make_id').on('change', function (e) {
               carmodelObj.code +
               '" value="' +
               carmodelObj.id +
-              '">' +
+              '" selected>' +
               carmodelObj.text +
               '</option>',
           );
