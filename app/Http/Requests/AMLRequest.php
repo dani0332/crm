@@ -23,14 +23,14 @@ class AMLRequest extends FormRequest
      */
     public function rules()
     {
-        if ($this->ajax() && !request()->get('onLoadCheck')){
+        if ($this->ajax() && ! request()->get('onLoadCheck')) {
             return [
                 'quoteType' => 'required',
                 'searchType' => 'required',
                 'searchField' => 'required',
                 'matchFound' => 'required',
                 'amlCreatedStartDate' => 'date|required',
-                'amlCreatedEndDate' => 'date|required'
+                'amlCreatedEndDate' => 'date|required',
             ];
         }
 
