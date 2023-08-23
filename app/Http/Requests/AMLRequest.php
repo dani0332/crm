@@ -23,7 +23,7 @@ class AMLRequest extends FormRequest
      */
     public function rules()
     {
-        if ($this->ajax() && !request()->get('onLoadCheck')){
+        if ($this->ajax() && ! request()->get('onLoadCheck')) {
             return [
                 'quoteType' => 'required',
                 'searchType' => 'nullable',
