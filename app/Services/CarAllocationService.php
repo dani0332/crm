@@ -133,13 +133,13 @@ class CarAllocationService extends AllocationService
         $eligibleUsers = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) {
                 $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                    ->where('is_available', 1);
+                    ->where('is_available', 1)->where('status', UserStatusEnum::ONLINE);
             })
             ->where(function ($query) {
                 $query->whereRaw('allocation_count < max_capacity')
                     ->orWhere('max_capacity', -1);
             })
-            ->where('leadAllocationUser.status', UserStatusEnum::ONLINE)
+
             ->whereIn('user_id', $tierUserIds)
             ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
 
@@ -411,17 +411,18 @@ class CarAllocationService extends AllocationService
     public function fetchLeadsForReAssignment($advisorId)
     {
         $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-
+        info('leads will be picked up in reassignment from : '. $from);
         return CarQuote::where('advisor_id', $advisorId)
             ->whereBetween('created_at', [$from, now()])
-            ->where('quote_status_id', QuoteStatusEnum::NewLead);
+            ->where('quote_status_id', QuoteStatusEnum::NewLead)->get();
     }
 
     public function shouldProceed(): bool
     {
         $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'));
         $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'));
-
-        return now()->between($start_time, $end_time);
+        info('Reassignment job : business start time is : '. $start_time . ' and end time is : '. $end_time);
+        $shouldProceed = now()->between($start_time, $end_time);
+        return $shouldProceed;
     }
 }

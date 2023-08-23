@@ -162,6 +162,7 @@
     <script src="{{ asset('build/js/custom.js') }}"></script>
     <script>
         function getStatusText(statusId){
+            debugger;
             var statusText = '';
             switch(parseInt(statusId)){
                 case 1:
@@ -200,6 +201,7 @@
                     .find("td:first")
                     .each(function () {
                         if ($(this).text() == data.userId) {
+                            console.log('text and user match : ' + data.userId + ' and status is : '. data.status);
                             $('#online-status-div').hide();
                             $('#offline-status-div').hide();
                             $('#unavailable-status-div').hide();
@@ -220,6 +222,22 @@
                             $(this).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger')
                         }
                     });
+            }else{
+                console.log(data);
+                $('#online-status-div').hide();
+                $('#offline-status-div').hide();
+                $('#unavailable-status-div').hide();
+                if(userId == data.userId){
+                    if(data.status == 1) {
+                        $('#online-status-div').show();
+                    }
+                    if(data.status == 2)  {
+                        $('#offline-status-div').show();
+                    }
+                    if(data.status != 1 && data.status != 2 ) {
+                        $('#unavailable-status-div').show();
+                    }
+                }
             }
         });
 

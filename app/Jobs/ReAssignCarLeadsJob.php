@@ -22,12 +22,14 @@ class ReAssignCarLeadsJob extends LeadAllocationJobInterface
     public function handle()
     {
         if (! $this->shouldProceed()) {
+            info('Reassignment job is not proceeding as per business timings');
             return false;
         }
         // Fetch the leads to process, including deferred leads if needed
         $leads = $this->fetchLeads();
-
+        info('total number of leads found for reassignment are : '. count($leads));
         foreach ($leads as $lead) {
+            info('--------------- ReAssignment processing current lead : '. $lead->uuid. ' ---------------');
             // Find the appropriate tier for the lead
             $tier = $this->findTier($lead);
 
@@ -60,6 +62,8 @@ class ReAssignCarLeadsJob extends LeadAllocationJobInterface
                 // Log that tier was not found for the lead and skip processing
                 info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
+
+            info('--------------- ReAssignment processing ended for current lead : '. $lead->uuid. ' ---------------');
         }
     }
 
