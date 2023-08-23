@@ -1025,6 +1025,17 @@ onMounted(() => {
                 </dt>
                 <dt  class="font-medium">{{ quote.has_arrived_destination == 1?'Yes':'No' }}</dt>
             </div>
+            <div class="grid sm:grid-cols-2">
+                <dt>
+                    <x-tooltip position="bottom">
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                            Days Covers
+                        </label>
+                        <template #tooltip>Days Covers</template>
+                    </x-tooltip>
+                </dt>
+                <dt  class="font-medium">{{ quote.days_cover_for }}</dt>
+            </div>
             <div class="grid sm:grid-cols-2" v-if="quote.has_arrived_destination == 0 || quote.has_arrived_uae == 0">
                 <dt>
                     <x-tooltip position="bottom">
@@ -1035,6 +1046,17 @@ onMounted(() => {
                     </x-tooltip>
                 </dt>
                 <dt  class="font-medium">{{ quote.start_date }}</dt>
+            </div>
+            <div class="grid sm:grid-cols-2" v-if="quote.has_arrived_destination == 0 || quote.has_arrived_uae == 0">
+                <dt>
+                    <x-tooltip position="bottom">
+                        <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
+                            Travel End Date
+                        </label>
+                        <template #tooltip> Travel End Date</template>
+                    </x-tooltip>
+                </dt>
+                <dt  class="font-medium">{{ quote.end_date }}</dt>
             </div>
             <div class="grid sm:grid-cols-2">
                 <dt>
@@ -1051,7 +1073,7 @@ onMounted(() => {
                 <dt>
                     <x-tooltip position="bottom">
                         <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
-                            Region Cover
+                            Region Coverage
                         </label>
                         <template #tooltip>Region Cover</template>
                     </x-tooltip>
