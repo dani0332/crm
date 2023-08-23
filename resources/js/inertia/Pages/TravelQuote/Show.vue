@@ -1051,7 +1051,7 @@ onMounted(() => {
                 <dt>
                     <x-tooltip position="bottom">
                         <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
-                            Travel Coverage
+                            Region Cover
                         </label>
                         <template #tooltip>Region Cover</template>
                     </x-tooltip>

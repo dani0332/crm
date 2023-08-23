@@ -200,6 +200,7 @@ class TravelController extends Controller
         $model = $this->genericModel;
         return inertia('TravelQuote/Create', [
             'model' => json_encode($model->properties),
+            'quotePlans'=>null,
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
@@ -262,9 +263,11 @@ class TravelController extends Controller
         }
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
-
+        // $record->id
+        $quotePlans = $this->travelQuoteService->listTravelQuotePlans('ddd');
         return inertia('TravelQuote/Create', [
             'quote' => $record,
+            'quotePlans'=>$quotePlans,
             'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),

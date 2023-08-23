@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
+use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
 use App\Traits\RolePermissionConditions;
@@ -167,9 +168,11 @@ class TravelQuoteService extends BaseService
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
+
         if($request->uuid != null) {
             $dataArr['quoteUID'] = $request->uuid;
             $response = $this->kenService->request('/get-revised-travel-quote-plans','post',$dataArr);
+
             return $response;
 
 
@@ -786,4 +789,8 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
+   public function listTravelQuotePlans($id){
+        $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id',$id)->first();
+        return $travelQuotePlans;
+   }
 }

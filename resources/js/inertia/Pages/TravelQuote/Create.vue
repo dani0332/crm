@@ -5,6 +5,7 @@ const props = defineProps({
   fields: Object,
     quote:Object,
     travelers: Array,
+    quotePlans: Array,
 });
 
 const genderSelect = computed(() => {
@@ -33,9 +34,9 @@ const quoteForm = useForm({
     first_name: props.quote?.first_name || null,
     last_name: props.quote?.last_name || null,
     email: props.quote?.email || null,
-    direction_code:props.quote?.direction_code || null,
-    has_arrived_uae:props.quote?.has_arrived_uae?.toString() || null,
-    has_arrived_destination: props.quote?.has_arrived_destination?.toString() || null,
+    direction_code:props.quote?.direction_code || (props.quote?.uuid &&  props.quote?.destination_id_text == 'United Arab Emirates')?'travelUaeInbound':(props.quote?.uuid &&  props.destination_id_text != 'United Arab Emirates')?'travelUaeOutbound':null,
+    has_arrived_uae:props.quote?.has_arrived_uae?.toString() || (props.quote?.uuid &&  props.quotePlans)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null,
+    has_arrived_destination: props.quote?.has_arrived_destination?.toString() || (props.quote?.uuid &&  props.quotePlans)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null,
     coverage_code:props.quote?.coverage_code || null,
     uuid:props.quote?.uuid || null,
     mobile_no: props.quote?.mobile_no || null,
@@ -126,7 +127,7 @@ onMounted(() => {
   <div>
     <Head title="Create Travel" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Create Travel</h2>
+      <h2 class="text-xl font-semibold">{{(quoteForm.uuid != null)?'Update':'Create' }} Travel</h2>
       <div>
         <Link href="/quotes/travel">
           <x-button size="sm" color="#ff5e00" tag="div"> Travel List </x-button>
@@ -158,6 +159,7 @@ onMounted(() => {
                   v-model="quoteForm.has_arrived_destination"
                   :options="alreadylived"
                   class="w-full"
+                  :disabled="quoteForm.uuid != null"
                   :rules="[rules.isRequired]"
               />
           </x-field>
