@@ -3,11 +3,7 @@ const page = usePage();
 const user = computed(() => page.props.auth.user);
 const navLinks = computed(() => page.props.sidebar);
 const openSidebar = ref(false);
-window.Echo.channel('activity.user')
-.listen('user.status.changed', (e) => {
-    console.log("Received Data: ");
-    console.log(e);
-});
+
 router.on('navigate', () => {
   openSidebar.value = false;
 });
@@ -69,7 +65,8 @@ const onLogout = () => {
             <x-collapse
               show-icon
               :expanded="
-                link.children.some(child => $page.url.startsWith(child.url)) || link.active ||
+                link.children.some(child => $page.url.startsWith(child.url)) ||
+                link.active ||
                 link.children.some(child =>
                   child.children.some(grandchild =>
                     $page.url.startsWith(grandchild.url),
@@ -151,7 +148,8 @@ const onLogout = () => {
                       :href="child.url"
                       class="pl-4 py-2 flex gap-2 items-center hover:bg-black/10"
                       :class="{
-                        '!bg-primary-800': $page.url.startsWith(child.url) || child.active,
+                        '!bg-primary-800':
+                          $page.url.startsWith(child.url) || child.active,
                       }"
                     >
                       <x-icon
@@ -222,21 +220,13 @@ const onLogout = () => {
               </svg>
             </button>
           </div>
-          <div class="flex">
-                <span class=" mr-2 mt-2">
-                    <svg width="30px" height="30px" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"> <g id="SVGRepo_bgCarrier" stroke-width="0"/> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"/> <g id="SVGRepo_iconCarrier"> <path d="M8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16ZM11.7069 6.70739C12.0975 6.31703 12.0978 5.68386 11.7074 5.29318C11.3171 4.9025 10.6839 4.90224 10.2932 5.29261L6.99765 8.58551L5.70767 7.29346C5.31746 6.90262 4.6843 6.90212 4.29346 7.29233C3.90262 7.68254 3.90212 8.3157 4.29233 8.70654L6.28912 10.7065C6.47655 10.8943 6.7309 10.9998 6.99619 11C7.26147 11.0002 7.51595 10.8949 7.70361 10.7074L11.7069 6.70739Z" fill="#48ce46"/> </g> </svg>
-                </span>
-                <span class=" mr-2 mt-2">
-                    <svg width="30px" height="30px" viewBox="-0.64 -0.64 17.28 17.28" fill="none" xmlns="http://www.w3.org/2000/svg" transform="matrix(1, 0, 0, 1, 0, 0)" stroke="#000000" stroke-width="0.00016"> <g id="SVGRepo_bgCarrier" stroke-width="0"/> <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" stroke="#767474" stroke-width="1.056"> <path d="M8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16ZM11.7069 6.70739C12.0975 6.31703 12.0978 5.68386 11.7074 5.29318C11.3171 4.9025 10.6839 4.90224 10.2932 5.29261L6.99765 8.58551L5.70767 7.29346C5.31746 6.90262 4.6843 6.90212 4.29346 7.29233C3.90262 7.68254 3.90212 8.3157 4.29233 8.70654L6.28912 10.7065C6.47655 10.8943 6.7309 10.9998 6.99619 11C7.26147 11.0002 7.51595 10.8949 7.70361 10.7074L11.7069 6.70739Z" fill="#fafafa"/> </g> <g id="SVGRepo_iconCarrier"> <path d="M8 16C3.58172 16 0 12.4183 0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16ZM11.7069 6.70739C12.0975 6.31703 12.0978 5.68386 11.7074 5.29318C11.3171 4.9025 10.6839 4.90224 10.2932 5.29261L6.99765 8.58551L5.70767 7.29346C5.31746 6.90262 4.6843 6.90212 4.29346 7.29233C3.90262 7.68254 3.90212 8.3157 4.29233 8.70654L6.28912 10.7065C6.47655 10.8943 6.7309 10.9998 6.99619 11C7.26147 11.0002 7.51595 10.8949 7.70361 10.7074L11.7069 6.70739Z" fill="#fafafa"/> </g> </svg>
-                </span>
+          <div class="flex gap-3 items-center">
+            <UserStatus />
+
             <x-popover align="right" block>
-              <x-button>
-                {{ user.name }}</x-button>
+              <x-button> {{ user.name }}</x-button>
               <template #content>
                 <x-popover-container class="p-2">
-                    <div>>
-
-                    </div>
                   <button class="flex gap-2 items-center" @click="onLogout">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
