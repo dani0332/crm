@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import PaymentTable from './Partials/PaymentTable.vue'
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
 defineProps({
 	quote: Object,
 	leadStatuses: Array, //
@@ -52,7 +53,8 @@ defineProps({
 	websiteURL: String,
 	docUploadURL: String,
 	planURL: String,
-	storageUrl: String
+	storageUrl: String,
+    insuranceProviders: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1529,7 +1531,7 @@ const onExportPlans = () => {
 					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
-					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2">
 						Add Plan
 					</x-button>
 					<x-button @click.prevent="copyLink" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
@@ -1647,6 +1649,16 @@ const onExportPlans = () => {
 					:isPlanUpdateActive="isPlanUpdateActive"
 					:hidden="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
 					:totalSelectedAddonsPriceWithVat="totalPriceVAT"
+				/>
+			</x-modal>
+			<x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
+				<template #header> Create Car Quote </template>
+				<LazyCreatePlan
+				:record="record"
+				:insuranceProviders="insuranceProviders"
+				:listQuotePlans="listQuotePlans"
+				@success="onCreatePlan"
+				@error="onPlanError"
 				/>
 			</x-modal>
 		</div> 

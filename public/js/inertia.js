@@ -12035,6 +12035,144 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
 
 /***/ }),
 
+/***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=script&setup=true&lang=js":
+/*!**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=script&setup=true&lang=js ***!
+  \**************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* unplugin-vue-components disabled */
+
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ({
+  __name: 'CreatePlan',
+  props: {
+    record: Object,
+    insuranceProviders: Array,
+    listQuotePlans: Object
+  },
+  setup: function setup(__props, _ref) {
+    var __expose = _ref.expose;
+    __expose();
+    var props = __props;
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.usePage)();
+    var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
+      isRequired = _useRules.isRequired,
+      isNumber = _useRules.isNumber;
+    var quotePlansTable = (0,vue__WEBPACK_IMPORTED_MODULE_2__.reactive)({
+      columns: [{
+        text: 'Provider Name',
+        value: 'providerName'
+      }, {
+        text: 'Plan Name',
+        value: 'name'
+      }, {
+        text: 'Repair Type',
+        value: 'repairType'
+      }, {
+        text: 'Premium with VAT.',
+        value: 'premiumWithVat'
+      }]
+    });
+    var quotePlansTableData = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
+      if (!Array.isArray(page.props.listQuotePlans)) {
+        return [];
+      }
+      return typeof page.props.listQuotePlans !== 'string' ? page.props.listQuotePlans : [];
+    });
+    var totalPriceVAT = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
+      var vat = 0;
+      quotePlansTableData === null || quotePlansTableData === void 0 ? void 0 : quotePlansTableData.value.forEach(function (item) {
+        item.addons.forEach(function (addon) {
+          addon.carAddonOption.forEach(function (option) {
+            if (option.isSelected && option.price != 0) {
+              vat += option.price + option.vat;
+            }
+          });
+        });
+      });
+      return vat;
+    });
+    var addPlanForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
+      car_quote_uuid: page.props.record.uuid,
+      is_disabled: 0,
+      is_create: 1,
+      repair_type_comp: '',
+      insurance_provider_id: 1,
+      car_plan_id: null,
+      actual_premium: null,
+      car_value: null,
+      excess: null
+    });
+    var insuranceProviderOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.computed)(function () {
+      return page.props.insuranceProviders.map(function (provider) {
+        return {
+          value: provider.id,
+          label: provider.text
+        };
+      });
+    });
+    var insuranceProviderPlanOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)([]);
+    var setCarPlans = function setCarPlans() {
+      var id = addPlanForm.insurance_provider_id;
+      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/insurance-provider-plans?insuranceProviderId=".concat(id, "&quoteUuId=").concat(page.props.record.uuid)).then(function (_ref2) {
+        var data = _ref2.data;
+        insuranceProviderPlanOptions.value = data.map(function (plan) {
+          return {
+            value: plan.id,
+            label: plan.text
+          };
+        });
+      })["catch"](function (error) {
+        console.error('Error fetching insurance provider plans:', error);
+      });
+    };
+    var creatQuotePlan = function creatQuotePlan(isValid) {
+      if (!isValid) return;
+      addPlanForm.post("".concat(page.props.record.uuid, "/car-plan-manual-process"), {
+        preserveScroll: true,
+        onSuccess: function onSuccess() {
+          notification.success({
+            title: 'Car Quote Plan created successfully',
+            position: 'top'
+          });
+        }
+      });
+    };
+    var __returned__ = {
+      props: props,
+      page: page,
+      isRequired: isRequired,
+      isNumber: isNumber,
+      quotePlansTable: quotePlansTable,
+      quotePlansTableData: quotePlansTableData,
+      totalPriceVAT: totalPriceVAT,
+      addPlanForm: addPlanForm,
+      insuranceProviderOptions: insuranceProviderOptions,
+      insuranceProviderPlanOptions: insuranceProviderPlanOptions,
+      setCarPlans: setCarPlans,
+      creatQuotePlan: creatQuotePlan
+    };
+    Object.defineProperty(__returned__, '__isScriptSetup', {
+      enumerable: false,
+      value: true
+    });
+    return __returned__;
+  }
+});
+
+/***/ }),
+
 /***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=script&setup=true&lang=js":
 /*!********************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=script&setup=true&lang=js ***!
@@ -12526,13 +12664,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* harmony import */ var _Partials_PaymentTable_vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Partials/PaymentTable.vue */ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/PaymentTable.vue");
 /* harmony import */ var _Partials_AvailablePlans_vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./../Partials/AvailablePlans.vue */ "./resources/js/inertia/Pages/PersonalQuote/Partials/AvailablePlans.vue");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
-/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
-/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
-/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
-/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/shared/index.mjs");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var _Partials_CreatePlan_vue__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Partials/CreatePlan.vue */ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./resources/js/inertia/Composables/can.js */ "./resources/js/inertia/Composables/can.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
+/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/core/index.mjs");
+/* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/shared/index.mjs");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
 /* unplugin-vue-components disabled */function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
@@ -12542,6 +12681,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
 function _regeneratorRuntime() { "use strict"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return exports; }; var exports = {}, Op = Object.prototype, hasOwn = Op.hasOwnProperty, defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; }, $Symbol = "function" == typeof Symbol ? Symbol : {}, iteratorSymbol = $Symbol.iterator || "@@iterator", asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator", toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag"; function define(obj, key, value) { return Object.defineProperty(obj, key, { value: value, enumerable: !0, configurable: !0, writable: !0 }), obj[key]; } try { define({}, ""); } catch (err) { define = function define(obj, key, value) { return obj[key] = value; }; } function wrap(innerFn, outerFn, self, tryLocsList) { var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator, generator = Object.create(protoGenerator.prototype), context = new Context(tryLocsList || []); return defineProperty(generator, "_invoke", { value: makeInvokeMethod(innerFn, self, context) }), generator; } function tryCatch(fn, obj, arg) { try { return { type: "normal", arg: fn.call(obj, arg) }; } catch (err) { return { type: "throw", arg: err }; } } exports.wrap = wrap; var ContinueSentinel = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var IteratorPrototype = {}; define(IteratorPrototype, iteratorSymbol, function () { return this; }); var getProto = Object.getPrototypeOf, NativeIteratorPrototype = getProto && getProto(getProto(values([]))); NativeIteratorPrototype && NativeIteratorPrototype !== Op && hasOwn.call(NativeIteratorPrototype, iteratorSymbol) && (IteratorPrototype = NativeIteratorPrototype); var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(IteratorPrototype); function defineIteratorMethods(prototype) { ["next", "throw", "return"].forEach(function (method) { define(prototype, method, function (arg) { return this._invoke(method, arg); }); }); } function AsyncIterator(generator, PromiseImpl) { function invoke(method, arg, resolve, reject) { var record = tryCatch(generator[method], generator, arg); if ("throw" !== record.type) { var result = record.arg, value = result.value; return value && "object" == _typeof(value) && hasOwn.call(value, "__await") ? PromiseImpl.resolve(value.__await).then(function (value) { invoke("next", value, resolve, reject); }, function (err) { invoke("throw", err, resolve, reject); }) : PromiseImpl.resolve(value).then(function (unwrapped) { result.value = unwrapped, resolve(result); }, function (error) { return invoke("throw", error, resolve, reject); }); } reject(record.arg); } var previousPromise; defineProperty(this, "_invoke", { value: function value(method, arg) { function callInvokeWithMethodAndArg() { return new PromiseImpl(function (resolve, reject) { invoke(method, arg, resolve, reject); }); } return previousPromise = previousPromise ? previousPromise.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(innerFn, self, context) { var state = "suspendedStart"; return function (method, arg) { if ("executing" === state) throw new Error("Generator is already running"); if ("completed" === state) { if ("throw" === method) throw arg; return doneResult(); } for (context.method = method, context.arg = arg;;) { var delegate = context.delegate; if (delegate) { var delegateResult = maybeInvokeDelegate(delegate, context); if (delegateResult) { if (delegateResult === ContinueSentinel) continue; return delegateResult; } } if ("next" === context.method) context.sent = context._sent = context.arg;else if ("throw" === context.method) { if ("suspendedStart" === state) throw state = "completed", context.arg; context.dispatchException(context.arg); } else "return" === context.method && context.abrupt("return", context.arg); state = "executing"; var record = tryCatch(innerFn, self, context); if ("normal" === record.type) { if (state = context.done ? "completed" : "suspendedYield", record.arg === ContinueSentinel) continue; return { value: record.arg, done: context.done }; } "throw" === record.type && (state = "completed", context.method = "throw", context.arg = record.arg); } }; } function maybeInvokeDelegate(delegate, context) { var methodName = context.method, method = delegate.iterator[methodName]; if (undefined === method) return context.delegate = null, "throw" === methodName && delegate.iterator["return"] && (context.method = "return", context.arg = undefined, maybeInvokeDelegate(delegate, context), "throw" === context.method) || "return" !== methodName && (context.method = "throw", context.arg = new TypeError("The iterator does not provide a '" + methodName + "' method")), ContinueSentinel; var record = tryCatch(method, delegate.iterator, context.arg); if ("throw" === record.type) return context.method = "throw", context.arg = record.arg, context.delegate = null, ContinueSentinel; var info = record.arg; return info ? info.done ? (context[delegate.resultName] = info.value, context.next = delegate.nextLoc, "return" !== context.method && (context.method = "next", context.arg = undefined), context.delegate = null, ContinueSentinel) : info : (context.method = "throw", context.arg = new TypeError("iterator result is not an object"), context.delegate = null, ContinueSentinel); } function pushTryEntry(locs) { var entry = { tryLoc: locs[0] }; 1 in locs && (entry.catchLoc = locs[1]), 2 in locs && (entry.finallyLoc = locs[2], entry.afterLoc = locs[3]), this.tryEntries.push(entry); } function resetTryEntry(entry) { var record = entry.completion || {}; record.type = "normal", delete record.arg, entry.completion = record; } function Context(tryLocsList) { this.tryEntries = [{ tryLoc: "root" }], tryLocsList.forEach(pushTryEntry, this), this.reset(!0); } function values(iterable) { if (iterable) { var iteratorMethod = iterable[iteratorSymbol]; if (iteratorMethod) return iteratorMethod.call(iterable); if ("function" == typeof iterable.next) return iterable; if (!isNaN(iterable.length)) { var i = -1, next = function next() { for (; ++i < iterable.length;) { if (hasOwn.call(iterable, i)) return next.value = iterable[i], next.done = !1, next; } return next.value = undefined, next.done = !0, next; }; return next.next = next; } } return { next: doneResult }; } function doneResult() { return { value: undefined, done: !0 }; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, defineProperty(Gp, "constructor", { value: GeneratorFunctionPrototype, configurable: !0 }), defineProperty(GeneratorFunctionPrototype, "constructor", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, toStringTagSymbol, "GeneratorFunction"), exports.isGeneratorFunction = function (genFun) { var ctor = "function" == typeof genFun && genFun.constructor; return !!ctor && (ctor === GeneratorFunction || "GeneratorFunction" === (ctor.displayName || ctor.name)); }, exports.mark = function (genFun) { return Object.setPrototypeOf ? Object.setPrototypeOf(genFun, GeneratorFunctionPrototype) : (genFun.__proto__ = GeneratorFunctionPrototype, define(genFun, toStringTagSymbol, "GeneratorFunction")), genFun.prototype = Object.create(Gp), genFun; }, exports.awrap = function (arg) { return { __await: arg }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, asyncIteratorSymbol, function () { return this; }), exports.AsyncIterator = AsyncIterator, exports.async = function (innerFn, outerFn, self, tryLocsList, PromiseImpl) { void 0 === PromiseImpl && (PromiseImpl = Promise); var iter = new AsyncIterator(wrap(innerFn, outerFn, self, tryLocsList), PromiseImpl); return exports.isGeneratorFunction(outerFn) ? iter : iter.next().then(function (result) { return result.done ? result.value : iter.next(); }); }, defineIteratorMethods(Gp), define(Gp, toStringTagSymbol, "Generator"), define(Gp, iteratorSymbol, function () { return this; }), define(Gp, "toString", function () { return "[object Generator]"; }), exports.keys = function (val) { var object = Object(val), keys = []; for (var key in object) { keys.push(key); } return keys.reverse(), function next() { for (; keys.length;) { var key = keys.pop(); if (key in object) return next.value = key, next.done = !1, next; } return next.done = !0, next; }; }, exports.values = values, Context.prototype = { constructor: Context, reset: function reset(skipTempReset) { if (this.prev = 0, this.next = 0, this.sent = this._sent = undefined, this.done = !1, this.delegate = null, this.method = "next", this.arg = undefined, this.tryEntries.forEach(resetTryEntry), !skipTempReset) for (var name in this) { "t" === name.charAt(0) && hasOwn.call(this, name) && !isNaN(+name.slice(1)) && (this[name] = undefined); } }, stop: function stop() { this.done = !0; var rootRecord = this.tryEntries[0].completion; if ("throw" === rootRecord.type) throw rootRecord.arg; return this.rval; }, dispatchException: function dispatchException(exception) { if (this.done) throw exception; var context = this; function handle(loc, caught) { return record.type = "throw", record.arg = exception, context.next = loc, caught && (context.method = "next", context.arg = undefined), !!caught; } for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i], record = entry.completion; if ("root" === entry.tryLoc) return handle("end"); if (entry.tryLoc <= this.prev) { var hasCatch = hasOwn.call(entry, "catchLoc"), hasFinally = hasOwn.call(entry, "finallyLoc"); if (hasCatch && hasFinally) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } else if (hasCatch) { if (this.prev < entry.catchLoc) return handle(entry.catchLoc, !0); } else { if (!hasFinally) throw new Error("try statement without catch or finally"); if (this.prev < entry.finallyLoc) return handle(entry.finallyLoc); } } } }, abrupt: function abrupt(type, arg) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc <= this.prev && hasOwn.call(entry, "finallyLoc") && this.prev < entry.finallyLoc) { var finallyEntry = entry; break; } } finallyEntry && ("break" === type || "continue" === type) && finallyEntry.tryLoc <= arg && arg <= finallyEntry.finallyLoc && (finallyEntry = null); var record = finallyEntry ? finallyEntry.completion : {}; return record.type = type, record.arg = arg, finallyEntry ? (this.method = "next", this.next = finallyEntry.finallyLoc, ContinueSentinel) : this.complete(record); }, complete: function complete(record, afterLoc) { if ("throw" === record.type) throw record.arg; return "break" === record.type || "continue" === record.type ? this.next = record.arg : "return" === record.type ? (this.rval = this.arg = record.arg, this.method = "return", this.next = "end") : "normal" === record.type && afterLoc && (this.next = afterLoc), ContinueSentinel; }, finish: function finish(finallyLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.finallyLoc === finallyLoc) return this.complete(entry.completion, entry.afterLoc), resetTryEntry(entry), ContinueSentinel; } }, "catch": function _catch(tryLoc) { for (var i = this.tryEntries.length - 1; i >= 0; --i) { var entry = this.tryEntries[i]; if (entry.tryLoc === tryLoc) { var record = entry.completion; if ("throw" === record.type) { var thrown = record.arg; resetTryEntry(entry); } return thrown; } } throw new Error("illegal catch attempt"); }, delegateYield: function delegateYield(iterable, resultName, nextLoc) { return this.delegate = { iterator: values(iterable), resultName: resultName, nextLoc: nextLoc }, "next" === this.method && (this.arg = undefined), ContinueSentinel; } }, exports; }
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { Promise.resolve(value).then(_next, _throw); } }
 function _asyncToGenerator(fn) { return function () { var self = this, args = arguments; return new Promise(function (resolve, reject) { var gen = fn.apply(self, args); function _next(value) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "next", value); } function _throw(err) { asyncGeneratorStep(gen, resolve, reject, _next, _throw, "throw", err); } _next(undefined); }); }; }
+
 
 
 
@@ -12607,30 +12747,31 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     websiteURL: String,
     docUploadURL: String,
     planURL: String,
-    storageUrl: String
+    storageUrl: String,
+    insuranceProviders: Array
   },
   setup: function setup(__props, _ref) {
     var __expose = _ref.expose;
     __expose();
-    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.usePage)();
-    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_6__.useNotifications)('toast');
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.usePage)();
+    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_7__.useNotifications)('toast');
     var permissionEnum = page.props.permissionsEnum;
     var rolesEnum = page.props.rolesEnum;
     var hasRole = function hasRole(role) {
-      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_4__.useHasRole)(role);
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_5__.useHasRole)(role);
     };
     var hasAnyRole = function hasAnyRole(roles) {
-      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_4__.useHasAnyRole)(roles);
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_5__.useHasAnyRole)(roles);
     };
     var can = function can(permission) {
-      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_4__.useCan)(permission);
+      return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_5__.useCan)(permission);
     };
-    var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_5__.useRules)(),
+    var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_6__.useRules)(),
       isRequired = _useRules.isRequired,
       isEmail = _useRules.isEmail,
       isNumber = _useRules.isNumber,
       isMobile = _useRules.isMobile;
-    var leadStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var leadStatusForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       modelType: 'Car',
       leadId: page.props.record.id,
       quote_uuid: page.props.record.uuid,
@@ -12640,7 +12781,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       trans_code: page.props.record.transapp_code || null,
       lostReason: page.props.record.lost_reason_id || null
     });
-    var _useClipboard = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_7__.useClipboard)(),
+    var _useClipboard = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_8__.useClipboard)(),
       copy = _useClipboard.copy,
       copied = _useClipboard.copied;
     var paymentDetailsTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
@@ -12944,7 +13085,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var assumptionState = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
       isEditing: false
     });
-    var assumptionsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var assumptionsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       cylinder: page.props.record.cylinder || null,
       seat_capacity: page.props.record.seat_capacity || null,
       vehicleType: page.props.record.vehicle_type_id || null,
@@ -12995,7 +13136,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var policyDetailsState = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
       isEditing: false
     });
-    var policyDetailsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var policyDetailsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       quote_policy_number: page.props.record.policy_number || null,
       quote_policy_issuance_date: page.props.record.policy_issuance_date || null,
       quote_policy_start_date: page.props.record.policy_start_date || null,
@@ -13033,7 +13174,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var confirmData = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
       contactPrimary: null
     });
-    var leadDuplicateForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var leadDuplicateForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       modelType: 'car',
       parentType: 'car',
       entityId: page.props.record.id,
@@ -13062,7 +13203,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       });
     };
     var contactLoader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
-    var additionalContact = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var additionalContact = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       id: null,
       additional_contact_type: null,
       additional_contact_val: null,
@@ -13110,7 +13251,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     });
     var additionalContactPrimaryConfirmed = function additionalContactPrimaryConfirmed() {
       var isEmail = confirmData.contactPrimary.key === 'email';
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.post("/customer-additional-contact/".concat(isEmail ? confirmData.contactPrimary.id : 0, "/make-primary"), {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.post("/customer-additional-contact/".concat(isEmail ? confirmData.contactPrimary.id : 0, "/make-primary"), {
         isInertia: true,
         quote_id: page.props.record.id,
         key: confirmData.contactPrimary.key,
@@ -13134,7 +13275,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       });
     };
     var additionalContactDeleteConfirmed = function additionalContactDeleteConfirmed() {
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.post("/customer-additional-contact/".concat(confirmDeleteData.contact, "/delete"), {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.post("/customer-additional-contact/".concat(confirmDeleteData.contact, "/delete"), {
         isInertia: true
       }, {
         preserveScroll: true,
@@ -13162,7 +13303,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       });
     });
     var activityActionEdit = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
-    var activityForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var activityForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       entityUId: page.props.record.uuid,
       entityId: page.props.record.id,
       modelType: 'Car',
@@ -13241,7 +13382,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       confirmDeleteData.activity = id;
     };
     var activityDeleteConfirmed = function activityDeleteConfirmed() {
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.post("/activities/".concat(confirmDeleteData.activity, "/delete"), {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.post("/activities/".concat(confirmDeleteData.activity, "/delete"), {
         isInertia: true,
         quote_uuid: page.props.record.uuid
       }, {
@@ -13257,7 +13398,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         }
       });
     };
-    var notesForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
+    var notesForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       quote_id: page.props.record.id,
       quote_type_id: page.props.quoteTypeId,
       quote_uuid: page.props.record.uuid,
@@ -13316,9 +13457,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       modals.plan = true;
     };
     var isUploading = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
-    var docForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.useForm)({
-      quote_id: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.usePage)().props.record.id || null,
-      quote_uuid: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.usePage)().props.record.code || null,
+    var docForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
+      quote_id: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.usePage)().props.record.id || null,
+      quote_uuid: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.usePage)().props.record.code || null,
       quote_type_id: null,
       document_type_code: null,
       file: null
@@ -13369,7 +13510,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     };
     var confirmDeleteDoc = function confirmDeleteDoc() {
       documentsTable.isLoading = true;
-      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.post("/documents/delete", {
+      _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.post("/documents/delete", {
         docName: confirmDeleteDocData.docs,
         quoteId: page.props.record.id
       }, {
@@ -13408,22 +13549,22 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var toggleLoader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
     var onTogglePlans = function onTogglePlans(toggle) {
       toggleLoader.value = true;
-      var planIds = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_8__.useArrayUnique)(selectedPlans.value.map(function (p) {
+      var planIds = (0,_vueuse_core__WEBPACK_IMPORTED_MODULE_9__.useArrayUnique)(selectedPlans.value.map(function (p) {
         return p.id;
       })).value;
-      axios__WEBPACK_IMPORTED_MODULE_9__["default"].post(route('manualPlanToggle', {
+      axios__WEBPACK_IMPORTED_MODULE_10__["default"].post(route('manualPlanToggle', {
         quoteType: 'Car'
       }), {
         modelType: 'Car',
         planIds: planIds,
-        car_quote_uuid: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.usePage)().props.record.uuid,
+        car_quote_uuid: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.usePage)().props.record.uuid,
         toggle: toggle
       }).then(function (response) {
         notification.success({
           title: 'Plans has been updated',
           position: 'top'
         });
-        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.router.reload({
+        _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.router.reload({
           preserveScroll: true
         });
       })["catch"](function (error) {
@@ -13449,7 +13590,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       var planIds = selectedPlans.value.map(function (p) {
         return p.id;
       });
-      axios__WEBPACK_IMPORTED_MODULE_9__["default"].post('/api/v1/quotes/car/export-plans-pdf', {
+      axios__WEBPACK_IMPORTED_MODULE_10__["default"].post('/api/v1/quotes/car/export-plans-pdf', {
         plan_ids: planIds,
         quote_uuid: page.props.record.uuid
       }, {
@@ -13558,7 +13699,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       onExportPlans: onExportPlans,
       computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed,
       PaymentTable: _Partials_PaymentTable_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
-      LazyAvailablePlan: _Partials_AvailablePlans_vue__WEBPACK_IMPORTED_MODULE_2__["default"]
+      LazyAvailablePlan: _Partials_AvailablePlans_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
+      LazyCreatePlan: _Partials_CreatePlan_vue__WEBPACK_IMPORTED_MODULE_3__["default"]
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -38265,6 +38407,149 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 /***/ }),
 
+/***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=template&id=44147f34":
+/*!*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
+  !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=template&id=44147f34 ***!
+  \*******************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* binding */ render)
+/* harmony export */ });
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* unplugin-vue-components disabled */
+var _hoisted_1 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_2 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_3 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_4 = {
+  "class": "w-full md:w-1/2"
+};
+var _hoisted_5 = {
+  "class": "flex flex-col gap-4"
+};
+var _hoisted_6 = {
+  "class": "flex flex-wrap md:flex-nowrap gap-6 w-full pb-5"
+};
+var _hoisted_7 = {
+  "class": "w-full md:w-1/3"
+};
+var _hoisted_8 = {
+  "class": "w-full md:w-1/3"
+};
+var _hoisted_9 = {
+  "class": "w-full md:w-1/3"
+};
+var _hoisted_10 = {
+  "class": "text-right space-x-4"
+};
+var _hoisted_11 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", {
+  "class": "flex justify-between items-center mb-4"
+}, [/*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("h3", {
+  "class": "font-semibold text-primary-800 text-lg"
+}, " Quoted Plans ")], -1 /* HOISTED */);
+
+function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _component_x_select = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-select");
+  var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-input");
+  var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-button");
+  var _component_x_form = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("x-form");
+  var _component_DataTable = (0,vue__WEBPACK_IMPORTED_MODULE_0__.resolveComponent)("DataTable");
+  return (0,vue__WEBPACK_IMPORTED_MODULE_0__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_0__.Fragment, null, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_form, {
+    onSubmit: $setup.creatQuotePlan,
+    "auto-focus": false
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+        modelValue: $setup.addPlanForm.insurance_provider_id,
+        "onUpdate:modelValue": [_cache[0] || (_cache[0] = function ($event) {
+          return $setup.addPlanForm.insurance_provider_id = $event;
+        }), $setup.setCarPlans],
+        label: "Insurance Provider",
+        rules: [$setup.isRequired],
+        options: $setup.insuranceProviderOptions,
+        placeholder: "Select Insurance provider",
+        "class": "w-full"
+      }, null, 8 /* PROPS */, ["modelValue", "rules", "options"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_4, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
+        modelValue: $setup.addPlanForm.car_plan_id,
+        "onUpdate:modelValue": _cache[1] || (_cache[1] = function ($event) {
+          return $setup.addPlanForm.car_plan_id = $event;
+        }),
+        label: "Plan",
+        rules: [$setup.isRequired],
+        options: $setup.insuranceProviderPlanOptions,
+        placeholder: "Select plan",
+        "class": "w-full"
+      }, null, 8 /* PROPS */, ["modelValue", "rules", "options"])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+        modelValue: $setup.addPlanForm.actual_premium,
+        "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
+          return $setup.addPlanForm.actual_premium = $event;
+        }),
+        label: "Premium without vat",
+        rules: [$setup.isRequired],
+        "class": "w-full",
+        type: "number",
+        placeholder: "Enter Premium without vat"
+      }, null, 8 /* PROPS */, ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_8, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+        modelValue: $setup.addPlanForm.car_value,
+        "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
+          return $setup.addPlanForm.car_value = $event;
+        }),
+        label: "Car value",
+        rules: [$setup.isRequired],
+        "class": "w-full",
+        type: "number",
+        placeholder: "Enter Car value"
+      }, null, 8 /* PROPS */, ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_9, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+        modelValue: $setup.addPlanForm.excess,
+        "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
+          return $setup.addPlanForm.excess = $event;
+        }),
+        label: "Excess",
+        rules: [$setup.isRequired],
+        "class": "w-full",
+        type: "number",
+        placeholder: "Enter excess"
+      }, null, 8 /* PROPS */, ["modelValue", "rules"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_10, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_button, {
+        size: "sm",
+        color: "emerald",
+        loading: $setup.addPlanForm.processing,
+        type: "submit"
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)(" Add Plan ")];
+        }),
+        _: 1 /* STABLE */
+      }, 8 /* PROPS */, ["loading"])])];
+    }),
+    _: 1 /* STABLE */
+  }), _hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_DataTable, {
+    "table-class-name": "tablefixed compact",
+    headers: $setup.quotePlansTable.columns,
+    items: $setup.quotePlansTableData || [],
+    "show-index": "",
+    "border-cell": "",
+    "fixed-checkbox": "",
+    "hide-rows-per-page": "",
+    "hide-footer": ""
+  }, {
+    "item-premiumWithVat": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function (item) {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)(parseFloat(item.discountPremium + item.vat + $setup.totalPriceVAT).toFixed(2)), 1 /* TEXT */)];
+    }),
+
+    _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["headers", "items"])], 64 /* STABLE_FRAGMENT */);
+}
+
+/***/ }),
+
 /***/ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=template&id=40516bec":
 /*!*************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************************!*\
   !*** ./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=template&id=40516bec ***!
@@ -39834,7 +40119,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   })) : $setup.hasRole($setup.rolesEnum.Admin) && $setup.can($setup.permissionEnum.CarQuotesPlansCreate) ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
     key: 3,
-    onClick: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(_ctx.onAddPaymentModal, ["prevent"]),
+    onClick: _cache[18] || (_cache[18] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+      return $setup.modals.createPlan = true;
+    }, ["prevent"])),
     size: "sm",
     color: "orange",
     "class": "mr-2"
@@ -39843,7 +40130,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Add Plan ")];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["onClick"])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), typeof $props.listQuotePlans !== 'string' && $props.listQuotePlans.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), typeof $props.listQuotePlans !== 'string' && $props.listQuotePlans.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
     key: 4,
     onClick: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)($setup.copyLink, ["prevent"]),
     size: "sm",
@@ -39856,7 +40143,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, 8 /* PROPS */, ["onClick"])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     "items-selected": $setup.selectedPlans,
-    "onUpdate:itemsSelected": _cache[18] || (_cache[18] = function ($event) {
+    "onUpdate:itemsSelected": _cache[19] || (_cache[19] = function ($event) {
       return $setup.selectedPlans = $event;
     }),
     headers: $setup.availablePlansTable.columns,
@@ -40018,7 +40305,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["items-selected", "headers", "items", "hide-footer"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.plan,
-    "onUpdate:modelValue": _cache[19] || (_cache[19] = function ($event) {
+    "onUpdate:modelValue": _cache[20] || (_cache[20] = function ($event) {
       return $setup.modals.plan = $event;
     }),
     size: "xl",
@@ -40042,11 +40329,33 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8 /* PROPS */, ["plan", "genders", "record", "access", "notAdvisorAndManagerAndPA", "isPlanUpdateActive", "hidden", "totalSelectedAddonsPriceWithVat"])];
     }),
     _: 1 /* STABLE */
+  }, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
+    modelValue: $setup.modals.createPlan,
+    "onUpdate:modelValue": _cache[21] || (_cache[21] = function ($event) {
+      return $setup.modals.createPlan = $event;
+    }),
+    size: "xl",
+    "show-close": "",
+    backdrop: ""
+  }, {
+    header: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Create Car Quote ")];
+    }),
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)($setup["LazyCreatePlan"], {
+        record: $props.record,
+        insuranceProviders: $props.insuranceProviders,
+        listQuotePlans: $props.listQuotePlans,
+        onSuccess: _ctx.onCreatePlan,
+        onError: _ctx.onPlanError
+      }, null, 8 /* PROPS */, ["record", "insuranceProviders", "listQuotePlans", "onSuccess", "onError"])];
+    }),
+    _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"])]), $props.isQuoteDocumentEnabled ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_186, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [_hoisted_187, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_188, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_189, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
     modelValue: $setup.policyDetailsForm.quote_policy_number,
-    "onUpdate:modelValue": _cache[20] || (_cache[20] = function ($event) {
+    "onUpdate:modelValue": _cache[22] || (_cache[22] = function ($event) {
       return $setup.policyDetailsForm.quote_policy_number = $event;
     }),
     type: "text",
@@ -40056,7 +40365,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     disabled: !$setup.policyDetailsState.isEditing
   }, null, 8 /* PROPS */, ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_190, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
     modelValue: $setup.policyDetailsForm.quote_policy_issuance_date,
-    "onUpdate:modelValue": _cache[21] || (_cache[21] = function ($event) {
+    "onUpdate:modelValue": _cache[23] || (_cache[23] = function ($event) {
       return $setup.policyDetailsForm.quote_policy_issuance_date = $event;
     }),
     type: "text",
@@ -40066,7 +40375,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     disabled: !$setup.policyDetailsState.isEditing
   }, null, 8 /* PROPS */, ["modelValue", "disabled"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_191, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_192, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
     modelValue: $setup.policyDetailsForm.quote_policy_start_date,
-    "onUpdate:modelValue": _cache[22] || (_cache[22] = function ($event) {
+    "onUpdate:modelValue": _cache[24] || (_cache[24] = function ($event) {
       return $setup.policyDetailsForm.quote_policy_start_date = $event;
     }),
     type: "text",
@@ -40076,7 +40385,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     disabled: !$setup.policyDetailsState.isEditing
   }, null, 8 /* PROPS */, ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_193, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
     modelValue: $setup.policyDetailsForm.quote_policy_expiry_date,
-    "onUpdate:modelValue": _cache[23] || (_cache[23] = function ($event) {
+    "onUpdate:modelValue": _cache[25] || (_cache[25] = function ($event) {
       return $setup.policyDetailsForm.quote_policy_expiry_date = $event;
     }),
     type: "text",
@@ -40086,7 +40395,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     disabled: !$setup.policyDetailsState.isEditing
   }, null, 8 /* PROPS */, ["modelValue", "disabled"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_194, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_195, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
     modelValue: $setup.policyDetailsForm.quote_premium,
-    "onUpdate:modelValue": _cache[24] || (_cache[24] = function ($event) {
+    "onUpdate:modelValue": _cache[26] || (_cache[26] = function ($event) {
       return $setup.policyDetailsForm.quote_premium = $event;
     }),
     type: "text",
@@ -40100,7 +40409,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     color: "emerald",
     size: "sm",
     loading: $setup.policyDetailsForm.processing,
-    onClick: _cache[25] || (_cache[25] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+    onClick: _cache[27] || (_cache[27] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
       return $setup.policyDetailsState.isEditing = false;
     }, ["prevent"]))
   }, {
@@ -40125,7 +40434,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "mt-4",
     color: "emerald",
     size: "sm",
-    onClick: _cache[26] || (_cache[26] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+    onClick: _cache[28] || (_cache[28] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
       return $setup.policyDetailsState.isEditing = true;
     }, ["prevent"]))
   }, {
@@ -40147,7 +40456,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, 8 /* PROPS */, ["onClick"])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), !$setup.can($setup.permissionEnum.ApprovePayments) && !$setup.hasRole($setup.rolesEnum.PA) ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
     key: 1
   }, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" <Link :href=\"`${record.uuid}/documents`\" class=\"btn btn-primary btn-sm\" style=\"float:right;\">Upload Documents</Link> "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
-    onClick: _cache[27] || (_cache[27] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+    onClick: _cache[29] || (_cache[29] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
       return $setup.modals.doc = true;
     }, ["prevent"])),
     size: "sm",
@@ -40208,7 +40517,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["headers", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.docConfirm,
-    "onUpdate:modelValue": _cache[29] || (_cache[29] = function ($event) {
+    "onUpdate:modelValue": _cache[31] || (_cache[31] = function ($event) {
       return $setup.modals.docConfirm = $event;
     }),
     "show-close": "",
@@ -40221,7 +40530,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_203, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[28] || (_cache[28] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+        onClick: _cache[30] || (_cache[30] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
           return $setup.modals.docConfirm = false;
         }, ["prevent"]))
       }, {
@@ -40247,7 +40556,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.doc,
-    "onUpdate:modelValue": _cache[30] || (_cache[30] = function ($event) {
+    "onUpdate:modelValue": _cache[32] || (_cache[32] = function ($event) {
       return $setup.modals.doc = $event;
     }),
     size: "xl",
@@ -40388,7 +40697,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["headers", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.notes,
-    "onUpdate:modelValue": _cache[33] || (_cache[33] = function ($event) {
+    "onUpdate:modelValue": _cache[35] || (_cache[35] = function ($event) {
       return $setup.modals.notes = $event;
     }),
     size: "lg",
@@ -40406,7 +40715,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_218, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
             modelValue: $setup.notesForm.description,
-            "onUpdate:modelValue": _cache[31] || (_cache[31] = function ($event) {
+            "onUpdate:modelValue": _cache[33] || (_cache[33] = function ($event) {
               return $setup.notesForm.description = $event;
             }),
             label: "",
@@ -40417,7 +40726,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "rules"]), _hoisted_219]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_220, [_hoisted_221, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
             size: "sm",
-            onClick: _cache[32] || (_cache[32] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+            onClick: _cache[34] || (_cache[34] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
               return $setup.modals.notes = false;
             }, ["prevent"]))
           }, {
@@ -40516,7 +40825,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["headers", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.activityConfirm,
-    "onUpdate:modelValue": _cache[35] || (_cache[35] = function ($event) {
+    "onUpdate:modelValue": _cache[37] || (_cache[37] = function ($event) {
       return $setup.modals.activityConfirm = $event;
     }),
     "show-close": "",
@@ -40529,7 +40838,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_227, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[34] || (_cache[34] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+        onClick: _cache[36] || (_cache[36] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
           return $setup.modals.activityConfirm = false;
         }, ["prevent"]))
       }, {
@@ -40555,7 +40864,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.activity,
-    "onUpdate:modelValue": _cache[41] || (_cache[41] = function ($event) {
+    "onUpdate:modelValue": _cache[43] || (_cache[43] = function ($event) {
       return $setup.modals.activity = $event;
     }),
     size: "lg",
@@ -40574,7 +40883,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_228, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
             modelValue: $setup.activityForm.title,
-            "onUpdate:modelValue": _cache[36] || (_cache[36] = function ($event) {
+            "onUpdate:modelValue": _cache[38] || (_cache[38] = function ($event) {
               return $setup.activityForm.title = $event;
             }),
             label: "Title",
@@ -40582,7 +40891,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
             modelValue: $setup.activityForm.description,
-            "onUpdate:modelValue": _cache[37] || (_cache[37] = function ($event) {
+            "onUpdate:modelValue": _cache[39] || (_cache[39] = function ($event) {
               return $setup.activityForm.description = $event;
             }),
             label: "Description",
@@ -40590,7 +40899,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.activityForm.assignee_id,
-            "onUpdate:modelValue": _cache[38] || (_cache[38] = function ($event) {
+            "onUpdate:modelValue": _cache[40] || (_cache[40] = function ($event) {
               return $setup.activityForm.assignee_id = $event;
             }),
             label: "Assignee",
@@ -40600,7 +40909,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "options", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_date_picker, {
             modelValue: $setup.activityForm.due_date,
-            "onUpdate:modelValue": _cache[39] || (_cache[39] = function ($event) {
+            "onUpdate:modelValue": _cache[41] || (_cache[41] = function ($event) {
               return $setup.activityForm.due_date = $event;
             }),
             label: "Due Date",
@@ -40610,7 +40919,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             timezone: 'UTC'
           }, null, 8 /* PROPS */, ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_229, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
             size: "sm",
-            onClick: _cache[40] || (_cache[40] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+            onClick: _cache[42] || (_cache[42] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
               return $setup.modals.activity = false;
             }, ["prevent"]))
           }, {
@@ -40649,7 +40958,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
     size: "sm",
     color: "orange",
-    onClick: _cache[42] || (_cache[42] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+    onClick: _cache[44] || (_cache[44] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
       $setup.additionalContact.reset();
       $setup.modals.addContact = true;
     }, ["prevent"]))
@@ -40717,7 +41026,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["headers", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.contactDeleteConfirm,
-    "onUpdate:modelValue": _cache[44] || (_cache[44] = function ($event) {
+    "onUpdate:modelValue": _cache[46] || (_cache[46] = function ($event) {
       return $setup.modals.contactDeleteConfirm = $event;
     }),
     "show-close": "",
@@ -40730,7 +41039,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_235, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[43] || (_cache[43] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+        onClick: _cache[45] || (_cache[45] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
           return $setup.modals.contactDeleteConfirm = false;
         }, ["prevent"]))
       }, {
@@ -40756,7 +41065,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.contactPrimaryConfirm,
-    "onUpdate:modelValue": _cache[46] || (_cache[46] = function ($event) {
+    "onUpdate:modelValue": _cache[48] || (_cache[48] = function ($event) {
       return $setup.modals.contactPrimaryConfirm = $event;
     }),
     "show-close": "",
@@ -40769,7 +41078,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_237, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
         ghost: "",
-        onClick: _cache[45] || (_cache[45] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+        onClick: _cache[47] || (_cache[47] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
           return $setup.modals.contactPrimaryConfirm = false;
         }, ["prevent"]))
       }, {
@@ -40795,7 +41104,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_modal, {
     modelValue: $setup.modals.addContact,
-    "onUpdate:modelValue": _cache[50] || (_cache[50] = function ($event) {
+    "onUpdate:modelValue": _cache[52] || (_cache[52] = function ($event) {
       return $setup.modals.addContact = $event;
     }),
     size: "lg",
@@ -40813,7 +41122,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_238, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.additionalContact.additional_contact_type,
-            "onUpdate:modelValue": _cache[47] || (_cache[47] = function ($event) {
+            "onUpdate:modelValue": _cache[49] || (_cache[49] = function ($event) {
               return $setup.additionalContact.additional_contact_type = $event;
             }),
             label: "Type",
@@ -40829,7 +41138,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "rules"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
             modelValue: $setup.additionalContact.additional_contact_val,
-            "onUpdate:modelValue": _cache[48] || (_cache[48] = function ($event) {
+            "onUpdate:modelValue": _cache[50] || (_cache[50] = function ($event) {
               return $setup.additionalContact.additional_contact_val = $event;
             }),
             label: "Value",
@@ -40837,7 +41146,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "rules"])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_239, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
             size: "sm",
-            onClick: _cache[49] || (_cache[49] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
+            onClick: _cache[51] || (_cache[51] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
               return $setup.modals.addContact = false;
             }, ["prevent"]))
           }, {
@@ -51334,6 +51643,34 @@ if (false) {}
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue":
+/*!******************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue ***!
+  \******************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _CreatePlan_vue_vue_type_template_id_44147f34__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./CreatePlan.vue?vue&type=template&id=44147f34 */ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=template&id=44147f34");
+/* harmony import */ var _CreatePlan_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./CreatePlan.vue?vue&type=script&setup=true&lang=js */ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=script&setup=true&lang=js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./node_modules/vue-loader/dist/exportHelper.js */ "./node_modules/vue-loader/dist/exportHelper.js");
+/* unplugin-vue-components disabled */
+
+
+
+;
+const __exports__ = /*#__PURE__*/(0,_home_usmanejaz_usman_projects_afia_blanka_node_modules_vue_loader_dist_exportHelper_js__WEBPACK_IMPORTED_MODULE_2__["default"])(_CreatePlan_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_1__["default"], [['render',_CreatePlan_vue_vue_type_template_id_44147f34__WEBPACK_IMPORTED_MODULE_0__.render],['__file',"resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue"]])
+/* hot reload */
+if (false) {}
+
+
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (__exports__);
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue":
 /*!************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue ***!
@@ -53350,6 +53687,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=script&setup=true&lang=js":
+/*!*****************************************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=script&setup=true&lang=js ***!
+  \*****************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* reexport safe */ _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_CreatePlan_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__["default"])
+/* harmony export */ });
+/* harmony import */ var _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_CreatePlan_vue_vue_type_script_setup_true_lang_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!../../../../../../../node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./CreatePlan.vue?vue&type=script&setup=true&lang=js */ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=script&setup=true&lang=js");
+/* unplugin-vue-components disabled */ 
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=script&setup=true&lang=js":
 /*!***********************************************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=script&setup=true&lang=js ***!
@@ -54950,6 +55303,22 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=template&id=44147f34":
+/*!************************************************************************************************************!*\
+  !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=template&id=44147f34 ***!
+  \************************************************************************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   render: () => (/* reexport safe */ _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_4_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_CreatePlan_vue_vue_type_template_id_44147f34__WEBPACK_IMPORTED_MODULE_0__.render)
+/* harmony export */ });
+/* harmony import */ var _node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_vue_components_node_modules_unplugin_auto_import_node_modules_unplugin_dist_webpack_loaders_transform_js_unpluginName_unplugin_auto_import_node_modules_babel_loader_lib_index_js_clonedRuleSet_5_use_0_node_modules_vue_loader_dist_templateLoader_js_ruleSet_1_rules_4_node_modules_vue_loader_dist_index_js_ruleSet_0_use_0_CreatePlan_vue_vue_type_template_id_44147f34__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! -!../../../../../../../node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!../../../../../../../node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!../../../../../../../node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!../../../../../../../node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!../../../../../../../node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./CreatePlan.vue?vue&type=template&id=44147f34 */ "./node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-vue-components!./node_modules/unplugin-auto-import/node_modules/unplugin/dist/webpack/loaders/transform.js?unpluginName=unplugin-auto-import!./node_modules/babel-loader/lib/index.js??clonedRuleSet-5.use[0]!./node_modules/vue-loader/dist/templateLoader.js??ruleSet[1].rules[4]!./node_modules/vue-loader/dist/index.js??ruleSet[0].use[0]!./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue?vue&type=template&id=44147f34");
+/* unplugin-vue-components disabled */
+
+/***/ }),
+
 /***/ "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=template&id=40516bec":
 /*!******************************************************************************************************************!*\
   !*** ./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue?vue&type=template&id=40516bec ***!
@@ -55672,6 +56041,8 @@ var map = {
 	"./PersonalQuote/Car/Form.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/Form.vue",
 	"./PersonalQuote/Car/LeadList": "./resources/js/inertia/Pages/PersonalQuote/Car/LeadList.vue",
 	"./PersonalQuote/Car/LeadList.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/LeadList.vue",
+	"./PersonalQuote/Car/Partials/CreatePlan": "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue",
+	"./PersonalQuote/Car/Partials/CreatePlan.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/CreatePlan.vue",
 	"./PersonalQuote/Car/Partials/DocumentUploader": "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue",
 	"./PersonalQuote/Car/Partials/DocumentUploader.vue": "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/DocumentUploader.vue",
 	"./PersonalQuote/Car/Partials/PaymentTable": "./resources/js/inertia/Pages/PersonalQuote/Car/Partials/PaymentTable.vue",

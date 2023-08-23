@@ -1,0 +1,185 @@
+<script setup>
+
+const props = defineProps({
+    record: Object,
+    insuranceProviders: Array,
+    listQuotePlans: Object,
+});
+
+const page = usePage();
+
+const { isRequired, isNumber } = useRules();
+
+const quotePlansTable = reactive({
+	columns: [
+		{ text: 'Provider Name', value: 'providerName' },
+		{ text: 'Plan Name', value: 'name' },
+		{ text: 'Repair Type', value: 'repairType' },
+		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+	]
+});
+
+const quotePlansTableData = computed(() => {
+	if (! Array.isArray(page.props.listQuotePlans)) {
+		return [];
+	}
+	return typeof page.props.listQuotePlans !== 'string' ? page.props.listQuotePlans : [];
+})
+
+const totalPriceVAT = computed(() => {
+	let vat = 0;
+	quotePlansTableData?.value.forEach(item => {
+		item.addons.forEach(addon => {
+			addon.carAddonOption.forEach(option => {
+				if (option.isSelected && option.price != 0) {
+					vat += option.price + option.vat;
+				}
+			})
+		})		
+	})
+	return vat;
+})
+
+const addPlanForm = useForm({
+    car_quote_uuid: page.props.record.uuid,
+	is_disabled: 0,
+	is_create: 1,
+	repair_type_comp: '',
+	insurance_provider_id: 1,
+	car_plan_id: null,
+	actual_premium: null,
+	car_value: null,
+	excess: null,
+});
+
+const insuranceProviderOptions = computed(() => {
+  return page.props.insuranceProviders.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
+
+});
+
+const insuranceProviderPlanOptions = ref([]);
+
+const setCarPlans = () => {
+  const id = addPlanForm.insurance_provider_id;
+  axios
+    .get(`/insurance-provider-plans?insuranceProviderId=${id}&quoteUuId=${page.props.record.uuid}`)
+    .then(({ data }) => {
+      insuranceProviderPlanOptions.value = data.map(plan => ({
+        value: plan.id,
+        label: plan.text,
+      }));
+    })
+    .catch(error => {
+      console.error('Error fetching insurance provider plans:', error);
+    });
+};
+
+const creatQuotePlan = isValid => {
+  if (!isValid) return;
+    addPlanForm.post(`${page.props.record.uuid}/car-plan-manual-process`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Car Quote Plan created successfully',
+        position: 'top',
+      });
+    },
+  });
+};
+
+</script>
+    <template>
+        <x-form @submit="creatQuotePlan" :auto-focus="false">
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+                <div class="w-full md:w-1/2">
+                    <div class="flex flex-col gap-4">
+						<x-select
+							v-model="addPlanForm.insurance_provider_id"
+							label="Insurance Provider"
+                            :rules="[isRequired]"
+							:options="insuranceProviderOptions"
+							placeholder="Select Insurance provider"
+							class="w-full"
+                            @update:modelValue="setCarPlans"
+						/>
+					</div>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <div class="flex flex-col gap-4">
+						<x-select
+							v-model="addPlanForm.car_plan_id"
+							label="Plan"
+                            :rules="[isRequired]"
+							:options="insuranceProviderPlanOptions"
+							placeholder="Select plan"
+							class="w-full"
+						/>
+					</div>
+                </div>
+            </div>
+            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+                <div class="w-full md:w-1/3">
+                    <x-input
+                        v-model="addPlanForm.actual_premium"
+                        label="Premium without vat"
+                        :rules="[isRequired]"
+                        class="w-full"
+                        type="number"
+                        placeholder="Enter Premium without vat"
+                    />
+                </div>
+                <div class="w-full md:w-1/3">
+                    <x-input
+                        v-model="addPlanForm.car_value"
+                        label="Car value"
+                        :rules="[isRequired]"
+                        class="w-full"
+                        type="number"
+                        placeholder="Enter Car value"
+                    />
+                </div>
+                <div class="w-full md:w-1/3">
+                    <x-input
+                        v-model="addPlanForm.excess"
+                        label="Excess"
+                        :rules="[isRequired]"
+                        class="w-full"
+                        type="number"
+                        placeholder="Enter excess"
+                    />
+                </div>
+            </div>
+
+            <div class="text-right space-x-4">
+                <x-button
+                size="sm"
+                color="emerald"
+                :loading="addPlanForm.processing"
+                type="submit"
+                >
+                Add Plan
+                </x-button>
+            </div>
+        </x-form>
+        <div class="flex justify-between items-center mb-4">
+			<h3 class="font-semibold text-primary-800 text-lg">
+				Quoted Plans
+			</h3>
+		</div>
+        <DataTable
+        table-class-name="tablefixed compact"
+        :headers="quotePlansTable.columns"
+        :items="quotePlansTableData || []"
+        show-index
+        border-cell
+        fixed-checkbox
+        hide-rows-per-page
+        hide-footer>
+        <template #item-premiumWithVat="item">
+                        {{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+                    </template>
+        </DataTable>
+    </template>
