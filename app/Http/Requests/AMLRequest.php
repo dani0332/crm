@@ -30,7 +30,7 @@ class AMLRequest extends FormRequest
                 'searchField' => 'required_with:searchType',
                 'matchFound' => 'nullable',
                 'amlCreatedStartDate' => 'nullable|required_without:searchType',
-                'amlCreatedEndDate' => 'nullable|required_without:searchType'
+                'amlCreatedEndDate' => 'nullable|required_without:searchType',
             ];
         }
 
