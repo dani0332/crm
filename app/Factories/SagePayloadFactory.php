@@ -10,43 +10,172 @@ class SagePayloadFactory
         if (strtolower($request->invoicePaymentStatus) == 'paid' &&
                         $leadStatus == 'policy booked'
         ) {
-            return self::createPaymontRecieptOneInvoice();
+            return self::createPaymontRecieptOneInvoice($request);
         } elseif ($request->discount > 0 &&
                     $leadStatus == 'policy booked' &&
                     strtolower($request->invoicePaymentStatus) != 'paid'
         ) {
             return self::createARInvoiceIds($request);
         } else {
-            return self::createARInvoicePremAndComm($request);
+            //return self::createARInvoicePremAndComm($request);
+            return self::createAPInvoicePrem($request);
+            
         }
     }
 
-    private static function createPaymontRecieptOneInvoice()
+    private static function createPaymontRecieptOneInvoice($request)
     {
         $payLoad = [
             'BatchRecordType' => 'CA',
             'ReceiptsAdjustments' => [
                 [
                     'BatchType' => 'CA',
-                    'CustomerNumber' => 'C00018',
+                    'CustomerNumber' => $request->customerId,
                     'ReceiptTransactionType' => 'ApplyDocument',
-                    'DocumentNumber' => 'PY000020',
+                    'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
                     'AppliedReceiptsAdjustments' => [
                         [
                             'BatchType' => 'CA',
-                            'CustomerNumber' => 'C00018',
-                            'DocumentNumber' => 'SHMOU22000124845',
+                            'CustomerNumber' => $request->customerId,
+                            'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
                             'ReceiptTransactionType' => 'ApplyDocument',
                         ],
                     ],
                 ],
             ],
         ];
-
+        
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
         ];
+    }
+
+    private static function createAPInvoicePrem($request) {
+        $payLoad = [
+            "Invoices" => [
+                [
+                    "VendorNumber" => "IP002",
+                    "DocumentNumber" => $request->insurerPremiumTaxInvoiceNumber,
+                    "InvoiceDescription" => $request->invoiceDescription,
+                    "DocumentDate" => $request->insurerInvoiceDate,
+                    "CurrencyCode" => "AED",
+                    "DueDate" => "2022-11-24T00:00:00Z",
+                    "TaxGroup" => "VAT",
+                    "TaxClass1" => 5,
+                    "TaxAmount1" => 0.000,
+                    "DocumentTotalBeforeTaxes" => $request->premiumWithoutTax,
+                    "DocumentTotalIncludingTax" => $request->premiumWithTax,
+                    "PostingDate" => $request->bookingDate,
+                    "InvoiceDetails" => [
+                        [
+                            "DistributionDescription" => $request->invoiceDescription,
+                            "TaxClass1" => 1,
+                            "GLAccount" => "55020",
+                            "DistributedAmount" => 2144.1,
+                            "DistributedAmountBeforeTaxes" => 2144.1
+                        ]
+                    ],
+                    "InvoicePaymentSchedules" => [
+                        [
+                            "DueDate" => "2022-11-24T00:00:00Z"
+                        ]
+                    ],
+                    "InvoiceOptionalFields" => [
+                        [
+                            "OptionalField" => "CCCODE",
+                            "Value" => "sample cc code"
+                        ],
+                        [
+                            "OptionalField" => "ENDORSEMENT",
+                            "Value" => "sample endorsement number"
+                        ],
+                        [
+                            "OptionalField" => "EXPIRY",
+                            "Value" => "20230505"
+                        ],
+                        [
+                            "OptionalField" => "INCEPTION",
+                            "Value" => "20230505"
+                        ],
+                        [
+                            "OptionalField" => "INSURED",
+                            "Value" => "sample insured"
+                        ],
+                        [
+                            "OptionalField" => "MAINCLASS",
+                            "Value" => "sample mainclass"
+                        ],
+                        [
+                            "OptionalField" => "MANAGER",
+                            "Value" => "sample manager"
+                        ],
+                        [
+                            "OptionalField" => "PDC",
+                            "Value" => "0"
+                        ],
+                        [
+                            "OptionalField" => "POLICY",
+                            "Value" => "sample policy number"
+                        ],
+                        [
+                            "OptionalField" => "POLICYHOLDER",
+                            "Value" => "sample policy holder"
+                        ],
+                        [
+                            "OptionalField" => "POLICYISSUER",
+                            "Value" => "sample policy issuer"
+                        ],
+                        [
+                            "OptionalField" => "PREMIUM",
+                            "Value" => "0.000"
+                        ],
+                        [
+                            "OptionalField" => "PREMIUMVAT",
+                            "Value" => "0.000"
+                        ],
+                        [
+                            "OptionalField" => "REQUESTTYPE",
+                            "Value" => "sample request type"
+                        ],
+                        [
+                            "OptionalField" => "SALESPERSON",
+                            "Value" => "sample salesperson"
+                        ],
+                        [
+                            "OptionalField" => "SUBCLASS",
+                            "Value" => "sample subclass"
+                        ],
+                        [
+                            "OptionalField" => "CNTYPE",
+                            "Value" => "Normal"
+                        ],
+                        [
+                            "OptionalField" => "COLLECTS",
+                            "Value" => ""
+                        ],
+                        [
+                            "OptionalField" => "COMMRATE",
+                            "Value" => ""
+                        ],
+                        [
+                            "OptionalField" => "STATE",
+                            "Value" => "DXB"
+                        ],
+                        [
+                            "OptionalField" => "IGTC",
+                            "Value" => "N"
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        return [
+            'endPoint' => 'AP/APInvoiceBatches',
+            'payload' => $payLoad,
+        ];
+           
     }
 
     private static function createARInvoiceIds($request)
@@ -55,7 +184,7 @@ class SagePayloadFactory
         $payLoad = $data = [
             'Invoices' => [
                 [
-                    'CustomerNumber' => 'IC008',
+                    'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
                     'InvoiceDescription' => 'D.ORIUNB.PL.P-10-1002-109-2022-109',
                     'DocumentDate' => '2023-05-16T00:00:00Z',
@@ -180,7 +309,7 @@ class SagePayloadFactory
         $payLoad = [
             'Invoices' => [
                 [
-                    'CustomerNumber' => 'C1111',
+                    'CustomerNumber' => $request->customerId,
                     'DocumentNumber' => $request->insurerPremiumTaxInvoiceNumber,
                     'InvoiceDescription' => 'HAFEEZ SAMPLE 2',
                     'DocumentDate' => '2023-04-26T00:00:00Z',

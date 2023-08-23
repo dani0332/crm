@@ -65,7 +65,7 @@ const { isRequired, isEmail, isNumber, isMobile } = useRules();
 const bookingDetailForm = useForm({
   requestType: 'New Business',
   bookingDate: '17-07-2023',
-  invoiceDescription: 'ORI.MOTORFEI-T',
+  invoiceDescription: 'P.ORI.GROUPMED.CPG/DHA-B/01/3/013861/2022',
   mainClassInsurance: 'Motor',
   invoicePaymentStatus: page.props.payments.length > 0 ? page.props.payments[0].payment_status_text : '',
   subClass: 'Comprehensive',
@@ -78,7 +78,17 @@ const bookingDetailForm = useForm({
   commission: '0',
   vatOnCommission: '0.00',
   commissionhVatApplicable: '15.00',
-  commissionIncludingVat: '0.0'  
+  commissionIncludingVat: '0.0',  
+ 
+  
+  paymentReferenceNo: page.props.record.payment_reference,
+  customerId: page.props.customerAdditionalContacts.length > 0 ? page.props.customerAdditionalContacts[0].customer_id : '',
+  paymentMethodName: page.props.payments.length > 0 ? page.props.payments[0].payment_methods_code : '',
+  capturedAmount: page.props.payments.length > 0 ? page.props.payments[0].captured_amount : '0.00',
+  premiumWithoutTax: page.props.record.premium || null,
+  premiumWithTax: page.props.record.premium || null,
+   
+  //paymentObject:  page.props.payments.length > 0 ? page.props.payments[0] : ''
 });
 
 let isNotificationOpen = false;
@@ -1629,8 +1639,7 @@ const uploadFile = (doc, files) => {
 								type="text"
 								label="Invoice Description *"
 								placeholder="Invoice Description"
-								class="w-full"
-								:readonly="true"						
+								class="w-full"								
 							/>
 						</div>
 						<div class="w-full md:w-2/2">
