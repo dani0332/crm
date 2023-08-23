@@ -127,14 +127,14 @@ class LeadAllocationController extends Controller
 
         $leadAllocationUser = LeadAllocation::where('user_id', $request->userId)->where('id', $request->id)->first();
 
-        if(isset($request->reason)) {
+        if (isset($request->reason)) {
 
-            if($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE ){
+            if ($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE) {
                 dispatch(new ReAssignCarLeadsJob(app(CarAllocationJob::class), $request->userId));
             }
 
-            $user =  User::where('id', $request->userId)->first();
-            $user->status = (UserStatusEnum::class) -$request->reason;
+            $user = User::where('id', $request->userId)->first();
+            $user->status = (UserStatusEnum::class) - $request->reason;
             $user->save();
         }
 

@@ -4,7 +4,6 @@ use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
-use PhpParser\Node\Expr\Assign;
 
 /*
 |--------------------------------------------------------------------------

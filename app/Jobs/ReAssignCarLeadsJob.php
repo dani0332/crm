@@ -20,8 +20,9 @@ class ReAssignCarLeadsJob extends LeadAllocationJobInterface
 
     public function handle()
     {
-        if(!$this->shouldProceed())
+        if (! $this->shouldProceed()) {
             return false;
+        }
         // Fetch the leads to process, including deferred leads if needed
         $leads = $this->fetchLeads();
 
