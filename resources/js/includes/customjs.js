@@ -1126,10 +1126,15 @@ $(document).ready(function () {
   $('#searchAML').submit(function (e) {
     var amlCreatedStartDate = $('#amlCreatedStartDate').val();
     var amlCreatedEndDate = $('#amlCreatedEndDate').val();
+    var searchType = $('#searchType').val();
+    var searchField = $('#searchField').val();
+
     $("input[name='onLoadCheck']").val(0);
     $(".quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error").html('').css('color', '');
+    $('#amlCreatedStartDate, #amlCreatedEndDate').css({ 'border-color' : ''});
+    $('#amlCreatedStartDateMsg').html('');
 
-    if($('#searchField').val() == ''){
+    if(searchType != '' && searchField == ''){
         $('.searchField-error').html('Please select search value').css('color', 'red');
         $('#searchField').css('border-color', 'red');
         return false;
@@ -1138,7 +1143,7 @@ $(document).ready(function () {
         $('#searchField').css({ 'border-color' : ''});
     }
 
-    if ( amlCreatedStartDate == '' || amlCreatedEndDate == '') {
+    if ( searchType == '' && (amlCreatedStartDate == '' || amlCreatedEndDate == '')) {
       $('#amlCreatedStartDateMsg').html('Please select start & end dates');
       $('#amlCreatedStartDate').css('border-color', 'red');
       $('#amlCreatedEndDate').css('border-color', 'red');

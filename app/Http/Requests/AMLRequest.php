@@ -26,11 +26,11 @@ class AMLRequest extends FormRequest
         if ($this->ajax() && !request()->get('onLoadCheck')){
             return [
                 'quoteType' => 'required',
-                'searchType' => 'required',
-                'searchField' => 'required',
-                'matchFound' => 'required',
-                'amlCreatedStartDate' => 'date|required',
-                'amlCreatedEndDate' => 'date|required'
+                'searchType' => 'nullable',
+                'searchField' => 'required_with:searchType',
+                'matchFound' => 'nullable',
+                'amlCreatedStartDate' => 'nullable|required_without:searchType',
+                'amlCreatedEndDate' => 'nullable|required_without:searchType'
             ];
         }
 
@@ -47,9 +47,7 @@ class AMLRequest extends FormRequest
         return [
             'quoteType.required' => 'Quote Type is required',
             'searchField.required' => 'Search Value is required',
-            'amlCreatedStartDate.date' => 'Created start date is not a valid date </br>',
             'amlCreatedStartDate.required' => 'Created start date is required ',
-            'amlCreatedEndDate.date' => 'Created end date is not a valid date </br>',
             'amlCreatedEndDate.required' => 'Created end date is required',
         ];
     }
