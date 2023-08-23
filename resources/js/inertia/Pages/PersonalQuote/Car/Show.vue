@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from "vue";
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import PaymentTable from './../../HealthQuote/Partials/PaymentTable.vue'
+import PaymentTable from './Partials/PaymentTable.vue'
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 defineProps({
 	quote: Object,
@@ -39,6 +38,8 @@ defineProps({
 	paymentMethods: Array,
 	sendPolicy: Boolean,
 	//
+	isPlanUpdateActive: Boolean,
+	yearsOfManufacture: Array,
 	access: Object,
 	record: Object,
 	quoteType: String,
@@ -60,6 +61,7 @@ const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
@@ -290,6 +292,10 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
+const assumptionState = reactive({
+	isEditing: false
+});
+
 const assumptionsForm = useForm({
   cylinder: page.props.record.cylinder || null,
   seat_capacity: page.props.record.seat_capacity || null,
@@ -299,7 +305,17 @@ const assumptionsForm = useForm({
   is_gcc_standard: page.props.paymentEntityModel.is_gcc_standard ||null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration: page.props.record.year_of_first_registration || null,
+  car_quote_id: page.props.record.id
 });
+
+const onUpdateAssumption = () => {
+	assumptionsForm.post('/quotes/car/carAssumptionsUpdate', {
+		preserveScroll: true,
+		onSuccess: () => {
+			assumptionState.isEditing = false;
+		}
+	})
+}
 
 const vehicleTypeOptions = computed(() => {
   return page.props.vehicleTypes.map(type => ({
@@ -315,12 +331,35 @@ const isOptions = computed(() => {
       ];
 });
 
-const policyDetailsForm = useForm({
-  policy_number: page.props.record.policy_number || null,
-  policy_start_date: page.props.record.policy_start_date || null,
-  previous_policy_expiry_date: page.props.record.previous_policy_expiry_date || null,
-  premium: page.props.record.premium || null,
+const currentInsuranceOptions = computed(() => {
+	return [
+		{ value: 'ACTIVE_TPL', label: 'ACTIVE_TPL' },
+		{ value: 'ACTIVE_COMP', label: 'ACTIVE_COMP' },
+		{ value: 'EXPIRED', label: 'EXPIRED' },
+	]
 });
+
+const policyDetailsState = reactive({
+	isEditing: false
+});
+const policyDetailsForm = useForm({
+  quote_policy_number: page.props.record.policy_number || null,
+  quote_policy_issuance_date: page.props.record.policy_issuance_date || null,
+  quote_policy_start_date: page.props.record.policy_start_date || null,
+  quote_policy_expiry_date: page.props.record.renewal_expiry_date || null,
+  quote_premium: page.props.record.premium || null,
+  modelType: 'Car',
+  quote_id: page.props.record.id
+});
+
+const onUpdatePolicyDetails = () => {
+	policyDetailsForm.post('/quotes/Car/update-quote-policy', {
+		preserveScroll: true,
+		onSuccess: () => {
+			policyDetailsState.isEditing = false;
+		}
+	})
+}
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -1264,10 +1303,9 @@ const onExportPlans = () => {
     
 		<PaymentTable 
 			v-if="hasRole(rolesEnum.BetaUser)"
-			:can="{}"
-			:isBetaUser="hasRole(rolesEnum.BetaUser)"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
 		/>
 		<!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.BetaUser)">
@@ -1333,11 +1371,12 @@ const onExportPlans = () => {
 				<div class="w-full md:w-1/2">
 					<x-textarea
 						v-model="assumptionsForm.cylinder"
+						required
 						type="text"
 						label="cylinder"
 						placeholder="cylinder"
 						class="w-full"
-						disabled="true"
+						:disabled="!assumptionState.isEditing"
 
 					/>
 				</div>
@@ -1345,10 +1384,11 @@ const onExportPlans = () => {
 					<x-textarea
 						v-model="assumptionsForm.seat_capacity"
 						type="text"
+						required
 						label="Seat Capacity"
 						placeholder="Seat Capacity"
 						class="w-full"
-						disabled="true"
+						:disabled="!assumptionState.isEditing"
 					/>
 				</div>
 			</div>
@@ -1361,50 +1401,94 @@ const onExportPlans = () => {
 							:options="vehicleTypeOptions"
 							placeholder="Vehicle Body Type"
 							class="w-full"
-							disabled="true"
+							required
+							:disabled="!assumptionState.isEditing"
 						/>
 					</div>
 				</div>
-			<div class="w-full md:w-1/2">
-						<div class="flex flex-col gap-4">
-							<x-select
-								v-model="assumptionsForm.is_modified"
-								label="Is Vehicle modified?"
-								:options="isOptions"
-								placeholder="Is Modified"
-								class="w-full"
-				disabled="true"
-							/>
-						</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.is_modified"
+							label="Is Vehicle modified?"
+							:options="isOptions"
+							placeholder="Is Modified"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
 					</div>
-		</div>
-		<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-			<div class="w-full md:w-1/2">
-						<div class="flex flex-col gap-4">
-							<x-select
-								v-model="assumptionsForm.is_bank_financed"
-								label="Is Bank Financed"
-								:options="isOptions"
-								placeholder="Is Bank Financed"
-								class="w-full"
-				disabled="true"
-							/>
-						</div>
-
+				</div>
+			</div>
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.is_bank_financed"
+							label="Is Bank Financed"
+							:options="isOptions"
+							placeholder="Is Bank Financed"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
 					</div>
-			<div class="w-full md:w-1/2">
-						<div class="flex flex-col gap-4">
-							<x-select
-								v-model="assumptionsForm.is_gcc_standard"
-								label="Is GCC Standard?"
-								:options="isOptions"
-								placeholder="Is GCC Standard"
-								class="w-full"
-				disabled="true"
-							/>
-						</div>
+				</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.is_gcc_standard"
+							label="Is GCC Standard?"
+							:options="isOptions"
+							placeholder="Is GCC Standard"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
 					</div>
-		</div>
+				</div>
+			</div>
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.current_insurance_status"
+							label="Current Insurance"
+							:options="currentInsuranceOptions"
+							placeholder="Current Insurance"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
+					</div>
+				</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.year_of_first_registration"
+							label="Year Of First Registration"
+							:options="$page.props.yearsOfManufacture.map(year => { return { value: year.id.toString(), label: year.text }})"
+							placeholder="Year Of First Registration"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="flex justify-end" v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)">
+				<x-button v-if="assumptionState.isEditing" class="mt-4 mr-2" color="emerald" size="sm" :loading="assumptionsForm.processing" @click.prevent="assumptionState.isEditing = false">
+					Cancel
+				</x-button>
+				<template v-if="!can(permissionEnum.ApprovePayments)">
+					<x-button v-if="assumptionState.isEditing" class="mt-4" color="emerald" size="sm" :loading="assumptionsForm.processing" @click.prevent="onUpdateAssumption">
+						Update
+					</x-button>
+					<x-button v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || (!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager])) && !assumptionState.isEditing" class="mt-4" color="emerald" size="sm" @click.prevent="assumptionState.isEditing = true">
+						Edit Assumptions
+					</x-button>
+				</template>
+			</div>
 		</div>
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -1558,6 +1642,10 @@ const onExportPlans = () => {
 					:plan="selectedPlan" 
 					:genders="genderOptions" 
 					:record="record"
+					:access="access"
+					:notAdvisorAndManagerAndPA="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
+					:isPlanUpdateActive="isPlanUpdateActive"
+					:hidden="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
 					:totalSelectedAddonsPriceWithVat="totalPriceVAT"
 				/>
 			</x-modal>
@@ -1571,58 +1659,70 @@ const onExportPlans = () => {
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.policy_number"
+						v-model="policyDetailsForm.quote_policy_number"
 						type="text"
 						label="Policy Number"
 						placeholder="Policy Number"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.policy_issuance_date"
+						v-model="policyDetailsForm.quote_policy_issuance_date"
 						type="text"
 						label="Issuance Date"
 						placeholder="Issuance Date"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.policy_start_date"
+						v-model="policyDetailsForm.quote_policy_start_date"
 						type="text"
 						label="Policy Start Date"
 						placeholder="Policy Start Date"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.previous_policy_expiry_date"
+						v-model="policyDetailsForm.quote_policy_expiry_date"
 						type="text"
 						label="Expiry Date"
 						placeholder="Expiry Date"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.premium"
+						v-model="policyDetailsForm.quote_premium"
 						type="text"
-						label="premium"
-						placeholder="premium"
+						label="Premium"
+						placeholder="Premium"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
+				<div class="w-full md:w-1/2" />
+			</div>
+			<div class="flex justify-end" v-if="!hasRole(rolesEnum.PA) && record.quote_status_id == quoteStatusEnum.TransactionApproved">
+				<x-button v-if="policyDetailsState.isEditing" class="mt-4 mr-2" color="emerald" size="sm" :loading="policyDetailsForm.processing" @click.prevent="policyDetailsState.isEditing = false">
+					Cancel
+				</x-button>
+				<x-button v-if="policyDetailsState.isEditing" class="mt-4" color="emerald" size="sm" :loading="policyDetailsForm.processing" @click.prevent="onUpdatePolicyDetails">
+					Update
+				</x-button>
+				<x-button v-if="!policyDetailsState.isEditing" class="mt-4" color="emerald" size="sm" @click.prevent="policyDetailsState.isEditing = true">
+					Edit
+				</x-button>
 			</div>
 		</div>
 

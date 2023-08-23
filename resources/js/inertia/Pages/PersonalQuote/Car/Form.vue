@@ -54,25 +54,20 @@ const quoteForm = useForm({
 	has_dental: props.quote?.has_dental || null,
 	has_worldwide_cover: props.quote?.has_worldwide_cover || null,
 	has_home: props.quote?.has_home || null,
-	car_make_id: props.quote?.car_make_id || 0,
-	trim: props.quote?.trim || '',
-	car_model_id: props.quote?.car_model_id || 0,
-	year_of_manufacture: parseInt(props.quote?.year_of_manufacture) || 0,
+	car_make_id: props.quote?.car_make_id || null,
+	trim: props.quote?.trim || null,
+	car_model_id: props.quote?.car_model_id || null,
+	year_of_manufacture: parseInt(props.quote?.year_of_manufacture) || null,
 });
 
-const setCarMake = (id) => {
+const getCarModel = () => {
 	axios
-		.get(`/car-make?id=${id}`)
-		.then(({ data }) => {
-			props.dropdownSource.car_make_id = data;
-		});
-}
-
-const setCarModel = (id) => {
-	axios
-		.get(`/car-model-by-id?id=${id}`)
+		.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
 		.then(({ data }) => {
 			props.dropdownSource.car_model_id = data;
+			if (quoteForm.car_model_id !== null) {
+				quoteForm.car_model_id = null
+			}
 		});
 }
 
@@ -102,10 +97,8 @@ function onSubmit(isValid) {
 }
 
 onMounted(() => {
-	if (quoteForm.car_make_id > 0) {
-		setCarMake(quoteForm.car_make_id);
-		setCarModel(quoteForm.car_make_id);
-		//ajaxCallScript(quoteForm.car_model_id);
+	if (quoteForm.car_make_id !== null) {
+		getCarModel();
 	}
 })
 </script>
@@ -181,13 +174,16 @@ onMounted(() => {
 				</x-field>
 
 				<x-field label="CAR MAKE" required>
-					<x-select v-model="quoteForm.car_make_id" :rules="[isRequired]" 
+					<x-select 
+						v-model="quoteForm.car_make_id" 
+						:rules="[isRequired]" 
 						:options="dropdownSource.car_make_id.map(item => ({
 							value: item.id,
 							label: item.text,
 						}))"
-						@change="setCarModel(e)" 
-						class="w-full" />
+						@update:modelValue="getCarModel"
+						class="w-full" 
+					/>
 				</x-field>
 
 				<x-field label="CAR MODEL" required>

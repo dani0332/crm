@@ -2,12 +2,18 @@
 const notification = useNotifications('toast');
 const page = usePage();
 
-defineProps({
+const permissionEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+
+const hasRole = role => useHasRole(role);
+const can = permission => useCan(permission);
+
+const props = defineProps({
   payments: Array,
-  isBetaUser: Boolean,
   can: Object,
+  paymentStatusEnum: Object,
   quoteRequest: Object,
-  paymentMethods: Object,
+  paymentMethods: Array,
   quote: Object,
 });
 
@@ -52,8 +58,8 @@ const collectionTypes = [
 const generateCCLink = async code => {
   try {
     const response = await axios.post('/generate-payment-link', {
-      quoteId: page.props.quoteRequest.id,
-      modelType: page.props.modelType,
+      quoteId: props.quoteRequest.id,
+      modelType: 'Car',
       paymentCode: code,
       isInertia: true,
     });
@@ -122,9 +128,9 @@ const addPayment = isValid => {
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
-    modelType: page.props.modelType,
-    quote_id: page.props.quoteRequest.id,
-    plan_id: page.props.quoteRequest.plan.id,
+    modelType: 'Car',
+    quote_id: props.quoteRequest.id,
+    plan_id: props.quoteRequest.plan.id,
     insurance_provider_id: providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
@@ -139,7 +145,7 @@ const addPayment = isValid => {
     };
     paymentMethodsForm
       .transform(data => editData)
-      .post('/payments/Health/update', {
+      .post('/payments/Car/update', {
         preserveScroll: true,
         onSuccess: () => {
           notification.success({
@@ -162,7 +168,7 @@ const addPayment = isValid => {
   };
   paymentMethodsForm
     .transform(data => storeData)
-    .post('/payments/Health/store', {
+    .post('/payments/Car/store', {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -183,8 +189,8 @@ const addPayment = isValid => {
 const approvePayment = payment => {
   let data = {
     code: payment.code,
-    modelType: page.props.modelType,
-    quote_id: page.props.quoteRequest.id,
+    modelType: 'Car',
+    quote_id: props.quoteRequest.id,
   };
   if (confirm('Are you sure you want to approve this payment?')) {
     axios.post('/update-payment-status', data).then(response => {
@@ -204,12 +210,12 @@ const approvePayment = payment => {
 };
 
 const getPlanName = computed(() => {
-  const plan = page.props.quoteRequest.plan;
+  const plan = props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
-  const plan = page.props.quoteRequest.plan;
+  const plan = props.quoteRequest.plan;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.text;
   }
@@ -217,7 +223,7 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = page.props.quoteRequest.plan;
+  const plan = props.quoteRequest.plan;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   }
@@ -226,7 +232,7 @@ const providerId = computed(() => {
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
@@ -249,7 +255,7 @@ const providerId = computed(() => {
       <template #item-code="{ code }">
         {{ code.toUpperCase() }}
       </template>
-      <template #item-actions="item">
+      <!-- <template #item-actions="item">
         <div class="flex gap-2">
           <template v-if="can.approve_payments">
             <x-button
@@ -288,7 +294,39 @@ const providerId = computed(() => {
             </x-button>
           </template>
         </div>
-      </template>
+      </template> -->
+      <template #item-actions="item">
+            <div class="flex gap-2">
+                <template v-if="!can(permissionEnum.ApprovePayments)">
+                    <x-button v-if="item.payment_method_code == 'CC' && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
+                        size="xs" 
+                        color="primary" 
+                        outlined 
+                        @click.prevent="generateCCLink(item.code)"
+                    >
+                        Copy Link
+                    </x-button>
+                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click="editPaymentModal(item)">
+                        Edit
+                    </x-button>
+                </template>
+                <template v-if="can(permissionEnum.ApprovePayments)">
+                    <x-button v-if="item.payment_method_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
+                        size="xs" 
+                        color="primary" 
+                        outlined 
+                        @click="approvePayment(item)"
+                    >
+                        Approve
+                    </x-button>
+                </template>
+                <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
+                    <x-button size="xs" color="primary" outlined disabled>
+                        Approve
+                    </x-button>
+                </template>
+            </div>
+        </template>
     </DataTable>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
