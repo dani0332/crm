@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
-use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -264,11 +263,11 @@ class CarAllocationService extends AllocationService
             ->toArray();
     }
 
-    public function processLeadAssignment($lead, $userId, $tier): void
+    public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
     {
         info('About to assign car lead: '.$lead->uuid.' to user with id: '.$userId);
 
-        $carQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier);
+        $carQuote = $this->assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType);
 
         info('advisor and tier assignment done for : '.$carQuote->uuid.' to user with id : '.$userId.' and tier name : '.$tier->name);
 
@@ -285,7 +284,7 @@ class CarAllocationService extends AllocationService
         info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
     }
 
-    private function assignLeadToUserAndGetQuote($lead, $userId, $tier): mixed
+    private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
     {
         $carQuote = CarQuote::findOrFail($lead->id);
 
@@ -293,7 +292,7 @@ class CarAllocationService extends AllocationService
         $carQuote->tier_id = $tier->id;
         $carQuote->cost_per_lead = $tier->cost_per_lead;
         $carQuote->auto_assigned = true;
-        $carQuote->assignment_type = AssignmentTypeEnum::SYSTEM_ASSIGNED;
+        $carQuote->assignment_type = $assignmentType;
 
         if ($carQuote->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Support\Facades\DB;
@@ -89,7 +90,7 @@ class CarAllocationJob extends LeadAllocationJobInterface
 
     protected function assignLead($lead, $userId, $tier): void
     {
-        $this->carAllocationService->processLeadAssignment($lead, $userId, $tier);
+        $this->carAllocationService->processLeadAssignment($lead, $userId, $tier, AssignmentTypeEnum::SYSTEM_ASSIGNED);
     }
 
     private function updateLeadTier($lead, $tier): void
