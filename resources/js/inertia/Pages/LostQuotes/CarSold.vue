@@ -1,6 +1,4 @@
 <script setup>
-import { ref } from 'vue';
-import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 
 defineProps({
     quotes: Object,

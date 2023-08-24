@@ -251,7 +251,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CarUncontactableList,
         ])) {
 
-            $nav = $nav->add('Car Sold/Uncontactable', '', function (Section $section) {
+            $nav = $nav->add('Car Sold / Uncon', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CarSoldList), 'Car Sold', '/quotes/car-sold', fn ($s) => $s->attributes(['icon' => 'car']))
                     ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CarUncontactableList), 'Car Uncontactable', '/quotes/car-uncontactable', fn ($s) => $s->attributes(['icon' => 'car']));

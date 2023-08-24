@@ -165,6 +165,19 @@ use App\Enums\PermissionsEnum;
                         </ul>
                 </ul>
                 @endcanany
+                @canany([PermissionsEnum::CarSoldList, PermissionsEnum::CarUncontactableList])
+                    <ul class="nav side-menu">
+                        <li> <a><i class="fa fa-quote-right"></i>Car Sold / Uncon <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                @can(PermissionsEnum::CarSoldList)
+                                    <li><a href="{{ url('/quotes/car-sold') }}"> Car Sold </a></li>
+                                @endcan
+                                @can(PermissionsEnum::CarUncontactableList)
+                                    <li><a href="{{ url('/quotes/car-uncontactable') }}"> Car Uncontactable </a></li>
+                                @endcan
+                            </ul>
+                    </ul>
+                @endcanany
                 @canany([PermissionsEnum::VehicleDepreciationList, PermissionsEnum::VehicleValuationList])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
