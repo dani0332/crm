@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import { Head, router, usePage, Link, useForm } from '@inertiajs/vue3';
 
 defineProps({
     quotes: Object,
@@ -166,7 +167,15 @@ const quotesSelected = ref([]),
             fixed-checkbox
         >
             <template #item-uuid="{ code, uuid }">
-                {{ code }}
+
+                <Link
+                    :href="`/quotes/car/${uuid}`"
+                    class="text-primary-500 hover:underline"
+
+                >
+                    {{ code }}
+                </Link>
+
             </template>
 
 
