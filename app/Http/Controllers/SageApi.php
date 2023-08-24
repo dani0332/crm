@@ -22,21 +22,32 @@ class SageApi extends Controller
     public function processSagePost(SageRequest $request)
     {
         $leadStatus = 'policy booked';
+        
+        $messageFromAP = '';
 
+        if( !($request->discount > 0) && $leadStatus == 'policy booked' && strtolower($request->invoicePaymentStatus) != 'paid' ) {
+            $request->callExtra = TRUE;
+            $messageFromAP = $this->processRequest($request, $leadStatus);
+                        
+        }
+        $request->callExtra = FALSE;
+        $message = $this->processRequest($request, $leadStatus);
+        return back()->with('message', $message.$messageFromAP);
+    }
+
+    private function processRequest($request, $leadStatus)
+    {
         $payLoadOptions = SagePayloadFactory::createPayload($request, $leadStatus);
         $endPoint = $payLoadOptions['endPoint'];
         $payLoad = $payLoadOptions['payload'];
-
         $jsonResponse = $this->sageApiService->postToSage300($endPoint, $payLoad);
-
         // Process the JSON response and handle messages
         $message = $this->processJsonResponse($jsonResponse);
-
         $message .= ' SAGE Endpoint= '.$endPoint;
-
-        return back()->with('message', $message);
+        return $message;
 
     }
+
 
     private function processJsonResponse($message)
     {

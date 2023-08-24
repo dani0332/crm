@@ -64,7 +64,7 @@ const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
 const bookingDetailForm = useForm({
   requestType: 'New Business',
-  bookingDate: '17-07-2023',
+  bookingDate: '2023-07-07',
   invoiceDescription: 'P.ORI.GROUPMED.CPG/DHA-B/01/3/013861/2022',
   mainClassInsurance: 'Motor',
   invoicePaymentStatus: page.props.payments.length > 0 ? page.props.payments[0].payment_status_text : '',
@@ -81,12 +81,17 @@ const bookingDetailForm = useForm({
   commissionIncludingVat: '0.0',  
  
   
-  paymentReferenceNo: page.props.record.payment_reference,
-  customerId: page.props.customerAdditionalContacts.length > 0 ? page.props.customerAdditionalContacts[0].customer_id : '',
+  //paymentReferenceNo: page.props.record.payment_reference,
+  //customerId: String(page.props.customerAdditionalContacts.length > 0 ? page.props.customerAdditionalContacts[0].customer_id : ''),
+  customerId:'IC008', 
   paymentMethodName: page.props.payments.length > 0 ? page.props.payments[0].payment_methods_code : '',
   capturedAmount: page.props.payments.length > 0 ? page.props.payments[0].captured_amount : '0.00',
-  premiumWithoutTax: page.props.record.premium || null,
-  premiumWithTax: page.props.record.premium || null,
+  premiumWithoutTax: page.props.record.premium ?? '',
+  premiumWithTax: page.props.record.premium ?? '',
+  policyExpiryDate: page.props.record.previous_policy_expiry_date ?? '',
+  policyNumber: page.props.record.policy_number ?? '',
+  advisorName:  page.props.record.advisor_id_text ?? '',
+  policyIssuer: page.props.record.car_plan_provider_id_text ?? ''
    
   //paymentObject:  page.props.payments.length > 0 ? page.props.payments[0] : ''
 });
