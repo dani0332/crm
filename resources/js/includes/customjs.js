@@ -2795,3 +2795,57 @@ $('#search-teams').submit(function (e) {
     $('.loader').hide();
   }, 1000);
 });
+
+var amlDetailKycLogsDatatable = $('.aml-detail-data-table').DataTable({
+    ordering: false,
+    info: true,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    processing: true,
+    ajax: {
+        url: config.routes.aml_kyc_logs_datatable_route,
+        data: {
+            'quote_type_id' : $(location).attr('href').split("/").splice(5)[0],
+            'quote_request_id': $(location).attr('href').split("/").splice(5)[2]
+        }
+    },
+    columns: [
+        {
+            data: 'id',
+            name: 'id',
+            render: function(data, type, row){
+                return ( "<a href='" +config.routes.aml_datatable_route +'/' + row.id +"'>" + row.id + '</a>' );
+            }
+        },
+        { data: 'input', name: 'input' },
+        { data: 'search_type', name: 'search_type' },
+        {
+            data: 'screenshot',
+            name: 'screenshot',
+            render: function(data){
+                var imgSrc = data;
+                if (imgSrc != null) {
+                    return ( '<a href="' + imgSrc + '" target="_blank">' + '<img class="img-responsive" src="' + imgSrc + '" alt="screenshot" height="80px" width="80px"></a>' );
+                }
+            }
+        },
+        { data: 'match_found', name: 'match_found', render: function(data, type, row){
+                return ( ( row.match_found > 0) ? 'True' : 'False');
+            }
+        },
+        { data: 'results_found', name: 'results_found' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
+    ]
+});
+
+$(window).on('load', function(){
+    if($("table").hasClass('aml-detail-data-table')){
+        $('.loader').show();
+        amlDetailKycLogsDatatable.draw();
+        setTimeout(() => {
+            $('.loader').hide();
+        }, 1000);
+    }
+});

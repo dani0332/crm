@@ -369,6 +369,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         $controller = in_array('Aml', newUi()) ? V2AMLController::class : AMLController::class;
         Route::resource('aml', $controller);
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}', [$controller, 'amlQuoteDetails']);
+        Route::get('kycLogsRecords', [AMLController::class, 'kycLogsRecords'])->name('kycLogsRecords');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteStatusUpdate/{quoteTypeCode}', [$controller, 'quoteStatusUpdate'])->name('quoteStatusUpdate');
         Route::get('aml/{quoteTypeId}/details/{quoteRequestId}/quoteUpdate', [$controller, 'quoteUpdate'])->name('quoteUpdate');
         Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');

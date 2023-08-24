@@ -160,9 +160,6 @@ class AMLController extends Controller
         $quoteTypeText = $quoteType[0]->text;
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
         if ($quoteTypeCode != '') {
-            $kycLogs = AML::where('quote_request_id', '=', $quoteRequestId)
-                ->where('quote_type_id', '=', $quoteTypeId)
-                ->orderBy('created_at', 'desc')->get();
 
             if ($quoteTypeCode == quoteTypeCode::Car) {
                 $quoteRequest = CarQuote::select(
@@ -379,9 +376,8 @@ class AMLController extends Controller
             $latestAmlLogResults = $getLatestAmlLog->results_found;
         }
 
-        $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)
-            ->where('quote_request_id', $quoteRequestId)->get();
-        $getAMLNumRows = $getAMLRows->count();
+        $getAMLNumRows = AML::where('quote_type_id', '=', $quoteTypeId)
+            ->where('quote_request_id', $quoteRequestId)->count();
 
         $nationalityList = $this->sanctionListService->fetchNationality();
         $yearsList = $this->sanctionListService->years();
@@ -394,7 +390,6 @@ class AMLController extends Controller
                 'businessTypeCode',
                 'businessCoverTypeText',
                 'businessCommuModeText',
-                'kycLogs',
                 'quoteStatusCode',
                 'auditLogLine',
                 'isCurrentUserFromCompliance',
@@ -412,7 +407,6 @@ class AMLController extends Controller
                 'quoteTypeCode',
                 'quoteTypeText',
                 'quoteRequest',
-                'kycLogs',
                 'quoteStatusCode',
                 'auditLogLine',
                 'isCurrentUserFromCompliance',
@@ -428,6 +422,18 @@ class AMLController extends Controller
         }
     }
 
+    public function kycLogsRecords(Request $request){
+
+        $kycLogs = AML::where([
+            'quote_request_id' => $request->quote_request_id,
+            'quote_type_id' => $request->quote_type_id
+        ])->orderBy('created_at', 'desc');
+
+        return DataTables::of($kycLogs)
+            ->addIndexColumn()
+            ->make(true);
+
+    }
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
         $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType);
