@@ -64,6 +64,22 @@ function setQueryStringFilters() {
     }
 }
 
+const advisorOptionsFilter = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.roles[0].name
+            ? advisor.name + ' - ' + advisor.roles[0]?.name
+            : advisor.name,
+    }));
+});
+
+const advisorOptions = computed(() => {
+    return page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+});
+
 onMounted(() => {
     setQueryStringFilters();
 });
@@ -109,13 +125,11 @@ const quotesSelected = ref([]),
                     placeholder="Search by Renewal Batch"
                 />
 
-                <x-input
+                <ComboBox
                     v-model="filters.advisor_id"
-                    type="search"
-                    name="renewal_batch"
-                    label="Renewal Advisor"
-                    class="w-full"
-                    placeholder="Search by Renewal Batch"
+                    label="Advisor"
+                    placeholder="Search by Advisor"
+                    :options="advisorOptionsFilter"
                 />
 
                 <x-select
@@ -142,7 +156,6 @@ const quotesSelected = ref([]),
 
 
         <DataTable
-            v-model:items-selected="quotesSelected"
             table-class-name="tablefixed"
             :headers="tableHeader"
             :loading="loader.table"

@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 
@@ -21,8 +23,11 @@ class CarQuoteController extends Controller
     {
         $quotes = CarQuoteRepository::getLostQuotes(QuoteStatusEnum::CarSold);
 
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
+
         return inertia('LostQuotes/CarSold', [
-            'quotes' => $quotes
+            'quotes' => $quotes,
+            'advisors' => $advisors
         ]);
     }
 
@@ -33,8 +38,11 @@ class CarQuoteController extends Controller
     {
         $quotes = CarQuoteRepository::getLostQuotes(QuoteStatusEnum::Uncontactable);
 
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
+
         return inertia('LostQuotes/CarUncontactable', [
-            'quotes' => $quotes
+            'quotes' => $quotes,
+            'advisors' => $advisors
         ]);
     }
 

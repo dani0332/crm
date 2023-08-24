@@ -51,6 +51,14 @@ class CarQuoteRepository extends BaseRepository
             $query->where('clql.status', request()->approval_status);
         }
 
+        if (!empty(request()->advisor_id)) {
+            $query->whereIn('cqr.advisor_id', request()->advisor_id);
+        }
+
+        if (!empty(request()->renewal_batch)) {
+            $query->where('cqr.renewal_batch', request()->renewal_batch);
+        }
+
         return $query->orderBy(DB::raw(' IF (clql.status = "' . GenericRequestEnum::PENDING . '", 0, 1) '))->simplePaginate();
     }
 
