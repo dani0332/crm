@@ -14,7 +14,7 @@ class AddErrorEmailSendField extends Migration
     {
         if (Schema::hasTable('health_quote_request')) {
             Schema::table('health_quote_request', function ($table) {
-                if (! Schema::hasColumn('track_emails', 'is_error_email_sent')) {
+                if (! Schema::hasColumn('health_quote_request', 'is_error_email_sent')) {
                     $table->boolean('is_error_email_sent')->nullable()->default(false);
                 }
             });
