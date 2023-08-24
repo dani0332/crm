@@ -41,7 +41,6 @@
                 serverSide: true,
                 searching: false,
                 paging: true,
-                processing: true,
                 ordering: true,
                 lengthChange: false,
                 ajax: config.routes.lead_allocation_index_route,
@@ -94,7 +93,6 @@
                         orderable: true,
                         searchable: false,
                         render: function(data, type, row) {
-                            debugger;
                             var statusText = getStatusText(data);
                             if (data == 1) {
                                 var html = `
@@ -173,7 +171,6 @@
             }
     });
     function changeAvailabilityInputs(ischecked){
-        debugger;
         $inputs = $('.chk');
         $inputs.each(function(){
             ischecked ? $(this).attr('disabled', false) : $(this).attr('disabled', true);
@@ -217,7 +214,6 @@
                     $(this).addClass('danger');
                     var userId = $(self).data('userid');
                     var allocationId = $(self).data('id');
-                    debugger;
                     $.ajax({
                         url: '/lead-allocation/update-availability',
                         type: 'POST',

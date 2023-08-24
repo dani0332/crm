@@ -97,7 +97,7 @@ class ReAssignCarLeadsJob extends LeadAllocationJobInterface
         return $this->carAllocationService->getRules($lead);
     }
 
-    protected function finalizeAdvisors($lead, $tier, $users, $rules): int
+    protected function finalizeAdvisors($lead, $tier, $users, $rules)
     {
         return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
     }

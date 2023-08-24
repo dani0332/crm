@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Jobs\CarAllocationJob;
@@ -32,14 +33,17 @@ class ApiController extends Controller
 
     public function assignLeads(Request $request)
     {
-        $quoteType = $request['attributes']['quoteType'];
-        $quoteId = $request['attributes']['CDBID'];
-        if ($request->has('attributes') && isset($quoteType) && isset($quoteId)) {
-            if ($quoteType == CarQuote::class) {
+        info('adding request log : '. json_encode($request->all()));
+        if($request->has('quoteUUID') && $request->has('quoteTypeId')){
+            $quoteId = $request['quoteUUID'];
+            $quoteType = $request['quoteTypeId'];
+            info('API is hit for quote uuid : '. $quoteId. ' with quote type id : '. $quoteType);
+            if ($quoteType == QuoteTypeId::Car) {
                 dispatch(new CarAllocationJob(app(CarAllocationService::class), $quoteId));
             }
-
-            return $this->apiService->sibHealthQuoteCallBack($request['attributes']['CDBID']);
+        }
+        else{
+            return response('Required Parameter missing', 403);
         }
     }
 }

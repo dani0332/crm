@@ -30,24 +30,19 @@ class CarAllocationService extends AllocationService
 
         info('Car leads fetch start date is: '.$from.' and end datetime is: '.$to.' and pickup limit is: '.$limit.' and Pickup direction FIFO is: '.$isFIFO);
 
-        $unassignedLeadsCount = $this->getUnassignedLeadsCount();
 
-        $leadsQuery = CarQuote::whereNull('advisor_id')
-            ->where('is_renewal_tier_email_sent', 0)->where('deferred', 0)
-            ->whereBetween('created_at', [$from, $to])
-            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->orderBy('created_at', $isFIFO ? 'asc' : 'desc')
-            ->limit($limit);
+        $leadsQuery = CarQuote::where('uuid', $quoteId);
 
-        $this->addDeferredLeadsIfNeeded($unassignedLeadsCount, $limit, $leadsQuery);
+        $deferredLeads = $this->getDeferredLeads();
+
+        $leadsQuery->union($deferredLeads);
 
         return $this->applyPriority($leadsQuery, $limit);
     }
 
-    protected function getUnassignedLeadsCount(): mixed
+    protected function getDeferredLeads(): mixed
     {
-        return CarQuote::whereNull('advisor_id')->count();
+        return CarQuote::whereNull('advisor_id')->where('deferred', 1)->whereBetween('deferred_at', [now()->subDay(2)->toDateTimeString(), now()]);
     }
 
     private function fetchDeferredLeads($limit): mixed
@@ -125,25 +120,32 @@ class CarAllocationService extends AllocationService
         if ($advisorId) {
             $tierUserIds = TierUser::where('tier_id', $tierId)->where('user_id', '!=', $advisorId)->pluck('user_id');
         } else {
+
+
             $tierUserIds = TierUser::where('tier_id', $tierId)->pluck('user_id');
         }
 
         info('Tier users: '.json_encode($tierUserIds));
-
-        $eligibleUsers = LeadAllocation::with('leadAllocationUser')
-            ->whereHas('leadAllocationUser', function ($query) {
-                $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                    ->where('is_available', 1)->where('status', UserStatusEnum::ONLINE);
-            })
-            ->where(function ($query) {
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
-
-            ->whereIn('user_id', $tierUserIds)
-            ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
-
+        $OnlineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::ONLINE, $tierUserIds);
+        $OfflineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::OFFLINE, $tierUserIds);
+        $eligibleUsers = count($OnlineEligibleUsers) > 0 ? $OnlineEligibleUsers : $OfflineEligibleUsers;
         return $eligibleUsers;
+    }
+
+    public function getAdvisorsByStatus($status, $tierUserIds)
+    {
+        return LeadAllocation::with('leadAllocationUser')
+        ->whereHas('leadAllocationUser', function ($query) use($status) {
+            $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                ->where('is_available', 1)->where('status', $status);
+        })
+        ->where(function ($query) {
+            $query->whereRaw('allocation_count < max_capacity')
+                ->orWhere('max_capacity', -1);
+        })
+
+        ->whereIn('user_id', $tierUserIds)
+        ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
     }
 
     public function getRules($carLead)
@@ -167,14 +169,6 @@ class CarAllocationService extends AllocationService
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
         return [$from, $to, $limit, $isFIFO];
-    }
-
-    public function addDeferredLeadsIfNeeded($unassignedLeadsCount, mixed $limit, $leadsQuery): void
-    {
-        if ($unassignedLeadsCount < $limit) {
-            $deferredLeads = $this->fetchDeferredLeads($limit - $unassignedLeadsCount);
-            $leadsQuery->union($deferredLeads);
-        }
     }
 
     public function applyPriority($leadsQuery, mixed $limit): mixed
@@ -220,7 +214,7 @@ class CarAllocationService extends AllocationService
                 });
 
                 return $leadSource;
-            });
+            })->toArray();
     }
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
@@ -396,9 +390,8 @@ class CarAllocationService extends AllocationService
 
         $carQuote = CarQuote::where('id', $lead->id)->first();
 
-        if ($carQuote && $carQuote->tier_id == null) {
+        if ($carQuote) {
             $carQuote->tier_id = $tier->id;
-            // Update lead as deferred to snooze assignment while available can be assigned
             $carQuote->deferred = 1;
             $carQuote->deferred_at = now();
             $carQuote->save();
@@ -426,5 +419,34 @@ class CarAllocationService extends AllocationService
         $shouldProceed = now()->between($start_time, $end_time);
 
         return $shouldProceed;
+    }
+
+    public function buildEmailDateForLMSIntroEmail($carQuote)
+    {
+        $user = User::where('id', $carQuote->advisor_id)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+        $emailData = (object) [
+            'customerEmail' => $carQuote->email,
+            'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'advisorName' => $user->name,
+            'landLine' => $user->landline_no,
+            'mobilePhone' => $user->mobile_no,
+            'advisorEmail' => $user->email,
+            'carQuoteId' => $carQuote->code,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+        ];
+
+        return $emailData;
+    }
+
+    public function isLeadReassigned($lead)
+    {
+        $leadDetail = CarQuoteRequestDetail::where('car_quote_request_id', $lead->id)->first();
+        if($leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2)){
+            return true;
+        }else{
+            return false;
+        }
     }
 }

@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Log;
 class CarAllocationJob extends LeadAllocationJobInterface
 {
     protected CarAllocationService $carAllocationService;
-    protected int $quoteId;
+    protected $quoteId;
     public function __construct(CarAllocationService $carAllocationService, $quoteId)
     {
         $this->carAllocationService = $carAllocationService;
+        info('Car allocation job is triggered for uuid : '. $quoteId);
         $this->quoteId = $quoteId;
     }
 

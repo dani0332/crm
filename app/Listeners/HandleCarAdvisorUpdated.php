@@ -2,9 +2,11 @@
 
 namespace App\Listeners;
 
+use App\Enums\quoteTypeCode;
 use App\Events\CarQuoteAdvisorUpdated;
+use App\Jobs\IntroEmailJob;
 use App\Models\Customer;
-use App\Services\CarQuoteService;
+use App\Services\CarAllocationService;
 use App\Services\SendSmsCustomerService;
 
 class HandleCarAdvisorUpdated
@@ -17,7 +19,7 @@ class HandleCarAdvisorUpdated
      *
      * @return void
      */
-    public function __construct(CarQuoteService $carQuoteService, SendSmsCustomerService $smsService)
+    public function __construct(CarAllocationService $carQuoteService, SendSmsCustomerService $smsService)
     {
         $this->carQuoteService = $carQuoteService;
         $this->smsService = $smsService;
@@ -31,10 +33,14 @@ class HandleCarAdvisorUpdated
     public function handle(CarQuoteAdvisorUpdated $event)
     {
         info('inside handle car update advisor');
+
         $lead = $event->lead;
-        // Trigger emails
-        $this->buildSMS($lead);
-        //$this->smsService->sendSMS();
+
+        //$this->triggerCarQuoteEmail($lead);
+        info('Email sending code reached');
+
+        //$this->buildSMS($lead);
+        info('SMS sending code reached');
 
     }
     public function buildSMS($lead)
@@ -47,5 +53,16 @@ class HandleCarAdvisorUpdated
         $this->smsService->sendSMS($clientNumber, $content, $customer);
 
         info('inside after build sms');
+    }
+
+    public function triggerCarQuoteEmail($lead)
+    {
+        $emailData = $this->carQuoteService->buildEmailDateForLMSIntroEmail($lead); // create email body for intro email
+
+        $isLeadReassigned = $this->carQuoteService->isLeadReassigned($lead);
+
+        $emailTemplateId = (int) $this->carQuoteService->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
+
+        IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email');
     }
 }

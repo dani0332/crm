@@ -162,7 +162,6 @@
     <script src="{{ asset('build/js/custom.js') }}"></script>
     <script>
         function getStatusText(statusId){
-            debugger;
             var statusText = '';
             switch(parseInt(statusId)){
                 case 1:
@@ -194,6 +193,28 @@
             cluster: 'ap1'
         });
 
+        function changeAvailiblity(data, self)
+        {
+            $('#online-status-div').hide();
+            $('#offline-status-div').hide();
+            $('#unavailable-status-div').hide();
+            if(userId == data.userId){
+                if(data.status == 1) {
+                    $('#online-status-div').show();
+                }
+                if(data.status == 2)  {
+                    $('#offline-status-div').show();
+                }
+                if(data.status != 1 && data.status != 2 ) {
+                    $('#unavailable-status-div').show();
+                }
+            }
+            var statusText = getStatusText(data.status);
+            $(self).parent().find('.status-text').text(statusText);
+            $(self).parent().find('#is_active').prop('checked', data.status == 1 ? true: false);
+            $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
+        }
+
         var channel = pusher.subscribe('activity.user');
         channel.bind('user.status.changed', function(data) {
             if ($('.car_lead_allocation_table').length > 0) {
@@ -201,29 +222,20 @@
                     .find("td:first")
                     .each(function () {
                         if ($(this).text() == data.userId) {
-                            console.log('text and user match : ' + data.userId + ' and status is : '. data.status);
-                            $('#online-status-div').hide();
-                            $('#offline-status-div').hide();
-                            $('#unavailable-status-div').hide();
-                            if(userId == data.userId){
-                                if(data.status == 1) {
-                                    $('#online-status-div').show();
-                                }
-                                if(data.status == 2)  {
-                                    $('#offline-status-div').show();
-                                }
-                                if(data.status != 1 && data.status != 2 ) {
-                                    $('#unavailable-status-div').show();
-                                }
-                            }
-                            var statusText = getStatusText(data.status);
-                            $(this).parent().find('.status-text').text(statusText)
-                            $(this).parent().find('#is_active').prop('checked', data.status == 1 ? true: false);
-                            $(this).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger')
+                           changeAvailiblity(data, this);
                         }
                     });
-            }else{
-                console.log(data);
+            }
+            if ($('.lead_allocation_table').length > 0) {
+                $('.lead_allocation_table').find("tr")
+                    .find("td:first")
+                    .each(function () {
+                        if ($(this).text() == data.userId) {
+                           changeAvailiblity(data, this);
+                        }
+                    });
+            }
+            if($('.lead_allocation_table').length == 0 && $('.car_lead_allocation_table').length == 0){
                 $('#online-status-div').hide();
                 $('#offline-status-div').hide();
                 $('#unavailable-status-div').hide();

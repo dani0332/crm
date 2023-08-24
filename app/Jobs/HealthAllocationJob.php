@@ -2,16 +2,19 @@
 
 namespace App\Jobs;
 
-use App\Models\Tier;
+use App\Enums\AssignmentTypeEnum;
+use App\Models\LeadAllocation;
 use App\Services\HealthAllocationService;
 
 class HealthAllocationJob extends LeadAllocationJobInterface
 {
     protected HealthAllocationService $healthAllocationService;
+    protected int $quoteId;
 
-    public function __construct(HealthAllocationService $healthAllocationService)
+    public function __construct(HealthAllocationService $healthAllocationService, $quoteId)
     {
         $this->healthAllocationService = $healthAllocationService;
+        $this->quoteId = $quoteId;
     }
 
     public function handle()
@@ -19,71 +22,86 @@ class HealthAllocationJob extends LeadAllocationJobInterface
         // Fetch the leads to process, including deferred leads if needed
         $leads = $this->fetchLeads();
 
-        foreach ($leads as $lead) {
-            // Find the appropriate tier for the lead
-            $tier = $this->findTier($lead);
+        if (count($leads) > 0) {
 
-            // If a valid tier is found
-            if ($tier) {
-                // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id);
+            $availableUsers = $this->findAvailableUsers(0);
 
-                // Find custom rules for the lead
-                $rules = $this->findRules($lead);
+            $currentIteration = now();
 
-                // Determine the final advisor for the lead based on tier, users, and rules
-                $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
+            info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR  '.$currentIteration.' -----------------------');
 
-                if ($advisorId) {
-                    // Assign the lead to the advisor and send an email
-                    $this->assignLeadAndSendEmail($lead, $advisorId, $tier);
+            $healthTeams = ['EBP', 'RM-Speed', 'RM-NB'];
+
+            foreach ($healthTeams as $healthTeam) {
+                info('Health Lead Allocation Started for health team: '.$healthTeam);
+
+                $filteredLeadsByHealthTeam = $leads->filter(function ($lead) use ($healthTeam) {
+                    return strtolower($lead->health_team_type) == strtolower($healthTeam) ? $lead : false;
+                });
+
+                $filteredUsersByHealthTeam = $availableUsers->filter(function ($user) use ($healthTeam) {
+                    return strtolower($user->sub_team_name) == strtolower($healthTeam) ? $user : false;
+                });
+
+                if ($filteredLeadsByHealthTeam->count() > 0 && $filteredUsersByHealthTeam->count() > 0) {
+                    foreach ($filteredLeadsByHealthTeam as $lead) {
+                        info('----------------------- HEALTH LEAD ALLOCATION STARTED FOR LEAD '.$lead->uuid.' -----------------------');
+
+                        $filteredUsersByHealthTeam = $filteredUsersByHealthTeam->sortBy('last_allocated', SORT_NATURAL)->flatten();
+
+                        $advisor = $filteredUsersByHealthTeam->first();
+
+                        $this->assignLead($lead, $advisor->id);
+
+                        info('-------> Health Lead Allocation Done for lead: '.$lead->uuid.' and advisor: '.$advisor->name);
+
+                        $filteredUsersByHealthTeam->each(function ($user) use ($advisor) {
+                            if ($user->id == $advisor->id) {
+                                $user->last_allocated = microtime(true);
+                            }
+                        });
+                        sleep(1);
+                        info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR LEAD '.$lead->uuid.' -----------------------');
+                    }
+
+                    foreach ($filteredUsersByHealthTeam as $user) {
+                        LeadAllocation::where('user_id', $user->id)->update(['last_allocated' => (float) $user->last_allocated]);
+                    }
                 } else {
-                    // Update the lead's tier information
-                    $this->updateLeadTier($lead, $tier);
+                    info($healthTeam.' Leads count is '.$filteredLeadsByHealthTeam->count().' and available users count is '.$filteredUsersByHealthTeam->count());
                 }
-            } else {
-                // Log that tier was not found for the lead and skip processing
-                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
+            info('----------------------- HEALTH LEAD ALLOCATION ENDED FOR  '.$currentIteration.' -----------------------');
         }
     }
 
     protected function fetchLeads(): mixed
     {
-        return $this->healthAllocationService->fetchLeads();
+        return $this->healthAllocationService->fetchLeads($this->quoteId);
     }
 
-    protected function findTier($lead): Tier
+    protected function findAvailableUsers($tierId)
     {
-        if ($lead->tier_id == null) {
-            return $this->healthAllocationService->findTier($lead);
-        }
-
-        return $this->healthAllocationService->getTierById($lead->tier_id);
+        return $this->healthAllocationService->getEligibleUsersForAllocation();
     }
 
-    protected function findAvailableUsers($tierId): array
+    protected function assignLead($lead, $userId, $tier = null): void
     {
-        return $this->healthAllocationService->getEligibleUsersForAllocation($tierId);
+        $this->healthAllocationService->processAssignment($lead, $userId, AssignmentTypeEnum::SYSTEM_ASSIGNED);
     }
 
-    protected function findRules($lead): array
+    protected function findRules($lead)
     {
-        return $this->healthAllocationService->getRules($lead);
+
     }
 
-    protected function finalizeAdvisors($lead, $tier, $users, $rules): int
+    protected function finalizeAdvisors($lead, $tier, $users, $rules)
     {
-        return $this->healthAllocationService->determineFinalUserId($lead, $users, $rules);
+
     }
 
-    protected function assignLeadAndSendEmail($lead, $userId, $tier): void
+    protected function findTier($lead)
     {
-        $this->healthAllocationService->processLeadAssignmentAndSendEmail($lead, $userId, $tier);
-    }
 
-    private function updateLeadTier($lead, $tier): void
-    {
-        $this->healthAllocationService->updateLeadTier($lead, $tier);
     }
 }
