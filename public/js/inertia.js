@@ -14002,6 +14002,7 @@ __webpack_require__.r(__webpack_exports__);
       return props.plan.discountPremium + props.plan.vat + props.totalSelectedAddonsPriceWithVat;
     });
     var insurerAvailableTrimsOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      if (!Array.isArray(props.plan.insurerAvailableTrims)) return [];
       return props.plan.insurerAvailableTrims.map(function (ins) {
         return {
           value: ins.admeId,

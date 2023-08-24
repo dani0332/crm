@@ -40,6 +40,8 @@ const totalPremiumWithVat = computed(() => {
 })
 
 const insurerAvailableTrimsOptions = computed(() => {
+  if (!Array.isArray(props.plan.insurerAvailableTrims)) return [];
+
   return props.plan.insurerAvailableTrims.map(ins => {
     return { value: ins.admeId, label: ins.description }
   })
