@@ -10,10 +10,8 @@ use App\Jobs\GetQuotePlansJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\HealthQuote;
 use App\Models\LeadAllocation;
-use App\Models\TierUser;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class HealthAllocationService extends AllocationService
 {
@@ -27,21 +25,22 @@ class HealthAllocationService extends AllocationService
         $OnlineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::ONLINE);
         $OfflineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::OFFLINE);
         $eligibleUsers = count($OnlineEligibleUsers) > 0 ? $OnlineEligibleUsers : $OfflineEligibleUsers;
+
         return $eligibleUsers;
     }
 
     public function getAdvisorsByStatus($status)
     {
         return LeadAllocation::with('leadAllocationUser')
-        ->whereHas('leadAllocationUser', function ($query) use($status) {
-            $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                ->where('is_available', 1)->where('status', $status);
-        })
-        ->where(function ($query) {
-            $query->whereRaw('allocation_count < max_capacity')
-                ->orWhere('max_capacity', -1);
-        })
-        ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id');
+            ->whereHas('leadAllocationUser', function ($query) use ($status) {
+                $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                    ->where('is_available', 1)->where('status', $status);
+            })
+            ->where(function ($query) {
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id');
     }
 
     public function processAssignment($lead, $advisorId, $assignmentType)

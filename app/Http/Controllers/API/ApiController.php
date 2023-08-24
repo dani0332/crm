@@ -33,16 +33,15 @@ class ApiController extends Controller
 
     public function assignLeads(Request $request)
     {
-        info('adding request log : '. json_encode($request->all()));
-        if($request->has('quoteUUID') && $request->has('quoteTypeId')){
+        info('adding request log : '.json_encode($request->all()));
+        if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
             $quoteId = $request['quoteUUID'];
             $quoteType = $request['quoteTypeId'];
-            info('API is hit for quote uuid : '. $quoteId. ' with quote type id : '. $quoteType);
+            info('API is hit for quote uuid : '.$quoteId.' with quote type id : '.$quoteType);
             if ($quoteType == QuoteTypeId::Car) {
                 dispatch(new CarAllocationJob(app(CarAllocationService::class), $quoteId));
             }
-        }
-        else{
+        } else {
             return response('Required Parameter missing', 403);
         }
     }

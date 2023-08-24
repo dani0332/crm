@@ -30,7 +30,6 @@ class CarAllocationService extends AllocationService
 
         info('Car leads fetch start date is: '.$from.' and end datetime is: '.$to.' and pickup limit is: '.$limit.' and Pickup direction FIFO is: '.$isFIFO);
 
-
         $leadsQuery = CarQuote::where('uuid', $quoteId);
 
         $deferredLeads = $this->getDeferredLeads();
@@ -121,7 +120,6 @@ class CarAllocationService extends AllocationService
             $tierUserIds = TierUser::where('tier_id', $tierId)->where('user_id', '!=', $advisorId)->pluck('user_id');
         } else {
 
-
             $tierUserIds = TierUser::where('tier_id', $tierId)->pluck('user_id');
         }
 
@@ -129,23 +127,23 @@ class CarAllocationService extends AllocationService
         $OnlineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::ONLINE, $tierUserIds);
         $OfflineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::OFFLINE, $tierUserIds);
         $eligibleUsers = count($OnlineEligibleUsers) > 0 ? $OnlineEligibleUsers : $OfflineEligibleUsers;
+
         return $eligibleUsers;
     }
 
     public function getAdvisorsByStatus($status, $tierUserIds)
     {
         return LeadAllocation::with('leadAllocationUser')
-        ->whereHas('leadAllocationUser', function ($query) use($status) {
-            $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                ->where('is_available', 1)->where('status', $status);
-        })
-        ->where(function ($query) {
-            $query->whereRaw('allocation_count < max_capacity')
-                ->orWhere('max_capacity', -1);
-        })
-
-        ->whereIn('user_id', $tierUserIds)
-        ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
+            ->whereHas('leadAllocationUser', function ($query) use ($status) {
+                $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                    ->where('is_available', 1)->where('status', $status);
+            })
+            ->where(function ($query) {
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->whereIn('user_id', $tierUserIds)
+            ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
     }
 
     public function getRules($carLead)
@@ -443,9 +441,9 @@ class CarAllocationService extends AllocationService
     public function isLeadReassigned($lead)
     {
         $leadDetail = CarQuoteRequestDetail::where('car_quote_request_id', $lead->id)->first();
-        if($leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2)){
+        if ($leadDetail && $leadDetail->advisor_assigned_date > now()->subMinutes(2)) {
             return true;
-        }else{
+        } else {
             return false;
         }
     }

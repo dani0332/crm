@@ -15,7 +15,7 @@ class CarAllocationJob extends LeadAllocationJobInterface
     public function __construct(CarAllocationService $carAllocationService, $quoteId)
     {
         $this->carAllocationService = $carAllocationService;
-        info('Car allocation job is triggered for uuid : '. $quoteId);
+        info('Car allocation job is triggered for uuid : '.$quoteId);
         $this->quoteId = $quoteId;
     }
 

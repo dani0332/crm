@@ -66,17 +66,17 @@ class UpdateUserStatus extends Command
 
                 $newStatus = $currentUserStatus;
 
-                if($lastActivity < $unAvailableTime){
+                if ($lastActivity < $unAvailableTime) {
                     $newStatus = UserStatusEnum::UNAVAILABLE;
-                } else if ($lastActivity < $offlineTime){
+                } elseif ($lastActivity < $offlineTime) {
                     $newStatus = UserStatusEnum::OFFLINE;
                 }
 
-                if($newStatus != $currentUserStatus){
-                    info('updating user as '. $newStatus  .' as the last activity was : '.$lastActivity);
+                if ($newStatus != $currentUserStatus) {
+                    info('updating user as '.$newStatus.' as the last activity was : '.$lastActivity);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus));
-                    if($newStatus == UserStatusEnum::UNAVAILABLE){
+                    if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $userId));
                     }
                 }
