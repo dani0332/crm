@@ -166,7 +166,11 @@ const quotesSelected = ref([]),
             hide-footer
         >
             <template #item-uuid="{ code, uuid }">
-                {{ code }}
+                <a
+                    :href="`/quotes/car/${uuid}`"
+                    class="text-primary-500 hover:underline">
+                    {{ code }}
+                </a>
             </template>
 
             <template #item-advisor="{ advisor }">

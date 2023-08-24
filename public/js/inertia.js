@@ -34528,6 +34528,7 @@ var _hoisted_2 = {
 var _hoisted_3 = {
   "class": "flex justify-end gap-3 mb-4"
 };
+var _hoisted_4 = ["href"];
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-divider");
   var _component_x_input = (0,vue__WEBPACK_IMPORTED_MODULE_2__.resolveComponent)("x-input");
@@ -34616,16 +34617,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "item-uuid": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function (_ref) {
       var code = _ref.code,
         uuid = _ref.uuid;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)($setup["Link"], {
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("a", {
         href: "/quotes/car/".concat(uuid),
         "class": "text-primary-500 hover:underline"
-      }, {
-        "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(code), 1 /* TEXT */)];
-        }),
-
-        _: 2 /* DYNAMIC */
-      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["href"])];
+      }, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(code), 9 /* TEXT, PROPS */, _hoisted_4)];
     }),
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["loading", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_Pagination, {
@@ -34671,6 +34666,7 @@ var _hoisted_2 = {
 var _hoisted_3 = {
   "class": "flex justify-end gap-3 mb-4"
 };
+var _hoisted_4 = ["href"];
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.Head;
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_3__.resolveComponent)("x-divider");
@@ -34759,9 +34755,11 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "item-uuid": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function (_ref) {
       var code = _ref.code,
         uuid = _ref.uuid;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(code), 1 /* TEXT */)];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createElementVNode)("a", {
+        href: "/quotes/car/".concat(uuid),
+        "class": "text-primary-500 hover:underline"
+      }, (0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(code), 9 /* TEXT, PROPS */, _hoisted_4)];
     }),
-
     "item-advisor": (0,vue__WEBPACK_IMPORTED_MODULE_3__.withCtx)(function (_ref2) {
       var advisor = _ref2.advisor;
       return [(0,vue__WEBPACK_IMPORTED_MODULE_3__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_3__.toDisplayString)(advisor === null || advisor === void 0 ? void 0 : advisor.email), 1 /* TEXT */)];

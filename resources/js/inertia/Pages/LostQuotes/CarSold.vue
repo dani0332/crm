@@ -167,17 +167,12 @@ const quotesSelected = ref([]),
             fixed-checkbox
         >
             <template #item-uuid="{ code, uuid }">
-
-                <Link
+                <a
                     :href="`/quotes/car/${uuid}`"
-                    class="text-primary-500 hover:underline"
-
-                >
+                    class="text-primary-500 hover:underline">
                     {{ code }}
-                </Link>
-
+                </a>
             </template>
-
 
         </DataTable>
 
