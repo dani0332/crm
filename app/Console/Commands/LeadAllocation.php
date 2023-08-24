@@ -71,7 +71,7 @@ class LeadAllocation extends Command
 
                 $unAllocatedLeads = $leadAllocationService->getHealthUnallocatedLeads();
 
-                if (count($unAllocatedLeads) > 0) {
+                if ($unAllocatedLeads && count($unAllocatedLeads) > 0) {
                     foreach ($unAllocatedLeads as $unAllocatedLead) {
                         if (! $unAllocatedLead->health_team_type) {
                             $leadAllocationService->assignHealthTeamBasedOnStartingPrice($unAllocatedLead);
