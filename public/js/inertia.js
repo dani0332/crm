@@ -11475,11 +11475,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
 /* unplugin-vue-components disabled */
+
+
 
 
 
@@ -11488,29 +11490,28 @@ __webpack_require__.r(__webpack_exports__);
   props: {
     dropdownSource: Object,
     model: String,
-    genderOptions: Object,
     quote: {
       type: Object,
       "default": {}
     }
   },
   setup: function setup(__props, _ref) {
-    var _props$quote, _props$quote2, _props$quote3, _props$quote4, _props$quote5, _props$quote6, _props$quote7, _props$quote8, _props$quote9, _props$quote10, _props$quote11, _props$quote12, _props$quote13, _props$quote14, _props$quote15, _props$quote16, _props$quote17, _props$quote18, _props$quote19, _props$quote20, _props$quote21, _props$quote22, _props$quote23, _props$quote24, _props$quote25, _props$quote26, _props$quote27, _props$quote28, _props$quote29;
+    var _props$quote, _props$quote2, _props$quote3, _props$quote4, _props$quote5, _props$quote6, _props$quote7, _props$quote8, _props$quote9, _props$quote10, _props$quote11, _props$quote12, _props$quote13, _props$quote14, _props$quote15, _props$quote16, _props$quote17, _props$quote18, _props$quote19, _props$quote20, _props$quote21, _props$quote22, _props$quote23, _props$quote24, _props$quote25, _props$quote26, _props$quote27, _props$quote28, _props$quote29, _props$quote30;
     var __expose = _ref.expose;
     __expose();
     var props = __props;
-    var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_0__.useRules)(),
+    var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
       isRequired = _useRules.isRequired,
       isEmail = _useRules.isEmail;
-    var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_1__.ref)(false);
-    var isEdit = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
+    var isEmptyField = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
+    var isEdit = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       return route().current().includes('edit');
     });
-    var genderSelect = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
-      return Object.keys(props.genderOptions).map(function (status) {
+    var carMakeOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+      return props.dropdownSource.car_make_id.map(function (item) {
         return {
-          value: status,
-          label: props.genderOptions[status]
+          value: item.id,
+          label: item.text
         };
       });
     });
@@ -11522,36 +11523,58 @@ __webpack_require__.r(__webpack_exports__);
       email: ((_props$quote3 = props.quote) === null || _props$quote3 === void 0 ? void 0 : _props$quote3.email) || '',
       mobile_no: ((_props$quote4 = props.quote) === null || _props$quote4 === void 0 ? void 0 : _props$quote4.mobile_no) || '',
       dob: (_props$quote5 = props.quote) !== null && _props$quote5 !== void 0 && _props$quote5.dob ? (_props$quote6 = props.quote) === null || _props$quote6 === void 0 ? void 0 : _props$quote6.dob.split('-').reverse().join('-') : null,
-      policy_number: ((_props$quote7 = props.quote) === null || _props$quote7 === void 0 ? void 0 : _props$quote7.policy_number) || null,
-      cylinder: ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : _props$quote8.cylinder) || null,
-      preference: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 ? void 0 : _props$quote9.preference) || '',
-      details: ((_props$quote10 = props.quote) === null || _props$quote10 === void 0 ? void 0 : _props$quote10.details) || '',
-      marital_status_id: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : _props$quote11.marital_status_id) || null,
-      uae_license_held_for_id: ((_props$quote12 = props.quote) === null || _props$quote12 === void 0 ? void 0 : _props$quote12.uae_license_held_for_id) || null,
-      nationality_id: ((_props$quote13 = props.quote) === null || _props$quote13 === void 0 ? void 0 : _props$quote13.nationality_id) || null,
-      lead_type_id: ((_props$quote14 = props.quote) === null || _props$quote14 === void 0 ? void 0 : _props$quote14.lead_type_id) || null,
-      back_home_license_held_for_id: ((_props$quote15 = props.quote) === null || _props$quote15 === void 0 ? void 0 : _props$quote15.back_home_license_held_for_id) || null,
-      salary_band_id: ((_props$quote16 = props.quote) === null || _props$quote16 === void 0 ? void 0 : _props$quote16.salary_band_id) || null,
-      member_category_id: ((_props$quote17 = props.quote) === null || _props$quote17 === void 0 ? void 0 : _props$quote17.member_category_id) || null,
-      gender: ((_props$quote18 = props.quote) === null || _props$quote18 === void 0 ? void 0 : _props$quote18.gender) || null,
-      currently_insured_with_id: ((_props$quote19 = props.quote) === null || _props$quote19 === void 0 ? void 0 : _props$quote19.currently_insured_with_id) || null,
-      policy_start_date: ((_props$quote20 = props.quote) === null || _props$quote20 === void 0 ? void 0 : _props$quote20.policy_start_date) || null,
-      is_ebp_renewal: ((_props$quote21 = props.quote) === null || _props$quote21 === void 0 ? void 0 : _props$quote21.is_ebp_renewal) || null,
-      is_ecommerce: ((_props$quote22 = props.quote) === null || _props$quote22 === void 0 ? void 0 : _props$quote22.is_ecommerce) || null,
-      has_dental: ((_props$quote23 = props.quote) === null || _props$quote23 === void 0 ? void 0 : _props$quote23.has_dental) || null,
-      has_worldwide_cover: ((_props$quote24 = props.quote) === null || _props$quote24 === void 0 ? void 0 : _props$quote24.has_worldwide_cover) || null,
-      has_home: ((_props$quote25 = props.quote) === null || _props$quote25 === void 0 ? void 0 : _props$quote25.has_home) || null,
-      car_make_id: ((_props$quote26 = props.quote) === null || _props$quote26 === void 0 ? void 0 : _props$quote26.car_make_id) || null,
-      trim: ((_props$quote27 = props.quote) === null || _props$quote27 === void 0 ? void 0 : _props$quote27.trim) || null,
-      car_model_id: ((_props$quote28 = props.quote) === null || _props$quote28 === void 0 ? void 0 : _props$quote28.car_model_id) || null,
-      year_of_manufacture: parseInt((_props$quote29 = props.quote) === null || _props$quote29 === void 0 ? void 0 : _props$quote29.year_of_manufacture) || null
+      cylinder: ((_props$quote7 = props.quote) === null || _props$quote7 === void 0 ? void 0 : _props$quote7.cylinder) || null,
+      uae_license_held_for_id: ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : _props$quote8.uae_license_held_for_id) || null,
+      nationality_id: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 ? void 0 : _props$quote9.nationality_id) || null,
+      back_home_license_held_for_id: ((_props$quote10 = props.quote) === null || _props$quote10 === void 0 ? void 0 : _props$quote10.back_home_license_held_for_id) || null,
+      gender: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : _props$quote11.gender) || null,
+      currently_insured_with_id: ((_props$quote12 = props.quote) === null || _props$quote12 === void 0 ? void 0 : _props$quote12.currently_insured_with) || null,
+      policy_start_date: ((_props$quote13 = props.quote) === null || _props$quote13 === void 0 ? void 0 : _props$quote13.policy_start_date) || null,
+      is_ebp_renewal: ((_props$quote14 = props.quote) === null || _props$quote14 === void 0 ? void 0 : _props$quote14.is_ebp_renewal) || null,
+      is_ecommerce: ((_props$quote15 = props.quote) === null || _props$quote15 === void 0 ? void 0 : _props$quote15.is_ecommerce) || null,
+      has_dental: ((_props$quote16 = props.quote) === null || _props$quote16 === void 0 ? void 0 : _props$quote16.has_dental) || null,
+      has_worldwide_cover: ((_props$quote17 = props.quote) === null || _props$quote17 === void 0 ? void 0 : _props$quote17.has_worldwide_cover) || null,
+      has_home: ((_props$quote18 = props.quote) === null || _props$quote18 === void 0 ? void 0 : _props$quote18.has_home) || null,
+      car_make_id: ((_props$quote19 = props.quote) === null || _props$quote19 === void 0 ? void 0 : _props$quote19.car_make_id) || null,
+      vehicle_type_id: ((_props$quote20 = props.quote) === null || _props$quote20 === void 0 ? void 0 : _props$quote20.vehicle_type_id) || null,
+      trim: ((_props$quote21 = props.quote) === null || _props$quote21 === void 0 ? void 0 : _props$quote21.trim) || null,
+      additional_notes: ((_props$quote22 = props.quote) === null || _props$quote22 === void 0 ? void 0 : _props$quote22.additional_notes) || '',
+      car_model_id: ((_props$quote23 = props.quote) === null || _props$quote23 === void 0 ? void 0 : _props$quote23.car_model_id) || null,
+      year_of_manufacture: parseInt((_props$quote24 = props.quote) === null || _props$quote24 === void 0 ? void 0 : _props$quote24.year_of_manufacture) || null,
+      emirate_of_registration_id: ((_props$quote25 = props.quote) === null || _props$quote25 === void 0 ? void 0 : _props$quote25.emirate_of_registration_id) || null,
+      car_type_insurance_id: ((_props$quote26 = props.quote) === null || _props$quote26 === void 0 ? void 0 : _props$quote26.car_type_insurance_id) || null,
+      claim_history_id: ((_props$quote27 = props.quote) === null || _props$quote27 === void 0 ? void 0 : _props$quote27.claim_history_id) || null,
+      seat_capacity: ((_props$quote28 = props.quote) === null || _props$quote28 === void 0 ? void 0 : _props$quote28.seat_capacity) || '',
+      has_ncd_supporting_documents: ((_props$quote29 = props.quote) === null || _props$quote29 === void 0 ? void 0 : _props$quote29.has_ncd_supporting_documents) || null,
+      car_value_tier: ((_props$quote30 = props.quote) === null || _props$quote30 === void 0 ? void 0 : _props$quote30.car_value_tier) || ''
     });
+    var trimOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
     var getCarModel = function getCarModel() {
       axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref2) {
         var data = _ref2.data;
         props.dropdownSource.car_model_id = data;
         if (quoteForm.car_model_id !== null) {
           quoteForm.car_model_id = null;
+        }
+      });
+    };
+    var getModelDetails = function getModelDetails() {
+      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/getCarModelDetails?car_model_id=".concat(quoteForm.car_model_id)).then(function (_ref3) {
+        var data = _ref3.data;
+        var item = data.length > 0 ? data[0] : null;
+        var trimDropdown = [];
+        data.forEach(function (item) {
+          trimDropdown.push({
+            value: item.id,
+            label: item.text
+          });
+        });
+        trimOptions.value = trimDropdown;
+        if (item) {
+          quoteForm.cylinder = item.cylinder;
+          quoteForm.seat_capacity = item.seat_capacity;
+          quoteForm.vehicle_type_id = item.vehicle_type_id;
+          quoteForm.trim = item.id;
         }
       });
     };
@@ -11572,9 +11595,13 @@ __webpack_require__.r(__webpack_exports__);
       };
       quoteForm.submit(method, url, options);
     }
-    (0,vue__WEBPACK_IMPORTED_MODULE_1__.onMounted)(function () {
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       if (quoteForm.car_make_id !== null) {
-        getCarModel();
+        axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref4) {
+          var data = _ref4.data;
+          props.dropdownSource.car_model_id = data;
+          getModelDetails();
+        });
       }
     });
     var __returned__ = {
@@ -11583,10 +11610,13 @@ __webpack_require__.r(__webpack_exports__);
       isEmail: isEmail,
       isEmptyField: isEmptyField,
       isEdit: isEdit,
-      genderSelect: genderSelect,
+      carMakeOptions: carMakeOptions,
       quoteForm: quoteForm,
+      trimOptions: trimOptions,
       getCarModel: getCarModel,
-      onSubmit: onSubmit
+      getModelDetails: getModelDetails,
+      onSubmit: onSubmit,
+      ref: vue__WEBPACK_IMPORTED_MODULE_0__.ref
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -13921,15 +13951,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_toast_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/toast.js */ "./resources/js/inertia/Composables/toast.js");
 /* harmony import */ var _vueuse_core__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @vueuse/core */ "./node_modules/@vueuse/shared/index.mjs");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
-/* unplugin-vue-components disabled */function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
-function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
-
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* unplugin-vue-components disabled */
 
 
 
@@ -14016,49 +14040,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       index: 5,
       label: 'Policy Detail'
     }]);
-    var onMemberPremiumUpdate = function onMemberPremiumUpdate(member, premium) {
-      var index = newPremiums.value.findIndex(function (m) {
-        return m.memberId == member.memberId;
-      });
-      if (index > -1) {
-        newPremiums.value[index].premium = premium;
-      } else {
-        newPremiums.value.push({
-          memberId: member.memberId,
-          premium: premium
-        });
-      }
-    };
-    var onMemberUpdate = function onMemberUpdate(member) {
-      var _newPremiums$value$fi;
-      var memberData = {
-        quoteUID: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.usePage)().props.quote.uuid,
-        planId: props.plan.id,
-        planDetails: [_objectSpread(_objectSpread({}, member), {}, {
-          premium: Number((_newPremiums$value$fi = newPremiums.value.find(function (m) {
-            return m.memberId == member.memberId;
-          })) === null || _newPremiums$value$fi === void 0 ? void 0 : _newPremiums$value$fi.premium) || member.premium
-        })]
-      };
-      memberFormLoader.value = true;
-      axios__WEBPACK_IMPORTED_MODULE_4__["default"].post('/health-plan-manual-update-process', memberData).then(function (res) {
-        if (res.data == 'Plan has been updated') {
-          notification.success({
-            title: res.data,
-            position: 'top'
-          });
-        } else {
-          notification.error({
-            title: res.data,
-            position: 'top'
-          });
-        }
-      })["catch"](function (err) {
-        console.log(err);
-      })["finally"](function () {
-        memberFormLoader.value = false;
-      });
-    };
     var onTogglePlans = function onTogglePlans() {
       toggleLoader.value = true;
       axios__WEBPACK_IMPORTED_MODULE_4__["default"].post('/quotes/car/manual-plan-toggle', {
@@ -14101,8 +14082,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       canUpdate: canUpdate,
       dateFormat: dateFormat,
       tabs: tabs,
-      onMemberPremiumUpdate: onMemberPremiumUpdate,
-      onMemberUpdate: onMemberUpdate,
       onTogglePlans: onTogglePlans,
       computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed
     };
@@ -37460,7 +37439,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
 
         _: 1 /* STABLE */
-      })) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_field, {
+      })) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" <x-field label=\"RENEWAL BATCH\" required v-if=\"isEdit\">\n\t\t\t\t\t<x-input v-model=\"quoteForm.renewal_batch\" :rules=\"[isRequired]\" class=\"w-full\" />\n\t\t\t\t</x-field> "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_field, {
         label: "FIRST NAME",
         required: ""
       }, {
@@ -37614,12 +37593,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               return $setup.quoteForm.car_make_id = $event;
             }), $setup.getCarModel],
             rules: [$setup.isRequired],
-            options: $props.dropdownSource.car_make_id.map(function (item) {
-              return {
-                value: item.id,
-                label: item.text
-              };
-            }),
+            options: $setup.carMakeOptions,
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "rules", "options"])];
         }),
@@ -37631,9 +37605,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.quoteForm.car_model_id,
-            "onUpdate:modelValue": _cache[9] || (_cache[9] = function ($event) {
+            "onUpdate:modelValue": [_cache[9] || (_cache[9] = function ($event) {
               return $setup.quoteForm.car_model_id = $event;
-            }),
+            }), $setup.getModelDetails],
             rules: [$setup.isRequired],
             options: $props.dropdownSource.car_model_id.map(function (item) {
               return {
@@ -37662,8 +37636,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         _: 1 /* STABLE */
       }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_field, {
-        label: "TRIM",
-        required: ""
+        label: "TRIM"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
@@ -37671,15 +37644,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
               return $setup.quoteForm.trim = $event;
             }),
-            rules: [$setup.isRequired],
-            options: $props.dropdownSource.trim.map(function (item) {
-              return {
-                value: item.id,
-                label: item.text
-              };
-            }),
+            options: $setup.trimOptions,
             "class": "w-full"
-          }, null, 8 /* PROPS */, ["modelValue", "rules", "options"])];
+          }, null, 8 /* PROPS */, ["modelValue", "options"])];
         }),
         _: 1 /* STABLE */
       }), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_field, {
@@ -37804,14 +37771,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
-            modelValue: $setup.quoteForm.currently_insured_with,
+            modelValue: $setup.quoteForm.currently_insured_with_id,
             "onUpdate:modelValue": _cache[18] || (_cache[18] = function ($event) {
-              return $setup.quoteForm.currently_insured_with = $event;
+              return $setup.quoteForm.currently_insured_with_id = $event;
             }),
             rules: [$setup.isRequired],
             options: $props.dropdownSource.currently_insured_with.map(function (item) {
               return {
-                value: item.id,
+                value: item.text,
                 label: item.text
               };
             }),
@@ -37850,10 +37817,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               return $setup.quoteForm.has_ncd_supporting_documents = $event;
             }),
             options: [{
-              value: 'Yes',
+              value: 1,
               label: 'Yes'
             }, {
-              value: 'No',
+              value: 0,
               label: 'No'
             }],
             "class": "w-full"
@@ -39918,7 +39885,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
     required: "",
     type: "text",
-    label: "cylinder",
+    label: "Cylinder",
     placeholder: "cylinder",
     "class": "w-full",
     disabled: !$setup.assumptionState.isEditing
@@ -41669,7 +41636,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_0__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dl", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" <div class=\"md:col-span-2 text-right select-none border-b pb-2 d-flex justify-between\">\n                \n              <x-toggle\n                v-model=\"hidePlan\"\n                color=\"error\"\n                label=\"Manual\"\n                @change=\"onTogglePlans\"\n                :loading=\"toggleLoader\"\n              />\n            </div> "), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_toggle, {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dl", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_3, [(0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_toggle, {
                 modelValue: $setup.hidePlan,
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = function ($event) {
                   return $setup.hidePlan = $event;
@@ -41690,41 +41657,26 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               }, null, 8 /* PROPS */, ["modelValue", "disabled", "loading"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.props.plan.providerName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.props.plan.repairType), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.props.plan.insurerQuoteNo,
                 disabled: !$setup.isManual,
-                size: "sm",
-                "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
-                  return $setup.onMemberPremiumUpdate(_ctx.item, $event);
-                })
+                size: "sm"
               }, null, 8 /* PROPS */, ["value", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" <dd>{{ props.plan.insurerQuoteNo }}</dd> ")]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_11, [_hoisted_12, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.props.plan.actualPremium,
                 disabled: !$setup.isManual,
-                size: "sm",
-                "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
-                  return $setup.onMemberPremiumUpdate(_ctx.item, $event);
-                })
+                size: "sm"
               }, null, 8 /* PROPS */, ["value", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" <dd>{{ props.plan.actualPremium }}</dd> ")]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.props.plan.discountPremium,
-                size: "sm",
-                "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
-                  return $setup.onMemberPremiumUpdate(_ctx.item, $event);
-                })
+                size: "sm"
               }, null, 8 /* PROPS */, ["value"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.props.record.car_value,
                 helper: $setup.isManual ? "Min: AED ".concat($setup.props.plan.carValueLowerLimit, " - Max: AED ").concat($setup.props.plan.carValueUpperLimit) : '',
-                size: "sm",
-                "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
-                  return $setup.onMemberPremiumUpdate(_ctx.item, $event);
-                })
+                size: "sm"
               }, null, 8 /* PROPS */, ["value", "helper"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.props.plan.excess || 0,
                 disabled: !$setup.isManual,
                 type: "number",
-                size: "sm",
-                "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
-                  return $setup.onMemberPremiumUpdate(_ctx.item, $event);
-                })
+                size: "sm"
               }, null, 8 /* PROPS */, ["value", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
                 modelValue: $setup.props.plan.ancillaryExcess,
-                "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
+                "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
                   return $setup.props.plan.ancillaryExcess = $event;
                 }),
                 placeholder: "Select Option",
@@ -41732,7 +41684,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                 "class": "w-full"
               }, null, 8 /* PROPS */, ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_21, [_hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_select, {
                 modelValue: $setup.props.plan.insurerTrimId,
-                "onUpdate:modelValue": _cache[8] || (_cache[8] = function ($event) {
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
                   return $setup.props.plan.insurerTrimId = $event;
                 }),
                 placeholder: "Select Option",

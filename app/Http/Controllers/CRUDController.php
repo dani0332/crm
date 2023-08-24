@@ -326,7 +326,7 @@ class CRUDController extends Controller
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         $modelType = json_decode($request->get('modelType'), true);
         $validateArray = [];
-        if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home) {
+        if ($modelType !== quoteTypeCode::Health && $modelType !== quoteTypeCode::Home && $modelType !== quoteTypeCode::Car) {
             foreach ($modelPropertiesList as $property => $value) {
                 if (strpos($value, 'required') && $property != 'id' && ! strpos($modelSkipPropertiesList['create'], $property)) {
                     $validateArray[$property] = 'required';
@@ -365,6 +365,8 @@ class CRUDController extends Controller
             }
         } elseif ($modelType == quoteTypeCode::Home) {
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList['create']);
+        } else if ($modelType == quoteTypeCode::Car && in_array($modelType, newUi())) {
+            $validateArray = $this->carQuoteService->getValidationArray($request);
         }
 
         if ($request->has('email')) {
@@ -810,8 +812,11 @@ class CRUDController extends Controller
             $modelSkipPropertiesList = (json_decode($request->get('modelSkipProperties'), true)) ? json_decode($request->get('modelSkipProperties'), true) : $request->get('modelSkipProperties');
             $validateArray = $this->homeQuoteService->getValidationArray($modelPropertiesList, $request, $modelSkipPropertiesList);
         } else {
-            if ($modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarManager)) {
-                $validateArray['renewal_batch'] = 'required';
+            if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+                $validateArray = $this->carQuoteService->getValidationArray($request);
+                if (Auth::user()->hasRole(RolesEnum::CarManager)) {
+                    $validateArray['renewal_batch'] = 'required';
+                }
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
                 $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);

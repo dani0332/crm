@@ -1375,7 +1375,7 @@ const onExportPlans = () => {
 						v-model="assumptionsForm.cylinder"
 						required
 						type="text"
-						label="cylinder"
+						label="Cylinder"
 						placeholder="cylinder"
 						class="w-full"
 						:disabled="!assumptionState.isEditing"

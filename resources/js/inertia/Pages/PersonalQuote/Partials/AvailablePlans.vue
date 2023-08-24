@@ -68,58 +68,6 @@ const tabs = ref([
   { index: 5, label: 'Policy Detail' },
 ]);
 
-const onMemberPremiumUpdate = (member, premium) => {
-  const index = newPremiums.value.findIndex(m => m.memberId == member.memberId);
-  if (index > -1) {
-    newPremiums.value[index].premium = premium;
-  } else {
-    newPremiums.value.push({
-      memberId: member.memberId,
-      premium: premium,
-    });
-  }
-};
-
-const onMemberUpdate = member => {
-  const memberData = {
-    quoteUID: usePage().props.quote.uuid,
-    planId: props.plan.id,
-    planDetails: [
-      {
-        ...member,
-        premium:
-          Number(
-            newPremiums.value.find(m => m.memberId == member.memberId)?.premium,
-          ) || member.premium,
-      },
-    ],
-  };
-
-  memberFormLoader.value = true;
-
-  axios
-    .post('/health-plan-manual-update-process', memberData)
-    .then(res => {
-      if (res.data == 'Plan has been updated') {
-        notification.success({
-          title: res.data,
-          position: 'top',
-        });
-      } else {
-        notification.error({
-          title: res.data,
-          position: 'top',
-        });
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      memberFormLoader.value = false;
-    });
-};
-
 const onTogglePlans = () => {
   toggleLoader.value = true;
 
@@ -179,16 +127,6 @@ const onTogglePlans = () => {
       <TabPanels class="mt-2 text-sm min-h-[70vh]">
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-            <!-- <div class="md:col-span-2 text-right select-none border-b pb-2 d-flex justify-between">
-                
-              <x-toggle
-                v-model="hidePlan"
-                color="error"
-                label="Manual"
-                @change="onTogglePlans"
-                :loading="toggleLoader"
-              />
-            </div> -->
             <div class="grid sm:grid-cols-2 mb-3">
               <x-toggle
                 v-model="hidePlan"
@@ -221,7 +159,6 @@ const onTogglePlans = () => {
                 :value="props.plan.insurerQuoteNo"
                 :disabled="!isManual"
                 size="sm"
-                @update:modelValue="onMemberPremiumUpdate(item, $event)"
               />
               <!-- <dd>{{ props.plan.insurerQuoteNo }}</dd> -->
             </div>
@@ -231,7 +168,6 @@ const onTogglePlans = () => {
                 :value="props.plan.actualPremium"
                 :disabled="!isManual"
                 size="sm"
-                @update:modelValue="onMemberPremiumUpdate(item, $event)"
               />
               <!-- <dd>{{ props.plan.actualPremium }}</dd> -->
             </div>
@@ -240,7 +176,6 @@ const onTogglePlans = () => {
               <x-input
                 :value="props.plan.discountPremium"
                 size="sm"
-                @update:modelValue="onMemberPremiumUpdate(item, $event)"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -249,7 +184,6 @@ const onTogglePlans = () => {
                 :value="props.record.car_value"  
                 :helper="isManual ? `Min: AED ${props.plan.carValueLowerLimit} - Max: AED ${props.plan.carValueUpperLimit}` : ''"              
                 size="sm"
-                @update:modelValue="onMemberPremiumUpdate(item, $event)"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -259,7 +193,6 @@ const onTogglePlans = () => {
                 :disabled="!isManual"
                 type="number"
                 size="sm"
-                @update:modelValue="onMemberPremiumUpdate(item, $event)"
               />
             </div>
             <div class="grid sm:grid-cols-2">
