@@ -26,12 +26,19 @@ class GoogleSocialiteController extends Controller
      */
     public function handleCallback()
     {
+
+      //  print_r(date('M-D-Y',strtotime('now')));
+      //  echo '-------------';
+       // print_r(date('M-D-Y',strtotime('- 30 Days')));
+       // dd(now());
         try {
             $socialUser = Socialite::driver(config('constants.social_driver'))->user();
         } catch (Exception $exception) {
             return redirect()->route('login')->with('status', 'Google login failed. Please try again.');
         }
-
+        // dd($socialUser->user['picture']);
+        // $table->datetime('google_photo_last_updated')->nullable()->after('profile_photo_path');
+        //            $table->text('google_profile_photo_path')->nullable()->after('profile_photo_path');
         $requestingUser = User::where('email', $socialUser->getEmail())->first();
 
         if (! $requestingUser) {
@@ -40,7 +47,12 @@ class GoogleSocialiteController extends Controller
 
         $remember = in_array($requestingUser->email, getAutomationUser()) ? true : false;
         auth()->login($requestingUser, $remember);
+        if(isset($socialUser->user['picture']) && ($requestingUser->google_photo_last_updated == null )){
 
+            $requestingUser->google_photo_last_updated = now();
+            $requestingUser->google_profile_photo_path = $socialUser->user['picture'];
+        }
+       // dd('ddddddd');
         $requestingUser->last_login = now();
         $requestingUser->save();
 

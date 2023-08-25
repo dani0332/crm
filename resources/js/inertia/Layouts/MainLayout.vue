@@ -193,8 +193,10 @@ const onLogout = () => {
         class="sticky top-0 z-20 flex h-16 w-full shrink-0 items-center border-b bg-white"
       >
         <div
-          class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
-        >
+          class="flex items-center justify-end w-full px-2 sm:px-4 md:px-6 lg:px-8"
+        ><div class="nav-avatar h-[45px] w-[45px] rounded-full border-[1px] mr-3">
+            <img :src="user.google_profile_photo_path!=null?user.google_profile_photo_path:'/image/alfred-theme.png'" alt="IMCRM" class="w-full h-full rounded-full" />
+        </div>
           <div>
             <button
               type="button"
@@ -240,7 +242,7 @@ const onLogout = () => {
                     </svg>
                     <span class="text-sm font-semibold">Logout</span>
                   </button>
-                </x-popover-container>
+                </x-popover-container>nav-avatar
               </template>
             </x-popover>
           </div>

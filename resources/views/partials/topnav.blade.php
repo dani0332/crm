@@ -7,6 +7,9 @@
             <nav class="nav navbar-nav">
             <ul class=" navbar-right">
                 <li class="nav-item dropdown open" style="padding-left: 15px;">
+                    <div class="nav-avatar">
+                        <img src="{{Auth::user()->google_profile_photo_path != null?Auth::user()->google_profile_photo_path:'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
+                    </div>
                 <a href="javascript:;" class="user-profile dropdown-toggle" aria-haspopup="true" id="navbarDropdown" data-toggle="dropdown" aria-expanded="false">
                     {{ Auth::check() ? Auth::user()->name : '' }}
                 </a>
