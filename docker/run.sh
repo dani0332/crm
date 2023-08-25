@@ -7,7 +7,7 @@ sudo chown -R $USER:www-data bootstrap/cache
 chmod -R 775 storage
 chmod -R 775 bootstrap/cache
 
-php artisan horizon:terminate #terminates so its restarted by supervisor
+yes | doppler run -- php artisan horizon:terminate #terminates so its restarted by supervisor
 # php artisan migrate:fresh --seed
 php artisan route:clear
 php artisan view:clear
