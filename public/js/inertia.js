@@ -14623,12 +14623,12 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         var volumeSegmentConversion = (parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
         var monthlySum = calculateMonthlySum(page.props.reportData.data, index);
         var rawRetention = (item.renewed / item.total_allocated_leads * 100).toFixed(2);
-        item.advisorRetention = advisorRetention;
-        item.volumeSegmentConversion = volumeSegmentConversion;
-        item.valueSegmentConversion = valueSegmentConversion;
-        item.imRetention = imRetention;
-        item.monthlySum = monthlySum;
-        item.rawRetention = rawRetention;
+        item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
+        item.volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
+        item.valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
+        item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
+        item.monthlySum = monthlySum == 'NaN' ? '0.00' : monthlySum;
+        item.rawRetention = rawRetention == 'NaN' ? '0.00' : rawRetention;
         item.rowSpan = currentRowSpan;
         item.highlight = advisorRetention < valueSegmentConversion || advisorRetention < volumeSegmentConversion || advisorRetention < imRetention;
         var monthName = (0,_vueuse_shared__WEBPACK_IMPORTED_MODULE_5__.useDateFormat)(item.end_date, 'MMM YY').value;
@@ -38741,7 +38741,7 @@ var _hoisted_14 = /*#__PURE__*/_withScopeId(function () {
 var _hoisted_15 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Tot. Alloc. ", -1 /* HOISTED */);
+  }, " Total Allocated ", -1 /* HOISTED */);
 });
 var _hoisted_16 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
@@ -38756,32 +38756,32 @@ var _hoisted_17 = /*#__PURE__*/_withScopeId(function () {
 var _hoisted_18 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Tot. Alloc. (excluding cancelled and uncontactable) ", -1 /* HOISTED */);
+  }, " Total Allocations (excluding cancelled and uncontactable) ", -1 /* HOISTED */);
 });
 var _hoisted_19 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Adv. Retention ", -1 /* HOISTED */);
+  }, " Advisor Retention ", -1 /* HOISTED */);
 });
 var _hoisted_20 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Val. Retention ", -1 /* HOISTED */);
+  }, " Value Retention ", -1 /* HOISTED */);
 });
 var _hoisted_21 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Vol. Retention ", -1 /* HOISTED */);
+  }, " Volume Retention ", -1 /* HOISTED */);
 });
 var _hoisted_22 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Rel. Retention on Val. ", -1 /* HOISTED */);
+  }, " Relative Retention on Value ", -1 /* HOISTED */);
 });
 var _hoisted_23 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Rel. Retention on Vol. ", -1 /* HOISTED */);
+  }, " Relative Retention on Volume ", -1 /* HOISTED */);
 });
 var _hoisted_24 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
@@ -38867,9 +38867,9 @@ var _hoisted_47 = /*#__PURE__*/_withScopeId(function () {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
   }, " Month "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28"
-  }, " Avg. IMRet. "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
+  }, " Avgerage IMRetention "), /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("th", {
     "class": "py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left"
-  }, " Avg. RawRet. ")])], -1 /* HOISTED */);
+  }, " Avgerage RawRetention ")])], -1 /* HOISTED */);
 });
 var _hoisted_48 = {
   "class": "x-table-cell px-3 py-4 align-middle"
@@ -39005,7 +39005,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         'bg-[#ffff00]': item.highlight
       }, "border-b border-gray-200 align-top"]),
       key: index
-    }, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.name), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_29, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" {{ moment(item.end_date).format('MMMM do') }} "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.useDateFormat(item.end_date, 'MMM DD').value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.renewed), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.total_allocated_leads), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.car_sold), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.uncontactable), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) "), item.total_allocated_leads == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_35, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) + parseInt(item.uncontactable))), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", {
+    }, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.name), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_29, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" {{ moment(item.end_date).format('MMMM do') }} "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" " + (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.useDateFormat(item.end_date, 'MMM DD').value), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.renewed.toLocaleString()), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_31, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.total_allocated_leads.toLocaleString()), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.car_sold.toLocaleString()), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.uncontactable.toLocaleString()), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) "), item.total_allocated_leads == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_35, " NaN ")) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("p", _hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) + parseInt(item.uncontactable))).toLocaleString()), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", {
       "class": (0,vue__WEBPACK_IMPORTED_MODULE_4__.normalizeClass)([item.advisorRetentionClass, "x-table-cell px-3 py-4 align-middle"])
     }, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.advisorRetention) + " % ", 3 /* TEXT, CLASS */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_37, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.valueSegmentConversion) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.volumeSegmentConversion) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_39, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.valueSegmentConversion)).toFixed(2)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_40, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.volumeSegmentConversion)).toFixed(2)) + " %", 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_41, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.imRetention) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_42, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)((parseFloat(item.advisorRetention) - parseFloat(item.imRetention)).toFixed(2)) + " %", 1 /* TEXT */)]), $setup.hasRole($setup.rolesEnum.CarAdvisor) != true ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("td", _hoisted_43, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("p", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.rawRetention) + " %", 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true), item.rowSpan > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("td", {
       key: 1,

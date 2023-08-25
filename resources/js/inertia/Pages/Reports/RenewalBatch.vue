@@ -290,12 +290,12 @@ function calculateValuesAndHighlight() {
         const monthlySum = calculateMonthlySum(page.props.reportData.data, index);
         const rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
 
-        item.advisorRetention = advisorRetention;
-        item.volumeSegmentConversion = volumeSegmentConversion;
-        item.valueSegmentConversion = valueSegmentConversion;
-        item.imRetention = imRetention;
-        item.monthlySum = monthlySum;
-        item.rawRetention = rawRetention;
+        item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
+        item.volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
+        item.valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
+        item.imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
+        item.monthlySum = monthlySum == 'NaN' ? '0.00' : monthlySum;
+        item.rawRetention = rawRetention == 'NaN' ? '0.00' : rawRetention;
         item.rowSpan = currentRowSpan;
         item.highlight = (advisorRetention < valueSegmentConversion) ||
             (advisorRetention < volumeSegmentConversion) ||
@@ -527,7 +527,7 @@ watch(
                                 Renewed
                             </th>
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Tot. Alloc.
+                                Total Allocated
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -539,27 +539,27 @@ watch(
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Tot. Alloc. (excluding cancelled and uncontactable)
+                                Total Allocations (excluding cancelled and uncontactable)
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Adv. Retention
+                                Advisor Retention
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Val. Retention
+                                Value Retention
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Vol. Retention
+                                Volume Retention
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Rel. Retention on Val.
+                                Relative Retention on Value
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Rel. Retention on Vol.
+                                Relative Retention on Volume
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -592,22 +592,22 @@ watch(
                                 {{ useDateFormat(item.end_date, 'MMM DD').value }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.renewed }}
+                                {{ item.renewed.toLocaleString() }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.total_allocated_leads }}
+                                {{ item.total_allocated_leads.toLocaleString() }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.car_sold }}
+                                {{ item.car_sold.toLocaleString() }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.uncontactable }}
+                                {{ item.uncontactable.toLocaleString() }}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
                                 <p v-if="item.total_allocated_leads == 0"> NaN </p>
-                                <p v-else>{{ parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
-                                    parseInt(item.uncontactable)) }} </p>
+                                <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
+                                    parseInt(item.uncontactable))).toLocaleString() }} </p>
                             </td>
                             <td :class="item.advisorRetentionClass" class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.advisorRetention }} %
@@ -652,10 +652,10 @@ watch(
                             </th>
                             <th
                                 class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left w-28">
-                                Avg. IMRet.
+                                Avgerage IMRetention
                             </th>
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Avg. RawRet.
+                                Avgerage RawRetention
                             </th>
                         </tr>
                     </thead>

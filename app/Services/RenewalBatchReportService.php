@@ -39,7 +39,6 @@ class RenewalBatchReportService extends BaseService
                 DB::raw('MONTH(renewal_batches.end_date) month')
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
-            ->join('user_team', 'user_team.user_id', '=', 'users.id')
             ->leftJoin('car_lost_quote_logs', function($qry){
                 $qry->on('car_lost_quote_logs.car_quote_request_id', '=', 'car_quote_request.id')
                     ->whereRaw('car_lost_quote_logs.id IN (select MAX(clql.id) from car_lost_quote_logs as clql
@@ -47,7 +46,6 @@ class RenewalBatchReportService extends BaseService
             })
             ->leftJoin('payments', function($qry){
                 $qry->on('payments.paymentable_id', '=', 'car_quote_request.id')
-                    // ->on('payments.paymentable_type', '=', DB::raw("'".CarQuote::class."'" ))
                     ->whereIn('payments.payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED]);
             })
             ->join('renewal_batches', 'renewal_batches.name', '=', 'car_quote_request.renewal_batch')
@@ -178,28 +176,42 @@ class RenewalBatchReportService extends BaseService
             return $carry;
         }, []);
 
+
+        // date filter
+        if (isset($filters->reportDate)) {
+            $reportDateEnd = Carbon::parse($filters->reportDate)
+                ->endOfDay()->format($dateFormat);
+        }
+        else {
+            $reportDateEnd = Carbon::today()->endOfDay()->format($dateFormat);
+        }
+
         /**
          * query as per auth roles
          */
         if (! $authUserIsAdvisor) {
             $query->addSelect(
                 DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') THEN 1 ELSE 0 END) as renewed'),
+                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ')
+                    and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::CarSold .'
                     and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::CarSold .'
                     and car_lost_quote_logs.status = "Approved"
+                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
                     THEN 1 ELSE 0 END) as car_sold'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
                     and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
                     and car_lost_quote_logs.status = "Approved"
+                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
                     THEN 1 ELSE 0 END) as uncontactable'),
             );
         } elseif ($authUserIsAdvisor) {
             $query->addSelect(
                 DB::raw('SUM(IF(car_quote_request.advisor_id = "' . $authUserId . '", 1, 0)) as total_allocated_leads'),
-                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as renewed'),
+                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ')
+                    and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id = "' . $authUserId . '" THEN 1 ELSE 0 END) as renewed'),
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::CarSold .'
                     and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::CarSold .'
                     and car_lost_quote_logs.status = "Approved"
@@ -212,16 +224,6 @@ class RenewalBatchReportService extends BaseService
                     THEN 1 ELSE 0 END) as uncontactable'),
             );
         }
-
-        // date filter
-        if (isset($filters->reportDate)) {
-            $reportDateEnd = Carbon::parse($filters->reportDate)
-                ->endOfDay()->format($dateFormat);
-        }
-        else {
-            $reportDateEnd = Carbon::today()->endOfDay()->format($dateFormat);
-        }
-        $query->whereDate('payments.captured_at', '<=', $reportDateEnd);
 
         // batch no filter
         $batchNo = isset($filters->batchNo) ? $filters->batchNo : null;
@@ -278,6 +280,7 @@ class RenewalBatchReportService extends BaseService
         }
         //teams filter
         if (isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts)) {
+            $query->join('user_team', 'user_team.user_id', '=', 'users.id');
             $teamsIds = $filters->teams;
             $query->whereIn('user_team.team_id', $teamsIds);
         }

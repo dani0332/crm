@@ -36,6 +36,7 @@
                                             value="{{ $renewalBatch->end_date }}"
                                             placeholder="Batch Start Date">
                                     </div>
+                                    <input type="hidden" name="id" value="{{$renewalBatch->id}}">
                                 </div>
                             </div>
                         </div>
