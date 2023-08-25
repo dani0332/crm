@@ -95,7 +95,7 @@ const onToggle = ({ id, active }) => {
           <Link :href="route('embedded-products.edit', id)">
             <x-button color="primary" size="xs" outlined> Edit </x-button>
           </Link>
-          <!-- <x-button
+           <x-button
                             color="red"
                             size="xs"
                             outlined
@@ -105,7 +105,7 @@ const onToggle = ({ id, active }) => {
                             "
                        >
                             Delete
-                        </x-button> -->
+                        </x-button>
         </div>
       </template>
     </DataTable>
