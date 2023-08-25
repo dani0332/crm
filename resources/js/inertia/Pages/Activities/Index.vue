@@ -114,6 +114,9 @@ function setQueryFilters() {
 function resetDates(option) {
   const today = new Date();
   let startDate, endDate;
+  if(isOverDue.value ){
+    filters.status = '';
+  }
   isOverDue.value = false;
   selectedOption.value = option; 
   if (option == 'today') {
