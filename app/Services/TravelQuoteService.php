@@ -106,17 +106,17 @@ class TravelQuoteService extends BaseService
     {
         $members = [];
         $dob = '';
-        if($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')){
-            foreach($request->members as $member) {
+        if ($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')) {
+            foreach ($request->members as $member) {
 
-                $dob_member = explode("T",$member['dob']);
-                $date = explode("-",$dob_member[0]);
-                $day = explode("T",$date[2]);
-                $newobj = new \stdClass();//create a new
-                if(isset($member['primary'])){
+                $dob_member = explode('T', $member['dob']);
+                $date = explode('-', $dob_member[0]);
+                $day = explode('T', $date[2]);
+                $newobj = new \stdClass(); //create a new
+                if (isset($member['primary'])) {
                     $newobj->primary = true;
                 }
-                if(isset($member['id'])){
+                if (isset($member['id'])) {
                     $newobj->id = $member['id'];
                 }
                 $newobj->dob = $dob_member[0];
@@ -125,12 +125,12 @@ class TravelQuoteService extends BaseService
                 $newobj->year = $date[0];
                 $newobj->month = $date[1];
                 $newobj->day = $day[0];
-                array_push($members,$newobj);
+                array_push($members, $newobj);
             }
         }
         $dataArr = [
-            'directionCode'=> $request->direction_code,
-            'regionCoverForId'=>3,
+            'directionCode' => $request->direction_code,
+            'regionCoverForId' => 3,
             'firstName' => $request->first_name,
             'lastName' => $request->last_name,
             'email' => $request->email,
@@ -140,41 +140,39 @@ class TravelQuoteService extends BaseService
             'referenceUrl' => config('constants.APP_URL'),
         ];
         //
-        if($dob!=""){
+        if ($dob != '') {
             $dataArr['dob'] = $dob;
         }
-        if($request->direction_code == 'travelUaeInbound'){
-            $dataArr['hasArrivedUae']= $request->has_arrived_uae;
-        }else {
+        if ($request->direction_code == 'travelUaeInbound') {
+            $dataArr['hasArrivedUae'] = $request->has_arrived_uae;
+        } else {
             $dataArr['hasArrivedDestination'] = $request->has_arrived_destination;
-            if($request->has_arrived_destination == '0'){
+            if ($request->has_arrived_destination == '0') {
                 $dataArr['regionCoverForId'] = $request->region_cover_for_id;
             }
         }
-        if($request->has_arrived_uae == '0' || $request->has_arrived_destination == '0') {
+        if ($request->has_arrived_uae == '0' || $request->has_arrived_destination == '0') {
             $dataArr['members'] = $members;
             $dataArr['coverageCode'] = $request->coverage_code;
             $dataArr['startDate'] = $request->start_date;
 
-            if($request->coverage_code=='singleTrip'){
+            if ($request->coverage_code == 'singleTrip') {
                 $dataArr['endDate'] = $request->end_date;
             }
         }
-        if($request->region_cover_for_id!=null && $request->direction_code == 'travelUaeOutbound') {
+        if ($request->region_cover_for_id != null && $request->direction_code == 'travelUaeOutbound') {
             $dataArr['regionCoverForId'] = $request->region_cover_for_id;
-            }
-
+        }
 
         if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
-        if($request->uuid != null) {
+        if ($request->uuid != null) {
             $dataArr['quoteUID'] = $request->uuid;
-            $response = $this->kenService->request('/get-revised-travel-quote-plans','post',$dataArr);
+            $response = $this->kenService->request('/get-revised-travel-quote-plans', 'post', $dataArr);
 
             return $response;
-
 
         }
         $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
@@ -789,8 +787,10 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
-   public function listTravelQuotePlans($id){
-        $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id',$id)->first();
+    public function listTravelQuotePlans($id)
+    {
+        $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
+
         return $travelQuotePlans;
-   }
+    }
 }

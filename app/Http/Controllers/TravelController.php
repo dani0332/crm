@@ -55,7 +55,7 @@ class TravelController extends Controller
 
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
-         $quotes = $gridData->simplePaginate(10)->withQueryString();
+        $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
         $isManager = auth()->user()->isManagerOrDeputy();
@@ -198,9 +198,10 @@ class TravelController extends Controller
         }
 
         $model = $this->genericModel;
+
         return inertia('TravelQuote/Create', [
             'model' => json_encode($model->properties),
-            'quotePlans'=>null,
+            'quotePlans' => null,
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
@@ -265,9 +266,10 @@ class TravelController extends Controller
         $fields['mobile_no']['disabled'] = true;
         // $record->id
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans('ddd');
+
         return inertia('TravelQuote/Create', [
             'quote' => $record,
-            'quotePlans'=>$quotePlans,
+            'quotePlans' => $quotePlans,
             'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),
