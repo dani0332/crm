@@ -643,11 +643,9 @@ watch(
   },
 );
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort((a, b) => {
-    if (a.providerName < b.providerName) {
-      return -1;
-    }
-  }),
+  page.props.listQuotePlans.sort(
+    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
+  ),
 );
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
