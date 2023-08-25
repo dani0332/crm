@@ -413,7 +413,10 @@ class CarQuoteService extends BaseService
         }
         // Car Advisor
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+            if (
+                (in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) || $record->payment_status_id == '' || $record->payment_status_id === null)
+            ) {
+
                 $access['carAdvisorCanEdit'] = true;
             }
             if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
@@ -422,7 +425,7 @@ class CarQuoteService extends BaseService
         }
         // Car Manager
         if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+            if ((in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) || $record->payment_status_id == '' || $record->payment_status_id == null)) {
                 $access['carManagerCanEdit'] = true;
             }
         }
