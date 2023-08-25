@@ -439,6 +439,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
                             PermissionsEnum::TIER_CONFIG_LIST,
+                            PermissionsEnum::TeamThresholdView,
                         ]),
                         'Allocation Config',
                         url('generic/tier'),
