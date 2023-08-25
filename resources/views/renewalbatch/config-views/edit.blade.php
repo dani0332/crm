@@ -36,6 +36,24 @@
                                             value="{{ $renewalBatch->end_date }}"
                                             placeholder="Batch Start Date">
                                     </div>
+                                    <div class="col">
+                                        <label for="formGroupExampleInput">Batch Month <span class="required">*</span></label>
+                                        <select class="form-control" id="batch-month" name="month">
+                                            <option selected disabled>Select Batch Month here</option>
+                                            <option value="1" {{$renewalBatch->month == 1 ? 'selected' : ''}}>January</option>
+                                            <option value="2" {{$renewalBatch->month == 2 ? 'selected' : ''}}>Feburary</option>
+                                            <option value="3" {{$renewalBatch->month == 3 ? 'selected' : ''}}>March</option>
+                                            <option value="4" {{$renewalBatch->month == 4 ? 'selected' : ''}}>April</option>
+                                            <option value="5" {{$renewalBatch->month == 5 ? 'selected' : ''}}>May</option>
+                                            <option value="6" {{$renewalBatch->month == 6 ? 'selected' : ''}}>June</option>
+                                            <option value="7" {{$renewalBatch->month == 7 ? 'selected' : ''}}>July</option>
+                                            <option value="8" {{$renewalBatch->month == 8 ? 'selected' : ''}}>August</option>
+                                            <option value="9" {{$renewalBatch->month == 9 ? 'selected' : ''}}>September</option>
+                                            <option value="10" {{$renewalBatch->month == 10 ? 'selected' : ''}}>October</option>
+                                            <option value="11" {{$renewalBatch->month == 11 ? 'selected' : ''}}>November</option>
+                                            <option value="12" {{$renewalBatch->month == 12 ? 'selected' : ''}}>December</option>
+                                        </select>
+                                    </div>
                                     <input type="hidden" name="id" value="{{$renewalBatch->id}}">
                                 </div>
                             </div>

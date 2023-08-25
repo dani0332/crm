@@ -59,6 +59,7 @@ class RenewalBatch extends Model implements AuditableContract
         'name',
         'start_date',
         'end_date',
+        'month'
     ];
 
     /**

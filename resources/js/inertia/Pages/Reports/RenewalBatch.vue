@@ -241,6 +241,13 @@ let avgRawRetentionArr = {};
 let monthlyIMAverages = {};
 let monthlyRawAverages = {};
 
+function getMonthName(monthNumber) {
+  const date = new Date();
+  date.setMonth(monthNumber - 1);
+
+  return date.toLocaleString('en-US', { month: 'short' });
+}
+
 function calculateValuesAndHighlight() {
 
     lastMonthSummedIndex = 0;
@@ -301,7 +308,8 @@ function calculateValuesAndHighlight() {
             (advisorRetention < volumeSegmentConversion) ||
             (advisorRetention < imRetention);
 
-        let monthName = useDateFormat(item.end_date, 'MMM YY').value;
+        let year = useDateFormat(new Date(), 'YY').value
+        let monthName = getMonthName(item.month)+"-"+year;
 
         // Check if the property exists and initialize it as an array if it doesn't
         if (!avgImRetentionArr[monthName]) {

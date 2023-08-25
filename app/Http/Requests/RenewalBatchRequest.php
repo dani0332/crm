@@ -96,6 +96,10 @@ class RenewalBatchRequest extends FormRequest
                 'date',
                 'after:start_date',
             ],
+            'month' => [
+                'required',
+                'integer',
+            ],
             'segment_volume' => [
                 'required',
                 'array',

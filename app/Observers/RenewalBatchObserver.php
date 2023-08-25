@@ -9,9 +9,9 @@ class RenewalBatchObserver
 {
     protected $attributes = null;
 
-    public function __construct(RenewalBatchRequest $request)
+    public function __construct()
     {
-        $this->attributes = $request->validated();
+        $this->attributes = request()->toArray();
     }
     /**
      * Handle the RenewalBatch "created" event.

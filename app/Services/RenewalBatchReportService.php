@@ -36,7 +36,7 @@ class RenewalBatchReportService extends BaseService
                 'renewal_batches.end_date',
                 'renewal_batches.id',
                 'renewal_batches.name',
-                DB::raw('MONTH(renewal_batches.end_date) month')
+                'renewal_batches.month'
             )
             ->join('users', 'users.id', '=', 'car_quote_request.advisor_id')
             ->leftJoin('car_lost_quote_logs', function($qry){
