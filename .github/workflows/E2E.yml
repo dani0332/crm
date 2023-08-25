@@ -3,10 +3,10 @@ name: Cypress Tests
 on:
   push:
     branches: [Integration_Github_Actions]
-  pull_request:
-    branches:
-      - main
-    types: [opened, reopened, edited]
+  # pull_request:
+  #   branches:
+  #     - main
+  #   types: [opened, reopened, edited]
 
 jobs:
   cypress-run:
