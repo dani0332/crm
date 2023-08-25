@@ -257,7 +257,7 @@ const leadStatusForm = useForm({
     leadStatus: page.props.quote.quote_status_id || null,
     notes: page.props.quote.life_quote_request_detail?.notes || null,
     trans_code: page.props.quote.transapp_code || null,
-    lostReason: page.props.quote.lost_reason_id || null,
+    lostReason: page.props.quote.life_quote_request_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
