@@ -14,6 +14,7 @@ const customStartDate = ref(null);
 const customEndDate   = ref(null);
 const activityLoader  = ref(false);
 const activityActionEdit = ref(false);
+const isOverDue = ref(false);
 const rules = {
   isRequired: v => !!v || 'This field is required',
 };
@@ -45,7 +46,7 @@ const loader = reactive({
 });
 const activityTable = [
   { text: 'Title', value: 'title' },
-  { text: 'CDBID', value: 'cdbid' },
+  { text: 'REF ID', value: 'cdbid' },
   { text: 'Client Name', value: 'client_name' },
   { text: 'Followup Date', value: 'due_date' },
   { text: 'Assigned To', value: 'assignee.name' },
@@ -58,6 +59,18 @@ function filterActivities(isValid) {
   if (!isValid) {
     return;
   }
+
+  if(isOverDue.value ){
+    if(filters.status  == '1') {
+      filters.due_date_end  = '1/1/1970';
+    } else {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1); 
+      filters.due_date_end = yesterday.toLocaleDateString();    
+    }    
+  }
+
   for (const key in filters) {
     if (filters[key] === '') {
       delete filters[key];
@@ -101,6 +114,7 @@ function setQueryFilters() {
 function resetDates(option) {
   const today = new Date();
   let startDate, endDate;
+  isOverDue.value = false;
   selectedOption.value = option; 
   if (option == 'today') {
     startDate = today.toLocaleDateString();
@@ -124,6 +138,8 @@ function resetDates(option) {
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1); 
     startDate = '1/1/1970';
+    filters.status = '0';
+    isOverDue.value = true;
     endDate = yesterday.toLocaleDateString();    
   } else if (option === 'custom') {
     // Handle the custom option by setting the custom start and end dates
