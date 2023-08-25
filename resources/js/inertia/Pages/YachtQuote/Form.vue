@@ -58,7 +58,7 @@ function onSubmit(isValid) {
         Yacht Quote <span v-if="quote">{{ quote?.uuid }}</span>
       </h2>
       <div>
-        <Link href="/personal-quotes/bike">
+        <Link href="/personal-quotes/yacht">
           <x-button size="sm" color="#ff5e00"> Yacht Quotes List </x-button>
         </Link>
       </div>
