@@ -123,10 +123,10 @@ class DashboardController extends Controller
     {
         $tplDashboardStats = $this->getTPLDashboardStats($request);
         $car = $this->getProductByName(quoteTypeCode::Car);
-        $teams = $this->getTeamsByProductId($car->id);        
+        $teams = $this->getTeamsByProductId($car->id);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
         $teams = $teams->filter(function ($item) use ($commonTeams) {
-            return in_array($item->id, $commonTeams); 
+            return in_array($item->id, $commonTeams);
         });
         $tiers = $this->tierService->getTPLTiers();
         $commonTeam = 0;
@@ -371,7 +371,7 @@ class DashboardController extends Controller
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
         $teams = $teams->filter(function ($item) use ($commonTeams) {
-            return in_array($item->id, $commonTeams); 
+            return in_array($item->id, $commonTeams);
         });
 
         return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
