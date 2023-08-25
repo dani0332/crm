@@ -380,11 +380,15 @@ use App\Enums\GenericRequestEnum;
                                     class='btn btn-warning btn-sm'>Edit</a>
                             @endcan
                         @endif
-                        @can(strtolower($model->modelType) . '-quotes-edit')
+                            @if( ($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'] ) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
+                                <a id="texta"
+                                   href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
+                                   class='btn btn-warning btn-sm'>Edit</a>
+                            @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(strtolower($model->modelType) . '-quotes-edit'))
                             <a id="texta"
                                 href="{{ url('quotes/' . strtolower($model->modelType) . '/' . $record->uuid . '/edit') }}"
                                 class='btn btn-warning btn-sm'>Edit</a>
-                        @endcan
+                            @endif
                     @endcannot
                 </div>
             </div>
@@ -475,9 +479,9 @@ use App\Enums\GenericRequestEnum;
         @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
         @endif
-        <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
+        <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :access="$access" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
 
-        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
+        <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />

@@ -30,16 +30,17 @@ class Kernel extends ConsoleKernel
 
         //$schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
 
-        // $schedule
-        //     ->command('AddBatchNumber:cron')
-        //     ->timezone('Asia/Dubai')
-        //     ->weeklyOn(1, '0:00')
-        //     ->onOneServer()
-        //     ->withoutOverlapping(1);
+        $schedule
+            ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        // $schedule->command('telescope:prune --hours=48')->daily()
-        //     ->onOneServer()
-        //     ->withoutOverlapping(1);
+        $schedule
+            ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);
+
+        $schedule
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
+
+        $schedule
+            ->command('telescope:prune --hours=48')->daily()->onOneServer()->withoutOverlapping(1);
     }
 
     /**

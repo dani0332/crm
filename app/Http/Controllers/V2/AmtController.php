@@ -2,18 +2,18 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\PaymentStatusEnum;
-use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\GroupMedicalType;
-use App\Models\QuoteStatus;
-use App\Models\User;
+use App\Repositories\LostReasonRepository;
+use App\Repositories\QuoteStatusRepository;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -75,8 +75,8 @@ class AmtController extends Controller
                 'bqr.first_name',
                 'bqr.last_name',
                 'qs.text as leadStatus',
-                DB::raw('DATE_FORMAT(bqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-                DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+                DB::raw('DATE_FORMAT(bqr.created_at, "%d-%b-%Y %r") as created_at'),
+                DB::raw('DATE_FORMAT(bqr.updated_at, "%d-%b-%Y %r") as updated_at'),
                 'bit.text as leadType',
                 'bqr.advisor_id',
                 'bqr.source',
@@ -231,71 +231,31 @@ class AmtController extends Controller
      */
     public function show($id)
     {
-        $quoteType = 'business';
-        $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
-        $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        $record = BusinessQuote::with(
+            'advisor',
+            'businessQuoteRequestDetail.lostReason'
+        )->where([
+            'uuid' => $id,
+            'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
+        ])->first();
         abort_if(! $record, 404);
+
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
-        $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
-        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
-        $lostReasons = DB::table('lost_reasons')
-            ->select('id', 'text')
-            ->get();
-        $selectedLostReasonId = $this->crudService->getSelectedLostReason('business', $record->id);
-
-        $selectedLeadStatus = '';
-        if (isset($record->quote_status_id) && $record->quote_status_id != '') {
-            $selectedLeadStatus = QuoteStatus::where('id', $record->quote_status_id)->first();
-        }
-        $assignedUserName = '';
-        $assignedGMType = '';
-        if (isset($record->group_medical_type_id) && $record->group_medical_type_id != '') {
-            $assignedGMType = GroupMedicalType::where('id', $record->group_medical_type_id)->first()->text;
-        }
-        if (isset($record->advisor_id) && $record->advisor_id != '') {
-            $assignedUser = User::where('id', $record->advisor_id)->first();
-            $assignedUserName = $assignedUser->name;
-        }
-
+        $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
-        $advisors = DB::table('users as u')
-            ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
-            ->join('roles as r', 'r.id', '=', 'mr.role_id')
-            ->whereIn('r.name', ['RM_ADVISOR', 'GM_ADVISOR', 'HEALTH_WCU_ADVISOR'])
-            ->select('u.id', DB::raw("CONCAT(u.name,' - ',r.name) AS name"))->orderBy('r.name')->distinct()->get();
-
-        if ($selectedLeadStatus != '') {
-            $selectedLeadStatus = $selectedLeadStatus->text;
-        }
-
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
-        $tiers = $this->lookupService->getTierR();
 
         return inertia('GroupMedicalQuote/Show', [
-            'genderOptions' => $this->crudService->getGenderOptions(),
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
-            'selectedLeadStatus' => $selectedLeadStatus,
-            'businessInsuranceType' => $businessInsuranceType,
-            'advisors' => $advisors,
-            'assignedUserName' => $assignedUserName,
-            'assignedGMType' => $assignedGMType,
-            'leadStatuses' => $leadStatuses,
-            'lostReasons' => $lostReasons,
-            'selectedLostReasonId' => $selectedLostReasonId,
-            'quoteType' => $quoteType,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
-            'customerAdditionalContacts' => $customerAdditionalContacts,
-            'quoteTypeId' => $quoteTypeId,
-            'tiers' => $tiers,
-            'enums' => [
-                'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-                'paymentStatusEnum' => PaymentStatusEnum::asArray(),
-            ],
-            'permissions' => [
-                'canEditQuote' => auth()->user()->can(PermissionsEnum::GMQuotesEdit),
-            ],
+            'genderOptions' => $this->crudService->getGenderOptions(),
             'typeCode' => quoteTypeCode::GroupMedical,
+            'lostReasons' => $lostReasons,
+            'quoteStatuses' => $quoteStatuses,
+            'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'customerAdditionalContacts' => $customerAdditionalContacts,
         ]);
     }
 

@@ -22,7 +22,7 @@ class HomeQuoteRepository extends BaseRepository
             'possessionType:id,text',
             'advisor',
         ])
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
