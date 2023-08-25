@@ -94,7 +94,6 @@ const tableHeader = [
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
 ];
 
 const can = permission => useCan(permission);
