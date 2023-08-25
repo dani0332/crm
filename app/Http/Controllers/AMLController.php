@@ -135,22 +135,22 @@ class AMLController extends Controller
 
                 if ($searchCriteriaSet) {
                     return DataTables::of($dataAml)
-                    ->addIndexColumn()
-                    ->addColumn('action', function ($row) {
-                        return view('aml.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                        ->addIndexColumn()
+                        ->addColumn('action', function ($row) {
+                            return view('aml.actions', compact('row'))->render();
+                        })
+                        ->rawColumns(['action'])
+                        ->make(true);
                 }
             }
 
             return DataTables::of([])
-                    ->addIndexColumn()
-                    ->addColumn('action', function ($row) {
-                        return view('aml.actions', compact('row'))->render();
-                    })
-                    ->rawColumns(['action'])
-                    ->make(true);
+                ->addIndexColumn()
+                ->addColumn('action', function ($row) {
+                    return view('aml.actions', compact('row'))->render();
+                })
+                ->rawColumns(['action'])
+                ->make(true);
         }
 
         return view('aml.view', compact('quoteTypes', 'quoteStatuses'));
