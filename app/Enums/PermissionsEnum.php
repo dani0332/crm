@@ -213,5 +213,5 @@ final class PermissionsEnum extends Enum
     public const RenewalsBatches = 'renewals-batches';
     public const CarQuoteSearch = 'car-quotes-search';
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
-    public const TeamThresholdView = 'team-threshold-view';
+    public const TeamThresholdView = 'team-allocation-threshold-view';
 }
