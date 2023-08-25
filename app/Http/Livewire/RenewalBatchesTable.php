@@ -45,6 +45,8 @@ class RenewalBatchesTable extends DataTableComponent
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
             ])
+            ->whereNotNull('batch')
+            ->where('batch', '<>', '')
             ->groupBy('batch');
     }
 

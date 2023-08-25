@@ -63,6 +63,7 @@ class HomeQuoteService extends BaseService
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
+            'ls.id as lost_reason_id',
             'hqr.previous_quote_id',
             'hqr.renewal_expiry_date',
             'hqr.renewal_batch',
