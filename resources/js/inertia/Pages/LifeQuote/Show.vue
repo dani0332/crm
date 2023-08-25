@@ -762,6 +762,6 @@ const onLeadStatus = () => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" />
   </div>
 </template>
