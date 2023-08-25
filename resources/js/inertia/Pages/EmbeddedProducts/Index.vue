@@ -95,17 +95,6 @@ const onToggle = ({ id, active }) => {
           <Link :href="route('embedded-products.edit', id)">
             <x-button color="primary" size="xs" outlined> Edit </x-button>
           </Link>
-           <x-button
-                            color="red"
-                            size="xs"
-                            outlined
-                            @click.prevent="
-                                deleteAction.id = id;
-                                showDeleteModal = true;
-                            "
-                       >
-                            Delete
-                        </x-button>
         </div>
       </template>
     </DataTable>
