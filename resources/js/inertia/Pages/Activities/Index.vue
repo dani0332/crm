@@ -427,11 +427,11 @@ onMounted(() => {
     >
     
     <template #item-title="{ title }">
-      <div class="truncate w-32">{{ title }}</div>
+      <div class="w-40 whitespace-normal">{{ title }}</div>
     </template>
 
     <template #item-client_name="{ client_name }">
-      <div class="truncate w-32">{{ client_name }}</div>
+      <div class="w-32 whitespace-normal">{{ client_name }}</div>
     </template>
 
     <template #item-cdbid="item">
