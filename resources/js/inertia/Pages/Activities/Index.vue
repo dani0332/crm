@@ -23,7 +23,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props.auth.user.id,
   status: null,  
   activity_id: null,
 });
@@ -297,7 +297,7 @@ onMounted(() => {
   <div>
     <Head title="Activities" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Activities</h2>
+      <h2 class="text-xl font-semibold">Search Activity</h2>
       <div class="space-x-3">
         <x-button size="sm" color="orange" @click.prevent="addActivity">
           Create Activity
@@ -341,51 +341,52 @@ onMounted(() => {
 
     </x-form>
     <x-divider class="my-2" />
-    <div class="flex justify-end gap-3 mb-4 mt-1">
-  <div class="flex gap-3">
-    <x-button
-      size="sm"
-      :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
-      @click.prevent="resetDates('overdue')"
-    >
-      Overdue
-    </x-button>
-    <x-button
-      size="sm"
-      :color="selectedOption === 'today' ? 'primary' : 'secondary'"
-      @click.prevent="resetDates('today')"
-    >
-      Today
-    </x-button>
-    <x-button
-      size="sm"
-      :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
-      @click.prevent="resetDates('tomorrow')"
-    >
-      Tomorrow
-    </x-button>
-    <x-button
-      size="sm"
-      :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
-      @click.prevent="resetDates('tweek')"
-    >
-      This Week
-    </x-button>
-    <x-button
-      size="sm"
-      :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
-      @click.prevent="resetDates('tmonth')"
-    >
-      This Month
-    </x-button>
-    <x-button
-      size="sm"
-      :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
-      @click.prevent="resetDates('custom')"
-    >
-      Custom
-    </x-button>    
-  </div>  
+    <div class="flex justify-between items-center mb-4 mt-1">
+      <h2 class="text-left text-xl font-bold">Activities</h2>
+      <div class="flex gap-3">
+      <x-button
+        size="sm"
+        :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('overdue')"
+      >
+        Overdue
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'today' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('today')"
+      >
+        Today
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('tomorrow')"
+      >
+        Tomorrow
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('tweek')"
+      >
+        This Week
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('tmonth')"
+      >
+        This Month
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('custom')"
+      >
+        Custom
+      </x-button>    
+    </div>  
 </div>
  <!-- Custom Date Range Picker -->
   <div v-if="selectedOption === 'custom'">
@@ -513,18 +514,19 @@ onMounted(() => {
             :adjust-to-text="false"
             class="w-full"
           />
-
-          <x-select
-            v-model="activityForm.assignee_id"
-            label="Assignee*"
-            :options="[            
-                ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
-              ]"
-            :rules="[rules.isRequired]"
-            placeholder="Select Assignee"
-            class="w-full"
-          />
-
+          <div v-if="activityActionEdit">
+            <x-select
+              v-model="activityForm.assignee_id"
+              label="Assignee*"
+              :options="[            
+                  ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
+                ]"
+              :rules="[rules.isRequired]"
+              :disabled="cannotUseAssignee"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+         </div>
           <x-input
             v-model="activityForm.due_date"
             label="Due Date*"
