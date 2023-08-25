@@ -1,4 +1,9 @@
 @extends('layouts.app_livewire')
+
+@php
+use App\Enums\PermissionsEnum;
+@endphp
+
 @section('title','Comprehensive Dashboard')
 @section('content')
 
@@ -73,32 +78,90 @@
         });
 
     }
+    const agentFilter = new SlimSelect({
+        select: '#user-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Users',
+            disabled: true,
+        }
+    })
+    const tierFilter = new SlimSelect({
+        select: '#tier-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Tiers',
+        }
+    })
+    const subTeamFilter = new SlimSelect({
+        select: '#sub-team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Sub Teams',
+            disabled: true,
+        },
+        events: {
+            beforeChange: (newVal, oldVal) => {
+                if (newVal.length === 0) {
+                    agentFilter.setData([]);
+                    agentFilter.disable();
+                }
+                return true;
+            }
+        }
+    })
+    const teamFilter = new SlimSelect({
+        select: '#team-filter',
+        settings: {
+            allowDeselect: true,
+            placeholderText: 'Select Teams',
+        },
+        events: {
+            beforeChange: (newVal, oldVal) => {
+                if (newVal.length === 0) {
+                    subTeamFilter.setData([]);
+                    subTeamFilter.disable();
+                    agentFilter.setData([]);
+                    agentFilter.disable();
+                }
+                return true;
+            }
+        }
+    })
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter, #user-filter, #team-filter , #excludeManualFilter, #commercial-filter').on('change', function(e) {
+        $('#tier-filter, #user-filter, #team-filter, #sub-team-filter, #excludeManualFilter, #commercial-filter').on('change', function(e) {
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
+            var subTeamFilterValue = $('#sub-team-filter').val();
+
             var commercialFilterValue = $('#commercial-filter').val();
             if (e.target.id == 'team-filter') {
+                if (!teamFilterValue) return;
+                fetchSubTeams(teamFilterValue);
+            } else if (e.target.id == 'sub-team-filter') {
+                if (!subTeamFilterValue) return;
                 $.ajax({
-                    url: "/get-users-by-team",
+                    url: "/get-users-by-sub-team",
                     type: "post",
                     data: {
-                        'team_filter': teamFilterValue
+                        'sub_team_filter': subTeamFilterValue
                     },
                     headers: {
                         'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                     },
                     success: function(users) {
                         if (users) {
-                            $('#user-filter').empty();
-                            users.forEach(user => {
-                                $('#user-filter').append($('<option>', {
-                                    value: user.id,
-                                    text: user.name
-                                }));
-                            });
+                            users = users.map(user => {
+                                return { text: user.name, value: user.id }
+                            })
+                            agentFilter.setData(users);
+                            if (users.length > 0) {
+                                agentFilter.enable();
+                            } else {
+                                agentFilter.disable();
+                            }
                         }
                     },
                     error: function(jqXHR, textStatus, errorThrown) {
@@ -106,6 +169,7 @@
                     }
                 });
             }
+
             var excludeFilterValue = $('#excludeManualFilter option:selected').val();
             comprehensiveDashboardStatChart.showLoading();
             $.ajax({
@@ -114,6 +178,7 @@
                 data: {
                     'tier_filter': tierFilterValue,
                     'team_filter': teamFilterValue,
+                    'sub_team_filter': subTeamFilterValue,
                     'userFilter': userFilterValue,
                     'excludeFilter': excludeFilterValue,
                     'isCommercial': commercialFilterValue
@@ -148,29 +213,47 @@
                 }
             });
         });
+
+        checkSelectedTeam();
     });
 
-    new SlimSelect({
-        select: '#user-filter',
-        settings: {
-            allowDeselect: true,
-            placeholderText: 'Select Users',
+    function checkSelectedTeam () {
+        const selectedTeam = $('#team-filter').val();
+        if (selectedTeam && selectedTeam.length > 0) {
+            fetchSubTeams(selectedTeam);
         }
-    })
-    new SlimSelect({
-        select: '#tier-filter',
-        settings: {
-            allowDeselect: true,
-            placeholderText: 'Select Tiers',
-        }
-    })
-    new SlimSelect({
-        select: '#team-filter',
-        settings: {
-            allowDeselect: true,
-            placeholderText: 'Select Teams',
-        }
-    })
+    }
+
+    function fetchSubTeams(teams) {
+        $.ajax({
+            url: "/get-sub-teams-by-team",
+            type: "post",
+            data: {
+                'team_filter': teams
+            },
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(users) {
+                if (users) {
+                    users = users.map(user => {
+                        return { text: user.name, value: user.id }
+                    })
+                    subTeamFilter.setData(users);
+                    if (users.length > 0) {
+                        subTeamFilter.enable();
+                    } else {
+                        subTeamFilter.disable();
+                        agentFilter.setData([]);
+                        agentFilter.disable();
+                    }
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.log(textStatus, errorThrown);
+            }
+        });
+    }
     new SlimSelect({
         select: '#commercial-filter',
         settings: {
@@ -183,6 +266,23 @@
 
 <div>
     <div class="flex gap-4 justify-end mb-4">
+        @can(PermissionsEnum::ViewTeamsFilters)
+            <div class="md:w-1/4">
+                <label>Teams</label>
+                <select multiple name="teams[]" id="team-filter">
+                    <option data-placeholder="true"></option>
+                    @foreach ($teams as $team)
+                    <option @if($team->name == 'Organic') selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="md:w-1/4">
+                <label>Sub Teams</label>
+                <select multiple name="sub_teams[]" id="sub-team-filter">
+                    <option data-placeholder="true"></option>
+                </select>
+            </div>
+        @endcan
         <div class="md:w-1/4">
             <label>Commercial</label>
             <select name="isCommercial" id="commercial-filter">
@@ -192,18 +292,14 @@
             </select>
         </div>
         <div class="md:w-1/4">
-            <label>Advisor Filter</label>
+            <label>Advisor</label>
             <select multiple name="users[]" id="user-filter">
                 <option data-placeholder="true"></option>
-                <optgroup data-selectall="true">
-                    @foreach ($carUsers as $carUser)
-                    <option value="{{$carUser->id}}"> {{ $carUser->name }} </option>
-                    @endforeach
-                </optgroup>
+
             </select>
         </div>
         <div class="md:w-1/4">
-            <label>Tiers Filter</label>
+            <label>Tiers</label>
             <select multiple name="tiers[]" id="tier-filter">
                 <option data-placeholder="true"></option>
                 @foreach ($tiers as $tier)
@@ -211,15 +307,7 @@
                 @endforeach
             </select>
         </div>
-        <div class="md:w-1/4">
-            <label>Teams Filter</label>
-            <select multiple name="teams[]" id="team-filter">
-                <option data-placeholder="true"></option>
-                @foreach ($teams as $team)
-                <option @if($team->name == 'Organic') selected="selected" @endif value="{{$team->id}}">{{$team->name}}</option>
-                @endforeach
-            </select>
-        </div>
+
     </div>
     <div>
         <div id="comprehensiveConversion"></div>
