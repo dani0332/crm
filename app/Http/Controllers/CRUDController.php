@@ -245,7 +245,6 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
-        dd('hhhh');
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);

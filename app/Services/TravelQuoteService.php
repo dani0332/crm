@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\TravelQuoteEnum;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -143,7 +144,7 @@ class TravelQuoteService extends BaseService
         if ($dob != '') {
             $dataArr['dob'] = $dob;
         }
-        if ($request->direction_code == 'travelUaeInbound') {
+        if ($request->direction_code == TravelQuoteEnum::TravelUaeInbound) {
             $dataArr['hasArrivedUae'] = $request->has_arrived_uae;
         } else {
             $dataArr['hasArrivedDestination'] = $request->has_arrived_destination;
@@ -156,11 +157,11 @@ class TravelQuoteService extends BaseService
             $dataArr['coverageCode'] = $request->coverage_code;
             $dataArr['startDate'] = $request->start_date;
 
-            if ($request->coverage_code == 'singleTrip') {
+            if ($request->coverage_code == TravelQuoteEnum::CoverageCodeSingleTrip) {
                 $dataArr['endDate'] = $request->end_date;
             }
         }
-        if ($request->region_cover_for_id != null && $request->direction_code == 'travelUaeOutbound') {
+        if ($request->region_cover_for_id != null && $request->direction_code == TravelQuoteEnum::TravelUaeOutbound) {
             $dataArr['regionCoverForId'] = $request->region_cover_for_id;
         }
 
