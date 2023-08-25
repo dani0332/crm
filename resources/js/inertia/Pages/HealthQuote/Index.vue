@@ -351,7 +351,7 @@ onMounted(() => {
                 :options="[
                   { value: 'Wow-Call', label: 'Wow-Call' },
                   { value: 'RM-NB', label: 'RM-NB' },
-                  { value: 'RM-Speed', label: 'RM-Speed' },
+                  { value: 'RM-SPEED', label: 'RM-SPEED' },
                   { value: 'EBP', label: 'EBP' },
                   { value: 'No-Type', label: 'No-Type' },
                 ]"

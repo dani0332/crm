@@ -447,6 +447,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
                             PermissionsEnum::TIER_CONFIG_LIST,
+                            PermissionsEnum::TeamThresholdView,
                         ]),
                         'Allocation Config',
                         url('generic/tier'),
@@ -468,6 +469,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                                 'Rules',
                                 url('generic/rule'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::TeamThresholdView),
+                                'Team Threshold',
+                                url('generic/allocation-threshold'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

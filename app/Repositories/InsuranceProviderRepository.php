@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\HealthRatingEligibility;
 use App\Models\InsuranceProvider;
-use App\Models\QuoteType;
+use DB;
 
 class InsuranceProviderRepository extends BaseRepository
 {
@@ -19,11 +19,18 @@ class InsuranceProviderRepository extends BaseRepository
     }
     public function fetchByQuoteTypeMapping($quoteTypeId)
     {
-        $quote = QuoteType::find($quoteTypeId);
-
-        if (! empty($quote) && count($quote->insurerProviders)) {
-            return $quote->insurerProviders;
-        }
+        return DB::table('insurance_provider_quote_type')
+            ->select([
+                'insurance_provider.id',
+                'insurance_provider.code',
+                'insurance_provider.text',
+                'insurance_provider.text_lms',
+                'insurance_provider_quote_type.insurance_provider_id',
+                'insurance_provider_quote_type.quote_type_id',
+            ])
+            ->where('quote_type_id', $quoteTypeId)
+            ->join('insurance_provider', 'insurance_provider.id', '=', 'insurance_provider_quote_type.insurance_provider_id')
+            ->get();
     }
 
     public function fetchNetworksByInsuranceProviders($request)
