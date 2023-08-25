@@ -10,74 +10,84 @@
             </div>
             <div class="x_content">
                 <form method="POST" id="searchAML" class="form-horizontal form-label-left" role="form" data-parsley-validate="" novalidate="" autocomplete="off">
+                    <input type="hidden" name="onLoadCheck" value="1"/>
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-2 col-sm-2" for="Quote Type">Quote Type</label>
                             <div class="col-md-6 col-sm-6">
                                 <div class="input-group">
-                                    <select class="form-control" id="quoteTypeValue" name="quoteType">
+                                    <select class="form-control" required id="quoteTypeValue" name="quoteType">
                                         <option value="">Select</option>
                                         @foreach ($quoteTypes as $quoteType)
                                             <option value="{{ $quoteType->id }}">{{ $quoteType->text }}</option>
                                         @endforeach
                                     </select>
                                 </div>
+                                <span class="help-block quoteType-error"></span>
                             </div>
                         </div>
-                        <div class="col">
-
-                        </div>
+                        <div class="col"></div>
                     </div>
                     <div id="aml-search-fields">
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="Search By">Search By</label>
                                 <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" id="searchType" name="searchType">
-                                        <option value=""></option>
-                                        <option value="cdbId">Ref-ID</option>
-                                        <option value="customerEmail">Customer Email</option>
-                                        <option value="id">AML ID</option>
-                                    </select>
+                                    <div class="input-group">
+                                        <select class="form-control" id="searchType" name="searchType">
+                                            <option value="">Select Search By</option>
+                                            <option value="cdbId">Ref-ID</option>
+                                            <option value="customerEmail">Customer Email</option>
+                                            <option value="id">AML ID</option>
+                                        </select>
+                                    </div>
+                                    <span class="help-block searchType-error"></span>
                                 </div>
                             </div>
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="Search Value">Search Value</label>
                                 <div class="col-md-6 col-sm-6">
                                     <div class="input-group">
-                                        <div><input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here..."></div>
-                                        <div id="aml-search-filter-result" class="required"></div>
+                                        <input type="text" class="form-control" id="searchField" name="searchField" placeholder="Type here...">
                                     </div>
+                                    <span class="help-block searchField-error"></span>
                                 </div>
+                                <div id="aml-search-filter-result" class="required"></div>
                             </div>
                         </div>
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="Match found">Match found</label>
                                 <div class="col-md-6 col-sm-6">
-                                    <select class="form-control" id="matchFound" name="matchFound">
-                                        <option value=""></option>
-                                        <option value="False">False</option>
-                                        <option value="True">True</option>
-                                    </select>
+                                    <div class="input-group">
+                                        <select class="form-control" id="matchFound" name="matchFound">
+                                            <option value="">Select Match Found</option>
+                                            <option value="False">False</option>
+                                            <option value="True">True</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col">
-
-                            </div>
+                            <div class="col"> </div>
                         </div>
                         <div class="item form-group">
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="Start Date">Created Start Date</label>
                                 <div class="col-md-6 col-sm-6">
-                                    <input type="text" class="form-control" id="amlCreatedStartDate" name="amlCreatedStartDate">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="amlCreatedStartDate" name="amlCreatedStartDate">
+                                    </div>
+                                    <span class="help-block amlCreatedStartDate-error"></span>
                                 </div>
                                 <span id="amlCreatedStartDateMsg" style="color:red;"> </span>
                             </div>
                             <div class="col">
                                 <label class="col-form-label col-md-2 col-sm-2" for="End Date">Created End Date</label>
                                 <div class="col-md-6 col-sm-6">
-                                    <input type="text" class="form-control" id="amlCreatedEndDate" name="amlCreatedEndDate">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="amlCreatedEndDate" name="amlCreatedEndDate">
+                                    </div>
+                                    <span class="help-block amlCreatedEndDate-error"></span>
                                 </div>
                                 <span id="amlCreatedEndDateMsg" style="color:red;"> </span>
                             </div>
@@ -112,9 +122,7 @@
                         <th>Updated At</th>
                         </tr>
                     </thead>
-
                     <tbody>
-
                     </tbody>
                 </table>
             </div>
