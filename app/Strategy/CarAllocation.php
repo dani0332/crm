@@ -22,14 +22,14 @@ class CarAllocation implements Allocation
 
     public function executeSteps()
     {
-        // Fetch the leads= to process
+        // Fetch the lead to process
         $lead = $this->fetchLead();
 
         if (! $lead) {
-            info('Lead with uuid : '.$lead->uuid.' not found or either was not under assignment criteria');
+            info('Lead not found or either was not under assignment criteria');
 
-            return false;
-        } // when lead is not on criteria or not found
+            return false; // when lead is not on criteria or not found
+        }
 
         // Find the appropriate tier for the lead
         $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
