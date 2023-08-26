@@ -13,7 +13,6 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\LeadAllocation::class,
         Commands\AddBatchNumber::class,
     ];
 
@@ -27,11 +26,6 @@ class Kernel extends ConsoleKernel
 
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
-
-        //$schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
-
-        $schedule
-            ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule
             ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);

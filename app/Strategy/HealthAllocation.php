@@ -4,8 +4,10 @@ namespace App\Strategy;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Services\HealthAllocationService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
-class HealthAllocationStrategy implements AllocationStrategy
+class HealthAllocation implements Allocation
 {
     protected $healthAllocationService;
     protected $allocationId;
@@ -18,26 +20,25 @@ class HealthAllocationStrategy implements AllocationStrategy
 
     public function executeSteps()
     {
-
         $lead = $this->fetchLead();
 
         if (! $lead) {
-            return false;
-        } // when lead is not on criteria or not found
+            return false; // when lead is not on criteria or not found
+        }
 
         $this->assignTeamBasedOnPrice($lead);
 
         if (! $lead->health_team_type) {
-            return false;
-        } // when system is not able to identify sub team based on price
+            return false; // when system is not able to identify sub team based on price
+        }
 
         $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
 
         if (! $advisor) {
-            return false;
-        } // when no advisor is found
+            return false; // when no advisor is found
+        }
 
-        $this->assignLead($lead, $advisor);
+        $this->assignLead($lead, $advisor); // Assign the lead to the advisor
     }
 
     private function fetchLead()
@@ -57,6 +58,13 @@ class HealthAllocationStrategy implements AllocationStrategy
 
     private function assignLead($lead, $advisor)
     {
-        $this->healthAllocationService->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_ASSIGNED);
+        DB::beginTransaction();
+        try {
+            $this->healthAllocationService->assignLead($lead, $advisor, AssignmentTypeEnum::SYSTEM_ASSIGNED);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage());
+        }
     }
 }

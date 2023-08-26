@@ -5,10 +5,11 @@ namespace App\Strategy;
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CarAllocationStrategy implements AllocationStrategy
+class CarAllocation implements Allocation
 {
     private $carAllocationService;
     private $allocationId;
@@ -25,6 +26,7 @@ class CarAllocationStrategy implements AllocationStrategy
         $lead = $this->fetchLead();
 
         if (! $lead) {
+            info('Lead with uuid : '. $lead->uuid .' not found or either was not under assignment criteria');
             return false;
         } // when lead is not on criteria or not found
 
@@ -42,7 +44,7 @@ class CarAllocationStrategy implements AllocationStrategy
             // Determine the final advisor for the lead based on tier, users, and rules
             $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
-            if ($advisorId) {
+            if ($advisorId && $advisorId != 0) {
                 DB::beginTransaction();
                 try {
                     // Assign the lead to the advisor and send an email
@@ -81,9 +83,9 @@ class CarAllocationStrategy implements AllocationStrategy
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId): array
+    protected function findAvailableUsers($tierId): array|Collection
     {
-        return $this->carAllocationService->getEligibleUsersForAllocation($tierId);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId);
     }
 
     protected function findRules($lead): array

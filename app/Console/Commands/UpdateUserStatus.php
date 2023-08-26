@@ -98,6 +98,7 @@ class UpdateUserStatus extends Command
                 $query->whereNotIn('status', [UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
             })
             ->select('user_id', DB::raw('MAX(last_activity) AS last_activity'))
+            ->orderBy('last_activity')
             ->groupBy('user_id')
             ->get();
     }

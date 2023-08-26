@@ -31,20 +31,33 @@ class ApiController extends Controller
 
     public function assignLeads(Request $request)
     {
-        info('adding request log : '.json_encode($request->all()));
-        if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
+        try {
+            info('API assignLeads called with request params as : ' . json_encode($request->all()));
+            if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
 
-            $allocationType = $request['quoteTypeId'];
+                $allocationType = $request->input('quoteTypeId');
+                $allocationId = $request->input('quoteUUID');
 
-            $allocationId = $request['quoteUUID'];
+                info('------ Lead allocation started for lead : '. $allocationId. ' ------');
 
-            info('API is hit for quote uuid : '.$allocationId.' with quote type id : '.$allocationType);
+                info('API endpoint is called for quote uuid: ' . $allocationId . ' with quote type id: ' . $allocationType);
 
-            $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+                $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
 
-            $allocationStrategy->executeSteps();
-        } else {
-            return response('Required Parameter missing', 403);
+                info('Allocation strategy is created : '. json_encode($allocationStrategy));
+
+                $allocationStrategy->executeSteps();
+
+                info('------ Lead allocation ended for lead : '. $allocationId. ' ------');
+                return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
+            } else {
+                info('------ Lead allocation ended for lead with Required parameters missing ------');
+                return response()->json(['error' => 'Required parameters missing'], 400);
+            }
+        } catch (\Exception $e) {
+            info('------ Lead allocation ended for lead with An error occurred ------');
+            return response()->json(['error' => 'An error occurred', 'message' => $e->getMessage()], 500);
         }
     }
+
 }

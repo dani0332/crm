@@ -14,7 +14,7 @@ use App\Models\CarQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
-use App\Models\Rule;
+use App\Models\RuleLeadSource;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
@@ -124,17 +124,18 @@ class CarAllocationService extends AllocationService
         ];
 
         foreach ($statusOrder as $status) {
-            $eligibleUser = $this->getAdvisorByStatus($status, $tierUserIds);
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds);
 
-            if ($eligibleUser) {
-                return $eligibleUser;
+            if ($eligibleUsers && count($eligibleUsers) > 0) {
+                info('result of available users are : '. json_encode($eligibleUsers));
+                return $eligibleUsers->toArray();
             }
         }
 
-        return null;
+        return [];
     }
 
-    public function getAdvisorByStatus($status, $tierUserIds)
+    public function getAdvisorsByStatus($status, $tierUserIds)
     {
         return LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
@@ -147,8 +148,7 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->orderByDesc('last_allocated')
-            ->first();
+            ->orderByDesc('last_allocated')->get();
     }
 
     public function getRules($carLead)
@@ -218,15 +218,19 @@ class CarAllocationService extends AllocationService
             info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
         } else {
             $ruleUsers = $this->getRuleUsers();
-            $finalEligibleUserIds = array_filter($eligibleUsers, function ($loginId) use ($ruleUsers) {
-                return ! in_array($loginId, $ruleUsers);
-            });
-
             info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
+            $finalEligibleUserIds = [];
+            info('eligibleUsers are : '. json_encode($eligibleUsers));
+            foreach ($eligibleUsers as $eligibleUserId) {
+                if (! in_array($eligibleUserId, $ruleUsers)) {
+                    array_push($finalEligibleUserIds, $eligibleUserId);
+                }
+            }
+            $finalEligibleUserIds = collect($finalEligibleUserIds)->pluck('user_id')->unique()->toArray();
             info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
-        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : null;
+        return count($finalEligibleUserIds) > 0 ? reset($finalEligibleUserIds) : 0;
     }
 
     /**
@@ -243,10 +247,9 @@ class CarAllocationService extends AllocationService
 
     private function getRuleUsers(): mixed
     {
-        return Rule::where('is_active', 1)
-            ->with('leadSources')->get()
-            ->pluck('leadSources.user_id')->flatten()->unique()
-            ->toArray();
+        return RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')
+                ->where('rules.is_active', 1)->distinct()
+                ->pluck('rule_lead_sources.user_id')->toArray();
     }
 
     public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
@@ -272,27 +275,28 @@ class CarAllocationService extends AllocationService
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
     {
-        $carQuote = CarQuote::findOrFail($lead->id);
+        $updatedData = [
+            'tier_id' => $tier->id,
+            'advisor_id' => $userId,
+            'cost_per_lead' => $tier->cost_per_lead,
+            'auto_assigned' => true,
+            'assignment_type' => $assignmentType,
+        ];
 
-        $carQuote->advisor_id = $userId;
-        $carQuote->tier_id = $tier->id;
-        $carQuote->cost_per_lead = $tier->cost_per_lead;
-        $carQuote->auto_assigned = true;
-        $carQuote->assignment_type = $assignmentType;
-
-        if ($carQuote->quote_batch_id === null) {
+        if ($lead->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();
             info('About to assign quote batch with id: '.$quoteBatch->id.' and name: '.$quoteBatch->name.' to quote: '.$lead->uuid);
-            $carQuote->quote_batch_id = $quoteBatch->id;
+            $updatedData['quote_batch_id'] = $quoteBatch->id;
         } else {
-            info('Quote batch currently attached to quote: '.$carQuote->uuid.' and quote id is: '.$carQuote->quote_batch_id);
+            info('Quote batch currently attached to quote: '.$lead->uuid.' and quote id is: '.$lead->quote_batch_id);
         }
 
-        $carQuote->save();
+        $lead->fill($updatedData);
+        $lead->save();
 
         info('Advisor and tier assignment done for: '.$lead->uuid.' to user with id: '.$userId.' and tier id: '.$tier->name);
 
-        return $carQuote;
+        return $lead;
     }
 
     public function updateCarLeadDetailRecord($leadId): void
@@ -378,19 +382,15 @@ class CarAllocationService extends AllocationService
 
     public function updateLeadTier($lead, $tier): void
     {
-        info('login users not found for selected lead so will try to assign only tier');
+        info('login users not found for selected lead so will try to assign only tier for lead : '. $lead->uuid);
 
-        $carQuote = CarQuote::where('id', $lead->id)->first();
+        CarQuote::where('id', $lead->id)->update([
+            'tier_id' => $tier->id,
+            'deferred' => true,
+            'deferred_at' => now(),
+        ]);
 
-        if ($carQuote) {
-            $carQuote->tier_id = $tier->id;
-            $carQuote->deferred = 1;
-            $carQuote->deferred_at = now();
-            $carQuote->save();
-            info('Tier with name : '.$tier->name.' and id : '.$tier->id.' is assigned to car lead with uuid : '.$carQuote->uuid);
-        } else {
-            info('Tier ('.$tier->name.')is already assigned against car lead with uuid : '.$carQuote->uuid);
-        }
+        info('Tier with name : '.$tier->name. ' is assigned to car lead with uuid : '.$lead->uuid);
     }
 
     public function fetchLeadsForReAssignment($advisorId)
