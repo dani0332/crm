@@ -2,6 +2,7 @@
 
 namespace App\Strategy;
 
-interface AllocationStrategy {
+interface AllocationStrategy
+{
     public function executeSteps();
 }

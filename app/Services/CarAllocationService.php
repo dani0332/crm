@@ -25,11 +25,11 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-       return CarQuote::where('uuid', $quoteId)
-                ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                ->where('is_renewal_tier_email_sent', 0)
-                ->first();
+        return CarQuote::where('uuid', $quoteId)
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->where('is_renewal_tier_email_sent', 0)
+            ->first();
     }
 
     public function getTier($tierId)
@@ -115,12 +115,12 @@ class CarAllocationService extends AllocationService
 
         $tierUserIds = $tierUserQuery->pluck('user_id');
 
-        info('Tier users: ' . json_encode($tierUserIds));
+        info('Tier users: '.json_encode($tierUserIds));
 
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
-            UserStatusEnum::UNAVAILABLE
+            UserStatusEnum::UNAVAILABLE,
         ];
 
         foreach ($statusOrder as $status) {
@@ -150,7 +150,6 @@ class CarAllocationService extends AllocationService
             ->orderByDesc('last_allocated')
             ->first();
     }
-
 
     public function getRules($carLead)
     {

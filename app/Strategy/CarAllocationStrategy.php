@@ -8,21 +8,25 @@ use App\Services\CarAllocationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class CarAllocationStrategy implements AllocationStrategy {
+class CarAllocationStrategy implements AllocationStrategy
+{
     private $carAllocationService;
     private $allocationId;
 
-    public function __construct(CarAllocationService $carAllocationService, $allocationId) {
+    public function __construct(CarAllocationService $carAllocationService, $allocationId)
+    {
         $this->carAllocationService = $carAllocationService;
         $this->allocationId = $allocationId;
     }
 
-
-    public function executeSteps() {
+    public function executeSteps()
+    {
         // Fetch the leads= to process
         $lead = $this->fetchLead();
 
-        if(!$lead) return false; // when lead is not on criteria or not found
+        if (! $lead) {
+            return false;
+        } // when lead is not on criteria or not found
 
         // Find the appropriate tier for the lead
         $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);

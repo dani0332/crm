@@ -6,8 +6,10 @@ use App\Enums\QuoteTypeId;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
 
-class AllocationFactory {
-    public static function createStrategy($allocationType, $allocationId) {
+class AllocationFactory
+{
+    public static function createStrategy($allocationType, $allocationId)
+    {
         $strategy = null;
 
         if ($allocationType === QuoteTypeId::Car) {
