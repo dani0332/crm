@@ -127,7 +127,8 @@ class CarAllocationService extends AllocationService
             $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('result of available users are : '. json_encode($eligibleUsers));
+                info('result of available users are : '.json_encode($eligibleUsers));
+
                 return $eligibleUsers->toArray();
             }
         }
@@ -220,7 +221,7 @@ class CarAllocationService extends AllocationService
             $ruleUsers = $this->getRuleUsers();
             info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
             $finalEligibleUserIds = [];
-            info('eligibleUsers are : '. json_encode($eligibleUsers));
+            info('eligibleUsers are : '.json_encode($eligibleUsers));
             foreach ($eligibleUsers as $eligibleUserId) {
                 if (! in_array($eligibleUserId, $ruleUsers)) {
                     array_push($finalEligibleUserIds, $eligibleUserId);
@@ -248,8 +249,8 @@ class CarAllocationService extends AllocationService
     private function getRuleUsers(): mixed
     {
         return RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')
-                ->where('rules.is_active', 1)->distinct()
-                ->pluck('rule_lead_sources.user_id')->toArray();
+            ->where('rules.is_active', 1)->distinct()
+            ->pluck('rule_lead_sources.user_id')->toArray();
     }
 
     public function processLeadAssignment($lead, $userId, $tier, $assignmentType): void
@@ -382,7 +383,7 @@ class CarAllocationService extends AllocationService
 
     public function updateLeadTier($lead, $tier): void
     {
-        info('login users not found for selected lead so will try to assign only tier for lead : '. $lead->uuid);
+        info('login users not found for selected lead so will try to assign only tier for lead : '.$lead->uuid);
 
         CarQuote::where('id', $lead->id)->update([
             'tier_id' => $tier->id,
@@ -390,7 +391,7 @@ class CarAllocationService extends AllocationService
             'deferred_at' => now(),
         ]);
 
-        info('Tier with name : '.$tier->name. ' is assigned to car lead with uuid : '.$lead->uuid);
+        info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
     }
 
     public function fetchLeadsForReAssignment($advisorId)

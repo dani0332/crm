@@ -26,7 +26,8 @@ class CarAllocation implements Allocation
         $lead = $this->fetchLead();
 
         if (! $lead) {
-            info('Lead with uuid : '. $lead->uuid .' not found or either was not under assignment criteria');
+            info('Lead with uuid : '.$lead->uuid.' not found or either was not under assignment criteria');
+
             return false;
         } // when lead is not on criteria or not found
 

@@ -11,7 +11,7 @@ class AllocationFactory
     public static function createStrategy($allocationType, $allocationId)
     {
         $strategy = null;
-        info('Inside strategy creation for quoteTypeId : '. $allocationType . ' and quote id is : '. $allocationId);
+        info('Inside strategy creation for quoteTypeId : '.$allocationType.' and quote id is : '.$allocationId);
         if ($allocationType == QuoteTypeId::Car) {
             info('Car Allocation is about to trigger');
             $strategy = new CarAllocation(new CarAllocationService(), $allocationId);
