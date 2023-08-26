@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
-use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
@@ -24,31 +23,23 @@ use Illuminate\Support\Facades\DB;
 
 class CarAllocationService extends AllocationService
 {
-    public function fetchLeads($quoteId)
+    public function fetchLead($quoteId)
     {
-        [$from, $to, $limit, $isFIFO] = $this->getAppStorageValuesForCarLeads();
+       return CarQuote::where('uuid', $quoteId)
+                ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+                ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+                ->where('is_renewal_tier_email_sent', 0)
+                ->first();
+    }
 
-        info('Car leads fetch start date is: '.$from.' and end datetime is: '.$to.' and pickup limit is: '.$limit.' and Pickup direction FIFO is: '.$isFIFO);
-
-        $leadsQuery = CarQuote::where('uuid', $quoteId);
-
-        $deferredLeads = $this->getDeferredLeads();
-
-        $leadsQuery->union($deferredLeads);
-
-        return $this->applyPriority($leadsQuery, $limit);
+    public function getTier($tierId)
+    {
+        return Tier::where('id', $tierId)->first();
     }
 
     protected function getDeferredLeads(): mixed
     {
         return CarQuote::whereNull('advisor_id')->where('deferred', 1)->whereBetween('deferred_at', [now()->subDay(2)->toDateTimeString(), now()]);
-    }
-
-    private function fetchDeferredLeads($limit): mixed
-    {
-        return CarQuote::where('deferred', 1)
-            ->orderBy('deferred_at')
-            ->limit($limit);
     }
 
     public function findTier($carLead): Tier|null
@@ -114,37 +105,52 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUsersForAllocation($tierId, $advisorId = null): array
+    public function getEligibleUserForAllocation($tierId, $advisorId = null)
     {
-        if ($advisorId) {
-            $tierUserIds = TierUser::where('tier_id', $tierId)->where('user_id', '!=', $advisorId)->pluck('user_id');
-        } else {
+        $tierUserQuery = TierUser::where('tier_id', $tierId);
 
-            $tierUserIds = TierUser::where('tier_id', $tierId)->pluck('user_id');
+        if ($advisorId) {
+            $tierUserQuery->where('user_id', '!=', $advisorId);
         }
 
-        info('Tier users: '.json_encode($tierUserIds));
-        $OnlineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::ONLINE, $tierUserIds);
-        $OfflineEligibleUsers = $this->getAdvisorsByStatus(UserStatusEnum::OFFLINE, $tierUserIds);
-        $eligibleUsers = count($OnlineEligibleUsers) > 0 ? $OnlineEligibleUsers : $OfflineEligibleUsers;
+        $tierUserIds = $tierUserQuery->pluck('user_id');
 
-        return $eligibleUsers;
+        info('Tier users: ' . json_encode($tierUserIds));
+
+        $statusOrder = [
+            UserStatusEnum::ONLINE,
+            UserStatusEnum::OFFLINE,
+            UserStatusEnum::UNAVAILABLE
+        ];
+
+        foreach ($statusOrder as $status) {
+            $eligibleUser = $this->getAdvisorByStatus($status, $tierUserIds);
+
+            if ($eligibleUser) {
+                return $eligibleUser;
+            }
+        }
+
+        return null;
     }
 
-    public function getAdvisorsByStatus($status, $tierUserIds)
+    public function getAdvisorByStatus($status, $tierUserIds)
     {
         return LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
                 $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                    ->where('is_available', 1)->where('status', $status);
+                    ->where('is_available', 1)
+                    ->where('status', $status);
             })
             ->where(function ($query) {
                 $query->whereRaw('allocation_count < max_capacity')
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->orderByDesc('last_allocated')->get()->pluck('leadAllocationUser.id')->toArray();
+            ->orderByDesc('last_allocated')
+            ->first();
     }
+
 
     public function getRules($carLead)
     {
@@ -167,17 +173,6 @@ class CarAllocationService extends AllocationService
         $isFIFO = $this->getAppStorageValueByKey('CAR_LEAD_PICKUP_FIFO');
 
         return [$from, $to, $limit, $isFIFO];
-    }
-
-    public function applyPriority($leadsQuery, mixed $limit): mixed
-    {
-        // Prioritize leads with payment_status_id of Authorized and Paid
-        $priorityPaymentStatus = [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PAID];
-        $prioritizedLeads = $leadsQuery->whereIn('payment_status_id', $priorityPaymentStatus)->get();
-        $normalLeads = $leadsQuery->whereNotIn('payment_status_id', $priorityPaymentStatus)
-            ->take($limit - $prioritizedLeads->count())->get();
-
-        return $prioritizedLeads->concat($normalLeads);
     }
 
     private function getRulesForCarMakeAndModel($carMake, $carModel)

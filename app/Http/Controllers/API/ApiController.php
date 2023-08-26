@@ -2,12 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
-use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
-use App\Jobs\CarAllocationJob;
 use App\Services\ApiService;
-use App\Services\CarAllocationService;
+use App\Strategy\AllocationFactory;
 use Illuminate\Http\Request;
 
 class ApiController extends Controller
@@ -35,12 +33,16 @@ class ApiController extends Controller
     {
         info('adding request log : '.json_encode($request->all()));
         if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
-            $quoteId = $request['quoteUUID'];
-            $quoteType = $request['quoteTypeId'];
-            info('API is hit for quote uuid : '.$quoteId.' with quote type id : '.$quoteType);
-            if ($quoteType == QuoteTypeId::Car) {
-                dispatch(new CarAllocationJob(app(CarAllocationService::class), $quoteId));
-            }
+
+            $allocationType = $request['quoteTypeId'];
+
+            $allocationId = $request['quoteUUID'];
+
+            info('API is hit for quote uuid : '.$allocationId.' with quote type id : '.$allocationType);
+
+            $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+
+            $allocationStrategy->executeSteps();
         } else {
             return response('Required Parameter missing', 403);
         }
