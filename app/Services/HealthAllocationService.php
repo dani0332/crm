@@ -66,27 +66,30 @@ class HealthAllocationService extends AllocationService
         foreach ($statusOrder as $status) {
             $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
             if ($eligibleUser) {
-                info('eligible user found for team : '. $leadTeam. ' with status : '. $status . ' and user id :' . $eligibleUser->user_id);
+                info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
+
                 return User::where('id', $eligibleUser->user_id)->first();
             }
         }
+
         return [];
     }
 
     public function getAdvisorByStatus($status, $leadTeam)
     {
-        info('trying to get advisors for team : '. $leadTeam. ' with current status as '. $status);
+        info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
+
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
-                ->join('teams as t', 't.id', '=', 'users.sub_team_id')
-                ->where('la.is_available', 1)
-                ->where('users.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                ->where('users.status', $status)
-                ->where(function ($query) {
-                    $query->whereRaw('la.allocation_count < la.max_capacity')
-                        ->orWhere('la.max_capacity', '=', -1);
-                })
-                ->where('t.name', $leadTeam)
-                ->orderBy('la.last_allocated', 'asc')->first();
+            ->join('teams as t', 't.id', '=', 'users.sub_team_id')
+            ->where('la.is_available', 1)
+            ->where('users.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+            ->where('users.status', $status)
+            ->where(function ($query) {
+                $query->whereRaw('la.allocation_count < la.max_capacity')
+                    ->orWhere('la.max_capacity', '=', -1);
+            })
+            ->where('t.name', $leadTeam)
+            ->orderBy('la.last_allocated', 'asc')->first();
     }
 
     public function assignLead($lead, $advisor, $assignmentType)
