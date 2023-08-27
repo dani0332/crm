@@ -23,18 +23,21 @@ class HealthAllocation implements Allocation
         $lead = $this->fetchLead();
 
         if (! $lead) {
+            info('No lead found or either lead is not under assignment criteria');
             return false; // when lead is not on criteria or not found
         }
 
         $this->assignTeamBasedOnPrice($lead);
 
         if (! $lead->health_team_type) {
+            info('No health team found against lead : '. $lead->uuid);
             return false; // when system is not able to identify sub team based on price
         }
 
         $advisor = $this->fetchAvailableAdvisor($lead->health_team_type);
 
         if (! $advisor) {
+            info('No advisors found against lead : '. $lead->uuid);
             return false; // when no advisor is found
         }
 

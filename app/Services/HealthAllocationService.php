@@ -13,6 +13,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\Team;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
@@ -63,38 +64,40 @@ class HealthAllocationService extends AllocationService
         ];
 
         foreach ($statusOrder as $status) {
-            $eligibleUser = $this->getAdvisorsByStatus($status, $leadTeam);
+            $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
             if ($eligibleUser) {
-                return $eligibleUser;
+                info('eligible user found for team : '. $leadTeam. ' with status : '. $status . ' and user id :' . $eligibleUser->user_id);
+                return User::where('id', $eligibleUser->user_id)->first();
             }
         }
+        return [];
     }
 
-    public function getAdvisorsByStatus($status, $leadTeam)
+    public function getAdvisorByStatus($status, $leadTeam)
     {
-        return LeadAllocation::with('leadAllocationUser')
-            ->join('teams as t', 't.id', '=', 'u.sub_team_id')
-            ->whereHas('leadAllocationUser', function ($query) use ($status) {
-                $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                    ->where('is_available', 1)->where('status', $status);
-            })
-            ->where(function ($query) {
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
-            ->where('t.name', $leadTeam)
-            ->orderByDesc('last_allocated')
-            ->first();
+        info('trying to get advisors for team : '. $leadTeam. ' with current status as '. $status);
+        return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+                ->join('teams as t', 't.id', '=', 'users.sub_team_id')
+                ->where('la.is_available', 1)
+                ->where('users.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
+                ->where('users.status', $status)
+                ->where(function ($query) {
+                    $query->whereRaw('la.allocation_count < la.max_capacity')
+                        ->orWhere('la.max_capacity', '=', -1);
+                })
+                ->where('t.name', $leadTeam)
+                ->orderBy('la.last_allocated', 'asc')->first();
     }
 
-    public function assignLead($lead, $advisorId, $assignmentType)
+    public function assignLead($lead, $advisor, $assignmentType)
     {
-        $lead->advisor_id = $advisorId;
+        $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
         $lead->save();
-        info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
+        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name);
         if ($lead->source != LeadSourceEnum::REFERRAL) {
-            $this->updateLeadAllocationRecord($advisorId, false);
+            info('lead source is not referral so about to update allocation record');
+            $this->updateLeadAllocationRecord($advisor->id, false);
         }
 
         $this->updateLeadDetailRecord($lead->id, $lead->uuid);

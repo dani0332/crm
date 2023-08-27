@@ -59,7 +59,8 @@ class ApiController extends Controller
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
 
-            return response()->json(['error' => 'An error occurred', 'message' => $e->getMessage()], 500);
+            return response()->json(['error' => 'An error occurred', 'message' => $e->getMessage()
+                            , 'stackTrace' => $e->getTraceAsString()], 500);
         }
     }
 
