@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\RuleTypeEnum;
 use App\Models\Rule;
 use App\Models\RuleDetail;
 use App\Models\RuleUser;
@@ -64,13 +65,14 @@ class RuleService extends BaseService
 
                 return $errorResponse;
             }
-        } else if (isset($request->name) && isset($request->rule_car_make_id) && isset($request->rule_car_model_id)) {
-            $existingRuleCarMakeModel = RuleDetail::where('car_make_id', $request->rule_car_make_id)
+        } else if (isset($request->name) && isset($request->rule_type)
+            && $request->rule_type == RuleTypeEnum::CAR_MAKE_MODEL) {
+            $existingCommercialRule = Rule::where('rule_type', $request->rule_type)
                 ->get();
 
-            if (count($existingRuleCarMakeModel) > 0) {
+            if (count($existingCommercialRule) > 0) {
                 $errorResponse = new stdClass();
-                $errorResponse->message = 'Error: Rule against same Car Make already exists';
+                $errorResponse->message = 'Error: Commercial rule already exist';
 
                 return $errorResponse;
             }
@@ -111,7 +113,7 @@ class RuleService extends BaseService
 
         $userIds = $request->rule_users;
 
-        $rule->ruleDetail()->create([
+        $rule->ruleDetail()->update([
             'lead_source_id' => $request->get('lead_source_id')
         ]);
 
