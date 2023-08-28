@@ -161,7 +161,7 @@ const memberCategoryText = memberCategoryId =>
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
   { value: 'EBP', label: 'EBP' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
@@ -643,11 +643,9 @@ watch(
   },
 );
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort((a, b) => {
-    if (a.providerName < b.providerName) {
-      return -1;
-    }
-  }),
+  page.props.listQuotePlans.sort(
+    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
+  ),
 );
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);

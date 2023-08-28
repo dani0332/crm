@@ -7906,8 +7906,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       value: 'RM-NB',
       label: 'RM-NB'
     }, {
-      value: 'RM-Speed',
-      label: 'RM-Speed'
+      value: 'RM-SPEED',
+      label: 'RM-SPEED'
     }, {
       value: 'EBP',
       label: 'EBP'
@@ -8336,9 +8336,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       }
     });
     var listQuotePlansFiltered = (0,vue__WEBPACK_IMPORTED_MODULE_7__.ref)(page.props.listQuotePlans.sort(function (a, b) {
-      if (a.providerName < b.providerName) {
-        return -1;
-      }
+      return Number(!b.isHidden) - Number(!a.isHidden);
     }));
     var onPlanFiltersSubmit = function onPlanFiltersSubmit() {
       var filters = cleanObj(planFilters);
@@ -9716,7 +9714,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       leadStatus: page.props.quote.quote_status_id || null,
       notes: page.props.quote.notes || null,
       trans_code: page.props.quote.transapp_code || null,
-      lostReason: page.props.quote.lost_reason || null
+      lostReason: page.props.quote.lost_reason_id || null
     });
     var onLeadStatus = function onLeadStatus() {
       leadStatusForm.post("/quotes/Home/".concat(page.props.quote.id, "/update-lead-status"), {
@@ -11137,7 +11135,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     quoteStatusEnum: Object
   },
   setup: function setup(__props, _ref) {
-    var _page$props$quote$lif;
+    var _page$props$quote$lif, _page$props$quote$lif2;
     var __expose = _ref.expose;
     __expose();
     var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
@@ -11402,7 +11400,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       leadStatus: page.props.quote.quote_status_id || null,
       notes: ((_page$props$quote$lif = page.props.quote.life_quote_request_detail) === null || _page$props$quote$lif === void 0 ? void 0 : _page$props$quote$lif.notes) || null,
       trans_code: page.props.quote.transapp_code || null,
-      lostReason: page.props.quote.lost_reason_id || null
+      lostReason: ((_page$props$quote$lif2 = page.props.quote.life_quote_request_detail) === null || _page$props$quote$lif2 === void 0 ? void 0 : _page$props$quote$lif2.lost_reason_id) || null
     });
     var onLeadStatus = function onLeadStatus() {
       leadStatusForm.post("/quotes/Life/".concat(page.props.quote.id, "/update-lead-status"), {
@@ -15448,9 +15446,6 @@ __webpack_require__.r(__webpack_exports__);
     }, {
       text: 'IS ECOMMERCE',
       value: 'is_ecommerce'
-    }, {
-      text: 'TRANSAPP CODE',
-      value: 'transapp_code'
     }];
     var can = function can(permission) {
       return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_3__.useCan)(permission);
@@ -29880,8 +29875,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               value: 'RM-NB',
               label: 'RM-NB'
             }, {
-              value: 'RM-Speed',
-              label: 'RM-Speed'
+              value: 'RM-SPEED',
+              label: 'RM-SPEED'
             }, {
               value: 'EBP',
               label: 'EBP'
@@ -36454,6 +36449,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(nationality === null || nationality === void 0 ? void 0 : nationality.code), 1 /* TEXT */)];
     }),
 
+    "item-lost_reason": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function (_ref5) {
+      var _life_quote_request_d;
+      var life_quote_request_detail = _ref5.life_quote_request_detail;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(life_quote_request_detail === null || life_quote_request_detail === void 0 ? void 0 : (_life_quote_request_d = life_quote_request_detail.lost_reason) === null || _life_quote_request_d === void 0 ? void 0 : _life_quote_request_d.text), 1 /* TEXT */)];
+    }),
+
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["items-selected", "loading", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Pagination, {
     links: {
@@ -37340,9 +37341,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "rows-per-page": 15,
     "hide-footer": $setup.historyData.length < 15
   }, null, 8 /* PROPS */, ["items", "hide-footer"]))]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_AuditLogs, {
-    "quote-type": $props.quoteType,
+    type: 'App\\Models\\LifeQuote',
     id: _ctx.$page.props.quote.id
-  }, null, 8 /* PROPS */, ["quote-type", "id"])]);
+  }, null, 8 /* PROPS */, ["id"])]);
 }
 
 /***/ }),
@@ -48805,7 +48806,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Head, {
     title: "Yacht Quote"
   }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_1, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("h2", _hoisted_2, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createTextVNode)(" Yacht Quote "), $props.quote ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("span", _hoisted_3, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.uuid), 1 /* TEXT */)) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_Link, {
-    href: "/personal-quotes/bike"
+    href: "/personal-quotes/yacht"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_button, {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ class AllocationThresholdController extends Controller
      */
     public function index()
     {
-        $teams = Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB])->get();
+        $teams = Team::whereIn('name', [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB])->where('type', TeamTypeEnum::TEAM)->get();
         $customSequence = [quoteTypeCode::EBP, quoteTypeCode::RM_SPEED, quoteTypeCode::RM_NB];
         $sortedTeams = $teams->sortBy(function ($team) use ($customSequence) {
             $index = array_search($team['name'], $customSequence);
