@@ -5,11 +5,17 @@ namespace App\Jobs;
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class ReAssignCarLeadsJob extends LeadAllocationJobInterface
+class ReAssignCarLeadsJob implements ShouldQueue
 {
+    use Dispatchable, InteractsWithQueue , Queueable;
+
     protected CarAllocationService $carAllocationService;
     protected $advisorId;
 
@@ -89,7 +95,7 @@ class ReAssignCarLeadsJob extends LeadAllocationJobInterface
 
     protected function findAvailableUsers($tierId): array
     {
-        return $this->carAllocationService->getEligibleUsersForAllocation($tierId, $this->advisorId);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId);
     }
 
     protected function findRules($lead): array
