@@ -190,7 +190,6 @@
                     }
                 }
             }
-            var totalRecords = 0;
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
@@ -275,7 +274,6 @@
                         }
                     }
                 }
-            totalRecords = vehicleTypeDataTable.page.info().recordsTotal;
             });
             $("#searchTable").submit(function(e) {
                 e.preventDefault();
@@ -303,47 +301,12 @@
                 }, 1000);
                 location.reload();
             });
-            function showErrorMessage(msg)
-            {
-                $(".errorMsg").empty().hide();
-                $(".errorMsg").append('<div class="alert alert-danger">'+ msg +'</div>');
-                $(".errorMsg").fadeIn(300);
-                setTimeout(function() {
-                    $(".errorMsg").fadeOut(300, function() {
-                        $(".errorMsg").empty().hide();
-                    });
-                }, 3200);
-            }
             // Custom export function to export all the available rows in grid not just the visible ones
             function newexportaction(e, dt, button, config) {
-                vehicleTypeDataTable.draw();
-                var startDateStr = $('#created_at').val();
-                var endDateStr = $('#created_at_end').val();
-                var startDateParts = startDateStr.split("-");
-                var endDateParts = endDateStr.split("-");
-                var startDate = new Date(startDateParts[2], startDateParts[1] - 1, startDateParts[0]);
-                var endDate = new Date(endDateParts[2], endDateParts[1] - 1, endDateParts[0]);
-                if(!startDateStr || !endDateStr){
-                    showErrorMessage('Note : For export created date start and end should be selected');
-                    return;
-                }
-                if (endDateStr <= startDateStr) {
-                    showErrorMessage('Note : End date must be greater than start date.');
-                    return;
-                } else {
-                    var differenceInMilliseconds = endDate - startDate;
-                    var differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
-                    var maxDaysInMonth = 31;
-                    if (differenceInDays > maxDaysInMonth) {
-                        showErrorMessage('Note : Date range cannot be greater than a month.');
-                        return;
-                    }
-                }
                 var self = this;
                 var oldStart = dt.settings()[0]._iDisplayStart;
                 dt.one('preXhr', function(e, s, data) {
                     data.start = 0;
-                    data.length = totalRecords;
                     data.length = 2147483647;
                     dt.one('preDraw', function(e, settings) {
                         if (button[0].className.indexOf('buttons-copy') >= 0) {
@@ -507,7 +470,6 @@
         <div class="col-md-12 col-sm-12">
             <div class="x_panel" style="overflow:hidden">
                 <div class="x_title">
-                    <div class="errorMsg"></div>
                     <h2>{{ str_contains(strtolower($model->modelType), 'team')
                         ? 'Team'
                         : (str_contains(strtolower($model->modelType), 'leadstatus')
