@@ -437,11 +437,12 @@ class AMLController extends Controller
         }
     }
 
-    public function kycLogsRecords(Request $request){
+    public function kycLogsRecords(Request $request)
+    {
 
         $kycLogs = AML::where([
             'quote_request_id' => $request->quote_request_id,
-            'quote_type_id' => $request->quote_type_id
+            'quote_type_id' => $request->quote_type_id,
         ])->orderBy('created_at', 'desc');
 
         return DataTables::of($kycLogs)
