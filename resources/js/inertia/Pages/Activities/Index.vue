@@ -297,7 +297,7 @@ onMounted(() => {
   <div>
     <Head title="Activities" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Search Activity</h2>
+      <h2 class="text-xl font-semibold">Search Activity </h2>
       <div class="space-x-3">
         <x-button size="sm" color="orange" @click.prevent="addActivity">
           Create Activity
