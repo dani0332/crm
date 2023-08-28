@@ -14,9 +14,4 @@ class TravelQuotePlan extends Model implements AuditableContract
     use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
     protected $guarded = [];
-
-    public function quoteStatus()
-    {
-        return $this->belongsTo(QuoteStatus::class);
-    }
 }

@@ -110,23 +110,23 @@ class TravelQuoteService extends BaseService
         if ($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')) {
             foreach ($request->members as $member) {
 
-                $dob_member = explode('T', $member['dob']);
-                $date = explode('-', $dob_member[0]);
+                $memberDob = explode('T', $member['dob']);
+                $date = explode('-', $memberDob[0]);
                 $day = explode('T', $date[2]);
-                $newobj = new \stdClass(); //create a new
+                $memberData = new \stdClass();
                 if (isset($member['primary'])) {
-                    $newobj->primary = true;
+                    $memberData->primary = true;
                 }
                 if (isset($member['id'])) {
-                    $newobj->id = $member['id'];
+                    $memberData->id = $member['id'];
                 }
-                $newobj->dob = $dob_member[0];
-                $dob = $dob_member[0];
-                $newobj->gender = $member['gender'];
-                $newobj->year = $date[0];
-                $newobj->month = $date[1];
-                $newobj->day = $day[0];
-                array_push($members, $newobj);
+                $memberData->dob = $memberDob[0];
+                $dob = $memberDob[0];
+                $memberData->gender = $member['gender'];
+                $memberData->year = $date[0];
+                $memberData->month = $date[1];
+                $memberData->day = $day[0];
+                array_push($members, $memberData);
             }
         }
         $dataArr = [

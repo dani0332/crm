@@ -989,7 +989,7 @@ onMounted(() => {
                       <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
               </dt>
-            <dt v-else class="font-medium">{{ field.title?.toUpperCase() }}</dt>
+            <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
             <dd>{{ field?.value }}</dd>
           </div>
 
@@ -1002,7 +1002,7 @@ onMounted(() => {
                         <template #tooltip> Traveling Where</template>
                     </x-tooltip>
                 </dt>
-                <dt  class="font-medium">{{ quote.direction_code?.toUpperCase() }}</dt>
+                <dt  class="font-medium uppercase">{{ quote.direction_code }}</dt>
             </div>
 
             <div v-if="enums.travelQuoteEnum.TravelUaeInbound == quote.direction_code" class="grid sm:grid-cols-2" >
@@ -1067,7 +1067,7 @@ onMounted(() => {
                         <template #tooltip> Travel Coverage</template>
                     </x-tooltip>
                 </dt>
-                <dt  class="font-medium">{{ quote.coverage_code?.toUpperCase() }}</dt>
+                <dt  class="font-medium">{{ quote.coverage_code }}</dt>
             </div>
             <div class="grid sm:grid-cols-2">
                 <dt>
@@ -1426,12 +1426,12 @@ onMounted(() => {
         :rows-per-page="15"
       >
         <template #item-email_status="item">
-          <span class="text-primary-600">{{
-            item.email_status?.toUpperCase()
+          <span class="text-primary-600 uppercase">{{
+            item.email_status
           }}</span>
         </template>
         <template #item-reason="item">
-          <span class="text-primary-600">{{ item.reason?.toUpperCase() }}</span>
+          <span class="text-primary-600 uppercase">{{ item.reason}}</span>
         </template>
       </DataTable>
     </div>
@@ -1558,10 +1558,10 @@ onMounted(() => {
 
       <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
         <p
-          class="text-center text-primary-600"
+          class="text-center text-primary-600 uppercase"
           v-if="typeof listQuotePlans == 'string'"
         >
-          {{ listQuotePlans?.toUpperCase() }}
+          {{ listQuotePlans }}
         </p>
       </div>
       <div v-else>
@@ -1574,12 +1574,12 @@ onMounted(() => {
           :rows-per-page="15"
         >
           <template #item-providerName="item">
-            <span class="text-primary-600">{{
-              item.providerName?.toUpperCase()
+            <span class="text-primary-600 uppercase">{{
+              item.providerName
             }}</span>
           </template>
           <template #item-name="item">
-            <span class="text-primary-600">{{ item.name?.toUpperCase() }}</span>
+            <span class="text-primary-600 uppercase">{{ item.name }}</span>
           </template>
           <template #item-discountPremium="item">
             <span class="text-primary-600">{{

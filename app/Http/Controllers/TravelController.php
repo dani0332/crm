@@ -264,8 +264,7 @@ class TravelController extends Controller
         }
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
-        // $record->id
-        $quotePlans = $this->travelQuoteService->listTravelQuotePlans('ddd');
+        $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
 
         return inertia('TravelQuote/Create', [
             'quote' => $record,
