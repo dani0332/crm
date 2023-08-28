@@ -99,12 +99,16 @@ class BikeQuoteRepository extends BaseRepository
                 $q->with(['uaeLicenseHeldFor']);
             }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'currentlyInsuredWith', 'payments' => function ($q) {
                 $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
+            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 
+            'quoteDetail.previousAdvisor','documents' => function ($q) {
                 $q->with('createdBy')->orderBy('created_at', 'desc');
             }])->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
+        $data= $quote->toArray();
+        $quote['lost_reason']=$data['quote_detail']['lost_reason']['text'] ?? Null;
+        $quote['previous_advisor_id_text']=$data['quote_detail']['previous_advisor']['name'] ?? Null;
         return $quote;
     }
 

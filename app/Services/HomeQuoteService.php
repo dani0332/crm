@@ -57,6 +57,8 @@ class HomeQuoteService extends BaseService
             'hqr.premium',
             'hqr.advisor_id',
             'u.name as advisor_id_text',
+            'hqr.previous_advisor_id',
+            'uadv.name AS previous_advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
@@ -74,10 +76,12 @@ class HomeQuoteService extends BaseService
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
+            
     }
 
     public function getEntity($id)

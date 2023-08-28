@@ -1639,6 +1639,7 @@ onMounted(() => {
       :paymentMethods="paymentMethods"
       :quote="quote"
     />
+    <LastYearPolicyDetail :quote="quote" />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div>

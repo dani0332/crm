@@ -233,6 +233,7 @@ class AmtController extends Controller
     {
         $record = BusinessQuote::with(
             'advisor',
+            'previousAdvisor',
             'businessQuoteRequestDetail.lostReason'
         )->where([
             'uuid' => $id,
@@ -240,6 +241,9 @@ class AmtController extends Controller
         ])->first();
         abort_if(! $record, 404);
 
+        $data= $record->toArray();
+        $record['lost_reason']=$data['business_quote_request_detail']['lost_reason']['text'] ?? Null;
+        $record['previous_advisor_id_text']=$data['previous_advisor']['name'] ?? Null;
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -254,6 +258,7 @@ class AmtController extends Controller
             'typeCode' => quoteTypeCode::GroupMedical,
             'lostReasons' => $lostReasons,
             'quoteStatuses' => $quoteStatuses,
+            'modelType' => QuoteTypes::BUSINESS,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
         ]);

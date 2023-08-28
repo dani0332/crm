@@ -29,38 +29,38 @@ defineProps({
 const page = usePage();
 
 const modals = reactive({
-    duplicate: false,
+  duplicate: false,
 });
 
 const leadDuplicateForm = useForm({
-    modelType: 'cycle',
-    parentType: 'cycle',
-    entityId: page.props.quote.id,
-    entityCode: page.props.quote.code,
-    entityUId: page.props.quote.uid,
-    lob_team: [],
-    lob_team_sub_selection: null,
+  modelType: 'cycle',
+  parentType: 'cycle',
+  entityId: page.props.quote.id,
+  entityCode: page.props.quote.code,
+  entityUId: page.props.quote.uid,
+  lob_team: [],
+  lob_team_sub_selection: null,
 });
 
 const openDuplicate = () => {
-    modals.duplicate = true;
-    leadDuplicateForm.reset();
+  modals.duplicate = true;
+  leadDuplicateForm.reset();
 };
 
 const onCreateDuplicate = isValid => {
-    if (!isValid) return;
-    leadDuplicateForm.post(route('createDuplicate'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            notification.success({
-                title: 'Quote duplicated successfully',
-                position: 'top',
-            });
-        },
-        onFinish: () => {
-            modals.duplicate = false;
-        },
-    });
+  if (!isValid) return;
+  leadDuplicateForm.post(route('createDuplicate'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Quote duplicated successfully',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.duplicate = false;
+    },
+  });
 };
 
 const historyLoading = ref(false);
@@ -92,82 +92,84 @@ const permissionsEnum = page.props.permissionsEnum;
 <template>
   <div>
     <Head title="Cycle Quotes" />
-      <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-          <h2 class="text-xl font-semibold">Cycle Detail</h2>
-          <div class="flex gap-2">
-                <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-                  Duplicate Lead
-                </x-button>
-                <Link
-                  v-if="can(permissionsEnum.CycleQuotesList)"
-                  href="/personal-quotes/cycle"
-                  preserve-scroll
-                >
-                  <x-button size="sm" color="primary" tag="div">
-                      Cycle Quotes
-                  </x-button>
-                </Link>
-                <Link
-                  v-if="can(permissionsEnum.CycleQuotesEdit)"
-                  :href="`/personal-quotes/cycle/${quote.uuid}/edit`"
-                >
-                  <x-button size="sm" tag="div">Edit</x-button>
-                </Link>
-          </div>
-        </div>
-      <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
-          <template #header> Duplicate Lead </template>
-          <x-form @submit="onCreateDuplicate" :auto-focus="false">
-              <div class="grid gap-4">
-                  <x-select
-                      v-model="leadDuplicateForm.lob_team"
-                      label="LOBs"
-                      :options="
-                        duplicateAllowedLobs.map(lob => ({
-                            value: lob,
-                            label: lob,
-                          }))
-                        "
-                      :rules="[isRequired]"
-                      placeholder="Select LOB For Duplication"
-                      class="w-full"
-                      multiple
-                  />
-                  <x-select
-                      v-model="leadDuplicateForm.lob_team_sub_selection"
-                      label="Reason"
-                      :rules="[isRequired]"
-                      class="w-full"
-                      :options="[
-                          { value: 'new_enquiry', label: 'New enquiry' },
-                          { value: 'record_only', label: 'Record purposes only' },
-                        ]"
-                  />
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Cycle Detail</h2>
+      <div class="flex gap-2">
+        <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+          Duplicate Lead
+        </x-button>
+        <Link
+          v-if="can(permissionsEnum.CycleQuotesList)"
+          href="/personal-quotes/cycle"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Cycle Quotes
+          </x-button>
+        </Link>
+        <Link
+          v-if="can(permissionsEnum.CycleQuotesEdit)"
+          :href="`/personal-quotes/cycle/${quote.uuid}/edit`"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
+    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+      <template #header> Duplicate Lead </template>
+      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            label="LOBs"
+            :options="
+              duplicateAllowedLobs.map(lob => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
 
-                  <x-button
-                      color="orange"
-                      type="submit"
-                      :loading="leadDuplicateForm.processing"
-                  >
-                      Create Duplicate
-                  </x-button>
-              </div>
-          </x-form>
-      </x-modal>
+          <x-button
+            color="orange"
+            type="submit"
+            :loading="leadDuplicateForm.processing"
+          >
+            Create Duplicate
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -210,17 +212,19 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.device }}</dd>
           </div>
 
-            <div class="grid sm:grid-cols-2">
-                <div>
-                    <x-tooltip position="bottom">
-                        <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                            Parent Ref-ID
-                        </label>
-                        <template #tooltip> Parent Reference ID </template>
-                    </x-tooltip>
-                </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+          <div class="grid sm:grid-cols-2">
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
             </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
+          </div>
         </dl>
       </div>
 
@@ -246,10 +250,10 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote?.cycle_quote?.year_of_manufacture?.text }}</dd>
           </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">Purchased value(AED)</dt>
-                <dd>{{ quote?.asset_value}}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">Purchased value(AED)</dt>
+            <dd>{{ quote?.asset_value }}</dd>
+          </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Accessories</dt>
@@ -357,6 +361,8 @@ const permissionsEnum = page.props.permissionsEnum;
         </dl>
       </div>
     </div>
+
+    <LastYearPolicyDetail :quote="quote" />
 
     <QuoteActivities
       :can="can"

@@ -114,6 +114,7 @@ class LifeQuoteController extends Controller
             'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'modelType' => QuoteTypes::LIFE,
         ]);
     }
 
