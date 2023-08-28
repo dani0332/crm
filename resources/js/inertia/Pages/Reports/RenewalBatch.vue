@@ -261,7 +261,7 @@ function calculateValuesAndHighlight() {
                     parseInt(item.renewed) /
                     (
                         parseInt(item.total_allocated_leads) -
-                        (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                        parseInt(item.car_sold) - parseInt(item.uncontactable)
                     )) * 100
 
             ).toFixed(2);
@@ -271,7 +271,7 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed) /
                 (
                     parseInt(item.total_allocated_leads) -
-                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                    parseInt(item.car_sold) - parseInt(item.uncontactable)
                 )) * 100
 
         ).toFixed(2);
@@ -281,7 +281,7 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_value_segment_advisors) /
                 (
                     parseInt(item.total_by_value_segment_advisors) -
-                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                    parseInt(item.car_sold) - parseInt(item.uncontactable)
                 )) * 100
         ).toFixed(2);
 
@@ -290,7 +290,7 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_volume_segment_advisors) /
                 (
                     parseInt(item.total_by_volume_segment_advisors) -
-                    (parseInt(item.car_sold) - parseInt(item.uncontactable))
+                    parseInt(item.car_sold) - parseInt(item.uncontactable)
                 )) * 100
         ).toFixed(2);
 

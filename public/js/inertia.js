@@ -15073,10 +15073,10 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       lastMonthSummedIndex = 0;
       currentRowSpan = 0;
       page.props.reportData.data.forEach(function (item, index) {
-        var advisorRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
-        var imRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
-        var valueSegmentConversion = (parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
-        var volumeSegmentConversion = (parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - (parseInt(item.car_sold) - parseInt(item.uncontactable))) * 100).toFixed(2);
+        var advisorRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        var imRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        var valueSegmentConversion = (parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        var volumeSegmentConversion = (parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
         var monthlySum = calculateMonthlySum(page.props.reportData.data, index);
         var rawRetention = (item.renewed / item.total_allocated_leads * 100).toFixed(2);
         item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
