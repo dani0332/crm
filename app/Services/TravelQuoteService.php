@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
@@ -105,25 +106,7 @@ class TravelQuoteService extends BaseService
     public function saveTravelQuote(Request $request)
     {
         $members = [];
-        $dob = '';
-        if ($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')) {
-            foreach ($request->members as $member) {
-
-                $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
-                $memberData = new \stdClass();
-                if (isset($member['primary'])) {
-                    $memberData->primary = true;
-                }
-                if (isset($member['id'])) {
-                    $memberData->id = $member['id'];
-                }
-                $memberData->dob = $memberDob;
-                $dob = $memberDob[0];
-                $memberData->gender = $member['gender'];
-                array_push($members, $memberData);
-            }
-        }
-        $dataArr = [
+        $travelQuote = [
             'directionCode' => $request->direction_code,
             'regionCoverForId' => 3,
             'firstName' => $request->first_name,
@@ -134,42 +117,51 @@ class TravelQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
-        if ($dob != '') {
-            $dataArr['dob'] = $dob;
+        if ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0') {
+
+            foreach ($request->members as $member) {
+                $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
+                $memberData = new \stdClass();
+                if (isset($member['primary'])) {
+                    $memberData->primary = true;
+                    $travelQuote['dob'] = $memberDob;
+                }
+                if (isset($member['id'])) {
+                    $memberData->id = $member['id'];
+                }
+                $memberData->dob = $memberDob;
+                $memberData->gender = $member['gender'];
+                array_push($members, $memberData);
+            }
+                $travelQuote['members'] = $members;
+                $travelQuote['coverageCode'] = $request->coverage_code;
+                $travelQuote['startDate'] = $request->start_date;
+
+                if ($request->coverage_code == TravelQuoteEnum::COVERAGECODESINGLETRIP) {
+                    $travelQuote['endDate'] = $request->end_date;
+                }
         }
+
         if ($request->direction_code == TravelQuoteEnum::TRAVELUAEINBOUND) {
-            $dataArr['hasArrivedUae'] = $request->has_arrived_uae;
+            $travelQuote['hasArrivedUae'] = $request->has_arrived_uae;
         } else {
-            $dataArr['hasArrivedDestination'] = $request->has_arrived_destination;
+            $travelQuote['hasArrivedDestination'] = $request->has_arrived_destination;
             if ($request->has_arrived_destination == '0') {
-                $dataArr['regionCoverForId'] = $request->region_cover_for_id;
+                $travelQuote['regionCoverForId'] = $request->region_cover_for_id;
             }
         }
-        if ($request->has_arrived_uae == '0' || $request->has_arrived_destination == '0') {
-            $dataArr['members'] = $members;
-            $dataArr['coverageCode'] = $request->coverage_code;
-            $dataArr['startDate'] = $request->start_date;
 
-            if ($request->coverage_code == TravelQuoteEnum::COVERAGECODESINGLETRIP) {
-                $dataArr['endDate'] = $request->end_date;
-            }
-        }
-        if ($request->region_cover_for_id != null && $request->direction_code == TravelQuoteEnum::TRAVELUAEOUTBOUND) {
-            $dataArr['regionCoverForId'] = $request->region_cover_for_id;
-        }
-
-        if (! Auth::user()->hasRole('ADMIN') && ! Auth::user()->hasRole('Call Desk')) {
-            $dataArr['advisorId'] = Auth::user()->id;
+        if (! Auth::user()->hasRole(RolesEnum::Admin) && ! Auth::user()->hasRole(RolesEnum::CallDesk)) {
+            $travelQuote['advisorId'] = Auth::user()->id;
         }
 
         if ($request->uuid != null) {
-            $dataArr['quoteUID'] = $request->uuid;
-            $kenService = new KenService();
-            $response = $kenService->request('/get-revised-travel-quote-plans', 'post', $dataArr);
+            $travelQuote['quoteUID'] = $request->uuid;
+            $response = KenService::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
             return $response;
 
         }
-        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $dataArr);
+        $response = CapiRequestService::sendCAPIRequest('/api/v1-save-travel-quote', $travelQuote);
 
         if (isset($response->quoteUID)) {
             $this->savePremium(quoteTypeCode::TravelQuote, $request, $response);
@@ -520,6 +512,7 @@ class TravelQuoteService extends BaseService
             'parent_duplicate_quote_id' => 'input|title',
             'policy_start_date' => 'input|date',
             'members' => 'input|array|required',
+            'direction_code' => 'input|text|required',
 
         ];
     }
