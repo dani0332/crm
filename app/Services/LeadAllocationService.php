@@ -16,6 +16,7 @@ use App\Models\TierUser;
 use App\Models\LeadSource;
 use App\Models\RuleDetail;
 use App\Enums\DaysNameEnum;
+use App\Enums\RuleTypeEnum;
 use App\Jobs\IntroEmailJob;
 use App\Models\HealthQuote;
 use App\Enums\quoteTypeCode;
@@ -503,7 +504,7 @@ class LeadAllocationService extends BaseService
 
                     info("count of matched records =====******======");
                     info(count($matchedRuleRecords));
-                    
+
                     if (count($matchedRuleRecords) > 0) {
                         $ruleUserIds = [];
                         // getting user Ids from rules
@@ -686,57 +687,24 @@ class LeadAllocationService extends BaseService
             ->first();
 
         foreach ($commercialKeywords as $keyword) {
-            info("keyword check keyword = ". json_encode($keyword->name));
             if (
                 str_contains(
                     strtolower(trim($carLead->full_name)),
                     strtolower(trim($keyword->name))
                 )
+                ||
+                ($commercialCarMake && $commercialCarModel)
             ) {
-                $carMake = $carLead->car_make_id;
-                $carModel = $carLead->car_model_id;
+                $records = $this->getCommercialRule();
 
-                $records = Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-                    ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-                    ->join('users', 'users.id', 'rule_users.user_id')
-                    ->where('rule_details.car_make_id', $carMake)
-                    ->where('rule_details.car_model_id', $carModel)
-                    ->where('rules.is_active', 1)
-                    ->groupBy('rule_details.rule_id')
-                    ->select(
-                        DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-                    );
+                info('commercial records: ' . json_encode($records->get()));
 
-                    info('keyword corporate motor records: ' . json_encode($records->get()));
-
-                    return $records->get();
+                return $records->get();
 
             }
         }
 
-        if ( $commercialCarMake && $commercialCarModel ) {
-            info("keyword no found but vehicle is commercial ");
-
-            $carMake = $carLead->car_make_id;
-            $carModel = $carLead->car_model_id;
-
-            $records = Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-                ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-                ->join('users', 'users.id', 'rule_users.user_id')
-                ->where('rule_details.car_make_id', $carMake)
-                ->where('rule_details.car_model_id', $carModel)
-                ->where('rules.is_active', 1)
-                ->groupBy('rule_details.rule_id')
-                ->select(
-                    DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-                );
-
-                info('commercial vehicle corporate motor records: ' . json_encode($records->get()));
-
-                return $records->get();
-
-        }
-        info("keyword and found but vehicle is not commercial as well, so checking for normal rules");
+        info("keyword not found and vehicle is not commercial as well, so checking for normal rules");
 
         $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
             ->join('rules',  'rules.id', 'rule_details.rule_id',)
@@ -1004,5 +972,18 @@ class LeadAllocationService extends BaseService
 
             return true;
         }
+    }
+
+    public function getCommercialRule()
+    {
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rule_type', RuleTypeEnum::CAR_MAKE_MODEL)
+            ->where('rules.is_active', 1)
+            ->groupBy('rule_details.rule_id')
+            ->select(
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            );
     }
 }

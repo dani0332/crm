@@ -26,9 +26,9 @@ class RuleService extends BaseService
                 'rd.car_make_id as car_make_id',
                 'rd.car_model_id as car_model_id',
                 'ls.name as lead_source_id',
-                'cmk.text as rule_car_make_id',
+                // 'cmk.text as rule_car_make_id',
                 DB::raw('group_concat(distinct(u.name)) AS rule_users'),
-                DB::raw('group_concat(distinct(cmdl.text)) AS rule_car_model_id'),
+                // DB::raw('group_concat(distinct(cmdl.text)) AS rule_car_model_id'),
                 'r.is_active',
                 'r.updated_at',
                 'r.created_at'
@@ -36,8 +36,6 @@ class RuleService extends BaseService
             ->leftJoin('rule_details as rd', 'rd.rule_id', 'r.id')
             ->leftJoin('rule_users as ru', 'ru.rule_id', 'r.id')
             ->leftJoin('lead_sources as ls', 'ls.id', 'rd.lead_source_id')
-            ->leftJoin('car_make as cmk', 'cmk.id', 'rd.car_make_id')
-            ->leftJoin('car_model as cmdl', 'cmdl.id', 'rd.car_model_id')
             ->leftJoin('rule_types as rt', 'rt.id', 'r.rule_type')
             ->leftJoin('users as u', 'u.id', 'ru.user_id')
             ->groupBy('r.id');
@@ -89,20 +87,9 @@ class RuleService extends BaseService
 
         $userIds = $request->rule_users;
 
-        if (count($request->get('rule_car_model_id'))  > 0) {
-            foreach($request->get('rule_car_model_id') as $carModelId){
-                $rule->ruleDetail()->create([
-                    'lead_source_id' => $request->get('lead_source_id'),
-                    'car_make_id' => $request->get('rule_car_make_id'),
-                    'car_model_id' => $carModelId,
-                ]);
-            }
-        }else{
-            $errorResponse = new stdClass();
-            $errorResponse->message = 'Error: Rule car make details not found';
-
-            return $errorResponse;
-        }
+        $rule->ruleDetail()->create([
+            'lead_source_id' => $request->get('lead_source_id')
+        ]);
 
         $rule->ruleUsers()->attach($userIds);
         return $rule;
@@ -124,23 +111,9 @@ class RuleService extends BaseService
 
         $userIds = $request->rule_users;
 
-        if (count($request->get('rule_car_model_id'))  > 0) {
-            //becuase this will not change
-            $existingCarMake = $rule->ruleDetail->first()->car_make_id;
-            $rule->ruleDetail()->delete();
-            foreach($request->get('rule_car_model_id') as $carModelId){
-                $rule->ruleDetail()->create([
-                    'lead_source_id' => $request->get('lead_source_id'),
-                    'car_make_id' => $existingCarMake,
-                    'car_model_id' => $carModelId,
-                ]);
-            }
-        }else{
-            $errorResponse = new stdClass();
-            $errorResponse->message = 'Error: Rule car make details not found';
-
-            return $errorResponse;
-        }
+        $rule->ruleDetail()->create([
+            'lead_source_id' => $request->get('lead_source_id')
+        ]);
 
         if (isset($request->rule_users)) {
             RuleUser::where('rule_id', $rule->id)->delete();
@@ -160,9 +133,7 @@ class RuleService extends BaseService
             'rule_start_date' => 'input|date|title',
             'rule_end_date' => 'input|date|title',
             'rule_type' => 'select|required',
-            'lead_source_id' => 'select|title|required_without:rule_car_model_id',
-            'rule_car_make_id' => 'select|title|required_without:lead_source_id',
-            'rule_car_model_id' => 'select|title|multiple|required_without:lead_source_id',
+            'lead_source_id' => 'select|title|required_if:rule_type,1',
             'rule_users' => 'select|multiple|required|multiSearch',
             'is_active' => 'input|checkbox|title',
             'created_at' => 'input|title|date|range|dateRange',
@@ -185,12 +156,6 @@ class RuleService extends BaseService
                 break;
             case 'lead_source_id':
                 $title = 'Lead Source';
-                break;
-            case 'rule_car_make_id':
-                $title = 'Car Make';
-                break;
-            case 'rule_car_model_id':
-                $title = 'Car Model';
                 break;
             case 'rule_users':
                 $title = 'Rule Users';

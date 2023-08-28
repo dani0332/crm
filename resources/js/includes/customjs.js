@@ -2895,13 +2895,7 @@ $('#rule_type').change(function() {
 
     if (selectedValue == 1) {
         $('#lead_source_id_div').show();
-        $('#rule_car_make_id_div').hide();
-        $('#rule_car_model_id_div').hide();
-        $('#rule_car_make_id').val('');
-        $('#rule_car_model_id').val('');
     } else {
-        $('#rule_car_make_id_div').show();
-        $('#rule_car_model_id_div').show();
         $('#lead_source_id_div').hide();
         $('#lead_source_id').val('');
 
