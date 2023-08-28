@@ -39,7 +39,5 @@ class AllocationService
                 'last_allocated' => $timestamp,
                 'updated_at' => now(),
             ]);
-
-        info('Count updated for user Id: '.$userId);
     }
 }

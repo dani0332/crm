@@ -153,7 +153,7 @@
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
 
     @php
-    $pusherAppKey = config('constants.PUSHER_APP_KEY');
+    $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
     @endphp
     <!-- iCheck -->

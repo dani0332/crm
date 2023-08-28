@@ -19,7 +19,7 @@ class CarQuoteObserver
                 ];
             }
         }
-        info('following properties were changes. '.json_encode($changes));
+
         if ($lead->isDirty('advisor_id') || $lead->isDirty('quote_status_id')) {
             event(new CarQuoteAdvisorUpdated($lead));
         }

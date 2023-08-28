@@ -127,7 +127,7 @@ class CarAllocationService extends AllocationService
             $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('result of available users are : '.json_encode($eligibleUsers));
+                info('result of available users are : '.json_encode(collect($eligibleUsers)->pluck('user_id')));
 
                 return $eligibleUsers->toArray();
             }
@@ -221,7 +221,7 @@ class CarAllocationService extends AllocationService
             $ruleUsers = $this->getRuleUsers();
             info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
             $finalEligibleUserIds = [];
-            info('eligibleUsers are : '.json_encode($eligibleUsers));
+            info('eligibleUsers are : '.json_encode(collect($eligibleUsers)->pluck('user_id')));
             foreach ($eligibleUsers as $eligibleUserId) {
                 if (! in_array($eligibleUserId, $ruleUsers)) {
                     array_push($finalEligibleUserIds, $eligibleUserId);
@@ -295,14 +295,12 @@ class CarAllocationService extends AllocationService
         $lead->fill($updatedData);
         $lead->save();
 
-        info('Advisor and tier assignment done for: '.$lead->uuid.' to user with id: '.$userId.' and tier id: '.$tier->name);
-
         return $lead;
     }
 
     public function updateCarLeadDetailRecord($leadId): void
     {
-        info('---- Inside updateCarLeadDetailRecord');
+        info('about to update car quote detail record for : '. $leadId);
 
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
 
@@ -319,7 +317,7 @@ class CarAllocationService extends AllocationService
         $carQuoteDetail->advisor_assigned_by_id = auth()->id();
         $carQuoteDetail->save();
 
-        info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
+        info('car quote detail update for lead : '. $carQuoteDetail->car_quote_request_id);
     }
 
     private function createNewCarQuoteDetail($leadId): void
@@ -332,7 +330,7 @@ class CarAllocationService extends AllocationService
             'updated_at' => now(),
         ]);
 
-        info('---- updateCarLeadDetailRecord - record not found, creating new entry');
+        info('car quote request detail record not found, creating new entry');
     }
 
     public function updateLeadAllocationOnCarAutoAssignment($userId): void
@@ -343,7 +341,7 @@ class CarAllocationService extends AllocationService
             $this->updateLeadAllocationCounts($userId, $leadAllocation);
         }
 
-        info('Count updated for user Id: '.$userId.', total count = '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
+        info('allocation count updated for user Id: '.$userId.', total count = '.$leadAllocation->allocation_count.' and auto count = '.$leadAllocation->auto_assignment_count);
     }
 
     private function buildEmailDataForLMSIntroEmail($userId, $carQuote): object
