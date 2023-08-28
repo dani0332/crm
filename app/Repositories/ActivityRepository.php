@@ -3,10 +3,14 @@
 namespace App\Repositories;
 
 use App\Models\Activities;
+use App\Traits\GetUserTreeTrait;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityRepository extends BaseRepository
 {
+    use GetUserTreeTrait;
+
     public function model()
     {
         return Activities::class;
@@ -15,21 +19,55 @@ class ActivityRepository extends BaseRepository
     /**
      * @return mixed
      */
+    public function fetchGetData()
+    {
+
+        $subOrdinateIds = $this->walkTree(Auth::user()->id);
+        array_push($subOrdinateIds, Auth::user()->id);
+
+        return $this->with(['assignee'])
+            ->whereIn('assignee_id', $subOrdinateIds)
+            ->filter()
+            ->orderBy('status')
+            ->simplePaginate()
+            ->withQueryString();
+    }
+
+    /**
+     * @return total records
+     */
+    public function fetchCountActivities()
+    {
+
+        $subOrdinateIds = $this->walkTree(Auth::user()->id);
+        array_push($subOrdinateIds, Auth::user()->id);
+
+        return $this->with(['assignee'])
+            ->filter()
+            ->whereIn('assignee_id', $subOrdinateIds)
+            ->count();
+
+    }
+    /**
+     * @return mixed
+     */
     public function fetchCreate($data)
     {
-        $quote = PersonalQuoteRepository::where('id', $data['quote_id'])->firstOrFail();
-
         $activityData = [
             'uuid' => generateUuid(),
-            'client_name' => $quote->first_name.' '.$quote->last_name,
-            'quote_request_id' => $quote->id,
-            'quote_type_id' => $quote->quote_type_id,
-            'quote_uuid' => $quote->uuid,
             'assignee_id' => $data['assignee_id'],
             'due_date' => $data['due_date'],
             'description' => $data['description'],
             'title' => $data['title'],
         ];
+
+        if (isset($data['quote_id'])) {
+            $quote = PersonalQuoteRepository::where('id', $data['quote_id'])->firstOrFail();
+            $activityData['client_name'] = $quote->first_name.' '.$quote->last_name;
+            $activityData['quote_request_id'] = $quote->id;
+            $activityData['quote_type_id'] = $quote->quote_type_id;
+            $activityData['quote_uuid'] = $quote->uuid;
+        }
 
         return ActivityRepository::create($activityData);
     }
