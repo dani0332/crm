@@ -32,6 +32,7 @@ class LifeQuotesExport implements FromCollection, WithHeadings, WithMapping, Sho
             'PREMIUM',
             'POLICY NUMBER',
             'SOURCE',
+            'LOST REASON',
             'IS ECOMMERCE',
         ];
     }
@@ -50,6 +51,7 @@ class LifeQuotesExport implements FromCollection, WithHeadings, WithMapping, Sho
             $quote->premium,
             $quote->policy_number,
             $quote->source,
+            optional($quote->lifeQuoteRequestDetail)?->lostReason->text,
             $quote->is_ecommerce ? 'Yes' : 'No',
         ];
     }
