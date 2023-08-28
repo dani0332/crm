@@ -100,6 +100,52 @@ const onTogglePlans = () => {
       toggleLoader.value = false;
     });
 };
+
+const insurerQuoteNoValue = ref(props.plan.insurerQuoteNo);
+const actualPremiumValue = ref(props.plan.actualPremium);
+const discountPremium = ref(props.plan.discountPremium);
+const carValue = ref(props.record.car_value);
+const excessValue = ref(props.plan.excess || 0);
+const ancillaryExcessValue = ref(props.plan.ancillaryExcess);
+const insurerTrimIdValue = ref(props.plan.insurerTrimId);
+
+const onUpdatePlan = () => {	
+    axios	
+    .post('/car-plan-manual-update-process', {	
+      car_quote_uuid: usePage().props.record.uuid,	
+      car_plan_id: props.plan.id,	
+      actual_premium: actualPremiumValue.value,	
+      discounted_premium: discountPremium.value,	
+      premium_vat: props.vat ? props.vat : 0 ,	
+      car_value:carValue.value,	
+      excess: excessValue.value,	
+      is_disabled:hidePlan.value,	
+      is_create:0,	
+      addons:'',	
+      insurerTrim: insurerTrimIdValue.value,	
+      insurer_quote_no: insurerQuoteNoValue.value,	
+      is_manual_update: isManual.value,	
+      ancillary_excess: ancillaryExcessValue.value,	
+    })	
+    .then(response => {	
+      notification.success({	
+        title: 'Plan has been updated',	
+        position: 'top',	
+      });	
+      router.reload({	
+        preserveScroll: true,	
+        preserveState: true,	
+      });	
+    })	
+    .catch(error => {	
+      notification.error({	
+        title: error,	
+        position: 'top',	
+      });	
+    })	
+    .finally(() => {	
+    });	
+}
 </script>
 
 <template>
@@ -158,7 +204,8 @@ const onTogglePlans = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium mt-2">Insurer Quote No.:</dt>
               <x-input
-                :value="props.plan.insurerQuoteNo"
+                :value="insurerQuoteNoValue"
+                v-model = "insurerQuoteNoValue"
                 :disabled="!isManual"
                 size="sm"
               />
@@ -167,7 +214,8 @@ const onTogglePlans = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium mt-2">Actual Premium:</dt>
               <x-input
-                :value="props.plan.actualPremium"
+                :value="actualPremiumValue"
+                v-model = "actualPremiumValue"
                 :disabled="!isManual"
                 size="sm"
               />
@@ -176,14 +224,16 @@ const onTogglePlans = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium mt-2">Discounted Premium:	</dt>
               <x-input
-                :value="props.plan.discountPremium"
+                :value="discountPremium"
+                v-model = "discountPremium"
                 size="sm"
               />
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium mt-2">Car value:</dt>
               <x-input
-                :value="props.record.car_value"  
+                :value="carValue"
+                v-model = "carValue"
                 :helper="isManual ? `Min: AED ${props.plan.carValueLowerLimit} - Max: AED ${props.plan.carValueUpperLimit}` : ''"              
                 size="sm"
               />
@@ -191,7 +241,8 @@ const onTogglePlans = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium mt-2">Excess:</dt>
               <x-input
-                :value="props.plan.excess || 0"
+                :value="excessValue"
+                v-model = "excessValue"
                 :disabled="!isManual"
                 type="number"
                 size="sm"
@@ -200,7 +251,7 @@ const onTogglePlans = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium mt-2">Ancillary Excess:</dt>
               <x-select
-                v-model="props.plan.ancillaryExcess"
+                v-model="ancillaryExcessValue"
                 placeholder="Select Option"
                 :options="ancillaryExcessOptions"
                 class="w-full"
@@ -209,7 +260,7 @@ const onTogglePlans = () => {
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Car Trim</dt>
               <x-select
-                v-model="props.plan.insurerTrimId"
+                v-model="insurerTrimIdValue"
                 placeholder="Select Option"
                 :options="insurerAvailableTrimsOptions"                
                 class="w-full"
@@ -240,7 +291,7 @@ const onTogglePlans = () => {
               color="primary"
               size="sm"
               :disabled="isPlanUpdateActive"
-              @click.prevent="onUpdatePlan"
+              @click = "onUpdatePlan"
             >
               Update
             </x-button>           

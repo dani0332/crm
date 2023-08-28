@@ -55,6 +55,9 @@ defineProps({
 	planURL: String,
 	storageUrl: String,
     insuranceProviders: Array,
+	advisor: Array,
+	carMakeText:String,
+	carModelText:String,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -379,6 +382,7 @@ const modals = reactive({
   plan: false,
   docConfirm: false,
   createPlan:false,
+  sendConfirm:false,
 });
 
 const confirmData = reactive({
@@ -894,6 +898,49 @@ const onExportPlans = () => {
     .finally(() => {
       exportLoader.value = false;
     });
+};
+const confirmSendEmail = () => {
+	const first_name = page.props.record.first_name || '';
+    const last_name = page.props.record.last_name || '';
+	axios
+    .post(
+      `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
+    {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: page.props.record.id,
+		quote_uuid: page.props.record.uuid,
+		quote_cdb_id: page.props.record.code,
+		quote_previous_expiry_date: page.props.record.previous_policy_expiry_date,
+		quote_currently_insured_with: page.props.record.currently_insured_with,
+		quote_car_make: page.props.carMakeText,
+		quote_car_model: page.props.carModelText,
+		quote_car_year_of_manufacture: page.props.record.year_of_manufacture,
+		quote_previous_policy_number: page.props.record.previous_quote_policy_number,
+		customer_name: `${first_name} ${last_name}`,
+		customer_email: page.props.record.email,
+		advisor_name: page.props.advisor ? page.props.advisor.name : null,
+		advisor_email: page.props.advisor ? page.props.advisor.email : null,
+		advisor_mobile_no: page.props.advisor ? page.props.advisor.mobile_no : null,
+		advisor_landline_no: page.props.advisor ? page.props.advisor.landline_no : null,
+    },
+    {
+	    responseType: 'json',
+    },)
+
+	.then(response => {
+
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+	.finally(() => {
+		modals.sendConfirm = false;
+	})
+
 };
 
 </script>
@@ -1524,7 +1571,7 @@ const onExportPlans = () => {
 					>
 						Download PDF
 					</x-button>
-					<x-button @click.prevent="onSendOCBEmail" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
+					<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
 						Send OCB Email to Customer
 					</x-button>
 					
@@ -1650,6 +1697,24 @@ const onExportPlans = () => {
 					:hidden="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
 					:totalSelectedAddonsPriceWithVat="totalPriceVAT"
 				/>
+			</x-modal>
+			<x-modal v-model="modals.sendConfirm" show-close backdrop>
+				<template #header> Send Email </template>
+				<p>Are you sure send email to customer?</p>
+				<template #actions>
+					<div class="text-right space-x-4">
+					<x-button size="sm" ghost @click.prevent="modals.sendConfirm = false">
+						Cancel
+					</x-button>
+					<x-button
+						size="sm"
+						color="error"
+						@click.prevent="confirmSendEmail"
+					>
+						Send
+					</x-button>
+					</div>
+				</template>
 			</x-modal>
 			<x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
 				<template #header> Create Car Quote </template>
