@@ -1,10 +1,12 @@
 <?php
 
-namespace App\Strategy;
+namespace App\Factories;
 
 use App\Enums\QuoteTypeId;
 use App\Services\CarAllocationService;
 use App\Services\HealthAllocationService;
+use App\Strategies\CarAllocation;
+use App\Strategies\HealthAllocation;
 
 class AllocationFactory
 {

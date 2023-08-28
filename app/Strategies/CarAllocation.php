@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Strategy;
+namespace App\Strategies;
 
 use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;

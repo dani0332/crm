@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Factories\AllocationFactory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\APiFetchUrl;
 use App\Services\ApiService;
-use App\Strategy\AllocationFactory;
 use Illuminate\Http\Request;
 
 class ApiController extends Controller
