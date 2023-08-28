@@ -2,19 +2,18 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityRequest;
-use App\Repositories\ActivityRepository;
-use Illuminate\Support\Facades\Auth;
-use App\Models\Activities;
 use App\Models\User;
+use App\Repositories\ActivityRepository;
 use App\Traits\GetUserTreeTrait;
-use App\Enums\PermissionsEnum;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityController extends Controller
-{   
+{
     use GetUserTreeTrait;
-     /**
+    /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function index()
@@ -24,11 +23,12 @@ class ActivityController extends Controller
         $activities = ActivityRepository::getData();
         $totalActivities = ActivityRepository::countActivities();
         $cannotUseAssignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);
+
         return inertia('Activities/Index', [
             'activities' => $activities,
             'advisors' => $advisors,
             'cannotUseAssignee' => $cannotUseAssignee,
-            'totalActivities' => $totalActivities
+            'totalActivities' => $totalActivities,
         ]);
     }
 
@@ -39,9 +39,9 @@ class ActivityController extends Controller
      */
     public function create()
     {
-       return inertia('Activities/Form', []);
+        return inertia('Activities/Form', []);
     }
- 
+
     /**
      * @return \Illuminate\Http\RedirectResponse
      */
