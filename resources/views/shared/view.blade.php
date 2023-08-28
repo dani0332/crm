@@ -317,14 +317,14 @@
             // Custom export function to export all the available rows in grid not just the visible ones
             function newexportaction(e, dt, button, config) {
                 vehicleTypeDataTable.draw();
-                var startDateStr = $('#created_at').val();
-                var endDateStr = $('#created_at_end').val();
+                var startDateStr = $('#advisor_assigned_date').val();
+                var endDateStr = $('#advisor_assigned_date_end').val();
                 var startDateParts = startDateStr.split("-");
                 var endDateParts = endDateStr.split("-");
                 var startDate = new Date(startDateParts[2], startDateParts[1] - 1, startDateParts[0]);
                 var endDate = new Date(endDateParts[2], endDateParts[1] - 1, endDateParts[0]);
                 if(!startDateStr || !endDateStr){
-                    showErrorMessage('Note : For export created date start and end should be selected');
+                    showErrorMessage('Note : For export assigned date start and end should be selected');
                     return;
                 }
                 if (endDateStr <= startDateStr) {
