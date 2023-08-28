@@ -300,7 +300,7 @@ class CarAllocationService extends AllocationService
 
     public function updateCarLeadDetailRecord($leadId): void
     {
-        info('about to update car quote detail record for : '. $leadId);
+        info('about to update car quote detail record for : '.$leadId);
 
         $carQuoteDetail = CarQuoteRequestDetail::where('car_quote_request_id', $leadId)->first();
 
@@ -317,7 +317,7 @@ class CarAllocationService extends AllocationService
         $carQuoteDetail->advisor_assigned_by_id = auth()->id();
         $carQuoteDetail->save();
 
-        info('car quote detail update for lead : '. $carQuoteDetail->car_quote_request_id);
+        info('car quote detail update for lead : '.$carQuoteDetail->car_quote_request_id);
     }
 
     private function createNewCarQuoteDetail($leadId): void
