@@ -87,6 +87,7 @@ class PetQuoteRepository extends BaseRepository
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
+            'quoteDetail',
             'petQuote.accomodationType:id,text',
             'petQuote.possessionType:id,text',
             'petQuote.petAge:id,text',

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Http\Requests\AMLRequest;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\BikeQuote;
@@ -36,6 +37,7 @@ class AMLController extends Controller
     protected $quoteStatusService;
     protected $sanctionListService;
     use GenericQueriesAllLobs;
+
     /**
      * Display a listing of the resource.
      *
@@ -54,10 +56,10 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(AMLRequest $request)
     {
-        $quoteTypes = QuoteType::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
-        $quoteStatuses = QuoteStatus::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
+        $quoteTypes = QuoteType::withActive()->orderBy('sort_order')->get();
+        $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
 
         if ($request->ajax()) {
             $dataAml = [];
@@ -98,6 +100,8 @@ class AMLController extends Controller
                     ->where('kyc_logs.quote_type_id', $request->quoteType)
                     ->orderBy('kyc_logs.created_at', 'desc');
 
+                $searchCriteriaSet = false;
+
                 if (
                     isset($request->searchType) && ! empty($request->searchType) &&
                     isset($request->searchField) && ! empty($request->searchField)
@@ -111,6 +115,7 @@ class AMLController extends Controller
                     if ($request->searchType == 'customerEmail') {
                         $dataAml->where($quoteRequestTable.'.email', $request->searchField);
                     }
+                    $searchCriteriaSet = true;
                 }
                 if (isset($request->matchFound)) {
                     if ($request->matchFound == 'False') {
@@ -125,10 +130,21 @@ class AMLController extends Controller
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
                     $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
+                    $searchCriteriaSet = true;
+                }
+
+                if ($searchCriteriaSet) {
+                    return DataTables::of($dataAml)
+                        ->addIndexColumn()
+                        ->addColumn('action', function ($row) {
+                            return view('aml.actions', compact('row'))->render();
+                        })
+                        ->rawColumns(['action'])
+                        ->make(true);
                 }
             }
 
-            return DataTables::of($dataAml)
+            return DataTables::of([])
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
                     return view('aml.actions', compact('row'))->render();

@@ -110,6 +110,9 @@ class YachtQuoteRepository extends BaseRepository
             'currentlyInsuredWith',
             'advisor',
         ])
+            ->when(\auth()->user()->hasRole(RolesEnum::YachtAdvisor), function ($query) {
+                $query->where('advisor_id', \auth()->user()->id);
+            })
             ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');

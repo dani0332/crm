@@ -78,6 +78,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PRICE', value: 'premium' },
@@ -93,7 +94,6 @@ const tableHeader = [
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
 ];
 
 const can = permission => useCan(permission);
@@ -326,6 +326,10 @@ watch(
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
       </template>
+
+        <template #item-transapp_code="{ quote_detail }">
+            {{ quote_detail?.transapp_code }}
+        </template>
 
       <template #item-quote_status="{ quote_status }">
         {{ quote_status?.text }}
