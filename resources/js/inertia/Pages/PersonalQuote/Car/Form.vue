@@ -1,9 +1,9 @@
 <script setup>
+import { ref } from "vue";
 
 const props = defineProps({
 	dropdownSource: Object,
 	model: String,
-	genderOptions: Object,
 	quote: {
 		type: Object,
 		default: {},
@@ -17,12 +17,12 @@ const isEdit = computed(() => {
 	return route().current().includes('edit');
 });
 
-const genderSelect = computed(() => {
-	return Object.keys(props.genderOptions).map(status => ({
-		value: status,
-		label: props.genderOptions[status],
-	}));
-});
+const carMakeOptions = computed(() => {
+	return props.dropdownSource.car_make_id.map(item => ({
+		value: item.id,
+		label: item.text,
+	}))
+})
 
 const quoteForm = useForm({
 	modelType: '"Car"',
@@ -34,45 +34,64 @@ const quoteForm = useForm({
 	dob: props.quote?.dob
 		? props.quote?.dob.split('-').reverse().join('-')
 		: null,
-	policy_number: props.quote?.policy_number || null,
 	cylinder: props.quote?.cylinder || null,
-	preference: props.quote?.preference || '',
-	details: props.quote?.details || '',
-	marital_status_id: props.quote?.marital_status_id || null,
 	uae_license_held_for_id: props.quote?.uae_license_held_for_id || null,
 	nationality_id: props.quote?.nationality_id || null,
-	lead_type_id: props.quote?.lead_type_id || null,
-	back_home_license_held_for_id:
-		props.quote?.back_home_license_held_for_id || null,
-	salary_band_id: props.quote?.salary_band_id || null,
-	member_category_id: props.quote?.member_category_id || null,
+	back_home_license_held_for_id: props.quote?.back_home_license_held_for_id || null,
 	gender: props.quote?.gender || null,
-	currently_insured_with_id: props.quote?.currently_insured_with_id || null,
+	currently_insured_with_id: props.quote?.currently_insured_with || null,
 	policy_start_date: props.quote?.policy_start_date || null,
 	is_ebp_renewal: props.quote?.is_ebp_renewal || null,
 	is_ecommerce: props.quote?.is_ecommerce || null,
 	has_dental: props.quote?.has_dental || null,
 	has_worldwide_cover: props.quote?.has_worldwide_cover || null,
 	has_home: props.quote?.has_home || null,
-	car_make_id: props.quote?.car_make_id || 0,
-	trim: props.quote?.trim || '',
-	car_model_id: props.quote?.car_model_id || 0,
-	year_of_manufacture: parseInt(props.quote?.year_of_manufacture) || 0,
+	car_make_id: props.quote?.car_make_id || null,
+	vehicle_type_id: props.quote?.vehicle_type_id || null,
+	trim: props.quote?.trim || null,
+	additional_notes: props.quote?.additional_notes || '',
+	car_model_id: props.quote?.car_model_id || null,
+	year_of_manufacture: parseInt(props.quote?.year_of_manufacture) || null,
+	emirate_of_registration_id: props.quote?.emirate_of_registration_id || null,
+	car_type_insurance_id: props.quote?.car_type_insurance_id || null,
+	claim_history_id: props.quote?.claim_history_id || null,
+	seat_capacity: props.quote?.seat_capacity || '',
+	has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents || null,
+	car_value_tier: props.quote?.car_value_tier || ''
 });
 
-const setCarMake = (id) => {
+const trimOptions = ref([]);
+
+const getCarModel = () => {
 	axios
-		.get(`/car-make?id=${id}`)
+		.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
 		.then(({ data }) => {
-			props.dropdownSource.car_make_id = data;
+			props.dropdownSource.car_model_id = data;
+			if (quoteForm.car_model_id !== null) {
+				quoteForm.car_model_id = null
+			}
 		});
 }
 
-const setCarModel = (id) => {
+const getModelDetails = () => {
 	axios
-		.get(`/car-model-by-id?id=${id}`)
+		.get(`/getCarModelDetails?car_model_id=${quoteForm.car_model_id}`)
 		.then(({ data }) => {
-			props.dropdownSource.car_model_id = data;
+			const item = data.length > 0 ? data[0] : null;
+			let trimDropdown = [];
+			data.forEach(item => {
+				trimDropdown.push({
+					value: item.id,
+					label: item.text
+				});
+			})
+			trimOptions.value = trimDropdown;
+			if (item) {
+				quoteForm.cylinder = item.cylinder;
+				quoteForm.seat_capacity = item.seat_capacity;
+				quoteForm.vehicle_type_id = item.vehicle_type_id;
+				quoteForm.trim = item.id;
+			}
 		});
 }
 
@@ -102,10 +121,13 @@ function onSubmit(isValid) {
 }
 
 onMounted(() => {
-	if (quoteForm.car_make_id > 0) {
-		setCarMake(quoteForm.car_make_id);
-		setCarModel(quoteForm.car_make_id);
-		//ajaxCallScript(quoteForm.car_model_id);
+	if (quoteForm.car_make_id !== null) {		
+		axios
+			.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
+			.then(({ data }) => {
+				props.dropdownSource.car_model_id = data;
+				getModelDetails();
+			});
 	}
 })
 </script>
@@ -134,6 +156,11 @@ onMounted(() => {
 						</li>
 					</ul>
 				</x-alert>
+
+				<!-- <x-field label="RENEWAL BATCH" required v-if="isEdit">
+					<x-input v-model="quoteForm.renewal_batch" :rules="[isRequired]" class="w-full" />
+				</x-field> -->
+
 				<x-field label="FIRST NAME" required>
 					<x-input v-model="quoteForm.first_name" :rules="[isRequired]" class="w-full" />
 				</x-field>
@@ -148,8 +175,7 @@ onMounted(() => {
 				</x-field>
 
 				<x-field label="PHONE NUMBER" required>
-					<x-input v-model="quoteForm.mobile_no" type="tel" :rules="[isRequired]" class="w-full"
-						:disabled="isEdit" :error="quoteForm.errors.mobile_no" />
+					<x-input v-model="quoteForm.mobile_no" type="tel" :rules="[isRequired]" class="w-full" :disabled="isEdit" :error="quoteForm.errors.mobile_no" />
 				</x-field>
 
 				<x-field label="DATE OF BIRTH" required>
@@ -181,13 +207,13 @@ onMounted(() => {
 				</x-field>
 
 				<x-field label="CAR MAKE" required>
-					<x-select v-model="quoteForm.car_make_id" :rules="[isRequired]" 
-						:options="dropdownSource.car_make_id.map(item => ({
-							value: item.id,
-							label: item.text,
-						}))"
-						@change="setCarModel(e)" 
-						class="w-full" />
+					<x-select 
+						v-model="quoteForm.car_make_id" 
+						:rules="[isRequired]" 
+						:options="carMakeOptions"
+						@update:modelValue="getCarModel"
+						class="w-full" 
+					/>
 				</x-field>
 
 				<x-field label="CAR MODEL" required>
@@ -196,19 +222,16 @@ onMounted(() => {
 						label: item.text,
 					}))
 						"
-						 class="w-full" />
+						@update:modelValue="getModelDetails"
+						class="w-full" />
 				</x-field>
 
 				<x-field label="CYLINDER" required>
 					<x-input v-model="quoteForm.cylinder" class="w-full" type="number" :rules="[isRequired]" />
 				</x-field>
 
-				<x-field label="TRIM" required>
-					<x-select v-model="quoteForm.trim" :rules="[isRequired]" :options="dropdownSource.trim.map(item => ({
-						value: item.id,
-						label: item.text,
-					}))
-						" class="w-full" />
+				<x-field label="TRIM" >
+					<x-select v-model="quoteForm.trim" :options="trimOptions" class="w-full" />
 				</x-field>
 
 				<x-field label="CAR MODEL YEAR" required>
@@ -252,8 +275,8 @@ onMounted(() => {
 				</x-field>
 
 				<x-field label="CURRENTLY INSURED WITH" required>
-					<x-select v-model="quoteForm.currently_insured_with" :rules="[isRequired]" :options="dropdownSource.currently_insured_with.map(item => ({
-						value: item.id,
+					<x-select v-model="quoteForm.currently_insured_with_id" :rules="[isRequired]" :options="dropdownSource.currently_insured_with.map(item => ({
+						value: item.text,
 						label: item.text,
 					}))
 						" class="w-full" />
@@ -269,8 +292,8 @@ onMounted(() => {
 
 				<x-field label="CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS?">
 					<x-select v-model="quoteForm.has_ncd_supporting_documents" :options="[
-						{ value: 'Yes', label: 'Yes' },
-						{ value: 'No', label: 'No' },
+						{ value: 1, label: 'Yes' },
+						{ value: 0, label: 'No' },
 					]" class="w-full" />
 				</x-field>
 			</div>

@@ -1,8 +1,8 @@
 <script setup>
 import { computed } from "vue";
-import LazyDocumentUploader from './Partials/DocumentUploader.vue';
-import PaymentTable from './../../HealthQuote/Partials/PaymentTable.vue'
+import PaymentTable from './Partials/PaymentTable.vue'
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
+import LazyCreatePlan from './Partials/CreatePlan.vue';
 defineProps({
 	quote: Object,
 	leadStatuses: Array, //
@@ -39,6 +39,8 @@ defineProps({
 	paymentMethods: Array,
 	sendPolicy: Boolean,
 	//
+	isPlanUpdateActive: Boolean,
+	yearsOfManufacture: Array,
 	access: Object,
 	record: Object,
 	quoteType: String,
@@ -49,7 +51,13 @@ defineProps({
 	carQuotePlanAddons: Array,
 	notesForCustomers:Object,
 	websiteURL: String,
-	docUploadURL: String
+	docUploadURL: String,
+	planURL: String,
+	storageUrl: String,
+    insuranceProviders: Array,
+	advisor: Array,
+	carMakeText:String,
+	carModelText:String,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -58,6 +66,7 @@ const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const { isRequired, isEmail, isNumber, isMobile } = useRules();
 
@@ -112,7 +121,7 @@ const onSubmitBookingDetails = isValid => {
 		notification.success({
 			title: page.props.flash.message,
 			position: 'top',
-			timeout: 15000 
+			timeout: 35000 
 		});
 	  }
 	  isNotificationOpen = true;
@@ -227,6 +236,7 @@ const documentsTableItems = computed(() => {
 			document_name_text: doc.doc_name,
 			created_at: doc.created_at,
 			doc_uuid: doc.doc_uuid,
+			doc_url: doc.doc_url,
 			created_by: doc.created_by ? doc.created_by.name : "",
 		}
 	})
@@ -356,6 +366,10 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
+const assumptionState = reactive({
+	isEditing: false
+});
+
 const assumptionsForm = useForm({
   cylinder: page.props.record.cylinder || null,
   seat_capacity: page.props.record.seat_capacity || null,
@@ -365,7 +379,17 @@ const assumptionsForm = useForm({
   is_gcc_standard: page.props.paymentEntityModel.is_gcc_standard ||null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration: page.props.record.year_of_first_registration || null,
+  car_quote_id: page.props.record.id
 });
+
+const onUpdateAssumption = () => {
+	assumptionsForm.post('/quotes/car/carAssumptionsUpdate', {
+		preserveScroll: true,
+		onSuccess: () => {
+			assumptionState.isEditing = false;
+		}
+	})
+}
 
 const vehicleTypeOptions = computed(() => {
   return page.props.vehicleTypes.map(type => ({
@@ -381,12 +405,35 @@ const isOptions = computed(() => {
       ];
 });
 
-const policyDetailsForm = useForm({
-  policy_number: page.props.record.policy_number || null,
-  policy_start_date: page.props.record.policy_start_date || null,
-  previous_policy_expiry_date: page.props.record.previous_policy_expiry_date || null,
-  premium: page.props.record.premium || null,
+const currentInsuranceOptions = computed(() => {
+	return [
+		{ value: 'ACTIVE_TPL', label: 'ACTIVE_TPL' },
+		{ value: 'ACTIVE_COMP', label: 'ACTIVE_COMP' },
+		{ value: 'EXPIRED', label: 'EXPIRED' },
+	]
 });
+
+const policyDetailsState = reactive({
+	isEditing: false
+});
+const policyDetailsForm = useForm({
+  quote_policy_number: page.props.record.policy_number || null,
+  quote_policy_issuance_date: page.props.record.policy_issuance_date || null,
+  quote_policy_start_date: page.props.record.policy_start_date || null,
+  quote_policy_expiry_date: page.props.record.renewal_expiry_date || null,
+  quote_premium: page.props.record.premium || null,
+  modelType: 'Car',
+  quote_id: page.props.record.id
+});
+
+const onUpdatePolicyDetails = () => {
+	policyDetailsForm.post('/quotes/Car/update-quote-policy', {
+		preserveScroll: true,
+		onSuccess: () => {
+			policyDetailsState.isEditing = false;
+		}
+	})
+}
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -401,7 +448,10 @@ const modals = reactive({
   activity:false,
   activityConfirm:false,
   notes:false,
-  plan: false
+  plan: false,
+  docConfirm: false,
+  createPlan:false,
+  sendConfirm:false,
 });
 
 const confirmData = reactive({
@@ -439,21 +489,6 @@ const onCreateDuplicate = isValid => {
   });
 };
 
-const memberCategoryText = memberCategoryId =>
-  computed(() => {
-    return page.props.memberCategories.find(
-      category => category.id === memberCategoryId,
-    )?.text;
-  });
-
-const memberDataDocs = membersDetail => {
-  return membersDetail
-    .map(member => ({
-      id: member.id,
-      name: memberCategoryText(member.member_category_id).value,
-    }))
-    .filter(member => member.name !== undefined);
-};
 const contactLoader = ref(false);
 
 const additionalContact = useForm({
@@ -793,6 +828,191 @@ const uploadFile = (doc, files) => {
     });
 };
 
+const confirmDeleteDocData = reactive({
+  docs: null,
+  member: null,
+  activity: null,
+  contact: null,
+});
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteDocData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  documentsTable.isLoading = true;
+  router.post(
+    `/documents/delete`,
+    {
+      docName: confirmDeleteDocData.docs,
+      quoteId: page.props.record.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        modals.docConfirm = false;
+        documentsTable.isLoading = false;
+        notification.error({
+          title: 'File Deleted',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
+
+const copyLink = () => {
+	copy(page.props.planURL);
+	if (copied)
+		notification.success({
+			title: 'Link copied to clipboardd',
+			position: 'top',
+		});
+}
+
+const onLeadStatus = () => {
+  leadStatusForm.post(
+    `/quotes/Car/${page.props.record.id}/update-lead-status`,
+    {
+      preserveScroll: true,
+      onError: errors => {
+        console.log(errors);
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Status Updated',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
+const toggleLoader = ref(false);
+ 
+const onTogglePlans = toggle => {
+  toggleLoader.value = true;
+
+  const planIds = useArrayUnique(
+    selectedPlans.value.map(p => {
+      return p.id;
+    }),
+  ).value;
+
+  axios
+    .post(route('manualPlanToggle', { quoteType: 'Car' }), {
+      modelType: 'Car',
+      planIds: planIds,
+      car_quote_uuid: usePage().props.record.uuid,
+      toggle: toggle,
+    })
+    .then(response => {
+      notification.success({
+        title: 'Plans has been updated',
+        position: 'top',
+      });
+      router.reload({
+        preserveScroll: true,
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: error,
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      toggleLoader.value = false;
+      selectedPlans.value = [];
+    });
+};
+const exportLoader = ref(false);
+const onExportPlans = () => {
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 3 to 5 plans to download PDF.',
+      position: 'top',
+    });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
+  axios
+    .post(
+      '/api/v1/quotes/car/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.record.uuid,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
+};
+const confirmSendEmail = () => {
+	const first_name = page.props.record.first_name || '';
+    const last_name = page.props.record.last_name || '';
+	axios
+    .post(
+      `/quotes/car/${page.props.record.uuid}/send-email-one-click-buy`,
+    {
+        quote_type_id: page.props.quoteTypeId,
+        quote_id: page.props.record.id,
+		quote_uuid: page.props.record.uuid,
+		quote_cdb_id: page.props.record.code,
+		quote_previous_expiry_date: page.props.record.previous_policy_expiry_date,
+		quote_currently_insured_with: page.props.record.currently_insured_with,
+		quote_car_make: page.props.carMakeText,
+		quote_car_model: page.props.carModelText,
+		quote_car_year_of_manufacture: page.props.record.year_of_manufacture,
+		quote_previous_policy_number: page.props.record.previous_quote_policy_number,
+		customer_name: `${first_name} ${last_name}`,
+		customer_email: page.props.record.email,
+		advisor_name: page.props.advisor ? page.props.advisor.name : null,
+		advisor_email: page.props.advisor ? page.props.advisor.email : null,
+		advisor_mobile_no: page.props.advisor ? page.props.advisor.mobile_no : null,
+		advisor_landline_no: page.props.advisor ? page.props.advisor.landline_no : null,
+    },
+    {
+	    responseType: 'json',
+    },)
+
+	.then(response => {
+
+      notification.success({
+        title: response.data.success,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+	.finally(() => {
+		modals.sendConfirm = false;
+	})
+
+};
+
 </script>
 
 <template>
@@ -1085,7 +1305,7 @@ const uploadFile = (doc, files) => {
 					class="w-full"
 					multiple
 				/>
-				<!-- <x-select
+				<x-select
 					v-model="leadDuplicateForm.lob_team_sub_selection"
 					label="Reason"
 					:rules="[rules.isRequired]"
@@ -1094,7 +1314,7 @@ const uploadFile = (doc, files) => {
 					{ value: 'new_enquiry', label: 'New enquiry' },
 					{ value: 'record_only', label: 'Record purposes only' },
 					]"
-				/> -->
+				/>
 
 				<x-button
 					color="orange"
@@ -1202,10 +1422,9 @@ const uploadFile = (doc, files) => {
     
 		<PaymentTable 
 			v-if="hasRole(rolesEnum.BetaUser)"
-			:can="{}"
-			:isBetaUser="hasRole(rolesEnum.BetaUser)"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
 		/>
 		<!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.BetaUser)">
@@ -1271,11 +1490,12 @@ const uploadFile = (doc, files) => {
 				<div class="w-full md:w-1/2">
 					<x-textarea
 						v-model="assumptionsForm.cylinder"
+						required
 						type="text"
-						label="cylinder"
+						label="Cylinder"
 						placeholder="cylinder"
 						class="w-full"
-						disabled="true"
+						:disabled="!assumptionState.isEditing"
 
 					/>
 				</div>
@@ -1283,10 +1503,11 @@ const uploadFile = (doc, files) => {
 					<x-textarea
 						v-model="assumptionsForm.seat_capacity"
 						type="text"
+						required
 						label="Seat Capacity"
 						placeholder="Seat Capacity"
 						class="w-full"
-						disabled="true"
+						:disabled="!assumptionState.isEditing"
 					/>
 				</div>
 			</div>
@@ -1299,50 +1520,94 @@ const uploadFile = (doc, files) => {
 							:options="vehicleTypeOptions"
 							placeholder="Vehicle Body Type"
 							class="w-full"
-							disabled="true"
+							required
+							:disabled="!assumptionState.isEditing"
 						/>
 					</div>
 				</div>
-			<div class="w-full md:w-1/2">
-						<div class="flex flex-col gap-4">
-							<x-select
-								v-model="assumptionsForm.is_modified"
-								label="Is Vehicle modified?"
-								:options="isOptions"
-								placeholder="Is Modified"
-								class="w-full"
-				disabled="true"
-							/>
-						</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.is_modified"
+							label="Is Vehicle modified?"
+							:options="isOptions"
+							placeholder="Is Modified"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
 					</div>
-		</div>
-		<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-			<div class="w-full md:w-1/2">
-						<div class="flex flex-col gap-4">
-							<x-select
-								v-model="assumptionsForm.is_bank_financed"
-								label="Is Bank Financed"
-								:options="isOptions"
-								placeholder="Is Bank Financed"
-								class="w-full"
-				disabled="true"
-							/>
-						</div>
-
+				</div>
+			</div>
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.is_bank_financed"
+							label="Is Bank Financed"
+							:options="isOptions"
+							placeholder="Is Bank Financed"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
 					</div>
-			<div class="w-full md:w-1/2">
-						<div class="flex flex-col gap-4">
-							<x-select
-								v-model="assumptionsForm.is_gcc_standard"
-								label="Is GCC Standard?"
-								:options="isOptions"
-								placeholder="Is GCC Standard"
-								class="w-full"
-				disabled="true"
-							/>
-						</div>
+				</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.is_gcc_standard"
+							label="Is GCC Standard?"
+							:options="isOptions"
+							placeholder="Is GCC Standard"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
 					</div>
-		</div>
+				</div>
+			</div>
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.current_insurance_status"
+							label="Current Insurance"
+							:options="currentInsuranceOptions"
+							placeholder="Current Insurance"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
+					</div>
+				</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-select
+							v-model="assumptionsForm.year_of_first_registration"
+							label="Year Of First Registration"
+							:options="$page.props.yearsOfManufacture.map(year => { return { value: year.id.toString(), label: year.text }})"
+							placeholder="Year Of First Registration"
+							class="w-full"
+							required
+							:disabled="!assumptionState.isEditing"
+						/>
+					</div>
+				</div>
+			</div>
+			<div class="flex justify-end" v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)">
+				<x-button v-if="assumptionState.isEditing" class="mt-4 mr-2" color="emerald" size="sm" :loading="assumptionsForm.processing" @click.prevent="assumptionState.isEditing = false">
+					Cancel
+				</x-button>
+				<template v-if="!can(permissionEnum.ApprovePayments)">
+					<x-button v-if="assumptionState.isEditing" class="mt-4" color="emerald" size="sm" :loading="assumptionsForm.processing" @click.prevent="onUpdateAssumption">
+						Update
+					</x-button>
+					<x-button v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || (!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager])) && !assumptionState.isEditing" class="mt-4" color="emerald" size="sm" @click.prevent="assumptionState.isEditing = true">
+						Edit Assumptions
+					</x-button>
+				</template>
+			</div>
 		</div>
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -1376,17 +1641,17 @@ const uploadFile = (doc, files) => {
 					>
 						Download PDF
 					</x-button>
-					<x-button @click.prevent="onSendOCBEmail" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
+					<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
 						Send OCB Email to Customer
 					</x-button>
 					
-					<x-button @click.prevent="onAddPlan" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
+					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
-					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
+					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2">
 						Add Plan
 					</x-button>
-					<x-button @click.prevent="onAddPaymentModal" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
+					<x-button @click.prevent="copyLink" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
 						Copy Link
 					</x-button>
 				</div>
@@ -1414,6 +1679,9 @@ const uploadFile = (doc, files) => {
 							Hidden
 						</x-tag>
 					</div>
+				</template>
+				<template #item-name="item">
+					<span class="text-primary-600 cursor-pointer" @click.prevent="selectPlan(item)">{{ item.name }}</span>
 				</template>
 				<template #item-benefits="{ benefits }">
 					<!-- <span>{{ benefits.feature }}</span> -->
@@ -1489,7 +1757,44 @@ const uploadFile = (doc, files) => {
 				<template #header>
 				{{ selectedPlan.providerName }} - {{ selectedPlan.name }}
 				</template>
-				<LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
+				<LazyAvailablePlan 
+					:plan="selectedPlan" 
+					:genders="genderOptions" 
+					:record="record"
+					:access="access"
+					:notAdvisorAndManagerAndPA="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
+					:isPlanUpdateActive="isPlanUpdateActive"
+					:hidden="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
+					:totalSelectedAddonsPriceWithVat="totalPriceVAT"
+				/>
+			</x-modal>
+			<x-modal v-model="modals.sendConfirm" show-close backdrop>
+				<template #header> Send Email </template>
+				<p>Are you sure send email to customer?</p>
+				<template #actions>
+					<div class="text-right space-x-4">
+					<x-button size="sm" ghost @click.prevent="modals.sendConfirm = false">
+						Cancel
+					</x-button>
+					<x-button
+						size="sm"
+						color="error"
+						@click.prevent="confirmSendEmail"
+					>
+						Send
+					</x-button>
+					</div>
+				</template>
+			</x-modal>
+			<x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
+				<template #header> Create Car Quote </template>
+				<LazyCreatePlan
+				:record="record"
+				:insuranceProviders="insuranceProviders"
+				:listQuotePlans="listQuotePlans"
+				@success="onCreatePlan"
+				@error="onPlanError"
+				/>
 			</x-modal>
 		</div> 
 
@@ -1501,58 +1806,70 @@ const uploadFile = (doc, files) => {
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.policy_number"
+						v-model="policyDetailsForm.quote_policy_number"
 						type="text"
 						label="Policy Number"
 						placeholder="Policy Number"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.policy_issuance_date"
+						v-model="policyDetailsForm.quote_policy_issuance_date"
 						type="text"
 						label="Issuance Date"
 						placeholder="Issuance Date"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.policy_start_date"
+						v-model="policyDetailsForm.quote_policy_start_date"
 						type="text"
 						label="Policy Start Date"
 						placeholder="Policy Start Date"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.previous_policy_expiry_date"
+						v-model="policyDetailsForm.quote_policy_expiry_date"
 						type="text"
 						label="Expiry Date"
 						placeholder="Expiry Date"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 				<div class="w-full md:w-1/2">
 					<x-textarea
-						v-model="policyDetailsForm.premium"
+						v-model="policyDetailsForm.quote_premium"
 						type="text"
-						label="premium"
-						placeholder="premium"
+						label="Premium"
+						placeholder="Premium"
 						class="w-full"
-						disabled="true"
+						:disabled="!policyDetailsState.isEditing"
 					/>
 				</div>
+				<div class="w-full md:w-1/2" />
+			</div>
+			<div class="flex justify-end" v-if="!hasRole(rolesEnum.PA) && record.quote_status_id == quoteStatusEnum.TransactionApproved">
+				<x-button v-if="policyDetailsState.isEditing" class="mt-4 mr-2" color="emerald" size="sm" :loading="policyDetailsForm.processing" @click.prevent="policyDetailsState.isEditing = false">
+					Cancel
+				</x-button>
+				<x-button v-if="policyDetailsState.isEditing" class="mt-4" color="emerald" size="sm" :loading="policyDetailsForm.processing" @click.prevent="onUpdatePolicyDetails">
+					Update
+				</x-button>
+				<x-button v-if="!policyDetailsState.isEditing" class="mt-4" color="emerald" size="sm" @click.prevent="policyDetailsState.isEditing = true">
+					Edit
+				</x-button>
 			</div>
 		</div>
 
@@ -1591,7 +1908,7 @@ const uploadFile = (doc, files) => {
 				hide-footer
 			>
 				<template #item-document_name_text="item">
-					<Link :href="`/documents/${item.doc_uuid}`">{{ item.document_name_text }}</Link>
+					<Link :href="storageUrl + item.doc_url">{{ item.document_name_text }}</Link>
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
@@ -1600,7 +1917,7 @@ const uploadFile = (doc, files) => {
 							size="xs"
 							color="error"
 							outlined
-							@click.prevent="deleteDocument(item.id)"
+							@click.prevent="onDocDelete(item.document_name_text)"
 						>
 							Delete
 						</x-button>
@@ -1608,7 +1925,8 @@ const uploadFile = (doc, files) => {
 				</template>
 			</DataTable>
 
-			<div class="p-4 rounded shadow mb-6 bg-white">
+
+<div class="p-4 rounded shadow mb-6 bg-white">
 				<div>
 					<h3 class="font-semibold text-primary-800 text-lg">Booking Details</h3>
 					<x-divider class="mb-4 mt-1" />
@@ -1800,6 +2118,27 @@ const uploadFile = (doc, files) => {
 			</div>
 
 
+
+
+			<x-modal v-model="modals.docConfirm" show-close backdrop>
+				<template #header> Delete Document </template>
+				<p>Are you sure you want to delete this document?</p>
+				<template #actions>
+					<div class="text-right space-x-4">
+					<x-button size="sm" ghost @click.prevent="modals.docConfirm = false">
+						Cancel
+					</x-button>
+					<x-button
+						size="sm"
+						color="error"
+						@click.prevent="confirmDeleteDoc"
+						:loading="documentsTable.isLoading"
+					>
+						Delete
+					</x-button>
+					</div>
+				</template>
+			</x-modal>
 			<x-modal v-model="modals.doc" size="xl" show-close backdrop>
       			<template #header> Upload Documents </template>
 

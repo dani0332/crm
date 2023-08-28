@@ -412,17 +412,15 @@ class CarQuoteService extends BaseService
         }
         // Car Advisor
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
-                $access['carAdvisorCanEdit'] = true;
-            }
             if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
                 $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
             }
         }
-        // Car Manager
-        if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager,RolesEnum::CarAdvisor, RolesEnum::LeadPool])) {
+            if ((in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) || $record->payment_status_id == '' || $record->payment_status_id == null)) {
                 $access['carManagerCanEdit'] = true;
+                $access['carAdvisorCanEdit'] = true;
             }
         }
 
@@ -1440,7 +1438,7 @@ class CarQuoteService extends BaseService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
         if ($request->planIds) {
-            $data = explode(',', $request->planIds);
+            $data = $request->planIds;
             $isDisabled = $request->toggle;
             $plansArray = [];
             for ($i = 0; $i < count($data); $i++) {
@@ -1559,5 +1557,29 @@ class CarQuoteService extends BaseService
 
             return false;
         }
+    }
+
+    public function getValidationArray() : array 
+    {
+        return [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'dob' => 'required',
+            'nationality_id' => 'required',
+            'uae_license_held_for_id' => 'required',
+            'back_home_license_held_for_id' => 'required',
+            'year_of_manufacture' => 'required',
+            'emirate_of_registration_id' => 'required',
+            'car_type_insurance_id' => 'required',
+            'claim_history_id' => 'required',
+            'additional_notes' => 'required|string',
+            'car_value_tier' => 'required',
+            'seat_capacity' => 'required',
+            'cylinder' => 'required|string',
+            'vehicle_type_id' => 'required',
+            'car_make_id' => 'required', // ID
+            'car_model_id' => 'required', // ID
+            'currently_insured_with_id' => 'required|string'
+        ]; 
     }
 }

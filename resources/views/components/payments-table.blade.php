@@ -154,7 +154,7 @@ use App\Enums\PaymentStatusEnum;
                                             data-paymentCode="{{$payment->code}}"
                                             class="btn btn-sm btn-success generateCCLink" style="float: left;">Copy Link</button>
                                         @endif
-                                        @if(true || $payment->payment_status_id != PaymentStatusEnum::PAID &&
+                                        @if($payment->payment_status_id != PaymentStatusEnum::PAID &&
                                         $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && 
                                         ! auth()->user()->hasRole(RolesEnum::PA))
                                          @can(PermissionsEnum::PaymentsEdit)
