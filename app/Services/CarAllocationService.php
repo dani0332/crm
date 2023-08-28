@@ -399,6 +399,7 @@ class CarAllocationService extends AllocationService
 
         return CarQuote::where('advisor_id', $advisorId)
             ->whereBetween('created_at', [$from, now()])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('quote_status_id', QuoteStatusEnum::NewLead)->get();
     }
 
