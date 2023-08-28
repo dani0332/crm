@@ -56,6 +56,7 @@ class HomeQuoteService extends BaseService
             DB::raw('DATE_FORMAT(hqrd.next_followup_date, "%d-%m-%Y") as next_followup_date'),
             'hqr.premium',
             'hqr.advisor_id',
+            'hqr.payment_status_id',
             'u.name as advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
