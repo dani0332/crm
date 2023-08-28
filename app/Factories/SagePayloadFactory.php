@@ -114,92 +114,7 @@ class SagePayloadFactory
                             "DueDate" => "2025-11-24T00:00:00Z"
                         ]
                     ],
-                    "InvoiceOptionalFields" => [
-                        [
-                            "OptionalField" => "CCCODE",
-                            "Value" => "sample cc code"
-                        ],
-                        [
-                            "OptionalField" => "ENDORSEMENT",
-                            "Value" => "sample endorsement number"
-                        ],
-                        [
-                            "OptionalField" => "EXPIRY",
-                            "Value" => $request->policyExpiryDate
-                        ],
-                        [
-                            "OptionalField" => "INCEPTION",
-                            "Value" => "20230505"
-                        ],
-                        [
-                            "OptionalField" => "INSURED",
-                            "Value" => "sample insured"
-                        ],
-                        [
-                            "OptionalField" => "MAINCLASS",
-                            "Value" => $request->mainClassInsurance
-                        ],
-                        [
-                            "OptionalField" => "MANAGER",
-                            "Value" => "sample manager"
-                        ],
-                        [
-                            "OptionalField" => "PDC",
-                            "Value" => "0"
-                        ],
-                        [
-                            "OptionalField" => "POLICY",
-                            "Value" => $request->policyNumber
-                        ],
-                        [
-                            "OptionalField" => "POLICYHOLDER",
-                            "Value" => "sample policy holder"
-                        ],
-                        [
-                            "OptionalField" => "POLICYISSUER",
-                            "Value" => $request->policyIssuer
-                        ],
-                        [
-                            "OptionalField" => "PREMIUM",
-                            "Value" => strval($request->premiumWithTax)
-                        ],
-                        [
-                            "OptionalField" => "PREMIUMVAT",
-                            "Value" => "0.000"
-                        ],
-                        [
-                            "OptionalField" => "REQUESTTYPE",
-                            "Value" => $request->requestType
-                        ],
-                        [
-                            "OptionalField" => "SALESPERSON",
-                            "Value" =>  $request->advisorName
-                        ],
-                        [
-                            "OptionalField" => "SUBCLASS",
-                            "Value" => $request->subClass
-                        ],
-                        [
-                            "OptionalField" => "CNTYPE",
-                            "Value" => "Normal"
-                        ],
-                        [
-                            "OptionalField" => "COLLECTS",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "COMMRATE",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "STATE",
-                            "Value" => "DXB"
-                        ],
-                        [
-                            "OptionalField" => "IGTC",
-                            "Value" => "N"
-                        ]
-                    ]
+                   "InvoiceOptionalFields" => self::createOptionalFields($request)
                 ]
             ]
         ];
@@ -209,7 +124,7 @@ class SagePayloadFactory
             'payload' => $payLoad,
         ];
            
-    }
+    }    
 
     private static function createARInvoiceDis($request)
     {
@@ -244,97 +159,17 @@ class SagePayloadFactory
                             "DueDate" => "2023-05-16T00:00:00Z"
                         ]
                     ],
-                    "InvoiceOptionalFields" => [
-                        [
-                            "OptionalField" => "CCCODE",
-                            "Value" => "sample cc code"
-                        ],
-                        [
-                            "OptionalField" => "ENDORSEMENT",
-                            "Value" => "sample endorsement number"
-                        ],
-                        [
-                            "OptionalField" => "EXPIRY",
-                            "Value" => $request->policyExpiryDate
-                        ],
-                        [
-                            "OptionalField" => "INCEPTION",
-                            "Value" => "20230505"
-                        ],
-                        [
-                            "OptionalField" => "INSURED",
-                            "Value" => "sample insured"
-                        ],
-                        [
-                            "OptionalField" => "MAINCLASS",
-                            "Value" => $request->mainClassInsurance
-                        ],
-                        [
-                            "OptionalField" => "MANAGER",
-                            "Value" => "sample manager"
-                        ],
-                        [
-                            "OptionalField" => "PDC",
-                            "Value" => "0"
-                        ],
-                        [
-                            "OptionalField" => "POLICY",
-                            "Value" =>  $request->policyNumber
-                        ],
-                        [
-                            "OptionalField" => "POLICYHOLDER",
-                            "Value" => "sample policy holder"
-                        ],
-                        [
-                            "OptionalField" => "POLICYISSUER",
-                            "Value" => $request->policyIssuer
-                        ],
-                        [
-                            "OptionalField" => "PREMIUM",
-                            "Value" => strval($request->premiumWithTax)
-                        ],
-                        [
-                            "OptionalField" => "PREMIUMVAT",
-                            "Value" => "0.000"
-                        ],
-                        [
-                            "OptionalField" => "REQUESTTYPE",
-                            "Value" => $request->requestType
-                        ],
-                        [
-                            "OptionalField" => "SALESPERSON",
-                            "Value" => $request->advisorName
-                        ],
-                        [
-                            "OptionalField" => "SUBCLASS",
-                            "Value" => $request->subClass
-                        ],
-                        [
-                            "OptionalField" => "CNTYPE",
-                            "Value" => "Normal"
-                        ],
-                        [
-                            "OptionalField" => "COLLECTS",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "COMMRATE",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "STATE",
-                            "Value" => "DXB"
-                        ]
-                    ]
+                    "InvoiceOptionalFields" => self::createOptionalFields($request)
                 ]
             ]
-        ];        
+        ];       
+        
         return [
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
         ];
     }
-
+   
     private static function createARInvoicePremAndComm($request)
     {
         // Payload creation logic for default scenario
@@ -367,88 +202,7 @@ class SagePayloadFactory
                             "DueDate" => "2023-04-26T00:00:00Z"
                         ]
                     ],
-                    "InvoiceOptionalFields" => [
-                        [
-                            "OptionalField" => "CCCODE",
-                            "Value" => "sample cc code",
-                        ],
-                        [
-                            "OptionalField" => "ENDORSEMENT",
-                            "Value" => "sample endorsement number",
-                        ],
-                        [
-                            "OptionalField" => "EXPIRY",
-                            "Value" => $request->policyExpiryDate,
-                        ],
-                        [
-                            "OptionalField" => "INCEPTION",
-                            "Value" => "20230505",
-                        ],
-                        [
-                            "OptionalField" => "INSURED",
-                            "Value" => "sample insured",
-                        ],
-                        [
-                            "OptionalField" => "MAINCLASS",
-                            "Value" => $request->mainClassInsurance,
-                        ],
-                        [
-                            "OptionalField" => "MANAGER",
-                            "Value" => "sample manager",
-                        ],
-                        [
-                            "OptionalField" => "PDC",
-                            "Value" => "0",
-                        ],
-                        [
-                            "OptionalField" => "POLICY",
-                            "Value" => $request->policyNumber,
-                        ],
-                        [
-                            "OptionalField" => "POLICYHOLDER",
-                            "Value" => "sample policy holder",
-                        ],
-                        [
-                            "OptionalField" => "POLICYISSUER",
-                            "Value" => $request->policyIssuer,
-                        ],
-                        [
-                            "OptionalField" => "PREMIUM",
-                            "Value" => strval($request->premiumWithTax),
-                        ],
-                        [
-                            "OptionalField" => "PREMIUMVAT",
-                            "Value" => "0.000",
-                        ],
-                        [
-                            "OptionalField" => "REQUESTTYPE",
-                            "Value" => $request->requestType,
-                        ],
-                        [
-                            "OptionalField" => "SALESPERSON",
-                            "Value" => $request->advisorName,
-                        ],
-                        [
-                            "OptionalField" => "SUBCLASS",
-                            "Value" => $request->subClass,
-                        ],
-                        [
-                            "OptionalField" => "CNTYPE",
-                            "Value" => "Normal",
-                        ],
-                        [
-                            "OptionalField" => "COLLECTS",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "COMMRATE",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "STATE",
-                            "Value" => "DXB"
-                        ]
-                    ]
+                    "InvoiceOptionalFields" => self::createOptionalFields($request)
                 ],
                 [
                     'CustomerNumber' => $request->customerId,
@@ -478,88 +232,7 @@ class SagePayloadFactory
                             "DueDate" => "2023-05-26T00:00:00Z"
                         ]
                     ],
-                    "InvoiceOptionalFields" => [
-                        [
-                            "OptionalField" => "CCCODE",
-                            "Value" => "sample cc code"
-                        ],
-                        [
-                            "OptionalField" => "ENDORSEMENT",
-                            "Value" => "sample endorsement number"
-                        ],
-                        [
-                            "OptionalField" => "EXPIRY",
-                            "Value" => $request->policyExpiryDate
-                        ],
-                        [
-                            "OptionalField" => "INCEPTION",
-                            "Value" => "20230505"
-                        ],
-                        [
-                            "OptionalField" => "INSURED",
-                            "Value" => "sample insured"
-                        ],
-                        [
-                            "OptionalField" => "MAINCLASS",
-                            "Value" => $request->mainClassInsurance
-                        ],
-                        [
-                            "OptionalField" => "MANAGER",
-                            "Value" => "sample manager"
-                        ],
-                        [
-                            "OptionalField" => "PDC",
-                            "Value" => "0"
-                        ],
-                        [
-                            "OptionalField" => "POLICY",
-                            "Value" => $request->policyNumber
-                        ],
-                        [
-                            "OptionalField" => "POLICYHOLDER",
-                            "Value" => "sample policy holder"
-                        ],
-                        [
-                            "OptionalField" => "POLICYISSUER",
-                            "Value" => $request->policyIssuer
-                        ],
-                        [
-                            "OptionalField" => "PREMIUM",
-                            "Value" => strval($request->premiumWithTax)
-                        ],
-                        [
-                            "OptionalField" => "PREMIUMVAT",
-                            "Value" => "0.000"
-                        ],
-                        [
-                            "OptionalField" => "REQUESTTYPE",
-                            "Value" => $request->requestType
-                        ],
-                        [
-                            "OptionalField" => "SALESPERSON",
-                            "Value" => $request->advisorName
-                        ],
-                        [
-                            "OptionalField" => "SUBCLASS",
-                            "Value" => $request->subClass
-                        ],
-                        [
-                            "OptionalField" => "CNTYPE",
-                            "Value" => "Normal"
-                        ],
-                        [
-                            "OptionalField" => "COLLECTS",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "COMMRATE",
-                            "Value" => ""
-                        ],
-                        [
-                            "OptionalField" => "STATE",
-                            "Value" => "DXB"
-                        ]
-                    ]
+                    "InvoiceOptionalFields" => self::createOptionalFields($request)
                 ]
             ]
         ];
@@ -569,5 +242,91 @@ class SagePayloadFactory
             'endPoint' => 'AR/ARInvoiceBatches',
             'payload' => $payLoad,
         ];
+    }
+
+    private static function createOptionalFields($request) {
+        $optionalArray = [
+            [
+                "OptionalField" => "CCCODE",
+                "Value" => "sample cc code"
+            ],
+            [
+                "OptionalField" => "ENDORSEMENT",
+                "Value" => "sample endorsement number"
+            ],
+            [
+                "OptionalField" => "EXPIRY",
+                "Value" => $request->policyExpiryDate
+            ],
+            [
+                "OptionalField" => "INCEPTION",
+                "Value" => "20230505"
+            ],
+            [
+                "OptionalField" => "INSURED",
+                "Value" => "sample insured"
+            ],
+            [
+                "OptionalField" => "MAINCLASS",
+                "Value" => $request->mainClassInsurance
+            ],
+            [
+                "OptionalField" => "MANAGER",
+                "Value" => "sample manager"
+            ],
+            [
+                "OptionalField" => "PDC",
+                "Value" => "0"
+            ],
+            [
+                "OptionalField" => "POLICY",
+                "Value" =>  $request->policyNumber
+            ],
+            [
+                "OptionalField" => "POLICYHOLDER",
+                "Value" => "sample policy holder"
+            ],
+            [
+                "OptionalField" => "POLICYISSUER",
+                "Value" => $request->policyIssuer
+            ],
+            [
+                "OptionalField" => "PREMIUM",
+                "Value" => strval($request->premiumWithTax)
+            ],
+            [
+                "OptionalField" => "PREMIUMVAT",
+                "Value" => "0.000"
+            ],
+            [
+                "OptionalField" => "REQUESTTYPE",
+                "Value" => $request->requestType
+            ],
+            [
+                "OptionalField" => "SALESPERSON",
+                "Value" => $request->advisorName
+            ],
+            [
+                "OptionalField" => "SUBCLASS",
+                "Value" => $request->subClass
+            ],
+            [
+                "OptionalField" => "CNTYPE",
+                "Value" => "Normal"
+            ],
+            [
+                "OptionalField" => "COLLECTS",
+                "Value" => ""
+            ],
+            [
+                "OptionalField" => "COMMRATE",
+                "Value" => ""
+            ],
+            [
+                "OptionalField" => "STATE",
+                "Value" => "DXB"
+            ]
+        ];
+        return $optionalArray;
     }
 }
