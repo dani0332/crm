@@ -25,10 +25,9 @@ class TravelQuoteService extends BaseService
     use RolePermissionConditions;
     use AddPremiumAllLobs;
 
-    public function __construct(LeadAllocationService $leadAllocationService, KenService $kenService)
+    public function __construct(LeadAllocationService $leadAllocationService)
     {
         $this->leadAllocationService = $leadAllocationService;
-        $this->kenService = $kenService;
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -140,11 +139,10 @@ class TravelQuoteService extends BaseService
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
         ];
-        //
         if ($dob != '') {
             $dataArr['dob'] = $dob;
         }
-        if ($request->direction_code == TravelQuoteEnum::TravelUaeInbound) {
+        if ($request->direction_code == TravelQuoteEnum::TRAVELUAEINBOUND) {
             $dataArr['hasArrivedUae'] = $request->has_arrived_uae;
         } else {
             $dataArr['hasArrivedDestination'] = $request->has_arrived_destination;
@@ -157,11 +155,11 @@ class TravelQuoteService extends BaseService
             $dataArr['coverageCode'] = $request->coverage_code;
             $dataArr['startDate'] = $request->start_date;
 
-            if ($request->coverage_code == TravelQuoteEnum::CoverageCodeSingleTrip) {
+            if ($request->coverage_code == TravelQuoteEnum::COVERAGECODESINGLETRIP) {
                 $dataArr['endDate'] = $request->end_date;
             }
         }
-        if ($request->region_cover_for_id != null && $request->direction_code == TravelQuoteEnum::TravelUaeOutbound) {
+        if ($request->region_cover_for_id != null && $request->direction_code == TravelQuoteEnum::TRAVELUAEOUTBOUND) {
             $dataArr['regionCoverForId'] = $request->region_cover_for_id;
         }
 
@@ -171,8 +169,8 @@ class TravelQuoteService extends BaseService
 
         if ($request->uuid != null) {
             $dataArr['quoteUID'] = $request->uuid;
-            $response = $this->kenService->request('/get-revised-travel-quote-plans', 'post', $dataArr);
-
+            $kenService = new KenService();
+            $response = $kenService->request('/get-revised-travel-quote-plans', 'post', $dataArr);
             return $response;
 
         }

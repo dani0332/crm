@@ -60,6 +60,9 @@ const rules = {
     'E-mail must be valid',
   isRequired: v => !!v || 'This field is required',
   allowEmpty: v => true || 'This field is required',
+    isPhone: v =>
+        /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
+        'Phone must be valid',
 };
 const subTeamOptions = [
     { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
@@ -249,7 +252,7 @@ onMounted(() => {
               <x-input
                   v-model="quoteForm.mobile_no"
                   class="w-full"
-                  :rules="[rules.isRequired]"
+                  :rules="[rules.isPhone]"
               />
           </x-field>
         </div>
