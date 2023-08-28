@@ -6,6 +6,7 @@ const props = defineProps({
     quote:Object,
     travelers: Array,
     quotePlans: Array,
+    errors:Array,
 });
 
 const genderSelect = computed(() => {
@@ -138,6 +139,9 @@ onMounted(() => {
       </div>
     </div>
     <x-divider class="my-4" />
+      <x-alert class="mb-4" v-for="error in errors">
+          <h4 class="text-red-500"><b>{{error}}</b></h4>
+      </x-alert>
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
           <x-field label="Traveling Where?" required>
@@ -265,6 +269,7 @@ onMounted(() => {
               <DatePicker
                   v-model="travel.dob"
                   name="created_at_start"
+                  format="dd-MM-yyyy"
                   :rules="[rules.isRequired]"
               />
           </x-field>

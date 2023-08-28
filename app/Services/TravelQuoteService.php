@@ -109,9 +109,7 @@ class TravelQuoteService extends BaseService
         if ($request->members && ($request->has_arrived_destination == '0' || $request->has_arrived_uae == '0')) {
             foreach ($request->members as $member) {
 
-                $memberDob = explode('T', $member['dob']);
-                $date = explode('-', $memberDob[0]);
-                $day = explode('T', $date[2]);
+                $memberDob = \Carbon\Carbon::parse($member['dob'])->format('Y-m-d');
                 $memberData = new \stdClass();
                 if (isset($member['primary'])) {
                     $memberData->primary = true;
@@ -119,12 +117,9 @@ class TravelQuoteService extends BaseService
                 if (isset($member['id'])) {
                     $memberData->id = $member['id'];
                 }
-                $memberData->dob = $memberDob[0];
+                $memberData->dob = $memberDob;
                 $dob = $memberDob[0];
                 $memberData->gender = $member['gender'];
-                $memberData->year = $date[0];
-                $memberData->month = $date[1];
-                $memberData->day = $day[0];
                 array_push($members, $memberData);
             }
         }
@@ -524,6 +519,7 @@ class TravelQuoteService extends BaseService
             'previous_quote_policy_premium' => 'input|title',
             'parent_duplicate_quote_id' => 'input|title',
             'policy_start_date' => 'input|date',
+            'members' => 'input|array|required',
 
         ];
     }

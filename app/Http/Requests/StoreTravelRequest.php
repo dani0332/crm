@@ -48,6 +48,13 @@ class StoreTravelRequest extends FormRequest
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';
             }
+            if ($key == 'members') {
+                $rules[$key.'.*.dob']  = 'required_if:has_arrived_uae,1';
+                $rules[$key.'.*.dob']  = 'required_if:has_arrived_destination,1';
+                $rules[$key.'.*.gender']  = 'required_if:has_arrived_uae,1';
+                $rules[$key.'.*.gender']  = 'required_if:has_arrived_destination,1';
+            }
+
             $rules[$key] = $rule;
         }
 
