@@ -178,7 +178,7 @@
                 transaction_datatable_route: "{{ route('transaction.index') }}",
                 re_issue_transaction_form: "{{ route('re_issue_transaction_form') }}",
                 aml_datatable_route: "{{ route('aml.index') }}",
-                aml_kyc_logs_datatable_route: "{{ route('kycLogsRecords') }}",
+                aml_kyc_logs_datatable_route: "{{ route('kyc-logs-records') }}",
                 valuation_api_route: "{{ Config::get('constants.valuation_api_route') }}",
                 valuation_api_token: "{{ Config::get('constants.valuation_api_token') }}",
                 tminsurancetype_datatable_route: "{{ route('tminsurancetype.index') }}",
