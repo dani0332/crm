@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             AddPersonalLobsProducts::class,
             // PetBikeMigrationSeeder::class
             InsurerQuoteTypeMappingSeeder::class,
+            addTeamAllocationThresholdViewPermission::class,
         ]);
     }
 }
