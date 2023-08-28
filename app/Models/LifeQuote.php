@@ -32,7 +32,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function getDobAttribute($value)
     {
-        return Carbon::parse($value)->format('Y-m-d');
+        return Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY'));
     }
 
     public function quoteStatus()
