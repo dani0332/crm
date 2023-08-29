@@ -402,7 +402,7 @@ use App\Enums\LeadSourceEnum;
     @endif
 
     @if (strtolower($model->modelType) != 'team' && strtolower($model->modelType) != 'leadstatus')
-        @if ($model->modelType == quoteTypeCode::Car && (LeadSourceEnum::RENEWAL_UPLOAD ) && auth()->user()->hasRole(RolesEnum::BetaUser))
+        @if ($model->modelType == quoteTypeCode::Car && $record->source == LeadSourceEnum::RENEWAL_UPLOAD)
         
             <x-quote-renewal-card :record="$record" :modeltype="$model->modelType" />
         @endif

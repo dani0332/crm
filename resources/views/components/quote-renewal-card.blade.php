@@ -11,16 +11,16 @@
             <div class="x_content">
 
 
-                <form id="" method='post' action="{{ url('/quotes/'.strtolower($modeltype).'/update-quote-policy') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
+                <form id="" method='post' action="{{ url('/quotes/update-last-year-policy') }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{csrf_field()}}
                     <input type="hidden" name="modelType" value="{{ strtolower($modeltype) ?? ''}}">
-                    <input type="hidden" id="quote_id" name="quote_id" value="{{ $record->id }}">
+                    <input type="hidden" id="quoteId" name="quoteId" value="{{ $record->id }}">
                     <div class="item form-group">
                         <div class="col">
                             <label class="col-form-label col-md-3 col-sm-3 label-align" ><b>Renewal Batch#</b></label>
                             <div class="col-md-6 col-sm-6">
                             <p class="label-align-center">
-                            <input type="text" class="form-control" id="renewal_batch" name="renewal_batch"  {{ !empty($record->renewal_batch ) ? 'readonly' : '' }} value="{{ isset($record->renewal_batch) ? $record->renewal_batch : '' }}">
+                            <input type="text" class="form-control" id="renewalBatch" name="renewalBatch"  {{ !empty($record->renewal_batch ) ? 'readonly' : '' }} value="{{ isset($record->renewal_batch) ? $record->renewal_batch : '' }}" required >
                             </p>
                             </div>
                         </div>
@@ -105,7 +105,7 @@
                 @if (empty($record->renewal_batch ))
                     <div align="right">
                         <span style="color:red;" id="error-quote-policy-form"></span>
-                        <button type="submit" class="btn btn-primary btn-sm" id="">Edit</button>
+                        <button type="submit" class="btn btn-primary btn-sm" id="">Update</button>
                     </div>
                     @endif
             </form>

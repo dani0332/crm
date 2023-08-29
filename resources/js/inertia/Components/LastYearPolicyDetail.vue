@@ -8,7 +8,8 @@ const props = defineProps({
     default: {},
   },
 });
-
+const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
+const { isRequired } = useRules();
 const policyForm = useForm({
   model: props.model,
   renewal_batch: props?.quote?.renewal_batch || null,
@@ -21,12 +22,12 @@ function onSubmit(isValid) {
   if (isValid) {
     policyForm
       .transform(data => ({
-        renewal_batch: data.renewal_batch,
+        renewalBatch: data.renewal_batch,
         modelType: data.modelType,
-        quote_id: data.quote_id,
+        quoteId: data.quote_id,
         isInertia: true,
       }))
-      .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+      .post(`/quotes/update-last-year-policy`, {
         preserveScroll: true,
         onSuccess: () => {},
         onFinish: () => {},
@@ -51,6 +52,7 @@ function onSubmit(isValid) {
                 v-model="policyForm.renewal_batch"
                 type="tel"
                 class="w-full"
+                :rules="[isRequired]"
                 :disabled="props?.quote?.renewal_batch > 0"
                 :error="policyForm.errors.renewal_batch"
               />
@@ -61,7 +63,7 @@ function onSubmit(isValid) {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Previous Policy Expiry Date</dt>
-              <dd>{{ quote?.previous_policy_expiry_date }}</dd>
+              <dd>{{ dateFormat(quote?.previous_policy_expiry_date) }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Previous Policy Price</dt>
@@ -69,7 +71,7 @@ function onSubmit(isValid) {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Previous Start Date</dt>
-              <dd>{{ quote?.policy_start_date }}</dd>
+              <dd>{{ dateFormat(quote?.policy_start_date) }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Previous Advisor</dt>
@@ -83,7 +85,7 @@ function onSubmit(isValid) {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Renewal Expiry Date</dt>
-              <dd>{{ quote?.renewal_expiry_date }}</dd>
+              <dd>{{ dateFormat(quote?.renewal_expiry_date) }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Lost reason</dt>

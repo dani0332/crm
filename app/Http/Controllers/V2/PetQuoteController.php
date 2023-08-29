@@ -111,6 +111,7 @@ class PetQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
+            'modelType' => QuoteTypes::PET,
         ]);
     }
 

@@ -1293,7 +1293,6 @@ class CRUDController extends Controller
 
     public function updateQuotePolicy(Request $request)
     {
-        
         $model = '\\App\\Models\\'.ucwords($request->modelType).'Quote';
         $quoteModel = $model::where('id', $request->quote_id)->first();
         if (! $quoteModel) {
@@ -1306,7 +1305,6 @@ class CRUDController extends Controller
             'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
             'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
             'premium' => $request->quote_premium,
-            'renewal_batch' => $request->renewal_batch,
         ]);
 
         return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
