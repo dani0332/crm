@@ -129,7 +129,7 @@ const onUpdatePlan = () => {
     })	
     .then(response => {	
       notification.success({	
-        title: 'Plan has been updated',	
+        title: response.data,	
         position: 'top',	
       });	
       router.reload({	

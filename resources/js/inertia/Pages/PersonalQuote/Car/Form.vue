@@ -121,7 +121,8 @@ function onSubmit(isValid) {
 }
 
 onMounted(() => {
-	if (quoteForm.car_make_id !== null) {		
+	if (quoteForm.car_make_id !== null) {	
+		setCarMake(quoteForm.car_make_id);
 		axios
 			.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
 			.then(({ data }) => {
@@ -130,6 +131,14 @@ onMounted(() => {
 			});
 	}
 })
+
+const setCarMake = (id) => {
+	axios
+		.get(`/car-make?id=${id}`)
+		.then(({ data }) => {
+			props.dropdownSource.car_make_id = data;
+		});	
+}
 </script>
 
 <template>

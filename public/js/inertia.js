@@ -12007,6 +12007,7 @@ __webpack_require__.r(__webpack_exports__);
     }
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       if (quoteForm.car_make_id !== null) {
+        setCarMake(quoteForm.car_make_id);
         axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref4) {
           var data = _ref4.data;
           props.dropdownSource.car_model_id = data;
@@ -12014,6 +12015,12 @@ __webpack_require__.r(__webpack_exports__);
         });
       }
     });
+    var setCarMake = function setCarMake(id) {
+      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-make?id=".concat(id)).then(function (_ref5) {
+        var data = _ref5.data;
+        props.dropdownSource.car_make_id = data;
+      });
+    };
     var __returned__ = {
       props: props,
       isRequired: isRequired,
@@ -12026,6 +12033,7 @@ __webpack_require__.r(__webpack_exports__);
       getCarModel: getCarModel,
       getModelDetails: getModelDetails,
       onSubmit: onSubmit,
+      setCarMake: setCarMake,
       ref: vue__WEBPACK_IMPORTED_MODULE_0__.ref
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
@@ -13531,10 +13539,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var assumptionsForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.useForm)({
       cylinder: page.props.record.cylinder || null,
       seat_capacity: page.props.record.seat_capacity || null,
-      vehicleType: page.props.record.vehicle_type_id || null,
-      is_modified: page.props.paymentEntityModel.is_modified || null,
-      is_bank_financed: page.props.paymentEntityModel.is_bank_financed || null,
-      is_gcc_standard: page.props.paymentEntityModel.is_gcc_standard || null,
+      vehicle_type_id: page.props.record.vehicle_type_id || null,
+      is_modified: page.props.record.is_modified || 0,
+      is_bank_financed: page.props.record.is_bank_financed || 0,
+      is_gcc_standard: page.props.record.is_gcc_standard || null,
       current_insurance_status: page.props.record.current_insurance_status || null,
       year_of_first_registration: page.props.record.year_of_first_registration || null,
       car_quote_id: page.props.record.id
@@ -14539,7 +14547,7 @@ __webpack_require__.r(__webpack_exports__);
         ancillary_excess: ancillaryExcessValue.value
       }).then(function (response) {
         notification.success({
-          title: 'Plan has been updated',
+          title: response.data,
           position: 'top'
         });
         _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__.router.reload({
@@ -40891,9 +40899,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "w-full",
     disabled: !$setup.assumptionState.isEditing
   }, null, 8 /* PROPS */, ["modelValue", "disabled"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_155, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_156, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", _hoisted_157, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
-    modelValue: $setup.assumptionsForm.vehicleType,
+    modelValue: $setup.assumptionsForm.vehicle_type_id,
     "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
-      return $setup.assumptionsForm.vehicleType = $event;
+      return $setup.assumptionsForm.vehicle_type_id = $event;
     }),
     label: "Vehicle Body Type",
     options: $setup.vehicleTypeOptions,

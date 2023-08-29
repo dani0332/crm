@@ -304,10 +304,10 @@ const assumptionState = reactive({
 const assumptionsForm = useForm({
   cylinder: page.props.record.cylinder || null,
   seat_capacity: page.props.record.seat_capacity || null,
-  vehicleType: page.props.record.vehicle_type_id || null,
-  is_modified: page.props.paymentEntityModel.is_modified || null,
-  is_bank_financed: page.props.paymentEntityModel.is_bank_financed || null,
-  is_gcc_standard: page.props.paymentEntityModel.is_gcc_standard ||null,
+  vehicle_type_id: page.props.record.vehicle_type_id || null,
+  is_modified: page.props.record.is_modified || 0,
+  is_bank_financed: page.props.record.is_bank_financed || 0,
+  is_gcc_standard: page.props.record.is_gcc_standard ||null,
   current_insurance_status: page.props.record.current_insurance_status || null,
   year_of_first_registration: page.props.record.year_of_first_registration || null,
   car_quote_id: page.props.record.id
@@ -1445,7 +1445,7 @@ const confirmSendEmail = () => {
 				<div class="w-full md:w-1/2">
 					<div class="flex flex-col gap-4">
 						<x-select
-							v-model="assumptionsForm.vehicleType"
+							v-model="assumptionsForm.vehicle_type_id"
 							label="Vehicle Body Type"
 							:options="vehicleTypeOptions"
 							placeholder="Vehicle Body Type"
