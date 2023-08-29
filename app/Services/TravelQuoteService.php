@@ -7,6 +7,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Facades\Ken;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
@@ -157,7 +158,7 @@ class TravelQuoteService extends BaseService
 
         if ($request->uuid != null) {
             $travelQuote['quoteUID'] = $request->uuid;
-            $response = KenService::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
+            $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
             return $response;
 
         }

@@ -36,7 +36,7 @@ const quoteForm = useForm({
     last_name: props.quote?.last_name || null,
     email: props.quote?.email || null,
     direction_code:props.quote?.direction_code?props.quote?.direction_code:(props.quote?.uuid &&  props.quote?.destination_id_text == 'United Arab Emirates')?'travelUaeInbound':(props.quote?.uuid &&  props.destination_id_text != 'United Arab Emirates')?'travelUaeOutbound':null,
-    has_arrived_uae:props.quote?.has_arrived_uae?.toString() || (props.quote?.uuid &&  props.quotePlans)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null,
+    has_arrived_uae:props.quote?.has_arrived_uae?.toString() || ((props.quote?.uuid &&  props.quotePlans && props.quote?.has_arrived_uae)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null),
     has_arrived_destination: props.quote?.has_arrived_destination?.toString() || ((props.quote?.uuid &&  props.quotePlans && props.quote.has_arrived_destination)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null),
     coverage_code:props.quote?.coverage_code || null,
     uuid:props.quote?.uuid || null,
