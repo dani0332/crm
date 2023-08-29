@@ -54,7 +54,7 @@ class CheckAmlService
 
             // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
-            if( checkPersonalQuotes($quoteTypeCode) && ( ! $this->isDataMigrated($quoteTypeId, $quotePrimaryKey) )){
+            if (checkPersonalQuotes($quoteTypeCode) && (! $this->isDataMigrated($quoteTypeId, $quotePrimaryKey))) {
                 $quotePrimaryKey = $this->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
             }
             $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quotePrimaryKey);
@@ -280,7 +280,7 @@ class CheckAmlService
     public function isDataMigrated($quoteTypeId, $quoteRequestId)
     {
         $kycLogCreatedDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail();
-        $dataMigrationDate = match ($quoteTypeId){
+        $dataMigrationDate = match ($quoteTypeId) {
             QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
         };
 
@@ -292,14 +292,14 @@ class CheckAmlService
 
     public function getPersonalQuoteId($quoteTypeId, $quoteRequestId)
     {
-        return match ($quoteTypeId){
+        return match ($quoteTypeId) {
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id
         };
     }
 
     public function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId)
     {
-        return match ($quoteTypeId){
+        return match ($quoteTypeId) {
             QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->update(['pa_id' => auth()->id()])
         };
     }
