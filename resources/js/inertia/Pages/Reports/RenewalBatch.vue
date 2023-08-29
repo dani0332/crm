@@ -294,9 +294,18 @@ function calculateValuesAndHighlight() {
                 )) * 100
         ).toFixed(2);
 
+        const ratioCarSoldUncontactable = (
+            (
+                (
+                    parseInt(item.car_sold) + parseInt(item.uncontactable) ) /
+                    parseInt(item.total_allocated_leads)
+                ) * 100
+        ).toFixed(2);
+
         const monthlySum = calculateMonthlySum(page.props.reportData.data, index);
         const rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
 
+        item.ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
         item.volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
         item.valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
@@ -318,8 +327,9 @@ function calculateValuesAndHighlight() {
         if (!avgRawRetentionArr[monthName]) {
             avgRawRetentionArr[monthName] = [];
         }
-        avgImRetentionArr[monthName].push(parseFloat(imRetention));
-        avgRawRetentionArr[monthName].push(parseFloat(rawRetention));
+
+        avgImRetentionArr[monthName].push( imRetention == 'NaN' ? parseFloat(0.00) : parseFloat(imRetention));
+        avgRawRetentionArr[monthName].push( rawRetention == 'NaN' ? parseFloat(0.00) : parseFloat(rawRetention));
 
         page.props.renewalBatchesList.forEach(batch => {
             batch.slabs.forEach(slab => {
@@ -407,16 +417,16 @@ const calculateMonthlySum = (data, index) => {
     if (lastMonthSummedIndex <= index) {
         while (index <= (data.length - 1) && currentMonthValue == data[index].month) {
 
-            totalRenewed = + data[index].renewed;
-            totalAllocated = + data[index].total_allocated_leads;
-            totalCarSold = + data[index].car_sold;
-            totalCarUncontactable = + data[index].uncontactable;
+            totalRenewed = parseInt(totalRenewed) + parseInt(data[index].renewed);
+            totalAllocated = parseInt(totalAllocated) + parseInt(data[index].total_allocated_leads);
+            totalCarSold = parseInt(totalCarSold) + parseInt(data[index].car_sold);
+            totalCarUncontactable = parseInt(totalCarUncontactable) + parseInt(data[index].uncontactable);
             index++;
             lastMonthSummedIndex = index;
             currentRowSpan++;
         }
 
-        var result = totalRenewed / (totalAllocated - (totalCarSold - totalCarUncontactable)) * 100;
+        var result = totalRenewed / (totalAllocated - totalCarSold - totalCarUncontactable) * 100;
 
         return (result).toFixed(2) + " %";
     }
@@ -539,11 +549,16 @@ watch(
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
-                                Car Sold
+                                Car Sold/Cancelled
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
                                 Uncontactable
+                            </th>
+
+                            <th v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                                class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
+                                RATIO - Cancelled / Sold / Uncontactable
                             </th>
 
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">
@@ -610,6 +625,10 @@ watch(
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.uncontactable.toLocaleString() }}
+                            </td>
+                            <td v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])"
+                                class="x-table-cell px-3 py-4 align-middle">
+                                {{ item.ratioCarSoldUncontactable }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
