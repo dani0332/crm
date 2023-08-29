@@ -138,10 +138,6 @@ onMounted(() => {
         </Link>
       </div>
     </div>
-      {{props.quote.has_arrived_destination}}
-      =-================================== {{quoteForm.has_arrived_destination}}
-      ======================================
-      {{props}}
     <x-divider class="my-4" />
       <x-alert class="mb-4" v-for="error in errors">
           <h4 class="text-red-500"><b>{{error}}</b></h4>
