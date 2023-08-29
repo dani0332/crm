@@ -316,6 +316,11 @@
             }
             function validateDateRange(startDateStr, endDateStr) {
 
+                if (!startDateStr && !endDateStr) {
+                    showErrorMessage('For Export : date range must be selected either created date or advisor assigned date.');
+                    return false;
+                }
+
                 if (startDateStr && endDateStr) {
                     var startDateParts = startDateStr.split("-");
                     var endDateParts = endDateStr.split("-");
