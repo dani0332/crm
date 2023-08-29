@@ -113,8 +113,8 @@ class HealthAllocationService extends AllocationService
 
         if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                 && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                CammyJob::dispatch($lead, 'intro');
-            }
+            CammyJob::dispatch($lead, 'intro');
+        }
 
         GetQuotePlansJob::dispatch($lead);
     }

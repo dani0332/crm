@@ -252,7 +252,7 @@ class CRUDService extends BaseService
             SyncSIBContactJob::dispatch($entity);
         }
 
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)&& in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])        ) {
+        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
             if ($request->leadStatus == QuoteStatusEnum::Quoted) {
                 CammyJob::dispatch($entity, 'intro');
             } else {
