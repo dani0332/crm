@@ -176,6 +176,26 @@ class RenewalBatchReportService extends BaseService
             return $carry;
         }, []);
 
+        /**
+         * Get volume and value segment advisors list
+         */
+        $volumeSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
+            $qry->where('segment_type', RenewalBatch::SEGMENT_TYPE_VOLUME);
+        })
+            ->select('id')
+            ->pluck('id')
+            ->toArray();
+
+        $volumeSegmentAdvisorsIdString = ! empty($volumeSegmentAdvisorsId) ? implode(',', $volumeSegmentAdvisorsId) : '0';
+
+        $valueSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
+            $qry->where('segment_type', RenewalBatch::SEGMENT_TYPE_VALUE);
+        })
+            ->select('id')
+            ->pluck('id')
+            ->toArray();
+
+        $valueSegmentAdvisorsIdString = ! empty($valueSegmentAdvisorsId) ? implode(',', $valueSegmentAdvisorsId) : '0';
 
         // date filter
         if (isset($filters->reportDate)) {
@@ -246,41 +266,69 @@ class RenewalBatchReportService extends BaseService
         } elseif (! isset($filters->advisors) && $authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager) {
             $query->where('car_quote_request.advisor_id', $authUserId);
         }
+
         // segment wise advisors filter
-        $volumeSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
-            $qry->where('segment_type', RenewalBatch::SEGMENT_TYPE_VOLUME);
-        })
-            ->select('id')
-            ->pluck('id')
-            ->toArray();
-
-        $volumeSegmentAdvisorsIdString = ! empty($volumeSegmentAdvisorsId) ? implode(',', $volumeSegmentAdvisorsId) : '0';
-
-        $valueSegmentAdvisorsId = User::whereHas('renewalBatch', function ($qry) {
-            $qry->where('segment_type', RenewalBatch::SEGMENT_TYPE_VALUE);
-        })
-            ->select('id')
-            ->pluck('id')
-            ->toArray();
-
-        $valueSegmentAdvisorsIdString = ! empty($valueSegmentAdvisorsId) ? implode(',', $valueSegmentAdvisorsId) : '0';
-
         if (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VOLUME) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as total_by_volume_segment_advisors')
+                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ')
+                and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')
+                and payments.captured_at <= "'.$reportDateEnd.'"  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')
+                THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')
+                    and car_lost_quote_logs.status = "Approved"
+                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
+                    THEN 1 ELSE 0 END) as car_sold_by_volume_segment'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')
+                    and car_lost_quote_logs.status = "Approved"
+                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
+                    THEN 1 ELSE 0 END) as uncontactable_by_volume_segment'),
             );
         } elseif (isset($filters->segment) && $filters->segment === RenewalBatch::SEGMENT_TYPE_VALUE) {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as total_by_value_segment_advisors')
+                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ')
+                and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')
+                and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')
+                THEN 1 ELSE 0 END) as total_by_value_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::CarSold .'
+                    and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')
+                    and car_lost_quote_logs.status = "Approved"
+                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
+                    THEN 1 ELSE 0 END) as car_sold_by_value_segment'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_lost_quote_logs.quote_status_id = '. QuoteStatusEnum::Uncontactable .'
+                    and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')
+                    and car_lost_quote_logs.status = "Approved"
+                    and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
+                    THEN 1 ELSE 0 END) as uncontactable_by_value_segment'),
             );
         } else {
             $query->addSelect(
-                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
-                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ') and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
-                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')  THEN 1 ELSE 0 END) as total_by_value_segment_advisors')
+                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ')
+                and car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')
+                and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_volume_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $volumeSegmentAdvisorsIdString . ')
+                THEN 1 ELSE 0 END) as total_by_volume_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in (' . PaymentStatusEnum::CAPTURED . ', ' . PaymentStatusEnum::PARTIAL_CAPTURED . ')
+                and car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')
+                and payments.captured_at <= "'.$reportDateEnd.'" THEN 1 ELSE 0 END) as renewed_by_value_segment_advisors'),
+
+                DB::raw('SUM(CASE WHEN car_quote_request.advisor_id in (' . $valueSegmentAdvisorsIdString . ')
+                THEN 1 ELSE 0 END) as total_by_value_segment_advisors')
             );
         }
         //teams filter

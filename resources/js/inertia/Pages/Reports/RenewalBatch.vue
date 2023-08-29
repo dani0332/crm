@@ -253,7 +253,24 @@ function calculateValuesAndHighlight() {
     lastMonthSummedIndex = 0;
     currentRowSpan = 0;
 
+
+    let segmentFilter = filters.segment ? filters.segment : '';
+
+    console.log(segmentFilter);
+
     page.props.reportData.data.forEach((item, index) => {
+
+        if (segmentFilter == 'volume') {
+            item.total_allocated_leads = item.total_by_volume_segment_advisors
+            item.renewed = item.renewed_by_volume_segment_advisors
+            item.car_sold = item.car_sold_by_volume_segment
+            item.uncontactable = item.uncontactable_by_volume_segment
+        } else if (segmentFilter == 'value') {
+            item.total_allocated_leads = item.total_by_value_segment_advisors
+            item.renewed = item.renewed_by_value_segment_advisors
+            item.car_sold = item.car_sold_by_value_segment
+            item.uncontactable = item.uncontactable_by_value_segment
+        }
 
         const advisorRetention =
             (
