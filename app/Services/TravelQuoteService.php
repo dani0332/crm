@@ -134,13 +134,13 @@ class TravelQuoteService extends BaseService
                 $memberData->gender = $member['gender'];
                 array_push($members, $memberData);
             }
-                $travelQuote['members'] = $members;
-                $travelQuote['coverageCode'] = $request->coverage_code;
-                $travelQuote['startDate'] = $request->start_date;
+            $travelQuote['members'] = $members;
+            $travelQuote['coverageCode'] = $request->coverage_code;
+            $travelQuote['startDate'] = $request->start_date;
 
-                if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
-                    $travelQuote['endDate'] = $request->end_date;
-                }
+            if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
+                $travelQuote['endDate'] = $request->end_date;
+            }
         }
 
         if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
@@ -159,6 +159,7 @@ class TravelQuoteService extends BaseService
         if ($request->uuid != null) {
             $travelQuote['quoteUID'] = $request->uuid;
             $response = Ken::request('/get-revised-travel-quote-plans', 'post', $travelQuote);
+
             return $response;
 
         }
