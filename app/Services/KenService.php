@@ -38,11 +38,11 @@ class KenService
 
         $url = $this->baseUrl.$path;
         $response = $this->client->withBody(json_encode($data), 'application/json')
-            ->send($method, $url)->onError(function ($response)  use ($data,$url) {
-                Log::info('Ken Service Exception',['data'=>$data,'url'=>$url]);
-                if(isset($response->json()['msg'])){
+            ->send($method, $url)->onError(function ($response) use ($data, $url) {
+                Log::info('Ken Service Exception', ['data' => $data, 'url' => $url]);
+                if (isset($response->json()['msg'])) {
                     vAbort($response->json()['msg']);
-                }else {
+                } else {
                     vAbort($response->json());
                 }
             });

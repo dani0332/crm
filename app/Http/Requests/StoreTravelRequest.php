@@ -32,7 +32,6 @@ class StoreTravelRequest extends FormRequest
             return strpos($value, 'required') !== false;
         });
 
-
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
@@ -50,10 +49,10 @@ class StoreTravelRequest extends FormRequest
                 $rule[] = 'max:20';
             }
             if ($key == 'members') {
-                $rules[$key.'.*.dob'][]  = 'required_if:has_arrived_uae,0';
-                $rules[$key.'.*.dob'][]  = 'required_if:has_arrived_destination,0';
-                $rules[$key.'.*.gender'][]  = 'required_if:has_arrived_uae,0';
-                $rules[$key.'.*.gender'][]  = 'required_if:has_arrived_destination,0';
+                $rules[$key.'.*.dob'][] = 'required_if:has_arrived_uae,0';
+                $rules[$key.'.*.dob'][] = 'required_if:has_arrived_destination,0';
+                $rules[$key.'.*.gender'][] = 'required_if:has_arrived_uae,0';
+                $rules[$key.'.*.gender'][] = 'required_if:has_arrived_destination,0';
             }
 
             $rules[$key] = $rule;
