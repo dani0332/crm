@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Controllers\AMLController;
 use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
@@ -16,6 +17,7 @@ class CheckAmlService
 
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
+        $quotePrimaryKey = $quoteRequestId;
         $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
@@ -49,9 +51,12 @@ class CheckAmlService
 
             // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
-            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
+            if( checkPersonalQuotes($quoteTypeCode) && ( !AMLController::isDataMigrated($quoteTypeId, $quotePrimaryKey) ) ){
+                $quotePrimaryKey = AMLController::getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
+            }
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quotePrimaryKey);
 
-            if ($isEmailSendingEnabled == true && $quoteCdbId) {
+            if ($isEmailSendingEnabled && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
                     $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);

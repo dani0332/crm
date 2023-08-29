@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\AMLRequest;
 use App\Models\AML;
@@ -16,6 +17,7 @@ use App\Models\CommunicationMode;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
+use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
@@ -28,6 +30,7 @@ use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -339,18 +342,45 @@ class AMLController extends Controller
                 $businessTypeCode = BusinessQuoteType::where('id', '=', $quoteRequest->business_type_of_insurance_id)->value('code');
                 $businessCoverTypeText = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
                 $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
-            } elseif ($quoteTypeCode == quoteTypeCode::Pet) {
-                $quoteRequest = PetQuote::select(
-                    'pet_quote_request.*',
-                    'quote_status.text as quote_status_text',
-                    'payment_status.text as payment_status_text',
-                    'customer.first_name as cust_f_name',
-                    'customer.last_name as cust_l_name'
-                )
+            }
+            elseif ($quoteTypeCode == quoteTypeCode::Pet) {
+                if( $this->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId) )
+                {
+                    $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())
+                        ->select([
+                            'personal_quotes.*',
+                            'pet_quote_request.lang',
+                            'pet_quote_request.reviver_name',
+                            'pet_quote_request.promo_code',
+                            'pet_quote_request.additional_notes',
+                            'pet_quote_request.is_synced',
+                            'pet_quote_request.previous_quote_id',
+                            'pet_quote_request.quote_status_id',
+                            'payment_status.text as payment_status_text',
+                            'quote_status.text as quote_status_text',
+                            'customer.first_name as cust_f_name',
+                            'customer.last_name as cust_l_name'
+                        ])
+                        ->leftJoin('pet_quote_request', 'pet_quote_request.personal_quote_id', 'personal_quotes.id')
+                        ->leftjoin('customer', 'customer.id', 'personal_quotes.customer_id')
+                        ->leftjoin('quote_status', 'personal_quotes.quote_status_id', 'quote_status.id')
+                        ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
+                        ->where('personal_quotes.id', $quoteRequestId)
+                        ->first();
+
+                }else{
+                    $quoteRequest = PetQuote::select([
+                        'pet_quote_request.*',
+                        'quote_status.text as quote_status_text',
+                        'payment_status.text as payment_status_text',
+                        'customer.first_name as cust_f_name',
+                        'customer.last_name as cust_l_name'
+                    ])
                     ->leftjoin('quote_status', 'pet_quote_request.quote_status_id', 'quote_status.id')
                     ->leftjoin('payment_status', 'pet_quote_request.payment_status_id', 'payment_status.id')
                     ->leftjoin('customer', 'pet_quote_request.customer_id', 'customer.id')
                     ->where('pet_quote_request.id', $quoteRequestId)->first();
+                }
                 $auditLogLine = 'PetQuote';
             } else {
                 $quoteRequest = '';
@@ -465,6 +495,7 @@ class AMLController extends Controller
 
     public function quoteUpdate(Request $request, $quoteTypeId, $quoteRequestId)
     {
+        $quotePrimaryKey = $quoteRequestId;
         $this->validate($request, [
             'first_name' => 'required|max:200',
             'last_name' => 'required|max:200',
@@ -472,18 +503,25 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteRequestId);
+        if( checkPersonalQuotes($quoteTypeCode) && (! $this->isDataMigrated($quoteTypeId, $quotePrimaryKey)) ){
+            $quotePrimaryKey = $this->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
+        }
+        $updateQuote = $this->getQuoteObject($quoteTypeCode, $quotePrimaryKey);
+
         if ($updateQuote) {
             $quoteUpdate = $updateQuote;
             $firstName = ucwords(strtolower($request->first_name));
             $lastName = ucwords(strtolower($request->last_name));
-            $nationality = $request->nationality;
             $yob = $request->yob;
             $quoteUpdate->first_name = $firstName;
             $quoteUpdate->last_name = $lastName;
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
             if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
-                $quoteUpdate->pa_id = Auth::user()->id;
+                if(checkPersonalQuotes($quoteTypeCode)):
+                    $this->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId);
+                else:
+                    $quoteUpdate->pa_id = Auth::user()->id;
+                endif;
             }
             $quoteUpdate->save();
         }
@@ -544,5 +582,32 @@ class AMLController extends Controller
     public function uploadUaeSanctionList()
     {
         return view('aml.upload');
+    }
+
+    public static function isDataMigrated($quoteTypeId, $quoteRequestId)
+    {
+        $kycLogCreatedDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail();
+        $dataMigrationDate = match ($quoteTypeId){
+            QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
+        };
+
+        return Carbon::createFromFormat(
+            config('constants.DATE_FORMAT_ONLY'),
+            Carbon::parse($kycLogCreatedDate->created_at)->format(config('constants.DATE_FORMAT_ONLY'))
+        )->gte($dataMigrationDate);
+    }
+
+    public static function getPersonalQuoteId($quoteTypeId, $quoteRequestId)
+    {
+        return match ($quoteTypeId){
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id
+        };
+    }
+
+    private function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId)
+    {
+        return match ($quoteTypeId){
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->update(['pa_id' => auth()->id()])
+        };
     }
 }
