@@ -35,9 +35,9 @@ const quoteForm = useForm({
     first_name: props.quote?.first_name || null,
     last_name: props.quote?.last_name || null,
     email: props.quote?.email || null,
-    direction_code:props.quote?.direction_code || (props.quote?.uuid &&  props.quote?.destination_id_text == 'United Arab Emirates')?'travelUaeInbound':(props.quote?.uuid &&  props.destination_id_text != 'United Arab Emirates')?'travelUaeOutbound':null,
+    direction_code:props.quote?.direction_code?props.quote?.direction_code:(props.quote?.uuid &&  props.quote?.destination_id_text == 'United Arab Emirates')?'travelUaeInbound':(props.quote?.uuid &&  props.destination_id_text != 'United Arab Emirates')?'travelUaeOutbound':null,
     has_arrived_uae:props.quote?.has_arrived_uae?.toString() || (props.quote?.uuid &&  props.quotePlans)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null,
-    has_arrived_destination: props.quote?.has_arrived_destination?.toString() || (props.quote?.uuid &&  props.quotePlans)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null,
+    has_arrived_destination: props.quote?.has_arrived_destination?.toString() || ((props.quote?.uuid &&  props.quotePlans && props.quote.has_arrived_destination)?'1':(props.quote?.uuid &&  props.quotePlans == null)?'0':null),
     coverage_code:props.quote?.coverage_code || null,
     uuid:props.quote?.uuid || null,
     mobile_no: props.quote?.mobile_no || null,
@@ -138,6 +138,10 @@ onMounted(() => {
         </Link>
       </div>
     </div>
+      {{props.quote.has_arrived_destination}}
+      =-================================== {{quoteForm.has_arrived_destination}}
+      ======================================
+      {{props}}
     <x-divider class="my-4" />
       <x-alert class="mb-4" v-for="error in errors">
           <h4 class="text-red-500"><b>{{error}}</b></h4>
