@@ -51,7 +51,7 @@ class CheckAmlService
 
             // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
-            if( checkPersonalQuotes($quoteTypeCode) && ( !AMLController::isDataMigrated($quoteTypeId, $quotePrimaryKey) ) ){
+            if (checkPersonalQuotes($quoteTypeCode) && (! AMLController::isDataMigrated($quoteTypeId, $quotePrimaryKey))) {
                 $quotePrimaryKey = AMLController::getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
             }
             $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quotePrimaryKey);
