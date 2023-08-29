@@ -1,5 +1,4 @@
 <script setup>
-const notification = useNotifications('toast');
 const page = usePage();
 
 const props = defineProps({
@@ -8,14 +7,16 @@ const props = defineProps({
     default: {},
   },
 });
+
 const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
+
 const { isRequired } = useRules();
+
 const policyForm = useForm({
   model: props.model,
   renewal_batch: props?.quote?.renewal_batch || null,
-
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
 });
@@ -48,61 +49,64 @@ function onSubmit(isValid) {
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-            <x-field label="Renewal batch" required>
-              <x-input
-                v-model="policyForm.renewal_batch"
-                type="tel"
-                class="w-full"
-                :rules="[isRequired]"
-                :disabled="props?.quote?.renewal_batch > 0"
-                :error="policyForm.errors.renewal_batch"
-              />
-            </x-field>
+          <div class="grid md:grid-cols-2 gap-x-6 gap-y-4">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Previous Policy Number</dt>
-              <dd>{{ props?.quote?.previous_quote_policy_number }}</dd>
+              <div class="font-medium">Previous Policy Number</div>
+              <div>{{ props?.quote?.previous_quote_policy_number }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Previous Policy Expiry Date</dt>
-              <dd>{{ dateFormat(quote?.previous_policy_expiry_date) }}</dd>
+              <div class="font-medium">Previous Policy Expiry Date</div>
+              <div>{{ dateFormat(quote?.previous_policy_expiry_date) }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Previous Policy Price</dt>
-              <dd>{{ quote?.previous_quote_policy_premium }}</dd>
+              <div class="font-medium">Previous Policy Price</div>
+              <div>{{ quote?.previous_quote_policy_premium }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Previous Start Date</dt>
-              <dd>{{ dateFormat(quote?.policy_start_date) }}</dd>
+              <div class="font-medium">Previous Start Date</div>
+              <div>{{ dateFormat(quote?.policy_start_date) }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Previous Advisor</dt>
-              <dd>
+              <div class="font-medium">Previous Advisor</div>
+              <div>
                 {{ quote?.previous_advisor_id_text }}
-              </dd>
+              </div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Policy Number</dt>
-              <dd>{{ quote?.policy_number }}</dd>
+              <div class="font-medium">Policy Number</div>
+              <div>{{ quote?.policy_number }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Renewal Expiry Date</dt>
-              <dd>{{ dateFormat(quote?.renewal_expiry_date) }}</dd>
+              <div class="font-medium">Renewal Expiry Date</div>
+              <div>{{ dateFormat(quote?.renewal_expiry_date) }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Lost reason</dt>
-              <dd>
+              <div class="font-medium">Lost reason</div>
+              <div>
                 {{ quote?.lost_reason }}
-              </dd>
+              </div>
             </div>
-          </dl>
+          </div>
         </div>
       </div>
-      <div
-        class="flex justify-end gap-3 mb-4"
-        v-if="!props?.quote?.renewal_batch > 0"
-      >
-        <x-button color="primary" type="submit">Update </x-button>
+      <div class="flex justify-between gap-3 items-center">
+        <x-field label="Renewal batch" required>
+          <x-input
+            v-model="policyForm.renewal_batch"
+            type="tel"
+            class="w-full md:w-64"
+            :rules="[isRequired]"
+            :disabled="props?.quote?.renewal_batch > 0"
+            :error="policyForm.errors.renewal_batch"
+          />
+        </x-field>
+        <x-button
+          v-if="!props?.quote?.renewal_batch > 0"
+          color="primary"
+          type="submit"
+        >
+          Update
+        </x-button>
       </div>
     </x-form>
   </div>
