@@ -57,9 +57,20 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
                 @endforeach
                 </div>
               </td>
-              <td>N/A</td>
+              <td><span class="badge badge-light" style="font-size: 0.75rem;">N/A</span></td>
               <td>{{ $transaction->updated_at->format('d-m-Y h:m:s') }}</td>
-              <td>{{ $transaction?->prices[0]?->transactions->first()?->payment_status_id }}</td>
+              <td>
+                @if($transaction?->prices[0]?->transactions->first()?->payment_status_id == PaymentStatusEnum::PAID)
+                  <span class="badge badge-success" style="font-size: 0.75rem;">Paid</span>
+                @elseif($transaction?->prices[0]?->transactions->first()?->payment_status_id == PaymentStatusEnum::PENDING)
+                  <span class="badge badge-warning" style="font-size: 0.75rem;">Pending</span>
+                @elseif($transaction?->prices[0]?->transactions->first()?->payment_status_id == PaymentStatusEnum::FAILED)
+                  <span class="badge badge-danger" style="font-size: 0.75rem;">Failed</span>
+                @else
+                  <span class="badge badge-light" style="font-size: 0.75rem;">N/A</span>
+                @endif
+
+             </td>
               <td>
                 <div>
                 <button class="btn btn-success btn-sm" disabled>
