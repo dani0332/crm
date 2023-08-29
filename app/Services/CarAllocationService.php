@@ -405,8 +405,8 @@ class CarAllocationService extends AllocationService
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME'));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_END_TIME'));
+        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_TIME));
+        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_END_TIME));
         info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
         $shouldProceed = now()->between($start_time, $end_time);
 
