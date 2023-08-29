@@ -1940,8 +1940,7 @@ const confirmSendEmail = () => {
 								type="text"
 								label="Request Type *"
 								placeholder="Request Type"
-								class="w-full"
-								:readonly="true"					
+								class="w-full"													
 							/>
 						</div>
 						<div class="w-full md:w-2/2">
@@ -1969,10 +1968,9 @@ const confirmSendEmail = () => {
 							<x-input
 								v-model="bookingDetailForm.mainClassInsurance"
 								type="text"
-								label="Main Class of Insurance *"
+								label="Main Class of Insurance"
 								placeholder="Main Class of Insurance"
-								class="w-full"
-								:readonly="true"					
+								class="w-full"								
 							/>
 						</div>
 					</div>
@@ -2002,9 +2000,10 @@ const confirmSendEmail = () => {
 							<x-input
 								v-model="bookingDetailForm.insurerInvoiceDate"
 								type="text"
-								label="Insurer Invoice Date"
+								label="Insurer Invoice Due Date *"
 								placeholder="Insurer Invoice Date"
-								class="w-full"						
+								class="w-full"
+								:rules="[isRequired]"						
 							/>
 						</div>
 						<div class="w-full md:w-2/2">

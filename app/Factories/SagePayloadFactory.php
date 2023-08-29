@@ -29,8 +29,7 @@ class SagePayloadFactory
         } elseif($request->callExtra) {
             return self::createAPInvoicePrem($request);
         } else {
-            return self::createARInvoicePremAndComm($request);
-            //return self::createAPInvoicePrem($request);
+           return self::createARInvoicePremAndComm($request);
             
         }
     }
