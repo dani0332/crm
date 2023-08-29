@@ -358,7 +358,7 @@ class AMLController extends Controller
                             'payment_status.text as payment_status_text',
                             'quote_status.text as quote_status_text',
                             'customer.first_name as cust_f_name',
-                            'customer.last_name as cust_l_name'
+                            'customer.last_name as cust_l_name',
                         ])
                         ->leftJoin('pet_quote_request', 'pet_quote_request.personal_quote_id', 'personal_quotes.id')
                         ->leftjoin('customer', 'customer.id', 'personal_quotes.customer_id')
@@ -367,18 +367,18 @@ class AMLController extends Controller
                         ->where('personal_quotes.id', $quoteRequestId)
                         ->first();
 
-                }else{
+                } else {
                     $quoteRequest = PetQuote::select([
                         'pet_quote_request.*',
                         'quote_status.text as quote_status_text',
                         'payment_status.text as payment_status_text',
                         'customer.first_name as cust_f_name',
-                        'customer.last_name as cust_l_name'
+                        'customer.last_name as cust_l_name',
                     ])
-                    ->leftjoin('quote_status', 'pet_quote_request.quote_status_id', 'quote_status.id')
-                    ->leftjoin('payment_status', 'pet_quote_request.payment_status_id', 'payment_status.id')
-                    ->leftjoin('customer', 'pet_quote_request.customer_id', 'customer.id')
-                    ->where('pet_quote_request.id', $quoteRequestId)->first();
+                        ->leftjoin('quote_status', 'pet_quote_request.quote_status_id', 'quote_status.id')
+                        ->leftjoin('payment_status', 'pet_quote_request.payment_status_id', 'payment_status.id')
+                        ->leftjoin('customer', 'pet_quote_request.customer_id', 'customer.id')
+                        ->where('pet_quote_request.id', $quoteRequestId)->first();
                 }
                 $auditLogLine = 'PetQuote';
             } else {
@@ -516,11 +516,12 @@ class AMLController extends Controller
             $quoteUpdate->last_name = $lastName;
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
             if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
-                if(checkPersonalQuotes($quoteTypeCode)):
+                if(checkPersonalQuotes($quoteTypeCode)){
                     $this->checkAmlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId);
-                else:
+                }
+                else{
                     $quoteUpdate->pa_id = Auth::user()->id;
-                endif;
+                }
             }
             $quoteUpdate->save();
         }
