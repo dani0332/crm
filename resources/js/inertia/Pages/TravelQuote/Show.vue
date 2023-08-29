@@ -969,7 +969,6 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-            {{travelFields}}
           <div
             class="grid sm:grid-cols-2"
             v-for="field in travelFields"
