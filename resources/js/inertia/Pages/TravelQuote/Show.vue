@@ -1143,7 +1143,10 @@ onMounted(() => {
     </div>
 
     <LastYearPolicyDetail
-      v-if="quote.source == $page.props.leadSource.RENEWAL_UPLOAD"
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
       :quote="quote"
     />
 
