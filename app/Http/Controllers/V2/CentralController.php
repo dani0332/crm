@@ -98,8 +98,8 @@ class CentralController extends Controller
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 
-    
-    public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request){
+    public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
+    {
 
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
         if (! $quoteModel) {

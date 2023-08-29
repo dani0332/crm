@@ -24,7 +24,7 @@ class PersonalQuoteDetail extends Model implements AuditableContract
     public function lostReason()
     {
         return $this->belongsTo(LostReasons::class);
-    } 
+    }
     public function previousAdvisor()
     {
         return $this->belongsTo(User::class, 'previous_advisor_id', 'id');

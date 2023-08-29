@@ -26,7 +26,7 @@ class UpdateLastYearPolicyRequest extends FormRequest
         return [
             'modelType' => 'required',
             'quoteId' => 'required',
-            'renewalBatch' => 'required'
+            'renewalBatch' => 'required',
         ];
     }
 }
