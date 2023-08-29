@@ -144,6 +144,7 @@ const travelFields = computed(() => {
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
     'previous_policy_expiry_date',
+    'policy_start_date',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -968,6 +969,7 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            {{travelFields}}
           <div
             class="grid sm:grid-cols-2"
             v-for="field in travelFields"
@@ -1036,7 +1038,7 @@ onMounted(() => {
                 </dt>
                 <dt  class="font-medium">{{ quote.days_cover_for }}</dt>
             </div>
-            <div class="grid sm:grid-cols-2" v-if="quote.has_arrived_destination == 0 || quote.has_arrived_uae == 0">
+            <div class="grid sm:grid-cols-2" >
                 <dt>
                     <x-tooltip position="bottom">
                         <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
@@ -1045,9 +1047,9 @@ onMounted(() => {
                         <template #tooltip> Travel Start Date</template>
                     </x-tooltip>
                 </dt>
-                <dt  class="font-medium">{{ quote.start_date }}</dt>
+                <dt  class="font-medium">{{ quote.start_date?quote.start_date:quote.policy_start_date  }}</dt>
             </div>
-            <div class="grid sm:grid-cols-2" v-if="quote.has_arrived_destination == 0 || quote.has_arrived_uae == 0">
+            <div class="grid sm:grid-cols-2" >
                 <dt>
                     <x-tooltip position="bottom">
                         <label class="font-medium text-gray-800 text-sm  decoration-dotted decoration-primary-700">
