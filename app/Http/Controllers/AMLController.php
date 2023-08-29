@@ -30,7 +30,6 @@ use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
-use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -344,7 +343,7 @@ class AMLController extends Controller
                 $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
             }
             elseif ($quoteTypeCode == quoteTypeCode::Pet) {
-                if( $this->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId) )
+                if( $this->checkAmlService->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId) )
                 {
                     $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())
                         ->select([
@@ -503,8 +502,8 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        if( checkPersonalQuotes($quoteTypeCode) && (! $this->isDataMigrated($quoteTypeId, $quotePrimaryKey)) ){
-            $quotePrimaryKey = $this->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
+        if( checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quotePrimaryKey)) ){
+            $quotePrimaryKey = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
         }
         $updateQuote = $this->getQuoteObject($quoteTypeCode, $quotePrimaryKey);
 
@@ -518,7 +517,7 @@ class AMLController extends Controller
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
             if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
                 if(checkPersonalQuotes($quoteTypeCode)):
-                    $this->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId);
+                    $this->checkAmlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId);
                 else:
                     $quoteUpdate->pa_id = Auth::user()->id;
                 endif;
@@ -582,32 +581,5 @@ class AMLController extends Controller
     public function uploadUaeSanctionList()
     {
         return view('aml.upload');
-    }
-
-    public static function isDataMigrated($quoteTypeId, $quoteRequestId)
-    {
-        $kycLogCreatedDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail();
-        $dataMigrationDate = match ($quoteTypeId){
-            QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
-        };
-
-        return Carbon::createFromFormat(
-            config('constants.DATE_FORMAT_ONLY'),
-            Carbon::parse($kycLogCreatedDate->created_at)->format(config('constants.DATE_FORMAT_ONLY'))
-        )->gte($dataMigrationDate);
-    }
-
-    public static function getPersonalQuoteId($quoteTypeId, $quoteRequestId)
-    {
-        return match ($quoteTypeId){
-            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id
-        };
-    }
-
-    private function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId)
-    {
-        return match ($quoteTypeId){
-            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->update(['pa_id' => auth()->id()])
-        };
     }
 }

@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Controllers\AMLController;
+use App\Enums\QuoteTypes;
+use App\Models\AML;
+use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
+use Carbon\Carbon;
 use Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -51,8 +54,8 @@ class CheckAmlService
 
             // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
-            if( checkPersonalQuotes($quoteTypeCode) && ( !AMLController::isDataMigrated($quoteTypeId, $quotePrimaryKey) ) ){
-                $quotePrimaryKey = AMLController::getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
+            if( checkPersonalQuotes($quoteTypeCode) && ( ! $this->isDataMigrated($quoteTypeId, $quotePrimaryKey) )){
+                $quotePrimaryKey = $this->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
             }
             $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quotePrimaryKey);
 
@@ -272,5 +275,32 @@ class CheckAmlService
             'chAmlStatus' => $chAmlStatus,
             'requestMessage' => $requestMessage,
         ], $subject, $errorEmailRecipients);
+    }
+
+    public function isDataMigrated($quoteTypeId, $quoteRequestId)
+    {
+        $kycLogCreatedDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail();
+        $dataMigrationDate = match ($quoteTypeId){
+            QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
+        };
+
+        return Carbon::createFromFormat(
+            config('constants.DATE_FORMAT_ONLY'),
+            Carbon::parse($kycLogCreatedDate->created_at)->format(config('constants.DATE_FORMAT_ONLY'))
+        )->gte($dataMigrationDate);
+    }
+
+    public function getPersonalQuoteId($quoteTypeId, $quoteRequestId)
+    {
+        return match ($quoteTypeId){
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id
+        };
+    }
+
+    public function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId)
+    {
+        return match ($quoteTypeId){
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->update(['pa_id' => auth()->id()])
+        };
     }
 }
