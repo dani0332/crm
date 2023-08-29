@@ -341,10 +341,8 @@ class AMLController extends Controller
                 $businessTypeCode = BusinessQuoteType::where('id', '=', $quoteRequest->business_type_of_insurance_id)->value('code');
                 $businessCoverTypeText = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
                 $businessCommuModeText = CommunicationMode::where('id', '=', $quoteRequest->communication_mode_id)->value('text');
-            }
-            elseif ($quoteTypeCode == quoteTypeCode::Pet) {
-                if( $this->checkAmlService->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId) )
-                {
+            } elseif ($quoteTypeCode == quoteTypeCode::Pet) {
+                if ($this->checkAmlService->isDataMigrated(QuoteTypes::PET->id(), $quoteRequestId)) {
                     $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())
                         ->select([
                             'personal_quotes.*',
@@ -502,7 +500,7 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        if( checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId)) ){
+        if (checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId))) {
             $quoteId = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quoteId);
         }
         $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteId);
@@ -516,10 +514,9 @@ class AMLController extends Controller
             $quoteUpdate->last_name = $lastName;
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
             if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
-                if(checkPersonalQuotes($quoteTypeCode)){
+                if (checkPersonalQuotes($quoteTypeCode)) {
                     $this->checkAmlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId);
-                }
-                else{
+                } else {
                     $quoteUpdate->pa_id = Auth::user()->id;
                 }
             }
