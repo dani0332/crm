@@ -6,14 +6,7 @@ use BenSampo\Enum\Enum;
 
 final class TravelQuoteEnum extends Enum
 {
-    const TRAVELUAEINBOUND = 'travelUaeInbound';
-    const TRAVELUAEOUTBOUND = 'travelUaeOutbound';
-    const COVERAGECODESINGLETRIP = 'singleTrip';
-    const COVERAGECODEMULTITRIP = 'multiTrip';
-    const COVERAGECODEANNUALTRIPSTRING = 'Annual Trip';
-    const COVERAGECODESINGLETRIPSTRING = 'Single Trip';
-    const COVERAGECODEMULTITRIPSTRING = 'Multi Trip';
-    const COVERAGECODEANNUALTRIP = 'annualTrip';
-    const TRAVELUAEINBOUNDSTRING = 'To the UAE (Inbound)';
-    const TRAVELUAEOUTBOUNDSTRING = 'Outside UAE (Outbound)';
+    const TRAVEL_UAE_INBOUND = 'travelUaeInbound';
+    const TRAVEL_UAE_OUTBOUND = 'travelUaeOutbound';
+    const COVERAGE_CODE_SINGLE_TRIP = 'singleTrip';
 }

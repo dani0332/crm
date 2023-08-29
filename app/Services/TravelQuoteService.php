@@ -138,12 +138,12 @@ class TravelQuoteService extends BaseService
                 $travelQuote['coverageCode'] = $request->coverage_code;
                 $travelQuote['startDate'] = $request->start_date;
 
-                if ($request->coverage_code == TravelQuoteEnum::COVERAGECODESINGLETRIP) {
+                if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
                     $travelQuote['endDate'] = $request->end_date;
                 }
         }
 
-        if ($request->direction_code == TravelQuoteEnum::TRAVELUAEINBOUND) {
+        if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
             $travelQuote['hasArrivedUae'] = $request->has_arrived_uae;
         } else {
             $travelQuote['hasArrivedDestination'] = $request->has_arrived_destination;
