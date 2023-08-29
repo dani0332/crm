@@ -6,6 +6,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Mail\HealthAssignmentIssueEmail;
@@ -109,6 +110,11 @@ class HealthAllocationService extends AllocationService
         if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
             SyncSIBContactJob::dispatch($lead);
         }
+
+        if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                CammyJob::dispatch($lead, 'intro');
+            }
 
         GetQuotePlansJob::dispatch($lead);
     }
