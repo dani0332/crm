@@ -41,25 +41,31 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 								@continue;
 							@endif
               @php
-                $pwDoc = json_decode($transaction->product->embeddedProduct->company_documents)[0]->path;
+                $pwDoc = json_decode($transaction->company_documents)[0]->path;
                 $pwDoc = $pwDoc !== '' ? $websiteURL.$pwDoc: '';
               @endphp
             <tr>
               <td>
                 <input type="checkbox" class="car_ep_checkbox" name="toggle_plans_checkbox" value="" />
               </td>
-              <td>{{ $transaction->code}}</td>
-              <td>{{ $transaction->product->embeddedProduct->display_name }}</td>
-              <td>{{ $transaction->price_with_vat }}</td>
-              <td>N/A</td>
-              <td>{{ $transaction->updated_at->format('d-m-Y h:m:s') }}</td>
-              <td>{{ $transaction->paymentStatus->text }}</td>
+              <td>{{ $transaction->short_code }}-{{ $quoteCode }}</td>
+              <td>{{ $transaction->display_name }}</td>
               <td>
                 <div>
-                <button class="btn btn-success btn-sm">
+                @foreach ($transaction->prices as $item)
+                    <span class="badge badge-info" style="font-size: 0.75rem;"> {{ ($item->price + ($item->price * 5) / 100) }}</span>
+                @endforeach
+                </div>
+              </td>
+              <td>N/A</td>
+              <td>{{ $transaction->updated_at->format('d-m-Y h:m:s') }}</td>
+              <td>{{ $transaction?->prices[0]?->transactions->first()?->payment_status_id }}</td>
+              <td>
+                <div>
+                <button class="btn btn-success btn-sm" disabled>
                    Send Documents 
                 </button>
-                <button class="btn btn-warning btn-sm">
+                <button class="btn btn-warning btn-sm" disabled>
                 Download Certificate
                 </button>
                 <a href="{{$pwDoc}}" target="_blank" class="btn btn-info btn-sm {{ $pwDoc == '' ? 'disabled': ''}}">

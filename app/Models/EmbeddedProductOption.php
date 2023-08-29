@@ -15,4 +15,9 @@ class EmbeddedProductOption extends Model
     {
         return $this->belongsTo(EmbeddedProduct::class, 'embedded_product_id', 'id');
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(EmbeddedTransaction::class, 'product_id', 'id');
+    }
 }

@@ -31,7 +31,7 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
-  epTransactions: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -1527,7 +1527,11 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <EmbeddedProducts :data="epTransactions" />
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

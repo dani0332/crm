@@ -123,4 +123,15 @@ class EmbeddedProductRepository extends BaseRepository
             'title' => $title,
         ];
     }
+
+    public function fetchByQuoteType($quoteTypeId, $quoteRequestId)
+    {
+        return $this->whereHas('placements', function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })
+        ->with(['prices.transactions' => function ($query) use ($quoteRequestId) {
+            $query->where('quote_request_id', $quoteRequestId);
+        }])
+        ->get();
+    }
 }

@@ -11,7 +11,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   lostReasons: Array,
   quoteStatusEnum: Object,
-  epTransactions: Array,
+  embeddedProducts: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -602,7 +602,11 @@ const onLeadStatus = () => {
       </div>
     </div>
 
-    <EmbeddedProducts :data="epTransactions" />
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

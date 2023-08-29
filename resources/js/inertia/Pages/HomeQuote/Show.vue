@@ -12,7 +12,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   isBetaUser: Boolean,
   can: Object,
-  epTransactions: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -719,7 +719,11 @@ const policyDetails = useForm({
       </div>
     </div>
 
-    <EmbeddedProducts :data="epTransactions" />
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

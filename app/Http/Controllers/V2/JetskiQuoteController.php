@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
-use App\Repositories\EmbeddedTransactionRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\LostReasonRepository;
@@ -105,7 +105,7 @@ class JetskiQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::JETSKI->id(), $quote->id);
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::JETSKI->id(), $quote->id);
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
@@ -121,7 +121,7 @@ class JetskiQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
-            'epTransactions' => $epTransactions,
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 

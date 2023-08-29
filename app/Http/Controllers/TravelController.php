@@ -12,7 +12,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
-use App\Repositories\EmbeddedTransactionRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -116,7 +116,7 @@ class TravelController extends Controller
             unset($fields['id']);
         }
 
-        $epTransactions = EmbeddedTransactionRepository::epTransactions(self::TYPE_ID, $record->id);
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -142,7 +142,7 @@ class TravelController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
-            'epTransactions' => $epTransactions,
+            'embeddedProducts' => $embeddedProducts,
             'message' => session('message'),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),

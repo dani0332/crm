@@ -22,7 +22,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
-  epTransactions: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -403,7 +403,11 @@ const permissionsEnum = page.props.permissionsEnum;
       :quoteStatusesEnum="quoteStatusesEnum"
     />
 
-    <EmbeddedProducts :data="epTransactions" />
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
 

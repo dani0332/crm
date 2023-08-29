@@ -10,7 +10,7 @@ use App\Http\Requests\CycleQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
-use App\Repositories\EmbeddedTransactionRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -117,7 +117,7 @@ class CycleQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
 
-        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::CYCLE->id(), $quote->id);
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CYCLE->id(), $quote->id);
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -134,7 +134,7 @@ class CycleQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
-            'epTransactions' => $epTransactions,
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 }

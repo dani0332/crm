@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
-use App\Repositories\EmbeddedTransactionRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -82,7 +82,7 @@ class LifeQuoteController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
-        $epTransactions = EmbeddedTransactionRepository::epTransactions(QuoteTypes::LIFE->id(), $quote->id);
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
@@ -117,7 +117,7 @@ class LifeQuoteController extends Controller
             'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
-            'epTransactions' => $epTransactions,
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 

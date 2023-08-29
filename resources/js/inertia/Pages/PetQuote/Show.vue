@@ -24,7 +24,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
-  epTransactions: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -361,7 +361,11 @@ const onCreateDuplicate = isValid => {
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
 
-    <EmbeddedProducts :data="epTransactions" />
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <LeadHistory :quote="quote" />
 
