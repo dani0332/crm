@@ -22,6 +22,9 @@ class SageApi extends Controller
     public function processSagePost(SageRequest $request)
     {
         $leadStatus = 'policy booked';
+        if(!$request->premiumWithoutTax>0){
+            return back()->with('error', 'This lead does not have premium,select another lead');
+        }
         
         $messageFromAP = '';
 
