@@ -494,7 +494,7 @@ class AMLController extends Controller
 
     public function quoteUpdate(Request $request, $quoteTypeId, $quoteRequestId)
     {
-        $quotePrimaryKey = $quoteRequestId;
+        $quoteId = $quoteRequestId;
         $this->validate($request, [
             'first_name' => 'required|max:200',
             'last_name' => 'required|max:200',
@@ -502,10 +502,10 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        if( checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quotePrimaryKey)) ){
-            $quotePrimaryKey = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
+        if( checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId)) ){
+            $quoteId = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quoteId);
         }
-        $updateQuote = $this->getQuoteObject($quoteTypeCode, $quotePrimaryKey);
+        $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteId);
 
         if ($updateQuote) {
             $quoteUpdate = $updateQuote;

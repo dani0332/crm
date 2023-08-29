@@ -20,7 +20,7 @@ class CheckAmlService
 
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
-        $quotePrimaryKey = $quoteRequestId;
+        $quoteId = $quoteRequestId;
         $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
@@ -54,10 +54,10 @@ class CheckAmlService
 
             // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
-            if( checkPersonalQuotes($quoteTypeCode) && ( ! $this->isDataMigrated($quoteTypeId, $quotePrimaryKey) )){
-                $quotePrimaryKey = $this->getPersonalQuoteId($quoteTypeId, $quotePrimaryKey);
+            if( checkPersonalQuotes($quoteTypeCode) && ( ! $this->isDataMigrated($quoteTypeId, $quoteId) )){
+                $quoteId = $this->getPersonalQuoteId($quoteTypeId, $quoteId);
             }
-            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quotePrimaryKey);
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteId);
 
             if ($isEmailSendingEnabled && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
