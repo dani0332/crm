@@ -344,7 +344,11 @@ const historyDataTable = [
       </div>
     </div>
 
-    <LastYearPolicyDetail :quote="quote" />
+    <LastYearPolicyDetail
+      v-if="quote.source == $page.props.leadSource.RENEWAL_UPLOAD"
+      :quote="quote"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>

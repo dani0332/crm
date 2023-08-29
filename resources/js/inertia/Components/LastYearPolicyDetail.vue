@@ -8,7 +8,9 @@ const props = defineProps({
     default: {},
   },
 });
-const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
+const dateFormat = date => {
+  return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
+};
 const { isRequired } = useRules();
 const policyForm = useForm({
   model: props.model,

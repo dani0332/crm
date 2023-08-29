@@ -250,14 +250,15 @@ const allowStatusUpdate = computed(() => {
 });
 
 const leadStatusForm = useForm({
-    modelType: 'Life',
-    leadId: page.props.quote.id,
-    quote_uuid: page.props.quote.uuid,
-    assigned_to_user_id: page.props.quote.advisor_id,
-    leadStatus: page.props.quote.quote_status_id || null,
-    notes: page.props.quote.life_quote_request_detail?.notes || null,
-    trans_code: page.props.quote.transapp_code || null,
-    lostReason: page.props.quote.life_quote_request_detail?.lost_reason_id || null,
+  modelType: 'Life',
+  leadId: page.props.quote.id,
+  quote_uuid: page.props.quote.uuid,
+  assigned_to_user_id: page.props.quote.advisor_id,
+  leadStatus: page.props.quote.quote_status_id || null,
+  notes: page.props.quote.life_quote_request_detail?.notes || null,
+  trans_code: page.props.quote.transapp_code || null,
+  lostReason:
+    page.props.quote.life_quote_request_detail?.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -510,7 +511,10 @@ const onLeadStatus = () => {
       </div>
     </div>
 
-    <LastYearPolicyDetail :quote="quote" />
+    <LastYearPolicyDetail
+      v-if="quote.source == $page.props.leadSource.RENEWAL_UPLOAD"
+      :quote="quote"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>

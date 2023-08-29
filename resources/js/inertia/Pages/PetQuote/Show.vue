@@ -292,7 +292,10 @@ const onCreateDuplicate = isValid => {
       </div>
     </div>
 
-    <LastYearPolicyDetail :quote="quote" />
+    <LastYearPolicyDetail
+      v-if="quote.source == $page.props.leadSource.RENEWAL_UPLOAD"
+      :quote="quote"
+    />
 
     <QuoteActivities
       :can="can"

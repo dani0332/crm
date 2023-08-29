@@ -233,7 +233,10 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </div>
 
-    <LastYearPolicyDetail :quote="quote" />
+    <LastYearPolicyDetail
+      v-if="quote.source == $page.props.leadSource.RENEWAL_UPLOAD"
+      :quote="quote"
+    />
 
     <QuoteActivities
       :can="can"
