@@ -151,10 +151,9 @@
                                 <div class="input-group">
                                     <select class="form-control" name="team" multiple id="team">
                                         <option value="">Select</option>
-                                            <option value="BDM">BDM</option>
-                                            <option value="SBDM">SBDM</option>
-                                        <option value="Organic">Organic</option>
-                                        <option value="Tpl 2.0">Tpl 2.0</option>
+                                        @foreach ($teams as $team)
+                                            <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>

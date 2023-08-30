@@ -12,9 +12,11 @@ use Auth;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
+use App\Traits\TeamHierarchyTrait;
 
 class TransactionController extends Controller
 {
+    use TeamHierarchyTrait;
     /**
      * Display a listing of the resource.
      *
@@ -51,6 +53,7 @@ class TransactionController extends Controller
             $dataTransapp = $transaction::select(
                 'transactions.*',
                 'statuses.name as status',
+                'user_team.team_id',
                 'insurance_companies.name as insurance',
                 'type_of_insurances.text as type_of_insurance',
                 'handlers.name as handler_name',
@@ -61,12 +64,14 @@ class TransactionController extends Controller
                 ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
                 ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
                 ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
+                ->leftjoin('user_team', 'handlers.id', 'user_team.user_id')
                 ->leftjoin('users as creaters', 'transactions.created_by_id', 'creaters.id')
                 ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
                 ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at', 'desc')
                 ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
                 ->where('transactions.is_deleted', 0);
 
+            $dataTransapp->where('user_team.team_id','!=', NULL);
             if ($isTransappNonAdmin == '1') {
             //    $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
@@ -109,8 +114,8 @@ class TransactionController extends Controller
                 ->addColumn('premium_total',$premiumAmount)
                 ->make(true);
         }
-
-        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin'));
+        $teams = $this->getAllTeams();
+        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin','teams'));
     }
 
     /**
