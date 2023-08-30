@@ -27,14 +27,12 @@ class CustomerUploadRequest extends FormRequest
             'file_name' => 'required|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/excel|max:2048',
             'cdb_id' => 'required|exists:business_quote_request,code',
             'myalfred_expiry_date' => 'required',
-            'inviatation_email' => 'boolean'
+            'inviatation_email' => 'boolean',
         ];
     }
 
     /**
      * Prepare inputs for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation(): void
     {
@@ -52,7 +50,7 @@ class CustomerUploadRequest extends FormRequest
     {
         return [
             'cdb_id.required' => 'The Ref-ID field is required.',
-            'cdb_id.exists' => "Ref-ID : ".$this->cdb_id." doesn't exists in system.",
+            'cdb_id.exists' => 'Ref-ID : '.$this->cdb_id." doesn't exists in system.",
         ];
     }
 }

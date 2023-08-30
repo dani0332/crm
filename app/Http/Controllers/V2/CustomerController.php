@@ -21,7 +21,7 @@ class CustomerController extends Controller
         $customers = CustomerRepository::getData();
 
         return inertia('Customer/Index', [
-            'customers' => $customers
+            'customers' => $customers,
         ]);
     }
 
@@ -33,7 +33,7 @@ class CustomerController extends Controller
         $customer = CustomerRepository::getBy('uuid', $uuid);
 
         return inertia('Customer/Show', [
-            'customer' => $customer
+            'customer' => $customer,
         ]);
     }
 
@@ -60,13 +60,14 @@ class CustomerController extends Controller
     {
         $customer = CustomerRepository::where(['uuid' => $uuid])->firstorFail();
 
-        $sendWelcomeEmail = ((!$customer->has_alfred_access || $customer->has_reward_access) &&
-                                $customerRequest->has_alfred_access && $customerRequest->has_reward_access );
+        $sendWelcomeEmail = ((! $customer->has_alfred_access || $customer->has_reward_access) &&
+                                $customerRequest->has_alfred_access && $customerRequest->has_reward_access);
 
         $customer->update($customerRequest->validated());
 
-        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent)
+        if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
             dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+        }
 
         return redirect('customer/'.$uuid)->with('message', 'Customer information has been updated');
     }
@@ -88,11 +89,11 @@ class CustomerController extends Controller
 
     public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService)
     {
-        if($customerUploadRequest->validated())
+        if ($customerUploadRequest->validated()) {
             CustomerRepository::customerUploadRecordsCreate($customerUploadRequest, $sendEmailCustomerService);
+        }
 
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');
     }
-
 
 }

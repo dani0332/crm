@@ -33,14 +33,12 @@ class CustomerRequest extends FormRequest
             'dob' => 'nullable',
             'nationality_id' => 'nullable|integer',
             'has_alfred_access' => 'nullable|boolean',
-            'has_reward_access' => 'nullable|boolean'
+            'has_reward_access' => 'nullable|boolean',
         ];
     }
 
     /**
      * Prepare inputs for validation.
-     *
-     * @return void
      */
     protected function prepareForValidation(): void
     {
