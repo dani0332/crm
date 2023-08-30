@@ -497,8 +497,7 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        $isDataMigrated = $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId);
-        if (checkPersonalQuotes($quoteTypeCode) && (!$isDataMigrated)) {
+        if (checkPersonalQuotes($quoteTypeCode) && (!$this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId))) {
             $quoteId = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quoteId);
         }
         $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteId);
@@ -513,7 +512,7 @@ class AMLController extends Controller
             // Check current user role is pa/AML > If yes > update pa_id - current_user_id
             if (Auth::user()->hasRole(RolesEnum::AML) || Auth::user()->hasRole(RolesEnum::PA)) {
                 if (checkPersonalQuotes($quoteTypeCode)) {
-                    $this->checkAmlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, $isDataMigrated);
+                    $this->checkAmlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId));
                 } else {
                     $quoteUpdate->pa_id = Auth::user()->id;
                 }
