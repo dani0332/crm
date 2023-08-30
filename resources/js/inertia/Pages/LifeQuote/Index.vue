@@ -397,6 +397,10 @@ onMounted(() => {
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
       </template>
+        <template #item-lost_reason="{ life_quote_request_detail }">
+            {{ life_quote_request_detail?.lost_reason?.text }}
+        </template>
+
       <!-- <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">

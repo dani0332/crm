@@ -58,7 +58,7 @@ class EmbeddedProductRepository extends BaseRepository
 
             foreach ($prices as $price) {
                 if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
-                    $price->update(['is_active' => false]);
+                    $price->delete();
                 }
             }
 
@@ -87,7 +87,7 @@ class EmbeddedProductRepository extends BaseRepository
      */
     public function fetchGetData()
     {
-        return $this->with(['insuranceProvider'])->orderBy('created_at', 'desc')->simplePaginate();
+        return $this->with(['insuranceProvider'])->latest('updated_at')->simplePaginate();
     }
 
     /**
@@ -111,10 +111,9 @@ class EmbeddedProductRepository extends BaseRepository
 
         GenericDocument::create([
             'uuid' => $docUuid,
-            'name' => $originalName,
+            'name' => $title.'_'.$originalName,
             'path' => $filePathAzure,
             'mime_type' => $fileMimeType,
-            'title' => $title,
             'documentable_type' => 'App\Models\EmbeddedProduct',
             'created_by_id' => auth()->id(),
         ]);
@@ -123,5 +122,17 @@ class EmbeddedProductRepository extends BaseRepository
             'path' => $filePathAzure,
             'title' => $title,
         ];
+    }
+
+    public function fetchByQuoteType($quoteTypeId, $quoteRequestId)
+    {
+        return $this->whereHas('placements', function ($query) use ($quoteTypeId) {
+            $query->where('quote_type_id', $quoteTypeId);
+        })
+            ->where('is_active', 1)
+            ->with(['prices.transactions' => function ($query) use ($quoteRequestId) {
+                $query->where('quote_request_id', $quoteRequestId);
+            }])
+            ->get();
     }
 }

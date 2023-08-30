@@ -1,15 +1,14 @@
 <script setup>
-import { reactive, computed, onMounted, ref } from 'vue';
-import { Head, router, usePage, Link } from '@inertiajs/vue3';
-import Pagination from '@/inertia/Components/Pagination.vue';
-import ExportExcel from '@/inertia/Components/ExportExcel.vue';
-import ComboBox from '@/inertia/Components/ComboBox.vue';
-import {useCan} from "../../Composables/can";
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
 
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  quoteType: {
+    type: String,
+    default: 'yacht',
+  },
 });
 
 const page = usePage();
@@ -35,6 +34,7 @@ let availableFilters = {
 
 const filters = reactive(availableFilters);
 const canExport = ref(false);
+const hasRole = role => useHasRole(role);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -82,31 +82,57 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+  if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {
+    permissionAssignLeads.value = true;
+  }
 });
 
 const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
+const quotesSelected = ref([]);
+const permissionAssignLeads = ref(false);
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
   window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+const advisorOptionsFilter = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
 };
 
 watch(
@@ -120,7 +146,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
 </script>
 
 <template>
@@ -128,7 +153,12 @@ watch(
     <Head title="Yacht Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
-      <x-button v-if="can(permissionsEnum.YachtQuotesCreate)" size="sm" color="#ff5e00" href="/personal-quotes/yacht/create">
+      <x-button
+        v-if="can(permissionsEnum.YachtQuotesCreate)"
+        size="sm"
+        color="#ff5e00"
+        href="/personal-quotes/yacht/create"
+      >
         Create Lead
       </x-button>
     </div>
@@ -137,21 +167,23 @@ watch(
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-              <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-              </x-tooltip>
-              <x-input
-                  v-model="filters.code"
-                  type="search"
-                  name="code"
-                  class="w-full"
-                  placeholder="Search by Ref-ID"
-              />
-          </div>
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -198,16 +230,6 @@ watch(
           label="Created Date End"
           class="w-full"
         />
-
-        <x-input
-          v-model="filters.renewal_batch"
-          type="search"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
-
         <ComboBox
           v-model="filters.quote_status_id"
           label="Lead Status"
@@ -220,7 +242,12 @@ watch(
             }))
           "
         />
-
+        <ComboBox
+          v-model="filters.advisor_id"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="advisorOptionsFilter"
+        />
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
@@ -232,7 +259,14 @@ watch(
           ]"
           class="w-full"
         />
-
+        <x-input
+          v-model="filters.renewal_batch"
+          type="search"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
         <x-select
           v-model="filters.previous_quote_policy_number"
           label="Is Renewal"
@@ -246,36 +280,51 @@ watch(
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="onReset">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div
+        v-if="quotesSelected.length > 0 && permissionAssignLeads"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+          @success="onLeadAssigned"
+        />
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -286,17 +335,18 @@ watch(
       fixed-checkbox
     >
       <template #item-uuid="{ code, uuid }">
-        <Link v-if="can(permissionsEnum.YachtQuotesShow)"
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesShow)"
           :href="`/personal-quotes/yacht/${uuid}`"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
         </Link>
-          <span v-else>{{code}}</span>
+        <span v-else>{{ code }}</span>
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">

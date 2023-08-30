@@ -11,6 +11,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
@@ -20,6 +21,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
+use App\Models\HealthPlanType;
 use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -27,6 +29,8 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -385,9 +389,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if (! $record) {
-            abort(404);
-        }
+        abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -399,6 +401,7 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $model = $this->genericModel;
         $model_name = $this->genericModel->modelType.'Quote';
+
         $customTitles = $customTableList = [];
         if (Auth::user()->isRenewalManager() || Auth::user()->isRenewalAdvisor()) {
             $isRenewalUser = true;
@@ -464,6 +467,8 @@ class CRUDController extends Controller
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $tiers = $this->lookupService->getTierR();
 
+        $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $listQuotePlans = null;
@@ -484,6 +489,8 @@ class CRUDController extends Controller
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
 
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -491,7 +498,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'embeddedProducts',
             ]));
         }
 
@@ -518,7 +525,7 @@ class CRUDController extends Controller
                 'isNewBusinessUser', 'ecomTravelInsuranceQuoteUrl', 'quoteType', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'emailStatuses',
                 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'quoteTypeId', 'tiers',
+                'quoteTypeId', 'tiers', 'access',
             ]));
         }
 
@@ -528,6 +535,7 @@ class CRUDController extends Controller
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
 
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
@@ -547,6 +555,7 @@ class CRUDController extends Controller
                 'notProductionApproval' => $notProductionApproval,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
+                'embeddedProducts' => $embeddedProducts,
             ]);
         }
 
@@ -590,6 +599,8 @@ class CRUDController extends Controller
             $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
+
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
                 $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
@@ -600,12 +611,23 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
+            $paymentMethods = $paymentMethods?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->code,
                     'label' => $paymentMethod->name,
                 ];
             });
+
+            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
+
+            $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
@@ -628,6 +650,7 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'insuranceProviders' => $insuranceProviders,
+                'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
@@ -640,7 +663,9 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
+                'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
+                'embeddedProducts' => $embeddedProducts,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
@@ -654,7 +679,7 @@ class CRUDController extends Controller
                 'record', 'model', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
-                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers',
+                'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers', 'access',
             ]));
         }
     }
@@ -872,11 +897,16 @@ class CRUDController extends Controller
     public function carQuotePlanDetails($quoteId, $planId)
     {
         $quotePlans = $this->carQuoteService->getQuotePlans($quoteId);
+        $record = $this->crudService->getEntity($this->genericModel->modelType, $quoteId);
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+
+        $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
+
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access']));
         }
     }
 
@@ -1105,7 +1135,6 @@ class CRUDController extends Controller
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
-
             $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
             $quoteData['quoteTypeId'] = $quoteTypeId;
             $quoteData['quoteUID'] = $request->quote_uuid;
