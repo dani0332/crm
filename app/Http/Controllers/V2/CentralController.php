@@ -100,8 +100,10 @@ class CentralController extends Controller
 
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
+        $validatedRequest = $request->validated();
 
-        $quoteModel = $this->getQuoteObject($request->modelType, $request->quoteId);
+        $quoteModel = $this->getQuoteObject($validatedRequest['modelType'], $validatedRequest['quoteId']);
+
         if (! $quoteModel) {
             return redirect()->back()->with('success', 'Error Updating Policy Details.');
         }

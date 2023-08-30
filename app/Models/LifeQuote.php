@@ -75,7 +75,7 @@ class LifeQuote extends Model implements AuditableContract
     public function numberOfYears()
     {
         return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
-    } 
+    }
     public function maritalStatus()
     {
         return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');

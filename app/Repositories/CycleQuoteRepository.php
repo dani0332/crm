@@ -125,9 +125,9 @@ class CycleQuoteRepository extends BaseRepository
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 }])->firstOrFail();
 
-        $data = $quote->toArray();
-        $quote['lost_reason'] = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote['previous_advisor_id_text'] = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
 
         return $quote;
     }

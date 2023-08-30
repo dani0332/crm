@@ -106,9 +106,9 @@ class BikeQuoteRepository extends BaseRepository
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
-        $data = $quote->toArray();
-        $quote['lost_reason'] = $data['quote_detail']['lost_reason']['text'] ?? null;
-        $quote['previous_advisor_id_text'] = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
 
         return $quote;
     }
