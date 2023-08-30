@@ -61,10 +61,10 @@ class QuoteAllocation extends Command
                     'allocationKey' => 'advisor_id',
                     'conditions' => function ($lead) {
                         return $lead instanceof CarQuote
-                            && !in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                            && !in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+                            && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+                            && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
                             && $lead->is_renewal_tier_email_sent === 0;
-                    }
+                    },
                 ],
                 QuoteTypeId::Health => [
                     'model' => HealthQuote::class,
@@ -73,9 +73,9 @@ class QuoteAllocation extends Command
                         return $lead instanceof HealthQuote
                             && $lead->quote_status_id === QuoteStatusEnum::Qualified
                             && $lead->health_quote_request->price_starting_from !== null
-                            && !$lead->health_quote_request->is_error_email_sent
+                            && ! $lead->health_quote_request->is_error_email_sent
                             && $lead->health_quote_request->advisor_id === null;
-                    }
+                    },
                 ],
             ];
 
@@ -98,12 +98,12 @@ class QuoteAllocation extends Command
 
         $quoteModel::whereNull($allocationKey)
             ->whereBetween('created_at', [now()->startOfDay()->toDateTimeString(), $to])
-            ->when($conditions, fn($query) => $query->where($conditions))
+            ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType) {
                 foreach ($leads as $lead) {
                     info("------ Lead allocation started for $quoteType lead: $lead->uuid ------");
                     $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->id);
-                    info("Allocation strategy is created: " . json_encode($allocationStrategy));
+                    info('Allocation strategy is created: '.json_encode($allocationStrategy));
                     $allocationStrategy->executeSteps();
                     info("------ Lead allocation end for $quoteType lead: $lead->uuid ------");
                 }
