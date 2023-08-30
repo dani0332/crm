@@ -76,7 +76,7 @@ class AMLController extends Controller
                     QuoteTypes::PET->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
-                        $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';;
+                        $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
                     } else {
                         $quoteRequestTable = 'personal_quotes';
                         if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
@@ -85,7 +85,7 @@ class AMLController extends Controller
                                 'customerEmail' => 'email'
                             };
                             $personalQuoteCreatedDate = PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
-                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $personalQuoteCreatedDate) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';;
+                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $personalQuoteCreatedDate) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';
                         }
                     }
                 }
