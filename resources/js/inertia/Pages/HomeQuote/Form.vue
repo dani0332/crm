@@ -10,7 +10,7 @@ const props = defineProps({
   homePossessionTypeEnum: Object,
   model: String,
 });
-
+const page = usePage();
 const hasContentOrBuilding = ref(true);
 
 const quoteForm = useForm({
@@ -64,7 +64,7 @@ function successResponse(){
         position: 'top',
     });
     if(isEdit.value) {
-        router.get(`/quotes/home/${props.quote?.uuid}`);
+        router.get(route('home.show', page.props?.quote?.uuid));
     }else {
         quoteForm.reset();
     }
@@ -80,7 +80,7 @@ function onSubmit(isValid) {
                     has_personal_belongings: data.has_personal_belongings ? true : false,
                     has_building: data.has_building ? true : false,
                 }))
-                .put(`/quotes/home/${props.quote?.uuid}`, {
+                .put(route('home.update', props.quote.uuid),{
                     onError: errors => {
                         console.log(errors);
                     },
@@ -89,7 +89,7 @@ function onSubmit(isValid) {
                     },
                 });
         }else{
-            quoteForm.post(`/quotes/save`, {
+            quoteForm.post(route('home.store'), {
                     onError: errors => {
                         quoteForm.setError(errors);
                     },
@@ -111,7 +111,7 @@ function onSubmit(isValid) {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">{{ isEdit ? 'Edit' : 'Create' }} Home</h2>
       <div class="space-x-4">
-        <Link :href="`/quotes/home/${props.quote?.uuid}`">
+        <Link v-if="$page.props?.quote?.uuid" :href="route('home.show', $page.props?.quote?.uuid)">
           <x-button size="sm" tag="div"> Cancel </x-button>
         </Link>
         <Link href="/quotes/home">
