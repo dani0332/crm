@@ -247,6 +247,7 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -280,7 +281,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HomeQuote/Create', [
+            return inertia('HomeQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -726,7 +727,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HomeQuote/Edit', [
+            return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
                 'dropdownSource' => $dropdownSource,

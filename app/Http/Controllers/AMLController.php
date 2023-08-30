@@ -497,7 +497,7 @@ class AMLController extends Controller
         ]);
 
         $quoteTypeCode = QuoteType::where('id', '=', $quoteTypeId)->value('code');
-        if (checkPersonalQuotes($quoteTypeCode) && (!$this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId))) {
+        if (checkPersonalQuotes($quoteTypeCode) && (! $this->checkAmlService->isDataMigrated($quoteTypeId, $quoteId))) {
             $quoteId = $this->checkAmlService->getPersonalQuoteId($quoteTypeId, $quoteId);
         }
         $updateQuote = $this->getQuoteObject($quoteTypeCode, $quoteId);
