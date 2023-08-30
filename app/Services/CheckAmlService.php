@@ -280,7 +280,7 @@ class CheckAmlService
     public function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = '')
     {
         $createdDate = $parseDate;
-        if(empty($parseDate)) {
+        if (empty($parseDate)) {
             $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
         }
 

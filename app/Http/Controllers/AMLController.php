@@ -90,14 +90,14 @@ class AMLController extends Controller
                 if (in_array($quoteTypeId, [
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
-                    QuoteTypes::PET->id()
+                    QuoteTypes::PET->id(),
                 ])) {
-                    if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)){
+                    if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = $this->checkAmlService->isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : 'pet_quote_request';
                     } else {
                         $quoteRequestTable = 'personal_quotes';
-                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])){
-                            $searchType = match ($request->searchType){
+                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
+                            $searchType = match ($request->searchType) {
                                 'cdbId' => 'code',
                                 'customerEmail' => 'email'
                             };
