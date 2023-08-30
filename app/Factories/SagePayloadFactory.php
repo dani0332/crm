@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Factories;
+use App\Services\SageApiService;
 
 class SagePayloadFactory
 {
@@ -35,21 +36,48 @@ class SagePayloadFactory
     }
 
     private static function createPaymontRecieptOneInvoice($request)
-    {       
+    {   
+        /*$sageApi = new SageApiService();
+        $createPrepaymentReciept = [
+            "BatchRecordType" => "CA",
+            "ReceiptsAdjustments" => [
+                [
+                    "BatchType" => "CA",
+                    "CustomerNumber" => "IC008",
+                    "BankReceiptAmount" => $request->premiumWithTax,
+                    "CheckReceiptNumber" => "123456",
+                    "PaymentCode" => "BT",
+                    "ReceiptTransactionType" => "Prepayment",
+                    "AppliedReceiptsAdjustments" => [
+                        [
+                            "BatchType" => "CA",
+                            "CustomerNumber" => "IC008",
+                            "ReceiptTransactionType" => "Prepayment"
+                        ]
+                    ]
+                ]
+            ]
+        ];
+        $message = $sageApi->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
+        $responseData = json_decode($message, true);
         
+        $documentNumber = $responseData['ReceiptsAdjustments'][0]['DocumentNumber'];
+        //echo $documentNumber; exit;
+        //echo "<pre>"; print_r($responseData); exit;
+        $documentNumber = "PP000039";*/
         $payLoad = [
             "BatchRecordType" => "CA",
             "ReceiptsAdjustments" => [
                 [
                     "BatchType" => "CA",
-                    "CustomerNumber" => "C00018",
+                    "CustomerNumber" => "IC008",
                     "ReceiptTransactionType" => "ApplyDocument",
-                    "DocumentNumber" => "PY000020",
+                    "DocumentNumber" => strval(session('documentNumberForReciept')),
                     "AppliedReceiptsAdjustments" => [
                         [
                             "BatchType" => "CA",
-                            "CustomerNumber" => "C00018",
-                            "DocumentNumber" => "SHMOU22000124845",
+                            "CustomerNumber" => "IC008",
+                            "DocumentNumber" => $request->insurerPremiumTaxInvoiceNumber.'-PREM',
                             "ReceiptTransactionType" => "ApplyDocument"
                         ]
                     ]
@@ -75,7 +103,7 @@ class SagePayloadFactory
                 ],
             ],
         ];*/
-        
+        session(['documentNumberForReciept' => '']);
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,

@@ -78,7 +78,8 @@ const bookingDetailForm = useForm({
   mainClassInsurance: 'Motor',
   invoicePaymentStatus: page.props.payments.length > 0 ? page.props.payments[0].payment_status_text : '',
   subClass: 'Comprehensive',
-  insurerInvoiceDate: page.props.payments.length > 0 ? page.props.payments[0].captured_at : '15-01-2023',
+  //insurerInvoiceDate: page.props.payments.length > 0 ? page.props.payments[0].captured_at : '15-01-2023',
+  insurerInvoiceDate: '2023-02-02',
   brokerInvoiceNumber: 'IM-1234-N567892',
   insurerPremiumTaxInvoiceNumber: 'AM-1234-N567892',
   discount: '',
@@ -2012,7 +2013,8 @@ const confirmSendEmail = () => {
 								type="text"
 								label="Broker Invoice Number"
 								placeholder="Broker Invoice Number"
-								class="w-full"						
+								class="w-full"
+								@input="limitCharacterCount"
 							/>
 						</div>
 					</div>
@@ -2024,7 +2026,8 @@ const confirmSendEmail = () => {
 								label="Insurer Premium Tax Invoice Number *"
 								placeholder="Insurer Premium Tax Invoice Number"
 								:rules="[isRequired]"
-								class="w-full"						
+								class="w-full"
+								maxlength="15"						
 							/>
 						</div>
 						<div class="w-full md:w-2/2">

@@ -17,6 +17,7 @@ class SageApi extends Controller
 
     public function index()
     {
+        
     }
 
     public function processSagePost(SageRequest $request)
@@ -25,6 +26,47 @@ class SageApi extends Controller
         if(!$request->premiumWithoutTax>0){
             return back()->with('error', 'This lead does not have premium,select another lead');
         }
+
+        //session(['documentNumberForReciept' => '']);
+        if (strtolower($request->invoicePaymentStatus) == 'paid' && $leadStatus == 'policy booked' && 
+            session('documentNumberForReciept')=='' ) {
+            
+            $createPrepaymentReciept = [
+                "BatchRecordType" => "CA",
+                "ReceiptsAdjustments" => [
+                    [
+                        "BatchType" => "CA",
+                        "CustomerNumber" => "IC008",
+                        "BankReceiptAmount" => floatval($request->premiumWithoutTax),
+                        "CheckReceiptNumber" => "123456",
+                        "PaymentCode" => "BT",
+                        "ReceiptTransactionType" => "Prepayment",
+                        "AppliedReceiptsAdjustments" => [
+                            [
+                                "BatchType" => "CA",
+                                "CustomerNumber" => "IC008",
+                                "ReceiptTransactionType" => "Prepayment"
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+            $message = $this->sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
+            $responseData = json_decode($message, true);
+            //echo "<pre>"; print_r($responseData); exit;            
+            
+            $documentNumberForReciept = $responseData['ReceiptsAdjustments'][0]['DocumentNumber'];
+            
+            session(['documentNumberForReciept' => $documentNumberForReciept]);
+
+            return back()->with('message', 'Please POST Batch No '.$responseData['BatchNumber'].' Reciept and related Invoice from SAGE dashboard and submit again.');
+            
+            //return back()->with('error', 'This lead does not have premium,select another lead');
+            //return self::createPaymontRecieptOneInvoice($request);
+        }
+
+
+
         
         $messageFromAP = '';
 
