@@ -11,6 +11,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
@@ -28,6 +29,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -488,6 +490,8 @@ class CRUDController extends Controller
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
 
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
+
             return view('shared.show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
@@ -495,7 +499,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'embeddedProducts',
             ]));
         }
 
@@ -532,6 +536,7 @@ class CRUDController extends Controller
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
 
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
@@ -551,6 +556,7 @@ class CRUDController extends Controller
                 'notProductionApproval' => $notProductionApproval,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
+                'embeddedProducts' => $embeddedProducts,
             ]);
         }
 
@@ -606,7 +612,7 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
+            $paymentMethods = $paymentMethods?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->code,
                     'label' => $paymentMethod->name,
@@ -619,6 +625,8 @@ class CRUDController extends Controller
                     'label' => $paymentMethod->text,
                 ];
             })->sortBy('label')->values();
+
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
@@ -658,6 +666,7 @@ class CRUDController extends Controller
                 'paymentMethods' => $paymentMethods,
                 'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
+                'embeddedProducts' => $embeddedProducts,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
