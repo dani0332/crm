@@ -1,6 +1,4 @@
 <script setup>
-import { ref } from 'vue';
-import { useNotifications } from '@indielayer/ui';
 
 const notification = useNotifications('toast');
 
