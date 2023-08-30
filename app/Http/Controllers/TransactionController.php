@@ -68,12 +68,12 @@ class TransactionController extends Controller
                 ->where('transactions.is_deleted', 0);
 
             if ($isTransappNonAdmin == '1') {
-                $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
+            //    $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
 
             if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
-                $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
+              //  $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
             }
             if (! empty($request->transapp_approval_code)) {
                 $dataTransapp->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
@@ -102,9 +102,11 @@ class TransactionController extends Controller
             if (isset($request->payment_mode) && ! empty($request->payment_mode)) {
                 $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
             }
-
+            $premiumAmount = $dataTransapp->sum('amount_paid');
+           // dd($dataTransapp->sum('amount_paid'));
             return $datatables::of($dataTransapp)
                 ->addIndexColumn()
+                ->addColumn('premium_total',$premiumAmount)
                 ->make(true);
         }
 

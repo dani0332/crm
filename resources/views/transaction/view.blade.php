@@ -15,7 +15,7 @@
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
             <div class="x_title">
-                <h2>Transaction List</h2>
+                <h2>Transaction List 2222</h2>
                 <div class="clearfix"></div>
             </div>
             <div class="x_content">
@@ -132,6 +132,29 @@
                                         @foreach ($paymentModes as $paymentMode)
                                             <option value="{{ $paymentMode->id }}">{{ $paymentMode->name }}</option>
                                         @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="item form-group">
+                        <div class="col col-md-6">
+                            <label class="col-form-label col-md-2 col-sm-2" for="Payment mode">Total Premium</label>
+                            <div class="col-md-6 col-sm-6 mt-2 text-bold" id="total_premium_value" >
+
+                            </div>
+                        </div>
+                        <div class="col col-md-6">
+                            <label class="col-form-label col-md-2 col-sm-2" id="payment_mode_id" for="Payment mode">Teams</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                    <select class="form-control" name="team" multiple id="team">
+                                        <option value="">Select</option>
+                                            <option value="BDM">BDM</option>
+                                            <option value="SBDM">SBDM</option>
+                                        <option value="Organic">Organic</option>
+                                        <option value="Tpl 2.0">Tpl 2.0</option>
                                     </select>
                                 </div>
                             </div>
