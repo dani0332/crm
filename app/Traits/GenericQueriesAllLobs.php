@@ -11,7 +11,12 @@ trait GenericQueriesAllLobs
     public function getQuoteCode($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
-        $modelType = $nameSpace.$quoteType.'Quote';
+        $modelType = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+
+        if (! class_exists($modelType)) {
+            return false;
+        }
+
         $result = $modelType::whereId($id)->value('code');
         if ($result) {
             return $result;
