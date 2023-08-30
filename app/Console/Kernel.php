@@ -39,6 +39,9 @@ class Kernel extends ConsoleKernel
 
         $schedule
             ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
+
+        $schedule
+            ->command('QuoteAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
     }
 
     /**
