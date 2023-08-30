@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypes;
+use App\Models\AML;
+use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
+use Carbon\Carbon;
 use Config;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -16,6 +20,7 @@ class CheckAmlService
 
     public function checkAml($firstName, $lastName, $quoteRequestId, $quoteTypeId, $isEmailSendingEnabled, $yob, $companyName)
     {
+        $quoteId = $quoteRequestId;
         $amlEndPoint = Config::get('constants.AML_SEARCH_API_ENDPOINT');
         $emailL_sys = Config::get('constants.emailL_sys');
         $appUrl = env('APP_URL');
@@ -49,9 +54,12 @@ class CheckAmlService
 
             // Get Ref-ID
             $quoteTypeCode = QuoteType::where('id', $quoteTypeId)->value('code');
-            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteRequestId);
+            if (checkPersonalQuotes($quoteTypeCode) && (! $this->isDataMigrated($quoteTypeId, $quoteId))) {
+                $quoteId = $this->getPersonalQuoteId($quoteTypeId, $quoteId);
+            }
+            $quoteCdbId = $this->getQuoteCode($quoteTypeCode, $quoteId);
 
-            if ($isEmailSendingEnabled == true && $quoteCdbId) {
+            if ($isEmailSendingEnabled && $quoteCdbId) {
                 $fullName = $firstName.' '.$lastName;
                 if ($companyName != null) {
                     $this->sendAMLMatchedEmailComplianceTeam($emailL_sys, $amlUrl, $checkAMLResponseEntity, $companyName, $quoteTypeName, $quoteCdbId);
@@ -267,5 +275,36 @@ class CheckAmlService
             'chAmlStatus' => $chAmlStatus,
             'requestMessage' => $requestMessage,
         ], $subject, $errorEmailRecipients);
+    }
+
+    public function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = '')
+    {
+        $createdDate = $parseDate;
+        if (empty($parseDate)) {
+            $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
+        }
+
+        $dataMigrationDate = match ($quoteTypeId) {
+            QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
+        };
+
+        return Carbon::createFromFormat(
+            config('constants.DATE_FORMAT_ONLY'),
+            Carbon::parse($createdDate)->format(config('constants.DATE_FORMAT_ONLY'))
+        )->gte($dataMigrationDate);
+    }
+
+    public function getPersonalQuoteId($quoteTypeId, $quoteRequestId)
+    {
+        return match ($quoteTypeId) {
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id
+        };
+    }
+
+    public function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId)
+    {
+        return match ($quoteTypeId) {
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->update(['pa_id' => auth()->id()])
+        };
     }
 }
