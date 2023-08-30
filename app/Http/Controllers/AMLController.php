@@ -67,33 +67,16 @@ class AMLController extends Controller
             $dataAml = [];
 
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
-                $quoteTypeId = $request->quoteType;
+                $quoteTypeCode = QuoteType::where('id', $request->quoteType)->value('code');
+                $quoteRequestTable = strtolower($quoteTypeCode) . '_quote_request';
 
-                if ($quoteTypeId == QuoteTypes::CAR->id()) {
-                    $quoteRequestTable = 'car_quote_request';
-                }
-                if ($quoteTypeId == QuoteTypes::HOME->id()) {
-                    $quoteRequestTable = 'home_quote_request';
-                }
-                if ($quoteTypeId == QuoteTypes::HEALTH->id()) {
-                    $quoteRequestTable = 'health_quote_request';
-                }
-                if ($quoteTypeId == QuoteTypes::LIFE->id()) {
-                    $quoteRequestTable = 'life_quote_request';
-                }
-                if ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
-                    $quoteRequestTable = 'business_quote_request';
-                }
-                if ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
-                    $quoteRequestTable = 'travel_quote_request';
-                }
-                if (in_array($quoteTypeId, [
+                if (in_array($request->quoteType, [
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
-                        $quoteRequestTable = $this->checkAmlService->isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : 'pet_quote_request';
+                        $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';;
                     } else {
                         $quoteRequestTable = 'personal_quotes';
                         if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
@@ -102,7 +85,7 @@ class AMLController extends Controller
                                 'customerEmail' => 'email'
                             };
                             $personalQuoteCreatedDate = PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
-                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($quoteTypeId, '', $personalQuoteCreatedDate) ? 'personal_quotes' : 'pet_quote_request';
+                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $personalQuoteCreatedDate) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';;
                         }
                     }
                 }
