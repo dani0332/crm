@@ -989,7 +989,12 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td colspan="4"><span class="car-quote-plan-total-premium"></span></td>
 							</tr>
+							<tr>
+								<td colspan="3"></td>
+								<td> </td>
+							</tr>
 						</table>
+						<p style='float:right'>Created Date: {{ $createdAt }}<br>Updated At: {{ $updatedAt }}</p>
 						</p>
 					</div>
 					<div class="tab-pane fade" id="addons" role="tabpanel" aria-labelledby="addons-tab">
