@@ -49,7 +49,7 @@
 
                     <div class="item form-group">
                         <div class="col">
-                            <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Previous Start Date</b></label>
+                            <label class="col-form-label col-md-3 col-sm-3 label-align"><b>Previous Policy Start Date</b></label>
                             <div class="col-md-6 col-sm-6">
                                 <p class="label-align-center">{{ isset($record->policy_start_date) ? $record->policy_start_date : '' }}</p>
                     
