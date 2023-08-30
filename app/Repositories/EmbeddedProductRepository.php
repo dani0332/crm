@@ -129,6 +129,7 @@ class EmbeddedProductRepository extends BaseRepository
         return $this->whereHas('placements', function ($query) use ($quoteTypeId) {
             $query->where('quote_type_id', $quoteTypeId);
         })
+        ->where('is_active', 1)
         ->with(['prices.transactions' => function ($query) use ($quoteRequestId) {
             $query->where('quote_request_id', $quoteRequestId);
         }])
