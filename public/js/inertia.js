@@ -15483,11 +15483,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       lastMonthSummedIndex = 0;
       currentRowSpan = 0;
       var segmentFilter = filters.segment ? filters.segment : '';
-      console.log(segmentFilter);
       page.props.reportData.data.forEach(function (item, index) {
-        console.log("Before: ");
-        console.log(item.total_allocated_leads);
-        console.log(item.renewed);
         if (segmentFilter == 'volume') {
           item.total_allocated_leads = item.total_by_volume_segment_advisors;
           item.renewed = item.renewed_by_volume_segment_advisors;
@@ -15499,9 +15495,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
           item.car_sold = item.car_sold_by_value_segment;
           item.uncontactable = item.uncontactable_by_value_segment;
         }
-        console.log("After: ");
-        console.log(item.total_allocated_leads);
-        console.log(item.renewed);
+      });
+      page.props.reportData.data.forEach(function (item, index) {
         var advisorRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
         var imRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
         var valueSegmentConversion = (parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);

@@ -256,8 +256,6 @@ function calculateValuesAndHighlight() {
 
     let segmentFilter = filters.segment ? filters.segment : '';
 
-    console.log(segmentFilter);
-
     page.props.reportData.data.forEach((item, index) => {
 
         if (segmentFilter == 'volume') {
@@ -271,6 +269,9 @@ function calculateValuesAndHighlight() {
             item.car_sold = item.car_sold_by_value_segment
             item.uncontactable = item.uncontactable_by_value_segment
         }
+    });
+
+    page.props.reportData.data.forEach((item, index) => {
 
         const advisorRetention =
             (
