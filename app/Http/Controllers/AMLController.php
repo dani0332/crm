@@ -67,33 +67,44 @@ class AMLController extends Controller
             $dataAml = [];
 
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
-                $quoteTypeCode = QuoteType::where('id', '=', $request->quoteType)->value('code');
-                if ($quoteTypeCode == quoteTypeCode::Car) {
+                $quoteTypeId = $request->quoteType;
+
+                if ($quoteTypeId == QuoteTypes::CAR->id()) {
                     $quoteRequestTable = 'car_quote_request';
                 }
-                if ($quoteTypeCode == quoteTypeCode::Home) {
+                if ($quoteTypeId == QuoteTypes::HOME->id()) {
                     $quoteRequestTable = 'home_quote_request';
                 }
-                if ($quoteTypeCode == quoteTypeCode::Health) {
+                if ($quoteTypeId == QuoteTypes::HEALTH->id()) {
                     $quoteRequestTable = 'health_quote_request';
                 }
-                if ($quoteTypeCode == quoteTypeCode::Life) {
+                if ($quoteTypeId == QuoteTypes::LIFE->id()) {
                     $quoteRequestTable = 'life_quote_request';
                 }
-                if ($quoteTypeCode == quoteTypeCode::Business) {
+                if ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
                     $quoteRequestTable = 'business_quote_request';
                 }
-                if ($quoteTypeCode == quoteTypeCode::Bike) {
-                    $quoteRequestTable = 'bike_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Yacht) {
-                    $quoteRequestTable = 'yacht_quote_request';
-                }
-                if ($quoteTypeCode == quoteTypeCode::Travel) {
+                if ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
                     $quoteRequestTable = 'travel_quote_request';
                 }
-                if ($quoteTypeCode == quoteTypeCode::Pet) {
-                    $quoteRequestTable = 'pet_quote_request';
+                if (in_array($quoteTypeId, [
+                    QuoteTypes::BIKE->id(),
+                    QuoteTypes::YACHT->id(),
+                    QuoteTypes::PET->id()
+                ])) {
+                    if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)){
+                        $quoteRequestTable = $this->checkAmlService->isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : 'pet_quote_request';
+                    } else {
+                        $quoteRequestTable = 'personal_quotes';
+                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])){
+                            $searchType = match ($request->searchType){
+                                'cdbId' => 'code',
+                                'customerEmail' => 'email'
+                            };
+                            $personalQuoteCreatedDate = PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
+                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($quoteTypeId, '', $personalQuoteCreatedDate) ? 'personal_quotes' : 'pet_quote_request';
+                        }
+                    }
                 }
 
                 $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')

@@ -277,16 +277,20 @@ class CheckAmlService
         ], $subject, $errorEmailRecipients);
     }
 
-    public function isDataMigrated($quoteTypeId, $quoteRequestId)
+    public function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = '')
     {
-        $kycLogCreatedDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail();
+        $createdDate = $parseDate;
+        if(empty($parseDate)) {
+            $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
+        }
+
         $dataMigrationDate = match ($quoteTypeId) {
             QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
         };
 
         return Carbon::createFromFormat(
             config('constants.DATE_FORMAT_ONLY'),
-            Carbon::parse($kycLogCreatedDate->created_at)->format(config('constants.DATE_FORMAT_ONLY'))
+            Carbon::parse($createdDate)->format(config('constants.DATE_FORMAT_ONLY'))
         )->gte($dataMigrationDate);
     }
 
