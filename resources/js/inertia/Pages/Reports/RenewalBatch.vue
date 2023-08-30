@@ -273,7 +273,7 @@ function calculateValuesAndHighlight() {
 
     page.props.reportData.data.forEach((item, index) => {
 
-        const advisorRetention =
+        let advisorRetention =
             (
                 (
                     parseInt(item.renewed) /
@@ -283,8 +283,9 @@ function calculateValuesAndHighlight() {
                     )) * 100
 
             ).toFixed(2);
+        advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
 
-        const imRetention = (
+        let imRetention = (
             (
                 parseInt(item.renewed) /
                 (
@@ -293,8 +294,9 @@ function calculateValuesAndHighlight() {
                 )) * 100
 
         ).toFixed(2);
+        imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
 
-        const valueSegmentConversion = (
+        let valueSegmentConversion = (
             (
                 parseInt(item.renewed_by_value_segment_advisors) /
                 (
@@ -302,8 +304,9 @@ function calculateValuesAndHighlight() {
                     parseInt(item.car_sold) - parseInt(item.uncontactable)
                 )) * 100
         ).toFixed(2);
+        valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
 
-        const volumeSegmentConversion = (
+        let volumeSegmentConversion = (
             (
                 parseInt(item.renewed_by_volume_segment_advisors) /
                 (
@@ -311,17 +314,21 @@ function calculateValuesAndHighlight() {
                     parseInt(item.car_sold) - parseInt(item.uncontactable)
                 )) * 100
         ).toFixed(2);
+        volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
 
-        const ratioCarSoldUncontactable = (
+        let ratioCarSoldUncontactable = (
             (
                 (
                     parseInt(item.car_sold) + parseInt(item.uncontactable) ) /
                     parseInt(item.total_allocated_leads)
                 ) * 100
         ).toFixed(2);
+        ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
 
         const monthlySum = calculateMonthlySum(page.props.reportData.data, index);
         const rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
+
+        console.log(monthlySum);
 
         item.ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
@@ -346,8 +353,8 @@ function calculateValuesAndHighlight() {
             avgRawRetentionArr[monthName] = [];
         }
 
-        avgImRetentionArr[monthName].push( imRetention == 'NaN' ? parseFloat(0.00) : parseFloat(imRetention));
-        avgRawRetentionArr[monthName].push( rawRetention == 'NaN' ? parseFloat(0.00) : parseFloat(rawRetention));
+        avgImRetentionArr[monthName].push( imRetention == 'NaN' ? parseFloat('0.00') : parseFloat(imRetention));
+        avgRawRetentionArr[monthName].push( rawRetention == 'NaN' ? parseFloat('0.00') : parseFloat(rawRetention));
 
         page.props.renewalBatchesList.forEach(batch => {
             batch.slabs.forEach(slab => {
@@ -446,7 +453,7 @@ const calculateMonthlySum = (data, index) => {
 
         var result = totalRenewed / (totalAllocated - totalCarSold - totalCarUncontactable) * 100;
 
-        return (result).toFixed(2) + " %";
+        return (result).toFixed(2);
     }
 };
 
@@ -650,7 +657,7 @@ watch(
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 <!-- Sum of allocations per batch  - (Approved Car Sold + Approved Uncontactable) -->
-                                <p v-if="item.total_allocated_leads == 0"> NaN </p>
+                                <p v-if="item.total_allocated_leads == 0"> 0 </p>
                                 <p v-else>{{ (parseInt(item.total_allocated_leads) - (parseInt(item.car_sold) +
                                     parseInt(item.uncontactable))).toLocaleString() }} </p>
                             </td>
@@ -664,12 +671,12 @@ watch(
                                 {{ item.volumeSegmentConversion }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <p>{{ (parseFloat(item.advisorRetention) -
-                                    parseFloat(item.valueSegmentConversion)).toFixed(2) }} %</p>
+                                <p>{{ parseFloat(item.valueSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
+                                    parseFloat(item.valueSegmentConversion)).toFixed(2) : '0.00'}} %</p>
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                <p>{{ (parseFloat(item.advisorRetention) -
-                                    parseFloat(item.volumeSegmentConversion)).toFixed(2) }} %</p>
+                                <p>{{ parseFloat(item.volumeSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
+                                    parseFloat(item.volumeSegmentConversion)).toFixed(2) : '0.00' }} %</p>
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.imRetention }} %
@@ -683,7 +690,7 @@ watch(
                             </td>
                             <td v-if="item.rowSpan > 0" class="x-table-cell px-3 py-4 align-middle text-center"
                                 :rowspan="item.rowSpan">
-                                <b> {{ item.monthlySum }}</b>
+                                <b> {{ item.monthlySum }} %</b>
                             </td>
                         </tr>
                     </tbody>
