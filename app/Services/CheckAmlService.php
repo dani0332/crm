@@ -301,10 +301,13 @@ class CheckAmlService
         };
     }
 
-    public function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId)
+    public function updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, $isMigrated, $updateData = '')
     {
+        $filterColumn = $isMigrated ? 'personal_quote_id' : 'id';
+        $updateData = empty($updateData) ? ['pa_id' => auth()->id()] : $updateData;
+
         return match ($quoteTypeId) {
-            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->update(['pa_id' => auth()->id()])
+            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
     }
 }
