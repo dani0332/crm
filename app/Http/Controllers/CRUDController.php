@@ -21,6 +21,7 @@ use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
+use App\Models\HealthPlanType;
 use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
@@ -626,6 +627,8 @@ class CRUDController extends Controller
 
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
+            $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+
             return inertia('HealthQuote/Show', [
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
@@ -660,6 +663,7 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'payments' => $payments,
                 'paymentMethods' => $paymentMethods,
+                'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
                 'embeddedProducts' => $embeddedProducts,
                 'can' => [

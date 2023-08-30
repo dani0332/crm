@@ -1,8 +1,14 @@
 <script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  quoteType: {
+    type: String,
+    default: 'yacht',
+  },
 });
 
 const page = usePage();
@@ -28,6 +34,7 @@ let availableFilters = {
 
 const filters = reactive(availableFilters);
 const canExport = ref(false);
+const hasRole = role => useHasRole(role);
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -75,6 +82,9 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
+  if (hasRole(rolesEnum.YachtManager) || hasRole(rolesEnum.Admin)) {
+    permissionAssignLeads.value = true;
+  }
 });
 
 const tableHeader = [
@@ -85,20 +95,44 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NO', value: 'policy_no' },
   { text: 'SOURCE', value: 'source' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
 
+const quotesSelected = ref([]);
+const permissionAssignLeads = ref(false);
+
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'yacht');
   window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+const advisorOptionsFilter = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
+});
+
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
+
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
 };
 
 watch(
@@ -196,16 +230,6 @@ watch(
           label="Created Date End"
           class="w-full"
         />
-
-        <x-input
-          v-model="filters.renewal_batch"
-          type="search"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
-
         <ComboBox
           v-model="filters.quote_status_id"
           label="Lead Status"
@@ -218,7 +242,12 @@ watch(
             }))
           "
         />
-
+        <ComboBox
+          v-model="filters.advisor_id"
+          label="Advisor"
+          placeholder="Search by Advisor"
+          :options="advisorOptionsFilter"
+        />
         <x-select
           v-model="filters.is_ecommerce"
           label="Is Ecommerce"
@@ -230,7 +259,14 @@ watch(
           ]"
           class="w-full"
         />
-
+        <x-input
+          v-model="filters.renewal_batch"
+          type="search"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
         <x-select
           v-model="filters.previous_quote_policy_number"
           label="Is Renewal"
@@ -273,7 +309,22 @@ watch(
       </div>
     </x-form>
 
+    <Transition name="fade">
+      <div
+        v-if="quotesSelected.length > 0 && permissionAssignLeads"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+          @success="onLeadAssigned"
+        />
+      </div>
+    </Transition>
+
     <DataTable
+      v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :headers="tableHeader"
       :loading="loader.table"
@@ -295,7 +346,7 @@ watch(
       </template>
 
       <template #item-advisor="{ advisor }">
-        {{ advisor?.email }}
+        {{ advisor?.name }}
       </template>
 
       <template #item-quote_status="{ quote_status }">

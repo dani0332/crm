@@ -91,4 +91,16 @@ class EmbeddedProductController extends Controller
 
         return response()->json($data);
     }
+
+    public function toggleStatus($id)
+    {
+        EmbeddedProductRepository::where('id', $id)->update([
+            'is_active' => request()->input('is_active'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Embedded Product status updated',
+        ]);
+    }
 }

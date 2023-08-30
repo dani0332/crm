@@ -27,12 +27,13 @@ class YachtQuoteController extends Controller
     public function index()
     {
         $personalQuotes = YachtQuoteRepository::getData();
-
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
 
         return inertia('YachtQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 

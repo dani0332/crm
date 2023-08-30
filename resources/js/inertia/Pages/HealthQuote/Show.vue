@@ -37,6 +37,7 @@ defineProps({
   sendPolicy: Boolean,
   insuranceProviders: Array,
   embeddedProducts: Array,
+  healthPlanTypes: Array,
 });
 
 const page = usePage();
@@ -56,6 +57,10 @@ const fixedValue = number => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const checkPlanType = id => {
+  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
 const modals = reactive({
@@ -157,7 +162,7 @@ const memberCategoryText = memberCategoryId =>
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
   { value: 'EBP', label: 'EBP' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
@@ -639,11 +644,9 @@ watch(
   },
 );
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort((a, b) => {
-    if (a.providerName < b.providerName) {
-      return -1;
-    }
-  }),
+  page.props.listQuotePlans.sort(
+    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
+  ),
 );
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
@@ -1322,7 +1325,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
+            <dd>{{ checkPlanType(quoteRequest.health_plan_type_id) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>

@@ -27,8 +27,8 @@ class ActivityRequest extends FormRequest
             'title' => 'required|max:500',
             'due_date' => 'required',
             'description' => 'required',
-            'assignee_id' => 'required',
-            'quote_id' => 'required|exists:personal_quotes,id',
+            'assignee_id' => 'sometimes|required',
+            'quote_id' => 'sometimes|required|exists:personal_quotes,id',
         ];
     }
 }
