@@ -68,7 +68,7 @@ class AMLController extends Controller
 
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeCode = QuoteType::where('id', $request->quoteType)->value('code');
-                $quoteRequestTable = strtolower($quoteTypeCode) . '_quote_request';
+                $quoteRequestTable = strtolower($quoteTypeCode).'_quote_request';
 
                 if (in_array($request->quoteType, [
                     QuoteTypes::BIKE->id(),
@@ -85,7 +85,7 @@ class AMLController extends Controller
                                 'customerEmail' => 'email'
                             };
                             $personalQuoteCreatedDate = PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
-                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $personalQuoteCreatedDate) ? 'personal_quotes' : strtolower($quoteTypeCode) . '_quote_request';
+                            $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $personalQuoteCreatedDate) ? 'personal_quotes' : strtolower($quoteTypeCode).'_quote_request';
                         }
                     }
                 }
