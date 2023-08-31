@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
-use App\Models\InslyDetail;
 use App\Repositories\InslyDetailRepository;
 
 class LegacyPolicyController extends Controller
@@ -28,11 +27,12 @@ class LegacyPolicyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(int $policyNo)
+    public function show($policyNo)
     {
 
-        $policy = InslyDetailRepository::getBy('policy_oid',$policyNo);
+        $policy = InslyDetailRepository::getBy('policy_no',$policyNo);
 
+        // dd($policy->toArray());
         return inertia('LegacyPolicy/Show', ['policy' => $policy]);
 
     }

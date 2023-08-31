@@ -32,29 +32,30 @@ defineProps({
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Insurer</dt>
-            <dd>{{ quote?.pet_quote?.premium }}</dd>
+            <dd>{{ policy?.policy?.insurer }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">POLICY NUMBER</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.policy?.policy_no }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Policy Start Date</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.policy?.start_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Policy End Date</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.policy?.end_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Premiuim</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dt class="font-medium">Premium</dt>
+            <dd>{{ policy.premium }}</dd>
           </div>
+
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Sales Person</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.policy?.renewer_person }}</dd>
           </div>
         </dl>
       </div>
@@ -67,20 +68,20 @@ defineProps({
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Customer Name</dt>
-            <dd>{{ quote?.pet_quote?.premium }}</dd>
+            <dd>{{ policy.customer?.name }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Email</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.customer?.email }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Mobile Number</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.customer?.mobile_phone }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Phone Number</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+            <dd>{{ policy.customer?.phone }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">
