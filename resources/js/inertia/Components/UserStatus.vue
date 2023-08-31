@@ -14,7 +14,7 @@ const statusText = id => {
 };
 
 onMounted(() => {
-  window.Echo.channel(page.props.appName + '-activity.user').listen(
+  window.Echo.channel(page.props.appEnv + '-activity.user').listen(
     page.props.appName + '-user.status.changed',
     function (e) {
       if (e?.userId == page.props.auth.user.id) {
@@ -25,7 +25,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  window.Echo.channel(page.props.appName + '-activity.user').stopListening(page.props.appName + '-user.status.changed');
+  window.Echo.channel(page.props.appEnv + '-activity.user').stopListening(page.props.appEnv + '-user.status.changed');
 });
 </script>
 
