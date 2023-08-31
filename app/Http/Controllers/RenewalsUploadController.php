@@ -338,7 +338,7 @@ class RenewalsUploadController extends Controller
 
         $renewalBatchEmail = RenewalsBatchEmails::create([
             'batch' => $batch,
-            'status' => ProcessStatusCode::IN_PROGRESS,
+            'status' => ProcessStatusCode::PENDING,
             'total_leads' => $totalLeads,
             'total_sent' => 0,
             'total_bounced' => 0,
