@@ -14,7 +14,7 @@ class AddUserStatusLogs extends Migration
      */
     public function up()
     {
-        if (!Schema::hasTable('log_attributes')) {
+        if (! Schema::hasTable('log_attributes')) {
             Schema::create('log_attributes', function (Blueprint $table) {
                 $table->id();
                 $table->string('name')->unique();
