@@ -13700,6 +13700,9 @@ __webpack_require__.r(__webpack_exports__);
       text: 'Total Sent',
       value: 'total_sent'
     }, {
+      text: 'Total Failed',
+      value: 'total_failed'
+    }, {
       text: 'Status',
       value: 'status'
     }, {

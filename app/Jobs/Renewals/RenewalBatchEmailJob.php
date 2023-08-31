@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
+use Throwable;
 
 class RenewalBatchEmailJob implements ShouldQueue, StackableJob
 {
@@ -32,7 +33,7 @@ class RenewalBatchEmailJob implements ShouldQueue, StackableJob
     protected $renewalQuoteProcess;
 
     public $tries = 3;
-    public $timeout = 30;
+    public $timeout = 80;
     public $backoff = 10;
 
     /**
@@ -50,7 +51,6 @@ class RenewalBatchEmailJob implements ShouldQueue, StackableJob
         $this->batch = $batch;
         $this->renewalsBatchEmail = $renewalsBatchEmail;
         $this->renewalQuoteProcess = $renewalQuoteProcess;
-
         $this->onQueue('renewals');
     }
 
@@ -61,7 +61,7 @@ class RenewalBatchEmailJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadFileService)
     {
-        info('Renewals OCB email job started ');
+        info('Renewals OCB email job started processId: ' . $this->renewalQuoteProcess->id);
 
         $renewalsUploadFileService->renewalBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 

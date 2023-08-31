@@ -30,6 +30,7 @@ const tableHeader = [
     { text: 'Batch', value: 'batch' },
     { text: 'Total Leads', value: 'total_leads' },
     { text: 'Total Sent', value: 'total_sent' },
+    { text: 'Total Failed', value: 'total_failed' },
     { text: 'Status', value: 'status' },
     { text: 'User', value: 'createdby.email' },
     { text: 'Created At', value: 'created_at' },
@@ -54,10 +55,8 @@ const permissionsEnum = page.props.permissionsEnum;
         </div>
         <x-divider class="my-4" />
 
-        <x-alert color="error" class="mb-5" v-if="$page.props?.errors">
-            <ul>
-                <li v-for="error in $page.props?.errors">{{ error }}</li>
-            </ul>
+        <x-alert color="error" class="mb-5" v-if="$page.props?.errors.error">
+            {{$page.props?.errors.error}}
         </x-alert>
 
         <DataTable

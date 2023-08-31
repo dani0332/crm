@@ -332,9 +332,14 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
+    /**
+     * @param ScheduleRenewalsOcbRequest $request
+     * @param $batch
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
     public function scheduleRenewalsOcb(ScheduleRenewalsOcbRequest $request, $batch)
     {
-        $totalLeads = $this->renewalsUploadFileService->getOcbLeadsQuery($batch)->count();
+        $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotal($batch);
 
         $renewalBatchEmail = RenewalsBatchEmails::create([
             'batch' => $batch,

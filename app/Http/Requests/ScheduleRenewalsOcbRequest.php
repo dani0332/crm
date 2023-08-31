@@ -52,7 +52,7 @@ class ScheduleRenewalsOcbRequest extends FormRequest
                 $validator->errors()->add('error', 'Batch process is already created, next can be created after 5 minutes');
             }
 
-            $totalLeads = $this->renewalsUploadService->getOcbLeadsQuery($batch)->count();
+            $totalLeads = $this->renewalsUploadService->getPendingOcbLeadsTotal($batch);
             if ($totalLeads == 0) {
                 $validator->errors()->add('error', 'No leads found for batch - ' . $batch);
             }
