@@ -1295,20 +1295,20 @@ class RenewalsUploadService
         }
     }
 
-    public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
-    {
-        Log::info('updateRenewalEmailBatchStatus START');
-        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
-        if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
-            $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
-            $renewalsBatchStatus->save();
-        }
-        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
-            $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
-            $renewalsBatchStatus->save();
-        }
-        Log::info('updateRenewalEmailBatchStatus END');
-    }
+//    public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
+//    {
+//        Log::info('updateRenewalEmailBatchStatus START');
+//        $renewalsBatchStatus = RenewalsBatchEmails::find($batchEmailId);
+//        if ($renewalsBatchStatus) { // if record exists, update the number of rows uploaded
+//            $renewalsBatchStatus->total_sent = $renewalsBatchStatus->total_sent + 1;
+//            $renewalsBatchStatus->save();
+//        }
+//        if (($renewalsBatchStatus->total_sent + $renewalsBatchStatus->total_bounced) == $renewalsBatchStatus->total_leads || $isCompleted == 1) { // if all records are uploaded, update the status to completed
+//            $renewalsBatchStatus->status = ProcessStatusCode::COMPLETED;
+//            $renewalsBatchStatus->save();
+//        }
+//        Log::info('updateRenewalEmailBatchStatus END');
+//    }
 
     /**
      * //$modelName, $quoteRequestIdName.
@@ -1691,22 +1691,22 @@ class RenewalsUploadService
     }
 
     //todo: remove this code
-    public function updateRenewalQuoteEmailSent($batch, $quoteId)
-    {
-        info('updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);
-        $emailSent = RenewalQuoteProcess::where([
-            'quote_type' => QuoteTypeShortCode::CAR,
-            'batch' => $batch,
-            'type' => RenewalsUploadType::UPDATE_LEADS,
-            'status' => RenewalProcessStatuses::PLANS_FETCHED,
-            'email_sent' => 0,
-            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
-            'quote_id' => $quoteId,
-        ])->first();
-        if ($emailSent) {
-            $emailSent->email_sent = 1;
-            $emailSent->save();
-        }
-        info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
-    }
+//    public function updateRenewalQuoteEmailSent($batch, $quoteId)
+//    {
+//        info('updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);
+//        $emailSent = RenewalQuoteProcess::where([
+//            'quote_type' => QuoteTypeShortCode::CAR,
+//            'batch' => $batch,
+//            'type' => RenewalsUploadType::UPDATE_LEADS,
+//            'status' => RenewalProcessStatuses::PLANS_FETCHED,
+//            'email_sent' => 0,
+//            'fetch_plans_status' => FetchPlansStatuses::FETCHED,
+//            'quote_id' => $quoteId,
+//        ])->first();
+//        if ($emailSent) {
+//            $emailSent->email_sent = 1;
+//            $emailSent->save();
+//        }
+//        info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
+//    }
 }
