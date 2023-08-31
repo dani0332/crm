@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UtmLeadsSalesReportSeeder::class,
             AddPersonalLobsProducts::class,
             PersonalQuoteRolesPermissionSeeder::class,
+            RevivalConversionReportPermissionSeeder::class,
         ]);
     }
 }
