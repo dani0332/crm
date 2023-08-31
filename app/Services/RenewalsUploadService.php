@@ -11,6 +11,7 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -21,6 +22,7 @@ use App\Jobs\Renewals\CreateRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
+use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\AML;
 use App\Models\CarMake;
@@ -1207,10 +1209,10 @@ class RenewalsUploadService
         return $randomString;
     }
 
-    public function renewalBatchEmailProcess($batchLeadId, $batchEmailId, $quoteTypeId, $isCompleted, $batch)
+    public function renewalBatchEmailProcess($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
         Log::info('renewalBatchEmailProcess START');
-        $carQuote = CarQuote::find($batchLeadId);
+        $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
 
         if ($carQuote->previous_quote_policy_number != null) {
             // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
@@ -1230,7 +1232,7 @@ class RenewalsUploadService
             $carMake = $this->lookupService->getCarMake($carQuote->car_make_id);
             $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
             $emailData = (object) [
-                'quoteTypeId' => $quoteTypeId,
+                'quoteTypeId' => QuoteTypeId::Car,
                 'quoteId' => $carQuote->id,
                 'templateId' => $emailTemplateId,
                 'quoteCdbId' => $carQuote->code,
@@ -1270,13 +1272,15 @@ class RenewalsUploadService
 
             if ($responseCode == 201) {
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
-                $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+                RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
+                //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
             } else {
-                Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
+                RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
+                Log::error('renewalBatchEmailProcess uuid: ' . $carQuote->uuid . ' EmailNotSent: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
             }
         }
 
-        $this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
+//        $this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
         Log::info('renewalBatchEmailProcess END');
     }
 
@@ -1598,7 +1602,7 @@ class RenewalsUploadService
         ])->distinct('quote_id')->get();
     }
 
-    public function getProcessLeadsToSendEmails($batch)
+    public function getOcbLeadsQuery($batch)
     {
         return RenewalQuoteProcess::select('id', 'quote_id')->where([
             'quote_type' => QuoteTypeShortCode::CAR,
@@ -1610,9 +1614,65 @@ class RenewalsUploadService
         ])
             ->whereHas('carQuote', function ($q) {
                 $q->whereNull('paid_at');
-            })->groupBy('quote_id')->get();
+            })->groupBy('quote_id');
     }
 
+    public function scheduleRenewalsOcbEmails($batch, RenewalsBatchEmails $renewalsBatchEmail)
+    {
+        $logPrefix = 'fn: scheduleRenewalsOcbEmails ';
+        try
+        {
+            $jobs = null;
+
+            $this->getOcbLeadsQuery($batch)
+                ->chunkById(50, function ($renewalQuoteProcesses) use (&$jobs, $batch, $renewalsBatchEmail) {
+                    foreach ($renewalQuoteProcesses as $renewalQuoteProcess) {
+                        $jobs[] = new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $renewalQuoteProcess);
+                    }
+                });
+
+            if ($jobs != null && count($jobs)) {
+
+                Haystack::build()
+                    ->onQueue('renewals')
+                    ->addJobs($jobs)
+                    ->then(function () use ($logPrefix, $renewalsBatchEmail) {
+                        info($logPrefix.' all jobs completed successfully');
+                        $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
+                    })
+                    ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
+                        info($logPrefix.' one of batch is failed. ');
+                        $renewalsBatchEmail->update(['status' => ProcessStatusCode::FAILED]);
+                    })
+                    ->finally(function () use ($logPrefix) {
+                        info($logPrefix.' everything done');
+                    })
+                    ->allowFailures()
+                    ->withDelay(2)
+                    ->dispatch();
+
+            } else {
+                info($logPrefix.' No leads to schedule OCB email');
+                $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
+            }
+
+        }
+        catch (\Exception $exception)
+        {
+            info($logPrefix . ' one of batch is failed. Exception : '.$exception->getMessage());
+            $renewalsBatchEmail->update(['status' =>  ProcessStatusCode::FAILED]);
+        }
+
+
+        //todo: remove this code
+//        foreach ($batchLeads as $key => $batchLead) {
+//            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
+//            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
+//            sleep(0.5);
+//        }
+    }
+
+    //todo: remove this code
     public function updateRenewalQuoteEmailSent($batch, $quoteId)
     {
         info('updateRenewalQuoteEmailSent START batch: '.$batch.' quoteId: '.$quoteId);

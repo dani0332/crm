@@ -93,8 +93,8 @@ function onSubmit(isValid) {
     </div>
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
-      <x-alert color="error" class="mb-5" v-if="quoteForm.errors.error">
-        {{ quoteForm?.errors?.error }}
+      <x-alert color="error" class="mb-5" v-if="$page.props?.errors">
+        {{ $page.props?.errors }}
       </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">

@@ -48,12 +48,17 @@ const permissionsEnum = page.props.permissionsEnum;
             <h2 class="text-xl font-semibold">Email Batch Details</h2>
             <div class="space-x-3">
                 <x-button color="#ff5e00" href="/renewals/batches" class="btn-2">Batches List</x-button>
-                <x-button color="primary" onclick="return confirm('Do you want to send emails?');" :href="`/renewals/batches/${batch}/batch-process`">Send Emails</x-button>
+                <x-button color="primary" onclick="return confirm('Do you want to send emails?');" :href="`/renewals/batches/${batch}/schedule-renewals-ocb`">Send Emails</x-button>
 
             </div>
         </div>
         <x-divider class="my-4" />
 
+        <x-alert color="error" class="mb-5" v-if="$page.props?.errors">
+            <ul>
+                <li v-for="error in $page.props?.errors">{{ error }}</li>
+            </ul>
+        </x-alert>
 
         <DataTable
             table-class-name="tablefixed"

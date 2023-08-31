@@ -13,11 +13,13 @@ use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
+use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\RenewalsQuoteAmlJob;
+use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\AML;
 use App\Models\CarQuote;
 use App\Models\QuoteType;
@@ -330,43 +332,21 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-    public function runBatchProcess($batch)
+    public function scheduleRenewalsOcb(ScheduleRenewalsOcbRequest $request, $batch)
     {
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
-            return abort(403);
-        }
+        $totalLeads = $this->renewalsUploadFileService->getOcbLeadsQuery($batch)->count();
 
-        $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
+        $renewalBatchEmail = RenewalsBatchEmails::create([
+            'batch' => $batch,
+            'status' => ProcessStatusCode::IN_PROGRESS,
+            'total_leads' => $totalLeads,
+            'total_sent' => 0,
+            'total_bounced' => 0,
+            'total_failed' => 0,
+            'created_by_id' => auth()->id()
+        ]);
 
-        if ($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
-            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
-        }
-
-        Log::info('runBatchProcess START');
-        $batchLeads = $this->renewalsUploadFileService->getProcessLeadsToSendEmails($batch);
-        $batchLeadsCount = $batchLeads->count();
-        Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
-
-        if ($batchLeadsCount == 0) {
-            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
-        }
-
-        $batchEmail = new RenewalsBatchEmails();
-        $batchEmail->batch = $batch;
-        $batchEmail->status = ProcessStatusCode::IN_PROGRESS;
-        $batchEmail->total_leads = $batchLeadsCount;
-        $batchEmail->total_sent = 0;
-        $batchEmail->total_bounced = 0;
-        $batchEmail->created_by_id = auth()->id();
-        $batchEmail->save();
-
-        foreach ($batchLeads as $key => $batchLead) {
-            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
-            sleep(0.5);
-        }
-
-        Log::info('runBatchProcess END');
+        ScheduleRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
