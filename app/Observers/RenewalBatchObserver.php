@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Http\Requests\RenewalBatchRequest;
 use App\Models\RenewalBatch;
 
 class RenewalBatchObserver

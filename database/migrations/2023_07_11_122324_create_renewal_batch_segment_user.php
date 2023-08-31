@@ -15,24 +15,26 @@ class CreateRenewalBatchSegmentUser extends Migration
     public function up()
     {
         // pivot table
-        Schema::create('renewal_batch_segment_user', function (Blueprint $table) {
-            $table->id();
+        if (! Schema::hasTable('renewal_batch_segment_user')) {
+            Schema::create('renewal_batch_segment_user', function (Blueprint $table) {
+                $table->id();
 
-            $table->foreignId('renewal_batch_id')
-                ->constrained('renewal_batches')
-                ->constrained('retention_configs')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+                $table->foreignId('renewal_batch_id')
+                    ->constrained('renewal_batches')
+                    ->constrained('retention_configs')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
 
-            $table->enum('segment_type', [RenewalBatch::SGEMENT_TYPES_LIST]);
+                $table->enum('segment_type', [RenewalBatch::SGEMENT_TYPES_LIST]);
 
-            $table->foreignId('advisor_id')
-                ->constrained('users')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+                $table->foreignId('advisor_id')
+                    ->constrained('users')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
     }
 
     /**

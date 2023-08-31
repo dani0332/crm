@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Controllers\ActivitesController;
@@ -9,21 +8,15 @@ use App\Http\Controllers\AjaxController;
 use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\AMTController;
-use Illuminate\Support\Facades\Artisan;
-use App\Http\Controllers\CRUDController;
-use App\Http\Controllers\FormController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\TeamController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ClaimsAttachmentsController;
 use App\Http\Controllers\ClaimsStatusController;
+use App\Http\Controllers\CRUDController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\RentACarController;
-use App\Http\Controllers\AuditableController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FailedJobsController;
-use App\Http\Controllers\V2\CentralController;
+use App\Http\Controllers\FormController;
 use App\Http\Controllers\GenericCrudController;
 use App\Http\Controllers\HandlerController;
 use App\Http\Controllers\HealthQuoteController;
@@ -38,9 +31,12 @@ use App\Http\Controllers\ReasonController;
 use App\Http\Controllers\RenewalBatchController;
 use App\Http\Controllers\RenewalDataProcessingController;
 use App\Http\Controllers\RenewalsUploadController;
+use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\TmCallStatusController;
 use App\Http\Controllers\TmInsuranceTypeController;
 use App\Http\Controllers\TmLeadController;
@@ -51,10 +47,12 @@ use App\Http\Controllers\TravelController;
 use App\Http\Controllers\TravelMembersDetailController;
 use App\Http\Controllers\TypeOfInsuranceController;
 use App\Http\Controllers\UploadResourceController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AMLController as V2AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use App\Http\Controllers\V2\JetskiQuoteController;
@@ -65,6 +63,8 @@ use App\Http\Controllers\V2\PetQuoteController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------

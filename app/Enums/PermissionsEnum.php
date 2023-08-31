@@ -218,6 +218,6 @@ final class PermissionsEnum extends Enum
     public const CarSoldList = 'car-sold-list';
     public const CarUncontactableList = 'car-uncontactable-list';
     public const ViewTeamsFilters = 'view-teams-filters';
-    public const RenewalBatchConfigs   =   'renewal-batch-list';
-    public const RenewalBatchReport   =   'renewal-batch-report';
+    public const RenewalBatchConfigs = 'renewal-batch-list';
+    public const RenewalBatchReport = 'renewal-batch-report';
 }

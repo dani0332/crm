@@ -13,18 +13,20 @@ class CreateRenewalBatchDeadlinesTable extends Migration
      */
     public function up()
     {
-        Schema::create('renewal_batch_deadlines', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('renewal_batch_id')
-                ->constrained('renewal_batches')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+        if (! Schema::hasTable('renewal_batch_deadlines')) {
+            Schema::create('renewal_batch_deadlines', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('renewal_batch_id')
+                    ->constrained('renewal_batches')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->integer('quote_status_id');
-            $table->foreign('quote_status_id')->references('id')->on('quote_status');
-            $table->date('deadline_date');
-            $table->timestamps();
-        });
+                $table->integer('quote_status_id');
+                $table->foreign('quote_status_id')->references('id')->on('quote_status');
+                $table->date('deadline_date');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

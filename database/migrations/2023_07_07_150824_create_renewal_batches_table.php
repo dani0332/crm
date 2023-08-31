@@ -13,13 +13,15 @@ class CreateRenewalBatchesTable extends Migration
      */
     public function up()
     {
-        Schema::create('renewal_batches', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->date('start_date');
-            $table->date('end_date');
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('renewal_batches')) {
+            Schema::create('renewal_batches', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->date('start_date');
+                $table->date('end_date');
+                $table->timestamps();
+            });
+        }
 
     }
 

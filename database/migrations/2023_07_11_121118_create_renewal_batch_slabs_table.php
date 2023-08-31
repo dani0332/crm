@@ -14,29 +14,31 @@ class CreateRenewalBatchSlabsTable extends Migration
     public function up()
     {
         //pivot table
-        Schema::create('renewal_batch_slabs', function (Blueprint $table) {
-            $table->id();
+        if (! Schema::hasTable('renewal_batch_slabs')) {
+            Schema::create('renewal_batch_slabs', function (Blueprint $table) {
+                $table->id();
 
-            $table->foreignId('renewal_batch_id')
-                ->constrained('renewal_batches')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+                $table->foreignId('renewal_batch_id')
+                    ->constrained('renewal_batches')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
 
-            $table->foreignId('team_id')
-                ->constrained('teams')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+                $table->foreignId('team_id')
+                    ->constrained('teams')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
 
-            $table->foreignId('slab_id')
-                ->constrained('slabs')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+                $table->foreignId('slab_id')
+                    ->constrained('slabs')
+                    ->onDelete('cascade')
+                    ->onUpdate('cascade');
 
-            $table->integer('max')->default(0);
-            $table->integer('min')->default(0);
+                $table->integer('max')->default(0);
+                $table->integer('min')->default(0);
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
     }
 
     /**

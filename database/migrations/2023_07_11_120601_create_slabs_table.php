@@ -13,11 +13,13 @@ class CreateSlabsTable extends Migration
      */
     public function up()
     {
-        Schema::create('slabs', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('slabs')) {
+            Schema::create('slabs', function (Blueprint $table) {
+                $table->id();
+                $table->string('title');
+                $table->timestamps();
+            });
+        }
     }
 
     /**
