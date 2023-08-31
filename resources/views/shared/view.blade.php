@@ -314,72 +314,91 @@
                     });
                 }, 3200);
             }
-            // Custom export function to export all the available rows in grid not just the visible ones
-            function newexportaction(e, dt, button, config) {
-                vehicleTypeDataTable.draw();
-                var startDateStr = $('#created_at').val();
-                var endDateStr = $('#created_at_end').val();
-                var startDateParts = startDateStr.split("-");
-                var endDateParts = endDateStr.split("-");
-                var startDate = new Date(startDateParts[2], startDateParts[1] - 1, startDateParts[0]);
-                var endDate = new Date(endDateParts[2], endDateParts[1] - 1, endDateParts[0]);
-                if(!startDateStr || !endDateStr){
-                    showErrorMessage('Note : For export created date start and end should be selected');
-                    return;
+            function validateDateRange(startDateStr, endDateStr) {
+
+                if (!startDateStr && !endDateStr) {
+                    showErrorMessage('For Export : date range must be selected either created date or advisor assigned date.');
+                    return false;
                 }
-                if (endDateStr <= startDateStr) {
-                    showErrorMessage('Note : End date must be greater than start date.');
-                    return;
-                } else {
+
+                if (startDateStr && endDateStr) {
+                    var startDateParts = startDateStr.split("-");
+                    var endDateParts = endDateStr.split("-");
+
+                    var startDate = new Date(startDateParts[2], startDateParts[1] - 1, startDateParts[0]);
+                    var endDate = new Date(endDateParts[2], endDateParts[1] - 1, endDateParts[0]);
+
+
+                    if (endDate <= startDate) {
+                        showErrorMessage('Note : End date must be greater than start date.');
+                        return false;
+                    }
+
                     var differenceInMilliseconds = endDate - startDate;
                     var differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
-                    var maxDaysInMonth = 31;
-                    if (differenceInDays > maxDaysInMonth) {
-                        showErrorMessage('Note : Date range cannot be greater than a month.');
-                        return;
+
+                    if (differenceInDays > 31) {
+                        showErrorMessage('Note : Date range cannot exceed 31 days.');
+                        return false;
                     }
+
+                    return true;
+                } else {
+                    return false;
                 }
+            }
+
+            function newexportaction(e, dt, button, config) {
+                var advisorStartDate = $('#advisor_assigned_date').val();
+                var advisorEndDate = $('#advisor_assigned_date_end').val();
+                var createdStartDate = $('#created_at').val();
+                var createdEndDate = $('#created_at_end').val();
+
+                if (!validateDateRange(advisorStartDate, advisorEndDate) && !validateDateRange(createdStartDate, createdEndDate)) {
+                    return;
+                }
+
                 var self = this;
                 var oldStart = dt.settings()[0]._iDisplayStart;
+
                 dt.one('preXhr', function(e, s, data) {
                     data.start = 0;
                     data.length = totalRecords;
-                    data.length = 2147483647;
                     dt.one('preDraw', function(e, settings) {
-                        if (button[0].className.indexOf('buttons-copy') >= 0) {
-                            $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button,
-                                config);
-                        } else if (button[0].className.indexOf('buttons-excel') >= 0) {
-                            $.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
-                                $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt,
-                                    button, config) :
-                                $.fn.dataTable.ext.buttons.excelFlash.action.call(self, e, dt,
-                                    button, config);
-                        } else if (button[0].className.indexOf('buttons-csv') >= 0) {
-                            $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
-                                $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button,
-                                    config) :
-                                $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button,
-                                    config);
-                        } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
-                            $.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
-                                $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button,
-                                    config) :
-                                $.fn.dataTable.ext.buttons.pdfFlash.action.call(self, e, dt, button,
-                                    config);
-                        } else if (button[0].className.indexOf('buttons-print') >= 0) {
+                        var btnClass = button[0].className;
+
+                        if (btnClass.indexOf('buttons-copy') >= 0) {
+                            $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-excel') >= 0) {
+                            ($.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.excelHtml5.action : $.fn.dataTable.ext.buttons.excelFlash.action)
+                            .call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-csv') >= 0) {
+                            ($.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.csvHtml5.action : $.fn.dataTable.ext.buttons.csvFlash.action)
+                            .call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-pdf') >= 0) {
+                            ($.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.pdfHtml5.action : $.fn.dataTable.ext.buttons.pdfFlash.action)
+                            .call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-print') >= 0) {
                             $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
                         }
+
                         dt.one('preXhr', function(e, s, data) {
                             settings._iDisplayStart = oldStart;
                             data.start = oldStart;
                         });
+
                         setTimeout(dt.ajax.reload, 0);
                         return false;
                     });
                 });
+
                 dt.ajax.reload();
             }
+
+
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
