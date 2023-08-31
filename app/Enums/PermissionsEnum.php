@@ -214,4 +214,5 @@ final class PermissionsEnum extends Enum
     const RenewalsBatches = 'renewals-batches';
     const CarQuoteSearch = 'car-quotes-search';
     const UtmLeadsSalesReport = 'utm-leads-sales-report';
+    const RevivalConversionReportView = 'revival-conversion-report-view';
 }
