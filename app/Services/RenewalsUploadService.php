@@ -1211,8 +1211,9 @@ class RenewalsUploadService
 
     public function renewalBatchEmailProcess($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
-        Log::info('renewalBatchEmailProcess START');
         $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
+
+        Log::info('Renewals OCB Email started for uuid: ' . $carQuote->uuid);
 
         if ($carQuote->previous_quote_policy_number != null) {
             // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
@@ -1271,17 +1272,17 @@ class RenewalsUploadService
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if ($responseCode == 201) {
-                Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
+                Log::info('Renewals OCB Email sent to uuid: ' . $carQuote->uuid. ' ResponseCode: '.$responseCode);
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_sent' => DB::raw('total_sent+1')]);
                 //$this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
             } else {
                 RenewalsBatchEmails::where('id', $renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
-                Log::error('renewalBatchEmailProcess uuid: ' . $carQuote->uuid . ' EmailNotSent: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
+                Log::error('Renewals OCB Email failed for uuid: ' . $carQuote->uuid . ' ResponseCode: '.$responseCode.' batchEmailId:'.$renewalsBatchEmail->id.' Customer EmailAddress:'.$carQuote->email);
             }
         }
 
 //        $this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
-        Log::info('renewalBatchEmailProcess END');
+        Log::info('Renewals OCB Email completed for uuid: ' . $carQuote->uuid);
     }
 
     public function updateRenewalEmailBatchStatus($batchEmailId, $isCompleted)
@@ -1625,14 +1626,17 @@ class RenewalsUploadService
             $jobs = null;
 
             $this->getOcbLeadsQuery($batch)
-                ->chunkById(50, function ($renewalQuoteProcesses) use (&$jobs, $batch, $renewalsBatchEmail) {
-                    foreach ($renewalQuoteProcesses as $renewalQuoteProcess) {
-                        $jobs[] = new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $renewalQuoteProcess);
+                ->chunkById(50, function ($leads) use (&$jobs, $batch, $renewalsBatchEmail) {
+                    foreach ($leads as $lead) {
+                        $jobs[] = new RenewalBatchEmailJob($batch, $renewalsBatchEmail, $lead);
                     }
                 });
 
+
+
             if ($jobs != null && count($jobs)) {
 
+                info($logPrefix . 'total leads to be scheduled for OCB : ' . count($jobs));
                 Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
