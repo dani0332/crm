@@ -4,11 +4,11 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Models\InslyDetail;
-use Illuminate\Http\Request;
+use App\Repositories\InslyDetailRepository;
 
 class LegacyPolicyController extends Controller
 {
-   /**
+    /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
@@ -16,13 +16,13 @@ class LegacyPolicyController extends Controller
     public function index()
     {
 
-        $policies=InslyDetail::simplePaginate()->withQueryString()->toArray();
+        $policies = InslyDetailRepository::getData();
 
-        return inertia('LegacyPolicy/Index', ['policies'=>$policies]);
+        return inertia('LegacyPolicy/Index', ['policies' => $policies]);
 
     }
 
-     /**
+    /**
      * Display the specified resource.
      *
      * @param  int  $id
@@ -31,9 +31,9 @@ class LegacyPolicyController extends Controller
     public function show(int $policyNo)
     {
 
-        $policy=InslyDetail::where('policy_oid','=',$policyNo)->first();
-        
-        return inertia('LegacyPolicy/Show', ['policy'=>$policy]);
+        $policy = InslyDetailRepository::getBy('policy_oid',$policyNo);
+
+        return inertia('LegacyPolicy/Show', ['policy' => $policy]);
 
     }
 }
