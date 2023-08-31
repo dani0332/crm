@@ -155,6 +155,7 @@
     @php
     $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
+    $appName = config('constants.APP_ENV')
     @endphp
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
@@ -188,7 +189,7 @@
         var pusherAppKey = @json($pusherAppKey);
         var userId = @json($userId);
             Pusher.logToConsole = true;
-
+        var appName = #json($appName);
         var pusher = new Pusher(pusherAppKey, {
             cluster: 'ap1'
         });
@@ -215,8 +216,8 @@
             $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
         }
 
-        var channel = pusher.subscribe('activity.user');
-        channel.bind('user.status.changed', function(data) {
+        var channel = pusher.subscribe(appName + '-activity.user');
+        channel.bind(appName + '-user.status.changed', function(data) {
             if ($('.car_lead_allocation_table').length > 0) {
                 $('.car_lead_allocation_table').find("tr")
                     .find("td:first")
