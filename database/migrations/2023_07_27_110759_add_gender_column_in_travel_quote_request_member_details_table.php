@@ -14,7 +14,7 @@ class AddGenderColumnInTravelQuoteRequestMemberDetailsTable extends Migration
     public function up()
     {
         Schema::table('travel_quote_request_member_details', function (Blueprint $table) {
-            if (!Schema::hasColumn('travel_quote_request_member_details', 'gender')) {
+            if (! Schema::hasColumn('travel_quote_request_member_details', 'gender')) {
                 $table->string('gender')->nullable();
             }
         });
