@@ -126,7 +126,6 @@ class TransactionController extends Controller
             ->orderBy('name')
             ->where('is_active', 1)
             ->get();
-        $teams = $this->getAllTeams();
         $isCarManager = auth()->user()->hasAnyRole([RolesEnum::CarManager]);
 
         return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
