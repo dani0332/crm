@@ -196,6 +196,7 @@
 
         function changeAvailiblity(data, self)
         {
+            debugger;
             $('#online-status-div').hide();
             $('#offline-status-div').hide();
             $('#unavailable-status-div').hide();
@@ -218,6 +219,7 @@
 
         var channel = pusher.subscribe(appName + '-activity.user');
         channel.bind(appName + '-user.status.changed', function(data) {
+            debugger;
             if ($('.car_lead_allocation_table').length > 0) {
                 $('.car_lead_allocation_table').find("tr")
                     .find("td:first")
@@ -237,6 +239,7 @@
                     });
             }
             if($('.lead_allocation_table').length == 0 && $('.car_lead_allocation_table').length == 0){
+                debugger;
                 $('#online-status-div').hide();
                 $('#offline-status-div').hide();
                 $('#unavailable-status-div').hide();
