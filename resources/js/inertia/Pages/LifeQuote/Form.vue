@@ -29,7 +29,7 @@ const quoteForm = useForm({
   premium: props.quote?.premium || '',
   tenure_of_insurance_id: props.quote?.tenure_of_insurance_id || '',
   number_of_years_id: props.quote?.number_of_years_id || '',
-  is_smoker: props.quote?.is_smoker || '',
+  is_smoker: props.quote?.is_smoker || 0,
   gender: props.quote?.gender || '',
   others_info: props.quote?.others_info || '',
 });
@@ -149,7 +149,7 @@ function onSubmit(isValid) {
         <x-input
           v-model="quoteForm.premium"
           type="number"
-          label="PREMIUM"
+          label="PRICE"
           class="w-full"
           :error="quoteForm.errors.premium"
         />
@@ -239,8 +239,8 @@ function onSubmit(isValid) {
           v-model="quoteForm.is_smoker"
           label="Smoker"
           :options="[
-            { value: 0, label: 'Yes' },
-            { value: 1, label: 'No' },
+            { value: 1, label: 'Yes' },
+            { value: 0, label: 'No' },
           ]"
           class="w-full"
           :error="quoteForm.errors.is_smoker"

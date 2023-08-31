@@ -1,0 +1,26 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class EmbeddedTransaction extends Model
+{
+    use HasFactory;
+
+    public function quoteType()
+    {
+        return $this->belongsTo(QuoteType::class, 'quote_type_id', 'id');
+    }
+
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(EmbeddedProductOption::class, 'product_id', 'id');
+    }
+}

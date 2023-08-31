@@ -46,8 +46,8 @@ class HealthQuoteService extends BaseService
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
-            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%b-%Y %H:%i:%s") as created_at'),
+            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%b-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
             'hqr.email',
@@ -670,7 +670,7 @@ class HealthQuoteService extends BaseService
                 $title = 'Marital Status';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'cover_for_id':
                 $title = 'Who would you like cover for?';
@@ -745,13 +745,13 @@ class HealthQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'currently_insured_with_id':
                 $title = 'Currently Insured With';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             case 'device':
                 $title = 'Device';
@@ -1080,7 +1080,7 @@ class HealthQuoteService extends BaseService
                     info('Lead: '.$leadId.' assigned to advisor: '.$userId);
                 } else {
                     info('Advisor : '.$userId.' cannot take lead: '.$leadId);
-                    $msg = 'Advisor is not allowed to take lead with CDBID : '.$lead->code;
+                    $msg = 'Advisor is not allowed to take lead with Ref-ID : '.$lead->code;
                     array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
 
                     continue;
@@ -1118,7 +1118,7 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['basmah'] + $plan['policyFee'] + $plan['vat'];
+                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
@@ -1221,7 +1221,7 @@ class HealthQuoteService extends BaseService
 
         $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
         $quote->load(['advisor' => function ($q) {
-            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
         }, 'customer']);
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])

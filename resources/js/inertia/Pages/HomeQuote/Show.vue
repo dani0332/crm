@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-// import axios from 'axios';
-
 defineProps({
   quote: Object,
   leadStatuses: Array,
@@ -17,6 +12,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   isBetaUser: Boolean,
   can: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -102,7 +98,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
   trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason || null,
+  lostReason: page.props.quote.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -466,8 +462,17 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quote.code }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Advisor</dt>
@@ -486,8 +491,17 @@ const policyDetails = useForm({
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Parent Cdb Id</dt>
-            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Renewal Batch</dt>
@@ -610,7 +624,7 @@ const policyDetails = useForm({
             <dd>{{ quote.previous_policy_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Previous Quote Premium</dt>
+            <dt class="font-medium">Previous Quote Price</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
         </dl>
@@ -628,7 +642,7 @@ const policyDetails = useForm({
             <dd>{{ quote.policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Premium</dt>
+            <dt class="font-medium">Price</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -704,6 +718,12 @@ const policyDetails = useForm({
         </x-button>
       </div>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -837,7 +857,12 @@ const policyDetails = useForm({
       </x-modal>
     </div>
 
-    <customerAdditionalContacts quoteType="Home" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+    <customerAdditionalContacts
+      quoteType="Home"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

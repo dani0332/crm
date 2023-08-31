@@ -190,6 +190,7 @@
                     }
                 }
             }
+            var totalRecords = 0;
             // Initializing the datatable
             var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
                 ordering: false,
@@ -274,6 +275,7 @@
                         }
                     }
                 }
+            totalRecords = vehicleTypeDataTable.page.info().recordsTotal;
             });
             $("#searchTable").submit(function(e) {
                 e.preventDefault();
@@ -301,48 +303,102 @@
                 }, 1000);
                 location.reload();
             });
-            // Custom export function to export all the available rows in grid not just the visible ones
+            function showErrorMessage(msg)
+            {
+                $(".errorMsg").empty().hide();
+                $(".errorMsg").append('<div class="alert alert-danger">'+ msg +'</div>');
+                $(".errorMsg").fadeIn(300);
+                setTimeout(function() {
+                    $(".errorMsg").fadeOut(300, function() {
+                        $(".errorMsg").empty().hide();
+                    });
+                }, 3200);
+            }
+            function validateDateRange(startDateStr, endDateStr) {
+
+                if (!startDateStr && !endDateStr) {
+                    showErrorMessage('For Export : date range must be selected either created date or advisor assigned date.');
+                    return false;
+                }
+
+                if (startDateStr && endDateStr) {
+                    var startDateParts = startDateStr.split("-");
+                    var endDateParts = endDateStr.split("-");
+
+                    var startDate = new Date(startDateParts[2], startDateParts[1] - 1, startDateParts[0]);
+                    var endDate = new Date(endDateParts[2], endDateParts[1] - 1, endDateParts[0]);
+
+
+                    if (endDate <= startDate) {
+                        showErrorMessage('Note : End date must be greater than start date.');
+                        return false;
+                    }
+
+                    var differenceInMilliseconds = endDate - startDate;
+                    var differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+
+                    if (differenceInDays > 31) {
+                        showErrorMessage('Note : Date range cannot exceed 31 days.');
+                        return false;
+                    }
+
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
             function newexportaction(e, dt, button, config) {
+                var advisorStartDate = $('#advisor_assigned_date').val();
+                var advisorEndDate = $('#advisor_assigned_date_end').val();
+                var createdStartDate = $('#created_at').val();
+                var createdEndDate = $('#created_at_end').val();
+
+                if (!validateDateRange(advisorStartDate, advisorEndDate) && !validateDateRange(createdStartDate, createdEndDate)) {
+                    return;
+                }
+
                 var self = this;
                 var oldStart = dt.settings()[0]._iDisplayStart;
+
                 dt.one('preXhr', function(e, s, data) {
                     data.start = 0;
-                    data.length = 2147483647;
+                    data.length = totalRecords;
                     dt.one('preDraw', function(e, settings) {
-                        if (button[0].className.indexOf('buttons-copy') >= 0) {
-                            $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button,
-                                config);
-                        } else if (button[0].className.indexOf('buttons-excel') >= 0) {
-                            $.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
-                                $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt,
-                                    button, config) :
-                                $.fn.dataTable.ext.buttons.excelFlash.action.call(self, e, dt,
-                                    button, config);
-                        } else if (button[0].className.indexOf('buttons-csv') >= 0) {
-                            $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
-                                $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button,
-                                    config) :
-                                $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button,
-                                    config);
-                        } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
-                            $.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
-                                $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button,
-                                    config) :
-                                $.fn.dataTable.ext.buttons.pdfFlash.action.call(self, e, dt, button,
-                                    config);
-                        } else if (button[0].className.indexOf('buttons-print') >= 0) {
+                        var btnClass = button[0].className;
+
+                        if (btnClass.indexOf('buttons-copy') >= 0) {
+                            $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-excel') >= 0) {
+                            ($.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.excelHtml5.action : $.fn.dataTable.ext.buttons.excelFlash.action)
+                            .call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-csv') >= 0) {
+                            ($.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.csvHtml5.action : $.fn.dataTable.ext.buttons.csvFlash.action)
+                            .call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-pdf') >= 0) {
+                            ($.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
+                                $.fn.dataTable.ext.buttons.pdfHtml5.action : $.fn.dataTable.ext.buttons.pdfFlash.action)
+                            .call(self, e, dt, button, config);
+                        } else if (btnClass.indexOf('buttons-print') >= 0) {
                             $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
                         }
+
                         dt.one('preXhr', function(e, s, data) {
                             settings._iDisplayStart = oldStart;
                             data.start = oldStart;
                         });
+
                         setTimeout(dt.ajax.reload, 0);
                         return false;
                     });
                 });
+
                 dt.ajax.reload();
             }
+
+
             $(".toggle-btn-2").on("click", function() {
                 $(".show-visual-cards").addClass("hideme");
                 $(".show-visual-cards").removeClass("showme");
@@ -470,6 +526,7 @@
         <div class="col-md-12 col-sm-12">
             <div class="x_panel" style="overflow:hidden">
                 <div class="x_title">
+                    <div class="errorMsg"></div>
                     <h2>{{ str_contains(strtolower($model->modelType), 'team')
                         ? 'Team'
                         : (str_contains(strtolower($model->modelType), 'leadstatus')
@@ -698,6 +755,9 @@
                             <input type="hidden" id="isManualAllocationAllowed" name="isManualAllocationAllowed"
                                 value="{{ $isManualAllocationAllowed }}">
                         </form>
+                        @php
+                            $updatedTitles = ['premium' => 'price'];
+                        @endphp
                         <table id="dtBasicExample" class="table-striped jambo_table table" style="table-layout: fixed;"
                             width="100%">
                             <thead>
@@ -719,12 +779,19 @@
                                         @if ($model->modelType != 'LeadStatus' && $model->modelType != 'Team')
                                             @if ($property != 'id')
                                                 @if (!in_array($property, explode(',', $skipProperties['list'])))
-                                                    <th data-type="{{ explode('|', $value)[1] }}"
-                                                        style="width: 180px !important">
+                                                    @php
+                                                        $textDecorations = $tooltip = "";
+                                                        if((strpos($value, 'title') && strtoupper($customTitles[$property]) == 'REF-ID')){
+                                                            $textDecorations = 'text-decoration: underline; text-decoration-style: dotted;';
+                                                            $tooltip = 'Reference ID';
+                                                        }
+                                                    @endphp
+                                                    <th data-type="{{ explode('|', $value)[1] }}" data-toggle="tooltip" data-placement="top" title="{{$tooltip}}"
+                                                        style="width: 180px !important; {{$textDecorations}}">
                                                         @if (strpos($value, 'title'))
-                                                            {{ strtoupper($customTitles[$property]) }}
+                                                            {{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property])) }}
                                                         @else
-                                                            {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                            {{ str_replace('_', ' ', strtoupper((array_key_exists(strtolower($property), $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}
                                                         @endif
                                                     </th>
                                                 @endif
@@ -734,9 +801,9 @@
                                                 <th data-type="{{ explode('|', $value)[1] }}"
                                                     style="width: 180px !important">
                                                     @if (strpos($value, 'title'))
-                                                        {{ strtoupper($customTitles[$property]) }}
+                                                        {{ strtoupper( (array_key_exists(strtolower($customTitles[$property]), $updatedTitles) ? $updatedTitles[strtolower($customTitles[$property])] : $customTitles[$property])) }}
                                                     @else
-                                                        {{ str_replace('_', ' ', strtoupper($property)) }}
+                                                        {{ str_replace('_', ' ', strtoupper((array_key_exists($property, $updatedTitles) ? $updatedTitles[strtolower($property)] : $property))) }}
                                                     @endif
                                                 </th>
                                             @endif

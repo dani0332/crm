@@ -11,6 +11,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   lostReasons: Array,
   quoteStatusEnum: Object,
+  embeddedProducts: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -31,7 +32,9 @@ const rules = {
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
     value: advisor.id,
-    label: advisor.roles[0].name ? advisor.name + ' - ' + advisor.roles[0]?.name : advisor.name
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
   }));
 });
 
@@ -71,7 +74,6 @@ const leadDuplicateForm = useForm({
   lob_team_sub_selection: null,
 });
 
-
 //activities
 const activityActionEdit = ref(false);
 const activityTable = [
@@ -97,7 +99,6 @@ const activityForm = useForm({
   activity_id: null,
   uuid: null,
 });
-
 
 const confirmDeleteData = reactive({
   docs: null,
@@ -227,6 +228,57 @@ const onCreateDuplicate = isValid => {
     },
   });
 };
+
+const quoteStatusOptions = computed(() => {
+  return page.props.quoteStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const leadStatusOptions = computed(() => {
+  return page.props.quoteStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
+});
+
+const allowStatusUpdate = computed(() => {
+  return (
+    page.props.quote.quote_status_id ==
+    page.props.quoteStatusEnum.TransactionApproved
+  );
+});
+
+const leadStatusForm = useForm({
+  modelType: 'Life',
+  leadId: page.props.quote.id,
+  quote_uuid: page.props.quote.uuid,
+  assigned_to_user_id: page.props.quote.advisor_id,
+  leadStatus: page.props.quote.quote_status_id || null,
+  notes: page.props.quote.life_quote_request_detail?.notes || null,
+  trans_code: page.props.quote.transapp_code || null,
+  lostReason:
+    page.props.quote.life_quote_request_detail?.lost_reason_id || null,
+});
+
+const onLeadStatus = () => {
+  leadStatusForm.post(
+    `/quotes/Life/${page.props.quote.id}/update-lead-status`,
+    {
+      preserveScroll: true,
+      onError: errors => {
+        console.log(errors);
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Lead Status Updated',
+          position: 'top',
+        });
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -303,8 +355,17 @@ const onCreateDuplicate = isValid => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quote.code }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -327,7 +388,7 @@ const onCreateDuplicate = isValid => {
             <dd>{{ quote?.mobile_no }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Advisor</dt>
+            <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor?.name }}</dd>
           </div>
 
@@ -377,7 +438,7 @@ const onCreateDuplicate = isValid => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
             <dd></dd>
           </div>
@@ -418,7 +479,7 @@ const onCreateDuplicate = isValid => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">IS SMOKER</dt>
-            <dd>{{ quote.is_smoker }}</dd>
+            <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -427,16 +488,25 @@ const onCreateDuplicate = isValid => {
             <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EXPIRY DATE</dt>
-            <dd></dd>
+            <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
+            <dd>{{ quote.renewal_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd></dd>
+            <dd>{{ quote.renewal_batch }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
-            <dd></dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
         </dl>
       </div>
@@ -455,7 +525,7 @@ const onCreateDuplicate = isValid => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -465,13 +535,80 @@ const onCreateDuplicate = isValid => {
       </div>
     </div>
 
-    <QuoteStatus
-      :quote="quote"
-      :quote-type="quoteType"
-      :quote-statuses="quoteStatuses"
-      :lost-reasons="lostReasons"
-      :quote-status-enum="quoteStatusEnum"
+    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
+            <x-select
+              v-model="leadStatusForm.leadStatus"
+              label="Status"
+              :options="leadStatusOptions"
+              :disabled="allowStatusUpdate"
+              placeholder="Lead Status"
+              class="w-full"
+            />
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="Notes"
+              placeholder="Lead Notes"
+              class="w-full"
+              :disabled="allowStatusUpdate"
+            />
+          </div>
+        </div>
+        <div class="w-full md:w-2/3">
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus ==
+              page.props.quoteStatusEnum.TransactionApproved
+            "
+            v-model="leadStatusForm.trans_code"
+            label="TransApp Code"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
+          <x-select
+            v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
+            v-model="leadStatusForm.lostReason"
+            label="Lost Reason"
+            :options="
+              lostReasons?.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="leadStatusForm.errors.lostReason"
+          />
+        </div>
+      </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="allowStatusUpdate"
+        >
+          Change Status
+        </x-button>
+      </div>
+    </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -502,8 +639,8 @@ const onCreateDuplicate = isValid => {
             @change="onActivityStatusUpdate(id)"
           />
         </template>
-        <template #item-advisor="{assignee}">
-            {{ assignee?.name }}
+        <template #item-advisor="{ assignee }">
+          {{ assignee?.name }}
         </template>
         <template #item-action="item">
           <div class="space-x-4">
@@ -607,7 +744,12 @@ const onCreateDuplicate = isValid => {
       </x-modal>
     </div>
 
-    <customerAdditionalContacts quoteType="Life" :customerId="quote.customer_id" :quoteId="quote.id"  :contacts="customerAdditionalContacts" />
+    <customerAdditionalContacts
+      quoteType="Life"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
@@ -638,6 +780,6 @@ const onCreateDuplicate = isValid => {
         :hide-footer="historyData.length < 15"
       />
     </div>
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\LifeQuote'" :id="$page.props.quote.id" />
   </div>
 </template>

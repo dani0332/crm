@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\PermissionsEnum;
+use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
@@ -53,8 +54,11 @@ class HandleInertiaRequests extends Middleware
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ]);
     }
 
@@ -242,13 +246,13 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
-            $nav = $nav->add('Discount Management', '', function (Section $section) {
-                $section
-                    ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
-            });
-        }
+        // if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
+        //     $nav = $nav->add('Discount Management', '', function (Section $section) {
+        //         $section
+        //             ->add('Base Discount', '/discount/base', fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->add('Age Discount', '/discount/age', fn ($s) => $s->attributes(['icon' => 'box']));
+        //     });
+        // }
 
         if (auth()->user()->can(PermissionsEnum::TransAppList)) {
             $nav = $nav->add('Trans App', '', function (Section $section) {
@@ -262,7 +266,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(
                         auth()->user()->can(PermissionsEnum::TransAppCreate),
                         'Create Transaction',
-                        '/transapp/create',
+                        '/transapp/transaction/create',
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
@@ -436,6 +440,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
                             PermissionsEnum::TIER_CONFIG_LIST,
+                            PermissionsEnum::TeamThresholdView,
                         ]),
                         'Allocation Config',
                         url('generic/tier'),
@@ -457,6 +462,12 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                                 'Rules',
                                 url('generic/rule'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::TeamThresholdView),
+                                'Team Threshold',
+                                url('generic/allocation-threshold'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

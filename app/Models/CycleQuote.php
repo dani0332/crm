@@ -28,6 +28,6 @@ class CycleQuote extends Model
 
     public function yearOfManufacture()
     {
-        return $this->hasOne(YearOfManufacture::class, 'id', 'year_of_manufacture_id');
+        return $this->belongsTo(YearOfManufacture::class);
     }
 }

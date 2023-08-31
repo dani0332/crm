@@ -10,6 +10,7 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -25,12 +26,13 @@ class BikeQuoteController extends Controller
     public function index()
     {
         $personalQuotes = BikeQuoteRepository::getData();
-
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
 
         return inertia('BikeQuote/Index', [
             'quotes' => $personalQuotes,
             'quoteStatuses' => $quoteStatuses,
+            'advisors' => $advisors,
         ]);
     }
 
@@ -68,9 +70,11 @@ class BikeQuoteController extends Controller
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('BikeQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
+        return inertia(
+            'BikeQuote/Form',
+            array_merge($data, [
+                'quote' => $quote,
+            ])
         );
     }
 
@@ -97,6 +101,8 @@ class BikeQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::BIKE->id(), $quote->id);
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
@@ -111,6 +117,7 @@ class BikeQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 

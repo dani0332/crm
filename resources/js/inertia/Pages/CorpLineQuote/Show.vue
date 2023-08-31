@@ -11,6 +11,7 @@ defineProps({
   advisors: Array,
   permissions: Object,
   typeCode: String,
+  lostReasons: Object,
 });
 
 const { isRequired } = useRules();
@@ -102,7 +103,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason || null,
+  lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -432,8 +433,15 @@ const onAssignLead = () => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quote.code }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Ref-ID
+                      </label>
+                      <template #tooltip> Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">FIRST NAME</dt>
@@ -477,7 +485,7 @@ const onAssignLead = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.lost_reason }}</dd>
+            <dd>{{ quote?.lost_reason }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -496,7 +504,7 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
 
@@ -507,7 +515,7 @@ const onAssignLead = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BUSINESS INSURANCE TYPE</dt>
-            <dd>Group Medical</dd>
+            <dd>{{ quote.business_type_of_insurance_id_text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -531,8 +539,15 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
-            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+              <div>
+                  <x-tooltip position="bottom">
+                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                          Parent Ref-ID
+                      </label>
+                      <template #tooltip> Parent Reference ID </template>
+                  </x-tooltip>
+              </div>
+              <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -561,7 +576,7 @@ const onAssignLead = () => {
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -622,7 +637,10 @@ const onAssignLead = () => {
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
             label="LOST REASON"
-            :options="lostReasonsOptions"
+            :options="lostReasons?.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))"
             placeholder="Lost Reason is required"
             class="w-full"
             :error="leadStatusForm.errors.lostReason"
