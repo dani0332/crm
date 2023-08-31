@@ -413,13 +413,12 @@ $(document).ready(function () {
         d.transapp_approval_code = $('#transapp_approval_code').val();
         d.transapp_customer_email = $('#customer_email').val();
         d.transapp_customer_name = $('#customer_name').val();
+        d.team_id = $('#team').val();
       },
     },
       drawCallback: function () {
-         console.log('draw call back=================================',this.api().data());
          let tableData = this.api().data();
           if(tableData[0]){
-              console.log('premium total',tableData[0].premium_total);
               $('#total_premium_value').html(tableData[0].premium_total);
           }
       },

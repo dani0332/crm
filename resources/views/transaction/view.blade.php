@@ -138,6 +138,7 @@
                         </div>
 
                     </div>
+                    <?php  if ($isCarManager) { ?>
                     <div class="item form-group">
                         <div class="col col-md-6">
                             <label class="col-form-label col-md-2 col-sm-2" for="Payment mode">Total Premium</label>
@@ -160,6 +161,7 @@
                         </div>
 
                     </div>
+                    <?php } ?>
                     <div class="item form-group">
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\TransactionRequest;
 use App\Models\CarQuote;
+use App\Models\Team;
 use App\Models\Transaction;
 use App\Services\CustomerService;
 use App\Services\ReasonService;
@@ -11,6 +12,7 @@ use App\Services\TransAppService;
 use Auth;
 use DataTables;
 use DB;
+use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
 use App\Traits\TeamHierarchyTrait;
 
@@ -75,7 +77,9 @@ class TransactionController extends Controller
             if ($isTransappNonAdmin == '1') {
             //    $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
-
+            if (! empty($request->team_id)) {
+                $dataTransapp->whereIn('user_team.team_id', $request->team_id);
+            }
             if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
               //  $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
@@ -114,8 +118,15 @@ class TransactionController extends Controller
                 ->addColumn('premium_total',$premiumAmount)
                 ->make(true);
         }
-        $teams = $this->getAllTeams();
-        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin','teams'));
+
+        $teamIds = $this->getUserTeams(auth()->user()->id);
+        $teams = Team::whereIn('id', $teamIds->pluck('id'))
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get();
+        $isCarManager =  auth()->user()->hasAnyRole([RolesEnum::CarManager]);
+        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin','teams','isCarManager'));
     }
 
     /**
