@@ -6,7 +6,6 @@ use App\Enums\ProcessStatusCode;
 use App\Models\RenewalsBatchEmails;
 use App\Services\RenewalsUploadService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -28,6 +27,7 @@ class ScheduleRenewalOcbEmails implements ShouldQueue
     {
         $this->batch = $batch;
         $this->renewalsBatchEmail = $renewalsBatchEmail;
+        $this->onQueue('renewals');
     }
 
     /**
@@ -38,6 +38,8 @@ class ScheduleRenewalOcbEmails implements ShouldQueue
     public function handle(RenewalsUploadService $renewalsUploadService)
     {
         info('CL: ScheduleRenewalOcbEmails OCB email schedule is started');
+
+        $this->renewalsBatchEmail->update(['status' => ProcessStatusCode::IN_PROGRESS]);
 
         $renewalsUploadService->scheduleRenewalsOcbEmails($this->batch, $this->renewalsBatchEmail);
 

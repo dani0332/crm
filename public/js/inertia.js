@@ -38500,16 +38500,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["href"])])]), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createVNode)(_component_x_divider, {
     "class": "my-4"
-  }), (_ctx$$page$props = _ctx.$page.props) !== null && _ctx$$page$props !== void 0 && _ctx$$page$props.errors ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createBlock)(_component_x_alert, {
+  }), (_ctx$$page$props = _ctx.$page.props) !== null && _ctx$$page$props !== void 0 && _ctx$$page$props.errors.error ? ((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createBlock)(_component_x_alert, {
     key: 0,
     color: "error",
     "class": "mb-5"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_2__.withCtx)(function () {
       var _ctx$$page$props2;
-      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementVNode)("ul", null, [((0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_2__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.renderList)((_ctx$$page$props2 = _ctx.$page.props) === null || _ctx$$page$props2 === void 0 ? void 0 : _ctx$$page$props2.errors, function (error) {
-        return (0,vue__WEBPACK_IMPORTED_MODULE_2__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_2__.createElementBlock)("li", null, (0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)(error), 1 /* TEXT */);
-      }), 256 /* UNKEYED_FRAGMENT */))])];
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_2__.createTextVNode)((0,vue__WEBPACK_IMPORTED_MODULE_2__.toDisplayString)((_ctx$$page$props2 = _ctx.$page.props) === null || _ctx$$page$props2 === void 0 ? void 0 : _ctx$$page$props2.errors.error), 1 /* TEXT */)];
     }),
 
     _: 1 /* STABLE */

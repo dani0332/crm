@@ -16,10 +16,12 @@ use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class RenewalBatchEmailJob implements ShouldQueue
+class RenewalBatchEmailJob implements ShouldQueue, StackableJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
     protected $batchLeadId;
     protected $batchEmailId;
@@ -59,7 +61,11 @@ class RenewalBatchEmailJob implements ShouldQueue
      */
     public function handle(RenewalsUploadService $renewalsUploadFileService)
     {
+        info('Renewals OCB email job started ');
+
         $renewalsUploadFileService->renewalBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
+
+        info('Renewals OCB email job completed ');
 
         /*try {
 
