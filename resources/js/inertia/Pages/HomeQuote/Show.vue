@@ -508,10 +508,6 @@ const policyDetails = useForm({
             <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Renewal Batch</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Renewal import code</dt>
             <dd>{{ quote.renewal_import_code }}</dd>
           </div>

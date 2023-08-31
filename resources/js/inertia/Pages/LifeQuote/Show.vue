@@ -491,10 +491,6 @@ const onLeadStatus = () => {
             <dd>{{ quote.renewal_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <div>
               <x-tooltip position="bottom">
                 <label

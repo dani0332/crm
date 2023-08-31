@@ -1233,10 +1233,6 @@ onMounted(() => {
             <dd>{{ quote.is_ebp_renewal ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.lost_reason }}</dd>
           </div>

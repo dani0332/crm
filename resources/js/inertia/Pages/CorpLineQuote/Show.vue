@@ -531,11 +531,6 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">GENDER</dt>
             <dd>{{ genderText(quote.gender).value }}</dd>
           </div>
