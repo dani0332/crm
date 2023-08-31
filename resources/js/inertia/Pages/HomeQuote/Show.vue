@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-// import axios from 'axios';
-
 defineProps({
   quote: Object,
   leadStatuses: Array,
@@ -17,6 +12,7 @@ defineProps({
   allowedDuplicateLOB: Array,
   isBetaUser: Boolean,
   can: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -702,6 +698,12 @@ const policyDetails = useForm({
         </x-button>
       </div>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

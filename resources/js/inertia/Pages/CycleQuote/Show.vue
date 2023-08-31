@@ -1,12 +1,10 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
-import { useCan } from '../../Composables/can';
 
 defineProps({
   quote: Object,
@@ -24,6 +22,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -379,6 +378,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusesEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

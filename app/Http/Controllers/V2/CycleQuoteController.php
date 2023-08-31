@@ -10,6 +10,7 @@ use App\Http\Requests\CycleQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -70,9 +71,11 @@ class CycleQuoteController extends Controller
 
         $quote = CycleQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('CycleQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
+        return inertia(
+            'CycleQuote/Form',
+            array_merge($data, [
+                'quote' => $quote,
+            ])
         );
     }
 
@@ -86,7 +89,6 @@ class CycleQuoteController extends Controller
         CycleQuoteRepository::update($uuid, $request->validated());
 
         return redirect('personal-quotes/cycle/'.$uuid)->with('message', 'Quote updated successfully');
-
     }
 
     /**
@@ -115,6 +117,8 @@ class CycleQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
 
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CYCLE->id(), $quote->id);
+
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
@@ -131,6 +135,7 @@ class CycleQuoteController extends Controller
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'modelType' => QuoteTypes::CYCLE,
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 }

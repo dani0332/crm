@@ -1,6 +1,5 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -23,6 +22,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -281,6 +281,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

@@ -7,7 +7,6 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
-import { useCan } from '../../Composables/can';
 
 defineProps({
   quote: Object,
@@ -24,6 +23,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -284,6 +284,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
 
     <AuditLogs :id="$page.props.quote.id" :quote-type="quoteType" />

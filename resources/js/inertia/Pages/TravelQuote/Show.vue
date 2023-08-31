@@ -31,6 +31,7 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -1270,6 +1271,7 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="travelers.length < 15"
         show-index
       >
         <template #item-name="item"> Traveler {{ item.index }} </template>
@@ -1284,7 +1286,7 @@ onMounted(() => {
         </template>
 
         <template #item-action="item">
-          <div class="flex gap-2 pr-2">
+          <div class="flex gap-2 justify-center">
             <x-button
               size="xs"
               color="primary"
@@ -1314,7 +1316,6 @@ onMounted(() => {
         backdrop
       >
         <template #header>
-          <i class="fa fa-user"></i>
           {{ travelerForm.id ? 'Edit: ' + travelerName : 'New Member' }}
         </template>
         <x-form @submit="submitTraveler" :auto-focus="false">
@@ -1467,6 +1468,7 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="emailStatuses.length < 15"
       >
         <template #item-email_status="item">
           <span class="text-primary-600 uppercase">{{
@@ -1615,6 +1617,7 @@ onMounted(() => {
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
+          :hide-footer="listQuotePlans.length < 15"
         >
           <template #item-providerName="item">
             <span class="text-primary-600 uppercase">{{
@@ -1649,6 +1652,12 @@ onMounted(() => {
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
