@@ -805,10 +805,13 @@ const additionalContactPrimaryConfirmed = () => {
     }/make-primary`,
     {
       isInertia: true,
+      quote_type: 'travel',
       quote_id: page.props.quote.id,
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
-      quote_type: 'travel',
+      quote_customer_id: page.props.quote.customer_id,
+      quote_primary_email_address: page.props.quote.email,
+      quote_primary_mobile_no: page.props.quote.mobile_no
     },
     {
       preserveScroll: true,

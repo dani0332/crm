@@ -14,6 +14,12 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+    quoteEmail: {
+        type: String
+    },
+    quoteMobile: {
+        type: String
+    }
 });
 
 const { isRequired, isEmail, isMobileNo } = useRules();
@@ -90,6 +96,7 @@ const additionalContactDelete = id => {
 };
 
 const additionalContactDeleteConfirmed = () => {
+    const isEmail = confirmData.contactPrimary.key === 'email';
   router.post(
     `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
     {
@@ -128,9 +135,12 @@ const additionalContactPrimaryConfirmed = () => {
     {
       isInertia: true,
       quote_id: props.quoteId,
+      quote_type: props.quoteType,
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
-      quote_type: props.quoteType,
+        quote_customer_id: props.customerId,
+        quote_primary_email_address: props.quoteEmail,
+        quote_primary_mobile_no: props.quoteMobile
     },
     {
       preserveScroll: true,

@@ -52,4 +52,9 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

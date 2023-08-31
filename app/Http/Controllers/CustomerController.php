@@ -195,6 +195,15 @@ class CustomerController extends Controller
             if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
                 $quoteObject->customer->update(['email' => $request->value]);
+
+                if (isset($request->quote_primary_email_address) && isset($request->quote_customer_id)) {
+                    CustomerAdditionalContact::updateOrCreate([
+                        'customer_id' => $request->quote_customer_id,
+                        'key' => 'email',
+                        'value' => strtolower($request->quote_primary_email_address),
+                    ]);
+                }
+
             } else {
                 if ($request->isInertia) {
                     return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
@@ -211,7 +220,7 @@ class CustomerController extends Controller
                 $quoteObject->customer->update(['mobile_no' => $request->value]);
 
                 if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
-                    CustomerAdditionalContact::create([
+                    CustomerAdditionalContact::updateOrCreate([
                         'customer_id' => $request->quote_customer_id,
                         'key' => 'mobile_no',
                         'value' => trim($request->quote_primary_mobile_no),

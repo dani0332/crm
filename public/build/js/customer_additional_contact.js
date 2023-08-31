@@ -13,6 +13,8 @@ $(function () {
       var key = $(this).attr('data-key');
       var value = $(this).attr('data-value');
       var quote_type = $(this).attr('data-quote-type');
+      var quote_primary_email_address = $(this).attr('data-quote-primary-email-address');
+      var quote_customer_id = $(this).attr('data-quote-customer-id');
       $.ajax({
         url: '/customer-additional-contact/' + id + '/make-primary',
         method: 'POST',
@@ -21,6 +23,8 @@ $(function () {
           key: key,
           value: value,
           quote_type: quote_type,
+          quote_primary_email_address: quote_primary_email_address,
+          quote_customer_id: quote_customer_id,
           _token: $('input[name=_token]').val(),
         },
         success: function (data) {

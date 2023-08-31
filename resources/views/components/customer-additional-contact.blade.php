@@ -34,12 +34,14 @@ use App\Enums\DatabaseColumnsString;
                                 <td style="float:right;">
                                     @if(! auth()->user()->hasRole(RolesEnum::PA))
                                         @if($customerAdditionalContact->key == DatabaseColumnsString::EMAIL)
-                                            <button class="btn btn-success btn-sm additional-email-make-primary-btn" 
-                                                data-record-id="{{ $customerAdditionalContact->id }}" 
+                                            <button class="btn btn-success btn-sm additional-email-make-primary-btn"
                                                 data-quote-id="{{ $record->id }}" 
                                                 data-key="{{ $customerAdditionalContact->key }}" 
                                                 data-value="{{ $customerAdditionalContact->value }}" 
-                                                data-quote-type="{{ $quoteType }}">Make Primary</button>
+                                                data-quote-type="{{ $quoteType }}"
+                                                data-quote-primary-email-address="{{ $record->email }}"
+                                                data-quote-customer-id="{{ $record->customer_id }}"
+                                                data-record-id="{{ $customerAdditionalContact->id }}">Make Primary</button>
                                         @else
                                             <button class="btn btn-success btn-sm additional-mobile-no-make-primary-btn" 
                                                 data-quote-id="{{ $record->id }}" 

@@ -749,6 +749,9 @@ const onLeadStatus = () => {
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
+
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
