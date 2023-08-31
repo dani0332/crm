@@ -10,7 +10,7 @@ class KenService
     private $baseUrl = null;
 
     /**
-     * setup http client with credentials
+     * setup http client with credentials.
      */
     public function __construct()
     {
@@ -26,7 +26,7 @@ class KenService
     }
 
     /**
-     * send request to ken
+     * send request to ken.
      *
      * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response
      *
@@ -35,10 +35,14 @@ class KenService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl.$path;
-
         $response = $this->client->withBody(json_encode($data), 'application/json')
-            ->send($method, $url)->onError(function ($response) {
-                vAbort($response->json()['msg']);
+            ->send($method, $url)->onError(function ($response) use ($data, $url) {
+                info('Ken Service Exception', ['data' => $data, 'url' => $url]);
+                if (isset($response->json()['msg'])) {
+                    vAbort($response->json()['msg']);
+                } else {
+                    vAbort('Ken Service Exception');
+                }
             });
 
         return $response->json();
