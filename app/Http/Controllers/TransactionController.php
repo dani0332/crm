@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RolesEnum;
 use App\Http\Requests\TransactionRequest;
 use App\Models\CarQuote;
 use App\Models\Team;
@@ -9,16 +10,16 @@ use App\Models\Transaction;
 use App\Services\CustomerService;
 use App\Services\ReasonService;
 use App\Services\TransAppService;
+use App\Traits\TeamHierarchyTrait;
 use Auth;
 use DataTables;
 use DB;
-use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
-use App\Traits\TeamHierarchyTrait;
 
 class TransactionController extends Controller
 {
     use TeamHierarchyTrait;
+
     /**
      * Display a listing of the resource.
      *
@@ -73,16 +74,16 @@ class TransactionController extends Controller
                 ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
                 ->where('transactions.is_deleted', 0);
 
-            $dataTransapp->where('user_team.team_id','!=', NULL);
+            $dataTransapp->where('user_team.team_id', '!=', null);
             if ($isTransappNonAdmin == '1') {
-            //    $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
+                $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
             if (! empty($request->team_id)) {
                 $dataTransapp->whereIn('user_team.team_id', $request->team_id);
             }
             if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
-              //  $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
+                $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
             }
             if (! empty($request->transapp_approval_code)) {
                 $dataTransapp->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
@@ -112,10 +113,10 @@ class TransactionController extends Controller
                 $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
             }
             $premiumAmount = $dataTransapp->sum('amount_paid');
-           // dd($dataTransapp->sum('amount_paid'));
+
             return $datatables::of($dataTransapp)
                 ->addIndexColumn()
-                ->addColumn('premium_total',$premiumAmount)
+                ->addColumn('premium_total', $premiumAmount)
                 ->make(true);
         }
 
@@ -125,8 +126,10 @@ class TransactionController extends Controller
             ->orderBy('name')
             ->where('is_active', 1)
             ->get();
-        $isCarManager =  auth()->user()->hasAnyRole([RolesEnum::CarManager]);
-        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin','teams','isCarManager'));
+        $teams = $this->getAllTeams();
+        $isCarManager = auth()->user()->hasAnyRole([RolesEnum::CarManager]);
+
+        return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
     }
 
     /**
