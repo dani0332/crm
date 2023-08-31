@@ -45,11 +45,16 @@ class StoreTravelRequest extends FormRequest
                 $rule[] = 'email:rfc,dns';
             }
             if ($key == 'mobile_no') {
-                $rule[] = 'regex:/(0)[0-9]/';
-                $rule[] = 'not_regex:/[a-z]/';
                 $rule[] = 'min:7';
                 $rule[] = 'max:20';
             }
+            if ($key == 'members') {
+                $rules[$key.'.*.dob'][] = 'required_if:has_arrived_uae,0';
+                $rules[$key.'.*.dob'][] = 'required_if:has_arrived_destination,0';
+                $rules[$key.'.*.gender'][] = 'required_if:has_arrived_uae,0';
+                $rules[$key.'.*.gender'][] = 'required_if:has_arrived_destination,0';
+            }
+
             $rules[$key] = $rule;
         }
 
