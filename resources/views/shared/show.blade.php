@@ -601,6 +601,15 @@ use App\Enums\GenericRequestEnum;
             </button>
         </div>
     @endcan
+
+    @can('api-logs')
+        <div id="apilogsdiv">
+            <button id='apilogsbtn' class="btn btn-warning btn-sm apilogsbtn" data-id="{{ $record->id }}"
+                data-model="App\Models\{{ $model_name }}">
+                View API Logs
+            </button>
+        </div>
+    @endcan
     <script>
         function toggleSubDropDown(el){
             var selectedLobs = $("#lob_team").val();

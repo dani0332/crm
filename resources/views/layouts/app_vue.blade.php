@@ -63,6 +63,7 @@
                 rentacar_datatable_route:"{{ route('rentacar.index') }}",
                 customer_data_table_route:"{{ route('customer.index') }}",
                 load_auditable:"{{ url('auditable') }}",
+                load_apilogs:"{{ url('apilogs') }}",
                 load_dashboard_stats:"{{ url('dashboard-stats') }}",
                 insurancecompany_datatable_route:"{{ route('insurancecompany.index') }}",
                 handler_datatable_route:"{{ route('handler.index') }}",

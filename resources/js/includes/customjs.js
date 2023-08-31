@@ -1806,6 +1806,23 @@ $(document).ready(function () {
       },
     });
   });
+
+  $('.apilogsbtn').click(function () {
+    var auditableId = $(this).attr('data-id');
+    var auditableType = $(this).attr('data-model');
+    $(this).attr('disabled', true);
+
+    $.ajax({
+      url: config.routes.load_apilogs,
+      method: 'POST',
+      data: { auditableId, auditableType, _token: config._token },
+      success: function (data) {
+        $('#apilogsdiv').html(data);
+        $('.apilogsbtn').hide();
+      },
+    });
+  });
+
   // dateRangePickerChange("", "");
   // $(".x_panel transparent > .applyBtn, .ranges li").click(function () {
   //     setTimeout(() => {

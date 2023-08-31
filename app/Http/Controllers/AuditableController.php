@@ -26,6 +26,20 @@ class AuditableController extends Controller
         return view('auditable', compact('auditableId', 'auditableType'));
     }
 
+    public function loadApiLogsComponent(Request $request)
+    {
+        $auditableType = $request->auditableType;
+        $auditableId = $request->auditableId;
+
+        if ($request->jsonData) {
+            $service = app()->make(BaseService::class);
+
+            return response()->json($service->audits($auditableId, $auditableType));
+        }
+
+        return view('apilogs', compact('auditableId', 'auditableType'));
+    }
+
     public function loadAuditLogs(Request $request)
     {
         return DB::table('audits')
