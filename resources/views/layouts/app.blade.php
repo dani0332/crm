@@ -229,7 +229,7 @@
                         }
                     });
             }
-            if ($('.lead_allocation_table').length > 0) {
+            else if ($('.lead_allocation_table').length > 0) {
                 $('.lead_allocation_table').find("tr")
                     .find("td:first")
                     .each(function () {
@@ -237,13 +237,11 @@
                            changeAvailiblity(data, this);
                         }
                     });
-            }
-            if($('.lead_allocation_table').length == 0 && $('.car_lead_allocation_table').length == 0){
-                debugger;
-                $('#online-status-div').hide();
-                $('#offline-status-div').hide();
-                $('#unavailable-status-div').hide();
+            }else{
                 if(userId == data.userId){
+                    $('#online-status-div').hide();
+                    $('#offline-status-div').hide();
+                    $('#unavailable-status-div').hide();
                     if(data.status == 1) {
                         $('#online-status-div').show();
                     }
