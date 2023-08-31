@@ -155,7 +155,7 @@
     @php
     $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
-    $appName = config('constants.APP_ENV')
+    $appName = config('constants.APP_ENV');
     @endphp
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
@@ -189,7 +189,7 @@
         var pusherAppKey = @json($pusherAppKey);
         var userId = @json($userId);
             Pusher.logToConsole = true;
-        var appName = #json($appName);
+        var appName = @json($appName);
         var pusher = new Pusher(pusherAppKey, {
             cluster: 'ap1'
         });
