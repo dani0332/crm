@@ -178,6 +178,7 @@ class CustomerController extends Controller
 
     public function makeAdditionalContactPrimary(Request $request)
     {
+        dd($request->toArray());
         $validator = Validator::make($request->all(), [
             'quote_id' => 'required',
             'quote_type' => 'required',
@@ -263,35 +264,33 @@ class CustomerController extends Controller
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
 
         if ($key == GenericRequestEnum::EMAIL) {
-            $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
 
-            if ($isAdditionalEmailExist) {
+            if ( strtolower($value) == strtolower($quoteObject->email)) {
                 if ($request->isInertia) {
-                    vAbort('Email Address already in use for a customer. Please try another.');
+                    vAbort('Email Address already in use for a current lead. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Email Address already in use for a customer. Please try another.',
+                    'message' => 'Email Address already in use for a current lead. Please try another.',
                 ]]);
             }
         }
 
         if ($key == GenericRequestEnum::MOBILE_NO) {
-            $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
 
-            if ($isAdditionalMobileNoExist) {
+            if ($value == $quoteObject->mobile_no) {
                 if ($request->isInertia) {
-                    vAbort('Mobile Number already in use for a customer. Please try another.');
+                    vAbort('Mobile Number already in use for a current lead. Please try another.');
                 }
 
                 return response()->json(['error' => [
-                    'message' => 'Mobile Number already in use for a customer. Please try another.',
+                    'message' => 'Mobile Number already in use for a current lead. Please try another.',
                 ]]);
             }
         }
 
         Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$key.' value: '.$value);
-        CustomerAdditionalContact::create([
+        CustomerAdditionalContact::updateOrCreate([
             'customer_id' => $request->customer_id,
             'key' => $key,
             'value' => trim($value),
@@ -304,5 +303,10 @@ class CustomerController extends Controller
         return response()->json(['data' => [
             'message' => 'Contact added successfully.',
         ]]);
+    }
+
+    public function customerAlreadyEmailExistCheck(Request $request)
+    {
+        return response()->json([ 'response' => (bool) $this->customerService->getCustomerByEmail($request->value) ]);
     }
 }
