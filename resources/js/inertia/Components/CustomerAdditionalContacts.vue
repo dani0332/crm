@@ -27,6 +27,7 @@ const { isRequired, isEmail, isMobileNo } = useRules();
 const notification = useNotifications('toast');
 
 const contactLoader = ref(false);
+const EmailCheckLoader = ref(false);
 
 const additionalContactTable = [
     { text: 'Type', value: 'key' },
@@ -100,27 +101,24 @@ const customerAlreadyPrimaryCheck = async () => {
         value: confirmData.contactPrimary.value
     };
 
+    EmailCheckLoader.value = true;
+    contactLoader.value = true;
+
     axios.post('/customer-primary-email-check', data)
-        .then(res => {
-            if( res.data.response == true){
-                modals.contactPrimaryConfirm = false;
-                modals.customerAlreadyPrimaryConfirm = true;
-            } else {
-                modals.contactPrimaryConfirm = false;
-                console.log("Trigger Make Primary Request");
-            }
-        })
-        .catch(err => {
-            console.log(err);
-        })
-        .finally(() => {
-            // auditLogs.loading = false;
-        });
-
-
+    .then(res => {
+        if( res.data.response === true){
+            modals.contactPrimaryConfirm = false;
+            modals.customerAlreadyPrimaryConfirm = true;
+        } else {
+            additionalContactPrimaryConfirmed();
+        }
+    })
+    .catch(err => {
+        console.log(err);
+    })
 };
 
-const additionalContactPrimaryConfirmed = () => {
+function additionalContactPrimaryConfirmed() {
     const isEmail = confirmData.contactPrimary.key === 'email';
     router.post(
         `/customer-additional-contact/${
@@ -149,7 +147,9 @@ const additionalContactPrimaryConfirmed = () => {
             },
             onFinish: () => {
                 contactLoader.value = false;
+                EmailCheckLoader.value = false;
                 modals.contactPrimaryConfirm = false;
+                modals.customerAlreadyPrimaryConfirm = false;
             },
             onError: err => {
                 const firstError = Object.values(err)[0];
@@ -316,6 +316,7 @@ const additionalContactDeleteConfirmed = () => {
                     <x-button
                         size="sm"
                         color="emerald"
+                        :loading="EmailCheckLoader"
                         @click.prevent="customerAlreadyPrimaryCheck"
                     >
                         Confirm

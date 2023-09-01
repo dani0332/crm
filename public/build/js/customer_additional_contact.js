@@ -6,41 +6,64 @@ $(function () {
 
   // Make additional email primary
   $('.additional-email-make-primary-btn').on('click', function () {
+    var _this = $(this);
     if (confirm('Are you sure to make this primary email address?')) {
-      $('.loader').show();
-      var id = $(this).attr('data-record-id');
-      var quote_id = $(this).attr('data-quote-id');
-      var key = $(this).attr('data-key');
-      var value = $(this).attr('data-value');
-      var quote_type = $(this).attr('data-quote-type');
-      var quote_primary_email_address = $(this).attr('data-quote-primary-email-address');
-      var quote_customer_id = $(this).attr('data-quote-customer-id');
-      $.ajax({
-        url: '/customer-additional-contact/' + id + '/make-primary',
-        method: 'POST',
-        data: {
-          quote_id: quote_id,
-          key: key,
-          value: value,
-          quote_type: quote_type,
-          quote_primary_email_address: quote_primary_email_address,
-          quote_customer_id: quote_customer_id,
-          _token: $('input[name=_token]').val(),
-        },
-        success: function (data) {
-          $('.loader').hide();
-          if (data.data.message) {
-            alert(data.data.message);
-          } else {
-            alert('Primary Email Updated');
-          }
-          location.reload();
-        },
-      });
+        $.ajax({
+            url: '/customer-primary-email-check',
+            method: 'POST',
+            data: {
+                key: $(this).attr('data-key'),
+                value: $(this).attr('data-value'),
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                if (data.response === true) {
+                    if (confirm('You are about to set this "email" as the primary contact for this lead. This action will add this lead to the list of other existing leads associated with the same email. \n Are you sure you want to continue?')) {
+                        additionalContactPrimaryConfirmed(_this);
+                    }
+                } else {
+                    additionalContactPrimaryConfirmed(_this);
+                }
+            }
+        });
     } else {
-      return false;
+        return false;
     }
   });
+
+  function additionalContactPrimaryConfirmed(_this){
+      $('.loader').show();
+      var id = _this.attr('data-record-id');
+      var quote_id = _this.attr('data-quote-id');
+      var key = _this.attr('data-key');
+      var value = _this.attr('data-value');
+      var quote_type = _this.attr('data-quote-type');
+      var quote_primary_email_address = _this.attr('data-quote-primary-email-address');
+      var quote_customer_id = _this.attr('data-quote-customer-id');
+
+      $.ajax({
+          url: '/customer-additional-contact/' + id + '/make-primary',
+          method: 'POST',
+          data: {
+              quote_id: quote_id,
+              key: key,
+              value: value,
+              quote_type: quote_type,
+              quote_primary_email_address: quote_primary_email_address,
+              quote_customer_id: quote_customer_id,
+              _token: $('input[name=_token]').val(),
+          },
+          success: function (data) {
+              $('.loader').hide();
+              if (data.data.message) {
+                  alert(data.data.message);
+              } else {
+                  alert('Primary Email Updated');
+              }
+              location.reload();
+          }
+      });
+  }
 
   // Delete additional email
   $('.additional-contact-delete-btn').on('click', function () {

@@ -20,9 +20,6 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
 });
 
 const rules = {

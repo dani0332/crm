@@ -178,7 +178,6 @@ class CustomerController extends Controller
 
     public function makeAdditionalContactPrimary(Request $request)
     {
-        dd($request->toArray());
         $validator = Validator::make($request->all(), [
             'quote_id' => 'required',
             'quote_type' => 'required',
@@ -192,46 +191,46 @@ class CustomerController extends Controller
         }
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
         if ($request->key == GenericRequestEnum::EMAIL) {
+            Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
             $quoteObject->email = $request->value;
-            if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $quoteObject->customer->update(['email' => $request->value]);
-
+            $customer = $this->customerService->getCustomerByEmail($request->value);
+            if ($customer) {
+                $quoteObject->customer_id = $customer->id;
                 if (isset($request->quote_primary_email_address) && isset($request->quote_customer_id)) {
                     CustomerAdditionalContact::updateOrCreate([
                         'customer_id' => $request->quote_customer_id,
                         'key' => 'email',
                         'value' => strtolower($request->quote_primary_email_address),
                     ]);
-                }
 
-            } else {
-                if ($request->isInertia) {
-                    return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
+                    // Replicate Old additional contact info with new customer
+                    $this->customerService->replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
                 }
+            } else{
+                $customer = Customer::create([
+                    'first_name' => $quoteObject->first_name,
+                    'last_name' => $quoteObject->last_name,
+                    'mobile_no' => $quoteObject->mobile_no,
+                    'email' => $request->value
+                ]);
+                $quoteObject->customer_id = $customer->id;
 
-                return response()->json(['data' => [
-                    'message' => 'Email Address already in use for a customer.',
-                ]]);
+                // Replicate Old additional contact info with new customer
+                $this->customerService->replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
             }
         } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
+            Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
             $quoteObject->mobile_no = $request->value;
-            if ($quoteObject->customer) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
-                $quoteObject->customer->update(['mobile_no' => $request->value]);
-
-                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
-                    CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request->quote_customer_id,
-                        'key' => 'mobile_no',
-                        'value' => trim($request->quote_primary_mobile_no),
-                    ]);
-                }
+            if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
+                CustomerAdditionalContact::updateOrCreate([
+                    'customer_id' => $request->quote_customer_id,
+                    'key' => 'mobile_no',
+                    'value' => trim($request->quote_primary_mobile_no),
+                ]);
             }
-            // Add quote_previous_primary_mobile_no in customer_additional_contact
         }
-        $quoteObject->save();
 
+        $quoteObject->save();
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
         }

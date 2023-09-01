@@ -120,4 +120,16 @@ class CustomerService extends BaseService
     {
         return Customer::where('uuid', $uuid)->first();
     }
+
+    public function replicatePreviousAdditionalContacts($old_customer_id, $new_customer_id)
+    {
+        $customerPreviousContactInfo = CustomerAdditionalContact::where('customer_id', $old_customer_id)->get();
+        foreach ($customerPreviousContactInfo as $customerPreInfo) {
+            CustomerAdditionalContact::updateOrCreate([
+                'customer_id' => $new_customer_id,
+                'key' => $customerPreInfo->key,
+                'value' => $customerPreInfo->value,
+            ]);
+        }
+    }
 }
