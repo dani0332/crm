@@ -131,6 +131,7 @@ class AMLController extends Controller
             return redirect()->route('aml.details')->with('message', 'Not Found!');
         }
 
+        // Need to update with Limit when new UI going to Live
         $kycLogs = AML::where('quote_request_id', '=', $quoteRequestId)->where('quote_type_id', '=', $quoteTypeId)->orderBy('created_at', 'desc')->get();
 
         $auditLogLine = $quoteTypeCode.'Quote';
@@ -166,8 +167,7 @@ class AMLController extends Controller
         $firstAmlLogResults = AML::where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->first()->results_found ?? 0;
         $latestAmlLogResults = AML::where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->latest()->first()->results_found ?? 0;
 
-        $getAMLRows = AML::where('quote_type_id', '=', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->get();
-        $getAMLNumRows = $getAMLRows->count();
+        $getAMLNumRows = AML::where('quote_type_id', '=', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->count();
 
         $nationalityList = $this->sanctionListService->fetchNationality();
         $yearsList = $this->sanctionListService->years();
