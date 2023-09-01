@@ -195,7 +195,7 @@ const onLogout = () => {
         <div
           class="flex items-center justify-end w-full px-2 sm:px-4 md:px-6 lg:px-8"
         ><div class="nav-avatar h-[45px] w-[45px] rounded-full border-[1px] mr-3">
-            <img :src="user.google_profile_photo_path!=null?user.google_profile_photo_path:'/image/alfred-theme.png'" alt="IMCRM" class="w-full h-full rounded-full" />
+            <img :src="user.profile_photo_path!=null?user.profile_photo_path:'/image/alfred-theme.png'" alt="IMCRM" class="w-full h-full rounded-full" />
         </div>
           <div>
             <button

@@ -177,7 +177,7 @@
             </div>
             <div class="col-md-4 col-sm-4">
                 <div class="nav-avatar">
-                    <img src="{{Auth::user()->google_profile_photo_path != null?Auth::user()->google_profile_photo_path:'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
+                    <img src="{{Auth::user()->profile_photo_path != null?Auth::user()->profile_photo_path:'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
                 </div>
             </div>
             <div class="col-md-8 col-sm-8">

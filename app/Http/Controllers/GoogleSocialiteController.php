@@ -38,7 +38,7 @@ class GoogleSocialiteController extends Controller
         }
         // dd($socialUser->user['picture']);
         // $table->datetime('google_photo_last_updated')->nullable()->after('profile_photo_path');
-        //            $table->text('google_profile_photo_path')->nullable()->after('profile_photo_path');
+        //            $table->text('profile_photo_path')->nullable()->after('profile_photo_path');
         $requestingUser = User::where('email', $socialUser->getEmail())->first();
 
         if (! $requestingUser) {
@@ -50,9 +50,8 @@ class GoogleSocialiteController extends Controller
         if(isset($socialUser->user['picture']) && ($requestingUser->google_photo_last_updated == null )){
 
             $requestingUser->google_photo_last_updated = now();
-            $requestingUser->google_profile_photo_path = $socialUser->user['picture'];
+            $requestingUser->profile_photo_path = $socialUser->user['picture'];
         }
-       // dd('ddddddd');
         $requestingUser->last_login = now();
         $requestingUser->save();
 
