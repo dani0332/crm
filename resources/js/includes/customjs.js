@@ -413,8 +413,15 @@ $(document).ready(function () {
         d.transapp_approval_code = $('#transapp_approval_code').val();
         d.transapp_customer_email = $('#customer_email').val();
         d.transapp_customer_name = $('#customer_name').val();
+        d.team_id = $('#team').val();
       },
     },
+      drawCallback: function () {
+         let tableData = this.api().data();
+          if(tableData[0]){
+              $('#total_premium_value').html(tableData[0].premium_total);
+          }
+      },
     columns: [
       { data: 'approval_code', name: 'approval_code' },
       { data: 'created_at', name: 'created_at' },
