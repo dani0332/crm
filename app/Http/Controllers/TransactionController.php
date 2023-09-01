@@ -122,7 +122,7 @@ class TransactionController extends Controller
 
         $teams = [];
         $teamIds = $this->getUserTeams(auth()->user()->id);
-        if(count($teamIds) > 0) {
+        if (count($teamIds) > 0) {
             $teams = Team::whereIn('id', $teamIds->pluck('id'))
                 ->select('name', 'id')
                 ->orderBy('name')
