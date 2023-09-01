@@ -47,7 +47,6 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    // '/personal-quotes/yacht'
     router.visit(route('yacht-quotes-list'), {
       method: 'get',
       data: filters,
@@ -62,7 +61,6 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  // '/personal-quotes/yacht'
   router.visit(route('yacht-quotes-list'), {
     method: 'get',
     data: { page: 1 },
@@ -156,7 +154,7 @@ watch(
     <Head title="Yacht Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
-      <!-- /personal-quotes/yacht/create -->
+
       <x-button
         v-if="can(permissionsEnum.YachtQuotesCreate)"
         size="sm"
@@ -168,12 +166,10 @@ watch(
     </div>
     <x-divider class="my-4" />
 
-    <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <x-tooltip position="bottom">
-            <!-- <x-field label="Ref-ID"> -->
             <label
               class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
             >
@@ -181,7 +177,7 @@ watch(
             </label>
             <template #tooltip> Reference ID </template>
           </x-tooltip>
-          <!-- <x-field label="Ref-ID"> -->
+
           <x-input
             v-model="filters.code"
             type="search"
@@ -189,7 +185,6 @@ watch(
             class="w-full"
             placeholder="Search by Ref-ID"
           />
-          <!-- </x-field> -->
         </div>
         <x-field label="First Name">
           <x-input
