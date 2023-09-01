@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from "vue";
+const notification = useNotifications('toast');
 
 const props = defineProps({
 	dropdownSource: Object,
@@ -63,6 +64,11 @@ const quoteForm = useForm({
 const trimOptions = ref([]);
 
 const getCarModel = () => {
+	
+	quoteForm.cylinder = null;
+	quoteForm.seat_capacity = null;
+	quoteForm.vehicle_type_id = null;
+	quoteForm.trim = null;
 	axios
 		.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
 		.then(({ data }) => {
@@ -73,7 +79,8 @@ const getCarModel = () => {
 		});
 }
 
-const getModelDetails = () => {
+const getModelDetails = (onchange) => {
+
 	axios
 		.get(`/getCarModelDetails?car_model_id=${quoteForm.car_model_id}`)
 		.then(({ data }) => {
@@ -87,10 +94,22 @@ const getModelDetails = () => {
 			})
 			trimOptions.value = trimDropdown;
 			if (item) {
+				if(onchange) {
+					notification.success({
+						title: 'Assumptions found',
+						position: 'top',
+					});
+				}
 				quoteForm.cylinder = item.cylinder;
 				quoteForm.seat_capacity = item.seat_capacity;
 				quoteForm.vehicle_type_id = item.vehicle_type_id;
 				quoteForm.trim = item.id;
+			}
+			else{
+				notification.error({
+					title: 'Assumptions not found',
+					position: 'top',
+				});
 			}
 		});
 }
@@ -127,7 +146,7 @@ onMounted(() => {
 			.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
 			.then(({ data }) => {
 				props.dropdownSource.car_model_id = data;
-				getModelDetails();
+				getModelDetails(false);
 			});
 	}
 })
@@ -200,7 +219,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="UAE LICENCE HELD FOR" required>
-					<x-select v-model="quoteForm.uae_license_held_for_id" :rules="[isRequired]" :options="dropdownSource.uae_license_held_for_id.map(item => ({
+					<ComboBox v-model="quoteForm.uae_license_held_for_id" :single="true" :rules="[isRequired]" :options="dropdownSource.uae_license_held_for_id.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
@@ -216,8 +235,9 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CAR MAKE" required>
-					<x-select 
+					<ComboBox 
 						v-model="quoteForm.car_make_id" 
+						:single="true"
 						:rules="[isRequired]" 
 						:options="carMakeOptions"
 						@update:modelValue="getCarModel"
@@ -226,12 +246,12 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CAR MODEL" required>
-					<x-select v-model="quoteForm.car_model_id" :rules="[isRequired]" :options="dropdownSource.car_model_id.map(item => ({
+					<ComboBox v-model="quoteForm.car_model_id" :single="true" :rules="[isRequired]" :options="dropdownSource.car_model_id.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
 						"
-						@update:modelValue="getModelDetails"
+						@update:modelValue="getModelDetails(true)"
 						class="w-full" />
 				</x-field>
 
@@ -240,11 +260,11 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="TRIM" >
-					<x-select v-model="quoteForm.trim" :options="trimOptions" class="w-full" />
+					<ComboBox v-model="quoteForm.trim" :single="true" :options="trimOptions" class="w-full" />
 				</x-field>
 
 				<x-field label="CAR MODEL YEAR" required>
-					<x-select v-model="quoteForm.year_of_manufacture" :rules="[isRequired]" :options="dropdownSource.year_of_manufacture.map(item => ({
+					<ComboBox v-model="quoteForm.year_of_manufacture" :single="true" :rules="[isRequired]" :options="dropdownSource.year_of_manufacture.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
@@ -256,7 +276,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="VEHICLE TYPE" required>
-					<x-select v-model="quoteForm.vehicle_type_id" :rules="[isRequired]" :options="dropdownSource.vehicle_type_id.map(item => ({
+					<ComboBox v-model="quoteForm.vehicle_type_id" :single="true" :rules="[isRequired]" :options="dropdownSource.vehicle_type_id.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
@@ -284,7 +304,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CURRENTLY INSURED WITH" required>
-					<x-select v-model="quoteForm.currently_insured_with_id" :rules="[isRequired]" :options="dropdownSource.currently_insured_with.map(item => ({
+					<ComboBox v-model="quoteForm.currently_insured_with_id" :single="true" :rules="[isRequired]" :options="dropdownSource.currently_insured_with.map(item => ({
 						value: item.text,
 						label: item.text,
 					}))

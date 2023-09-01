@@ -48,7 +48,7 @@ const tableHeader = [
   { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'QUOTE LINK', value: 'quote_link' },  
 ];
@@ -388,20 +388,22 @@ onMounted(() => {
                     placeholder="Please select batch"
                     :options="leadTiers"
                 />
-                <x-select
+                <ComboBox
+                    :single="true"
                     v-model="filters.vehicle_type_id"
                     label="Vehicle Type"
                     name="vehicle_type_id"
                     :options="vehicleTypes"
-                    placeholder="Please select Vehicle Type"
+                    placeholder="Please select an option"
                     class="w-full"
                 />
-                <x-select
+                <ComboBox
+                    :single="true"
                     v-model="filters.car_type_insurance_id"
                     label="Type of Car Insurance"
                     name="car_type_insurance_id"
                     :options="carTypeInsurances"
-                    placeholder="Please select type of Car Insurance"
+                    placeholder="Please select an option"
                     class="w-full"
                 />                
                 <x-input
@@ -422,12 +424,13 @@ onMounted(() => {
                     name="renewal_expiry_date_end"
                     label="Renewal Expiry Date End"
                 />
-                <x-select
+                <ComboBox
+                    :single="true"
                     v-model="filters.currently_insured_with"
                     label="Currently Insured with"
                     name="currently_insured_with"
                     :options="providers"
-                    placeholder="Please select Currently Insured with"
+                    placeholder="Please select an option"
                     class="w-full"
                 />
                 <x-input

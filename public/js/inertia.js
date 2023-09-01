@@ -11766,10 +11766,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
+/* harmony import */ var _indielayer_ui__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @indielayer/ui */ "./node_modules/@indielayer/ui/lib/index.es.js");
 /* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
 /* unplugin-vue-components disabled */
+
 
 
 
@@ -11790,6 +11792,7 @@ __webpack_require__.r(__webpack_exports__);
     var __expose = _ref.expose;
     __expose();
     var props = __props;
+    var notification = (0,_indielayer_ui__WEBPACK_IMPORTED_MODULE_3__.useNotifications)('toast');
     var _useRules = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_1__.useRules)(),
       isRequired = _useRules.isRequired,
       isEmail = _useRules.isEmail;
@@ -11840,7 +11843,11 @@ __webpack_require__.r(__webpack_exports__);
     });
     var trimOptions = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
     var getCarModel = function getCarModel() {
-      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref2) {
+      quoteForm.cylinder = null;
+      quoteForm.seat_capacity = null;
+      quoteForm.vehicle_type_id = null;
+      quoteForm.trim = null;
+      axios__WEBPACK_IMPORTED_MODULE_4__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref2) {
         var data = _ref2.data;
         props.dropdownSource.car_model_id = data;
         if (quoteForm.car_model_id !== null) {
@@ -11848,8 +11855,8 @@ __webpack_require__.r(__webpack_exports__);
         }
       });
     };
-    var getModelDetails = function getModelDetails() {
-      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/getCarModelDetails?car_model_id=".concat(quoteForm.car_model_id)).then(function (_ref3) {
+    var getModelDetails = function getModelDetails(onchange) {
+      axios__WEBPACK_IMPORTED_MODULE_4__["default"].get("/getCarModelDetails?car_model_id=".concat(quoteForm.car_model_id)).then(function (_ref3) {
         var data = _ref3.data;
         var item = data.length > 0 ? data[0] : null;
         var trimDropdown = [];
@@ -11861,10 +11868,21 @@ __webpack_require__.r(__webpack_exports__);
         });
         trimOptions.value = trimDropdown;
         if (item) {
+          if (onchange) {
+            notification.success({
+              title: 'Assumptions found',
+              position: 'top'
+            });
+          }
           quoteForm.cylinder = item.cylinder;
           quoteForm.seat_capacity = item.seat_capacity;
           quoteForm.vehicle_type_id = item.vehicle_type_id;
           quoteForm.trim = item.id;
+        } else {
+          notification.error({
+            title: 'Assumptions not found',
+            position: 'top'
+          });
         }
       });
     };
@@ -11888,20 +11906,21 @@ __webpack_require__.r(__webpack_exports__);
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       if (quoteForm.car_make_id !== null) {
         setCarMake(quoteForm.car_make_id);
-        axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref4) {
+        axios__WEBPACK_IMPORTED_MODULE_4__["default"].get("/car-model-by-id?id=".concat(quoteForm.car_make_id)).then(function (_ref4) {
           var data = _ref4.data;
           props.dropdownSource.car_model_id = data;
-          getModelDetails();
+          getModelDetails(false);
         });
       }
     });
     var setCarMake = function setCarMake(id) {
-      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/car-make?id=".concat(id)).then(function (_ref5) {
+      axios__WEBPACK_IMPORTED_MODULE_4__["default"].get("/car-make?id=".concat(id)).then(function (_ref5) {
         var data = _ref5.data;
         props.dropdownSource.car_make_id = data;
       });
     };
     var __returned__ = {
+      notification: notification,
       props: props,
       isRequired: isRequired,
       isEmail: isEmail,
@@ -12082,7 +12101,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       text: 'IS VEHICLE MODIFIED',
       value: 'is_modified'
     }, {
-      text: 'PREMIUM',
+      text: 'PRICE',
       value: 'premium'
     }, {
       text: 'LOST REASON',
@@ -38544,11 +38563,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         required: ""
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.uae_license_held_for_id,
             "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
               return $setup.quoteForm.uae_license_held_for_id = $event;
             }),
+            single: true,
             rules: [$setup.isRequired],
             options: $props.dropdownSource.uae_license_held_for_id.map(function (item) {
               return {
@@ -38586,11 +38606,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         required: ""
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.car_make_id,
             "onUpdate:modelValue": [_cache[8] || (_cache[8] = function ($event) {
               return $setup.quoteForm.car_make_id = $event;
             }), $setup.getCarModel],
+            single: true,
             rules: [$setup.isRequired],
             options: $setup.carMakeOptions,
             "class": "w-full"
@@ -38602,11 +38623,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         required: ""
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.car_model_id,
             "onUpdate:modelValue": [_cache[9] || (_cache[9] = function ($event) {
               return $setup.quoteForm.car_model_id = $event;
-            }), $setup.getModelDetails],
+            }), _cache[10] || (_cache[10] = function ($event) {
+              return $setup.getModelDetails(true);
+            })],
+            single: true,
             rules: [$setup.isRequired],
             options: $props.dropdownSource.car_model_id.map(function (item) {
               return {
@@ -38625,7 +38649,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
             modelValue: $setup.quoteForm.cylinder,
-            "onUpdate:modelValue": _cache[10] || (_cache[10] = function ($event) {
+            "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
               return $setup.quoteForm.cylinder = $event;
             }),
             "class": "w-full",
@@ -38638,11 +38662,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         label: "TRIM"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.trim,
-            "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+            "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
               return $setup.quoteForm.trim = $event;
             }),
+            single: true,
             options: $setup.trimOptions,
             "class": "w-full"
           }, null, 8 /* PROPS */, ["modelValue", "options"])];
@@ -38653,11 +38678,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         required: ""
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.year_of_manufacture,
-            "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
+            "onUpdate:modelValue": _cache[13] || (_cache[13] = function ($event) {
               return $setup.quoteForm.year_of_manufacture = $event;
             }),
+            single: true,
             rules: [$setup.isRequired],
             options: $props.dropdownSource.year_of_manufacture.map(function (item) {
               return {
@@ -38676,7 +38702,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
             modelValue: $setup.quoteForm.car_value_tier,
-            "onUpdate:modelValue": _cache[13] || (_cache[13] = function ($event) {
+            "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
               return $setup.quoteForm.car_value_tier = $event;
             }),
             "class": "w-full",
@@ -38690,11 +38716,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         required: ""
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.vehicle_type_id,
-            "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
+            "onUpdate:modelValue": _cache[15] || (_cache[15] = function ($event) {
               return $setup.quoteForm.vehicle_type_id = $event;
             }),
+            single: true,
             rules: [$setup.isRequired],
             options: $props.dropdownSource.vehicle_type_id.map(function (item) {
               return {
@@ -38713,7 +38740,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
             modelValue: $setup.quoteForm.seat_capacity,
-            "onUpdate:modelValue": _cache[15] || (_cache[15] = function ($event) {
+            "onUpdate:modelValue": _cache[16] || (_cache[16] = function ($event) {
               return $setup.quoteForm.seat_capacity = $event;
             }),
             "class": "w-full",
@@ -38729,7 +38756,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.quoteForm.emirate_of_registration_id,
-            "onUpdate:modelValue": _cache[16] || (_cache[16] = function ($event) {
+            "onUpdate:modelValue": _cache[17] || (_cache[17] = function ($event) {
               return $setup.quoteForm.emirate_of_registration_id = $event;
             }),
             rules: [$setup.isRequired],
@@ -38750,7 +38777,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.quoteForm.car_type_insurance_id,
-            "onUpdate:modelValue": _cache[17] || (_cache[17] = function ($event) {
+            "onUpdate:modelValue": _cache[18] || (_cache[18] = function ($event) {
               return $setup.quoteForm.car_type_insurance_id = $event;
             }),
             rules: [$setup.isRequired],
@@ -38769,11 +38796,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         required: ""
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
             modelValue: $setup.quoteForm.currently_insured_with_id,
-            "onUpdate:modelValue": _cache[18] || (_cache[18] = function ($event) {
+            "onUpdate:modelValue": _cache[19] || (_cache[19] = function ($event) {
               return $setup.quoteForm.currently_insured_with_id = $event;
             }),
+            single: true,
             rules: [$setup.isRequired],
             options: $props.dropdownSource.currently_insured_with.map(function (item) {
               return {
@@ -38792,7 +38820,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.quoteForm.claim_history_id,
-            "onUpdate:modelValue": _cache[19] || (_cache[19] = function ($event) {
+            "onUpdate:modelValue": _cache[20] || (_cache[20] = function ($event) {
               return $setup.quoteForm.claim_history_id = $event;
             }),
             rules: [$setup.isRequired],
@@ -38812,7 +38840,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
             modelValue: $setup.quoteForm.has_ncd_supporting_documents,
-            "onUpdate:modelValue": _cache[20] || (_cache[20] = function ($event) {
+            "onUpdate:modelValue": _cache[21] || (_cache[21] = function ($event) {
               return $setup.quoteForm.has_ncd_supporting_documents = $event;
             }),
             options: [{
@@ -38832,7 +38860,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_textarea, {
             modelValue: $setup.quoteForm.additional_notes,
-            "onUpdate:modelValue": _cache[21] || (_cache[21] = function ($event) {
+            "onUpdate:modelValue": _cache[22] || (_cache[22] = function ($event) {
               return $setup.quoteForm.additional_notes = $event;
             }),
             type: "textarea",
@@ -39109,7 +39137,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         name: "tier_id",
         placeholder: "Please select batch",
         options: $setup.leadTiers
-      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
+        single: true,
         modelValue: $setup.filters.vehicle_type_id,
         "onUpdate:modelValue": _cache[14] || (_cache[14] = function ($event) {
           return $setup.filters.vehicle_type_id = $event;
@@ -39117,9 +39146,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         label: "Vehicle Type",
         name: "vehicle_type_id",
         options: $setup.vehicleTypes,
-        placeholder: "Please select Vehicle Type",
+        placeholder: "Please select an option",
         "class": "w-full"
-      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+      }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
+        single: true,
         modelValue: $setup.filters.car_type_insurance_id,
         "onUpdate:modelValue": _cache[15] || (_cache[15] = function ($event) {
           return $setup.filters.car_type_insurance_id = $event;
@@ -39127,7 +39157,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         label: "Type of Car Insurance",
         name: "car_type_insurance_id",
         options: $setup.carTypeInsurances,
-        placeholder: "Please select type of Car Insurance",
+        placeholder: "Please select an option",
         "class": "w-full"
       }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
         modelValue: $setup.filters.renewal_batch,
@@ -39153,7 +39183,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         }),
         name: "renewal_expiry_date_end",
         label: "Renewal Expiry Date End"
-      }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_select, {
+      }, null, 8 /* PROPS */, ["modelValue"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_ComboBox, {
+        single: true,
         modelValue: $setup.filters.currently_insured_with,
         "onUpdate:modelValue": _cache[19] || (_cache[19] = function ($event) {
           return $setup.filters.currently_insured_with = $event;
@@ -39161,7 +39192,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         label: "Currently Insured with",
         name: "currently_insured_with",
         options: $setup.providers,
-        placeholder: "Please select Currently Insured with",
+        placeholder: "Please select an option",
         "class": "w-full"
       }, null, 8 /* PROPS */, ["modelValue", "options"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_input, {
         modelValue: $setup.filters.previous_quote_policy_number,
@@ -40756,6 +40787,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_x_button, {
         size: "sm",
+        color: "primary",
         tag: "div"
       }, {
         "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
@@ -40977,7 +41009,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, null, 8 /* PROPS */, ["modelValue", "options", "disabled"])])])]), !$setup.hasRole($setup.rolesEnum.PA) && $setup.can($setup.permissionEnum.CarQuotesEdit) ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("div", _hoisted_170, [$setup.assumptionState.isEditing ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
     key: 0,
     "class": "mt-4 mr-2",
-    color: "emerald",
+    color: "orange",
     size: "sm",
     loading: $setup.assumptionsForm.processing,
     onClick: _cache[13] || (_cache[13] = (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)(function ($event) {
@@ -40993,7 +41025,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
   }, [$setup.assumptionState.isEditing ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
     key: 0,
     "class": "mt-4",
-    color: "emerald",
+    color: "primary",
     size: "sm",
     loading: $setup.assumptionsForm.processing,
     onClick: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)($setup.onUpdateAssumption, ["prevent"])
@@ -41106,7 +41138,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     key: 4,
     onClick: (0,vue__WEBPACK_IMPORTED_MODULE_4__.withModifiers)($setup.copyLink, ["prevent"]),
     size: "sm",
-    color: "#ff5e00"
+    color: "emerald"
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_4__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createTextVNode)(" Copy Link ")];

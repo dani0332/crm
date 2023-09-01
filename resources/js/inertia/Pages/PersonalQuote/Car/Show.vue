@@ -1213,7 +1213,7 @@ const confirmSendEmail = () => {
 			<x-divider class="mb-4 mt-4" />
 			<div class="flex justify-end mb-4">
 				<Link :href="route('car.edit', record.uuid)">
-				<x-button size="sm" tag="div">Edit</x-button>
+				<x-button size="sm" color="primary" tag="div">Edit</x-button>
 				</Link>
 			</div>
 		</div>
@@ -1526,11 +1526,11 @@ const confirmSendEmail = () => {
 				</div>
 			</div>
 			<div class="flex justify-end" v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)">
-				<x-button v-if="assumptionState.isEditing" class="mt-4 mr-2" color="emerald" size="sm" :loading="assumptionsForm.processing" @click.prevent="assumptionState.isEditing = false">
+				<x-button v-if="assumptionState.isEditing" class="mt-4 mr-2" color="orange" size="sm" :loading="assumptionsForm.processing" @click.prevent="assumptionState.isEditing = false">
 					Cancel
 				</x-button>
 				<template v-if="!can(permissionEnum.ApprovePayments)">
-					<x-button v-if="assumptionState.isEditing" class="mt-4" color="emerald" size="sm" :loading="assumptionsForm.processing" @click.prevent="onUpdateAssumption">
+					<x-button v-if="assumptionState.isEditing" class="mt-4" color="primary" size="sm" :loading="assumptionsForm.processing" @click.prevent="onUpdateAssumption">
 						Update
 					</x-button>
 					<x-button v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || (!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager])) && !assumptionState.isEditing" class="mt-4" color="emerald" size="sm" @click.prevent="assumptionState.isEditing = true">
@@ -1581,7 +1581,7 @@ const confirmSendEmail = () => {
 					<x-button v-else-if="hasRole(rolesEnum.Admin) && can(permissionEnum.CarQuotesPlansCreate)" @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2">
 						Add Plan
 					</x-button>
-					<x-button @click.prevent="copyLink" size="sm" color="#ff5e00" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
+					<x-button @click.prevent="copyLink" size="sm" color="emerald" v-if="typeof listQuotePlans !== 'string' && listQuotePlans.length > 0">
 						Copy Link
 					</x-button>
 				</div>
