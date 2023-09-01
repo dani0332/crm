@@ -96,7 +96,7 @@ function onSubmit(isValid) {
             type="tel"
             class="w-full md:w-64"
             :rules="[isRequired]"
-            :disabled="props?.quote?.renewal_batch > 0"
+            :disabled="props?.quote?.renewal_batch"
             :error="policyForm.errors.renewal_batch"
           />
         </x-field>
