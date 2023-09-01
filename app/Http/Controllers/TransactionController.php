@@ -120,12 +120,15 @@ class TransactionController extends Controller
                 ->make(true);
         }
 
+        $teams = [];
         $teamIds = $this->getUserTeams(auth()->user()->id);
-        $teams = Team::whereIn('id', $teamIds->pluck('id'))
-            ->select('name', 'id')
-            ->orderBy('name')
-            ->where('is_active', 1)
-            ->get();
+        if(count($teamIds) > 0) {
+            $teams = Team::whereIn('id', $teamIds->pluck('id'))
+                ->select('name', 'id')
+                ->orderBy('name')
+                ->where('is_active', 1)
+                ->get();
+        }
         $isCarManager = auth()->user()->hasAnyRole([RolesEnum::CarManager]);
 
         return view('transaction.view', compact('transactors', 'handlers', 'insuranceCompanies', 'paymentModes', 'reasons', 'isTransappAdmin', 'teams', 'isCarManager'));
