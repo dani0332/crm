@@ -1,6 +1,5 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -23,6 +22,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -61,20 +61,22 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor?.email }}</dd>
+            <dd>{{ quote.advisor?.name }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -301,6 +303,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

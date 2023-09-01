@@ -85,7 +85,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
-if (config('constants.APP_ENV') == EnvEnum::STAGING) {
+if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV') == EnvEnum::UAT) {
     Route::middleware('throttle:50,10')->group(function () {
         Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
@@ -181,7 +181,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::patch('activities/v2/{id}/update-status', [ActivityController::class, 'updateStatus']);
     Route::delete('activities/v2/{id}/', [ActivityController::class, 'destroy']);
 
-    Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
+    //Route::get('activities', [ActivitesController::class, 'index'])->name('activities.index');
+    Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
+    Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
+
     Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
     Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
@@ -231,6 +234,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-tpl-filter-stats', [DashboardController::class, 'getTPLDashboardStats']);
     Route::post('/get-comp-filter-stats', [DashboardController::class, 'getComprehensiveDashboardStats']);
     Route::post('/get-users-by-team', [DashboardController::class, 'getUsersByTeam']);
+
+    Route::post('/get-sub-teams-by-team', [DashboardController::class, 'getSubTeamsByTeam']);
+    Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
     Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
