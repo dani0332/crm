@@ -17,6 +17,7 @@ use Carbon\Carbon;
                             <tr>
                               <th>ID</th>
                               <th>REF-ID</th>
+                              <th>Source</th>
                               <th>Call Type</th>
                               <th>Status</th>
                               <th>Provider Name</th>
@@ -27,18 +28,19 @@ use Carbon\Carbon;
                           <tbody>
                             @foreach($apilogs as $key => $apilog)
                             <tr>
-                              <td style="word-wrap:break-word;">{{ $apilog->id }}</td>
-                              <td style="word-wrap:break-word;">{{ $apilog->quote_uuid }}</td>
-                              <td style="word-wrap:break-word;">{{ $apilog->call_type }}</td>
-                              <td style="word-wrap:break-word;">{{ $apilog->status }}</td>
-                              <td style="word-wrap:break-word;">{{ $apilog->provider_name }}</td>
-                              <td style="word-wrap:break-word;">{{ $apilog->created_at }}</td>
-                              <td style="word-wrap:break-word;">
+                              <td>{{ $apilog->id }}</td>
+                              <td>{{ $apilog->quote_uuid }}</td>
+                              <td>{{ $apilog->source_table }}</td>
+                              <td>{{ $apilog->call_type }}</td>
+                              <td style="color: {{ ($apilog->status === 'passed' || $apilog->status === 'N/A') ? 'green' : 'red' }}">{{ strtoupper($apilog->status) }}</td>
+                              <td>{{ $apilog->provider_name }}</td>
+                              <td>{{ $apilog->created_at }}</td>
+                              <td>
                               <button class="btn btn-warning btn-sm view-button"
                                     data-id="{{ $apilog->id }}"
                                     data-ref-id="{{ $apilog->quote_uuid }}"
                                     data-call-type="{{ $apilog->call_type }}"
-                                    data-status="{{ $apilog->status }}"
+                                    data-status="{{ strtoupper($apilog->status) }}"
                                     data-provider-name="{{ $apilog->provider_name }}"
                                     data-request="{{ $apilog->request }}"
                                     data-response="{{ $apilog->response }}"
@@ -74,10 +76,6 @@ use Carbon\Carbon;
             
     <div class="modal-body">
         <table class="table">
-            <tr>
-                <th>Field</th>
-                <th>Value</th>
-            </tr>
             <tr>
                 <td><strong>REF-ID:</strong></td>
                 <td><span id="modalRefId"></span></td>
