@@ -14,7 +14,6 @@ class AddGoogleProfileFields extends Migration
     {
         Schema::table('users', function ($table) {
             $table->datetime('google_photo_last_updated')->after('profile_photo_path')->nullable();
-            $table->text('profile_photo_path')->after('profile_photo_path')->nullable();
         });
     }
 
@@ -26,7 +25,6 @@ class AddGoogleProfileFields extends Migration
     public function down()
     {
         Schema::table('users', function ($table) {
-            $table->dropColumn('profile_photo_path');
             $table->dropColumn('google_photo_last_updated');
         });
     }

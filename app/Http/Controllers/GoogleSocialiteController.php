@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\RolesEnum;
 use App\Models\User;
+use Carbon\Carbon;
 use Exception;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -26,29 +27,23 @@ class GoogleSocialiteController extends Controller
      */
     public function handleCallback()
     {
-
-      //  print_r(date('M-D-Y',strtotime('now')));
-      //  echo '-------------';
-       // print_r(date('M-D-Y',strtotime('- 30 Days')));
-       // dd(now());
         try {
             $socialUser = Socialite::driver(config('constants.social_driver'))->user();
         } catch (Exception $exception) {
             return redirect()->route('login')->with('status', 'Google login failed. Please try again.');
         }
-        // dd($socialUser->user['picture']);
-        // $table->datetime('google_photo_last_updated')->nullable()->after('profile_photo_path');
-        //            $table->text('profile_photo_path')->nullable()->after('profile_photo_path');
         $requestingUser = User::where('email', $socialUser->getEmail())->first();
-
         if (! $requestingUser) {
             return redirect()->route('login')->with('status', 'You are not authorized to login. Please contact admin.');
         }
 
         $remember = in_array($requestingUser->email, getAutomationUser()) ? true : false;
         auth()->login($requestingUser, $remember);
-        if(isset($socialUser->user['picture']) && ($requestingUser->google_photo_last_updated == null )){
+        $lastUpdatedDate = Carbon::parse($requestingUser->google_photo_last_updated);
+        $today = Carbon::now();
+        $lastSync = $lastUpdatedDate->diffInDays($today);
 
+        if(isset($socialUser->user['picture']) && ($lastSync > 30  || $requestingUser->google_photo_last_updated == null) ){
             $requestingUser->google_photo_last_updated = now();
             $requestingUser->profile_photo_path = $socialUser->user['picture'];
         }
