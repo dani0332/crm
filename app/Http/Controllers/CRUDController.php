@@ -15,6 +15,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Exports\CarQuoteExport;
 use App\Exports\HealthQuotesExport;
@@ -33,6 +34,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
@@ -264,6 +266,7 @@ class CRUDController extends Controller
      */
     public function create(Request $request)
     {
+
         $isRenewalUser = Auth::user()->isRenewalUser();
         if ($isRenewalUser && strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $renewalAdvisors = $this->crudService->fillRenewalData($this->genericModel);
@@ -305,7 +308,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HomeQuote/Create', [
+            return inertia('HomeQuote/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -522,8 +525,10 @@ class CRUDController extends Controller
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
             $paymentEntityModel->load(['plan.insuranceProvider']);
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
+
             // return view('shared.show', compact([
-            //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+            //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
             //     'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
             //     'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
@@ -531,6 +536,7 @@ class CRUDController extends Controller
             //     'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
             //     'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
             // ]));
+
             $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
             $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
@@ -550,7 +556,7 @@ class CRUDController extends Controller
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum',
-                'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
+                'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl'
             ]));
@@ -589,6 +595,7 @@ class CRUDController extends Controller
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
 
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
@@ -608,6 +615,7 @@ class CRUDController extends Controller
                 'notProductionApproval' => $notProductionApproval,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
+                'embeddedProducts' => $embeddedProducts,
             ]);
         }
 
@@ -663,7 +671,7 @@ class CRUDController extends Controller
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
 
-            $paymentMethods = $paymentMethods->map(function ($paymentMethod) {
+            $paymentMethods = $paymentMethods?->map(function ($paymentMethod) {
                 return [
                     'value' => $paymentMethod->code,
                     'label' => $paymentMethod->name,
@@ -676,6 +684,8 @@ class CRUDController extends Controller
                     'label' => $paymentMethod->text,
                 ];
             })->sortBy('label')->values();
+
+            $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
@@ -715,6 +725,7 @@ class CRUDController extends Controller
                 'paymentMethods' => $paymentMethods,
                 'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
+                'embeddedProducts' => $embeddedProducts,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
@@ -775,7 +786,7 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
-            return inertia('HomeQuote/Edit', [
+            return inertia('HomeQuote/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
                 'dropdownSource' => $dropdownSource,

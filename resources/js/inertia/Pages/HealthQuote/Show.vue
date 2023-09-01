@@ -36,6 +36,7 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  embeddedProducts: Array,
   healthPlanTypes: Array,
 });
 
@@ -1980,6 +1981,12 @@ onMounted(() => {
         </div>
       </x-modal>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
