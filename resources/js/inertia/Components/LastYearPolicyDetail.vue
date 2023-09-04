@@ -63,7 +63,7 @@ function onSubmit(isValid) {
               <div>{{ quote?.previous_quote_policy_premium }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
-              <div class="font-medium">Previous Start Date</div>
+              <div class="font-medium">Previous Policy Start Date</div>
               <div>{{ dateFormat(quote?.policy_start_date) }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
