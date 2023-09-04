@@ -107,6 +107,7 @@ const source_type_list = [
     { text: 'All', value: '' },
     { text: 'Renewal', value: 'Renewal_upload' },
 ];
+console.log('filters',filters.product);
 const tableHeader = [
     { text: 'CDB ID', value: 'code' },
     { text: 'FIRST NAME', value: 'first_name' },
@@ -116,11 +117,24 @@ const tableHeader = [
     { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
     { text: 'POLICY START DATE', value: 'policy_start_date' },
     { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
+    { text: 'GROSS PREMIUM', value: 'premium' },
     { text: 'CREATED DATE', value: 'created_at' },  {
         text: 'ADVISOR ASSIGNED DATE',
         value: 'advisor_assigned_date',
     },
     { text: 'ADVISOR', value: 'advisor' },
+];
+const tableHeader2 = [
+  { text: 'CDB ID', value: 'code' },
+  { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
+  { text: 'POLICY START DATE', value: 'policy_start_date' },
+  { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
+  { text: 'GROSS PREMIUM', value: 'premium' },
+  { text: 'CREATED DATE', value: 'created_at' },  {
+    text: 'ADVISOR ASSIGNED DATE',
+    value: 'advisor_assigned_date',
+  },
+  { text: 'ADVISOR', value: 'advisor' },
 ];
 
 const can = permission => useCan(permission);
@@ -137,7 +151,7 @@ const permissionsEnum = page.props.permissionsEnum;
         <Head title="Search" />
 
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Search</h2>
+            <h2 class="text-xl font-semibold">Search {{filters.product}}</h2>
         </div>
         <x-divider class="my-4" />
 
@@ -203,7 +217,7 @@ const permissionsEnum = page.props.permissionsEnum;
                 </x-button>
             </div>
         </x-form>
-        <div class="flex justify-end gap-3 mb-4 mt-4">
+        <div class="flex justify-end gap-3 mb-4 mt-4" v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)">
             <a id="export_link" target="_blank" class="border appearance-none rounded-md shadow-sm py-2 text-sm px-4 cursor-pointer"  href="" size="sm" color="emerald">
                 Export
             </a>
@@ -212,10 +226,11 @@ const permissionsEnum = page.props.permissionsEnum;
 
 
         <div class="mb-4 font-bold">Total Records : {{ quotes.total || 0 }}</div>
+
         <DataTable
             table-class-name="tablefixed"
             :loading="loader.table"
-            :headers="tableHeader"
+            :headers="filters.product == 8?tableHeader2:tableHeader"
             :items=" quotes.data || []"
             border-cell
             hide-rows-per-page
