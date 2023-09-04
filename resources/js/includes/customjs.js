@@ -2878,7 +2878,6 @@ $('#search-teams').submit(function (e) {
   }, 1000);
 });
 
-<<<<<<< HEAD
 $('#search-keywords').submit(function (e) {
     e.preventDefault();
     $('.loader').show();
@@ -2917,7 +2916,7 @@ $('#rule_car_make_id').on('change', function (e) {
       console.log("Car make code not found");
       return;
     }
-    $.get('/commercial_car-model-by-id?make_code=' + make_code, function (data) {
+    $.get('/commercial-car-model-by-id?make_code=' + make_code, function (data) {
       var carmodel = $('#rule_car_model_id').empty();
       carmodel.append(
         '<option data-id="" value="">Please select rule car model</option>',
@@ -2947,7 +2946,7 @@ $('#rule_car_make_id').on('change', function (e) {
   {
     console.log("Triggered");
   }
-=======
+
 var amlDetailKycLogsDatatable = $('.aml-detail-data-table').DataTable({
     ordering: false,
     info: true,
@@ -3001,4 +3000,3 @@ $(window).on('load', function(){
         }, 1000);
     }
 });
->>>>>>> 07a8ebfe99e477013986dcc653a89778537cc650

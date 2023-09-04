@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class RuleDetail extends Model
 {
@@ -28,21 +27,4 @@ class RuleDetail extends Model
     {
         return (new static())->fillable;
     }
-
-    /**
-     * RELATIONS
-     */
-
-    /**
-     * get lead source function
-     */
-    public function leadSource(): HasOne
-    {
-        return $this->hasOne(
-            LeadSource::class,
-            'id',
-            'lead_source_id',
-        );
-    }
-
 }

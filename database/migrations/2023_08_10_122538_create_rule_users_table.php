@@ -13,21 +13,23 @@ class CreateRuleUsersTable extends Migration
      */
     public function up()
     {
-        Schema::create('rule_users', function (Blueprint $table) {
-            $table->id();
+        if (! Schema::hasTable('rule_users')) {
+            Schema::create('rule_users', function (Blueprint $table) {
+                $table->id();
 
-            $table->foreignId('rule_id')
-                ->constrained('rules')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                $table->foreignId('rule_id')
+                    ->constrained('rules')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                $table->foreignId('user_id')
+                    ->constrained('users')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
     }
 
     /**

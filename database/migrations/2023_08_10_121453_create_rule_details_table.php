@@ -13,34 +13,36 @@ class CreateRuleDetailsTable extends Migration
      */
     public function up()
     {
-        Schema::create('rule_details', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('rule_id')
-                ->constrained('rules')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+        if (! Schema::hasTable('rule_details')) {
+            Schema::create('rule_details', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('rule_id')
+                    ->constrained('rules')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->integer('car_make_id')->nullable();
-            $table->foreign('car_make_id')
-                ->references('id')
-                ->on('car_make')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                $table->integer('car_make_id')->nullable();
+                $table->foreign('car_make_id')
+                    ->references('id')
+                    ->on('car_make')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->integer('car_model_id')->nullable();
-            $table->foreign('car_model_id')
-                ->references('id')
-                ->on('car_model')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                $table->integer('car_model_id')->nullable();
+                $table->foreign('car_model_id')
+                    ->references('id')
+                    ->on('car_model')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->foreignId('lead_source_id')->nullable()
-                ->constrained('lead_sources')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
+                $table->foreignId('lead_source_id')->nullable()
+                    ->constrained('lead_sources')
+                    ->cascadeOnDelete()
+                    ->cascadeOnUpdate();
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
     }
 
     /**

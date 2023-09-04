@@ -13,12 +13,14 @@ class CreateCommercialKeywordsTable extends Migration
      */
     public function up()
     {
-        Schema::create('commercial_keywords', function (Blueprint $table) {
-            $table->unsignedBigInteger('id')->primary();
-            $table->string('key');
-            $table->string('name');
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('commercial_keywords')) {
+            Schema::create('commercial_keywords', function (Blueprint $table) {
+                $table->unsignedBigInteger('id')->primary();
+                $table->string('key');
+                $table->string('name');
+                $table->timestamps();
+            });
+        }
     }
 
     /**

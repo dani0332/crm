@@ -10,6 +10,17 @@ class CommercialKeyword extends Model
     use HasFactory;
 
     /**
+     * attributes those are mass assignable
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'id',
+        'name',
+        'key',
+    ];
+
+    /**
      * ATTRIBUTES
      */
     public function getCreatedAtAttribute($date)

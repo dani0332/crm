@@ -13,11 +13,13 @@ class CreateRuleTypesTable extends Migration
      */
     public function up()
     {
-        Schema::create('rule_types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-        });
+        if (! Schema::hasTable('rule_types')) {
+            Schema::create('rule_types', function (Blueprint $table) {
+                $table->id();
+                $table->string('name');
+                $table->timestamps();
+            });
+        }
     }
 
     /**
