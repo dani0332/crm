@@ -17,7 +17,6 @@ use Carbon\Carbon;
                             <tr>
                               <th>ID</th>
                               <th>REF-ID</th>
-                              <th>Source</th>
                               <th>Call Type</th>
                               <th>Status</th>
                               <th>Provider Name</th>
@@ -30,22 +29,21 @@ use Carbon\Carbon;
                             <tr>
                               <td>{{ $apilog->id }}</td>
                               <td>{{ $apilog->quote_uuid }}</td>
-                              <td>{{ $apilog->source_table }}</td>
                               <td>{{ $apilog->call_type }}</td>
                               <td style="color: {{ ($apilog->status === 'passed' || $apilog->status === 'N/A') ? 'green' : 'red' }}">{{ strtoupper($apilog->status) }}</td>
-                              <td>{{ $apilog->provider_name }}</td>
-                              <td>{{ $apilog->created_at }}</td>
+                              <td>{{ $apilog->carQuotePlanDetails->provider_name }}</td>
+                              <td>{{ date('d/m/Y H:i:s',strtotime($apilog->created_at)) }}</td>
                               <td>
                               <button class="btn btn-warning btn-sm view-button"
                                     data-id="{{ $apilog->id }}"
                                     data-ref-id="{{ $apilog->quote_uuid }}"
                                     data-call-type="{{ $apilog->call_type }}"
                                     data-status="{{ strtoupper($apilog->status) }}"
-                                    data-provider-name="{{ $apilog->provider_name }}"
+                                    data-provider-name="{{ $apilog->carQuotePlanDetails->provider_name }}"
                                     data-request="{{ $apilog->request }}"
                                     data-response="{{ $apilog->response }}"
-                                    data-created-at="{{ $apilog->created_at }}"
-                                    data-updated-at="{{ $apilog->updated_at }}"
+                                    data-created-at="{{ date('d/m/Y H:i:s',strtotime($apilog->created_at)) }}"
+                                    data-updated-at="{{ date('d/m/Y H:i:s',strtotime($apilog->updated_at)) }}"
                               >
                                 View
                             </button>
@@ -60,10 +58,8 @@ use Carbon\Carbon;
             </div>
         </div>         
     </div>
-
-
     <!-- Add Modal -->    
-    <div class="modal fade" id="viewModal" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel">
+    <div class="modal fade" id="viewModalLog" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel">
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header" style="background-color: #4183bd;">
@@ -71,8 +67,7 @@ use Carbon\Carbon;
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
-            </div>
-            
+            </div>           
             
     <div class="modal-body">
         <table class="table">
@@ -150,7 +145,7 @@ use Carbon\Carbon;
               $('#updatedAt').text(updatedAt);
 
               // Show the modal
-              $('#viewModal').modal('show');
+              $('#viewModalLog').modal('show');
           });
       });
   </script>

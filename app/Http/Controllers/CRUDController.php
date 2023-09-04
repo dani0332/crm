@@ -59,6 +59,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Models\Audit;
 
 class CRUDController extends Controller
 {
@@ -903,35 +904,25 @@ class CRUDController extends Controller
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
-        //echo "<pre>"; print_r($quotePlans); exit;die();
-
-        $createdAt = '';
-        $updatedAt = '';
-        $auditLog = \DB::table('audits')
-            ->select('created_at', 'updated_at')
+        $updatedAtAudit = '';
+        /*$auditLog = \DB::table('audits')
+            ->select('updated_at')
             ->where('auditable_id', $record->id)
             ->where('auditable_type', 'App\Models\CarQuote')
-            ->latest()->first();
-        if ($auditLog) {
-            $createdAt = $auditLog->created_at;
-            $updatedAt = $auditLog->updated_at;        
-        }
-        //echo $auditLog->created_at."fffgf";
-        /*DB::table('audits')
-            ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
+            ->latest()->first();*/
+        $auditLog = Audit::select('updated_at')
             ->where('auditable_id', $record->id)
             ->where('auditable_type', 'App\Models\CarQuote')
-            ->orderBy('created_at', 'desc')
-            ->get();
-        */
-        //echo $record->id; exit;
-
+            ->latest()
+            ->first();
+        if ($auditLog) {            
+            $updatedAtAudit = $auditLog->updated_at;        
+        }       
+        
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
-
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access', 'createdAt', 'updatedAt']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access', 'updatedAtAudit']));
         }
     }
 
