@@ -120,7 +120,7 @@ class CycleQuoteRepository extends BaseRepository
                 'quoteDetail.lostReason',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-                }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
+                }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 }])->firstOrFail();
     }

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use Illuminate\Support\Facades\Log;
 
 class CustomerRepository extends BaseRepository
 {
@@ -16,14 +17,17 @@ class CustomerRepository extends BaseRepository
     }
 
     /**
-     * @return bool
+     * @return CustomerAdditionalContact
      */
     public function fetchStoreAdditionalContact($customerId, $data)
     {
-        $customer = $this->findOrFail($customerId);
-        $customer->additionalContactInfo()->create($data);
+        Log::info('Customer additional contact id: '.$customerId.' new: '.$data['key'].' value: '.$data['value']);
 
-        return $customer;
+        return CustomerAdditionalContact::updateOrCreate([
+            'customer_id' => $customerId,
+            'key' => $data['key'],
+            'value' => trim($data['value']),
+        ]);
     }
 
     public function fetchGetAdditionalContacts($customerId, $quoteMobileNo)
@@ -41,5 +45,17 @@ class CustomerRepository extends BaseRepository
         }
 
         return $additionalContacts;
+    }
+
+    public function fetchReplicatePreviousAdditionalContacts($old_customer_id, $new_customer_id)
+    {
+        $customerPreviousContactInfo = CustomerAdditionalContact::where('customer_id', $old_customer_id)->get();
+        foreach ($customerPreviousContactInfo as $customerPreInfo) {
+            CustomerAdditionalContact::updateOrCreate([
+                'customer_id' => $new_customer_id,
+                'key' => $customerPreInfo->key,
+                'value' => $customerPreInfo->value,
+            ]);
+        }
     }
 }

@@ -44,15 +44,15 @@ const modals = reactive({
 });
 
 const addAdditionalContact = () => {
-    additionalContact.additional_contact_type = null;
-    additionalContact.additional_contact_val = null;
+    additionalContact.key = null;
+    additionalContact.value = null;
     modals.addContact = true;
 };
 
 const additionalContact = useForm({
     id: null,
-    additional_contact_type: null,
-    additional_contact_val: null,
+    key: null,
+    value: null,
     quote_id: props.quoteId,
     customer_id: props.customerId,
     quote_type: props.quoteType,
@@ -102,7 +102,6 @@ const customerAlreadyPrimaryCheck = async () => {
     };
 
     EmailCheckLoader.value = true;
-    contactLoader.value = true;
 
     axios.post('/customer-primary-email-check', data)
     .then(res => {
@@ -256,7 +255,7 @@ const additionalContactDeleteConfirmed = () => {
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-select
-              v-model="additionalContact.additional_contact_type"
+              v-model="additionalContact.key"
               label="Type"
               :options="[
                 { value: 'email', label: 'Email' },
@@ -268,16 +267,16 @@ const additionalContactDeleteConfirmed = () => {
             />
 
             <x-input
-              v-if="additionalContact.additional_contact_type === 'mobile_no'"
-              v-model="additionalContact.additional_contact_val"
+              v-if="additionalContact.key === 'mobile_no'"
+              v-model="additionalContact.value"
               label="Value"
               :rules="[isRequired, isMobileNo]"
               class="w-full"
             />
 
             <x-input
-              v-if="additionalContact.additional_contact_type === 'email'"
-              v-model="additionalContact.additional_contact_val"
+              v-if="additionalContact.key === 'email'"
+              v-model="additionalContact.value"
               label="Value"
               :rules="[isRequired, isEmail]"
               class="w-full"

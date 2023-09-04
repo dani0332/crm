@@ -30,9 +30,16 @@ class CustomerAdditionalContactRequest extends FormRequest
      */
     public function rules()
     {
-        $rules['quote_id'] = 'required';
-        $rules['value'] = 'required';
-        $rules['key'] = 'required';
+        $rules = [
+            'quote_id' => 'required',
+            'value' => 'required',
+            'key' => 'required'
+        ];
+
+        if(request()->segment(1) == 'customer-additional-contact'){
+            $rules['customer_id'] = 'required';
+            $rules['quote_type'] = 'nullable';
+        }
 
         if ($this->key == GenericRequestEnum::EMAIL) {
             $rules['value'] = 'required|email:rfc,dns';
@@ -47,20 +54,12 @@ class CustomerAdditionalContactRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $customer = CustomerRepository::where(request()->key, request()->value)->first();
-            $additionalContacts = AdditionalContactRepository::where([['key', request()->key], ['value', request()->value]])->first();
-
-            $genericLobs = [quoteTypeCode::Life, quoteTypeCode::Travel];
-            if (in_array(request()->quote_type, $genericLobs)) {
-                $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
-            } else {
-                $quote = PersonalQuoteRepository::where('id', request()->quote_id)->first();
-            }
+            $quote = $this->getQuoteObject(request()->quote_type, request()->quote_id);
             /**
              * check if email/mobile already exists in customer, quote or additional contact info
              */
-            if ($customer || $additionalContacts || $quote->{request()->key} == request()->value) {
-                $validator->errors()->add('value', ucfirst(str_replace('_', ' ', request()->key)).' is already in use for a customer. Please try another.');
+            if ($quote->{request()->key} == request()->value) {
+                $validator->errors()->add('value', ucfirst(str_replace('_', ' ', request()->key)).' is already in use for a current lead. Please try another.');
             }
         });
     }

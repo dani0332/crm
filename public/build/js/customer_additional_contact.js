@@ -8,6 +8,7 @@ $(function () {
   $('.additional-email-make-primary-btn').on('click', function () {
     var _this = $(this);
     if (confirm('Are you sure to make this primary email address?')) {
+        $('.loader').show();
         $.ajax({
             url: '/customer-primary-email-check',
             method: 'POST',
@@ -131,8 +132,8 @@ $(function () {
         data: {
           quote_id: quote_id,
           customer_id: customer_id,
-          additional_contact_type: additional_contact_type,
-          additional_contact_val: additional_contact_val,
+          key: additional_contact_type,
+          value: additional_contact_val,
           quote_type: quote_type,
           _token: $('input[name=_token]').val(),
         },
@@ -155,6 +156,17 @@ $(function () {
             );
           }
         },
+          error: function(err){
+              $('.loader').hide();
+              var errors = err.responseJSON.errors;
+              $.each(errors, function (key, value) {
+                  validation_div_text(
+                      '#additional-contact-modal-validation-msg',
+                      value,
+                      'red',
+                  );
+              });
+          }
       });
     }
   });
