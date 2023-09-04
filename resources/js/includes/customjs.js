@@ -2794,6 +2794,81 @@ var teamsDataTable = $('.teams-data-table').DataTable({
   ],
 });
 
+/**
+ * Commercial keywords datatable
+ */
+var commercialKeywordsDataTable = $('.commercial-keywords-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_keywords_datatable_route,
+      data: function (d) {
+        d.name = $('#name').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_keywords_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'key', name: 'key' },
+      { data: 'name', name: 'name' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
+    ],
+  });
+
+/**
+ * Commercial vehicles datatable
+ */
+var commercialVehiclesDataTable = $('.commercial-vehicles-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_vehicles_datatable_route,
+      data: function (d) {
+        d.text = $('#text').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_vehicles_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'text', name: 'text' },
+      { data: 'code', name: 'code' },
+      { data: 'car_models', name: 'car_models' , title: 'Commercial Car Models'},
+    ],
+  });
+
 $('#search-teams').submit(function (e) {
   e.preventDefault();
   $('.loader').show();
@@ -2802,6 +2877,75 @@ $('#search-teams').submit(function (e) {
     $('.loader').hide();
   }, 1000);
 });
+
+$('#search-keywords').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialKeywordsDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+  $('#search-car-make').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialVehiclesDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+// Listen for change events on select1
+$('#rule_type').change(function() {
+    var selectedValue = $(this).val(); // Get the selected value
+
+    if (selectedValue == 1) {
+        $('#lead_source_id_div').show();
+    } else {
+        $('#lead_source_id_div').hide();
+        $('#lead_source_id').val('');
+
+    }
+});
+
+$('#rule_car_make_id').on('change', function (e) {
+    console.log("changed");
+    var make_code = $('#rule_car_make_id option:selected').attr('data-id');
+    if (!make_code) {
+      console.log("Car make code not found");
+      return;
+    }
+    $.get('/commercial-car-model-by-id?make_code=' + make_code, function (data) {
+      var carmodel = $('#rule_car_model_id').empty();
+      carmodel.append(
+        '<option data-id="" value="">Please select rule car model</option>',
+      );
+      if (data.length > 0) {
+        $.each(data, function (create, carmodelObj) {
+          var option = $('<option/>', { id: create, value: carmodelObj });
+          carmodel.append(
+            '<option data-id="' +
+              carmodelObj.code +
+              '" value="' +
+              carmodelObj.id +
+              '" selected>' +
+              carmodelObj.text +
+              '</option>',
+          );
+        });
+      }else{
+        carmodel.append(
+            '<option disabled>No commercial vehicle record found for this car make</option>',
+          );
+      }
+    });
+  });
+
+  function triggerTest()
+  {
+    console.log("Triggered");
+  }
 
 var amlDetailKycLogsDatatable = $('.aml-detail-data-table').DataTable({
     ordering: false,

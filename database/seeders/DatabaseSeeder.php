@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
+            CommercialKeywordsSeeder::class,
+            RuleTypeSeeder::class,
+            CommercialMakeModelKeywordsPermissionsSeeder::class,
             AddPersonalLobsProducts::class,
             // PetBikeMigrationSeeder::class
             InsurerQuoteTypeMappingSeeder::class,

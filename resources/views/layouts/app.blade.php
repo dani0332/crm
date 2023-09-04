@@ -199,6 +199,8 @@
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
                 advisor_conversion_report_route: "{{ url('reports/advisor-conversion')  }}",
                 teams_datatable_route: "{{ route('team.index') }}",
+                commercial_keywords_datatable_route: "{{ route('admin.commercial.keywords') }}",
+                commercial_vehicles_datatable_route: "{{ route('admin.configure.commerical.vehicles') }}",
             },
             _token: "{{ csrf_token() }}"
         };
