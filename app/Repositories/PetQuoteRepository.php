@@ -108,8 +108,6 @@ class PetQuoteRepository extends BaseRepository
 
     }
 
-
-
     public function fetchGetBy($column, $value)
     {
         $quote = $this->byQuoteTypeId(QuoteTypes::PET->id())

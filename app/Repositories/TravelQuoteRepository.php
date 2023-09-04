@@ -15,7 +15,6 @@ class TravelQuoteRepository extends BaseRepository
         return TravelQuote::class;
     }
 
-
     public function fetchGetData($forExport = false)
     {
         $query = $this->with([
@@ -30,7 +29,7 @@ class TravelQuoteRepository extends BaseRepository
             'nationality',
             'destination',
             'paymentStatus',
-            'insuranceProvider'
+            'insuranceProvider',
         ])
             ->filter(! $forExport)
             ->withFakeLeadCriteria()

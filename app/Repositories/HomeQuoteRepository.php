@@ -18,7 +18,6 @@ class HomeQuoteRepository extends BaseRepository
             ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
     }
 
-
     public function fetchGetData($forExport = false)
     {
         $query = $this->with([
@@ -28,7 +27,7 @@ class HomeQuoteRepository extends BaseRepository
             'possessionType:id,text',
             'advisor',
             'nationality',
-            'insuranceProvider'
+            'insuranceProvider',
         ])
             ->filter(! $forExport)
             ->withFakeLeadCriteria()

@@ -32,7 +32,7 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
-        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN
+        'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
 
     public function quoteStatus()
