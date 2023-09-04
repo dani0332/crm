@@ -28,6 +28,8 @@ use App\Models\PaymentStatus;
 use App\Models\Quadrants;
 use App\Models\QuoteStatus;
 use App\Models\Regions;
+use App\Models\RuleDetail;
+use App\Models\RuleType;
 use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TravelCoverFor;
@@ -287,6 +289,39 @@ class DropdownSourceService extends BaseService
                 break;
             case 'quote_batch_id':
                 $data = DB::table('quote_batches')->select('id', 'name')->get();
+                break;
+            case 'rule_type':
+                $data = RuleType::select('id', 'name')->get();
+                break;
+            case 'rule_car_make_id':
+                $data = CarMake::select('id', 'text', 'code')
+                    ->where('is_active', true)
+                    ->where('is_commercial', true)
+                    ->get();
+                break;
+            case 'rule_car_model_id':
+                // =========== update scenario only =================
+                $ruleID = explode('/', request()->path());
+                $data = [];
+                if (isset($ruleID[2])) {
+                    $carMake = RuleDetail::where('rule_id', $ruleID[2])->select('car_make_id')->first();
+                    if ($carMake && $carMake->car_make_id != null) {
+                        $makeCode = CarMake::whereId($carMake->car_make_id)
+                            ->where('is_active', true)
+                            ->where('is_commercial', true)
+                            ->select('code')
+                            ->first();
+
+                        $data = CarModel::where('car_make_code', $makeCode->code)
+                            ->where('is_active', true)
+                            ->where('is_commercial', true)
+                            ->select('id', 'text')
+                            ->get();
+                    }
+
+                }
+                // =========== end =================
+                break;
             default:
                 break;
         }

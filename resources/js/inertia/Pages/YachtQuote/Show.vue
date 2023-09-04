@@ -29,32 +29,30 @@ const page = usePage();
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
-
 </script>
 
 <template>
   <div>
-
     <Head title="Yacht Quotes" />
 
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Yacht Detail</h2>
       <div class="flex gap-2">
-        <!-- :href="`/personal-quotes/yacht/${quote.uuid}/edit`" -->
-        <Link v-if="can(permissionsEnum.YachtQuotesEdit)"
-              :href="route('yacht-quotes-edit', quote.uuid)">
-        <x-button size="sm"
-                  tag="div">Edit</x-button>
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesEdit)"
+          :href="route('yacht-quotes-edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
-        <Link v-if="can(permissionsEnum.YachtQuotesList)"
-              :href="route('yacht-quotes-list')"
-              preserve-scroll>
-        <x-button size="sm"
-                  color="primary"
-                  tag="div">
-          Yacht Quotes
-        </x-button>
+        <Link
+          v-if="can(permissionsEnum.YachtQuotesList)"
+          :href="route('yacht-quotes-list')"
+          preserve-scroll
+        >
+          <x-button size="sm" color="primary" tag="div">
+            Yacht Quotes
+          </x-button>
         </Link>
       </div>
     </div>
@@ -65,7 +63,9 @@ const permissionsEnum = page.props.permissionsEnum;
           <div class="grid sm:grid-cols-2">
             <div>
               <x-tooltip position="bottom">
-                <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
                   Ref-ID
                 </label>
                 <template #tooltip> Reference ID </template>
@@ -117,7 +117,9 @@ const permissionsEnum = page.props.permissionsEnum;
           <div class="grid sm:grid-cols-2">
             <div>
               <x-tooltip position="bottom">
-                <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
                   Parent Ref-ID
                 </label>
                 <template #tooltip> Parent Reference ID </template>
@@ -197,7 +199,6 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">EMAIL</dt>
             <dd>{{ quote.email }}</dd>
           </div>
-
         </dl>
       </div>
 
@@ -263,45 +264,55 @@ const permissionsEnum = page.props.permissionsEnum;
       </div>
     </div>
 
-    <QuoteActivities :can="can"
-                     :quote="quote"
-                     :activities="activities"
-                     :advisors="advisors"
-                     :quote-type="quoteType" />
+    <QuoteActivities
+      :can="can"
+      :quote="quote"
+      :activities="activities"
+      :advisors="advisors"
+      :quote-type="quoteType"
+    />
 
-    <QuotePayments v-if="isBetaUser"
-                   :can="can"
-                   :payments="quote.payments"
-                   :quote-type="quoteType"
-                   :payment-methods="paymentMethods"
-                   :insurance-providers="insuranceProviders"
-                   :is-beta-user="isBetaUser"
-                   :personal-plans="personalPlans" />
+    <QuotePayments
+      v-if="isBetaUser"
+      :can="can"
+      :payments="quote.payments"
+      :quote-type="quoteType"
+      :payment-methods="paymentMethods"
+      :insurance-providers="insuranceProviders"
+      :is-beta-user="isBetaUser"
+      :personal-plans="personalPlans"
+    />
 
-    <AdditionalContacts :quote="quote"
-                        :quote-type="quoteType" />
+    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
-    <QuoteStatus :quote="quote"
-                 :quote-type="quoteType"
-                 :quote-statuses="quoteStatuses"
-                 :lost-reasons="lostReasons"
-                 :quote-status-enum="quoteStatusEnum" />
+    <QuoteStatus
+      :quote="quote"
+      :quote-type="quoteType"
+      :quote-statuses="quoteStatuses"
+      :lost-reasons="lostReasons"
+      :quote-status-enum="quoteStatusEnum"
+    />
 
-    <QuoteDocuments :document-types="documentTypes"
-                    :quote-documents="quote.documents || []"
-                    :storageUrl="storageUrl"
-                    :quote="quote" />
+    <QuoteDocuments
+      :document-types="documentTypes"
+      :quote-documents="quote.documents || []"
+      :storageUrl="storageUrl"
+      :quote="quote"
+    />
 
-    <QuotePolicy :quote="quote"
-                 :can="can"
-                 :quoteStatusEnum="quoteStatusesEnum" />
+    <QuotePolicy
+      :quote="quote"
+      :can="can"
+      :quoteStatusEnum="quoteStatusesEnum"
+    />
 
-    <EmbeddedProducts :data="embeddedProducts"
-                      :link="quote.uuid"
-                      :code="quote.code" />
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
-    <AuditLogs :quote-type="quoteType"
-               :id="$page.props.quote.id" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
 
     <LeadHistory :quote="$page.props.quote" />
   </div>

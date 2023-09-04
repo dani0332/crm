@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CarMake extends BaseModel
 {
@@ -49,5 +50,17 @@ class CarMake extends BaseModel
     public function scopeActiveWithId($query, $id)
     {
         $query->whereId($id)->where('is_active', 1);
+    }
+
+    /**
+     * get all models of a car function
+     */
+    public function carModels(): HasMany
+    {
+        return $this->hasMany(
+            CarModel::class,
+            'car_make_code',
+            'code'
+        );
     }
 }
