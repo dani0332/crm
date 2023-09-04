@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\ActivityRepository;
@@ -118,6 +119,7 @@ class LifeQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'modelType' => QuoteTypes::LIFE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
             'embeddedProducts' => $embeddedProducts,
         ]);
     }

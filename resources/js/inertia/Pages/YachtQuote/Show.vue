@@ -23,6 +23,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -209,6 +210,7 @@ const permissionsEnum = page.props.permissionsEnum;
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
     />
 
     <QuoteActivities

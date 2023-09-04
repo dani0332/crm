@@ -556,6 +556,7 @@ class CRUDController extends Controller
                 'notProductionApproval' => $notProductionApproval,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
+                'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::HomeManager),
                 'embeddedProducts' => $embeddedProducts,
             ]);
         }
@@ -666,6 +667,7 @@ class CRUDController extends Controller
                 'paymentMethods' => $paymentMethods,
                 'healthPlanTypes' => $healthPlanTypes,
                 'sendPolicy' => (bool) $displaySendPolicyButton,
+                'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::HealthManager),
                 'embeddedProducts' => $embeddedProducts,
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),

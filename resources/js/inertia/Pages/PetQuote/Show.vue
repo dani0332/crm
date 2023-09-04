@@ -25,6 +25,7 @@ defineProps({
   quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
   embeddedProducts: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -299,6 +300,7 @@ const onCreateDuplicate = isValid => {
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
     />
 
     <QuoteActivities

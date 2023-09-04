@@ -9,6 +9,7 @@ defineProps({
   quoteStatuses: Object,
   quoteStatusEnum: Object,
   customerAdditionalContacts: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -345,6 +346,7 @@ const historyDataTable = [
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">

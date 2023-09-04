@@ -12,6 +12,7 @@ defineProps({
   permissions: Object,
   typeCode: String,
   lostReasons: Object,
+  canAddBatchNumber: Boolean,
 });
 
 const { isRequired } = useRules();
@@ -568,6 +569,7 @@ const onAssignLead = () => {
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

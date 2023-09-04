@@ -115,6 +115,7 @@ class PetQuoteController extends Controller
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'modelType' => QuoteTypes::PET,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::PetManager),
             'embeddedProducts' => $embeddedProducts,
         ]);
     }

@@ -102,7 +102,7 @@
 
                     </div>
                 </div>
-                @if (empty($record->renewal_batch ))
+                @if (empty($record->renewal_batch ) && auth()->user()->hasRole(RolesEnum::CarManager))
                     <div align="right">
                         <span style="color:red;" id="error-quote-policy-form"></span>
                         <button type="submit" class="btn btn-primary btn-sm" id="">Update</button>

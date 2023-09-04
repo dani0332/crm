@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -259,6 +260,7 @@ class AmtController extends Controller
             'lostReasons' => $lostReasons,
             'quoteStatuses' => $quoteStatuses,
             'modelType' => QuoteTypes::BUSINESS,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
         ]);

@@ -135,6 +135,7 @@ class CycleQuoteController extends Controller
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'modelType' => QuoteTypes::CYCLE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CycleManager),
             'embeddedProducts' => $embeddedProducts,
         ]);
     }

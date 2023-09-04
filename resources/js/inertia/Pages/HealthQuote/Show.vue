@@ -38,6 +38,7 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -1345,6 +1346,7 @@ onMounted(() => {
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

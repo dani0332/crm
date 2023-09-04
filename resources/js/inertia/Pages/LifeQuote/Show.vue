@@ -12,6 +12,7 @@ defineProps({
   lostReasons: Array,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
+  canAddBatchNumber: Boolean,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -514,6 +515,7 @@ const onLeadStatus = () => {
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">

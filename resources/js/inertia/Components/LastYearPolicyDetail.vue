@@ -6,6 +6,7 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  canAddBatchNumber: Boolean,
 });
 
 const dateFormat = date => {
@@ -101,7 +102,7 @@ function onSubmit(isValid) {
           />
         </x-field>
         <x-button
-          v-if="!props?.quote?.renewal_batch > 0"
+          v-if="!props?.quote?.renewal_batch > 0 && canAddBatchNumber"
           color="primary"
           type="submit"
         >

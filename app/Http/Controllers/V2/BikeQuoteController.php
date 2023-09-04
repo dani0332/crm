@@ -118,6 +118,7 @@ class BikeQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'modelType' => QuoteTypes::BIKE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::BikeManager),
             'embeddedProducts' => $embeddedProducts,
         ]);
     }
