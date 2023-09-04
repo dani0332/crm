@@ -777,6 +777,10 @@ class CarQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['created_at_end'], false);
                 $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
             }
+            else if (empty($request->email) && empty($request->code)) {
+                $dateTo = Carbon::today()->subDays(30)->toDateString();
+                $this->query->whereDate('cqr.created_at', "<=", $dateTo);
+            }
 
             foreach ($searchProperties as $item) {
                 if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
