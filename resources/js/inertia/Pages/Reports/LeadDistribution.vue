@@ -44,6 +44,7 @@ const tableHeader = [
 const filters = reactive({
   createdAtDates: [],
   tiers: [],
+  isCommercial: false,
   page: 1,
 });
 
@@ -141,6 +142,15 @@ const calculateTotalSum = (data, key) => {
           "
            deselect-all
           select-all
+        />
+        <x-select
+          v-model="filters.isCommercial"
+          label="Commercial"
+          placeholder="Select any option"
+          :options="[
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+          ]"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">

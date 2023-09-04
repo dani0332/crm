@@ -138,6 +138,30 @@
                         </div>
 
                     </div>
+                    <?php  if ($isCarManager) { ?>
+                    <div class="item form-group">
+                        <div class="col col-md-6">
+                            <label class="col-form-label col-md-2 col-sm-2" for="Payment mode">Total Premium</label>
+                            <div class="col-md-6 col-sm-6 mt-2 text-bold" id="total_premium_value" >
+
+                            </div>
+                        </div>
+                        <div class="col col-md-6">
+                            <label class="col-form-label col-md-2 col-sm-2" id="payment_mode_id" for="Payment mode">Teams</label>
+                            <div class="col-md-6 col-sm-6">
+                                <div class="input-group">
+                                    <select class="form-control" name="team" multiple id="team">
+                                        <option value="">Select</option>
+                                        @foreach ($teams as $team)
+                                            <option value="{{ $team->id }}">{{ $team->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <?php } ?>
                     <div class="item form-group">
                         <div class="col">
                             <ul class="nav navbar-right panel_toolbox">
