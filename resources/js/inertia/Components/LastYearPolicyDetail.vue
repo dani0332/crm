@@ -13,6 +13,15 @@ const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
 
+const isEdit = computed(() => {
+  return props.quote.renewal_batch !== null &&
+    props.quote.renewal_batch !== '' &&
+    props.quote.renewal_batch !== undefined
+    ? true
+    : page.props.canAddBatchNumber == true
+    ? false
+    : true;
+});
 const { isRequired } = useRules();
 
 const policyForm = useForm({
@@ -97,15 +106,11 @@ function onSubmit(isValid) {
             type="tel"
             class="w-full md:w-64"
             :rules="[isRequired]"
-            :disabled="props?.quote?.renewal_batch"
+            :disabled="isEdit"
             :error="policyForm.errors.renewal_batch"
           />
         </x-field>
-        <x-button
-          v-if="!props?.quote?.renewal_batch > 0 && canAddBatchNumber"
-          color="primary"
-          type="submit"
-        >
+        <x-button v-if="!isEdit" color="primary" type="submit">
           Update
         </x-button>
       </div>
