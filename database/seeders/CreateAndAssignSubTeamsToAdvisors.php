@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\Team;
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class CreateAndAssignSubTeamsToAdvisors extends Seeder
 {
@@ -18,36 +17,36 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
     {
         $data = $this->getMappingData();
 
-        foreach($data as $team) {
+        foreach ($data as $team) {
             $parentTeam = Team::where('name', '=', $team['name'])->first();
 
-            if ( ! $parentTeam) {
+            if (! $parentTeam) {
                 $parentTeam = Team::create([
                     'name' => $team['name'],
                     'type' => 2, // team
                     'is_active' => true,
-                    'parent_team_id' => 2 // Car
+                    'parent_team_id' => 2, // Car
                 ]);
             }
 
-            foreach($team['subTeams'] as $subTeam) {
+            foreach ($team['subTeams'] as $subTeam) {
                 $subTeamObj = Team::where(['name' => $subTeam['name'], 'parent_team_id' => $parentTeam->id])->first();
 
-                if (!$subTeamObj) {
+                if (! $subTeamObj) {
                     $subTeamObj = Team::create([
                         'name' => $subTeam['name'],
                         'type' => 3, // sub team
                         'is_active' => true,
-                        'parent_team_id' => $parentTeam->id
-                    ]); 
+                        'parent_team_id' => $parentTeam->id,
+                    ]);
                 }
 
-                $this->assignSubTeamToUsers($subTeam['advisors'], $subTeamObj); 
+                $this->assignSubTeamToUsers($subTeam['advisors'], $subTeamObj);
             }
-        }        
+        }
     }
 
-    private function getMappingData() 
+    private function getMappingData()
     {
         return [
             [
@@ -64,8 +63,8 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
                             'harjeet.singh@insurancemarket.ae',
                             'anoop.nair@insurancemarket.ae',
                             'adrian.mercado@insurancemarket.ae',
-                            'pooja.gangadhar@insurancemarket.ae'
-                        ]
+                            'pooja.gangadhar@insurancemarket.ae',
+                        ],
                     ],
                     [
                         'name' => 'Volume',
@@ -94,10 +93,10 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
                             'roja.naidu@insurancemarket.ae',
                             'saquib.musharraf@insurancemarket.ae',
                             'sarvjeet.singh@insurancemarket.ae',
-                            'sameer.ahmed@insurancemarket.ae'
-                        ]
-                    ]
-                ]
+                            'sameer.ahmed@insurancemarket.ae',
+                        ],
+                    ],
+                ],
             ],
             [
                 'name' => 'Motor Cooperate',
@@ -106,20 +105,20 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
                     [
                         'name' => 'Ecom Leads',
                         'type' => 3,
-                        'advisors' => ['vijay.ragav@insurancemarket.ae', 'anoop.shekhar@insurancemarket.ae']                    
+                        'advisors' => ['vijay.ragav@insurancemarket.ae', 'anoop.shekhar@insurancemarket.ae'],
                     ],
                     [
                         'name' => 'NB Commercial',
                         'type' => 3,
-                        'advisors' => ['hemal.mehta@insurancemarket.ae', 'hoor.javed@insurancemarket.ae'],                        
+                        'advisors' => ['hemal.mehta@insurancemarket.ae', 'hoor.javed@insurancemarket.ae'],
                     ],
                     [
                         'name' => 'MC Renewals',
                         'type' => 3,
-                        'advisors' => ['ganesh.nadarajan@insurancemarket.ae']
-                    ]
-                ]
-            ]  
+                        'advisors' => ['ganesh.nadarajan@insurancemarket.ae'],
+                    ],
+                ],
+            ],
         ];
     }
 
