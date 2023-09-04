@@ -5,17 +5,21 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use App\Models\CommercialKeyword;
+use App\Http\Requests\CommercialKeywordRequest;
+use App\Services\CommercialKeywordsService;
 
 class CommercialKeywordsController extends Controller
 {
+    protected $commercialKeywordsService;
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+    public function __construct(CommercialKeywordsService $commercialKeywordsService)
     {
         $this->middleware('auth');
+        $this->commercialKeywordsService = $commercialKeywordsService;
     }
 
     /**
@@ -59,23 +63,11 @@ class CommercialKeywordsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CommercialKeywordRequest $request)
     {
-        $validateArray = [
-            'name' => 'required|max:255|unique:commercial_keywords,name',
-        ];
+        $attributes = $request->validated();
 
-        $this->validate($request, $validateArray);
-
-        $latestRecord = CommercialKeyword::select('id')->orderByDesc('id')->first();
-
-        $keyword = new CommercialKeyword();
-        $keyword->id = ($latestRecord->id + 1);
-        $keyword->name = $request->get('name');
-        $keyword->key  = strtoupper(str_replace(' ', '_', $request->get('name')));
-        $keyword->save();
-
-        return redirect()->back()->with('success', 'Commercial Keyword has been stored');
+        return $this->commercialKeywordsService->store($attributes);
     }
 
     /**
@@ -107,23 +99,11 @@ class CommercialKeywordsController extends Controller
      * @param int $id
      * @return void
      */
-    public function update(Request $request, $id)
+    public function update(CommercialKeywordRequest $request, $id)
     {
-        $validateArray = [
-            'name' => 'required|max:255|unique:commercial_keywords,name,except,id',
-        ];
-        $this->validate($request, $validateArray);
+       $attributes = $request->validated();
 
-        $keyword = CommercialKeyword::find($id);
-        if($keyword){
-            $keyword->name = $request->get('name');
-            $keyword->key  = strtoupper(str_replace(' ', '_', $request->get('name')));
-            $keyword->update();
-        } else {
-            return redirect()->route('admin.commercial.keywords')->with('message', 'Record not found');
-        }
-
-        return redirect()->route('admin.commercial.keywords')->with('success', 'Commercial Keyword has been updated');
+        return $this->commercialKeywordsService->update($id, $attributes);
     }
 
 }

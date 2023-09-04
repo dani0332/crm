@@ -6,6 +6,7 @@ use App\Models\User;
 use OwenIt\Auditing\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -28,9 +29,9 @@ class Rule extends Model implements AuditableContract
      *
      * @return HasOne
      */
-    public function ruleDetail():HasMany
+    public function ruleDetail():hasOne
     {
-        return $this->hasMany(
+        return $this->hasOne(
             RuleDetail::class,
             'rule_id',
             'id'
@@ -53,5 +54,20 @@ class Rule extends Model implements AuditableContract
             'id',
             'ruleUsers'
         )->withTimestamps();
+    }
+
+    /**
+     * get rule type function
+     *
+     * @return BelongsTo
+     */
+    public function ruleType():BelongsTo
+    {
+        return $this->belongsTo(
+            RuleType::class,
+            'rule_type',
+            'id',
+            'ruleType'
+        );
     }
 }

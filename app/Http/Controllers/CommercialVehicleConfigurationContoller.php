@@ -7,17 +7,20 @@ use App\Models\CarModel;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
 use App\Http\Requests\CommercialVehicleConfigurationRequest;
+use App\Services\CommercialVehicleConfigurationService;
 
 class CommercialVehicleConfigurationContoller extends Controller
 {
+    protected $commercialVehicleConfigurationService;
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct()
+    public function __construct(CommercialVehicleConfigurationService $commercialVehicleConfigurationService)
     {
         $this->middleware('auth');
+        $this->commercialVehicleConfigurationService = $commercialVehicleConfigurationService;
     }
 
     /**
@@ -28,15 +31,7 @@ class CommercialVehicleConfigurationContoller extends Controller
      */
     public function index(Request $request)
     {
-        $gridData = CarMake::whereHas('carModels', function ($qry) {
-            $qry->where('is_commercial', 1)
-                ->select(['id', 'car_make_code', 'text']);
-            })->select('id', 'code', 'text')
-             ->where('is_commercial', true)
-             ->with(['carModels' => function ($qry) {
-                $qry->where('is_commercial', 1)
-                ->select(['id', 'car_make_code', 'text']);
-            }]);
+        $gridData = $this->commercialVehicleConfigurationService->getGridData();
 
         if ($request->ajax()) {
             if (isset($request->text) && ! empty($request->text)) {
@@ -67,9 +62,7 @@ class CommercialVehicleConfigurationContoller extends Controller
      */
     public function create()
     {
-        $carsMake = CarMake::select('id', 'code', 'text')
-            ->where('is_active', true)
-            ->get();
+        $carsMake = $this->commercialVehicleConfigurationService->getActiveCarMakes();
 
         return view('commercialcarmakemodel.add', compact('carsMake'));
     }
@@ -83,33 +76,7 @@ class CommercialVehicleConfigurationContoller extends Controller
     {
         $attributes = $request->validated();
 
-        $carMake = CarMake::find($attributes['car_make_id']);
-
-        if ($carMake) {
-            $carMake->is_commercial = true;
-            $carMake->save();
-
-            if ($attributes['car_make_id'] && count ($attributes['car_model_id']) > 0)
-            {
-                foreach ($attributes['car_model_id'] as $carModelId) {
-                    $carModel = CarModel::where('id', $carModelId)
-                        ->where('car_make_code', $carMake->code)
-                        ->first();
-
-                    if ($carModel) {
-                        $carModel->is_commercial = true;
-                        $carModel->save();
-                    } else {
-                        return redirect()->back()->with('message', 'Car Model record not found');
-                    }
-                }
-            } else {
-                return redirect()->back()->with('message', 'Car Model Ids missing');
-            }
-        } else {
-            return redirect()->back()->with('message', 'Car Make record not found');
-        }
-        return redirect()->back()->with('success', 'Commercial status assigned to the seleced vehicles');
+        return $this->commercialVehicleConfigurationService->store($attributes);
     }
 
     /**
@@ -120,12 +87,7 @@ class CommercialVehicleConfigurationContoller extends Controller
      */
     public function show($id)
     {
-        $carMake = CarMake::where('id', $id)->select('id', 'code', 'text')
-            ->where('is_commercial', true)
-            ->with(['carModels' => function ($qry) {
-                $qry->where('is_commercial', 1)
-                    ->select(['id', 'car_make_code', 'text']);
-            }])->first();
+        $carMake = $this->commercialVehicleConfigurationService->getDetails($id);
 
         return view('commercialcarmakemodel.show', compact('carMake'));
     }
@@ -138,15 +100,10 @@ class CommercialVehicleConfigurationContoller extends Controller
      */
     public function edit($id)
     {
-        $carMake = CarMake::where('id', $id)->select('id', 'code', 'text')
-            ->with(['carModels' => function ($qry) {
-                $qry->select(['id', 'car_make_code', 'text']);
-            }])->first();
+        $data = $this->commercialVehicleConfigurationService->edit($id);
 
-        $commercialModels = CarModel::where('car_make_code', $carMake->code)
-            ->where('is_commercial', true)
-            ->pluck('id')
-            ->toArray();
+        $carMake = $data['car_make'];
+        $commercialModels = $data['commercial_models'];
 
         return view('commercialcarmakemodel.edit', compact('carMake', 'commercialModels'));
     }
@@ -158,19 +115,11 @@ class CommercialVehicleConfigurationContoller extends Controller
      * @param int $id
      * @return void
      */
-    public function update(CommercialVehicleConfigurationRequest $request, $id)
+    public function update(CommercialVehicleConfigurationRequest $request)
     {
        $attributes = $request->validated();
 
-        $keyword = CarMake::find($id);
-        if($keyword){
-            $keyword->name = $request->get('name');
-            $keyword->key  = strtoupper(str_replace(' ', '_', $request->get('name')));
-            $keyword->update();
-        } else {
-            return redirect()->route('admin.commercial.keywords')->with('message', 'Record not found');
-        }
+       return $this->commercialVehicleConfigurationService->update($attributes);
 
-        return redirect()->route('admin.commercial.keywords')->with('success', 'Commercial Keyword has been updated');
     }
 }

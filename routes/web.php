@@ -263,6 +263,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::get('/create', [CommercialVehicleConfigurationContoller::class, 'create'])->name('admin.configure.commerical.vehicles.create');
             Route::post('/store', [CommercialVehicleConfigurationContoller::class, 'store'])->name('admin.configure.commerical.vehicles.store');
             Route::get('/edit/{carMake}', [CommercialVehicleConfigurationContoller::class, 'edit'])->name('admin.configure.commerical.vehicles.edit');
+            Route::post('/update', [CommercialVehicleConfigurationContoller::class, 'update'])->name('admin.configure.commerical.vehicles.update');
+
          });
     });
 

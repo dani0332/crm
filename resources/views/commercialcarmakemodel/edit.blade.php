@@ -17,7 +17,7 @@
                     @if (session()->has('success'))
                         <div class="alert alert-success">{{ session()->get('success') }}</div>
                     @endif
-                    <form id="demo-form2" method='post' action="{{ route('admin.configure.commerical.vehicles.store') }}"
+                    <form id="demo-form2" method='post' action="{{ route('admin.configure.commerical.vehicles.update') }}"
                         enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left"
                         autocomplete="off">
                         {{ csrf_field() }}

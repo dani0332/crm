@@ -16,7 +16,9 @@ class RuleService extends BaseService
     protected $searchPrefix = 'r.';
     public function __construct()
     {
-        $this->query = DB::table('rules as r')
+        $this->query =
+
+        DB::table('rules as r')
             ->select(
                 'r.id',
                 'r.name',
@@ -27,9 +29,7 @@ class RuleService extends BaseService
                 'rd.car_make_id as car_make_id',
                 'rd.car_model_id as car_model_id',
                 'ls.name as lead_source_id',
-                // 'cmk.text as rule_car_make_id',
                 DB::raw('group_concat(distinct(u.name)) AS rule_users'),
-                // DB::raw('group_concat(distinct(cmdl.text)) AS rule_car_model_id'),
                 'r.is_active',
                 'r.updated_at',
                 'r.created_at'

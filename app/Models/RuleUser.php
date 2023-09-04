@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RuleUser extends Model
 {
@@ -20,4 +21,18 @@ class RuleUser extends Model
         'created_at',
         'updated_at'
     ];
+
+    /**
+     * get rule users details function
+     *
+     * @return HasMany
+     */
+    public function users():HasMany
+    {
+        return $this->hasMany(
+            User::class,
+            'user_id',
+            'id'
+        );
+    }
 }
