@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
-use Config;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -25,20 +24,6 @@ class PetQuote extends Model implements AuditableContract
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
     ];
-
-    public function getCreatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
-    public function getUpdatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
 
     public function quoteStatus()
     {
@@ -95,9 +80,8 @@ class PetQuote extends Model implements AuditableContract
             'auditable_type' => PersonalQuote::class,
             'relations' => [
                 ['auditable_type' => PersonalQuoteDetail::class, 'key' => 'personal_quote_id'],
-                ['auditable_type' => PetQuote::class, 'key' => 'personal_quote_id'],
+                ['auditable_type' => self::class, 'key' => 'personal_quote_id'],
             ],
         ];
     }
-
 }

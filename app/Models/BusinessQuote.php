@@ -56,7 +56,7 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class, 'business_quote_request_id', 'id');
     }
 
-    public function typeOfInsurance()
+    public function businessTypeOfInsurance()
     {
         return $this->belongsTo(BusinessInsuranceType::class);
     }

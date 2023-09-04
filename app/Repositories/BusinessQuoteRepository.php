@@ -12,17 +12,19 @@ use App\Traits\CentralTrait;
 class BusinessQuoteRepository extends BaseRepository
 {
     use CentralTrait;
+
     public function model()
     {
         return BusinessQuote::class;
     }
 
-
     public function fetchExport()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'insuranceProvider'])->orderBy('created_at', 'desc');
+            ['advisor', 'nationality', 'insuranceProvider']
+        )->orderBy('created_at', 'desc');
     }
+
     /**
      * @return mixed
      */
@@ -32,14 +34,15 @@ class BusinessQuoteRepository extends BaseRepository
             'businessQuoteRequestDetail.lostReason',
             'quoteStatus',
             'advisor',
+            'businessTypeOfInsurance',
             'nationality',
             'insuranceProvider',
             'typeOfInsurance',
-        ])->whereHas('typeOfInsurance', function ($typeOfInsurance) use ($quoteType) {
-            $typeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
+        ])->whereHas('businessTypeOfInsurance', function ($businessTypeOfInsurance) use ($quoteType) {
+            $businessTypeOfInsurance->when($quoteType == quoteTypeCode::GroupMedical, function ($groupMedical) {
                 $groupMedical->where('text', quoteStatusCode::GROUP_MEDICAL);
             });
-            $typeOfInsurance->when($quoteType == quoteTypeCode::CORPLINE, function ($corpline) {
+            $businessTypeOfInsurance->when($quoteType == quoteTypeCode::CORPLINE, function ($corpline) {
                 $corpline->where('text', '!=', quoteStatusCode::GROUP_MEDICAL);
             });
         })->when(($quoteType == quoteTypeCode::GroupMedical && (
@@ -56,7 +59,7 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 

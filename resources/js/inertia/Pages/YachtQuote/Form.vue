@@ -19,20 +19,20 @@ const quoteForm = useForm({
 });
 
 const { isRequired, isEmail } = useRules();
-
+const editMode = computed(() => {
+  return props.quote && props.quote.uuid ? true : false;
+});
 const isEmptyField = ref(false);
-
 function onSubmit(isValid) {
   if (isValid) {
     quoteForm.clearErrors();
-    let method = 'post';
-    let url = `/personal-quotes/yacht/`;
-    let title = 'Quote saved successfully';
-    if (props.quote) {
-      method = 'put';
-      url = url + props.quote.uuid;
-      title = 'Quote updated successfully';
-    }
+    let method = editMode.value ? 'put' : 'post';
+    const url = editMode.value
+      ? route('yacht-quotes-update', props.quote.uuid)
+      : route('yacht-quotes-store');
+    let title = editMode.value
+      ? 'Quote updated successfully'
+      : 'Quote saved successfully';
 
     quoteForm.submit(method, url, {
       onError: errors => {
@@ -57,7 +57,7 @@ function onSubmit(isValid) {
         Yacht Quote <span v-if="quote">{{ quote?.uuid }}</span>
       </h2>
       <div>
-        <Link href="/personal-quotes/bike">
+        <Link :href="route('yacht-quotes-list')">
           <x-button size="sm" color="#ff5e00"> Yacht Quotes List </x-button>
         </Link>
       </div>
@@ -69,95 +69,98 @@ function onSubmit(isValid) {
       }}</x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-input
-          v-model="quoteForm.first_name"
-          type="text"
-          label="First Name*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.first_name"
-        />
-
-        <x-input
-          v-model="quoteForm.last_name"
-          type="text"
-          label="Last Name*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.last_name"
-        />
-
-        <x-input
-          v-model="quoteForm.email"
-          type="email"
-          label="Email*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.email"
-        />
-
-        <x-input
-          v-model="quoteForm.mobile_no"
-          type="tel"
-          label="Phone Number*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.mobile_no"
-        />
-
-        <x-input
-          v-model="quoteForm.boat_details"
-          type="text"
-          label="Boat Details*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.boat_details"
-        />
-
-        <x-input
-          v-model="quoteForm.engine_details"
-          type="text"
-          label="Engine Details*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.engine_details"
-        />
-
-        <x-input
-          v-model="quoteForm.claim_experience"
-          type="text"
-          label="Claim Experience*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.claim_experience"
-        />
-
-        <x-input
-          v-model="quoteForm.asset_value"
-          type="number"
-          label="Bike value(AED)*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.asset_value"
-        />
-
-        <x-input
-          v-model="quoteForm.use"
-          type="text"
-          label="Use*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.use"
-        />
-
-        <x-input
-          v-model="quoteForm.operator_experience"
-          type="text"
-          label="Operator Experience*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.operator_experience"
-        />
+        <x-field label="FIRST NAME" required>
+          <x-input
+            v-model="quoteForm.first_name"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.first_name"
+          />
+        </x-field>
+        <x-field label="LAST NAME" required>
+          <x-input
+            v-model="quoteForm.last_name"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.last_name"
+          />
+        </x-field>
+        <x-field label="EMAIL" required>
+          <x-input
+            v-model="quoteForm.email"
+            type="email"
+            :disabled="editMode"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.email"
+          />
+        </x-field>
+        <x-field label="PNONE NUMBER" required>
+          <x-input
+            v-model="quoteForm.mobile_no"
+            type="tel"
+            :disabled="editMode"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.mobile_no"
+          />
+        </x-field>
+        <x-field label="BOAT DETAILS" required>
+          <x-input
+            v-model="quoteForm.boat_details"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.boat_details"
+          />
+        </x-field>
+        <x-field label="ENGINE DETAILS" required>
+          <x-input
+            v-model="quoteForm.engine_details"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.engine_details"
+          />
+        </x-field>
+        <x-field label="CLAIM EXPERIENCE" required>
+          <x-input
+            v-model="quoteForm.claim_experience"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.claim_experience"
+          />
+        </x-field>
+        <x-field label="SUM INSURED" required>
+          <x-input
+            v-model="quoteForm.asset_value"
+            type="number"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.asset_value"
+          />
+        </x-field>
+        <x-field label="USE" required>
+          <x-input
+            v-model="quoteForm.use"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.use"
+          />
+        </x-field>
+        <x-field label="OPERATOR EXPERIENCE" required>
+          <x-input
+            v-model="quoteForm.operator_experience"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.operator_experience"
+          />
+        </x-field>
       </div>
 
       <x-divider class="my-4" />
@@ -168,7 +171,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Save
+          {{ editMode ? 'Update' : 'Create' }}
         </x-button>
       </div>
     </x-form>

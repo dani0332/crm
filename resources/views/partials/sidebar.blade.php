@@ -347,7 +347,7 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
-                PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
+                PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -360,7 +360,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/team') }}">Teams</a></li>
                             @endcan
-                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST])
+                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
                                     @can(PermissionsEnum::TIER_CONFIG_LIST)
@@ -371,6 +371,9 @@ use App\Enums\PermissionsEnum;
                                     @endcan
                                     @can(PermissionsEnum::RULE_CONFIG_LIST)
                                         <li><a href="{{ url('generic/rule') }}">Rules</a></li>
+                                    @endcan
+                                    @can(PermissionsEnum::TeamThresholdView)
+                                        <li><a href="{{ url('generic/allocation-threshold') }}">Team Threshold </a></li>
                                     @endcan
                                 </ul>
                             </li>

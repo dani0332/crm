@@ -30,7 +30,7 @@ class HomeQuoteRepository extends BaseRepository
             'nationality',
             'insuranceProvider'
         ])
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 

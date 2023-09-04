@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\LostReasonRepository;
@@ -69,9 +70,11 @@ class JetskiQuoteController extends Controller
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('JetskiQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
+        return inertia(
+            'JetskiQuote/Form',
+            array_merge($data, [
+                'quote' => $quote,
+            ])
         );
     }
 
@@ -102,6 +105,8 @@ class JetskiQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::JETSKI->id(), $quote->id);
+
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
             'quote' => $quote,
@@ -116,6 +121,7 @@ class JetskiQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 
