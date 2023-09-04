@@ -174,7 +174,7 @@ class AjaxController extends Controller
     {
         $carMakeCode = $request->get('make_code');
 
-        if ($carMakeCode){
+        if ($carMakeCode) {
             $carModel = CarModel::where('car_make_code', $carMakeCode)
                 ->select('id', 'text', 'code')
                 ->where('is_commercial', true)

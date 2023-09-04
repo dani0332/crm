@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CommercialVehicleConfigurationRequest;
 use App\Models\CarMake;
-use App\Models\CarModel;
+use App\Services\CommercialVehicleConfigurationService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
-use App\Http\Requests\CommercialVehicleConfigurationRequest;
-use App\Services\CommercialVehicleConfigurationService;
 
 class CommercialVehicleConfigurationContoller extends Controller
 {
@@ -26,7 +25,6 @@ class CommercialVehicleConfigurationContoller extends Controller
     /**
      * get resource grid view function
      *
-     * @param Request $request
      * @return void
      */
     public function index(Request $request)
@@ -44,7 +42,7 @@ class CommercialVehicleConfigurationContoller extends Controller
             return DataTables::of($gridData->get()->sortBy('text'))
                 ->addIndexColumn()
                 ->addColumn('car_models', function (CarMake $carMake) {
-                    if (!empty($carMake->carModels)) {
+                    if (! empty($carMake->carModels)) {
                         return implode(', ', $carMake->carModels->pluck('text')->toArray());
                     }
                 })
@@ -111,15 +109,15 @@ class CommercialVehicleConfigurationContoller extends Controller
     /**
      * update resource function
      *
-     * @param Request $request
-     * @param int $id
+     * @param  Request  $request
+     * @param  int  $id
      * @return void
      */
     public function update(CommercialVehicleConfigurationRequest $request)
     {
-       $attributes = $request->validated();
+        $attributes = $request->validated();
 
-       return $this->commercialVehicleConfigurationService->update($attributes);
+        return $this->commercialVehicleConfigurationService->update($attributes);
 
     }
 }

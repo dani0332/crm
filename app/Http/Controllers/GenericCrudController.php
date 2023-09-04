@@ -143,7 +143,7 @@ class GenericCrudController extends Controller
                 if (strpos($value, 'min')) {
                     $min = explode(':', $value)[1];
                     $validateArray[$property] = 'required|numeric|min:'.$min;
-                } else if (strpos($value, 'required_if')) {
+                } elseif (strpos($value, 'required_if')) {
                     $without = explode(':', $value)[1];
                     $validateArray[$property] = 'required_if:'.$without;
                 } else {

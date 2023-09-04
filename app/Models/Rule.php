@@ -2,14 +2,12 @@
 
 namespace App\Models;
 
-use App\Models\User;
-use OwenIt\Auditing\Auditable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Rule extends Model implements AuditableContract
@@ -19,17 +17,14 @@ class Rule extends Model implements AuditableContract
     protected $table = 'rules';
     protected $fillable = ['name', 'rule_start_date', 'rule_end_date', 'is_active', 'rule_type'];
 
-
     /**
      * RELATIONS
      */
 
     /**
      * get rule details function
-     *
-     * @return HasOne
      */
-    public function ruleDetail():hasOne
+    public function ruleDetail(): hasOne
     {
         return $this->hasOne(
             RuleDetail::class,
@@ -40,10 +35,8 @@ class Rule extends Model implements AuditableContract
 
     /**
      * get rule users function
-     *
-     * @return BelongsToMany
      */
-    public function ruleUsers():BelongsToMany
+    public function ruleUsers(): BelongsToMany
     {
         return $this->belongsToMany(
             User::class,
@@ -58,10 +51,8 @@ class Rule extends Model implements AuditableContract
 
     /**
      * get rule type function
-     *
-     * @return BelongsTo
      */
-    public function ruleType():BelongsTo
+    public function ruleType(): BelongsTo
     {
         return $this->belongsTo(
             RuleType::class,

@@ -17,11 +17,10 @@ class CommercialKeywordsSeeder extends Seeder
     {
         $keywordsList = CommercialKeywordEnum::KEYWORDS_LIST;
 
-        foreach ($keywordsList as $id => $key)
-        {
+        foreach ($keywordsList as $id => $key) {
             CommercialKeyword::updateOrCreate(
-                [ 'id' => $id, 'key' => $key],
-                [ 'id' => $id, 'key' => $key, 'name' => strtolower(str_replace('_', ' ', $key))],
+                ['id' => $id, 'key' => $key],
+                ['id' => $id, 'key' => $key, 'name' => strtolower(str_replace('_', ' ', $key))],
             );
         }
     }

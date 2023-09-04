@@ -413,8 +413,8 @@ class HandleInertiaRequests extends Middleware
         }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList,PermissionsEnum::COMMERCIAL_KEYWORDS,
-            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES
+            PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
@@ -443,7 +443,7 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::TIER_CONFIG_LIST,
                             PermissionsEnum::TeamThresholdView,
                             PermissionsEnum::COMMERCIAL_KEYWORDS,
-                            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES
+                            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
                         ]),
                         'Allocation Config',
                         url('generic/tier'),

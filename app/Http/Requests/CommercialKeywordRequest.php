@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class CommercialKeywordRequest extends FormRequest
 {
@@ -29,7 +29,7 @@ class CommercialKeywordRequest extends FormRequest
                 'required',
                 'max:255',
                 'unique:commercial_keywords,name,except,id',
-            ]
+            ],
         ];
     }
 }

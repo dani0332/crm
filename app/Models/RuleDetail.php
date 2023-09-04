@@ -22,12 +22,12 @@ class RuleDetail extends Model
     ];
 
     /**
-	 * Util functions
-	 */
-	public static function getFillables()
-	{
+     * Util functions
+     */
+    public static function getFillables()
+    {
         return (new static())->fillable;
-	}
+    }
 
     /**
      * RELATIONS
@@ -35,10 +35,8 @@ class RuleDetail extends Model
 
     /**
      * get lead source function
-     *
-     * @return HasOne
      */
-    public function leadSource():HasOne
+    public function leadSource(): HasOne
     {
         return $this->hasOne(
             LeadSource::class,

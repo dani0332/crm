@@ -54,10 +54,8 @@ class CarMake extends BaseModel
 
     /**
      * get all models of a car function
-     *
-     * @return HasMany
      */
-    public function carModels():HasMany
+    public function carModels(): HasMany
     {
         return $this->hasMany(
             CarModel::class,

@@ -12,7 +12,6 @@ class CommercialKeyword extends Model
     /**
      * ATTRIBUTES
      */
-
     public function getCreatedAtAttribute($date)
     {
         return $this->asDateTime($date)->format(config('constants.DATETIME_DISPLAY_FORMAT'));

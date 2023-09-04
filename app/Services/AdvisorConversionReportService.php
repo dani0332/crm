@@ -72,7 +72,7 @@ class AdvisorConversionReportService extends BaseService
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
-            'isCommercial'  => $request->isCommercial,
+            'isCommercial' => $request->isCommercial,
             'page' => $request->page,
         ];
 
@@ -311,10 +311,10 @@ class AdvisorConversionReportService extends BaseService
             })->where('source', '=', LeadSourceEnum::IMCRM);
         }
 
-        if (isset($filters->isCommercial) && $filters->isCommercial == "true") {
+        if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
             $query->where('car_make.is_commercial', '=', true)
                 ->where('car_model.is_commercial', '=', true);
-        }else{
+        } else {
             $query->where('car_make.is_commercial', '=', false)
                 ->where('car_model.is_commercial', '=', false);
         }

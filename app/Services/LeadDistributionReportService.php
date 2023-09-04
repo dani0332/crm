@@ -112,10 +112,10 @@ class LeadDistributionReportService extends BaseService
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
-        if (isset($filters->isCommercial) && $filters->isCommercial == "true") {
+        if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
             $query->where('car_make.is_commercial', '=', true)
                 ->where('car_model.is_commercial', '=', true);
-        }else{
+        } else {
             $query->where('car_make.is_commercial', '=', false)
                 ->where('car_model.is_commercial', '=', false);
         }

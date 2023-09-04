@@ -65,7 +65,7 @@ class RuleService extends BaseService
 
                 return $errorResponse;
             }
-        } else if (isset($request->name) && isset($request->rule_type)
+        } elseif (isset($request->name) && isset($request->rule_type)
             && $request->rule_type == RuleTypeEnum::CAR_MAKE_MODEL) {
             $existingCommercialRule = Rule::where('rule_type', $request->rule_type)
                 ->get();
@@ -90,10 +90,11 @@ class RuleService extends BaseService
         $userIds = $request->rule_users;
 
         $rule->ruleDetail()->create([
-            'lead_source_id' => $request->get('lead_source_id')
+            'lead_source_id' => $request->get('lead_source_id'),
         ]);
 
         $rule->ruleUsers()->attach($userIds);
+
         return $rule;
     }
 
@@ -114,7 +115,7 @@ class RuleService extends BaseService
         $userIds = $request->rule_users;
 
         $rule->ruleDetail()->update([
-            'lead_source_id' => $request->get('lead_source_id')
+            'lead_source_id' => $request->get('lead_source_id'),
         ]);
 
         if (isset($request->rule_users)) {

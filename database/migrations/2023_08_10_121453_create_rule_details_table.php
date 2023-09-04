@@ -38,7 +38,7 @@ class CreateRuleDetailsTable extends Migration
                 ->constrained('lead_sources')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-                
+
             $table->timestamps();
         });
     }

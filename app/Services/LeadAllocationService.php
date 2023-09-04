@@ -2,42 +2,42 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\Rule;
-use App\Models\Team;
-use App\Models\Tier;
-use App\Models\User;
-use App\Jobs\CammyJob;
-use App\Models\CarMake;
-use App\Enums\RolesEnum;
-use App\Models\CarModel;
-use App\Models\CarQuote;
-use App\Models\TierUser;
-use App\Models\LeadSource;
-use App\Models\RuleDetail;
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
-use App\Enums\RuleTypeEnum;
-use App\Jobs\IntroEmailJob;
-use App\Models\HealthQuote;
-use App\Enums\quoteTypeCode;
-use App\Models\QuoteBatches;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
+use App\Enums\RuleTypeEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
-use App\Models\LeadAllocation;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
-use App\Traits\GetUserTreeTrait;
-use App\Models\CommercialKeyword;
+use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\ApplicationStorage;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
+use App\Models\CommercialKeyword;
+use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
+use App\Models\LeadAllocation;
+use App\Models\LeadSource;
+use App\Models\QuoteBatches;
+use App\Models\Rule;
+use App\Models\RuleDetail;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Models\TierUser;
+use App\Models\User;
+use App\Traits\GetUserTreeTrait;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use App\Models\CarQuoteRequestDetail;
-use App\Enums\ApplicationStorageEnums;
-use App\Enums\CarTypeOfInsuranceIdEnum;
-use App\Mail\HealthAssignmentIssueEmail;
-use App\Models\HealthQuoteRequestDetail;
 
 class LeadAllocationService extends BaseService
 {
@@ -502,7 +502,7 @@ class LeadAllocationService extends BaseService
 
                     $matchedRuleRecords = $this->getRulesByLeadSource($carLead);
 
-                    info("count of matched records =====******======");
+                    info('count of matched records =====******======');
                     info(count($matchedRuleRecords));
 
                     if (count($matchedRuleRecords) > 0) {
@@ -526,7 +526,7 @@ class LeadAllocationService extends BaseService
                             ->pluck('rule_users.user_id')
                             ->toArray();
 
-                        info("Plucked users ====> ");
+                        info('Plucked users ====> ');
                         info(json_encode($ruleUsers));
 
                         info('No rule found against this lead : '.$carLead->uuid.' so filtering rule users : '.json_encode($ruleUsers));
@@ -697,17 +697,17 @@ class LeadAllocationService extends BaseService
             ) {
                 $records = $this->getCommercialRule();
 
-                info('commercial records: ' . json_encode($records->get()));
+                info('commercial records: '.json_encode($records->get()));
 
                 return $records->get();
 
             }
         }
 
-        info("keyword not found and vehicle is not commercial as well, so checking for normal rules");
+        info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
 
         $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
-            ->join('rules',  'rules.id', 'rule_details.rule_id',)
+            ->join('rules', 'rules.id', 'rule_details.rule_id')
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->join('users', 'users.id', 'rule_users.user_id')
             ->where('lead_sources.name', $carLead->source)
@@ -720,7 +720,7 @@ class LeadAllocationService extends BaseService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             );
 
-        info('lead source records: ' . json_encode($records->get()));
+        info('lead source records: '.json_encode($records->get()));
 
         return $records->get();
 

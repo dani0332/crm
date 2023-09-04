@@ -25,7 +25,7 @@ class CreateRuleUsersTable extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete()
                 ->cascadeOnUpdate();
-                
+
             $table->timestamps();
         });
     }

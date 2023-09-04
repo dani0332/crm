@@ -12,15 +12,13 @@ class CommercialVehicleConfigurationService extends BaseService
 {
     /**
      * get grid date function
-     *
-     * @return Builder
      */
-    public function getGridData():Builder
+    public function getGridData(): Builder
     {
         return CarMake::whereHas('carModels', function ($qry) {
             $qry->where('is_commercial', 1)
                 ->select(['id', 'car_make_code', 'text']);
-            })->select('id', 'code', 'text')
+        })->select('id', 'code', 'text')
             ->where('is_commercial', true)
             ->with(['carModels' => function ($qry) {
                 $qry->where('is_commercial', 1)
@@ -30,10 +28,8 @@ class CommercialVehicleConfigurationService extends BaseService
 
     /**
      * get active car makes function
-     *
-     * @return Collection
      */
-    public function getActiveCarMakes():Collection
+    public function getActiveCarMakes(): Collection
     {
         return CarMake::select('id', 'code', 'text')
             ->where('is_active', true)
@@ -42,11 +38,8 @@ class CommercialVehicleConfigurationService extends BaseService
 
     /**
      * store new configuration function
-     *
-     * @param array $attributes
-     * @return RedirectResponse
      */
-    public function store(array $attributes):RedirectResponse
+    public function store(array $attributes): RedirectResponse
     {
         $carMake = CarMake::find($attributes['car_make_id']);
 
@@ -54,8 +47,7 @@ class CommercialVehicleConfigurationService extends BaseService
             $carMake->is_commercial = true;
             $carMake->save();
 
-            if ($attributes['car_make_id'] && count ($attributes['car_model_id']) > 0)
-            {
+            if ($attributes['car_make_id'] && count($attributes['car_model_id']) > 0) {
                 foreach ($attributes['car_model_id'] as $carModelId) {
                     $carModel = CarModel::where('id', $carModelId)
                         ->where('car_make_code', $carMake->code)
@@ -74,16 +66,16 @@ class CommercialVehicleConfigurationService extends BaseService
         } else {
             return redirect()->back()->with('message', 'Car Make record not found');
         }
+
         return redirect()->back()->with('success', 'Commercial status assigned to the seleced vehicles');
     }
 
     /**
      * get details of a configuration function
      *
-     * @param int $id
-     * @return CarMake
+     * @param  int  $id
      */
-    public function getDetails($id):CarMake
+    public function getDetails($id): CarMake
     {
         return CarMake::where('id', $id)->select('id', 'code', 'text')
             ->where('is_commercial', true)
@@ -96,10 +88,9 @@ class CommercialVehicleConfigurationService extends BaseService
     /**
      * get edit information function
      *
-     * @param int $id
-     * @return Array
+     * @param  int  $id
      */
-    public function edit($id):Array
+    public function edit($id): array
     {
         $carMake = CarMake::where('id', $id)->select('id', 'code', 'text')
             ->with(['carModels' => function ($qry) {
@@ -119,11 +110,8 @@ class CommercialVehicleConfigurationService extends BaseService
 
     /**
      * update a configuration function
-     *
-     * @param array $attributes
-     * @return RedirectResponse
      */
-    public function update(array $attributes):RedirectResponse
+    public function update(array $attributes): RedirectResponse
     {
         $carMake = CarMake::find($attributes['car_make_id']);
 
@@ -132,14 +120,12 @@ class CommercialVehicleConfigurationService extends BaseService
             $commercialModels = CarModel::where('car_make_code', $carMake->code)
                 ->where('is_commercial', true)
                 ->get();
-            foreach($commercialModels as $model)
-            {
+            foreach ($commercialModels as $model) {
                 $model->is_commercial = false;
                 $model->save();
             }
 
-            if ($attributes['car_make_id'] && count ($attributes['car_model_id']) > 0)
-            {
+            if ($attributes['car_make_id'] && count($attributes['car_model_id']) > 0) {
                 foreach ($attributes['car_model_id'] as $carModelId) {
                     $carModel = CarModel::where('id', $carModelId)
                         ->where('car_make_code', $carMake->code)
@@ -158,6 +144,7 @@ class CommercialVehicleConfigurationService extends BaseService
         } else {
             return redirect()->back()->with('message', 'Car Make record not found');
         }
+
         return redirect()->back()->with('success', 'Commercial status assigned to the seleced vehicles');
     }
 }

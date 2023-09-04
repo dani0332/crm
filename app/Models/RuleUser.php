@@ -19,15 +19,13 @@ class RuleUser extends Model
         'rule_id',
         'user_id',
         'created_at',
-        'updated_at'
+        'updated_at',
     ];
 
     /**
      * get rule users details function
-     *
-     * @return HasMany
      */
-    public function users():HasMany
+    public function users(): HasMany
     {
         return $this->hasMany(
             User::class,

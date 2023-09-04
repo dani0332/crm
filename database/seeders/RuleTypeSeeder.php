@@ -16,8 +16,7 @@ class RuleTypeSeeder extends Seeder
     {
         $ruleTypes = RuleType::RULE_TYPES_LIST;
 
-        foreach($ruleTypes as $ruleType)
-        {
+        foreach ($ruleTypes as $ruleType) {
             RuleType::updateOrCreate(
                 ['name' => strtoupper($ruleType)],
                 ['name' => strtoupper($ruleType)]

@@ -305,7 +305,7 @@ class DropdownSourceService extends BaseService
                 $data = [];
                 if (isset($ruleID[2])) {
                     $carMake = RuleDetail::where('rule_id', $ruleID[2])->select('car_make_id')->first();
-                    if ($carMake && $carMake->car_make_id != null){
+                    if ($carMake && $carMake->car_make_id != null) {
                         $makeCode = CarMake::whereId($carMake->car_make_id)
                             ->where('is_active', true)
                             ->where('is_commercial', true)

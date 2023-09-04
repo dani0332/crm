@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\CommercialKeywordRequest;
+use App\Models\CommercialKeyword;
+use App\Services\CommercialKeywordsService;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
-use App\Models\CommercialKeyword;
-use App\Http\Requests\CommercialKeywordRequest;
-use App\Services\CommercialKeywordsService;
 
 class CommercialKeywordsController extends Controller
 {
@@ -25,7 +25,6 @@ class CommercialKeywordsController extends Controller
     /**
      * get resource grid view function
      *
-     * @param Request $request
      * @return void
      */
     public function index(Request $request)
@@ -95,13 +94,13 @@ class CommercialKeywordsController extends Controller
     /**
      * update resource function
      *
-     * @param Request $request
-     * @param int $id
+     * @param  Request  $request
+     * @param  int  $id
      * @return void
      */
     public function update(CommercialKeywordRequest $request, $id)
     {
-       $attributes = $request->validated();
+        $attributes = $request->validated();
 
         return $this->commercialKeywordsService->update($id, $attributes);
     }

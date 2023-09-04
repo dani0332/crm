@@ -29,19 +29,19 @@ class CommercialVehicleConfigurationRequest extends FormRequest
             'car_make_id' => [
                 'required',
                 'integer',
-                Rule::exists('car_make', 'id')
+                Rule::exists('car_make', 'id'),
             ],
             'car_model_id' => [
                 'required',
                 'array',
-                'min:1'
+                'min:1',
             ],
             'car_mode_id.*' => [
                 'required',
                 'integer',
-                Rule::exists('car_model', 'id')
+                Rule::exists('car_model', 'id'),
 
-            ]
+            ],
 
         ];
     }

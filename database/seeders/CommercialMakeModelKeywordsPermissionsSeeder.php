@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Models\Role;
+use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
-use App\Enums\PermissionsEnum;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class CommercialMakeModelKeywordsPermissionsSeeder extends Seeder
@@ -23,7 +23,6 @@ class CommercialMakeModelKeywordsPermissionsSeeder extends Seeder
         $permissions[] = Permission::findOrCreate(PermissionsEnum::COMMERCIAL_KEYWORDS_STORE, 'web');
         $permissions[] = Permission::findOrCreate(PermissionsEnum::COMMERCIAL_KEYWORDS_EDIT, 'web');
         $permissions[] = Permission::findOrCreate(PermissionsEnum::COMMERCIAL_KEYWORDS_UPDATE, 'web');
-
 
         $permissions[] = Permission::findOrCreate(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES, 'web');
         $permissions[] = Permission::findOrCreate(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES_CREATE, 'web');
