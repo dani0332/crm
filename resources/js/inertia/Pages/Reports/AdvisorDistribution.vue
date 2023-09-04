@@ -81,6 +81,7 @@ const filters = reactive({
   advisorAssignedDates: [],
   tiers: [],
   teams: [],
+  isCommercial: false,
   page: 1,
 });
 
@@ -190,6 +191,15 @@ const calculateTotalSum = (data, key) => {
               label: filterOptions.teams[key],
             }))
           "
+        />
+        <x-select
+          v-model="filters.isCommercial"
+          label="Commercial"
+          placeholder="Select any option"
+          :options="[
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+          ]"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
