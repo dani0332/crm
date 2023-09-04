@@ -42,7 +42,7 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
                     ]); 
                 }
 
-                $this->assignSubTeamToUsers($subTeam['advisors'], $subTeamObj); 
+                $this->assignSubTeamToUsers($subTeam['advisors'], $subTeamObj);
             }
         }        
     }
@@ -127,7 +127,7 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
     {
         foreach ($users as $userEmail) {
             $user = User::where('email', $userEmail)->first();
-            if ($user) {
+            if ($user && $user->sub_team_id != $subTeam['id']) {
                 $user->sub_team_id = $subTeam['id'];
                 $user->save();
             }
