@@ -4,6 +4,7 @@ use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\CarQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -22,6 +23,7 @@ Route::middleware(['basicAuth'])->group(function () {
 
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 Route::prefix('v1')->group(function () {
+    Route::get('quotes/car', [CarQuoteController::class, 'index']);
     Route::post('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'store']);
     Route::get('quotes/{quoteType}/{quoteUuid}/documents', [QuoteDocumentController::class, 'index']);
     Route::delete('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'destroy']);
