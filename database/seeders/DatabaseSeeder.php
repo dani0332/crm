@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
             InsurerQuoteTypeMappingSeeder::class,
             addTeamAllocationThresholdViewPermission::class,
             CreateAndAssignSubTeamsToAdvisors::class,
-	    AddApiLogViewToPermssion::class,        
-	]);
+	        AddApiLogViewToPermssion::class,        
+	    ]);
     }
 }

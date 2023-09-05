@@ -18,7 +18,7 @@ class AddApiLogViewToPermssion extends Seeder
      */
     public function run()
     {
-        $permission = Permission::findOrCreate(PermissionsEnum::ApiLogView, 'web');
+        $permission = Permission::findOrCreate(PermissionsEnum::API_LOG_VIEW, 'web');
         $carManagerRole = Role::where('name', RolesEnum::CarManager)->first();
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $carManagerRole->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
