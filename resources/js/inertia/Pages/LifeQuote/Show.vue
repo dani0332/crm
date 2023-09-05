@@ -49,8 +49,14 @@ const historyData = ref(null);
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
+  // const res = await fetch(
+  //   `/quotes/getLeadHistory?modelType=life&recordId=${page.props.quote.id}`,
+  // );
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=life&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'life',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -115,7 +121,7 @@ const addActivity = () => {
 
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -180,25 +186,23 @@ const activityDelete = id => {
 };
 
 const activityDeleteConfirmed = () => {
-  router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
-    {
-      isInertia: true,
-      quote_uuid: page.props.quote.uuid,
+  // `/activities/${confirmDeleteData.activity}/delete`,
+  //   {
+  //     isInertia: true,
+  //     quote_uuid: page.props.quote.uuid,
+  //   },
+  router.post(route('activities.destroy', page.props.quote.uuid), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.error({
+        title: 'Activity Deleted',
+        position: 'top',
+      });
     },
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.error({
-          title: 'Activity Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.activityConfirm = false;
-      },
+    onFinish: () => {
+      modals.activityConfirm = false;
     },
-  );
+  });
 };
 
 const modalsDuplicate = ref(false);
@@ -209,7 +213,7 @@ const openDuplicate = () => {
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
     onError: function onError(errors) {
       notification.error({
@@ -263,8 +267,12 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
+  // `/quotes/Life/${page.props.quote.id}/update-lead-status`,
   leadStatusForm.post(
-    `/quotes/Life/${page.props.quote.id}/update-lead-status`,
+    route('updateLeadStatus', {
+      modelType: 'Life',
+      QuoteUId: page.props.quote.id,
+    }),
     {
       preserveScroll: true,
       onError: errors => {
@@ -293,14 +301,14 @@ const onLeadStatus = () => {
         </x-button>
         <Link
           v-if="can(permissionsEnum.LifeQuotesList)"
-          href="/quotes/life"
+          :href="route('life-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div"> Life Quotes </x-button>
         </Link>
         <Link
           v-if="can(permissionsEnum.LifeQuotesEdit)"
-          :href="`/quotes/life/${quote.uuid}/edit`"
+          :href="route('life-quotes-edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -311,31 +319,32 @@ const onLeadStatus = () => {
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map((lob, index) => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-
+          <x-field label="LOBs" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              :options="
+                allowedDuplicateLOB.map((lob, index) => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+          </x-field>
+          <x-field label="Reason" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+          </x-field>
           <x-button
             color="orange"
             type="submit"
@@ -543,50 +552,58 @@ const onLeadStatus = () => {
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="Status"
-              :options="leadStatusOptions"
-              :disabled="allowStatusUpdate"
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="Notes"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="allowStatusUpdate"
-            />
+            <x-field label="Status">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                :options="leadStatusOptions"
+                :disabled="allowStatusUpdate"
+                placeholder="Lead Status"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Notes">
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="allowStatusUpdate"
+              />
+            </x-field>
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-input
+          <x-field
+            label="TransApp Code"
             v-if="
               leadStatusForm.leadStatus ==
               page.props.quoteStatusEnum.TransactionApproved
             "
-            v-model="leadStatusForm.trans_code"
-            label="TransApp Code"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
-            v-model="leadStatusForm.lostReason"
+          >
+            <x-input
+              v-model="leadStatusForm.trans_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+          </x-field>
+          <x-field
             label="Lost Reason"
-            :options="
-              lostReasons?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
+            v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
+          >
+            <x-select
+              v-model="leadStatusForm.lostReason"
+              :options="
+                lostReasons?.map(item => ({
+                  value: item.id,
+                  label: item.text,
+                }))
+              "
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
@@ -672,35 +689,36 @@ const onLeadStatus = () => {
 
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title*"
-              :rules="[rules.isRequired]"
-              class="w-full"
-            />
-
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee*"
-              :options="advisorOptions"
-              :rules="[rules.isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
-
-            <DatePicker
-              v-model="activityForm.due_date"
-              withTime
-              :rules="[rules.isRequired]"
-              label="Due Date*"
-            />
+            <x-field label="Title" required>
+              <x-input
+                v-model="activityForm.title"
+                :rules="[rules.isRequired]"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Description">
+              <x-textarea
+                v-model="activityForm.description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Assignee" required>
+              <x-select
+                v-model="activityForm.assignee_id"
+                :options="advisorOptions"
+                :rules="[rules.isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Due Date" required>
+              <DatePicker
+                v-model="activityForm.due_date"
+                withTime
+                :rules="[rules.isRequired]"
+              />
+            </x-field>
           </div>
 
           <div class="text-right space-x-4 mt-12">
