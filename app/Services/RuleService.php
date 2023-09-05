@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Enums\RuleTypeEnum;
 use App\Models\Rule;
-use App\Models\RuleLeadSource;
+use App\Models\RuleDetail;
+use App\Models\RuleUser;
 use DB;
 use Illuminate\Http\Request;
 use stdClass;
@@ -14,22 +16,29 @@ class RuleService extends BaseService
     protected $searchPrefix = 'r.';
     public function __construct()
     {
-        $this->query = DB::table('rules as r')
+        $this->query =
+
+        DB::table('rules as r')
             ->select(
                 'r.id',
                 'r.name',
                 'r.rule_start_date',
                 'r.rule_end_date',
-                'rls.lead_source_id as pid',
+                'rt.name as rule_type',
+                'rd.lead_source_id as pid',
+                'rd.car_make_id as car_make_id',
+                'rd.car_model_id as car_model_id',
                 'ls.name as lead_source_id',
-                DB::raw('group_concat(u.name) AS rule_users'),
+                DB::raw('group_concat(distinct(u.name)) AS rule_users'),
                 'r.is_active',
                 'r.updated_at',
                 'r.created_at'
             )
-            ->leftJoin('rule_lead_sources as rls', 'rls.rule_id', 'r.id')
-            ->leftJoin('lead_sources as ls', 'ls.id', 'rls.lead_source_id')
-            ->leftJoin('users as u', 'u.id', 'rls.user_id')
+            ->leftJoin('rule_details as rd', 'rd.rule_id', 'r.id')
+            ->leftJoin('rule_users as ru', 'ru.rule_id', 'r.id')
+            ->leftJoin('lead_sources as ls', 'ls.id', 'rd.lead_source_id')
+            ->leftJoin('rule_types as rt', 'rt.id', 'r.rule_type')
+            ->leftJoin('users as u', 'u.id', 'ru.user_id')
             ->groupBy('r.id');
     }
 
@@ -49,33 +58,42 @@ class RuleService extends BaseService
     public function saveRule(Request $request)
     {
         if (isset($request->name) && isset($request->lead_source_id)) {
-            $existingRuleLeadSource = RuleLeadSource::where('lead_source_id', $request->lead_source_id)->get();
+            $existingRuleLeadSource = RuleDetail::where('lead_source_id', $request->lead_source_id)->get();
             if (count($existingRuleLeadSource) > 0) {
                 $errorResponse = new stdClass();
                 $errorResponse->message = 'Error: Rule against same Lead Source already exists';
 
                 return $errorResponse;
             }
+        } elseif (isset($request->name) && isset($request->rule_type)
+            && $request->rule_type == RuleTypeEnum::CAR_MAKE_MODEL) {
+            $existingCommercialRule = Rule::where('rule_type', $request->rule_type)
+                ->get();
+
+            if (count($existingCommercialRule) > 0) {
+                $errorResponse = new stdClass();
+                $errorResponse->message = 'Error: Commercial rule already exist';
+
+                return $errorResponse;
+            }
         }
+
         $rule = Rule::create([
             'name' => $request->name,
             'rule_start_date' => $request->rule_start_date,
             'rule_end_date' => $request->rule_end_date,
             'is_active' => $request->has('is_active') && $request->is_active == 'on' ? 1 : 0,
             'is_applicable_for_rules' => false,
+            'rule_type' => $request->get('rule_type'),
         ]);
-        if (isset($request->rule_users) && isset($request->lead_source_id)) {
-            $userIds = $request->rule_users;
-            foreach ($userIds as $userId) {
-                RuleLeadSource::create([
-                    'lead_source_id' => $request->lead_source_id,
-                    'rule_id' => $rule->id,
-                    'user_id' => $userId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
+
+        $userIds = $request->rule_users;
+
+        $rule->ruleDetail()->create([
+            'lead_source_id' => $request->get('lead_source_id'),
+        ]);
+
+        $rule->ruleUsers()->attach($userIds);
 
         return $rule;
     }
@@ -90,20 +108,19 @@ class RuleService extends BaseService
         if (isset($request->rule_end_date)) {
             $rule->rule_end_date = $request->rule_end_date;
         }
+
         $rule->is_active = $request->has('is_active') && $request->is_active == 'on' ? 1 : 0;
         $rule->save();
-        if (isset($request->rule_users) && isset($request->lead_source_id)) {
-            RuleLeadSource::where('rule_id', $rule->id)->delete();
-            $userIds = $request->rule_users;
-            foreach ($userIds as $userId) {
-                RuleLeadSource::create([
-                    'lead_source_id' => $request->lead_source_id,
-                    'rule_id' => $rule->id,
-                    'user_id' => $userId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
+
+        $userIds = $request->rule_users;
+
+        $rule->ruleDetail()->update([
+            'lead_source_id' => $request->get('lead_source_id'),
+        ]);
+
+        if (isset($request->rule_users)) {
+            RuleUser::where('rule_id', $rule->id)->delete();
+            $rule->ruleUsers()->attach($userIds);
         }
 
         info('------ Rule update is successfully done by user : '.auth()->user()->id.' for rule : '.$rule->name.' ------');
@@ -118,7 +135,8 @@ class RuleService extends BaseService
             'name' => 'input|title|required|likeSearch',
             'rule_start_date' => 'input|date|title',
             'rule_end_date' => 'input|date|title',
-            'lead_source_id' => 'select|title|required',
+            'rule_type' => 'select|required',
+            'lead_source_id' => 'select|title|required_if:rule_type,1',
             'rule_users' => 'select|multiple|required|multiSearch',
             'is_active' => 'input|checkbox|title',
             'created_at' => 'input|title|date|range|dateRange',
