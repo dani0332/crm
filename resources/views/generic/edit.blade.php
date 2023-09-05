@@ -58,7 +58,8 @@
                             @if(!str_contains($model->skipProperties['update'], $property))
                                 @if($index == 0 || strpos($value, 'checkbox'))
                                 @else
-                                    <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
+                                    <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}
+                                        @if ( gettype($record->$property) != 'string') style="display: none" @endif {{$property == 'rule_type' ? "hidden" : ''}}>
                                         @if(strpos($value, 'input') !== false )
                                             <span class="col-form-label col-md-6 col-sm-6" for="name">
                                                 @if(strpos($value, 'title'))
@@ -101,7 +102,8 @@
                                                 <span class='required'>*</span>
                                                 @endif
                                             </span>
-                                            <select @if(strpos($value, 'multiple')) data-mdb-filter="true" multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}" >
+                                            <select @if(strpos($value, 'multiple')) data-mdb-filter="true" multiple="multiple" name="{{$property.'[]'}}" class="form-control select2 select-roles" @else name="{{$property}}" class="form-control" @endif id="{{$property}}"
+                                                {{$property == 'rule_type' ? "disabled" : ''}}>
                                                 @if(strpos($value, 'title'))
                                                     <option value="">{{"Please select ".$customTitles[$property] }}</option>
                                                 @else
@@ -133,7 +135,8 @@
                                                         $itemName = $item->name ?? $item->text;
                                                     @endphp
                                                     @if(gettype($record->$property) != 'string')
-                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}>{{ $itemName }}</option>
+                                                        <option value="{{$item->id}}" {{ $item->id == old($item->id, $record->$property) ? 'selected' : ''}}
+                                                            @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif>{{ $itemName }}</option>
                                                     @elseif (str_contains($record->$property, ','))
                                                         @if(str_contains($record->$property, $itemName))
                                                         <option value="{{$item->id}}" selected="selected">{{ $itemName }}</option>
@@ -141,7 +144,10 @@
                                                         <option value="{{$item->id}}">{{ $itemName }}</option>
                                                         @endif
                                                     @else
-                                                        <option value="{{$item->id}}" {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}>{{ $itemName }}</option>
+                                                        <option value="{{$item->id}}" @if($property === 'rule_car_make_id') disabled readonly @endif {{ $itemName == old($itemName, $record->$property) ? 'selected' : ''}}
+                                                            @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif>
+                                                            {{ $itemName }}
+                                                        </option>
                                                     @endif
                                                 @endforeach
 
