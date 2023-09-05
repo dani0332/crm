@@ -3,11 +3,7 @@
 namespace App\View\Components;
 
 use App\Models\CarQuote;
-use App\Models\CarQuotePlanDetail;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\InsurerRequestResponse;
-
-use DB;
 use Illuminate\View\Component;
 
 class Apilogs extends Component
@@ -33,15 +29,16 @@ class Apilogs extends Component
      * @return \Illuminate\Contracts\View\View|\Closure|string
      */
     public function render()
-    { 
+    {
         $auditableId = $this->auditableId;
         if ($this->auditableType == CarQuote::class) {
             $uuid = CarQuote::where('id', $auditableId)->value('uuid');
-            $apilogs =  InsurerRequestResponse::with('carQuotePlanDetails')
-            ->select('*')
-            ->where('insurer_request_response.quote_uuid', $uuid)
-            ->orderByDesc('insurer_request_response.created_at')
-            ->get();
+            $apilogs = InsurerRequestResponse::with('carQuotePlanDetails')
+                ->select('*')
+                ->where('insurer_request_response.quote_uuid', $uuid)
+                ->orderByDesc('insurer_request_response.created_at')
+                ->get();
+
             return view('components.apilogs', compact('apilogs'));
         }
     }

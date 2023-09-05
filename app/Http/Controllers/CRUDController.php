@@ -18,6 +18,7 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\Audit;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -59,7 +60,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
-use App\Models\Audit;
 
 class CRUDController extends Controller
 {
@@ -905,23 +905,19 @@ class CRUDController extends Controller
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         $updatedAtAudit = '';
-        /*$auditLog = \DB::table('audits')
-            ->select('updated_at')
-            ->where('auditable_id', $record->id)
-            ->where('auditable_type', 'App\Models\CarQuote')
-            ->latest()->first();*/
         $auditLog = Audit::select('updated_at')
             ->where('auditable_id', $record->id)
             ->where('auditable_type', 'App\Models\CarQuote')
             ->latest()
             ->first();
-        if ($auditLog) {            
-            $updatedAtAudit = $auditLog->updated_at;        
-        }       
-        
+        if ($auditLog) {
+            $updatedAtAudit = $auditLog->updated_at;
+        }
+
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
+
             return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access', 'updatedAtAudit']));
         }
     }

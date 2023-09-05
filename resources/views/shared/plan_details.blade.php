@@ -58,11 +58,7 @@ if (!isset($modelName)) {
 		$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
 
 		$createdAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->createdAt));
-		$updatedAt = '';
-		if($updatedAtAudit!=''){
-			$updatedAt = date('d/m/Y H:i:s',strtotime($updatedAtAudit));
-		}		
-
+		$updatedAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->updatedAt));
 	}
 }
 $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
