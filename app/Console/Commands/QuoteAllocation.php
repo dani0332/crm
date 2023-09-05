@@ -51,10 +51,9 @@ class QuoteAllocation extends Command
         $quoteAllocationSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH);
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
 
-        if ($quoteAllocationSwitch !== 0 && $masterSwitchConfigValue !== 0) {
+        if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(7)->toDateTimeString();
             $chunkSize = 50;
-
             $linesOfBusiness = [
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
@@ -95,18 +94,21 @@ class QuoteAllocation extends Command
         $quoteModel = $config['model'];
         $allocationKey = $config['allocationKey'];
         $conditions = $config['conditions'];
-
+        $processedRecords = 0;
         $quoteModel::whereNull($allocationKey)
             ->whereBetween('created_at', [now()->startOfDay()->toDateTimeString(), $to])
             ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType) {
                 foreach ($leads as $lead) {
-                    info("------ Lead allocation started for $quoteType lead: $lead->uuid ------");
+                    info("------ Lead allocation started for ". QuoteTypeId::getDescription($quoteType) ." lead: $lead->uuid ------");
                     $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->id);
                     info('Allocation strategy is created: '.json_encode($allocationStrategy));
                     $allocationStrategy->executeSteps();
-                    info("------ Lead allocation end for $quoteType lead: $lead->uuid ------");
                 }
             });
+        if ($processedRecords === 0) {
+            info("No records found for ". QuoteTypeId::getDescription($quoteType));
+        }
+        info("------ Lead allocation end for ". QuoteTypeId::getDescription($quoteType). "  ------");
     }
 }
