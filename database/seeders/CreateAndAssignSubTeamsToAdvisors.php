@@ -99,7 +99,7 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
                 ],
             ],
             [
-                'name' => 'Motor Cooperate',
+                'name' => 'Motor Corporate',
                 'type' => 2, // team
                 'subTeams' => [
                     [
