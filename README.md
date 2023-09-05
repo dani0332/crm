@@ -8,10 +8,11 @@ IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
 URLs: 
 
-- [Live](https://crm.alfred.ae/)
-- [Stage](https://crmstage.alfred.ae/)
-- [UAT](https://crmuat.alfred.ae)
-- [DEV](https://crmdev.alfred.ae) [DEV1](https://crmdev01.alfred.ae) [DEV2](https://crmdev02.alfred.ae)
+- [Live](https://imcrm.alfred.ae/)
+- [Stage](https://imcrmstage.alfred.ae/)
+- [UAT](https://imcrmuat.alfred.ae)
+- [DEV](https://imccrmdev.alfred.ae) [DEV1](https://imccrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
+- [TEST](https://imcrmtest.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
