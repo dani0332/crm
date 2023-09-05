@@ -3,10 +3,6 @@
 namespace App\Http\Requests;
 
 use App\Enums\GenericRequestEnum;
-use App\Enums\quoteTypeCode;
-use App\Repositories\AdditionalContactRepository;
-use App\Repositories\CustomerRepository;
-use App\Repositories\PersonalQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -33,10 +29,10 @@ class CustomerAdditionalContactRequest extends FormRequest
         $rules = [
             'quote_id' => 'required',
             'value' => 'required',
-            'key' => 'required'
+            'key' => 'required',
         ];
 
-        if(request()->segment(1) == 'customer-additional-contact'){
+        if (request()->segment(1) == 'customer-additional-contact') {
             $rules['customer_id'] = 'required';
             $rules['quote_type'] = 'nullable';
         }

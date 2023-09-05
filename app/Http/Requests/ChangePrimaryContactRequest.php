@@ -31,11 +31,11 @@ class ChangePrimaryContactRequest extends FormRequest
             'value' => 'required',
             'quote_id' => 'required',
             'quote_customer_id' => 'nullable',
-            'quote_primary_email_address' =>'nullable',
-            'quote_primary_mobile_no' => 'nullable'
+            'quote_primary_email_address' => 'nullable',
+            'quote_primary_mobile_no' => 'nullable',
         ];
 
-        if(request()->segment(1) == 'customer-additional-contact'){
+        if (request()->segment(1) == 'customer-additional-contact') {
             $rules['quote_type'] = 'required';
         }
 

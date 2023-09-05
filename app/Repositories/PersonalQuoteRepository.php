@@ -191,7 +191,7 @@ class PersonalQuoteRepository extends BaseRepository
             $quote = $this->findOrFail($quoteId);
             $updateData = [$data['key'] => $data['value']];
 
-            if($data['key'] == GenericRequestEnum::EMAIL){
+            if ($data['key'] == GenericRequestEnum::EMAIL) {
                 Log::info('Customer additional contact primary email updated. Previous Email: '.$quote->email.' New Email: '.$data['value']);
                 $customer = CustomerRepository::where('email', strtolower(trim($data['value'])))->first();
                 if ($customer) {
@@ -218,7 +218,7 @@ class PersonalQuoteRepository extends BaseRepository
                         'first_name' => $quote->first_name,
                         'last_name' => $quote->last_name,
                         'mobile_no' => $quote->mobile_no,
-                        'email' => strtolower(trim($data['value']))
+                        'email' => strtolower(trim($data['value'])),
                     ]);
 
                     $updateData['customer_id'] = $customer->id;

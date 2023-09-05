@@ -180,7 +180,7 @@ class CustomerController extends Controller
 
     public function makeAdditionalContactPrimary(ChangePrimaryContactRequest $request)
     {
-        if($request->validated()) {
+        if ($request->validated()) {
             $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
 
             if ($request->key == GenericRequestEnum::EMAIL) {
@@ -199,7 +199,7 @@ class CustomerController extends Controller
                         // Replicate Old additional contact info with new customer
                         CustomerRepository::replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
                     }
-                } else{
+                } else {
                     // Move current customer to additional contacts if not exists
                     CustomerAdditionalContact::updateOrCreate([
                         'customer_id' => $request->quote_customer_id,
@@ -211,7 +211,7 @@ class CustomerController extends Controller
                         'first_name' => $quoteObject->first_name,
                         'last_name' => $quoteObject->last_name,
                         'mobile_no' => $quoteObject->mobile_no,
-                        'email' => $request->value
+                        'email' => $request->value,
                     ]);
 
                     $quoteObject->customer_id = $customer->id;
@@ -245,7 +245,7 @@ class CustomerController extends Controller
 
     public function addAdditionalContact(CustomerAdditionalContactRequest $request)
     {
-        if ($request->validated()){
+        if ($request->validated()) {
             Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$request->key.' value: '.$request->value);
             CustomerAdditionalContact::updateOrCreate([
                 'customer_id' => $request->customer_id,
@@ -265,6 +265,6 @@ class CustomerController extends Controller
 
     public function customerAlreadyEmailExistCheck(Request $request)
     {
-        return response()->json([ 'response' => (bool) $this->customerService->getCustomerByEmail($request->value) ]);
+        return response()->json(['response' => (bool) $this->customerService->getCustomerByEmail($request->value)]);
     }
 }
