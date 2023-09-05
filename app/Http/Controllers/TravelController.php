@@ -97,7 +97,7 @@ class TravelController extends Controller
 
         $ecomDetails = [
             'premium' => $record->premium,
-            'paidAt' => $record->paid_at,
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
         ];
