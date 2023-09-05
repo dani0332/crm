@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
 use App\Http\Requests\ChangePrimaryContactRequest;
 use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Jobs\MAWelcomeJob;
@@ -180,79 +179,30 @@ class CustomerController extends Controller
 
     public function makeAdditionalContactPrimary(ChangePrimaryContactRequest $request)
     {
-        if ($request->validated()) {
-            $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
 
-            if ($request->key == GenericRequestEnum::EMAIL) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $quoteObject->email = $request->value;
-                $customer = $this->customerService->getCustomerByEmail($request->value);
-                if ($customer) {
-                    $quoteObject->customer_id = $customer->id;
-                    if (isset($request->quote_primary_email_address) && isset($request->quote_customer_id)) {
-                        CustomerAdditionalContact::updateOrCreate([
-                            'customer_id' => $request->quote_customer_id,
-                            'key' => 'email',
-                            'value' => strtolower($request->quote_primary_email_address),
-                        ]);
+        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
+        $makePrimary = CustomerRepository::makeAdditionalContactPrimary($quoteObject, $request->validated());
+        $response = ['data' => ['message' => 'Primary Contact Updated']];
 
-                        // Replicate Old additional contact info with new customer
-                        CustomerRepository::replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
-                    }
-                } else {
-                    // Move current customer to additional contacts if not exists
-                    CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request->quote_customer_id,
-                        'key' => 'email',
-                        'value' => strtolower($request->quote_primary_email_address),
-                    ]);
-
-                    $customer = Customer::create([
-                        'first_name' => $quoteObject->first_name,
-                        'last_name' => $quoteObject->last_name,
-                        'mobile_no' => $quoteObject->mobile_no,
-                        'email' => $request->value,
-                    ]);
-
-                    $quoteObject->customer_id = $customer->id;
-
-                    // Replicate Old additional contact info with new customer
-                    CustomerRepository::replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
-                }
-            } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
-                $quoteObject->mobile_no = $request->value;
-                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
-                    CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request->quote_customer_id,
-                        'key' => 'mobile_no',
-                        'value' => trim($request->quote_primary_mobile_no),
-                    ]);
-                }
-            }
-
-            $quoteObject->save();
+        if (!$makePrimary) {
+            $response = ['data' => ['message' => 'Primary Contact Not Updated']];
         }
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
         }
 
-        return response()->json(['data' => [
-            'message' => 'Primary Contact Updated',
-        ]]);
+        return response()->json($response);
     }
 
     public function addAdditionalContact(CustomerAdditionalContactRequest $request)
     {
-        if ($request->validated()) {
-            Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$request->key.' value: '.$request->value);
-            CustomerAdditionalContact::updateOrCreate([
-                'customer_id' => $request->customer_id,
-                'key' => $request->key,
-                'value' => trim($request->value),
-            ]);
-        }
+        Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$request->key.' value: '.$request->value);
+        CustomerAdditionalContact::updateOrCreate([
+            'customer_id' => $request->customer_id,
+            'key' => $request->key,
+            'value' => trim($request->value),
+        ]);
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
