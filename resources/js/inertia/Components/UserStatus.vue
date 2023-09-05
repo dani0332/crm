@@ -1,4 +1,5 @@
 <script setup>
+import Pusher from 'pusher-js';
 const page = usePage();
 const status = computed(() => page.props.auth.user.status);
 
@@ -13,19 +14,33 @@ const statusText = id => {
   return statuses[id];
 };
 
+const options = {
+  cluster: 'ap1',
+  forceTLS: true,
+};
+
+Pusher.logToConsole = true;
+
+const pusher = new Pusher(page.props.pusherKey, options);
+const channel = pusher.subscribe(page.props.appEnv + '-activity.user');
+
+const listen = () => {
+  console.log('listening');
+  channel.bind(page.props.appEnv + '-user.status.changed', function (e) {
+    console.log(e, 'saad');
+    if (e?.userId == page.props.auth.user.id) {
+      currentStatus.value = e.status;
+    }
+  });
+};
+
 onMounted(() => {
-  window.Echo.channel(page.props.appEnv + '-activity.user').listen(
-    page.props.appName + '-user.status.changed',
-    function (e) {
-      if (e?.userId == page.props.auth.user.id) {
-        currentStatus.value = e.status;
-      }
-    },
-  );
+  listen();
 });
 
 onUnmounted(() => {
-  window.Echo.channel(page.props.appEnv + '-activity.user').stopListening(page.props.appEnv + '-user.status.changed');
+  channel.unbind('user.status.changed');
+  channel.unsubscribe('activity.user');
 });
 </script>
 
