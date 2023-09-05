@@ -18,4 +18,22 @@ class RuleDetail extends Model implements AuditableContract
         return $this->belongsTo(Rule::class);
     }
 
+    /**
+     * attributes those are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'car_make_id',
+        'car_model_id',
+        'lead_source_id',
+    ];
+
+    /**
+     * Util functions.
+     */
+    public static function getFillables()
+    {
+        return (new static())->fillable;
+    }
 }
