@@ -60,8 +60,15 @@ if (!isset($modelName)) {
 		$createdAt = '';
 		if(isset($listQuotePlan->createdAt)){
 			$createdAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->createdAt));
-		}		
-		$updatedAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->updatedAt));
+		}
+		
+		$updatedAt = '';
+		if($listQuotePlan->isManualPlan){
+			$updatedAt = date('d/m/Y H:i:s',strtotime($updatedAtAudit));
+		} else {
+			$updatedAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->updatedAt));
+		}
+		
 	}
 }
 $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
