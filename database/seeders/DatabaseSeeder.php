@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             // PetBikeMigrationSeeder::class
             InsurerQuoteTypeMappingSeeder::class,
             addTeamAllocationThresholdViewPermission::class,
-            CreateAndAssignSubTeamsToAdvisors::class
+            CreateAndAssignSubTeamsToAdvisors::class,
         ]);
     }
 }

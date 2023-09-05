@@ -126,7 +126,7 @@ class CreateAndAssignSubTeamsToAdvisors extends Seeder
     {
         foreach ($users as $userEmail) {
             $user = User::where('email', $userEmail)->first();
-            if ($user && !isset($user->sub_team_id)) {
+            if ($user && ! isset($user->sub_team_id)) {
                 $user->sub_team_id = $subTeam['id'];
                 $user->save();
             }
