@@ -61,14 +61,12 @@ if (!isset($modelName)) {
 		if(isset($listQuotePlan->createdAt)){
 			$createdAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->createdAt));
 		}
-		
+
+		//if($listQuotePlan->isManualPlan)
 		$updatedAt = '';
-		if($listQuotePlan->isManualPlan){
-			$updatedAt = date('d/m/Y H:i:s',strtotime($updatedAtAudit));
-		} else {
+		if(isset($listQuotePlan->updatedAt)){
 			$updatedAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->updatedAt));
 		}
-		
 	}
 }
 $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
@@ -1008,12 +1006,12 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 						</table>
 						@if($createdAt!='')
-						<p>
-							<span style="float: right;"><strong>Created Date:</strong> {{ $createdAt }}</span><br>
-							@if($updatedAt!='')
-							<span style="float: right;"><strong>Updated At:</strong> {{ $updatedAt }}</span>							
-							@endif
-						</p>
+							<p>
+								<span style="float: right;"><strong>Created Date:</strong> {{ $createdAt }}</span><br>
+								@if($updatedAt!='')
+								<span style="float: right;"><strong>Updated At:</strong> {{ $updatedAt }}</span>							
+								@endif
+							</p>
 						@endif
 						</p>
 					</div>
