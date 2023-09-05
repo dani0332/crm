@@ -57,7 +57,10 @@ if (!isset($modelName)) {
 		$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
 		$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
 
-		$createdAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->createdAt));
+		$createdAt = '';
+		if(isset($listQuotePlan->createdAt)){
+			$createdAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->createdAt));
+		}		
 		$updatedAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->updatedAt));
 	}
 }
@@ -997,13 +1000,14 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td> </td>
 							</tr>
 						</table>
+						@if($createdAt!='')
 						<p>
 							<span style="float: right;"><strong>Created Date:</strong> {{ $createdAt }}</span><br>
 							@if($updatedAt!='')
 							<span style="float: right;"><strong>Updated At:</strong> {{ $updatedAt }}</span>							
 							@endif
 						</p>
-
+						@endif
 						</p>
 					</div>
 					<div class="tab-pane fade" id="addons" role="tabpanel" aria-labelledby="addons-tab">
