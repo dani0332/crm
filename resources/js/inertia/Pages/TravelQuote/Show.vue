@@ -1103,7 +1103,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ dateFormat(ecomDetails.paidAt).value }}</dd>
+            <dd>{{ ecomDetails.paidAt }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
