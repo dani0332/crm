@@ -12,6 +12,7 @@ defineProps({
 });
 
 const page = usePage();
+
 const loader = reactive({
   table: false,
   export: false,
@@ -46,7 +47,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('/personal-quotes/yacht', {
+    router.visit(route('yacht-quotes-list'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -60,7 +61,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/personal-quotes/yacht', {
+  router.visit(route('yacht-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -153,18 +154,18 @@ watch(
     <Head title="Yacht Quotes" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Yacht Quotes List</h2>
+
       <x-button
         v-if="can(permissionsEnum.YachtQuotesCreate)"
         size="sm"
         color="#ff5e00"
-        href="/personal-quotes/yacht/create"
+        :href="route('yacht-quotes-create')"
       >
         Create Lead
       </x-button>
     </div>
     <x-divider class="my-4" />
 
-    <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div>
@@ -176,6 +177,7 @@ watch(
             </label>
             <template #tooltip> Reference ID </template>
           </x-tooltip>
+
           <x-input
             v-model="filters.code"
             type="search"
@@ -184,100 +186,111 @@ watch(
             placeholder="Search by Ref-ID"
           />
         </div>
-        <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <x-input
-          v-model="filters.email"
-          type="search"
-          name="email"
-          label="Email"
-          class="w-full"
-          placeholder="Search by Email"
-        />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          label="Mobile Number"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-        />
-        <DatePicker
-          v-model="filters.created_at_start"
-          type="date"
-          name="created_at_start"
-          label="Created Date Start"
-          class="w-full"
-        />
-        <DatePicker
-          v-model="filters.created_at_end"
-          type="date"
-          name="created_at_end"
-          label="Created Date End"
-          class="w-full"
-        />
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status"
-          placeholder="Search by Lead Status"
-          :options="
-            quoteStatuses.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-        />
-        <ComboBox
-          v-model="filters.advisor_id"
-          label="Advisor"
-          placeholder="Search by Advisor"
-          :options="advisorOptionsFilter"
-        />
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Is Ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 1, label: 'Yes' },
-            { value: 0, label: 'No' },
-          ]"
-          class="w-full"
-        />
-        <x-input
-          v-model="filters.renewal_batch"
-          type="search"
-          name="renewal_batch"
-          label="Renewal Batch"
-          class="w-full"
-          placeholder="Search by Renewal Batch"
-        />
-        <x-select
-          v-model="filters.previous_quote_policy_number"
-          label="Is Renewal"
-          placeholder="Search by Renewal"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 0, label: 'Yes' },
-            { value: 1, label: 'No' },
-          ]"
-          class="w-full"
-        />
+        <x-field label="First Name">
+          <x-input
+            v-model="filters.first_name"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Search by First Name"
+          />
+        </x-field>
+        <x-field label="Last Name">
+          <x-input
+            v-model="filters.last_name"
+            type="search"
+            name="last_name"
+            class="w-full"
+            placeholder="Search by Last Name"
+          />
+        </x-field>
+        <x-field label="Email">
+          <x-input
+            v-model="filters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+          />
+        </x-field>
+        <x-field label="Mobile Number">
+          <x-input
+            v-model="filters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+          />
+        </x-field>
+        <x-field label="Created Date Start">
+          <DatePicker
+            v-model="filters.created_at_start"
+            type="date"
+            name="created_at_start"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Created Date End">
+          <DatePicker
+            v-model="filters.created_at_end"
+            type="date"
+            name="created_at_end"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Lead Status">
+          <ComboBox
+            v-model="filters.quote_status_id"
+            name="quote_status"
+            placeholder="Search by Lead Status"
+            :options="
+              quoteStatuses.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="Advisor">
+          <ComboBox
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptionsFilter"
+          />
+        </x-field>
+        <x-field label="Is E-Commerce">
+          <x-select
+            v-model="filters.is_ecommerce"
+            placeholder="Search by Ecommerce"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 1, label: 'Yes' },
+              { value: 0, label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Renewal Batch">
+          <x-input
+            v-model="filters.renewal_batch"
+            type="search"
+            name="renewal_batch"
+            class="w-full"
+            placeholder="Search by Renewal Batch"
+          />
+        </x-field>
+        <x-field label="Is Renewal">
+          <x-select
+            v-model="filters.previous_quote_policy_number"
+            placeholder="Search by Renewal"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 0, label: 'Yes' },
+              { value: 1, label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -337,7 +350,7 @@ watch(
       <template #item-uuid="{ code, uuid }">
         <Link
           v-if="can(permissionsEnum.YachtQuotesShow)"
-          :href="`/personal-quotes/yacht/${uuid}`"
+          :href="route('yacht-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

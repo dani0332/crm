@@ -242,7 +242,7 @@ const onLogout = () => {
                     </svg>
                     <span class="text-sm font-semibold">Logout</span>
                   </button>
-                </x-popover-container>nav-avatar
+                </x-popover-container>
               </template>
             </x-popover>
           </div>
