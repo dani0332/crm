@@ -28,9 +28,7 @@ class FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder extends Seeder
             $rule = Rule::find($ruleLeadSource->rule_id);
 
             if (! $rule) {
-                $this->command->info('Rule not found');
-
-                return false;
+                continue;
             }
 
             $ruleDetail = RuleDetail::where('lead_source_id', $ruleLeadSource->lead_source_id)->first();
