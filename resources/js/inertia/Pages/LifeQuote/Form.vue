@@ -45,19 +45,18 @@ function onSubmit(isValid) {
     let url = editMode.value
       ? route('life-quotes-update', props.quote.uuid)
       : route('life-quotes-store');
-    let title = editMode.value
-      ? 'Quote updated successfully'
-      : 'Quote saved successfully';
+    let title = editMode.value ? '' : 'Quote saved successfully';
 
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
       },
       onSuccess: () => {
-        notification.success({
-          title: title,
-          position: 'top',
-        });
+        if (title != '')
+          notification.success({
+            title: title,
+            position: 'top',
+          });
       },
     });
   }
