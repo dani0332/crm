@@ -3,11 +3,10 @@
 namespace Database\Seeders;
 
 use App\Models\Rule;
-use App\Models\RuleUser;
 use App\Models\RuleDetail;
 use App\Models\RuleLeadSource;
+use App\Models\RuleUser;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Log;
 
 class FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder extends Seeder
 {
@@ -26,12 +25,18 @@ class FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder extends Seeder
             /**
              * update Rule details tables
              */
-            $rule = Rule::findOrFail($ruleLeadSource->rule_id);
+            $rule = Rule::find($ruleLeadSource->rule_id);
+
+            if (! $rule) {
+                $this->command->info('Rule not found');
+
+                return false;
+            }
 
             $ruleDetail = RuleDetail::where('lead_source_id', $ruleLeadSource->lead_source_id)->first();
-            if (!$ruleDetail) {
+            if (! $ruleDetail) {
                 $rule->ruleDetail()->create([
-                    'lead_source_id' => $ruleLeadSource->lead_source_id
+                    'lead_source_id' => $ruleLeadSource->lead_source_id,
                 ]);
             }
 
@@ -42,12 +47,9 @@ class FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder extends Seeder
                 ->where('user_id', $ruleLeadSource->user_id)
                 ->first();
 
-            if (!$ruleUser) {
+            if (! $ruleUser) {
                 $rule->ruleUsers()->attach($ruleLeadSource->user_id);
             }
         }
-
-
-        $this->command->info("FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder completed");
     }
 }
