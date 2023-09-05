@@ -98,17 +98,18 @@ class QuoteAllocation extends Command
         $quoteModel::whereNull($allocationKey)
             ->whereBetween('created_at', [now()->startOfDay()->toDateTimeString(), $to])
             ->when($conditions, fn ($query) => $query->where($conditions))
-            ->chunk($chunkSize, function ($leads) use ($quoteType) {
+            ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {
-                    info("------ Lead allocation started for ". QuoteTypeId::getDescription($quoteType) ." lead: $lead->uuid ------");
+                    info('------ Lead allocation started for '.QuoteTypeId::getDescription($quoteType)." lead: $lead->uuid ------");
                     $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->id);
                     info('Allocation strategy is created: '.json_encode($allocationStrategy));
                     $allocationStrategy->executeSteps();
+                    $processedRecords++;
                 }
             });
         if ($processedRecords === 0) {
-            info("No records found for ". QuoteTypeId::getDescription($quoteType));
+            info('No records found for '.QuoteTypeId::getDescription($quoteType));
         }
-        info("------ Lead allocation end for ". QuoteTypeId::getDescription($quoteType). "  ------");
+        info('------ Lead allocation end for '.QuoteTypeId::getDescription($quoteType).'  ------');
     }
 }
