@@ -2942,6 +2942,223 @@ $('#rule_car_make_id').on('change', function (e) {
     });
   });
 
+// Add new additional contact modal
+$('#additional-contact-add-btn').on('click', function () {
+    $('#customer-additional-contact-add-modal').modal({ show: true });
+});
+
+// Make additional email primary
+$('.additional-email-make-primary-btn').on('click', function () {
+    var _this = $(this);
+    if (confirm('Are you sure to make this primary email address?')) {
+        $('.loader').show();
+        $.ajax({
+            url: '/customer-primary-email-check',
+            method: 'POST',
+            data: {
+                key: $(this).attr('data-key'),
+                value: $(this).attr('data-value'),
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                if (data.response === true) {
+                    if (confirm('You are about to set this "email" as the primary contact for this lead. This action will add this lead to the list of other existing leads associated with the same email. \n Are you sure you want to continue?')) {
+                        additionalContactPrimaryConfirmed(_this);
+                    } else {
+                        $('.loader').hide();
+                    }
+                } else {
+                    additionalContactPrimaryConfirmed(_this);
+                }
+            }
+        });
+    } else {
+        return false;
+    }
+});
+
+function additionalContactPrimaryConfirmed(_this){
+    $('.loader').show();
+    var id = _this.attr('data-record-id');
+    var quote_id = _this.attr('data-quote-id');
+    var key = _this.attr('data-key');
+    var value = _this.attr('data-value');
+    var quote_type = _this.attr('data-quote-type');
+    var quote_primary_email_address = _this.attr('data-quote-primary-email-address');
+    var quote_customer_id = _this.attr('data-quote-customer-id');
+
+    $.ajax({
+        url: '/customer-additional-contact/' + id + '/make-primary',
+        method: 'POST',
+        data: {
+            quote_id: quote_id,
+            key: key,
+            value: value,
+            quote_type: quote_type,
+            quote_primary_email_address: quote_primary_email_address,
+            quote_customer_id: quote_customer_id,
+            _token: $('input[name=_token]').val(),
+        },
+        success: function (data) {
+            $('.loader').hide();
+            if (data.data.message) {
+                alert(data.data.message);
+            } else {
+                alert('Primary Email Updated');
+            }
+            location.reload();
+        }
+    });
+}
+
+// Delete additional email
+$('.additional-contact-delete-btn').on('click', function () {
+    if (confirm('Are you sure to delete?')) {
+        $('.loader').show();
+        var customer_id = $(this).attr('data-customer-additional-contact-id');
+        $.ajax({
+            url: '/customer-additional-contact/' + customer_id + '/delete',
+            method: 'POST',
+            data: {
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                $('.loader').hide();
+                alert(data.data.message);
+                location.reload();
+            },
+        });
+    } else {
+        return false;
+    }
+});
+
+// On Add button click do validate Email/MobileNo
+$('#additional-contact-modal-add-btn').on('click', function () {
+    var additional_mobile_no_reg_exp = new RegExp('[a-zA-Z]');
+    var additional_contact_type = $('#additional_contact_type').val();
+    var additional_contact_val = $('#additional_contact').val();
+    var quote_id = $(this).attr('data-quote-id');
+    var quote_type = $(this).attr('data-quote-type');
+    var customer_id = $(this).attr('data-customer-id');
+    var contact_type_email_enum = $(this).attr('data-contact-type-email-enum');
+    var contact_type_mobile_no_enum = $(this).attr(
+        'data-contact-type-mobile-no-enum',
+    );
+
+    if (
+        additional_contact_type == contact_type_email_enum &&
+        is_valid_email(additional_contact_val) === false
+    ) {
+        validation_div_text(
+            '#additional-contact-modal-validation-msg',
+            'Please enter a valid email address.',
+            'red',
+        );
+        return false;
+    }
+    if (
+        additional_contact_type == contact_type_mobile_no_enum &&
+        (additional_contact_val == '' ||
+            additional_mobile_no_reg_exp.test(additional_contact_val))
+    ) {
+        validation_div_text(
+            '#additional-contact-modal-validation-msg',
+            'Please enter a valid  mobile number.',
+            'red',
+        );
+        return false;
+    } else {
+        $('.loader').show();
+        validation_div_text('#additional-contact-modal-validation-msg', '', '');
+        $.ajax({
+            url: '/customer-additional-contact/add',
+            method: 'POST',
+            data: {
+                quote_id: quote_id,
+                customer_id: customer_id,
+                key: additional_contact_type,
+                value: additional_contact_val,
+                quote_type: quote_type,
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                $('.loader').hide();
+                if (data.error && data.error.message) {
+                    validation_div_text(
+                        '#additional-contact-modal-validation-msg',
+                        data.error.message,
+                        'red',
+                    );
+                } else if (data.data.message) {
+                    alert('Contact Added.');
+                    location.reload();
+                } else {
+                    validation_div_text(
+                        '#additional-contact-modal-validation-msg',
+                        'There was an error!',
+                        'red',
+                    );
+                }
+            },
+            error: function(err){
+                $('.loader').hide();
+                var errors = err.responseJSON.errors;
+                $.each(errors, function (key, value) {
+                    validation_div_text(
+                        '#additional-contact-modal-validation-msg',
+                        value,
+                        'red',
+                    );
+                });
+            }
+        });
+    }
+});
+
+// Make additional mobile_no primary
+$('.additional-mobile-no-make-primary-btn').on('click', function () {
+    if (confirm('Are you sure to make this primary mobile no.?')) {
+        $('.loader').show();
+        $.ajax({
+            url: '/customer-additional-contact/' + 0 + '/make-primary',
+            method: 'POST',
+            data: {
+                quote_id: $(this).attr('data-quote-id'),
+                key: $(this).attr('data-key'),
+                value: $(this).attr('data-value'),
+                quote_type: $(this).attr('data-quote-type'),
+                quote_primary_mobile_no: $(this).attr('data-quote-primary-mobile-no'),
+                quote_customer_id: $(this).attr('data-quote-customer-id'),
+                _token: $('input[name=_token]').val(),
+            },
+            success: function (data) {
+                $('.loader').hide();
+                if (data.data.message) {
+                    alert(data.data.message);
+                } else {
+                    alert('Primary Mobile Updated');
+                }
+                location.reload();
+            },
+        });
+    } else {
+        return false;
+    }
+});
+
+function is_valid_email(email) {
+    var email_regex =
+        /^([a-zA-Z0-9_.+-])+\@(([a-zA-Z0-9-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+    return email_regex.test(email);
+}
+
+function validation_div_text(id, text, color) {
+    $(id)
+        .text(text)
+        .attr('style', 'color:' + color);
+}
+
   function triggerTest()
   {
     console.log("Triggered");
@@ -3000,3 +3217,5 @@ $(window).on('load', function(){
         }, 1000);
     }
 });
+
+
