@@ -217,8 +217,8 @@
             $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
         }
 
-        var channel = pusher.subscribe(appName + '-activity.user21');
-        channel.bind(appName + '-user.status.changed21', function(data) {
+        var channel = pusher.subscribe('public:'+appName + '-activity.user');
+        channel.bind('public:'+appName + '-user.status.changed', function(data) {
             debugger;
             if ($('.car_lead_allocation_table').length > 0) {
                 $('.car_lead_allocation_table').find("tr")
