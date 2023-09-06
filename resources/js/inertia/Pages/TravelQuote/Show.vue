@@ -31,6 +31,7 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -144,6 +145,7 @@ const travelFields = computed(() => {
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
     'previous_policy_expiry_date',
+    'policy_start_date',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -973,24 +975,146 @@ onMounted(() => {
             v-for="field in travelFields"
             :key="field"
           >
-              <dt v-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </dt>
-              <dt v-else-if="field.title == 'Parent Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </dt>
-            <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
+            <dt v-if="field.title == 'Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </dt>
+            <dt v-else-if="field.title == 'Parent Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </dt>
+            <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
             <dd>{{ field?.value }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Traveling Where
+                </label>
+                <template #tooltip> Traveling Where</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium uppercase">{{ quote.direction_code }}</dt>
+          </div>
+
+          <div
+            v-if="
+              enums.travelQuoteEnum.TravelUaeInbound == quote.direction_code
+            "
+            class="grid sm:grid-cols-2"
+          >
+            <dt>
+              <label
+                class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+              >
+                Arrived at UAE
+              </label>
+            </dt>
+            <dt class="font-medium">
+              {{ quote.has_arrived_uae == 1 ? 'Yes' : 'No' }}
+            </dt>
+          </div>
+          <div
+            v-if="
+              enums.travelQuoteEnum.TravelUaeOutbound == quote.direction_code
+            "
+            class="grid sm:grid-cols-2"
+          >
+            <dt>
+              <label
+                class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+              >
+                Arrived at Destination
+              </label>
+            </dt>
+            <dt class="font-medium">
+              {{ quote.has_arrived_destination == 1 ? 'Yes' : 'No' }}
+            </dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Days Covers
+                </label>
+                <template #tooltip>Days Covers</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.days_cover_for }}</dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Travel Start Date
+                </label>
+                <template #tooltip> Travel Start Date</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">
+              {{
+                quote.start_date ? quote.start_date : quote.policy_start_date
+              }}
+            </dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Travel End Date
+                </label>
+                <template #tooltip> Travel End Date</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.end_date }}</dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Travel Coverage
+                </label>
+                <template #tooltip> Travel Coverage</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.coverage_code }}</dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Region Coverage
+                </label>
+                <template #tooltip>Region Cover</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
           </div>
         </dl>
       </div>
@@ -1001,7 +1125,6 @@ onMounted(() => {
         </h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
@@ -1107,7 +1230,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ dateFormat(ecomDetails.paidAt).value }}</dd>
+            <dd>{{ ecomDetails.paidAt }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1140,6 +1263,7 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="travelers.length < 15"
         show-index
       >
         <template #item-name="item"> Traveler {{ item.index }} </template>
@@ -1154,7 +1278,7 @@ onMounted(() => {
         </template>
 
         <template #item-action="item">
-          <div class="flex gap-2 pr-2">
+          <div class="flex gap-2 justify-center">
             <x-button
               size="xs"
               color="primary"
@@ -1184,7 +1308,6 @@ onMounted(() => {
         backdrop
       >
         <template #header>
-          <i class="fa fa-user"></i>
           {{ travelerForm.id ? 'Edit: ' + travelerName : 'New Member' }}
         </template>
         <x-form @submit="submitTraveler" :auto-focus="false">
@@ -1337,14 +1460,15 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="emailStatuses.length < 15"
       >
         <template #item-email_status="item">
-          <span class="text-primary-600">{{
-            item.email_status.toUpperCase()
+          <span class="text-primary-600 uppercase">{{
+            item.email_status
           }}</span>
         </template>
         <template #item-reason="item">
-          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
+          <span class="text-primary-600 uppercase">{{ item.reason }}</span>
         </template>
       </DataTable>
     </div>
@@ -1471,10 +1595,10 @@ onMounted(() => {
 
       <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
         <p
-          class="text-center text-primary-600"
+          class="text-center text-primary-600 uppercase"
           v-if="typeof listQuotePlans == 'string'"
         >
-          {{ listQuotePlans?.toUpperCase() }}
+          {{ listQuotePlans }}
         </p>
       </div>
       <div v-else>
@@ -1485,14 +1609,15 @@ onMounted(() => {
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
+          :hide-footer="listQuotePlans.length < 15"
         >
           <template #item-providerName="item">
-            <span class="text-primary-600">{{
-              item.providerName?.toUpperCase()
+            <span class="text-primary-600 uppercase">{{
+              item.providerName
             }}</span>
           </template>
           <template #item-name="item">
-            <span class="text-primary-600">{{ item.name?.toUpperCase() }}</span>
+            <span class="text-primary-600 uppercase">{{ item.name }}</span>
           </template>
           <template #item-discountPremium="item">
             <span class="text-primary-600">{{
@@ -1519,6 +1644,12 @@ onMounted(() => {
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

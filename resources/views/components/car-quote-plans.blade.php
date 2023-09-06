@@ -11,7 +11,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
 $coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
-$halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC'];
+$halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 @endphp
 <div class="row">
 	<div class="col-md-12 col-sm-12">

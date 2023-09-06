@@ -1,6 +1,5 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -23,6 +22,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -40,14 +40,14 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="flex gap-2">
         <Link
           v-if="can(permissionsEnum.YachtQuotesEdit)"
-          :href="`/personal-quotes/yacht/${quote.uuid}/edit`"
+          :href="route('yacht-quotes-edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
         <Link
           v-if="can(permissionsEnum.YachtQuotesList)"
-          href="/personal-quotes/yacht"
+          :href="route('yacht-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div">
@@ -61,20 +61,22 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor?.email }}</dd>
+            <dd>{{ quote.advisor?.name }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -107,22 +109,24 @@ const permissionsEnum = page.props.permissionsEnum;
             <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
           </div>
 
-            <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">IS ECOMMERCE</dt>
-                <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
-            </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">IS ECOMMERCE</dt>
+            <dd>{{ quote.is_ecommerce ? 'Yes' : 'No' }}</dd>
+          </div>
 
-            <div class="grid sm:grid-cols-2">
-                <div>
-                    <x-tooltip position="bottom">
-                        <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                            Parent Ref-ID
-                        </label>
-                        <template #tooltip> Parent Reference ID </template>
-                    </x-tooltip>
-                </div>
-                <div>{{ quote.parent_duplicate_quote_id }}</div>
+          <div class="grid sm:grid-cols-2">
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
             </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
+          </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DEVICE</dt>
@@ -195,7 +199,6 @@ const permissionsEnum = page.props.permissionsEnum;
             <dt class="font-medium">EMAIL</dt>
             <dd>{{ quote.email }}</dd>
           </div>
-
         </dl>
       </div>
 
@@ -301,6 +304,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
