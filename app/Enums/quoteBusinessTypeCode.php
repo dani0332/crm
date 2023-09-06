@@ -38,4 +38,11 @@ final class quoteBusinessTypeCode extends Enum
     const workmens = 'Workmens Compensation & Employers Liability';
     const photographers = 'Photographers Insurance';
     const event = 'Event Insurance';
+
+    public static function getId($value): int
+    {
+        return match ($value) {
+            quoteBusinessTypeCode::groupMedical => 5,
+        };
+    }
 }

@@ -116,7 +116,7 @@ const totalLeads = reactive({
   current: '',
   tableHeader: [
     {
-      text: 'CDB Id',
+      text: 'Ref-ID',
       value: 'cdbId',
     },
     {
@@ -212,6 +212,7 @@ const filters = reactive({
   leadSources: [],
   advisors: [],
   teams: [],
+  isCommercial: false,
   page: 1,
 });
 
@@ -548,6 +549,15 @@ watch(
             :loading="loaders.advisorOptions"
           />
         </template>
+        <x-select
+            v-model="filters.isCommercial"
+            label="Commercial"
+            placeholder="Select any option"
+            :options="[
+                { value: true, label: 'Yes' },
+                { value: false, label: 'No' },
+            ]"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">

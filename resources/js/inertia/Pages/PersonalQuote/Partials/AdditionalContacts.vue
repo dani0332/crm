@@ -48,6 +48,16 @@ const contactForm = useForm({
   customer_id: page.props.quote.customer_id,
 });
 
+const numbersOnly = evt => {
+    const charCode = evt.which || evt.keyCode;
+
+    if (charCode > 31 && (charCode < 48 || charCode > 57) && charCode !== 46) {
+        evt.preventDefault();
+    } else {
+        return true;
+    }
+};
+
 const additionalContactPrimary = data => {
   modals.contactPrimaryConfirm = true;
   confirmData.contactPrimary = data;
@@ -221,8 +231,9 @@ const additionalContact = computed(() => {
 
           <x-input
             v-if="contactForm.key === 'mobile_no'"
-            type="text"
+            type="tel"
             v-model="contactForm.value"
+            @keydown="numbersOnly"
             label="Value"
             :rules="[isRequired, isMobileNo]"
             :error="contactForm.errors.value"

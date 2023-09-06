@@ -160,4 +160,23 @@ class AjaxController extends Controller
             return response()->json(['success' => true, 'payment_link' => $paymentLinkURL]);
         }
     }
+
+    public function commercialCarModelBasedOnCarMakeId(Request $request)
+    {
+        $carMakeCode = $request->get('make_code');
+
+        if ($carMakeCode) {
+            $carModel = CarModel::where('car_make_code', $carMakeCode)
+                ->select('id', 'text', 'code')
+                ->where('is_commercial', true)
+                ->where('is_active', true)
+                ->orderBy('text')
+                ->get();
+
+            return response()->json($carModel);
+        } else {
+            return response()->json([]);
+        }
+
+    }
 }

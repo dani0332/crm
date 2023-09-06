@@ -413,8 +413,15 @@ $(document).ready(function () {
         d.transapp_approval_code = $('#transapp_approval_code').val();
         d.transapp_customer_email = $('#customer_email').val();
         d.transapp_customer_name = $('#customer_name').val();
+        d.team_id = $('#team').val();
       },
     },
+      drawCallback: function () {
+         let tableData = this.api().data();
+          if(tableData[0]){
+              $('#total_premium_value').html(tableData[0].premium_total);
+          }
+      },
     columns: [
       { data: 'approval_code', name: 'approval_code' },
       { data: 'created_at', name: 'created_at' },
@@ -1047,6 +1054,14 @@ $(document).ready(function () {
     processing: true,
     ajax: {
       url: config.routes.aml_datatable_route,
+        error: function (json){
+            if(json.status === 422) {
+                var errors = json.responseJSON;
+                $.each(errors.errors, function (key, value) {
+                    $('.'+key+'-error').html(value).css('color', 'red');
+                });
+            }
+        },
       data: function (d) {
         d.searchType = $('#searchType').val();
         d.searchField = $('input[name=searchField]').val();
@@ -1054,6 +1069,8 @@ $(document).ready(function () {
         d.matchFound = $('#matchFound').val();
         d.amlCreatedStartDate = $('#amlCreatedStartDate').val();
         d.amlCreatedEndDate = $('#amlCreatedEndDate').val();
+        d.onLoadCheck = $("input[name='onLoadCheck']").val();
+
       },
     },
     columns: [
@@ -1113,33 +1130,27 @@ $(document).ready(function () {
     ],
   });
 
-  $('#aml-search-submit').hide();
-  $('#aml-search-fields').hide();
-  $('#quoteTypeValue').on('change', function (e) {
-    aml_search_filters_visiblity();
-  });
-
-  function aml_search_filters_visiblity() {
-    var quoteTypeValue = $('#quoteTypeValue').val();
-    console.log('quoteTypeValue1: ', quoteTypeValue);
-    if (quoteTypeValue != '') {
-      $('#aml-search-fields').show(300);
-      $('#aml-search-submit').show(300);
-    } else {
-      $('#aml-search-fields').hide(300);
-      $('#aml-search-submit').hide(300);
-    }
-  }
-
   $('#searchAML').submit(function (e) {
     var amlCreatedStartDate = $('#amlCreatedStartDate').val();
     var amlCreatedEndDate = $('#amlCreatedEndDate').val();
     var searchType = $('#searchType').val();
+    var searchField = $('#searchField').val();
 
-    if (
-      searchType == '' &&
-      (amlCreatedStartDate == '' || amlCreatedEndDate == '')
-    ) {
+    $("input[name='onLoadCheck']").val(0);
+    $(".quoteType-error, .searchField-error, .amlCreatedStartDate-error, .amlCreatedEndDate-error").html('').css('color', '');
+    $('#amlCreatedStartDate, #amlCreatedEndDate').css({ 'border-color' : ''});
+    $('#amlCreatedStartDateMsg').html('');
+
+    if(searchType != '' && searchField == ''){
+        $('.searchField-error').html('Please select search value').css('color', 'red');
+        $('#searchField').css('border-color', 'red');
+        return false;
+    }else{
+        $('.searchField-error').html('').css('color', '');
+        $('#searchField').css({ 'border-color' : ''});
+    }
+
+    if ( searchType == '' && (amlCreatedStartDate == '' || amlCreatedEndDate == '')) {
       $('#amlCreatedStartDateMsg').html('Please select start & end dates');
       $('#amlCreatedStartDate').css('border-color', 'red');
       $('#amlCreatedEndDate').css('border-color', 'red');
@@ -2783,6 +2794,81 @@ var teamsDataTable = $('.teams-data-table').DataTable({
   ],
 });
 
+/**
+ * Commercial keywords datatable
+ */
+var commercialKeywordsDataTable = $('.commercial-keywords-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_keywords_datatable_route,
+      data: function (d) {
+        d.name = $('#name').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_keywords_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'key', name: 'key' },
+      { data: 'name', name: 'name' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
+    ],
+  });
+
+/**
+ * Commercial vehicles datatable
+ */
+var commercialVehiclesDataTable = $('.commercial-vehicles-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_vehicles_datatable_route,
+      data: function (d) {
+        d.text = $('#text').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_vehicles_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'text', name: 'text' },
+      { data: 'code', name: 'code' },
+      { data: 'car_models', name: 'car_models' , title: 'Commercial Car Models'},
+    ],
+  });
+
 $('#search-teams').submit(function (e) {
   e.preventDefault();
   $('.loader').show();
@@ -2790,4 +2876,127 @@ $('#search-teams').submit(function (e) {
   setTimeout(() => {
     $('.loader').hide();
   }, 1000);
+});
+
+$('#search-keywords').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialKeywordsDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+  $('#search-car-make').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialVehiclesDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+// Listen for change events on select1
+$('#rule_type').change(function() {
+    var selectedValue = $(this).val(); // Get the selected value
+
+    if (selectedValue == 1) {
+        $('#lead_source_id_div').show();
+    } else {
+        $('#lead_source_id_div').hide();
+        $('#lead_source_id').val('');
+
+    }
+});
+
+$('#rule_car_make_id').on('change', function (e) {
+    console.log("changed");
+    var make_code = $('#rule_car_make_id option:selected').attr('data-id');
+    if (!make_code) {
+      console.log("Car make code not found");
+      return;
+    }
+    $.get('/commercial-car-model-by-id?make_code=' + make_code, function (data) {
+      var carmodel = $('#rule_car_model_id').empty();
+      carmodel.append(
+        '<option data-id="" value="">Please select rule car model</option>',
+      );
+      if (data.length > 0) {
+        $.each(data, function (create, carmodelObj) {
+          var option = $('<option/>', { id: create, value: carmodelObj });
+          carmodel.append(
+            '<option data-id="' +
+              carmodelObj.code +
+              '" value="' +
+              carmodelObj.id +
+              '" selected>' +
+              carmodelObj.text +
+              '</option>',
+          );
+        });
+      }else{
+        carmodel.append(
+            '<option disabled>No commercial vehicle record found for this car make</option>',
+          );
+      }
+    });
+  });
+
+  function triggerTest()
+  {
+    console.log("Triggered");
+  }
+
+var amlDetailKycLogsDatatable = $('.aml-detail-data-table').DataTable({
+    ordering: false,
+    info: true,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    processing: true,
+    ajax: {
+        url: config.routes.aml_kyc_logs_datatable_route,
+        data: {
+            'quote_type_id' : $(location).attr('href').split("/").splice(5)[0],
+            'quote_request_id': $(location).attr('href').split("/").splice(5)[2]
+        }
+    },
+    columns: [
+        {
+            data: 'id',
+            name: 'id',
+            render: function(data, type, row){
+                return ( "<a href='" +config.routes.aml_datatable_route +'/' + row.id +"'>" + row.id + '</a>' );
+            }
+        },
+        { data: 'input', name: 'input' },
+        { data: 'search_type', name: 'search_type' },
+        {
+            data: 'screenshot',
+            name: 'screenshot',
+            render: function(data){
+                var imgSrc = data;
+                if (imgSrc != null) {
+                    return ( '<a href="' + imgSrc + '" target="_blank">' + '<img class="img-responsive" src="' + imgSrc + '" alt="screenshot" height="80px" width="80px"></a>' );
+                }
+            }
+        },
+        { data: 'match_found', name: 'match_found', render: function(data, type, row){
+                return ( ( row.match_found > 0) ? 'True' : 'False');
+            }
+        },
+        { data: 'results_found', name: 'results_found' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
+    ]
+});
+
+$(window).on('load', function(){
+    if($("table").hasClass('aml-detail-data-table')){
+        $('.loader').show();
+        amlDetailKycLogsDatatable.draw();
+        setTimeout(() => {
+            $('.loader').hide();
+        }, 1000);
+    }
 });

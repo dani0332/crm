@@ -147,7 +147,7 @@ class CustomerController extends Controller
         $customerUploadId = $this->customerUploadFileService->customerUploadRecordsCreate($request);
 
         if ($customerUploadId == 0) {
-            return redirect('customer-upload')->with('message', 'CDB Id : '.$request->cdb_id." doesn't exists in system.")->withInput();
+            return redirect('customer-upload')->with('message', 'Ref-ID : '.$request->cdb_id." doesn't exists in system.")->withInput();
         }
 
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');

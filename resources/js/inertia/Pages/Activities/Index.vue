@@ -1,0 +1,581 @@
+<script setup>
+// Component Props and State Initialization
+defineProps({
+  activities: Object,
+  advisors: Object,
+  cannotUseAssignee: Boolean,
+  totalActivities: Number   
+});
+
+// Vue Composition API
+const page = usePage();
+const selectedOption  = ref('');
+const customStartDate = ref(null);
+const customEndDate   = ref(null);
+const activityLoader  = ref(false);
+const activityActionEdit = ref(false);
+const isOverDue = ref(false);
+const rules = {
+  isRequired: v => !!v || 'This field is required',
+};
+const notification = useNotifications('toast');
+const activityForm = useForm({
+  title: null,
+  description: null,
+  due_date: null,
+  assignee_id: page.props.auth.user.id,
+  status: null,  
+  activity_id: null,
+});
+const modals = reactive({
+  activity: false,
+  activityConfirm: false,
+});
+const filters = reactive({
+  assignee_id: '',
+  status: '',
+  due_date_start: '',  
+  due_date_end: '',  
+  due_date_time_start: '',  
+  due_date_time_end: '',    
+  page: 1,
+});
+const loader = reactive({
+  table: false,
+  export: false,
+});
+const activityTable = [
+  { text: 'Title', value: 'title' },
+  { text: 'REF ID', value: 'cdbid' },
+  { text: 'Client Name', value: 'client_name' },
+  { text: 'Followup Date', value: 'due_date' },
+  { text: 'Assigned To', value: 'assignee.name' },
+  { text: 'Done', value: 'status', width: 60, align: 'center' },
+  { text: 'Action', value: 'action' },
+];
+
+// Filter Functions
+function filterActivities(isValid) {
+  if (!isValid) {
+    return;
+  }
+
+  if(isOverDue.value ){
+    if(filters.status  == '1') {
+      filters.due_date_end  = '1/1/1970';
+    } else {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1); 
+      filters.due_date_end = yesterday.toLocaleDateString();    
+    }    
+  }
+
+  for (const key in filters) {
+    if (filters[key] === '') {
+      delete filters[key];
+    }
+  }
+  router.visit('/activities', {
+    method: 'get',
+    data: {
+      ...filters,
+    },
+    preserveState: true,
+    preserveScroll: true,
+    onFinish: () => {
+      loader.table = false;
+    },
+    onBefore: () => {
+      filters.page = 1;
+      loader.table = true;
+    },
+  });
+}
+function resetFilters() {
+  router.visit('/activities', {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
+}
+function setQueryFilters() {
+  let query = router.page.url.split('?')[1];
+  if (query) {
+    query = query.split('&');
+    query.forEach(item => {
+      const [key, value] = item.split('=');
+      filters[key] = value;
+    });
+  }
+}
+function resetDates(option) {
+  const today = new Date();
+  let startDate, endDate;
+  if(isOverDue.value ){
+    filters.status = '';
+  }
+  isOverDue.value = false;
+  selectedOption.value = option; 
+  if (option == 'today') {
+    startDate = today.toLocaleDateString();
+    endDate = today.toLocaleDateString();
+  }  else if (option == 'tomorrow') {
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1); 
+    startDate = tomorrow.toLocaleDateString();
+    endDate = tomorrow.toLocaleDateString();
+  }  else if (option == 'tweek') {
+    const firstDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 1));
+    const lastDayOfWeek = new Date(today.setDate(today.getDate() - today.getDay() + 7));    
+    startDate = firstDayOfWeek.toLocaleDateString();
+    endDate = lastDayOfWeek.toLocaleDateString();
+  } else if (option == 'tmonth') {
+    const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    startDate = firstDayOfMonth.toLocaleDateString();
+    endDate = lastDayOfMonth.toLocaleDateString();
+  }  else if (option == 'overdue') {
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1); 
+    startDate = '1/1/1970';
+    filters.status = '0';
+    isOverDue.value = true;
+    endDate = yesterday.toLocaleDateString();    
+  } else if (option === 'custom') {
+    // Handle the custom option by setting the custom start and end dates
+    selectedOption.value = option;
+    customStartDate.value = null; // Clear previously selected dates
+    customEndDate.value = null;
+  }
+  if (option != 'custom') {
+    filters.due_date_time_start  = '';
+    filters.due_date_time_end    = '';
+    filters.due_date_start  = startDate;
+    filters.due_date_end    = endDate;
+    filterActivities(1); // Call the filterActivities function
+  }
+}
+function applyCustomDates() {
+  if (customStartDate.value && customEndDate.value) {
+    // Update the filters with the selected custom dates
+    filters.due_date_start  = '';
+    filters.due_date_end    = '';
+    filters.due_date_time_start = customStartDate.value;
+    filters.due_date_time_end = customEndDate.value;
+    filterActivities(1); // Call the filterActivities function
+  }
+}
+
+// Helper Functions
+function buildCdbidLink(quote_uuid, quote_type_id) { 
+    if (quote_uuid) {
+      var url = '/quotes/' + getQuoteType(quote_type_id,'id') + '/' + quote_uuid;
+        var quoteTypeCode = getQuoteType(quote_type_id);
+        var CDBID = quoteTypeCode + '-' + quote_uuid.toUpperCase();
+        return "<a target='_blank' href='" + url + "'>" + CDBID +"</a>";
+    } else {
+        return '';
+    }  
+}
+function getQuoteType(id, returnType = 'code') {
+  const types = {
+    1: { code: 'CAR-', id: 'car' },
+    2: { code: 'HOM-', id: 'home' },
+    3: { code: 'HEA-', id: 'health' },
+    4: { code: 'LIF-', id: 'life' },
+    5: { code: 'BUS-', id: 'business' },
+    6: { code: 'BIK-', id: 'bike' },
+    7: { code: 'YAC-', id: 'yacht' },
+    8: { code: 'TRA-', id: 'travel' },
+  };
+  return types[id][returnType] || '';
+}
+
+// CRUD Functions
+const confirmDelete = id => {
+  modals.activityConfirm = true;
+  deleteData.activity_id = id;
+};
+const deleteData = reactive({
+  activity_id: null,
+});
+const onDeleteConfirmation = () => {
+  router.delete(`/activities/v2/${deleteData.activity_id}/`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      modals.activityConfirm = false;
+      notification.error({
+        title: 'Activity Deleted',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.activityConfirm = false;
+    },
+  });
+};
+const onStatusUpdate = id => {
+  activityLoader.value = true;
+  activityForm.activity_id = id;
+  activityForm.patch(`/activities/v2/${id}/update-status`, {
+    preserveScroll: true,
+
+    onSuccess: () => {
+      activityLoader.value = false;
+      notification.success({
+        title: 'Lead Activity Done',
+        position: 'top',
+      });
+    },
+  });
+};
+const addActivity = () => {
+  activityForm.reset();
+  activityActionEdit.value = false;
+  modals.activity = true;
+};
+const onEdit = activity => {
+  activityActionEdit.value = true;
+  modals.activity = true;
+  activityForm.activity_id = activity.id;
+  activityForm.title = activity.title;
+  activityForm.description = activity.description;
+  activityForm.due_date = activity.due_date
+    ? activity.due_date.split(' ')[0].split('-').reverse().join('-') +
+      'T' +
+      activity.due_date.split(' ')[1]
+    : null;
+  activityForm.assignee_id = activity.assignee_id;
+};
+const onSubmit = isValid => {
+  if (!isValid) return;
+  let url = `/activities/v2/`;
+  let method = `post`;
+  if (activityActionEdit.value) {
+    url += activityForm.activity_id;
+    method = 'patch';
+  }
+  activityForm.submit(method, url, {
+    preserveScroll: true,
+    onSuccess: () => {
+      activityForm.reset();
+      notification.success({
+        title: 'Activity saved',
+        position: 'top',
+      });
+    }, onError: (errors) => {
+      //console.error('Form submission error:', errors);
+      notification.error({
+        title: 'Activity save error',
+        position: 'top',
+      });
+    },
+    onFinish: () => {
+      modals.activity = false;
+    },
+  });
+};
+
+// Component hooks
+watch(
+  () => filters,
+  { deep: true, immediate: true },
+);
+onBeforeMount(() => { 
+  resetDates('today');
+});
+onMounted(() => {
+  setQueryFilters();
+});
+
+</script>
+
+<template>
+  <div>
+    <Head title="Activities" />
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-semibold">Search Activity </h2>
+      <div class="space-x-3">
+        <x-button size="sm" color="orange" @click.prevent="addActivity">
+          Create Activity
+        </x-button>        
+      </div>
+    </div>
+   
+    <x-divider class="my-4" />
+
+    <x-form @submit="filterActivities" :auto-focus="false">
+      <div class="grid sm:grid-cols-2 md:grid-cols-2 gap-4">
+        <x-select
+          v-model="filters.assignee_id"
+          label="Assigned To"
+          placeholder="Select Assigned To"
+          :disabled="cannotUseAssignee"
+          :options="[
+            { value: null, label: 'All' },
+            // Loop through advisorArray to generate options
+            ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
+          ]"
+        />
+        <x-select
+          v-model="filters.status"
+          label="Status"
+          placeholder="Select Activity Status"
+          :options="[
+            { value: '1', label: 'Done' },
+            { value: '0', label: 'Pending' },            
+          ]"
+        />
+      </div>      
+      <div class="flex justify-end gap-3 mb-4 mt-1">
+        <div class="flex gap-3"> 
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+            Reset
+          </x-button>
+        </div>
+      </div>
+
+    </x-form>
+    <x-divider class="my-2" />
+    <div class="flex justify-between items-center mb-4 mt-1">
+      <h2 class="text-left text-xl font-bold">Activities</h2>
+      <div class="flex gap-3">
+      <x-button
+        size="sm"
+        :color="selectedOption === 'overdue' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('overdue')"
+      >
+        Overdue
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'today' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('today')"
+      >
+        Today
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'tomorrow' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('tomorrow')"
+      >
+        Tomorrow
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'tweek' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('tweek')"
+      >
+        This Week
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'tmonth' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('tmonth')"
+      >
+        This Month
+      </x-button>
+      <x-button
+        size="sm"
+        :color="selectedOption === 'custom' ? 'primary' : 'secondary'"
+        @click.prevent="resetDates('custom')"
+      >
+        Custom
+      </x-button>    
+    </div>  
+</div>
+ <!-- Custom Date Range Picker -->
+  <div v-if="selectedOption === 'custom'">
+      <div class="flex gap-3">
+        <x-input
+            v-model="customStartDate"
+            label="Start Date"
+            type="datetime-local"
+            class="w-full"
+          />
+        <x-input
+            v-model="customEndDate"
+            label="End Date"
+            type="datetime-local"
+            class="w-full"
+          />
+      </div>
+      <div class="flex justify-end gap-3 mb-4 mt-1">
+        <div class="flex gap-3"> 
+          <x-button size="sm" color="primary" @click="applyCustomDates">Apply</x-button>
+        </div>
+      </div>
+      <x-divider class="my-2" />
+    </div>
+    <p class="text-md font-semibold text-gray-700">
+      Total Activities: {{ totalActivities }}
+    </p>
+    <x-divider class="my-2" />
+    <DataTable
+      table-class-name="tablefixed"
+      :loading="loader.table"
+      :headers="activityTable"
+      :items="activities.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+      fixed-checkbox
+    >
+    
+    <template #item-title="{ title }">
+      <div class="w-40 whitespace-normal">{{ title }}</div>
+    </template>
+
+    <template #item-client_name="{ client_name }">
+      <div class="w-32 whitespace-normal">{{ client_name }}</div>
+    </template>
+
+    <template #item-cdbid="item">
+      <div v-html="buildCdbidLink(item.quote_uuid, item.quote_type_id)"></div>
+    </template>
+
+    <template #item-due_date="item">
+      <td
+        :class="{
+          'bg-red-500': item.is_overdue === true,
+          'rounded': item.is_overdue === true,
+          'flex items-center justify-center w-full h-full': true
+        }">
+        {{ item.due_date }}
+      </td>
+    </template>
+
+    <template #item-status="{ status, id }">
+        <x-checkbox
+          color="emerald"
+          size="xl"
+          :modelValue="status === 1"
+          :disabled="status === 1"
+          @change="onStatusUpdate(id)"
+          :loading="activityLoader"
+        />
+      </template>
+      <template #item-action="item">
+        <div class="space-x-4">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            :disabled="item.status === 1"
+            @click.prevent="onEdit(item)"
+          >
+            Edit
+          </x-button>
+
+          <x-button
+            size="xs"
+            color="error"
+            :disabled="item.status === 1"
+            outlined
+            @click.prevent="confirmDelete(item.id)"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+  </DataTable>
+    <Pagination
+      :links="{
+        next: activities.next_page_url,
+        prev: activities.prev_page_url,
+        current: activities.current_page,
+        from: activities.from,
+        to: activities.to,
+      }"
+    />
+
+    <x-modal v-model="modals.activity" size="lg" show-close backdrop>
+      <template #header>
+        {{ activityActionEdit ? 'Edit' : 'Add' }} Activity
+      </template>
+
+      <x-form @submit="onSubmit" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-input
+            v-model="activityForm.title"
+            label="Title*"
+            :rules="[rules.isRequired]"
+            class="w-full"
+          />
+
+          <x-textarea
+            v-model="activityForm.description"
+            label="Description*"
+            :rules="[rules.isRequired]"
+            :adjust-to-text="false"
+            class="w-full"
+          />
+          <div v-if="activityActionEdit">
+            <x-select
+              v-model="activityForm.assignee_id"
+              label="Assignee*"
+              :options="[            
+                  ...advisors.map(advisor => ({ value: advisor.id, label: advisor.name })),
+                ]"
+              :rules="[rules.isRequired]"
+              :disabled="cannotUseAssignee"
+              placeholder="Select Assignee"
+              class="w-full"
+            />
+         </div>
+          <x-input
+            v-model="activityForm.due_date"
+            label="Due Date*"
+            type="datetime-local"
+            :rules="[rules.isRequired]"
+            class="w-full"
+          />
+        </div>
+
+        <div class="text-right space-x-4 mt-12">
+          <x-button size="sm" @click.prevent="modals.activity = false">
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="activityForm.processing"
+            type="submit"
+          >
+            {{ activityActionEdit ? 'Update' : 'Save' }}
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+
+    <x-modal v-model="modals.activityConfirm" show-close backdrop>
+      <template #header> Delete Activity </template>
+      <p>Are you sure you want to delete this activity?</p>
+      <template #actions>
+        <div class="text-right space-x-4">
+          <x-button
+            size="sm"
+            ghost
+            @click.prevent="modals.activityConfirm = false"
+          >
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="error"
+            :loading="activityForm.processing"
+            @click.prevent="onDeleteConfirmation"
+          >
+            Delete
+          </x-button>
+        </div>
+      </template>
+    </x-modal>
+  </div>
+</template>
