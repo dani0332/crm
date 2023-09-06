@@ -143,9 +143,5 @@ class Payment extends Model
     {
         return $this->belongsTo(InsuranceProvider::class);
     }
-
-    public function insuranceProvider()
-    {
-        return $this->belongsTo('App\Models\InsuranceProvider', 'insurance_provider_id');
-    }
+    
 }
