@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
   quote: Object,
   dropdownSource: Object,
@@ -29,10 +28,10 @@ const isEmptyField = ref(false);
 
 const businessInsuranceTypeOptions = computed(() => {
   return Object.keys(props.dropdownSource.business_type_of_insurance_id).map(
-    (status) => ({
+    status => ({
       value: props.dropdownSource.business_type_of_insurance_id[status].id,
       label: props.dropdownSource.business_type_of_insurance_id[status].text,
-    })
+    }),
   );
 });
 
@@ -40,22 +39,22 @@ const businessInsuranceTypeOptions = computed(() => {
 
 const genderOptions = [
   {
-    value: "Male",
-    label: "Male",
+    value: 'Male',
+    label: 'Male',
   },
   {
-    value: "FS",
-    label: "Female-Single",
+    value: 'FS',
+    label: 'Female-Single',
   },
   {
-    value: "FM",
-    label: "Female-Married",
+    value: 'FM',
+    label: 'Female-Married',
   },
 ];
 
 function onSubmit(isValid) {
   if (isValid) {
-    quoteForm.put(`/quotes/business/${props.quote.uuid}`, {
+    quoteForm.put(route('business.update', props.quote.uuid), {
       onSuccess: () => {
         router.get(`/quotes/business/${props.quote.uuid}`);
       },
@@ -66,14 +65,14 @@ function onSubmit(isValid) {
 
 <template>
   <div>
-    <Head title="Edit Quote" />
+    <Head title="Edit Business Quote" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Edit Business Quote Lead</h2>
       <div class="space-x-4">
         <Link :href="`/quotes/business/${props.quote.uuid}`">
           <x-button size="sm" tag="div"> View </x-button>
         </Link>
-        <Link href="/quotes/business">
+        <Link :href="route('business.index')">
           <x-button size="sm" color="#ff5e00" tag="div"> Quotes List </x-button>
         </Link>
       </div>
@@ -81,12 +80,7 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <label>
-          <p>
-            FIRST NAME
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="FIRST NAME" required>
           <x-input
             v-model="quoteForm.first_name"
             type="text"
@@ -94,14 +88,8 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.first_name"
           />
-        </label>
-
-        <label>
-          <p>
-            LAST NAME
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        </x-field>
+        <x-field label="LAST NAME" required>
           <x-input
             v-model="quoteForm.last_name"
             type="text"
@@ -109,14 +97,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.last_name"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            EMAIL
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="EMAIL" required>
           <x-input
             v-model="quoteForm.email"
             type="email"
@@ -125,14 +108,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.email"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            MOBILE NUMBER
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="MOBILE NUMBER" required>
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
@@ -141,14 +119,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            COMPANY NAME
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="COMPANY NAME" required>
           <x-input
             v-model="quoteForm.company_name"
             type="text"
@@ -156,7 +129,7 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.company_name"
           />
-        </label>
+        </x-field>
 
         <!-- <label>
           <p>POLICY NUMBER</p>
@@ -168,22 +141,17 @@ function onSubmit(isValid) {
             :error="quoteForm.errors.company_name"
           />
         </label> -->
+        <x-field label="PRICE" required>
+          <x-input
+            v-model="quoteForm.premium"
+            type="text"
+            :rules="[isRequired, isDecimal]"
+            class="w-full"
+            :error="quoteForm.errors.premium"
+          />
+        </x-field>
 
-        <x-input
-          v-model="quoteForm.premium"
-          type="text"
-          label="PRICE"
-          :rules="[isRequired, isDecimal]"
-          class="w-full"
-          :error="quoteForm.errors.premium"
-        />
-
-        <label>
-          <p>
-            NUMBER OF EMPLOYEES
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="NUMBER OF EMPLOYEES" required>
           <x-input
             v-model="quoteForm.number_of_employees"
             type="text"
@@ -191,14 +159,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.number_of_employees"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            BUSINESS INSURANCE TYPE
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="BUSINESS INSURANCE TYPE" required>
           <x-select
             v-model="quoteForm.business_type_of_insurance_id"
             :options="businessInsuranceTypeOptions"
@@ -206,13 +169,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.business_type_of_insurance_id"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            GENDER
-            <sup class="text-red-500">*</sup>
-          </p>
+        <x-field label="GENDER" required>
           <x-select
             v-model="quoteForm.gender"
             :options="genderOptions"
@@ -220,25 +179,25 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.gender"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            Brief Details
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="Brief Details" required>
           <x-textarea
             v-model="quoteForm.brief_details"
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.brief_details"
           />
-        </label>
+        </x-field>
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
-        <x-button size="md" color="emerald" type="submit" :loading="quoteForm.processing">
+        <x-button
+          size="md"
+          color="emerald"
+          type="submit"
+          :loading="quoteForm.processing"
+        >
           Update
         </x-button>
       </div>
