@@ -681,13 +681,6 @@ class CRUDController extends Controller
                 })->sortBy('label')->values();
             }
 
-            $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->id,
-                    'label' => $paymentMethod->text,
-                ];
-            })->sortBy('label')->values();
-
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
@@ -1479,7 +1472,7 @@ class CRUDController extends Controller
             'payment_methods_code' => $request->payment_methods,
             'payment_status_id' => PaymentStatusEnum::DRAFT,
             'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
-            'insurance_provider_id' => $request->insurance_provider_id,
+            'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
             'created_by' => $request->user()->id,
             'updated_by' => $request->user()->id,
         ];
