@@ -74,10 +74,10 @@ const can = permission => useCan(permission);
 
 <template>
     <div>
-        <Head title="Upload & Update Renewals" />
+        <Head title="Upload & Create Renewals" />
 
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Upload & Update Renewals</h2>
+            <h2 class="text-xl font-semibold">Upload & Create Renewals</h2>
         </div>
         <x-divider class="my-4" />
         <!--   filters     -->

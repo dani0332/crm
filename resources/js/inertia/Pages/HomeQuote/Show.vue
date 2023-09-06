@@ -1,9 +1,4 @@
 <script setup>
-import { computed, ref, reactive, onMounted } from 'vue';
-import { Head, usePage, router, useForm, Link } from '@inertiajs/vue3';
-import { useNotifications } from '@indielayer/ui';
-// import axios from 'axios';
-
 defineProps({
   quote: Object,
   leadStatuses: Array,
@@ -23,6 +18,7 @@ defineProps({
   permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -108,7 +104,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quote.notes || null,
   trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason || null,
+  lostReason: page.props.quote.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -728,6 +724,12 @@ const policyDetails = useForm({
         </x-button>
       </div>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

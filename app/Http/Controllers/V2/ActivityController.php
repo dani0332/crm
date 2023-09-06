@@ -2,12 +2,46 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\PermissionsEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ActivityRequest;
+use App\Models\User;
 use App\Repositories\ActivityRepository;
+use App\Traits\GetUserTreeTrait;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityController extends Controller
 {
+    use GetUserTreeTrait;
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function index()
+    {
+        $advisors = [];
+        $advisors = User::whereIn('id', $this->walkTree(Auth::user()->id))->get();
+        $activities = ActivityRepository::getData();
+        $totalActivities = ActivityRepository::countActivities();
+        $cannotUseAssignee = auth()->user()->cannot(PermissionsEnum::ActivitiesAssignedToView);
+
+        return inertia('Activities/Index', [
+            'activities' => $activities,
+            'advisors' => $advisors,
+            'cannotUseAssignee' => $cannotUseAssignee,
+            'totalActivities' => $totalActivities,
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        return inertia('Activities/Form', []);
+    }
+
     /**
      * @return \Illuminate\Http\RedirectResponse
      */

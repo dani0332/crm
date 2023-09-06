@@ -11,9 +11,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -53,6 +55,7 @@ class TravelController extends Controller
     public function index(Request $request)
     {
         $searchProperties = array_flip($this->genericModel->searchProperties);
+
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
@@ -131,7 +134,7 @@ class TravelController extends Controller
 
         $ecomDetails = [
             'premium' => $record->premium,
-            'paidAt' => $record->paid_at,
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
         ];
@@ -146,11 +149,12 @@ class TravelController extends Controller
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -181,6 +185,7 @@ class TravelController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            'embeddedProducts' => $embeddedProducts,
             'message' => session('message'),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
@@ -202,6 +207,7 @@ class TravelController extends Controller
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
         ]);
     }
@@ -244,6 +250,7 @@ class TravelController extends Controller
 
         return inertia('TravelQuote/Create', [
             'model' => json_encode($model->properties),
+            'quotePlans' => null,
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
@@ -267,7 +274,7 @@ class TravelController extends Controller
             return redirect()->back()->with('message', $record->message)->withInput();
         }
 
-        return redirect()->route('travel.show', data_get($record, 'quoteUID'))->with('message', 'Quote created successfully.');
+        return redirect('/quotes/travel')->with('message', 'Quote created successfully.');
     }
 
     /**
@@ -306,9 +313,12 @@ class TravelController extends Controller
         }
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
+        $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
 
-        return inertia('TravelQuote/Edit', [
+        return inertia('TravelQuote/Create', [
             'quote' => $record,
+            'quotePlans' => $quotePlans,
+            'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'dropdownSource' => $dropdownSource,

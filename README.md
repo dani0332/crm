@@ -3,15 +3,16 @@
 ## About Blanka - IMCRM
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
-IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above. 
+IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
 
 URLs: 
 
-- [Live](https://crm.alfred.ae/)
-- [Stage](https://crmstage.alfred.ae/)
-- [UAT](https://crmuat.alfred.ae)
-- [DEV](https://crmdev.alfred.ae) [DEV1](https://crmdev01.alfred.ae) [DEV2](https://crmdev02.alfred.ae)
+- [Live](https://imcrm.alfred.ae/)
+- [Stage](https://imcrmstage.alfred.ae/)
+- [UAT](https://imcrmuat.alfred.ae)
+- [DEV](https://imccrmdev.alfred.ae) [DEV1](https://imccrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
+- [TEST](https://imcrmtest.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
 
@@ -49,9 +50,9 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 - DEV02 - 8
 - Test - 9
 
-## Contributing
+## Contributing 
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
-- ```main``` branch is used for production deployments. 
+- ```main``` branch is used for production deployments.    
 
 ## Cypress test instructions
 

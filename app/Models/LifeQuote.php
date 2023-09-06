@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\FilterTypes;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
-use Config;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -30,11 +30,9 @@ class LifeQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
     ];
 
-    public function getDobAttribute($table)
+    public function getDobAttribute($value)
     {
-        $date_format = Config::get('constants.DATE_FORMAT');
-
-        return $this->asDate($table)->timezone(config('app.timezone'))->format($date_format);
+        return Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY'));
     }
 
     public function quoteStatus()
