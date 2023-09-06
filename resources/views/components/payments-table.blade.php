@@ -103,7 +103,7 @@ use App\Enums\QuoteTypes;
         <div class="x_panel">
             <div class="x_title">
                 <h2>Payments</h2>
-                @if(! auth()->user()->hasRole(RolesEnum::PA))
+                @if($paymentPlainModel->plan && ! auth()->user()->hasRole(RolesEnum::PA))
                 @cannot(PermissionsEnum::ApprovePayments)
                 @can(PermissionsEnum::PaymentsCreate)
                     <button class="btn btn-success btn-sm" style="float:right;width:110px;" type="button"
