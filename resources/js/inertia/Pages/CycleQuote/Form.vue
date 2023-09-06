@@ -1,6 +1,4 @@
 <script setup>
-const notification = useNotifications('toast');
-
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
@@ -31,10 +29,10 @@ const quoteForm = useForm({
 
 const { isRequired, isEmail } = useRules();
 
-const isEmptyField = ref(false);
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
+
 function onSubmit(isValid) {
   if (isValid) {
     let method = editMode.value ? 'put' : 'post';
@@ -60,7 +58,6 @@ function onSubmit(isValid) {
       </h2>
       <div>
         <Link :href="route('cycle-quotes-list')">
-          <!-- href="/personal-quotes/cycle" -->
           <x-button size="sm" color="#ff5e00"> Cycle Quotes List </x-button>
         </Link>
       </div>
@@ -167,16 +164,8 @@ function onSubmit(isValid) {
               label="Have you had any accidents or injuries whilst cycling in the past
               3 years in the UAE"
               required
-            ></x-field>
-            <!-- <label
-              for="entry"
-              class="block text-gray-700 text-sm font-semibold mb-3"
             >
-              Have you had any accidents or injuries whilst cycling in the past
-              3 years in the UAE*
-            </label> -->
-            <div class="w-full">
-              <div class="grid grid-cols-4 gap-1">
+              <div class="flex gap-12 mt-2">
                 <x-radio
                   v-model="quoteForm.has_accident"
                   value="1"
@@ -189,7 +178,7 @@ function onSubmit(isValid) {
                   label="No"
                 />
               </div>
-            </div>
+            </x-field>
           </div>
         </div>
 
@@ -199,16 +188,8 @@ function onSubmit(isValid) {
               label="Confirm that your bicycle is currently in good condition and there
               is no existing damage"
               required
-            ></x-field>
-            <!-- <label
-              for="entry"
-              class="block text-gray-700 text-sm font-semibold mb-3"
             >
-              Confirm that your bicycle is currently in good condition and there
-              is no existing damage*
-            </label> -->
-            <div class="w-full">
-              <div class="grid grid-cols-4 gap-1">
+              <div class="flex gap-12 mt-2">
                 <x-radio
                   v-model="quoteForm.has_good_condition"
                   value="1"
@@ -221,7 +202,7 @@ function onSubmit(isValid) {
                   label="No"
                 />
               </div>
-            </div>
+            </x-field>
           </div>
         </div>
       </div>

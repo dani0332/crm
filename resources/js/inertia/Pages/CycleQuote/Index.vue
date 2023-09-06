@@ -12,8 +12,7 @@ defineProps({
 });
 
 const page = usePage();
-const notification = useToast();
-const { isRequired } = useRules();
+
 const loader = reactive({
   table: false,
   export: false,
