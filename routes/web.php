@@ -405,7 +405,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
-            Route::get('amt/cards', [V2AmtController::class, 'cardsView']);
+            Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
             Route::resource('amt', V2AmtController::class);
         } else {
             Route::resource('amt', AMTController::class);
