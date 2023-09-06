@@ -58,18 +58,10 @@ function onSubmit(isValid) {
     let url = editMode.value
       ? route('bike-quotes-update', props.quote.uuid)
       : route('bike-quotes-store');
-    let title = editMode.value ? '' : 'Quote saved successfully';
 
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
-      },
-      onSuccess: () => {
-        if (title != '')
-          notification.success({
-            title: title,
-            position: 'top',
-          });
       },
     });
   }
