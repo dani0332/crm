@@ -2,8 +2,12 @@
 const props = defineProps({
   businessInsuranceType: Object,
   quote: Object,
+  gmTypes: Object,
+  selectedGmType: Object,
 });
 
+const notification = useToast();
+const isEdit = computed(() => (props.quote.uuid ? true : false));
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
     value: status,
@@ -28,6 +32,7 @@ const quoteForm = useForm({
   company_name: props.quote.company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
+  group_medical_type_id: props.selectedGmType ?? '',
   brief_details: props.quote.brief_details,
 });
 
@@ -36,31 +41,36 @@ const { isRequired, emptyOrDecimal, isNumber, isEmail } = useRules();
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-  if (isValid) {
-    // '/medical/amt'
-    quoteForm.post(route('amt.store'), {
-      onFinish: () => {
-        isEmptyField.value = true;
-      },
-    });
-  }
+  if (!isValid) return;
+  const method = isEdit.value ? 'put' : 'post';
+  const url = isEdit.value
+    ? route('amt.update', props.quote.uuid)
+    : route('amt.store');
+
+  const options = {
+    onError: errors => {
+      quoteForm.setError(errors);
+    },
+    onStart: () => {
+      quoteForm.clearErrors();
+    },
+  };
+  quoteForm.submit(method, url, options);
 }
 </script>
 
 <template>
   <div>
-    <Head title="Create Group Medical" />
+    <Head :title="isEdit ? 'Edit Group Medical' : 'Create Group Medical'" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Create Group Medical Lead</h2>
+      <h2 class="text-xl font-semibold">
+        {{ isEdit ? 'Update' : 'Create' }} Group Medical Lead
+      </h2>
       <div class="space-x-4">
-        <Link
-          v-if="props.quote.uuid"
-          :href="route('amt.show', props.quote.uuid)"
-        >
+        <Link v-if="isEdit" :href="route('amt.show', props.quote.uuid)">
           <x-button size="sm" tag="div"> View </x-button>
         </Link>
         <Link :href="route('amt.index')">
-          <!-- href="/medical/amt" -->
           <x-button size="sm" color="#ff5e00" tag="div"> Quotes List </x-button>
         </Link>
       </div>
@@ -94,6 +104,7 @@ function onSubmit(isValid) {
             type="email"
             :rules="[isRequired, isEmail]"
             class="w-full"
+            :disabled="isEdit"
             :error="quoteForm.errors.email"
           />
         </x-field>
@@ -104,6 +115,7 @@ function onSubmit(isValid) {
             type="tel"
             :rules="[isRequired]"
             class="w-full"
+            :disabled="isEdit"
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>
@@ -121,7 +133,7 @@ function onSubmit(isValid) {
         <x-field label="NUMBER OF EMPLOYEES" required>
           <x-input
             v-model="quoteForm.number_of_employees"
-            type="text"
+            type="number"
             :rules="[isRequired, isNumber]"
             class="w-full"
             :error="quoteForm.errors.number_of_employees"
@@ -155,10 +167,25 @@ function onSubmit(isValid) {
         <x-field label="PRICE">
           <x-input
             v-model="quoteForm.premium"
-            type="text"
+            type="number"
             class="w-full"
             :rules="[emptyOrDecimal]"
             :error="quoteForm.errors.premium"
+          />
+        </x-field>
+
+        <x-field label="Group Medical Type" required v-if="isEdit">
+          <x-select
+            v-model="quoteForm.group_medical_type_id"
+            :options="
+              gmTypes.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.group_medical_type_id"
           />
         </x-field>
       </div>
@@ -170,7 +197,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Create
+          {{ isEdit ? 'Update' : 'Create' }}
         </x-button>
       </div>
     </x-form>

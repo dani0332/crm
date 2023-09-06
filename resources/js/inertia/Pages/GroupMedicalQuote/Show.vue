@@ -169,7 +169,7 @@ const historyDataTable = [
           </x-button>
         </Link>
         <Link
-          v-if="can(permissionsEnum.canEditQuote)"
+          v-if="!can(permissionsEnum.canEditQuote)"
           :href="route('amt.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
