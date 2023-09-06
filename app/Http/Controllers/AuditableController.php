@@ -26,7 +26,7 @@ class AuditableController extends Controller
         return view('auditable', compact('auditableId', 'auditableType'));
     }
 
-    public function loadApiLogsComponent(Request $request)
+    public function apiLogsComponent(Request $request)
     {
         $auditableType = $request->auditableType;
         $auditableId = $request->auditableId;

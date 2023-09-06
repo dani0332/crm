@@ -18,7 +18,6 @@ use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
-use App\Models\Audit;
 use App\Models\CarQuote;
 use App\Models\Emirate;
 use App\Models\GenericModel;
@@ -60,6 +59,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
+use App\Repositories\AuditRepository;
 
 class CRUDController extends Controller
 {
@@ -905,7 +905,7 @@ class CRUDController extends Controller
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         $updatedAtAudit = '';
-        $auditLog = Audit::select('updated_at')
+        $auditLog = AuditRepository::select('updated_at')
             ->where('auditable_id', $record->id)
             ->where('auditable_type', 'App\Models\CarQuote')
             ->latest()
