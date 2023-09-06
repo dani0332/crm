@@ -115,6 +115,7 @@ class CycleQuoteRepository extends BaseRepository
             ->where($column, $value)
             ->with([
                 'cycleQuote',
+                'cycleQuote.yearOfManufacture',
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
