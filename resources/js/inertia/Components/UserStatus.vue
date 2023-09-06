@@ -1,4 +1,5 @@
 <script setup>
+import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 const page = usePage();
 const status = computed(() => page.props.auth.user.status);
@@ -14,28 +15,31 @@ const statusText = id => {
   return statuses[id];
 };
 
+window.Pusher.logToConsole = true;
 const options = {
-  cluster: 'ap1',
-  forceTLS: true,
+    broadcaster: 'pusher',
+    key: process.env.MIX_PUSHER_APP_KEY,
+    wsHost: window.location.hostname,
+    encrypted: false,
+    wsPort: 6001,
+    enabledTransports: ['ws', 'wss'],
+    cluster: 'ap1',
+    forceTLS: false,
+    disableStats: false,
 };
-
-Pusher.logToConsole = true;
-
-const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe('public.'+page.props.appEnv + '-activity.user');
-
-const listen = () => {
-  console.log('listening');
-  channel.bind('public.'+page.props.appEnv + '-user.status.changed', function (e) {
-    console.log(e, 'saad');
+window.Echo = new Echo({  ...options});
+const channel = window.Echo.channel('public.'+page.props.appEnv + '.activity.user')
+channel.subscribed(() =>{
+    console.log('Channel Subscribed !!');
+});
+channel.listen('.user.status.changed',(e) =>{
     if (e?.userId == page.props.auth.user.id) {
-      currentStatus.value = e.status;
+        currentStatus.value = e.status;
     }
-  });
-};
+});
 
 onMounted(() => {
-  listen();
+
 });
 
 onUnmounted(() => {

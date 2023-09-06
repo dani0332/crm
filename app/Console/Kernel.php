@@ -42,6 +42,8 @@ class Kernel extends ConsoleKernel
 
         $schedule
             ->command('QuoteAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('websockets:clean')->daily();
     }
 
     /**

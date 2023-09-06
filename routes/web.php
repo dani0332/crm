@@ -95,8 +95,8 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
     });
 }
 
-Route::get('test-broadcast/{status}', function ($status) {
-    event(new UserStatusChanged(17, $status));
+Route::get('test-broadcast', function () {
+    event(new UserStatusChanged(17,1));
 
     return 'Event has been sent!';
 });
