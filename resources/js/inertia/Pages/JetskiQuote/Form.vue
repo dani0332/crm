@@ -1,8 +1,4 @@
 <script setup>
-import { computed } from 'vue';
-
-const notification = useNotifications('toast');
-
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
