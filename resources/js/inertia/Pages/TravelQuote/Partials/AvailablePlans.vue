@@ -1,21 +1,13 @@
 <script setup>
-import { ref, reactive, computed } from 'vue';
-import { TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue';
-import { useDateFormat } from '@vueuse/shared';
-
 const props = defineProps({
   plan: Object,
 });
-
-
 
 const listQuotePlansMembers = computed(() => {
   return props.plan.listQuotePlansMembers.map((item, index) => {
     return { ...item, index };
   });
 });
-
-
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
@@ -225,10 +217,10 @@ const tabs = ref([
         <TabPanel>
           <div class="p-4">
             <table cellpadding="3" cellspacing="3" class="table-auto">
-              
               <tbody>
                 <tr
-                  v-for="feature in props.plan.listQuotePlanBenefitsPolicyDetails"
+                  v-for="feature in props.plan
+                    .listQuotePlanBenefitsPolicyDetails"
                   :key="feature.id"
                 >
                   <td class="px-4 py-2">

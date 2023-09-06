@@ -105,7 +105,7 @@ class CentralService
                 }
 
                 $response = in_array(ucfirst($lob), newUi()) ?
-                    (method_exists($repository, 'fetchCreateDuplicate') ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
+                    ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
                     Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
 
                 if (isset($response->message) && str_contains($response->message, 'Error')) {
@@ -136,7 +136,7 @@ class CentralService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht];
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
 
         if (str_starts_with($leadsIds, ',')) {

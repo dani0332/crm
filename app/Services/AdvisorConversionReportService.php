@@ -47,6 +47,8 @@ class AdvisorConversionReportService extends BaseService
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -70,6 +72,7 @@ class AdvisorConversionReportService extends BaseService
             'teamsFilter' => $request->teams,
             'advisorsFilter' => $request->advisors,
             'quoteBatchId' => $request->quote_batch_id,
+            'isCommercial' => $request->isCommercial,
             'page' => $request->page,
         ];
 
@@ -306,6 +309,14 @@ class AdvisorConversionReportService extends BaseService
                 $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
                     ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
             })->where('source', '=', LeadSourceEnum::IMCRM);
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
+            $query->where('car_make.is_commercial', '=', true)
+                ->where('car_model.is_commercial', '=', true);
+        } else {
+            $query->where('car_make.is_commercial', '=', false)
+                ->where('car_model.is_commercial', '=', false);
         }
 
         return $query;

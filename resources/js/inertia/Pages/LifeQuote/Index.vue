@@ -58,7 +58,7 @@ const loader = reactive({
 });
 
 const tableHeader = [
-  { text: 'CDB ID', value: 'code' },
+  { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status' },
@@ -69,7 +69,7 @@ const tableHeader = [
   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'PREMIUM', value: 'premium' },
+  { text: 'PRICE', value: 'premium' },
 ];
 
 const advisorOptions = computed(() => {
@@ -89,8 +89,7 @@ function filterQuotes(isValid) {
       delete filters[key];
     }
   }
-
-  router.visit('/quotes/life', {
+  router.visit(route('life-quotes-list'), {
     method: 'get',
     data: {
       ...filters,
@@ -108,7 +107,7 @@ function filterQuotes(isValid) {
 }
 
 function resetFilters() {
-  router.visit('/quotes/life', {
+  router.visit(route('life-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -169,7 +168,6 @@ function onAssignLead(isValid) {
   }
 }
 
-
 const canExport = ref(false);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
@@ -187,7 +185,11 @@ const onExport = () => {
 watch(
   () => filters,
   () => {
-    if (filters.created_at_start && filters.created_at_end && can(permissionsEnum.DATA_EXTRACTION)) {
+    if (
+      filters.created_at_start &&
+      filters.created_at_end &&
+      can(permissionsEnum.DATA_EXTRACTION)
+    ) {
       canExport.value = true;
     } else {
       canExport.value = false;
@@ -210,7 +212,7 @@ onMounted(() => {
         <Link href="/quotes/life/cards">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
-        <Link href="/quotes/life/create">
+        <Link :href="route('life-quotes-create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -218,80 +220,93 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-        <x-input
-          v-model="filters.code"
-          type="search"
-          name="code"
-          label="CDB ID"
-          class="w-full"
-          placeholder="Search by CDB ID"
-        />
-        <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <x-input
-          v-model="filters.email"
-          type="search"
-          name="email"
-          label="Email"
-          class="w-full"
-          placeholder="Search by Email"
-        />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          label="Mobile Number"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-        />
-        <DatePicker
-          v-model="filters.created_at_start"
-          name="created_at_start"
-          label="Created Date Start"
-        />
-        <DatePicker
-          v-model="filters.created_at_end"
-          name="created_at_end"
-          label="Created Date End"
-        />
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status_id"
-          placeholder="Search by Lead Status"
-          :options="
-            quoteStatuses.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-        />
-        <ComboBox
-          v-if="!hasRole(rolesEnum.TravelAdvisor)"
-          v-model="filters.advisor_id"
-          label="Advisor"
-          placeholder="Search by Advisor"
-          :options="advisorOptions"
-        />
-
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
+        <x-field label="First Name">
+          <x-input
+            v-model="filters.first_name"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Search by First Name"
+          />
+        </x-field>
+        <x-field label="Last Name">
+          <x-input
+            v-model="filters.last_name"
+            type="search"
+            name="last_name"
+            class="w-full"
+            placeholder="Search by Last Name"
+          />
+        </x-field>
+        <x-field label="Email">
+          <x-input
+            v-model="filters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+          />
+        </x-field>
+        <x-field label="Mobile Number">
+          <x-input
+            v-model="filters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+          />
+        </x-field>
+        <x-field label="Created Date Start">
+          <DatePicker
+            v-model="filters.created_at_start"
+            name="created_at_start"
+          />
+        </x-field>
+        <x-field label="Created Date End">
+          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
+        </x-field>
+        <x-field label="Lead Status">
+          <ComboBox
+            v-model="filters.quote_status_id"
+            name="quote_status_id"
+            placeholder="Search by Lead Status"
+            :options="
+              quoteStatuses.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="Advisor">
+          <ComboBox
+            v-if="!hasRole(rolesEnum.TravelAdvisor)"
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
+          />
+        </x-field>
         <x-select
           v-model="filters.is_renewal"
-          label="Renewal"
           placeholder="Renewal"
+          label="Renewal"
           :options="[
             { value: 'Yes', label: 'Yes' },
             { value: 'No', label: 'No' },
@@ -375,7 +390,7 @@ onMounted(() => {
     >
       <template #item-code="{ code, uuid }">
         <Link
-          :href="`/quotes/life/${uuid}`"
+          :href="route('life-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
@@ -390,6 +405,10 @@ onMounted(() => {
       <template #item-nationality="{ nationality }">
         {{ nationality?.code }}
       </template>
+      <template #item-lost_reason="{ life_quote_request_detail }">
+        {{ life_quote_request_detail?.lost_reason?.text }}
+      </template>
+
       <!-- <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
           <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">

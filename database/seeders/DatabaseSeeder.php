@@ -18,7 +18,15 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
-            InsurerQuoteTypeMappingSeeder::class
+            CommercialKeywordsSeeder::class,
+            RuleTypeSeeder::class,
+            CommercialMakeModelKeywordsPermissionsSeeder::class,
+            FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
+            AddPersonalLobsProducts::class,
+            // PetBikeMigrationSeeder::class
+            InsurerQuoteTypeMappingSeeder::class,
+            addTeamAllocationThresholdViewPermission::class,
+            CreateAndAssignSubTeamsToAdvisors::class,
         ]);
     }
 }

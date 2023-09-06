@@ -412,17 +412,15 @@ class CarQuoteService extends BaseService
         }
         // Car Advisor
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
-                $access['carAdvisorCanEdit'] = true;
-            }
             if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
                 $access['carAdvisorCanEditPaymentCancelledRefund'] = true;
             }
         }
-        // Car Manager
-        if (auth()->user()->hasRole(RolesEnum::CarManager)) {
-            if (! empty($record->payment_status_id) && in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED])) {
+
+        if (auth()->user()->hasAnyRole([RolesEnum::CarManager, RolesEnum::CarAdvisor, RolesEnum::LeadPool])) {
+            if ((in_array($record->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::PENDING, PaymentStatusEnum::FAILED, PaymentStatusEnum::DECLINED, PaymentStatusEnum::DRAFT, PaymentStatusEnum::CANCELLED, PaymentStatusEnum::REFUNDED]) || $record->payment_status_id == '' || $record->payment_status_id == null)) {
                 $access['carManagerCanEdit'] = true;
+                $access['carAdvisorCanEdit'] = true;
             }
         }
 
@@ -602,7 +600,7 @@ class CarQuoteService extends BaseService
                 $title = 'Claim History';
                 break;
             case 'code':
-                $title = 'CDB ID';
+                $title = 'Ref-ID';
                 break;
             case 'advisor_id':
                 $title = 'Advisor';
@@ -665,7 +663,7 @@ class CarQuoteService extends BaseService
                 $title = 'Previous Policy Expiry Date';
                 break;
             case 'previous_quote_policy_premium':
-                $title = 'Previous Policy Premium';
+                $title = 'Previous Policy Price';
                 break;
             case 'back_home_license_held_for_id':
                 $title = 'Home country driving license held for';
@@ -674,7 +672,7 @@ class CarQuoteService extends BaseService
                 $title = 'Can you provide no-claims letter from your previous insurers?';
                 break;
             case 'parent_duplicate_quote_id':
-                $title = 'Parent CDB ID';
+                $title = 'Parent Ref-ID';
                 break;
             case 'quote_link':
                 $title = 'Quote Link';
@@ -774,7 +772,10 @@ class CarQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['next_followup_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
-            if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
+            if (
+                in_array('created_at', $searchProperties)
+                && isset($request->created_at) && $request->created_at != ''
+                && (empty($request->email) && empty($request->code))) {
                 $dateFrom = $this->parseDate($request['created_at'], true);
                 $dateTo = $this->parseDate($request['created_at_end'], false);
                 $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
@@ -1482,12 +1483,14 @@ class CarQuoteService extends BaseService
      *
      * @return array|string[]
      */
-    public function exportPlansPdf($quoteType, $data)
+    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
     {
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
-        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if ($quotePlans == null) {
+            $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        }
 
         if (! isset($quotePlans->quotes->plans)) {
             return ['error' => 'Quote plans not available'];

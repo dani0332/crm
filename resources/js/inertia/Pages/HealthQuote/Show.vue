@@ -38,6 +38,8 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  embeddedProducts: Array,
+  healthPlanTypes: Array,
 });
 
 const page = usePage();
@@ -58,6 +60,10 @@ const fixedValue = number => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const checkPlanType = id => {
+  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
 const modals = reactive({
@@ -159,7 +165,7 @@ const memberCategoryText = memberCategoryId =>
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
   { value: 'EBP', label: 'EBP' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
@@ -469,7 +475,7 @@ const plansTable = reactive({
       value: 'eligibilityName',
     },
     {
-      text: 'Base Premium',
+      text: 'Base Price',
       value: 'actualPremium',
     },
     {
@@ -481,7 +487,7 @@ const plansTable = reactive({
       value: 'policyFee',
     },
     {
-      text: 'Total Indicative Premium (with VAT)',
+      text: 'Total Indicative Price (with VAT)',
       value: 'total',
     },
     {
@@ -607,24 +613,19 @@ const planFilters = reactive({
   manual_plan: null,
   current_online: null,
 });
-
 const planFiltersCount = ref(0);
-
 const options = reactive({
   network: [],
   loading: false,
 });
-
 watch(
   () => planFilters?.insurer,
   value => {
     if (value) {
       options.loading = true;
-      console.log(planFilters.insurer);
       const ids = planFilters.insurer.map(item => {
         return item;
       });
-
       let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
       axios
         .get(url)
@@ -644,20 +645,14 @@ watch(
     }
   },
 );
-
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort((a, b) => {
-    if (a.providerName < b.providerName) {
-      return -1;
-    }
-  }),
+  page.props.listQuotePlans.sort(
+    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
+  ),
 );
-
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
-
   planFiltersCount.value = Object.keys(filters).length;
-
   listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
     let isManualPlan = planFilters.manual_plan;
     let isCurrentlyOnline = planFilters.current_online;
@@ -666,12 +661,10 @@ const onPlanFiltersSubmit = () => {
       planFilters.insurer?.map(item => {
         return item;
       }) || [];
-
     let manualMatch = false;
     let insurerMatch = false;
     let networkMatch = false;
     let onlineMatch = false;
-
     if (isManualPlan != null) {
       manualMatch = plan.isManualPlan == isManualPlan;
     } else {
@@ -682,7 +675,6 @@ const onPlanFiltersSubmit = () => {
     } else {
       onlineMatch = true;
     }
-
     if (insurerIds?.length > 0) {
       insurerMatch = insurerIds.includes(plan.providerId);
     } else {
@@ -693,14 +685,11 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-
     return manualMatch && insurerMatch && networkMatch && onlineMatch;
   });
-
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
 };
-
 const onPlanFiltersReset = () => {
   planFilters.insurer = [];
   planFilters.network = [];
@@ -711,7 +700,6 @@ const onPlanFiltersReset = () => {
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
 };
-
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -732,10 +720,6 @@ const quoteDocumentsTable = reactive({
     {
       text: 'Created By',
       value: 'created_by_name',
-    },
-    {
-      text: 'Action',
-      value: 'action',
     },
   ],
 });
@@ -1198,8 +1182,17 @@ onMounted(() => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CDB ID</dt>
-            <dd>{{ quote.code }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
@@ -1222,8 +1215,17 @@ onMounted(() => {
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT CDB ID</dt>
-            <dd>{{ quote.parent_duplicate_quote_id }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">IS ECOMMERCE</dt>
@@ -1325,7 +1327,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
+            <dd>{{ checkPlanType(quoteRequest.health_plan_type_id) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -1356,7 +1358,7 @@ onMounted(() => {
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PREMIUM</dt>
+            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1770,16 +1772,6 @@ onMounted(() => {
             Download PDF
           </x-button>
 
-          <!-- hide create quote button for rm deployment -->
-          <x-button
-            size="sm"
-            color="primary"
-            v-show="false"
-            @click.prevent="modals.createPlan = true"
-          >
-            Create Quote
-          </x-button>
-
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1807,6 +1799,13 @@ onMounted(() => {
             </x-button>
             <template #content> {{ planFiltersCount }} </template>
           </x-badge>
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="modals.createPlan = true"
+          >
+            Add Plan
+          </x-button>
         </div>
       </div>
       <DataTable
@@ -1887,10 +1886,12 @@ onMounted(() => {
         <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
       </x-modal>
 
-      <x-modal v-model="modals.createPlan" size="lg" show-close backdrop>
+      <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
+          :members="membersDetail"
+          :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
         />
@@ -1916,7 +1917,7 @@ onMounted(() => {
                 : 'Network'
             "
             :options="options.network"
-            :disabled="options.network.length == 0"
+            :disabled="planFilters.insurer?.length == 0"
             select-all
             deselect-all
           />
@@ -1982,7 +1983,13 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Documents
@@ -2066,7 +2073,7 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
-    </div> -->
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">

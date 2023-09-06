@@ -1,5 +1,4 @@
 <script setup>
-
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -21,7 +20,11 @@ const onLoadMore = id => {
   };
   axios
     .post(
-      `/quotes/records?page=${quotes.pages[id]}&modelType=Life&status=${id}`,
+      route('loadMoreRecords', {
+        page: quotes.pages[id],
+        modelType: 'Life',
+        status: id,
+      }),
     )
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
@@ -50,7 +53,13 @@ const onSearch = id => {
     quotes.queries[id] === null
   ) {
     axios
-      .post(`/quotes/records?page=1&modelType=Life&status=${id}`)
+      .post(
+        route('loadMoreRecords', {
+          page: quotes.pages[id],
+          modelType: 'Life',
+          status: id,
+        }),
+      )
       .then(({ data }) => {
         quotes.data = quotes.data.map(quote => {
           if (quote.id === id) {
@@ -69,7 +78,11 @@ const onSearch = id => {
   }
   axios
     .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Life`,
+      route('searchLead', {
+        term: quotes.queries[id],
+        modelType: 'Life',
+        status: id,
+      }),
     )
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
@@ -98,11 +111,11 @@ const onSearch = id => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Life List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/life">
+        <Link :href="route('life-quotes-list')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/quotes/life/create">
+        <Link :href="route('life-quotes-create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -167,7 +180,7 @@ const onSearch = id => {
               company_name,
             } in quote.data.leads_list.data"
             :key="id"
-            :href="`/quotes/Life/${uuid}`"
+            :href="route('life-quotes-show', uuid)"
             target="_blank"
             title="View Lead"
             class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
