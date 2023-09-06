@@ -30,7 +30,7 @@ let availableFilters = {
   previous_quote_policy_number: '',
   is_ecommerce: '',
   quote_status_id: '',
-    advisor_id: [],
+  advisor_id: [],
   page: 1,
 };
 const canExport = ref(false);
@@ -39,10 +39,10 @@ const filters = reactive(availableFilters);
 const hasRole = role => useHasRole(role);
 
 const advisorOptions = computed(() => {
-    return page.props.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
-    }));
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
 });
 function onSubmit(isValid) {
   if (isValid) {
@@ -90,9 +90,9 @@ function setQueryStringFilters() {
 
 onMounted(() => {
   setQueryStringFilters();
-    if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
-        permissionAssignLeads.value = true;
-    }
+  if (hasRole(rolesEnum.BikeManager) || hasRole(rolesEnum.Admin)) {
+    permissionAssignLeads.value = true;
+  }
 });
 
 const tableHeader = [
@@ -116,19 +116,12 @@ const permissionsEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
 const advisorOptionsFilter = computed(() => {
-    return page.props.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.roles[0].name
-            ? advisor.name + ' - ' + advisor.roles[0]?.name
-            : advisor.name,
-    }));
-});
-
-const advisorOptions = computed(() => {
-    return page.props.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
-    }));
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.roles[0].name
+      ? advisor.name + ' - ' + advisor.roles[0]?.name
+      : advisor.name,
+  }));
 });
 
 const quotesSelected = ref([]),
@@ -137,7 +130,7 @@ const quotesSelected = ref([]),
   isDisabled = ref(false);
 
 const onLeadAssigned = () => {
-    quotesSelected.value = [];
+  quotesSelected.value = [];
 };
 
 const onDataExport = () => {
@@ -157,7 +150,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
 </script>
 
 <template>
@@ -180,21 +172,23 @@ watch(
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div>
+        <div>
           <x-tooltip position="bottom">
-              <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                  Ref-ID
-              </label>
-              <template #tooltip> Reference ID </template>
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
           </x-tooltip>
           <x-input
-              v-model="filters.code"
-              type="search"
-              name="code"
-              class="w-full"
-              placeholder="Search by Ref-ID"
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
           />
-      </div>
+        </div>
         <x-input
           v-model="filters.first_name"
           type="search"
@@ -240,37 +234,37 @@ watch(
           class="w-full"
         />
 
-      <ComboBox
+        <ComboBox
           v-model="filters.quote_status_id"
           label="Lead Status"
           name="quote_status"
           placeholder="Search by Lead Status"
           :options="
-        quoteStatuses.map(item => ({
-          value: item.id,
-          label: item.text,
-        }))
-      "
-      />
+            quoteStatuses.map(item => ({
+              value: item.id,
+              label: item.text,
+            }))
+          "
+        />
 
-      <ComboBox
+        <ComboBox
           v-model="filters.advisor_id"
           label="Advisor"
           placeholder="Search by Advisor"
           :options="advisorOptionsFilter"
-      />
+        />
 
-          <x-select
-              v-model="filters.is_ecommerce"
-              label="Is Ecommerce"
-              placeholder="Search by Ecommerce"
-              :options="[
+        <x-select
+          v-model="filters.is_ecommerce"
+          label="Is Ecommerce"
+          placeholder="Search by Ecommerce"
+          :options="[
             { value: '', label: 'All' },
             { value: 1, label: 'Yes' },
             { value: 0, label: 'No' },
           ]"
-              class="w-full"
-          />
+          class="w-full"
+        />
 
         <x-input
           v-model="filters.renewal_batch"
@@ -294,37 +288,40 @@ watch(
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="onReset">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0 && permissionAssignLeads" class="mb-4">
+      <div
+        v-if="quotesSelected.length > 0 && permissionAssignLeads"
+        class="mb-4"
+      >
         <LeadAssignment
           :selected="quotesSelected.map(e => e.id)"
           :advisors="advisorOptions"
