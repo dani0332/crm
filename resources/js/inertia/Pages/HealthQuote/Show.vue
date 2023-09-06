@@ -2,7 +2,6 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import PaymentTable from './Partials/PaymentTable.vue';
 import axios from 'axios';
 
 defineProps({

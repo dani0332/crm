@@ -126,7 +126,7 @@ class CycleQuoteRepository extends BaseRepository
                 'updatedBy',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }
+                },
             ])->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 

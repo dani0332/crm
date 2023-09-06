@@ -1,6 +1,4 @@
 <script setup>
-import { useCan } from '../../../Composables/can';
-
 const notification = useNotifications('toast');
 const page = usePage();
 
@@ -34,7 +32,8 @@ const rules = {
 
 const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
-  { text: 'Payment Status', value: 'payment_status.code' },
+  { text: 'Payment Status', value: 'payment_status.text' },
+  { text: 'Provider Name', value: 'insurance_provider.text' },
   { text: 'Plan Name', value: '' },
   { text: 'Authorize Amount', value: 'captured_amount', sortable: true },
   { text: 'Status Change Date', value: 'payment_status_log.created_at' },

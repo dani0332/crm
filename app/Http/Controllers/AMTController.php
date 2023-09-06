@@ -8,7 +8,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\GenericModel;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
@@ -274,10 +273,10 @@ class AMTController extends Controller
             $assignedUserName = $assignedUser->name;
         }
         $model = $this->genericModel;
-        $payments =  $record->payments;
-        $mainPayment =  $record->payments()->where('code','=', $record->code)->first();
+        $payments = $record->payments;
+        $mainPayment = $record->payments()->where('code', '=', $record->code)->first();
         $paymentMethods = $this->lookupService->getPaymentMethods();
-        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Group_Medical);
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::GroupMedical);
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')

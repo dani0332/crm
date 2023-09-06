@@ -109,7 +109,7 @@ class BikeQuoteRepository extends BaseRepository
                         'personalPlan',
                         'paymentMethod',
                         'paymentStatusLogs',
-                        'insuranceProvider'
+                        'insuranceProvider',
                     ]);
                 },
                 'createdBy',
@@ -117,7 +117,7 @@ class BikeQuoteRepository extends BaseRepository
                 'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }
+                },
             ])->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);

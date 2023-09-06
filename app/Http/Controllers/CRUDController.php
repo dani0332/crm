@@ -221,7 +221,7 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
-        $quote_status = $dropdownSource['quote_status_id'];
+            $quote_status = $dropdownSource['quote_status_id'];
 
             return inertia('HomeQuote/Index', [
                 'quotes' => $gridData,
@@ -543,6 +543,40 @@ class CRUDController extends Controller
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
 
+            $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+
+            $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
+
+            $payments->each(function ($payment) {
+                $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
+                $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
+                $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
+                $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
+                    && ! auth()->user()->hasRole(RolesEnum::PA);
+
+                $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
+            });
+
+            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+
+            $filteredInsuranceProviders =[];
+            if(!empty($insuranceProviders)){
+
+                $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->id,
+                        'label' => $paymentMethod->text,
+                    ];
+                })->sortBy('label')->values();
+            }
+
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
@@ -553,8 +587,19 @@ class CRUDController extends Controller
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
                 'lostReasons' => $lostReasons,
+                'payments' => $payments,
+                'quoteRequest' => $paymentEntityModel,
+                'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+                'paymentMethods' => $filteredPaymentMethods,
+                'insuranceProviders' => $filteredInsuranceProviders,
                 'permissions' => [
                     'pa' => auth()->user()->hasRole(RolesEnum::PA),
+                    'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
+                    'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
+                    'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                    'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+                    'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
+
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
@@ -602,7 +647,7 @@ class CRUDController extends Controller
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
 
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
-            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod']);
+            $payments->load(['paymentStatus', 'healthPlan.insuranceProvider', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
             $paymentEntityModel->load(['plan.insuranceProvider']);
 
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Health);
@@ -626,12 +671,15 @@ class CRUDController extends Controller
                 ];
             })->values();
 
-            $insuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->id,
-                    'label' => $paymentMethod->text,
-                ];
-            })->sortBy('label')->values();
+            if(!empty( $insuranceProviders )){
+
+                $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->id,
+                        'label' => $paymentMethod->text,
+                    ];
+                })->sortBy('label')->values();
+            }
 
             $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                 return [
@@ -664,7 +712,6 @@ class CRUDController extends Controller
                 'domainPath' => $domainPath,
                 'activities' => $activities,
                 'customerAdditionalContacts' => $customerAdditionalContacts,
-                'insuranceProviders' => $insuranceProviders,
                 'insuranceProviders' => $insuranceProviders,
                 'lostReasons' => $lostReasons,
                 'permissions' => [

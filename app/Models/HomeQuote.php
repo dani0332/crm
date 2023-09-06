@@ -37,10 +37,6 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
     }
-    public function payments()
-    {
-        return $this->morphMany(Payment::class, 'paymentable');
-    }
     
     public function accommodationType()
     {
@@ -55,5 +51,10 @@ class HomeQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+    }
+
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
     }
 }

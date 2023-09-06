@@ -31,6 +31,12 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
   embeddedProducts: Array,
 });
 
@@ -1579,6 +1585,17 @@ onMounted(() => {
         </template>
       </x-modal>
     </div>
+
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
