@@ -22,11 +22,11 @@ const options = {
 Pusher.logToConsole = true;
 
 const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe('public:'+page.props.appEnv + '-activity.user');
+const channel = pusher.subscribe('public.'+page.props.appEnv + '-activity.user');
 
 const listen = () => {
   console.log('listening');
-  channel.bind('public:'+page.props.appEnv + '-user.status.changed', function (e) {
+  channel.bind('public.'+page.props.appEnv + '-user.status.changed', function (e) {
     console.log(e, 'saad');
     if (e?.userId == page.props.auth.user.id) {
       currentStatus.value = e.status;
