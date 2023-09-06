@@ -159,15 +159,15 @@ class BusinessQuoteController extends Controller
         })->values();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
-        $filteredInsuranceProviders =[];
-        if(!empty( $insuranceProviders)){
-            
+        $filteredInsuranceProviders = [];
+        if (! empty($insuranceProviders)) {
+
             $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
-            return [
-                'value' => $paymentMethod->id,
-                'label' => $paymentMethod->text,
-            ];
-        })->sortBy('label')->values();
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
         }
         $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 

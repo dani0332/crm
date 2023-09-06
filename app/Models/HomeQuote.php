@@ -37,7 +37,7 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
     }
-    
+
     public function accommodationType()
     {
         return $this->belongsTo(HomeAccomodationType::class, 'ilivein_accommodation_type_id');

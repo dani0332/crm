@@ -14,8 +14,8 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
-use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -106,8 +106,8 @@ class TravelController extends Controller
         })->values();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
-        $filteredInsuranceProviders =[];
-        if(!empty( $insuranceProviders)){
+        $filteredInsuranceProviders = [];
+        if (! empty($insuranceProviders)) {
 
             $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                 return [

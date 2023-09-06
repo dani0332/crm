@@ -503,7 +503,7 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
-                'paymentEntityModel', 'payments', 'mainPayment','paymentMethods', 'insuranceProviders','isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'embeddedProducts',
             ]));
         }
@@ -566,8 +566,8 @@ class CRUDController extends Controller
                 ];
             })->values();
 
-            $filteredInsuranceProviders =[];
-            if(!empty($insuranceProviders)){
+            $filteredInsuranceProviders = [];
+            if (! empty($insuranceProviders)) {
 
                 $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                     return [
@@ -671,7 +671,7 @@ class CRUDController extends Controller
                 ];
             })->values();
 
-            if(!empty( $insuranceProviders )){
+            if (! empty($insuranceProviders)) {
 
                 $insuranceProviders = $insuranceProviders?->map(function ($paymentMethod) {
                     return [
