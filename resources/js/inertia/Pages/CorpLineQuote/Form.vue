@@ -5,6 +5,8 @@ const props = defineProps({
   model: String,
 });
 
+const isEdit = computed(() => (props.quote.uuid ? true : false));
+
 const quoteForm = useForm({
   modelType: '"Business"',
   gender: '',
@@ -53,18 +55,37 @@ const genderOptions = [
 ];
 
 function onSubmit(isValid) {
-  if (isValid) {
-    quoteForm.post(route('business.store'));
-  }
+  if (!isValid) return;
+
+  const method = isEdit.value ? 'put' : 'post';
+  const url = isEdit.value
+    ? route('business.update', props.quote.uuid)
+    : route('business.store');
+
+  const options = {
+    onError: errors => {
+      quoteForm.setError(errors);
+    },
+    onStart: () => {
+      quoteForm.clearErrors();
+    },
+  };
+
+  quoteForm.submit(method, url, options);
 }
 </script>
 
 <template>
   <div>
-    <Head title="Create Business Quote" />
+    <Head :title="isEdit ? 'Update' : 'Create' + ' Business Quote'" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Create Business Quote Lead</h2>
+      <h2 class="text-xl font-semibold">
+        {{ isEdit ? 'Update' : 'Create' }} Business Quote Lead
+      </h2>
       <div class="space-x-4">
+        <Link v-if="isEdit" :href="route('business.show', props.quote.uuid)">
+          <x-button size="sm" tag="div"> View </x-button>
+        </Link>
         <Link :href="route('business.index')">
           <x-button size="sm" color="#ff5e00" tag="div"> Quotes List </x-button>
         </Link>
@@ -97,6 +118,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.email"
             type="email"
+            :disabled="isEdit"
             :rules="[isRequired, isEmail]"
             class="w-full"
             :error="quoteForm.errors.email"
@@ -107,6 +129,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
+            :disabled="isEdit"
             :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
@@ -180,7 +203,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Create
+          {{ isEdit ? 'Update' : 'Create' }}
         </x-button>
       </div>
     </x-form>

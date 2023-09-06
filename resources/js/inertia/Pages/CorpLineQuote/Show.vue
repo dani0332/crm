@@ -376,7 +376,7 @@ const onAssignLead = () => {
         </Link>
 
         <Link
-          v-if="!permissions.canEditQuote == true"
+          v-if="permissions.canEditQuote == true"
           :href="route('business.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
