@@ -2388,5 +2388,6 @@ const confirmSendEmail = () => {
 
 	</div>
 	<AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
+	<ApiLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
 
 </template>

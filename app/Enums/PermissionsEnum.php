@@ -215,4 +215,5 @@ final class PermissionsEnum extends Enum
     public const UtmLeadsSalesReport = 'utm-leads-sales-report';
     public const TeamThresholdView = 'team-allocation-threshold-view';
     public const ViewTeamsFilters = 'view-teams-filters';
+    public const API_LOG_VIEW = 'api-logs-view';
 }
