@@ -395,7 +395,7 @@ const leadDuplicateForm = useForm({
   entityId: page.props.record.id,
   entityCode: page.props.record.code,
   entityUId: page.props.record.uid,
-  lob_team: [],
+  lob_team: null,
   lob_team_sub_selection: null,
 });
 
@@ -1221,31 +1221,32 @@ const confirmSendEmail = () => {
 		<template #header> Duplicate Lead </template>
 			<x-form @submit="onCreateDuplicate" :auto-focus="false">
 				<div class="grid gap-4">
-				<x-select
-					v-model="leadDuplicateForm.lob_team"
-					label="LOBs"
-					:options="
-					allowedDuplicateLOB.map(lob => ({
-						value: lob,
-						label: lob,
-					}))
-					"
-					:rules="[isRequired]"
-					placeholder="Select LOB For Duplication"
-					class="w-full"
-					multiple
-				/>
-				<x-select
-					v-model="leadDuplicateForm.lob_team_sub_selection"
-					label="Reason"
-					:rules="[rules.isRequired]"
-					class="w-full"
-					:options="[
-					{ value: 'new_enquiry', label: 'New enquiry' },
-					{ value: 'record_only', label: 'Record purposes only' },
-					]"
-				/>
-
+				<x-field label="LOBs" required>
+					<x-select
+						v-model="leadDuplicateForm.lob_team"
+						:options="
+						allowedDuplicateLOB.map(lob => ({
+							value: lob,
+							label: lob,
+						}))
+						"
+						:rules="[rules.isRequired]"
+						placeholder="Select LOB For Duplication"
+						class="w-full"
+						multiple
+					/>
+				</x-field>
+				<x-field label="Reason" required>
+					<x-select
+						v-model="leadDuplicateForm.lob_team_sub_selection"
+						:rules="[rules.isRequired]"
+						class="w-full"
+						:options="[
+						{ value: 'new_enquiry', label: 'New enquiry' },
+						{ value: 'record_only', label: 'Record purposes only' },
+						]"
+					/>
+				</x-field>
 				<x-button
 					color="orange"
 					type="submit"
@@ -2147,37 +2148,39 @@ const confirmSendEmail = () => {
 
 				<x-form @submit="onActivitySubmit" :auto-focus="false">
 				<div class="grid gap-4">
+					<x-field label="Title" required>
 					<x-input
 					v-model="activityForm.title"
-					label="Title"
 					:rules="[isRequired]"
 					class="w-full"
 					/>
-
+					</x-field>
+					<x-field label="Description" required>
 					<x-textarea
 					v-model="activityForm.description"
-					label="Description"
 					:adjust-to-text="false"
 					class="w-full"
+					:rules="[isRequired]"
 					/>
-
+					</x-field>
+					<x-field label="Assignee" required>
 					<x-select
 					v-model="activityForm.assignee_id"
-					label="Assignee"
 					:options="advisorOptions"
 					:rules="[isRequired]"
 					placeholder="Select Assignee"
 					class="w-full"
 					/>
-
+					</x-field>
+					<x-field label="Due Date" required>
 					<date-picker
 					v-model="activityForm.due_date"
-					label="Due Date"
 					:rules="[isRequired]"
 					class="w-full"
 					withTime
 					:timezone="'UTC'"
 					/>
+					</x-field>
 				</div>
 
 				<div class="text-right space-x-4 mt-12">
@@ -2311,9 +2314,9 @@ const confirmSendEmail = () => {
 
 				<x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
 					<div class="grid gap-4">
+						<x-field label="Type" required>
 						<x-select
 						v-model="additionalContact.additional_contact_type"
-						label="Type"
 						:options="[
 							{ value: 'email', label: 'Email' },
 							{ value: 'mobile_no', label: 'Mobile Number' },
@@ -2322,10 +2325,10 @@ const confirmSendEmail = () => {
 						placeholder="Select Type"
 						class="w-full"
 						/>
-
+						</x-field>
+						<x-field label="Value" required>
 						<x-input
 						v-model="additionalContact.additional_contact_val"
-						label="Value"
 						:rules="[
 							isRequired,
 							additionalContact.additional_contact_type === 'email'
@@ -2334,6 +2337,7 @@ const confirmSendEmail = () => {
 						]"
 						class="w-full"
 						/>
+						</x-field>
 					</div>
 
 					<div class="text-right space-x-4 mt-12">

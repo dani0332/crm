@@ -25,6 +25,13 @@ const carMakeOptions = computed(() => {
 	}))
 })
 
+const carModelOptions = computed(() => {
+	return props.dropdownSource.car_model_id.map(item => ({
+		value: item.id,
+		label: item.text,
+	}))
+})
+
 const quoteForm = useForm({
 	modelType: '"Car"',
 	model: props.model,
@@ -34,7 +41,7 @@ const quoteForm = useForm({
 	mobile_no: props.quote?.mobile_no || '',
 	dob: props.quote?.dob
 		? props.quote?.dob.split('-').reverse().join('-')
-		: null,
+		:'',
 	cylinder: props.quote?.cylinder || null,
 	uae_license_held_for_id: props.quote?.uae_license_held_for_id || null,
 	nationality_id: props.quote?.nationality_id || null,
@@ -219,11 +226,12 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="UAE LICENCE HELD FOR" required>
-					<ComboBox v-model="quoteForm.uae_license_held_for_id" :single="true" :rules="[isRequired]" :options="dropdownSource.uae_license_held_for_id.map(item => ({
+					<ComboBox v-model="quoteForm.uae_license_held_for_id" :single="true" :options="dropdownSource.uae_license_held_for_id.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full"
+						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR" required>
@@ -238,21 +246,21 @@ const setCarMake = (id) => {
 					<ComboBox 
 						v-model="quoteForm.car_make_id" 
 						:single="true"
-						:rules="[isRequired]" 
 						:options="carMakeOptions"
 						@update:modelValue="getCarModel"
 						class="w-full" 
+						:hasError="isEmptyField"
 					/>
 				</x-field>
 
 				<x-field label="CAR MODEL" required>
-					<ComboBox v-model="quoteForm.car_model_id" :single="true" :rules="[isRequired]" :options="dropdownSource.car_model_id.map(item => ({
-						value: item.id,
-						label: item.text,
-					}))
-						"
+					<ComboBox v-model="quoteForm.car_model_id" 
+					:single="true" 
+					:options="carModelOptions"
+					
 						@update:modelValue="getModelDetails(true)"
-						class="w-full" />
+						class="w-full"
+						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="CYLINDER" required>
@@ -264,11 +272,12 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CAR MODEL YEAR" required>
-					<ComboBox v-model="quoteForm.year_of_manufacture" :single="true" :rules="[isRequired]" :options="dropdownSource.year_of_manufacture.map(item => ({
+					<ComboBox v-model="quoteForm.year_of_manufacture" :single="true" :options="dropdownSource.year_of_manufacture.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full"
+						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
@@ -276,11 +285,12 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="VEHICLE TYPE" required>
-					<ComboBox v-model="quoteForm.vehicle_type_id" :single="true" :rules="[isRequired]" :options="dropdownSource.vehicle_type_id.map(item => ({
+					<ComboBox v-model="quoteForm.vehicle_type_id" :single="true" :options="dropdownSource.vehicle_type_id.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full"
+						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="SEAT CAPACITY" required>
@@ -304,11 +314,12 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CURRENTLY INSURED WITH" required>
-					<ComboBox v-model="quoteForm.currently_insured_with_id" :single="true" :rules="[isRequired]" :options="dropdownSource.currently_insured_with.map(item => ({
+					<ComboBox v-model="quoteForm.currently_insured_with_id" :single="true" :options="dropdownSource.currently_insured_with.map(item => ({
 						value: item.text,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full"
+						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="CLAIM HISTORY" required>
@@ -327,9 +338,9 @@ const setCarMake = (id) => {
 				</x-field>
 			</div>
 			<div class="grid sm:grid-cols-2 gap-4">
-				<x-field label="ADDITIONAL NOTES">
+				<x-field label="ADDITIONAL NOTES" required>
 					<x-textarea v-model="quoteForm.additional_notes" type="textarea" rows="5" class="w-full"
-						:adjust-to-text="false" />
+						:adjust-to-text="false" :rules="[isRequired]"/>
 				</x-field>
 			</div>
 			<x-divider class="my-4" />

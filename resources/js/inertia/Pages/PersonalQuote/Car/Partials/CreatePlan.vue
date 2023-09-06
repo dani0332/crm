@@ -91,95 +91,100 @@ const creatQuotePlan = isValid => {
 };
 
 </script>
-    <template>
-        <x-form @submit="creatQuotePlan" :auto-focus="false">
-			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-                <div class="w-full md:w-1/2">
-                    <div class="flex flex-col gap-4">
-						<x-select
-							v-model="addPlanForm.insurance_provider_id"
-							label="Insurance Provider"
-                            :rules="[isRequired]"
-							:options="insuranceProviderOptions"
-							placeholder="Select Insurance provider"
-							class="w-full"
-                            @update:modelValue="setCarPlans"
-						/>
-					</div>
-                </div>
-                <div class="w-full md:w-1/2">
-                    <div class="flex flex-col gap-4">
-						<x-select
-							v-model="addPlanForm.car_plan_id"
-							label="Plan"
-                            :rules="[isRequired]"
-							:options="insuranceProviderPlanOptions"
-							placeholder="Select plan"
-							class="w-full"
-						/>
-					</div>
-                </div>
-            </div>
-            <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-                <div class="w-full md:w-1/3">
-                    <x-input
-                        v-model="addPlanForm.actual_premium"
-                        label="Premium without vat"
-                        :rules="[isRequired]"
-                        class="w-full"
-                        type="number"
-                        placeholder="Enter Premium without vat"
-                    />
-                </div>
-                <div class="w-full md:w-1/3">
-                    <x-input
-                        v-model="addPlanForm.car_value"
-                        label="Car value"
-                        :rules="[isRequired]"
-                        class="w-full"
-                        type="number"
-                        placeholder="Enter Car value"
-                    />
-                </div>
-                <div class="w-full md:w-1/3">
-                    <x-input
-                        v-model="addPlanForm.excess"
-                        label="Excess"
-                        :rules="[isRequired]"
-                        class="w-full"
-                        type="number"
-                        placeholder="Enter excess"
-                    />
-                </div>
-            </div>
+<template>
+  <x-form @submit="creatQuotePlan" :auto-focus="false">
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/2">
+        <div class="flex flex-col gap-4">
+          <x-field label="Insurance Provider" required>
+          <x-select
+            v-model="addPlanForm.insurance_provider_id"
+            :rules="[isRequired]"
+            :options="insuranceProviderOptions"
+            placeholder="Select Insurance provider"
+            class="w-full"
+            @update:modelValue="setCarPlans"
+          />
+        </x-field>
+        </div>
+      </div>
+      <div class="w-full md:w-1/2">
+        <div class="flex flex-col gap-4">
+          <x-field label="Plan" required>  
+          <x-select
+            v-model="addPlanForm.car_plan_id"
+            :rules="[isRequired]"
+            :options="insuranceProviderPlanOptions"
+            placeholder="Select plan"
+            class="w-full"
+            />
+            </x-field>
+          </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+      <div class="w-full md:w-1/3">
+        <x-field label="Premium without vat" required>  
+        <x-input
+        v-model="addPlanForm.actual_premium"
+        :rules="[isRequired]"
+        class="w-full"
+        type="number"
+        placeholder="Enter Premium without vat"
+        />
+        </x-field>
+      </div>
+      <div class="w-full md:w-1/3">
+        <x-field label="Car value" required>  
+        <x-input
+        v-model="addPlanForm.car_value"
+        :rules="[isRequired]"
+        class="w-full"
+        type="number"
+        placeholder="Enter Car value"
+        />
+        </x-field>
+      </div>
+      <div class="w-full md:w-1/3">
+        <x-field label="Excess" required>  
+        <x-input
+        v-model="addPlanForm.excess"
+        :rules="[isRequired]"
+        class="w-full"
+        type="number"
+        placeholder="Enter excess"
+        />
+        </x-field>
+      </div>
+    </div>
 
-            <div class="text-right space-x-4">
-                <x-button
-                size="sm"
-                color="emerald"
-                :loading="addPlanForm.processing"
-                type="submit"
-                >
-                Add Plan
-                </x-button>
-            </div>
-        </x-form>
-        <div class="flex justify-between items-center mb-4">
-			<h3 class="font-semibold text-primary-800 text-lg">
-				Quoted Plans
-			</h3>
-		</div>
-        <DataTable
-        table-class-name="tablefixed compact"
-        :headers="quotePlansTable.columns"
-        :items="quotePlansTableData || []"
-        show-index
-        border-cell
-        fixed-checkbox
-        hide-rows-per-page
-        hide-footer>
-        <template #item-premiumWithVat="item">
-                        {{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
-                    </template>
-        </DataTable>
+    <div class="text-right space-x-4">
+      <x-button
+      size="sm"
+      color="emerald"
+      :loading="addPlanForm.processing"
+      type="submit"
+      >
+      Add Plan
+      </x-button>
+    </div>
+  </x-form>
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="font-semibold text-primary-800 text-lg">
+    Quoted Plans
+    </h3>
+  </div>
+  <DataTable
+  table-class-name="tablefixed compact"
+  :headers="quotePlansTable.columns"
+  :items="quotePlansTableData || []"
+  show-index
+  border-cell
+  fixed-checkbox
+  hide-rows-per-page
+  hide-footer>
+    <template #item-premiumWithVat="item">
+      {{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
     </template>
+  </DataTable>
+</template>

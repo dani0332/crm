@@ -340,30 +340,31 @@ const providerId = computed(() => {
       </template>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
-          <x-input
-            class="w-full"
-            :rules="[rules.isRequired, rules.amount]"
-            label="Capture Amount*"
-            v-model="paymentMethodsForm.amount"
-          />
-
-          <x-select
-            class="w-full"
-            v-model="paymentMethodsForm.collection_type"
-            :options="collectionTypes"
-            label="Collection Type*"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
-
-          <x-select
-            class="w-full md:col-span-2"
-            v-model="paymentMethodsForm.payment_method"
-            :options="paymentMethods"
-            label="Payment Method*"
-            :rules="[rules.isRequired]"
-          >
-          </x-select>
+          <x-field label="Capture Amount" required>
+            <x-input
+              class="w-full"
+              :rules="[rules.isRequired, rules.amount]"
+              v-model="paymentMethodsForm.amount"
+            />
+          </x-field>
+          <x-field label="Collection Type" required>
+            <x-select
+              class="w-full"
+              v-model="paymentMethodsForm.collection_type"
+              :options="collectionTypes"
+              :rules="[rules.isRequired]"
+            >
+            </x-select>
+          </x-field>
+          <x-field label="Payment Method" required>
+            <x-select
+              class="w-full md:col-span-2"
+              v-model="paymentMethodsForm.payment_method"
+              :options="paymentMethods"
+              :rules="[rules.isRequired]"
+            >
+            </x-select>
+          </x-field>
 
           <p class="text-sm text-gray-500">
             Provider Name:
@@ -374,14 +375,14 @@ const providerId = computed(() => {
             Plan Name :
             <span class="text-primary-800">{{ getPlanName }}</span>
           </p>
-
-          <x-input
-            class="w-full md:col-span-2"
-            label="Payment Reference*"
-            :rules="[rules.isRequired, rules.reference]"
-            v-show="paymentMethodsForm.payment_method != 'CC'"
-            v-model="paymentMethodsForm.payment_reference"
-          />
+          <x-field label="Payment Reference" required>
+            <x-input
+              class="w-full md:col-span-2"
+              :rules="[rules.isRequired, rules.reference]"
+              v-show="paymentMethodsForm.payment_method != 'CC'"
+              v-model="paymentMethodsForm.payment_reference"
+            />
+          </x-field>
 
           <div
             class="w-full md:col-span-2 flex justify-end"
