@@ -64,9 +64,6 @@ class AdvisorDistributionReportService extends BaseService
 
         $query = $this->applyFilters($query, $request->all());
 
-        info("Query for advisor distribution: ". json_encode($query->toSql()));
-        info("Query for advisor distribution: ". json_encode($query->getBindings()));
-
         return $query->paginate(15)
             ->withQueryString();
     }
