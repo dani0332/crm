@@ -148,11 +148,15 @@ class AdvisorDistributionReportService extends BaseService
         }
 
         if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
-            $query->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
+            $query->where(function ($query) {
+                $query->where('car_make.is_commercial', '=', true)
+                    ->orWhere('car_model.is_commercial', '=', true);
+            });
         } else {
-            $query->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+            $query->where(function ($query) {
+                $query->where('car_make.is_commercial', '=', false)
+                    ->orWhere('car_model.is_commercial', '=', false);
+            });
         }
 
         return $query;
