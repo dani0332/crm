@@ -87,6 +87,7 @@ class PetQuoteRepository extends BaseRepository
     {
         $query = $this->byQuoteTypeCode(QuoteTypes::PET)->with([
             'quoteStatus',
+            'quoteDetail',
             'petQuote.accomodationType:id,text',
             'petQuote.possessionType:id,text',
             'petQuote.petAge:id,text',
@@ -98,7 +99,7 @@ class PetQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::PetAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 

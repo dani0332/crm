@@ -60,6 +60,7 @@ class HandleInertiaRequests extends Middleware
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
         ]);
     }
 
@@ -414,7 +415,8 @@ class HandleInertiaRequests extends Middleware
         }
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
-            PermissionsEnum::TeamsList,
+            PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
@@ -441,6 +443,9 @@ class HandleInertiaRequests extends Middleware
                             PermissionsEnum::RULE_CONFIG_LIST,
                             PermissionsEnum::QUAD_CONFIG_LIST,
                             PermissionsEnum::TIER_CONFIG_LIST,
+                            PermissionsEnum::TeamThresholdView,
+                            PermissionsEnum::COMMERCIAL_KEYWORDS,
+                            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
                         ]),
                         'Allocation Config',
                         url('generic/tier'),
@@ -462,6 +467,24 @@ class HandleInertiaRequests extends Middleware
                                 auth()->user()->can(PermissionsEnum::RULE_CONFIG_LIST),
                                 'Rules',
                                 url('generic/rule'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::TeamThresholdView),
+                                'Team Threshold',
+                                url('generic/allocation-threshold'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::COMMERCIAL_KEYWORDS),
+                                'Commerical Keywords',
+                                route('admin.commercial.keywords'),
+                                fn ($s) => $s->attributes(['icon' => 'box'])
+                            )
+                            ->addIf(
+                                auth()->user()->can(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES),
+                                'Configure Commercial Vehicles',
+                                route('admin.configure.commerical.vehicles'),
                                 fn ($s) => $s->attributes(['icon' => 'box'])
                             )
                     );

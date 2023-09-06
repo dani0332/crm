@@ -38,6 +38,8 @@ defineProps({
   paymentMethods: Object,
   sendPolicy: Boolean,
   insuranceProviders: Array,
+  embeddedProducts: Array,
+  healthPlanTypes: Array,
 });
 
 const page = usePage();
@@ -58,6 +60,10 @@ const fixedValue = number => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const checkPlanType = id => {
+  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
 const modals = reactive({
@@ -159,7 +165,7 @@ const memberCategoryText = memberCategoryId =>
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
   { value: 'EBP', label: 'EBP' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
@@ -607,24 +613,19 @@ const planFilters = reactive({
   manual_plan: null,
   current_online: null,
 });
-
 const planFiltersCount = ref(0);
-
 const options = reactive({
   network: [],
   loading: false,
 });
-
 watch(
   () => planFilters?.insurer,
   value => {
     if (value) {
       options.loading = true;
-      console.log(planFilters.insurer);
       const ids = planFilters.insurer.map(item => {
         return item;
       });
-
       let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
       axios
         .get(url)
@@ -644,20 +645,14 @@ watch(
     }
   },
 );
-
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort((a, b) => {
-    if (a.providerName < b.providerName) {
-      return -1;
-    }
-  }),
+  page.props.listQuotePlans.sort(
+    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
+  ),
 );
-
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
-
   planFiltersCount.value = Object.keys(filters).length;
-
   listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
     let isManualPlan = planFilters.manual_plan;
     let isCurrentlyOnline = planFilters.current_online;
@@ -666,12 +661,10 @@ const onPlanFiltersSubmit = () => {
       planFilters.insurer?.map(item => {
         return item;
       }) || [];
-
     let manualMatch = false;
     let insurerMatch = false;
     let networkMatch = false;
     let onlineMatch = false;
-
     if (isManualPlan != null) {
       manualMatch = plan.isManualPlan == isManualPlan;
     } else {
@@ -682,7 +675,6 @@ const onPlanFiltersSubmit = () => {
     } else {
       onlineMatch = true;
     }
-
     if (insurerIds?.length > 0) {
       insurerMatch = insurerIds.includes(plan.providerId);
     } else {
@@ -693,14 +685,11 @@ const onPlanFiltersSubmit = () => {
     } else {
       networkMatch = true;
     }
-
     return manualMatch && insurerMatch && networkMatch && onlineMatch;
   });
-
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
 };
-
 const onPlanFiltersReset = () => {
   planFilters.insurer = [];
   planFilters.network = [];
@@ -711,7 +700,6 @@ const onPlanFiltersReset = () => {
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
 };
-
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -1339,7 +1327,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
+            <dd>{{ checkPlanType(quoteRequest.health_plan_type_id) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -1804,6 +1792,7 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
+
           <x-badge
             size="sm"
             color="error"
@@ -1932,7 +1921,7 @@ onMounted(() => {
                 : 'Network'
             "
             :options="options.network"
-            :disabled="options.network.length == 0"
+            :disabled="planFilters.insurer?.length == 0"
             select-all
             deselect-all
           />
@@ -1997,6 +1986,12 @@ onMounted(() => {
         </div>
       </x-modal>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
