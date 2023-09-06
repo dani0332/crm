@@ -201,11 +201,15 @@ class DashboardController extends Controller
         }
 
         if (isset($request->isCommercial) && $request->isCommercial == 'true') {
-            $records->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
+            $records->where(function ($query) {
+                $query->where('car_make.is_commercial', '=', true)
+                    ->orWhere('car_model.is_commercial', '=', true);
+            });
         } else {
-            $records->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+            $records->where(function ($query) {
+                $query->where('car_make.is_commercial', '=', false)
+                    ->orWhere('car_model.is_commercial', '=', false);
+            });
         }
 
         $labels = [];
@@ -334,11 +338,15 @@ class DashboardController extends Controller
         }
 
         if (isset($request->isCommercial) && $request->isCommercial == 'true') {
-            $records->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
+            $records->where(function ($query) {
+                $query->where('car_make.is_commercial', '=', true)
+                    ->orWhere('car_model.is_commercial', '=', true);
+            });
         } else {
-            $records->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+            $records->where(function ($query) {
+                $query->where('car_make.is_commercial', '=', false)
+                    ->orWhere('car_model.is_commercial', '=', false);
+            });
         }
 
         $labels = [];
