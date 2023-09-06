@@ -23,11 +23,11 @@ class UserStatusChanged implements ShouldBroadcastNow
 
     public function broadcastOn()
     {
-        return new Channel('public:'. config('constants.APP_ENV').'-activity.user');
+        return new Channel('public:'.config('constants.APP_ENV').'-activity.user');
     }
 
     public function broadcastAs()
     {
-        return 'public:'. config('constants.APP_ENV').'-user.status.changed';
+        return 'public:'.config('constants.APP_ENV').'-user.status.changed';
     }
 }

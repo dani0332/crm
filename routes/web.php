@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\EnvEnum;
-use App\Events\UserStatusChanged;
 use App\Enums\quoteTypeCode;
+use App\Events\UserStatusChanged;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -97,7 +97,8 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
 
 Route::get('test-broadcast/{status}', function ($status) {
     event(new UserStatusChanged(17, $status));
-    return "Event has been sent!";
+
+    return 'Event has been sent!';
 });
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
