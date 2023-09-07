@@ -23,6 +23,7 @@ const modals = reactive({
 const selectedLog = ref({});
 const selectLog = (item) => {
     selectedLog.value = item;
+    selectedLog.request = JSON.stringify("ghgh"+selectedLog.request);
   	modals.apiLog = true;
 }
 
@@ -123,7 +124,6 @@ const onLoadAuditLogData = async () => {
     <template #header>
       Insurance Request Response Details: {{ selectedLog.id }}
     </template>
-
     <div>
     <!-- Display field name and value -->
     <div class="row mb-3">
@@ -145,16 +145,16 @@ const onLoadAuditLogData = async () => {
     <div class="row mb-3">
         <div class="col-md-3"><strong>Request:</strong></div>
         <div class="col-md-9">
-            <div style="background-color: #d5edfd; color: white; height: 150px; overflow-y: auto; padding: 10px;">
-                <pre>{{ selectedLog.request }}</pre>
+            <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
+                <pre>{{ JSON.stringify(selectedLog.request, null, 2) }}</pre>
             </div>
         </div>
     </div>
     <div class="row mb-3">
         <div class="col-md-3"><strong>Response:</strong></div>
         <div class="col-md-9">
-            <div style="background-color: #d5edfd; color: white; height: 150px; overflow-y: auto; padding: 10px;">
-                <pre>{{ selectedLog.response }}</pre>
+            <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
+                <pre>{{ JSON.stringify(selectedLog.response, null, 2) }}</pre>
             </div>
         </div>
     </div>
