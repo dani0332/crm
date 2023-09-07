@@ -151,7 +151,7 @@
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/laravel-echo@1.11.2/dist/echo.iife.js"></script>
+
     @php
     $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
@@ -188,26 +188,39 @@
         }
         var pusherAppKey = @json($pusherAppKey);
         var userId = @json($userId);
+            Pusher.logToConsole = true;
         var appName = @json($appName);
-        window.Echo = new Echo({
-            broadcaster: 'pusher',
-            key: pusherAppKey,
-            wsHost: window.location.hostname,
-            encrypted: false,
-            wsPort: 6001,
-            enabledTransports: ['ws', 'wss'],
-            cluster: 'ap1',
-            forceTLS: false,
-            disableStats: false,
-        });
-        var channel = window.Echo.channel('public.'+appName + '.activity.user');
-
-        channel.subscribed((data) =>{
-            console.log('Channel Subscribed !!');
+        var pusher = new Pusher(pusherAppKey, {
+            cluster: 'ap1'
         });
 
-        channel.listen('.user.status.changed',(data) =>{
-                if ($('.car_lead_allocation_table').length > 0) {
+        function changeAvailiblity(data, self)
+        {
+            debugger;
+            $('#online-status-div').hide();
+            $('#offline-status-div').hide();
+            $('#unavailable-status-div').hide();
+            if(userId == data.userId){
+                if(data.status == 1) {
+                    $('#online-status-div').show();
+                }
+                if(data.status == 2)  {
+                    $('#offline-status-div').show();
+                }
+                if(data.status != 1 && data.status != 2 ) {
+                    $('#unavailable-status-div').show();
+                }
+            }
+            var statusText = getStatusText(data.status);
+            $(self).parent().find('.status-text').text(statusText);
+            $(self).parent().find('#is_active').prop('checked', data.status == 1 ? true: false);
+            $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
+        }
+
+        var channel = pusher.subscribe('public.'+appName + '.activity.user');
+        channel.bind('user.status.changed', function(data) {
+            debugger;
+            if ($('.car_lead_allocation_table').length > 0) {
                 $('.car_lead_allocation_table').find("tr")
                     .find("td:first")
                     .each(function () {
@@ -240,27 +253,6 @@
                 }
             }
         });
-        function changeAvailiblity(data, self)
-        {
-            $('#online-status-div').hide();
-            $('#offline-status-div').hide();
-            $('#unavailable-status-div').hide();
-            if(userId == data.userId){
-                if(data.status == 1) {
-                    $('#online-status-div').show();
-                }
-                if(data.status == 2)  {
-                    $('#offline-status-div').show();
-                }
-                if(data.status != 1 && data.status != 2 ) {
-                    $('#unavailable-status-div').show();
-                }
-            }
-            var statusText = getStatusText(data.status);
-            $(self).parent().find('.status-text').text(statusText);
-            $(self).parent().find('#is_active').prop('checked', data.status == 1 ? true: false);
-            $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
-        }
 
         var config = {
             routes: {
