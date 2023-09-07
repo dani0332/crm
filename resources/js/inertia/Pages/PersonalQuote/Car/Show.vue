@@ -58,6 +58,7 @@ defineProps({
 	advisor: Array,
 	carMakeText:String,
 	carModelText:String,
+	embeddedProducts: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1728,6 +1729,12 @@ const confirmSendEmail = () => {
 				/>
 			</x-modal>
 		</div> 
+
+		<EmbeddedProducts
+      	:data="embeddedProducts"
+      	:link="record.uuid"
+      	:code="record.code"
+    	/>
 
 		<div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
 			<div>
