@@ -70,7 +70,10 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=health&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'health',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -99,7 +102,7 @@ const permissionsEnum = page.props.permissionsEnum;
         </x-button>
         <Link
           v-if="can(permissionsEnum.CycleQuotesList)"
-          href="/personal-quotes/cycle"
+          :href="route('cycle-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div">
@@ -108,7 +111,7 @@ const permissionsEnum = page.props.permissionsEnum;
         </Link>
         <Link
           v-if="can(permissionsEnum.CycleQuotesEdit)"
-          :href="`/personal-quotes/cycle/${quote.uuid}/edit`"
+          :href="route('cycle-quotes-edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -118,31 +121,32 @@ const permissionsEnum = page.props.permissionsEnum;
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              duplicateAllowedLobs.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
-
+          <x-field label="LOBs" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              :options="
+                duplicateAllowedLobs.map(lob => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+          </x-field>
+          <x-field label="Reason" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+          </x-field>
           <x-button
             color="orange"
             type="submit"

@@ -105,7 +105,7 @@ class CycleQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CYCLE->value);
 

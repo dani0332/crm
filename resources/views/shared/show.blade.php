@@ -84,7 +84,7 @@ use App\Enums\GenericRequestEnum;
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             @if ($model->modelType == quoteTypeCode::Car)
-                <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+                <x-car-ecom-detail :record="$record" :mainPayment="$mainPayment" :payments="$payments" :carQuotePlanAddons="$carQuotePlanAddons" />
             @endif
             <div class="x_panel">
                 <br />
@@ -494,6 +494,12 @@ use App\Enums\GenericRequestEnum;
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
+@if ($model->modelType == quoteTypeCode::Life ||  $model->modelType == quoteTypeCode::Home ||  $model->modelType == quoteTypeCode::Business)
+    @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :insuranceProviders="$insuranceProviders" :modeltype="$model->modelType" />
+    @endif
+
+@endif
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
             aria-labelledby="quotePlanModalLabel" aria-hidden="true">
@@ -516,7 +522,10 @@ use App\Enums\GenericRequestEnum;
                 </div>
             </div>
         </div>
-        <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+            <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" :insuranceProviders="$insuranceProviders" />
+        @endif
+        <x-travel-ecom-detail :payments="$payments" :mainPayment="$mainPayment"  :record="$record" :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$membersDetail" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
