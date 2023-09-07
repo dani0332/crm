@@ -212,7 +212,7 @@ const filters = reactive({
   leadSources: [],
   advisors: [],
   teams: [],
-  isCommercial: false,
+  isCommercial: 'All',
   page: 1,
 });
 
@@ -554,6 +554,7 @@ watch(
             label="Commercial"
             placeholder="Select any option"
             :options="[
+                { value: 'All', label: 'All' },
                 { value: true, label: 'Yes' },
                 { value: false, label: 'No' },
             ]"
