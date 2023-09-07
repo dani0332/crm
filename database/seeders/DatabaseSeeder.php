@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             CommercialMakeModelKeywordsPermissionsSeeder::class,
             FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
             AddPersonalLobsProducts::class,
+            addTeamThresholdViewPermission::class,
             // PetBikeMigrationSeeder::class
             InsurerQuoteTypeMappingSeeder::class,
             addTeamAllocationThresholdViewPermission::class,

@@ -152,12 +152,9 @@ class AdvisorPerformanceReportService extends BaseService
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
 
-        if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
-            $query->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $query->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         return $query;
