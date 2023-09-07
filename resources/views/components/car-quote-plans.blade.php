@@ -6,6 +6,7 @@ use App\Enums\CarPlanType;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
@@ -51,7 +52,7 @@ $halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 									<button id="btn_download_plan_pdf" type="button" class="btn btn-success btn-sm">Download PDF</button>
 								</span>
 
-								@if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit']) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
+							@if(($access['carManagerCanEdit'] || $access['carAdvisorCanEdit']) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))
                                 <a href="{{ url('quotes/car/'.$record->uuid.'/create-quote') }}"
                                    class="btn btn-primary btn-sm">Add Plan</a>
                             @elseif(auth()->user()->hasRole([RolesEnum::Admin]) && auth()->user()->can(PermissionsEnum::CarQuotesPlansCreate))

@@ -65,6 +65,11 @@ class Payment extends Model
         return $q;
     }
 
+    public function getCapturedAmountAttribute($value)
+    {
+        return number_format($value, 2, '.', '');
+    }
+
     public function paymentable()
     {
         return $this->morphTo();
@@ -138,4 +143,5 @@ class Payment extends Model
     {
         return $this->belongsTo(InsuranceProvider::class);
     }
+
 }
