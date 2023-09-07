@@ -772,7 +772,16 @@ class CarQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['next_followup_date_end'], false);
                 $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
             }
-            if (
+
+            if ( //Skip start and end date while searching by "Batch" and  "Renewal Batch#"
+                (isset($request->renewal_batch) && $request->renewal_batch != '')
+                ||
+                (is_array($request->quote_batch_id) && count($request->quote_batch_id))                
+                ) {
+                $dateFrom = $this->parseDate('01-01-1970', false);
+                $dateTo = $this->parseDate(date("d-m-Y", time()), false);
+                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
+            } elseif (
                 in_array('created_at', $searchProperties)
                 && isset($request->created_at) && $request->created_at != ''
                 && (empty($request->email) && empty($request->code))) {
@@ -780,7 +789,7 @@ class CarQuoteService extends BaseService
                 $dateTo = $this->parseDate($request['created_at_end'], false);
                 $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
             }
-
+            
             foreach ($searchProperties as $item) {
                 if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
                     if ($request[$item] == 'null') {
