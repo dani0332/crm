@@ -775,17 +775,16 @@ class CarQuoteService extends BaseService
             if (
                 in_array('created_at', $searchProperties)
                 && isset($request->created_at) && $request->created_at != ''
-                && empty($request->email) 
+                && empty($request->email)
                 && empty($request->code)
                 && empty($request->renewal_batch)
                 && empty($request->quote_batch_id)
-            )
-            { 
+            ) {
                 $dateFrom = $this->parseDate($request['created_at'], true);
                 $dateTo = $this->parseDate($request['created_at_end'], false);
-                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);                
-            }          
-            
+                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
+            }
+
             foreach ($searchProperties as $item) {
                 if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
                     if ($request[$item] == 'null') {
