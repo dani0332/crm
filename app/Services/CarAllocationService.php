@@ -267,10 +267,6 @@ class CarAllocationService extends AllocationService
 
         $this->updateLeadAllocationOnCarAutoAssignment($userId);
 
-        $emailData = $this->buildEmailDataForLMSIntroEmail($userId, $carQuote);
-
-        $this->sendIntroEmailForLeadAssignment($carQuote->code, $emailData);
-
         info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
     }
 

@@ -1263,7 +1263,7 @@ class CarQuoteService extends BaseService
 
             $lead->advisor_id = $userId;
 
-            $lead->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED;
+            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
             $quoteBatch = QuoteBatches::latest()->first();
 

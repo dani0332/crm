@@ -20,8 +20,16 @@ class CarQuoteObserver
             }
         }
 
-        if ($lead->isDirty('advisor_id') || $lead->isDirty('quote_status_id')) {
-            event(new CarQuoteAdvisorUpdated($lead));
+        // $emailData = $this->buildEmailDataForLMSIntroEmail($userId, $carQuote);
+
+        // $this->sendIntroEmailForLeadAssignment($carQuote->code, $emailData);
+
+        if ($lead->isDirty('advisor_id')) {
+
+                $oldAdvisorId = $changes['advisor_id'];
+                $oldAssignmentType = $changes['assignment_type'];
+
+            event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId, $oldAssignmentType));
         }
     }
 }

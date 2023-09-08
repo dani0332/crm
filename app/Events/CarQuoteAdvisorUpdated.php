@@ -12,9 +12,13 @@ class CarQuoteAdvisorUpdated
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $lead;
+    public $oldAdvisorId;
+    public $oldAssignmentType;
 
-    public function __construct(CarQuote $lead)
+    public function __construct(CarQuote $lead, $oldAdvisorId, $oldAssignmentType)
     {
         $this->lead = $lead;
+        $this->oldAdvisorId = $oldAdvisorId;
+        $this->oldAssignmentType = $oldAssignmentType;
     }
 }

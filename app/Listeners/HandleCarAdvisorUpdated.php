@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\quoteTypeCode;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\IntroEmailJob;
@@ -35,6 +36,25 @@ class HandleCarAdvisorUpdated
         info('inside handle car update advisor');
 
         $lead = $event->lead;
+        $oldAdvisorId = $event->oldAdvisorId;
+        $oldAssignmentType = $event->oldAssignmentType;
+
+        if($lead->assignment_type === AssignmentTypeEnum::SYSTEM_REASSIGNED)
+        {
+            // reassignmenet template
+            if (
+                $oldAdvisorId != null
+                && $oldAdvisorId !== $lead->advisor_id()
+            ){
+                // reassignmenet template
+            } else {
+                // assignment template
+            }
+
+        } else if ($lead->assignment_type === AssignmentTypeEnum::SYSTEM_ASSIGNED) {
+            // assignment template
+        }
+
 
         //$this->triggerCarQuoteEmail($lead);
         info('Email sending code reached');
