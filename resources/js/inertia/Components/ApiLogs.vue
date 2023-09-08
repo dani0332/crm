@@ -19,15 +19,13 @@ const modals = reactive({
   apiLog: false,
 });
 
-
 const selectedLog = ref({});
 const selectLog = (item) => {
+    item.request = JSON.stringify("ghgh"+item.request);
     selectedLog.value = item;
-    selectedLog.request = JSON.stringify("ghgh"+selectedLog.request);
+    
   	modals.apiLog = true;
 }
-
-
 
 const apiLogs = reactive({
   loading: false,
@@ -118,63 +116,69 @@ const onLoadAuditLogData = async () => {
 				</x-button>						
 			</template>
     </DataTable>
-  </div>
-
+  </div> 
+  
+   
   <x-modal v-model="modals.apiLog" size="lg" show-close backdrop>
     <template #header>
-      Insurance Request Response Details: {{ selectedLog.id }}
+        Insurance Request Response Details: {{ selectedLog.id }}
     </template>
-    <div>
-    <!-- Display field name and value -->
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>REF-ID:</strong></div>
-        <div class="col-md-9">{{ selectedLog.quote_uuid }}</div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Call Type:</strong></div>
-        <div class="col-md-9">{{ selectedLog.call_type }}</div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Status:</strong></div>
-        <div class="col-md-9">{{ selectedLog.status }}</div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Provider Name:</strong></div>
-        <div class="col-md-9">{{ selectedLog.car_quote_plan_details.provider_name }}</div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Request:</strong></div>
-        <div class="col-md-9">
-            <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
-                <pre>{{ JSON.stringify(selectedLog.request, null, 2) }}</pre>
-            </div>
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Response:</strong></div>
-        <div class="col-md-9">
-            <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
-                <pre>{{ JSON.stringify(selectedLog.response, null, 2) }}</pre>
-            </div>
-        </div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Created At:</strong></div>
-        <div class="col-md-9">{{ selectedLog.created_at }}</div>
-    </div>
-    <div class="row mb-3">
-        <div class="col-md-3"><strong>Updated At:</strong></div>
-        <div class="col-md-9">{{ selectedLog.updated_at }}</div>
-    </div>
-</div>
+    <div class="space-x-4 mt-12">
+        <table class="table">
+            <tr>
+                <td><strong>REF-ID:</strong></td>
+                <td>{{ selectedLog.quote_uuid }}</td>
+            </tr>
+            <tr>
+                <td><strong>Call Type:</strong></td>
+                <td>{{ selectedLog.call_type }}</td>
+            </tr>
+            <tr>
+                <td><strong>Status:</strong></td>
+                <td>{{ selectedLog.status }}</td>
+            </tr>
+            <tr>
+                <td><strong>Provider Name:</strong></td>
+                <td>{{ selectedLog.car_quote_plan_details.provider_name }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>Request:</strong></td>               
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
+                        {{ JSON.stringify(selectedLog.request, null, 2) }}
+                    </div>
+                </td>
+            </tr>
 
-
-
+            <tr>
+                <td colspan="2"><strong>Response:</strong></td>               
+            </tr>
+            <tr>                
+                <td colspan="2">
+                    <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
+                        {{ JSON.stringify(selectedLog.response, null, 2) }}
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Created At:</strong></td>
+                <td>{{ selectedLog.created_at }}</td>
+            </tr>
+            <tr>
+                <td><strong>Updated At:</strong></td>
+                <td>{{ selectedLog.updated_at }}</td>
+            </tr>
+        </table>
+    </div>
     <div class="text-right space-x-4 mt-12">
-      <x-button size="sm" @click.prevent="modals.apiLog = false">
-        Close
-      </x-button>
+        <x-button size="sm" @click.prevent="modals.apiLog = false">
+            Close
+        </x-button>
     </div>
-  </x-modal>
+</x-modal>
+
+
   
 </template>
