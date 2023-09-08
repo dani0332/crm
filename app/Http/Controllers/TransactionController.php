@@ -111,8 +111,7 @@ class TransactionController extends Controller
             if (isset($request->payment_mode) && ! empty($request->payment_mode)) {
                 $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
             }
-            $premiumAmount = $dataTransapp->get('amount_paid');
-            $premiumAmount = $premiumAmount->sum('amount_paid');
+            $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
 
             return $datatables::of($dataTransapp)
                 ->addIndexColumn()
