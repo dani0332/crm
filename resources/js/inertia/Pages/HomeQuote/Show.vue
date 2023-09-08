@@ -12,6 +12,12 @@ defineProps({
   allowedDuplicateLOB: Array,
   isBetaUser: Boolean,
   can: Object,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
   embeddedProducts: Array,
 });
 
@@ -857,6 +863,16 @@ const policyDetails = useForm({
       </x-modal>
     </div>
 
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <customerAdditionalContacts
       quoteType="Home"
       :customerId="quote.customer_id"

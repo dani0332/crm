@@ -200,12 +200,9 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
-        if (isset($request->isCommercial) && $request->isCommercial == 'true') {
-            $records->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $records->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];
@@ -333,12 +330,9 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
-        if (isset($request->isCommercial) && $request->isCommercial == 'true') {
-            $records->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $records->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];

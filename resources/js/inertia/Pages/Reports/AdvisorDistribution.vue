@@ -81,7 +81,7 @@ const filters = reactive({
   advisorAssignedDates: [],
   tiers: [],
   teams: [],
-  isCommercial: false,
+  isCommercial: 'All',
   page: 1,
 });
 
@@ -197,6 +197,7 @@ const calculateTotalSum = (data, key) => {
           label="Commercial"
           placeholder="Select any option"
           :options="[
+            { value: 'All', label: 'All' },
             { value: true, label: 'Yes' },
             { value: false, label: 'No' },
           ]"
