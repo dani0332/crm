@@ -155,6 +155,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::resource('embedded-products', EmbeddedProductController::class);
     Route::resource('legacy-policy', LegacyPolicyController::class);
+    Route::post('/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 

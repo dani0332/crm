@@ -52,7 +52,7 @@ const tableHeader = [
   { text: 'Policy Number', value: 'policy_no' },
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
-  { text: 'Product', value: '' },
+  { text: 'Product', value: 'product.product' },
   { text: 'Policy expiry date', value: 'policy.end_date' },
 ];
 </script>

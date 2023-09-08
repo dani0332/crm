@@ -71,15 +71,21 @@ class LifeQuote extends Model implements AuditableContract
     public function numberOfYears()
     {
         return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
-    } public function maritalStatus()
+    }
+    public function maritalStatus()
     {
         return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');
-    }public function paymentStatus()
+    }
+    public function paymentStatus()
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
     }
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
     }
 }

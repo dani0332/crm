@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
+use Illuminate\Http\Request;
 
 class LegacyPolicyController extends Controller
 {
@@ -18,7 +19,6 @@ class LegacyPolicyController extends Controller
         $policies = InslyDetailRepository::getData();
 
         return inertia('LegacyPolicy/Index', ['policies' => $policies]);
-
     }
 
     /**
@@ -30,10 +30,17 @@ class LegacyPolicyController extends Controller
     public function show($policyNo)
     {
 
-        $policy = InslyDetailRepository::getBy('policy_no',$policyNo);
+        $policy = InslyDetailRepository::getBy('policy_no', $policyNo);
 
         // dd($policy->toArray());
         return inertia('LegacyPolicy/Show', ['policy' => $policy]);
+    }
 
+    public function moveToImcrm(Request $request)
+    {
+
+        $policy = InslyDetailRepository::saveToImcrm($request->toArray());
+
+        return $policy;
     }
 }
