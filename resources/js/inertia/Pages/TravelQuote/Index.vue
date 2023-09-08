@@ -105,7 +105,6 @@ function filterQuotes(isValid) {
     }
   }
 
-  // '/quotes/travel'
   router.visit(route('travel.index'), {
     method: 'get',
     data: filters,
@@ -225,11 +224,9 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <!-- href="/quotes/travel-cards" -->
         <Link :href="route('travel.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
-        <!-- href="/quotes/travel/create" -->
         <Link :href="route('travel.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
@@ -415,7 +412,6 @@ onMounted(() => {
       fixed-checkbox
     >
       <template #item-code="{ code, uuid }">
-        <!-- :href="`/quotes/travel/${uuid}`" -->
         <a
           :href="route('travel.show', uuid)"
           class="text-primary-500 hover:underline"

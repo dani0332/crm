@@ -57,7 +57,6 @@ const openDuplicate = () => {
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  // '/quotes/createDuplicate'
   leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
     onSuccess: () => {
@@ -87,7 +86,6 @@ const onCreateDuplicate = isValid => {
           v-if="can(permissionsEnum.PetQuotesEdit)"
           :href="route('pet-quotes-edit', quote.uuid)"
         >
-          <!-- :href="`/personal-quotes/pet/${quote.uuid}/edit`" -->
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
@@ -96,7 +94,6 @@ const onCreateDuplicate = isValid => {
           :href="route('pet-quotes-list')"
           preserve-scroll
         >
-          <!-- href="/personal-quotes/pet" -->
           <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
         </Link>
       </div>

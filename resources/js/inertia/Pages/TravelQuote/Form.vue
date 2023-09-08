@@ -26,14 +26,6 @@ const formFields = computed(() => {
   }));
 });
 
-/*
-const quoteForm = useForm({
-  ...formFields.value.reduce((acc, field) => {
-    acc[field.value] = '';
-    return acc;
-  }, {}),
-}); */
-
 const quoteForm = useForm({
   first_name: props.quote?.first_name || null,
   last_name: props.quote?.last_name || null,
@@ -296,7 +288,7 @@ onMounted(() => {
             :hasError="quoteForm.errors[index]"
           />
         </x-field>
-        <x-field v-if="editMode" label="Days Cover" required>
+        <x-field v-if="editMode" label="Days Cover">
           <x-input
             :value="quoteForm.days_cover_for"
             :disabled="true"
@@ -304,14 +296,14 @@ onMounted(() => {
           />
         </x-field>
 
-        <x-field label="Email" required>
+        <x-field label="Email">
           <x-input
             v-model="quoteForm.email"
             class="w-full"
             :rules="[rules.isEmail]"
           />
         </x-field>
-        <x-field label="Phone number" required>
+        <x-field label="Phone number">
           <x-input
             v-model="quoteForm.mobile_no"
             class="w-full"

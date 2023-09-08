@@ -84,18 +84,14 @@ function onSubmit(isValid) {
             onError: errors => {
               console.log(errors);
             },
-            onSuccess: () => {
-              // successResponse();
-            },
+            onSuccess: () => {},
           });
       } else {
         quoteForm.post(route('home.store'), {
           onError: errors => {
             quoteForm.setError(errors);
           },
-          onSuccess: () => {
-            // successResponse();
-          },
+          onSuccess: () => {},
         });
       }
     }
@@ -120,7 +116,6 @@ function onSubmit(isValid) {
           <x-button size="sm" tag="div"> Cancel </x-button>
         </Link>
         <Link :href="route('home.index')">
-          <!-- href="/quotes/home" -->
           <x-button size="sm" color="#ff5e00" tag="div"> Home List </x-button>
         </Link>
       </div>

@@ -80,7 +80,6 @@ function onSubmit(isValid) {
         (filters[key] === '' || filters[key].length === 0) &&
         delete filters[key],
     );
-    // '/quotes/home'
     router.visit(route('home.index'), {
       method: 'get',
       data: filters,
@@ -95,7 +94,6 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  // '/quotes/home'
   router.visit(route('home.index'), {
     method: 'get',
     data: { page: 1 },
@@ -164,16 +162,11 @@ function onAssignLead(isValid) {
         ...data,
         selectTmLeadId: `${selected}`,
       }))
-      // '/quotes/home/manualLeadAssign'
       .post(route('manualLeadAssign', { quoteType: 'home' }), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: () => {
           quotesSelected.value = [];
-          // notification.success({
-          //   title: 'Home Leads Assigned',
-          //   position: 'top',
-          // });
         },
       });
   }
@@ -208,12 +201,10 @@ const permissionsEnum = page.props.permissionsEnum;
       <h2 class="text-xl font-semibold">Home List</h2>
       <div class="space-x-3">
         <Link :href="route('home-cardView')">
-          <!-- href="/quotes/home-cards" -->
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
 
         <Link :href="route('home.create')">
-          <!-- href="/quotes/home/create" -->
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -389,7 +380,6 @@ const permissionsEnum = page.props.permissionsEnum;
           :href="route('home.show', uuid)"
           class="text-primary-500 hover:underline"
         >
-          <!-- :href="`/quotes/home/${uuid}`" -->
           {{ code }}
         </Link>
       </template>

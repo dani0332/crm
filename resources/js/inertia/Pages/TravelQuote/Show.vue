@@ -173,7 +173,6 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
-// `/quotes/Travel/${page.props.quote.id}/update-lead-status`,
 const onLeadStatus = () => {
   leadStatusForm.post(
     route('updateLeadStatus', {
@@ -184,12 +183,6 @@ const onLeadStatus = () => {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
-      },
-      onSuccess: () => {
-        // notification.success({
-        //   title: 'Lead Status Updated',
-        //   position: 'top',
-        // });
       },
     },
   );
@@ -279,7 +272,6 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-  // `/travelers/${travelerForm.id}`
   travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
@@ -302,7 +294,6 @@ const editTraveler = isValid => {
 };
 
 const deleteTraveler = id => {
-  // `/travelers/${id}`
   router.delete(route('travelers.destroy', id), {
     preserveScroll: true,
     onBefore: () => {
@@ -374,24 +365,18 @@ const submitPolicyDetails = isValid => {
       quote_id: data.quote_id,
       isInertia: true,
     }))
-    .post(
-      // route('update-quote-policy.store', {
-      //   quoteType: page.props.modelType,
-      // })
-      `/quotes/${page.props.modelType}/update-quote-policy`,
-      {
-        preserveScroll: true,
-        onSuccess: () => {
-          notification.success({
-            title: 'Policy Details Updated',
-            position: 'top',
-          });
-        },
-        onFinish: () => {
-          policyDetails.editMode = false;
-        },
+    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Policy Details Updated',
+          position: 'top',
+        });
       },
-    );
+      onFinish: () => {
+        policyDetails.editMode = false;
+      },
+    });
 };
 
 const memberCategoryText = memberCategoryId =>
@@ -602,7 +587,6 @@ const addActivity = () => {
   activityActionEdit.value = false;
   modals.activity = true;
 };
-// `/activities/updateStatus`
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
   activityForm.post(route('activities.updateStatus'), {
@@ -644,7 +628,6 @@ const activityEdit = data => {
 };
 
 const onActivitySubmit = isValid => {
-  // console.log('herere update');
   if (!isValid) return;
   if (activityActionEdit.value) {
     let date = new Date(activityForm.due_date);
@@ -849,7 +832,6 @@ const onLoadHistoryData = async () => {
       modelType: 'travel',
       recordId: page.props.quote.id,
     }),
-    // `/quotes/getLeadHistory?modelType=travel&recordId=${page.props.quote.id}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;

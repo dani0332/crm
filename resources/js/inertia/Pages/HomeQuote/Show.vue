@@ -113,18 +113,11 @@ const onLeadStatus = () => {
       modelType: 'Home',
       QuoteUId: page.props.quote.id,
     }),
-    // `/quotes/Home/${page.props.quote.id}/update-lead-status`,
     {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
       },
-      // onSuccess: () => {
-      //   notification.success({
-      //     title: 'Lead Status Updated',
-      //     position: 'top',
-      //   });
-      // },
     },
   );
 };
@@ -209,10 +202,6 @@ const onActivitySubmit = isValid => {
       preserveScroll: true,
       onSuccess: () => {
         activityForm.reset();
-        // notification.success({
-        //   title: 'Activity Added',
-        //   position: 'top',
-        // });
       },
       onFinish: () => {
         modals.activity = false;
@@ -229,7 +218,6 @@ const activityDelete = id => {
 const activityDeleteConfirmed = () => {
   router.post(
     route('activities.destroy', confirmDeleteData.activity),
-    // `/activities/${confirmDeleteData.activity}/delete`,
     {
       isInertia: true,
       quote_uuid: page.props.quote.uuid,
@@ -369,7 +357,6 @@ const onLoadHistoryData = async () => {
       modelType: 'home',
       recordId: page.props.quote.id,
     }),
-    // `/quotes/getLeadHistory?modelType=home&recordId=${page.props.quote.id}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -422,12 +409,10 @@ const policyDetails = useForm({
         </x-button>
 
         <Link :href="route('home.index')" preserve-scroll>
-          <!-- href="/quotes/home"  -->
           <x-button size="sm" color="primary" tag="div"> Home List </x-button>
         </Link>
 
         <Link :href="route('home.edit', quote.uuid)">
-          <!-- :href="`${quote.uuid}/edit`" -->
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>

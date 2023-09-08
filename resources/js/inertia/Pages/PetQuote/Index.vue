@@ -45,35 +45,27 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit(
-      route('pet-quotes-list'),
-      // '/personal-quotes/pet',
-      {
-        method: 'get',
-        data: filters,
-        preserveState: true,
-        preserveScroll: true,
-        onBefore: () => (loader.table = true),
-        onSuccess: () => (loader.table = false),
-      },
-    );
+    router.visit(route('pet-quotes-list'), {
+      method: 'get',
+      data: filters,
+      preserveState: true,
+      preserveScroll: true,
+      onBefore: () => (loader.table = true),
+      onSuccess: () => (loader.table = false),
+    });
   } else {
     console.log('Invalid');
   }
 }
 
 function onReset() {
-  router.visit(
-    route('pet-quotes-list'),
-    // '/personal-quotes/pet',
-    {
-      method: 'get',
-      data: { page: 1 },
-      preserveScroll: true,
-      onBefore: () => (loader.table = true),
-      onSuccess: () => (loader.table = false),
-    },
-  );
+  router.visit(route('pet-quotes-list'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
 }
 
 onMounted(() => {});
@@ -164,7 +156,6 @@ watch(
         color="#ff5e00"
         :href="route('pet-quotes-create')"
       >
-        <!-- href="/personal-quotes/pet/create" -->
         Create Lead
       </x-button>
     </div>
@@ -334,7 +325,6 @@ watch(
           :href="route('pet-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
-          <!-- :href="`/personal-quotes/pet/${uuid}`" -->
           {{ code }}
         </Link>
         <span v-else>{{ code }}</span>

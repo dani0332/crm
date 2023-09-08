@@ -209,7 +209,6 @@ const onSearch = id => {
             title="View Lead"
             class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"
           >
-            <!-- :href="`/quotes/home/${uuid}`" -->
             <div class="font-semibold text-sm">{{ code }}</div>
             <div class="flex items-center gap-2">
               <x-icon icon="person" size="sm" class="text-primary-400" />
