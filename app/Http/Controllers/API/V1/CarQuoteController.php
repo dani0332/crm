@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\CarQuoteResource;
+use App\Models\CarQuote;
 use App\Repositories\CarQuoteRepository;
+use App\Services\CarQuoteService;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
@@ -21,5 +25,17 @@ class CarQuoteController extends Controller
 
         //return CarQuoteResource::collection($quotes);
         return response()->json($quotes);
+    }
+
+    /**
+     * get ocb details
+     * @param $uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getOcbDetails($uuid, CarQuoteService $carQuoteService)
+    {
+        $ocbDetails = $carQuoteService->getOcbDetails($uuid);
+
+        return response()->json($ocbDetails);
     }
 }
