@@ -11,6 +11,12 @@ defineProps({
   advisors: Array,
   permissions: Object,
   typeCode: String,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
   lostReasons: Object,
 });
 
@@ -815,6 +821,17 @@ const onAssignLead = () => {
       :contacts="customerAdditionalContacts"
     />
 
+    <!-- Payments -->
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

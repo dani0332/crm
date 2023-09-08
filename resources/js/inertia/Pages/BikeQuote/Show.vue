@@ -40,14 +40,14 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="flex gap-2">
         <Link
           v-if="can(permissionsEnum.BikeQuotesEdit)"
-          :href="`/personal-quotes/bike/${quote.uuid}/edit`"
+          :href="route('bike-quotes-edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
         <Link
           v-if="can(permissionsEnum.BikeQuotesList)"
-          href="/personal-quotes/bike"
+          :href="route('bike-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div"> Bike Quotes </x-button>
