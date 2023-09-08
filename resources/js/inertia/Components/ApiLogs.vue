@@ -21,7 +21,7 @@ const modals = reactive({
 
 const selectedLog = ref({});
 const selectLog = (item) => {
-    item.request = JSON.stringify("ghgh"+item.request);
+    //item.request = JSON.stringify("ghgh"+item.request);
     selectedLog.value = item;
     
   	modals.apiLog = true;
@@ -123,52 +123,56 @@ const onLoadAuditLogData = async () => {
     <template #header>
         Insurance Request Response Details: {{ selectedLog.id }}
     </template>
-    <div class="space-x-4 mt-12">
+    
+    <div class="space-x-4">
         <table class="table">
-            <tr>
-                <td><strong>REF-ID:</strong></td>
+            <tr class="mb-10">
+                <td class="font-medium">REF-ID:</td>
                 <td>{{ selectedLog.quote_uuid }}</td>
             </tr>
-            <tr>
-                <td><strong>Call Type:</strong></td>
+            <tr class="mb-10">
+                <td class="font-medium">Call Type:</td>
                 <td>{{ selectedLog.call_type }}</td>
             </tr>
             <tr>
-                <td><strong>Status:</strong></td>
-                <td>{{ selectedLog.status }}</td>
+                <td class="font-medium">Status:</td>
+                <td>
+                  <x-tag v-if="selectedLog.status" size="xs" :color="selectedLog.status === 'failed' ? 'red' : 'primary'" class="mt-0.5 text-[10px]">
+                      {{ selectedLog.status.toUpperCase() }}
+                  </x-tag>					
+                </td>
             </tr>
             <tr>
-                <td><strong>Provider Name:</strong></td>
+                <td class="font-medium">Provider Name:</td>
                 <td>{{ selectedLog.car_quote_plan_details.provider_name }}</td>
             </tr>
             <tr>
-                <td colspan="2"><strong>Request:</strong></td>               
+                <td class="font-medium" colspan="2">Request:</td>               
             </tr>
             <tr>
                 <td colspan="2">
-                    <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
-                        {{ JSON.stringify(selectedLog.request, null, 2) }}
+                    <div style="font-size:14px; background-color: #d5edfd; color: rgb(6, 4, 4); height: 200px; width: 700px; overflow-y: auto; padding: 10px;">
+                        {{ selectedLog.request }}
                     </div>
                 </td>
             </tr>
-
             <tr>
-                <td colspan="2"><strong>Response:</strong></td>               
+                <td class="font-medium" colspan="2">Response:</td>               
             </tr>
             <tr>                
                 <td colspan="2">
-                    <div style="background-color: #d5edfd; color: rgb(6, 4, 4); height: 150px; overflow-y: auto; padding: 10px;">
-                        {{ JSON.stringify(selectedLog.response, null, 2) }}
-                    </div>
+                  <div style="font-size:14px; background-color: #d5edfd; color: rgb(6, 4, 4); height: 200px; width: 700px; overflow-y: auto; padding: 10px;">
+                    {{ selectedLog.response }}
+                  </div>
                 </td>
             </tr>
             <tr>
-                <td><strong>Created At:</strong></td>
-                <td>{{ selectedLog.created_at }}</td>
+                <td class="font-medium">Created At:</td>
+                <td>{{ dateFormat(selectedLog.created_at).value }}</td>
             </tr>
             <tr>
-                <td><strong>Updated At:</strong></td>
-                <td>{{ selectedLog.updated_at }}</td>
+                <td class="font-medium">Updated At:</td>
+                <td>{{ dateFormat(selectedLog.updated_at).value }}</td>
             </tr>
         </table>
     </div>
