@@ -73,7 +73,7 @@ class TransactionController extends Controller
                 ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
                 ->where('transactions.is_deleted', 0);
             if ($isTransappNonAdmin == '1') {
-                 $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
+                $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
             if (! empty($request->team_id) && $request->team_id[0] != null) {
                 $dataTransapp->leftjoin('user_team', 'handlers.id', 'user_team.user_id');
@@ -113,6 +113,7 @@ class TransactionController extends Controller
             }
             $premiumAmount = $dataTransapp->get('amount_paid');
             $premiumAmount = $premiumAmount->sum('amount_paid');
+
             return $datatables::of($dataTransapp)
                 ->addIndexColumn()
                 ->addColumn('premium_total', $premiumAmount)
