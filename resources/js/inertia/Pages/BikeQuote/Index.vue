@@ -38,6 +38,12 @@ const permissionAssignLeads = ref(false);
 const filters = reactive(availableFilters);
 const hasRole = role => useHasRole(role);
 
+const advisorOptions = computed(() => {
+  return page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
+});
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
@@ -115,13 +121,6 @@ const advisorOptionsFilter = computed(() => {
     label: advisor.roles[0].name
       ? advisor.name + ' - ' + advisor.roles[0]?.name
       : advisor.name,
-  }));
-});
-
-const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
   }));
 });
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -14,6 +15,7 @@ use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -91,6 +93,41 @@ class TravelController extends Controller
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $payments = $paymentEntityModel->payments;
+        $paymentMethods = $this->lookupService->getPaymentMethods();
+        $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+            return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+        })->map(function ($paymentMethod) {
+            return [
+                'value' => $paymentMethod->code,
+                'label' => $paymentMethod->name,
+            ];
+        })->values();
+
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
+        $filteredInsuranceProviders = [];
+        if (! empty($insuranceProviders)) {
+
+            $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+        }
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+
+        $payments->each(function ($payment) {
+            $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
+            $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
+            $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
+            $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
+                && ! auth()->user()->hasRole(RolesEnum::PA);
+
+            $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
+        });
+
         $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
@@ -140,6 +177,11 @@ class TravelController extends Controller
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
             'listQuotePlans' => $this->travelQuoteService->listQuotePlans($id),
             'activities' => $activities,
+            'payments' => $payments,
+            'quoteRequest' => $paymentEntityModel,
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'paymentMethods' => $filteredPaymentMethods,
+            'insuranceProviders' => $filteredInsuranceProviders,
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
@@ -158,6 +200,9 @@ class TravelController extends Controller
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
                 'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),

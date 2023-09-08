@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Models\HealthRatingEligibility;
 use App\Models\InsuranceProvider;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class InsuranceProviderRepository extends BaseRepository
 {
