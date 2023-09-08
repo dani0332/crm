@@ -102,17 +102,10 @@ const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
 };
-
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Quote duplicated successfully',
-        position: 'top',
-      });
-    },
     onFinish: () => {
       modals.duplicate = false;
     },
@@ -180,19 +173,23 @@ const leadStatusOptions = computed(() => {
   }));
 });
 
+// `/quotes/Travel/${page.props.quote.id}/update-lead-status`,
 const onLeadStatus = () => {
   leadStatusForm.post(
-    `/quotes/Travel/${page.props.quote.id}/update-lead-status`,
+    route('updateLeadStatus', {
+      modelType: 'Travel',
+      QuoteUId: page.props.quote.id,
+    }),
     {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
       },
       onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
+        // notification.success({
+        //   title: 'Lead Status Updated',
+        //   position: 'top',
+        // });
       },
     },
   );
@@ -242,8 +239,8 @@ const submitTraveler = isValid => {
 
 const addTravelMember = isValid => {
   if (!isValid) return;
-
-  travelerForm.post('/travelers', {
+  // '/travelers'
+  travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -282,8 +279,8 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-
-  travelerForm.put(`/travelers/${travelerForm.id}`, {
+  // `/travelers/${travelerForm.id}`
+  travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -305,7 +302,8 @@ const editTraveler = isValid => {
 };
 
 const deleteTraveler = id => {
-  router.delete(`/travelers/${id}`, {
+  // `/travelers/${id}`
+  router.delete(route('travelers.destroy', id), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -376,18 +374,24 @@ const submitPolicyDetails = isValid => {
       quote_id: data.quote_id,
       isInertia: true,
     }))
-    .post(`/quotes/${page.props.modelType}/update-quote-policy`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Policy Details Updated',
-          position: 'top',
-        });
+    .post(
+      // route('update-quote-policy.store', {
+      //   quoteType: page.props.modelType,
+      // })
+      `/quotes/${page.props.modelType}/update-quote-policy`,
+      {
+        preserveScroll: true,
+        onSuccess: () => {
+          notification.success({
+            title: 'Policy Details Updated',
+            position: 'top',
+          });
+        },
+        onFinish: () => {
+          policyDetails.editMode = false;
+        },
       },
-      onFinish: () => {
-        policyDetails.editMode = false;
-      },
-    });
+    );
 };
 
 const memberCategoryText = memberCategoryId =>
@@ -598,10 +602,10 @@ const addActivity = () => {
   activityActionEdit.value = false;
   modals.activity = true;
 };
-
+// `/activities/updateStatus`
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -640,6 +644,7 @@ const activityEdit = data => {
 };
 
 const onActivitySubmit = isValid => {
+  // console.log('herere update');
   if (!isValid) return;
   if (activityActionEdit.value) {
     let date = new Date(activityForm.due_date);
@@ -648,7 +653,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+    activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -667,7 +672,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/create-activity`, {
+    activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -689,7 +694,7 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
+    route('activities.destroy', confirmDeleteData.activity),
     {
       isInertia: true,
       quote_uuid: page.props.quote.uuid,
@@ -840,7 +845,11 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=travel&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'travel',
+      recordId: page.props.quote.id,
+    }),
+    // `/quotes/getLeadHistory?modelType=travel&recordId=${page.props.quote.id}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -917,14 +926,13 @@ onMounted(() => {
         >
           Duplicate Lead
         </x-button>
-
-        <Link href="/quotes/travel" preserve-scroll>
+        <Link :href="route('travel.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
         </Link>
 
         <Link
           v-if="permissions.canEditQuote == true"
-          :href="`${quote.uuid}/edit`"
+          :href="route('travel.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -935,30 +943,32 @@ onMounted(() => {
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
+          <x-field label="LOBs" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              :options="
+                allowedDuplicateLOB.map(lob => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+          </x-field>
+          <x-field label="Reason" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+          </x-field>
 
           <x-button
             color="orange"
@@ -1157,54 +1167,63 @@ onMounted(() => {
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="STATUS"
-              :options="leadStatusOptions"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="NOTES"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-            />
+            <x-field label="STATUS">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                :options="leadStatusOptions"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+                placeholder="Lead Status"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="NOTES">
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+              />
+            </x-field>
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-input
+          <x-field
+            label="TRANSAPP CODE"
             v-if="
               leadStatusForm.leadStatus ==
               enums.quoteStatusEnum.TransactionApproved
             "
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-            "
-            v-model="leadStatusForm.trans_code"
-            label="TRANSAPP CODE"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-            v-model="leadStatusForm.lostReason"
+          >
+            <x-input
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              v-model="leadStatusForm.trans_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+          </x-field>
+          <x-field
             label="LOST REASON"
-            :options="lostReasonsOptions"
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+          >
+            <x-select
+              v-model="leadStatusForm.lostReason"
+              :options="lostReasonsOptions"
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
@@ -1728,28 +1747,29 @@ onMounted(() => {
 
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee"
-              :options="advisorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
+            <x-field label="Title" required>
+              <x-input
+                v-model="activityForm.title"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Description">
+              <x-textarea
+                v-model="activityForm.description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Assignee" required>
+              <x-select
+                v-model="activityForm.assignee_id"
+                :options="advisorOptions"
+                :rules="[isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+            </x-field>
 
             <DatePicker
               :format="format"
@@ -1856,33 +1876,35 @@ onMounted(() => {
 
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
-
-            <x-input
-              v-if="additionalContact.additional_contact_type === 'mobile_no'"
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[isRequired, isMobileNo]"
-              class="w-full"
-            />
-
-            <x-input
-              v-if="additionalContact.additional_contact_type === 'email'"
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[isRequired, isEmail]"
-              class="w-full"
-            />
+            <x-field label="Type" required>
+              <x-select
+                v-model="additionalContact.additional_contact_type"
+                :options="[
+                  { value: 'email', label: 'Email' },
+                  { value: 'mobile_no', label: 'Mobile Number' },
+                ]"
+                :rules="[isRequired]"
+                placeholder="Select Type"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Value" required>
+              <x-input
+                v-if="additionalContact.additional_contact_type === 'mobile_no'"
+                v-model="additionalContact.additional_contact_val"
+                :rules="[isRequired, isMobileNo]"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Value" required>
+              <x-input
+                v-if="additionalContact.additional_contact_type === 'email'"
+                v-model="additionalContact.additional_contact_val"
+                label="Value"
+                :rules="[isRequired, isEmail]"
+                class="w-full"
+              />
+            </x-field>
           </div>
 
           <div class="text-right space-x-4 mt-12">
