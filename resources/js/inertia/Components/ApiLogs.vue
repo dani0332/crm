@@ -21,9 +21,7 @@ const modals = reactive({
 
 const selectedLog = ref({});
 const selectLog = (item) => {
-    //item.request = JSON.stringify("ghgh"+item.request);
-    selectedLog.value = item;
-    
+    selectedLog.value = item;    
   	modals.apiLog = true;
 }
 
@@ -152,7 +150,7 @@ const onLoadAuditLogData = async () => {
             <tr>
                 <td colspan="2">
                     <div style="font-size:14px; background-color: #d5edfd; color: rgb(6, 4, 4); height: 200px; width: 700px; overflow-y: auto; padding: 10px;">
-                        {{ selectedLog.request }}
+                      {{ selectedLog.request }}
                     </div>
                 </td>
             </tr>
@@ -181,8 +179,5 @@ const onLoadAuditLogData = async () => {
             Close
         </x-button>
     </div>
-</x-modal>
-
-
-  
+</x-modal>  
 </template>
