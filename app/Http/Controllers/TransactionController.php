@@ -56,7 +56,6 @@ class TransactionController extends Controller
             $dataTransapp = $transaction::select(
                 'transactions.*',
                 'statuses.name as status',
-                'user_team.team_id',
                 'insurance_companies.name as insurance',
                 'type_of_insurances.text as type_of_insurance',
                 'handlers.name as handler_name',
@@ -67,19 +66,19 @@ class TransactionController extends Controller
                 ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
                 ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
                 ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
-                ->leftjoin('user_team', 'handlers.id', 'user_team.user_id')
+
                 ->leftjoin('users as creaters', 'transactions.created_by_id', 'creaters.id')
                 ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
                 ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at', 'desc')
                 ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
                 ->where('transactions.is_deleted', 0);
-
-            $dataTransapp->where('user_team.team_id', '!=', null);
             if ($isTransappNonAdmin == '1') {
                 $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
             }
-            if (! empty($request->team_id)) {
+            if (! empty($request->team_id) && $request->team_id[0] != null) {
+                $dataTransapp->leftjoin('user_team', 'handlers.id', 'user_team.user_id');
                 $dataTransapp->whereIn('user_team.team_id', $request->team_id);
+                $dataTransapp->groupBy('transactions.id');
             }
             if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
@@ -112,7 +111,7 @@ class TransactionController extends Controller
             if (isset($request->payment_mode) && ! empty($request->payment_mode)) {
                 $dataTransapp->where('transactions.payment_mode_id', $request->payment_mode);
             }
-            $premiumAmount = $dataTransapp->sum('amount_paid');
+            $premiumAmount = $dataTransapp->get('amount_paid')->sum('amount_paid');
 
             return $datatables::of($dataTransapp)
                 ->addIndexColumn()
