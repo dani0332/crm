@@ -222,7 +222,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="password">Password</label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="password" id="password" name="password" value="{{ old('password', $user->password) }}" class="form-control">
+                            <input type="password" id="password" name="password" value="{{ $user->password }}" class="form-control">
                             @if ($errors->has('password'))
                                 <span class="text-danger">{{ $errors->first('password') }}</span>
                             @endif
