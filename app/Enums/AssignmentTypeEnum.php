@@ -10,7 +10,6 @@ final class AssignmentTypeEnum extends Enum
     const SYSTEM_REASSIGNED = 2;
     const MANUAL_ASSIGNED = 3;
     const MANUAL_REASSIGNED = 4;
-    
     const AssignmentTypeList = [
         self::SYSTEM_ASSIGNED,
         self::SYSTEM_REASSIGNED,
