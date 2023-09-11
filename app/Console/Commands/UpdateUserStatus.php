@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 class UpdateUserStatus extends Command
 {
     use TeamHierarchyTrait;
+
     /**
      * The name and signature of the console command.
      *
@@ -86,13 +87,11 @@ class UpdateUserStatus extends Command
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
                         $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
-                        if($this->userHaveProduct($userId, $carId))
-                        {
-                            ReAssignCarLeadsJob::dispatch(new CarAllocationService(),$userId);
+                        if ($this->userHaveProduct($userId, $carId)) {
+                            ReAssignCarLeadsJob::dispatch(new CarAllocationService(), $userId);
                         }
-                        if($this->userHaveProduct($userId, $healthId))
-                        {
-                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(),$userId);
+                        if ($this->userHaveProduct($userId, $healthId)) {
+                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(), $userId);
                         }
 
                     }
