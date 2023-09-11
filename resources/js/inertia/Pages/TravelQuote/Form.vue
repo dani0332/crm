@@ -12,6 +12,7 @@ const props = defineProps({
 const editMode = computed(() =>
   props.quote && props.quote.uuid ? true : false,
 );
+
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
     value: status,
@@ -78,6 +79,17 @@ const rules = {
     /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
     'Phone must be valid',
 };
+
+const {
+  isRequired,
+  policy_number,
+  premium,
+  renewal_expiry_date,
+  policy_start_date,
+  isEmail,
+  isMobileNo,
+} = useRules();
+
 const subTeamOptions = [
   { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
   { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' },
@@ -178,7 +190,7 @@ onMounted(() => {
             v-model="quoteForm.direction_code"
             :options="subTeamOptions"
             class="w-full"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
           />
         </x-field>
         <x-field
@@ -191,7 +203,7 @@ onMounted(() => {
             :options="alreadylived"
             class="w-full"
             :disabled="editMode"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
           />
         </x-field>
         <x-field
@@ -204,7 +216,7 @@ onMounted(() => {
             :options="alreadylived"
             class="w-full"
             :disabled="editMode"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
           />
         </x-field>
       </div>
@@ -224,7 +236,7 @@ onMounted(() => {
                 : outboundCoverageCode
             "
             class="w-full"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
           />
         </x-field>
         <x-field
@@ -238,7 +250,7 @@ onMounted(() => {
           <x-select
             v-model="quoteForm.region_cover_for_id"
             :options="outboundRegions"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
           />
         </x-field>
@@ -253,7 +265,7 @@ onMounted(() => {
           <DatePicker
             v-model="quoteForm.end_date"
             name="end_date"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
           />
         </x-field>
       </div>
@@ -261,14 +273,14 @@ onMounted(() => {
         <x-field label="First Name" required>
           <x-input
             v-model="quoteForm.first_name"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
           />
         </x-field>
         <x-field label="Last Name" required>
           <x-input
             v-model="quoteForm.last_name"
-            :rules="[rules.isRequired]"
+            :rules="[isRequired]"
             class="w-full"
           />
         </x-field>
@@ -300,14 +312,15 @@ onMounted(() => {
           <x-input
             v-model="quoteForm.email"
             class="w-full"
-            :rules="[rules.isEmail]"
+            :rules="[isEmail]"
           />
         </x-field>
-        <x-field label="Phone number">
+        <x-field label="Phone number" required>
           <x-input
             v-model="quoteForm.mobile_no"
             class="w-full"
-            :rules="[rules.isPhone]"
+            :rules="[isRequired, isMobileNo]"
+            :error="quoteForm.errors.mobile_no"
           />
         </x-field>
       </div>

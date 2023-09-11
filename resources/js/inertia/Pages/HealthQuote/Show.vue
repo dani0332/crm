@@ -139,7 +139,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -2276,7 +2276,7 @@ onMounted(() => {
                 isRequired,
                 additionalContact.additional_contact_type === 'email'
                   ? isEmail
-                  : isNumber,
+                  : isMobileNo,
               ]"
               class="w-full"
             />
