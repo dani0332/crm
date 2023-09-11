@@ -2395,5 +2395,5 @@ const confirmSendEmail = () => {
 
 	</div>
 	<AuditLogs :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
-
+	<ApiLogs v-if="can(permissionEnum.API_LOG_VIEW)" :type="'App\\Models\\CarQuote'" :id="$page.props.record.id" />
 </template>
