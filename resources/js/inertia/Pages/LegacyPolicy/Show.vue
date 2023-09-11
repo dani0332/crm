@@ -180,7 +180,7 @@ const moveToImcrm = async policyNumber => {
       <div class="text-sm"></div>
     </div>
 
-    <x-modal v-model="moveToImcrmModal" show-close backdrop>
+    <x-modal v-model="moveToImcrmModal" size="lg" show-close backdrop>
       <div v-if="single">
         This policy already exists in IMCRM as REF:ID
         <Link :href="`${lobLink}`" class="text-primary-500 hover:underline">
@@ -215,6 +215,20 @@ const moveToImcrm = async policyNumber => {
           {{ first_name + ' ' + last_name }}
         </template>
       </DataTable>
+
+      <div class="flex justify-end my-4 gap-3 mb-4">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="submit"
+          @click="onPlanFiltersSubmit"
+        >
+          Apply
+        </x-button>
+        <x-button size="sm" color="primary" @click.prevent="onPlanFiltersReset">
+          Reset
+        </x-button>
+      </div>
     </x-modal>
   </div>
 </template>

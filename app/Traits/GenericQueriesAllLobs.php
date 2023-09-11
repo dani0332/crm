@@ -34,6 +34,7 @@ trait GenericQueriesAllLobs
         if (! class_exists($model)) {
             return false;
         }
+
         return $model;
 
     }
@@ -128,8 +129,9 @@ trait GenericQueriesAllLobs
         }
     }
 
-    public function inslyInsurances(){
-        return  [
+    public function inslyInsurances()
+    {
+        return [
             QuoteTypes::BIKE->value => ['Bike insurance'],
             QuoteTypes::BUSINESS->value => ['Business interruption insurance', 'Contractors all risks', 'Cyber liability', 'Directors and officers liability insurance',
                 'Engineering and plant insurance', 'Fidelity guarantee', 'Group life', 'Group medical insurance', 'Holiday homes',
@@ -144,7 +146,7 @@ trait GenericQueriesAllLobs
             QuoteTypes::HOME->value => ['Home insurance', 'Personal accident'],
             QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
             QuoteTypes::HEALTH->value => ['Individual or family medical'],
-            QuoteTypes::CYCLE->value=> ['Pedal cycle insurance'],
+            QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
             QuoteTypes::PET->value => ['Pet insurance'],
             QuoteTypes::YACHT->value => ['Yacht insurance'],
         ];
