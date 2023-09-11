@@ -60,9 +60,9 @@ class UpdateUserStatus extends Command
             if ($lastActivity < $inactiveThreshold) {
 
                 info('Inside activity check for user : '.$session->user->name);
-                $unAvailableTime = now()->subMinutes(2);
+                $unAvailableTime = now()->subHours(2);
                 info('unavailable time is : '.$unAvailableTime);
-                $offlineTime = now()->subMinutes(1);
+                $offlineTime = now()->subMinutes(5);
 
                 $newStatus = $currentUserStatus;
 
@@ -110,7 +110,7 @@ class UpdateUserStatus extends Command
             $userInactiveThreshold = (int) $userInactiveThreshold->value;
         } else {
             // default is 30 seconds if app storage doesn't exist
-            $userInactiveThreshold = 30;
+            $userInactiveThreshold = 300;
         }
         $inactiveThreshold = now()->subSeconds($userInactiveThreshold);
 

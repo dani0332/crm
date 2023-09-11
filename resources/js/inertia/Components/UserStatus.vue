@@ -19,15 +19,11 @@ const options = {
   forceTLS: false,
 };
 
-Pusher.logToConsole = true;
-
 const pusher = new Pusher(page.props.pusherKey, options);
 const channel = pusher.subscribe('public.'+page.props.appEnv + '.activity.user');
 
 const listen = () => {
-  console.log('listening');
   channel.bind('user.status.changed', function (e) {
-    console.log(e, 'saad');
     if (e?.userId == page.props.auth.user.id) {
       currentStatus.value = e.status;
     }
@@ -40,7 +36,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   channel.unbind('user.status.changed');
-  channel.unsubscribe('activity.user');
+  channel.unsubscribe('public.'+page.props.appEnv + '.activity.user');
 });
 </script>
 
