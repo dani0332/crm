@@ -188,8 +188,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
 
-    Route::post('/activities/create-activity', [ActivitesController::class, 'store'])->name('activities.create.activity');
-    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update.activity');
+    Route::post('/activities/create-activity', [ActivitesController::class, 'store'])->name('activities.create-activity');
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update-activity');
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
@@ -265,7 +265,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('/store', [CommercialVehicleConfigurationContoller::class, 'store'])->name('admin.configure.commerical.vehicles.store');
             Route::get('/edit/{carMake}', [CommercialVehicleConfigurationContoller::class, 'edit'])->name('admin.configure.commerical.vehicles.edit');
             Route::post('/update', [CommercialVehicleConfigurationContoller::class, 'update'])->name('admin.configure.commerical.vehicles.update');
-
         });
     });
 
@@ -279,7 +278,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         if (in_array(quoteTypeCode::Business, newUi())) {
-            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView']);
+            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
