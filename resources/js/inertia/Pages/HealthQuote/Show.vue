@@ -1798,7 +1798,9 @@ onMounted(() => {
             </x-button>
             <template #content> {{ planFiltersCount }} </template>
           </x-badge>
+
           <x-button
+            v-if="false"
             size="sm"
             color="primary"
             @click.prevent="modals.createPlan = true"
