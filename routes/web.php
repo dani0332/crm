@@ -265,7 +265,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('/store', [CommercialVehicleConfigurationContoller::class, 'store'])->name('admin.configure.commerical.vehicles.store');
             Route::get('/edit/{carMake}', [CommercialVehicleConfigurationContoller::class, 'edit'])->name('admin.configure.commerical.vehicles.edit');
             Route::post('/update', [CommercialVehicleConfigurationContoller::class, 'update'])->name('admin.configure.commerical.vehicles.update');
-
         });
     });
 
@@ -275,7 +274,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
 
-        Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
+        Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         if (in_array(quoteTypeCode::Business, newUi())) {
