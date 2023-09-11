@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Log;
 class ReAssignHealthLeadsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue , Queueable;
+
     protected $healthAllocationService;
     protected $advisorId;
 
@@ -25,9 +26,10 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
     public function handle()
     {
-        info('-------- Reassignment health job started at : '. now(). ' ---------');
+        info('-------- Reassignment health job started at : '.now().' ---------');
         if (! $this->healthAllocationService->shouldProceed()) {
             info('Reassignment job is not proceeding as per business timings');
+
             return false;
         }
 
@@ -35,13 +37,13 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
         if (count($leads) == 0) {
             info('No health lead found or either lead is not under assignment criteria');
-            info('-------- Reassignment health job ended at : '. now(). ' ---------');
+            info('-------- Reassignment health job ended at : '.now().' ---------');
+
             return false; // when lead is not on criteria or not found
         }
 
-        foreach($leads as $lead)
-        {
-            info('-------- Reassignment of lead : '. $lead->uuid. ' started ---------');
+        foreach ($leads as $lead) {
+            info('-------- Reassignment of lead : '.$lead->uuid.' started ---------');
             $this->assignTeamBasedOnPrice($lead);
 
             if (! $lead->health_team_type) {
@@ -59,9 +61,9 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             }
 
             $this->assignLead($lead, $advisor); // Assign the lead to the advisor
-            info('-------- Reassignment of lead : '. $lead->uuid. ' ended ---------');
+            info('-------- Reassignment of lead : '.$lead->uuid.' ended ---------');
         }
-        info('-------- Reassignment health job ended at : '. now(). ' ---------');
+        info('-------- Reassignment health job ended at : '.now().' ---------');
     }
 
     private function fetchLead()
