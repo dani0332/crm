@@ -195,10 +195,10 @@
 
         function changeAvailiblity(data, self)
         {
-            $('#online-status-div').hide();
-            $('#offline-status-div').hide();
-            $('#unavailable-status-div').hide();
             if(userId == data.userId){
+                $('#online-status-div').hide();
+                $('#offline-status-div').hide();
+                $('#unavailable-status-div').hide();
                 if(data.status == 1) {
                     $('#online-status-div').show();
                 }
@@ -217,6 +217,7 @@
 
         var channel = pusher.subscribe('public.'+appName + '.activity.user');
         channel.bind('user.status.changed', function(data) {
+            debugger;
             if ($('.car_lead_allocation_table').length > 0) {
                 $('.car_lead_allocation_table').find("tr")
                     .find("td:first")

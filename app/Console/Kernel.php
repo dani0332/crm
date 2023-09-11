@@ -3,6 +3,10 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateHealthStatus;
+use App\Jobs\ReAssignCarLeadsJob;
+use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
+use App\Strategies\ReAssignHealthLeadsJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -43,7 +47,9 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('QuoteAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('websockets:clean')->daily();
+        $schedule
+            ->command('LeadsReassignment:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+
     }
 
     /**

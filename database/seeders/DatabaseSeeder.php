@@ -29,6 +29,7 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
+            addReassignmentTime::class,
         ]);
     }
 }

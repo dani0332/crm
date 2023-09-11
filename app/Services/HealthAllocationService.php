@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -29,6 +30,20 @@ class HealthAllocationService extends AllocationService
             ->where('health_quote_request.is_error_email_sent', false)
             ->whereNull('health_quote_request.advisor_id')
             ->first();
+    }
+
+    public function fetchReAssignmentLead($advisorId)
+    {
+        $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        info('leads will be picked up in reassignment from : '.$from);
+
+        $leads = HealthQuote::whereBetween('created_at', [$from, now()])
+            ->whereNotNull('health_quote_request.price_starting_from')
+            ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::Qualified]);
+        if($advisorId != 0){
+            $leads->where('advisor_id', $advisorId);
+        }
+        return $leads->get();
     }
 
     public function assignTeamBasedOnPrice($lead)
@@ -145,5 +160,15 @@ class HealthAllocationService extends AllocationService
             $leadDetail->save();
         }
         info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
+    }
+
+    public function shouldProceed(): bool
+    {
+        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+        info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
+        $shouldProceed = now()->between($start_time, $end_time);
+
+        return $shouldProceed;
     }
 }

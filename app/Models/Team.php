@@ -51,4 +51,9 @@ class Team extends Model implements AuditableContract
     {
         return $this->attributes['is_active'] == 1 ? 'True' : 'False';
     }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_team');
+    }
 }

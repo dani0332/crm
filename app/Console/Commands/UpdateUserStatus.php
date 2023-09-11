@@ -3,13 +3,19 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\quoteTypeCode;
+use App\Enums\TeamTypeEnum;
 use App\Enums\UserStatusEnum;
 use App\Events\UserStatusChanged;
 use App\Jobs\ReAssignCarLeadsJob;
+use App\Jobs\ReAssignHealthLeadsJob;
 use App\Models\ApplicationStorage;
 use App\Models\Sessions;
+use App\Models\Team;
 use App\Models\User;
 use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
+use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Collection;
@@ -17,6 +23,7 @@ use Illuminate\Support\Facades\DB;
 
 class UpdateUserStatus extends Command
 {
+    use TeamHierarchyTrait;
     /**
      * The name and signature of the console command.
      *
@@ -77,7 +84,17 @@ class UpdateUserStatus extends Command
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus));
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
-                        dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $userId));
+                        $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
+                        $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
+                        if($this->userHaveProduct($userId, $carId))
+                        {
+                            ReAssignCarLeadsJob::dispatch(new CarAllocationService(),$userId);
+                        }
+                        if($this->userHaveProduct($userId, $healthId))
+                        {
+                            ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(),$userId);
+                        }
+
                     }
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {

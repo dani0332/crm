@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\CarQuote;
 use App\Observers\CarQuoteObserver;
 use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -18,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->bind(CarAllocationService::class, function ($app) {
             return new CarAllocationService();
+        });
+
+        $this->app->bind(HealthAllocationService::class, function ($app) {
+            return new HealthAllocationService();
         });
     }
 

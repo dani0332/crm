@@ -381,8 +381,6 @@ class CarAllocationService extends AllocationService
 
         CarQuote::where('id', $lead->id)->update([
             'tier_id' => $tier->id,
-            'deferred' => true,
-            'deferred_at' => now(),
         ]);
 
         info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
@@ -392,17 +390,19 @@ class CarAllocationService extends AllocationService
     {
         $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         info('leads will be picked up in reassignment from : '.$from);
-
-        return CarQuote::where('advisor_id', $advisorId)
-            ->whereBetween('created_at', [$from, now()])
+        $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('quote_status_id', QuoteStatusEnum::NewLead)->get();
+            ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp]);
+        if($advisorId != 0){
+            $leads->where('advisor_id', $advisorId);
+        }
+        return $leads->get();
     }
 
     public function shouldProceed(): bool
     {
-        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_TIME));
-        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_END_TIME));
+        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
         info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
         $shouldProceed = now()->between($start_time, $end_time);
 

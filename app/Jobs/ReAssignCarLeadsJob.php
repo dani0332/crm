@@ -27,6 +27,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
     public function handle()
     {
+        info('-------- Reassignment car job started at : '. now(). ' ---------');
         if (! $this->shouldProceed()) {
             info('Reassignment job is not proceeding as per business timings');
 
@@ -34,7 +35,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
         }
         // Fetch the leads to process, including deferred leads if needed
         $leads = $this->fetchLeads();
-        info('total number of leads found for reassignment are : '.count($leads));
+        if(count($leads) == 0)
+        {
+            info('No car lead found or either lead is not under assignment criteria');
+            info('-------- Reassignment car job ended at : '. now(). ' ---------');
+            return false; // when lead is not on criteria or not found
+        }
         foreach ($leads as $lead) {
             info('--------------- ReAssignment processing current lead : '.$lead->uuid.' ---------------');
             // Find the appropriate tier for the lead
@@ -72,6 +78,8 @@ class ReAssignCarLeadsJob implements ShouldQueue
 
             info('--------------- ReAssignment processing ended for current lead : '.$lead->uuid.' ---------------');
         }
+
+        info('-------- Reassignment car job ended at : '. now(). ' ---------');
     }
 
     protected function shouldProceed(): bool

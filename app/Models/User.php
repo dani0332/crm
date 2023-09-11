@@ -80,6 +80,11 @@ class User extends Authenticatable implements AuditableContract
         return $this->belongsTo(Team::class);
     }
 
+    public function teams()
+    {
+        return $this->belongsToMany(Team::class, 'user_team');
+    }
+
     public function subTeam()
     {
         return $this->belongsTo(Team::class, 'sub_team_id', 'id');
