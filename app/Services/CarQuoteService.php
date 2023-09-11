@@ -813,6 +813,7 @@ class CarQuoteService extends BaseService
                                 $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
                             }
                         } else {
+                            if($item == 'email' && $searchedValue == '0') continue;
                             $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
                         }
                     }

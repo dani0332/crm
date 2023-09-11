@@ -27,7 +27,7 @@ const quoteForm = useForm({
     String(props.quote?.cycle_quote?.has_good_condition) || null,
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const editMode = computed(() => {
   return props.quote ? true : false;
@@ -102,7 +102,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.mobile_no"
             type="tel"
             :disabled="editMode"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />
