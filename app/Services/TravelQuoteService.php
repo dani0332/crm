@@ -216,7 +216,37 @@ class TravelQuoteService extends BaseService
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        return $this->query->orderBy('tqr.created_at', 'DESC');
+        if(isset($request->coverage_code)){
+            $this->query->where(function($q) use ($request){
+                $q->where('tqr.coverage_code', $request->coverage_code)
+                    ->orWhere(function($qInner) use ($request){
+                        if(TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP == $request->coverage_code){
+                            $qInner->where('days_cover_for','=<', 92);
+                        }
+                        if(TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP == $request->coverage_code || TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP == $request->coverage_code){
+                            $qInner->where('days_cover_for','>', 92);
+                        }
+
+                    });
+            });
+        }
+        if(isset($request->direction_code)){
+            if($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND){
+                $this->query->where(function($q) use ($request){
+                    $q->where('tqr.direction_code', $request->direction_code)
+                    ->orWhere(function($qInner) use ($request){
+                            $qInner->where('currently_located_in_id', 1)
+                                ->where('region_cover_for_id','!=', 3);
+                        });
+                });
+            }
+            if($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND){
+                $this->query->where(function($q) use ($request){
+                    $q->where('tqr.direction_code', $request->direction_code)
+                        ->orWhere('region_cover_for_id', 3);
+                });
+            }
+        }
         if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
         } elseif ($isNewManager || $isNewAdvisor) {
@@ -234,25 +264,24 @@ class TravelQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-          //  $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-        //    $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
-         //   $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            //$this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
         }
 
         if (isset($request->code) && $request->code != '') {

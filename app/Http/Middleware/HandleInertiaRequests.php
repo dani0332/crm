@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -57,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'travelQuoteEnum' =>  TravelQuoteEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
