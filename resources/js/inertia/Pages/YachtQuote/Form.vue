@@ -18,7 +18,7 @@ const quoteForm = useForm({
   operator_experience: props.quote?.yacht_quote?.operator_experience || '',
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
 });
@@ -93,7 +93,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.mobile_no"
             type="tel"
             :disabled="editMode"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />

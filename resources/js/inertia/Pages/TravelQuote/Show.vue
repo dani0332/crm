@@ -1870,19 +1870,24 @@ onMounted(() => {
                 class="w-full"
               />
             </x-field>
-            <x-field label="Value" required>
+            <x-field
+              label="Value"
+              required
+              v-if="additionalContact.additional_contact_type === 'mobile_no'"
+            >
               <x-input
-                v-if="additionalContact.additional_contact_type === 'mobile_no'"
                 v-model="additionalContact.additional_contact_val"
                 :rules="[isRequired, isMobileNo]"
                 class="w-full"
               />
             </x-field>
-            <x-field label="Value" required>
+            <x-field
+              label="Value"
+              required
+              v-if="additionalContact.additional_contact_type === 'email'"
+            >
               <x-input
-                v-if="additionalContact.additional_contact_type === 'email'"
                 v-model="additionalContact.additional_contact_val"
-                label="Value"
                 :rules="[isRequired, isEmail]"
                 class="w-full"
               />

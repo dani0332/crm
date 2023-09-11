@@ -22,7 +22,8 @@ const quoteForm = useForm({
   brief_details: props.quote.brief_details,
 });
 
-const { isRequired, emptyOrDecimal, isNumber, isEmail } = useRules();
+const { isRequired, emptyOrDecimal, isNumber, isEmail, isMobileNo } =
+  useRules();
 
 const isEmptyField = ref(false);
 
@@ -130,7 +131,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.mobile_no"
             type="tel"
             :disabled="isEdit"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />
