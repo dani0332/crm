@@ -53,12 +53,13 @@ class LeadsReassignment extends Command
         info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
         $shouldProceed = now()->between($start_time, $end_time);
         if ($shouldProceed) {
-            dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class),0));
-            dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class),0));
+            dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));
+            dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
         } else {
             info('Lead reassignment time is off');
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
+
             return;
         }
     }

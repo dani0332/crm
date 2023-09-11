@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Gate;
 class LeadAllocationController extends Controller
 {
     use TeamHierarchyTrait;
+
     protected $leadAllocationService;
     protected $applicationStorageService;
 
@@ -140,13 +141,11 @@ class LeadAllocationController extends Controller
             if ($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE) {
                 $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
                 $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
-                if($this->userHaveProduct($request->userId, $car->id))
-                {
+                if ($this->userHaveProduct($request->userId, $car->id)) {
                     info('user belong to car so dispatching car reassignment job');
                     dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $request->userId));
                 }
-                if($this->userHaveProduct($request->userId, $health->id))
-                {
+                if ($this->userHaveProduct($request->userId, $health->id)) {
                     info('user belong to health so dispatching health reassignment job');
                     dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $request->userId));
                 }
@@ -155,7 +154,7 @@ class LeadAllocationController extends Controller
             $user = User::where('id', $request->userId)->first();
             if ($user) {
                 $user->status = $request->reason;
-                info('user status is going to change on id : '. $user->id. ' and status : '. $user->status);
+                info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
                 event(new UserStatusChanged($user->id, $user->status));
                 $user->save();
             }

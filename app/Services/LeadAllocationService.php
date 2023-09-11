@@ -881,7 +881,7 @@ class LeadAllocationService extends BaseService
         $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
-        if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
+        if ($endTimeForAllocation <= now()->toTimeString() && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
             info('updateAllocationStatusIfNeeded -- Inside reset case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
@@ -890,7 +890,7 @@ class LeadAllocationService extends BaseService
             $this->updateUserMaxCapacity();
         }
 
-        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
+        if ($carLeadAllocationSwitch == 0 && $carLeadAllocationStartTime <= now()->toTimeString()) {
             info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
@@ -926,7 +926,7 @@ class LeadAllocationService extends BaseService
         $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
         info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
-        if (now()->toTimeString() >= $totalResetTime) {
+        if ($totalResetTime <= now()->toTimeString()) {
             info('should total reset is true');
 
             return true;

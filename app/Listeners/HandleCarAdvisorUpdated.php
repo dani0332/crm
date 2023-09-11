@@ -39,32 +39,25 @@ class HandleCarAdvisorUpdated
         $oldAdvisorId = $event->oldAdvisorId;
         $oldAssignmentType = $event->oldAssignmentType;
 
-        if($lead->assignment_type == AssignmentTypeEnum::SYSTEM_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED)
-        {
+        if ($lead->assignment_type == AssignmentTypeEnum::SYSTEM_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED) {
 
         }
 
-        if($lead->assignment_type == AssignmentTypeEnum::SYSTEM_REASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED)
-        {
+        if ($lead->assignment_type == AssignmentTypeEnum::SYSTEM_REASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) {
 
         }
 
-        if($lead->assignment_type === AssignmentTypeEnum::SYSTEM_REASSIGNED)
-        {
+        if ($lead->assignment_type === AssignmentTypeEnum::SYSTEM_REASSIGNED) {
             // reassignmenet template
-            if ($oldAdvisorId != null && $oldAdvisorId !== $lead->advisor_id())
-            {
+            if ($oldAdvisorId != null && $oldAdvisorId !== $lead->advisor_id()) {
                 // reassignmenet template
-            }
-            else
-            {
+            } else {
                 // assignment template
             }
 
-        } else if ($lead->assignment_type === AssignmentTypeEnum::SYSTEM_ASSIGNED ) {
+        } elseif ($lead->assignment_type === AssignmentTypeEnum::SYSTEM_ASSIGNED) {
             // assignment template
         }
-
 
         //$this->triggerCarQuoteEmail($lead);
         info('Email sending code reached');

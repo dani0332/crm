@@ -16,13 +16,13 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements AuditableContract
 {
+    use Auditable;
     use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
-    use Notifiable;
     use HasRoles;
+    use Notifiable;
     use TwoFactorAuthenticatable;
-    use Auditable;
 
     /**
      * The attributes that are mass assignable.

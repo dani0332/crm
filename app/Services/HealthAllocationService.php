@@ -40,9 +40,10 @@ class HealthAllocationService extends AllocationService
         $leads = HealthQuote::whereBetween('created_at', [$from, now()])
             ->whereNotNull('health_quote_request.price_starting_from')
             ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp, QuoteStatusEnum::Qualified]);
-        if($advisorId != 0){
+        if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
         }
+
         return $leads->get();
     }
 
