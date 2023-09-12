@@ -126,8 +126,8 @@ watch(
         v-model="createForm.provider_id"
         :options="
           $page.props.insuranceProviders?.map(item => ({
-            value: item.id,
-            label: item.text,
+            value: item.value,
+            label: item.label,
           }))
         "
         label="Provider"

@@ -29,7 +29,7 @@ const quoteForm = useForm({
   year_of_manufacture: props.quote?.bike_quote?.year_of_manufacture || null,
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const formFieldReq = reactive({
   nationality: false,
@@ -121,7 +121,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.mobile_no"
             type="tel"
             :disabled="editMode"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />

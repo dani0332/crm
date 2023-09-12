@@ -33,7 +33,7 @@ const quoteForm = useForm({
 const isEdit = computed(() => {
   return route().current().includes('edit');
 });
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const handleConditionalFields = () => {
   if (
@@ -146,6 +146,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.email"
             type="email"
             :disabled="isEdit"
+            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm?.errors?.email"
           />
@@ -155,6 +156,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.mobile_no"
             type="tel"
             :disabled="isEdit"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm?.errors?.mobile_no"
           />
