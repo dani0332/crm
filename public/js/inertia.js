@@ -12424,7 +12424,7 @@ __webpack_require__.r(__webpack_exports__);
       is_disabled: 0,
       is_create: 1,
       repair_type_comp: '',
-      insurance_provider_id: 1,
+      insurance_provider_id: '',
       car_plan_id: null,
       actual_premium: null,
       car_value: null,
@@ -12440,6 +12440,7 @@ __webpack_require__.r(__webpack_exports__);
     });
     var insuranceProviderPlanOptions = (0,vue__WEBPACK_IMPORTED_MODULE_2__.ref)([]);
     var setCarPlans = function setCarPlans() {
+      page.processing = true;
       var id = addPlanForm.insurance_provider_id;
       axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("/insurance-provider-plans?insuranceProviderId=".concat(id, "&quoteUuId=").concat(page.props.record.uuid)).then(function (_ref2) {
         var data = _ref2.data;
@@ -12449,6 +12450,7 @@ __webpack_require__.r(__webpack_exports__);
             label: plan.text
           };
         });
+        page.processing = false;
       })["catch"](function (error) {
         console.error('Error fetching insurance provider plans:', error);
       });
@@ -12465,6 +12467,11 @@ __webpack_require__.r(__webpack_exports__);
         }
       });
     };
+    var preventExponent = function preventExponent(event) {
+      if (event.key === 'e' || event.key === 'E') {
+        event.preventDefault();
+      }
+    };
     var __returned__ = {
       props: props,
       page: page,
@@ -12477,7 +12484,8 @@ __webpack_require__.r(__webpack_exports__);
       insuranceProviderOptions: insuranceProviderOptions,
       insuranceProviderPlanOptions: insuranceProviderPlanOptions,
       setCarPlans: setCarPlans,
-      creatQuotePlan: creatQuotePlan
+      creatQuotePlan: creatQuotePlan,
+      preventExponent: preventExponent
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
       enumerable: false,
@@ -40180,8 +40188,9 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             rules: [$setup.isRequired],
             options: $setup.insuranceProviderPlanOptions,
             placeholder: "Select plan",
-            "class": "w-full"
-          }, null, 8 /* PROPS */, ["modelValue", "rules", "options"])];
+            "class": "w-full",
+            loading: $setup.page.processing
+          }, null, 8 /* PROPS */, ["modelValue", "rules", "options", "loading"])];
         }),
         _: 1 /* STABLE */
       })])])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_6, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_7, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_field, {
@@ -40197,7 +40206,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             rules: [$setup.isRequired],
             "class": "w-full",
             type: "number",
-            placeholder: "Enter Premium without vat"
+            placeholder: "Enter Premium without vat",
+            onKeydown: $setup.preventExponent
           }, null, 8 /* PROPS */, ["modelValue", "rules"])];
         }),
         _: 1 /* STABLE */
@@ -40214,7 +40224,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             rules: [$setup.isRequired],
             "class": "w-full",
             type: "number",
-            placeholder: "Enter Car value"
+            placeholder: "Enter Car value",
+            onKeydown: $setup.preventExponent
           }, null, 8 /* PROPS */, ["modelValue", "rules"])];
         }),
         _: 1 /* STABLE */
@@ -40231,7 +40242,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             rules: [$setup.isRequired],
             "class": "w-full",
             type: "number",
-            placeholder: "Enter excess"
+            placeholder: "Enter excess",
+            onKeydown: $setup.preventExponent
           }, null, 8 /* PROPS */, ["modelValue", "rules"])];
         }),
         _: 1 /* STABLE */
@@ -41783,7 +41795,6 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "mt-4 mr-2",
     color: "orange",
     size: "sm",
-    loading: $setup.assumptionsForm.processing,
     onClick: _cache[13] || (_cache[13] = (0,vue__WEBPACK_IMPORTED_MODULE_6__.withModifiers)(function ($event) {
       return $setup.assumptionState.isEditing = false;
     }, ["prevent"]))
@@ -41792,7 +41803,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createTextVNode)(" Cancel ")];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["loading"])) : (0,vue__WEBPACK_IMPORTED_MODULE_6__.createCommentVNode)("v-if", true), !$setup.can($setup.permissionEnum.ApprovePayments) ? ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_6__.createCommentVNode)("v-if", true), !$setup.can($setup.permissionEnum.ApprovePayments) ? ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_6__.Fragment, {
     key: 1
   }, [$setup.assumptionState.isEditing ? ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createBlock)(_component_x_button, {
     key: 0,

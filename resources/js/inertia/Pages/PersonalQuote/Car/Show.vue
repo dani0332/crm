@@ -1528,7 +1528,7 @@ const confirmSendEmail = () => {
 				</div>
 			</div>
 			<div class="flex justify-end" v-if="!hasRole(rolesEnum.PA) && can(permissionEnum.CarQuotesEdit)">
-				<x-button v-if="assumptionState.isEditing" class="mt-4 mr-2" color="orange" size="sm" :loading="assumptionsForm.processing" @click.prevent="assumptionState.isEditing = false">
+				<x-button v-if="assumptionState.isEditing" class="mt-4 mr-2" color="orange" size="sm"  @click.prevent="assumptionState.isEditing = false">
 					Cancel
 				</x-button>
 				<template v-if="!can(permissionEnum.ApprovePayments)">

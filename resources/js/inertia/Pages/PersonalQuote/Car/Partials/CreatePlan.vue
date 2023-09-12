@@ -41,11 +41,11 @@ const totalPriceVAT = computed(() => {
 })
 
 const addPlanForm = useForm({
-    car_quote_uuid: page.props.record.uuid,
+  car_quote_uuid: page.props.record.uuid,
 	is_disabled: 0,
 	is_create: 1,
 	repair_type_comp: '',
-	insurance_provider_id: 1,
+	insurance_provider_id: '',
 	car_plan_id: null,
 	actual_premium: null,
 	car_value: null,
@@ -63,6 +63,7 @@ const insuranceProviderOptions = computed(() => {
 const insuranceProviderPlanOptions = ref([]);
 
 const setCarPlans = () => {
+  page.processing = true;
   const id = addPlanForm.insurance_provider_id;
   axios
     .get(`/insurance-provider-plans?insuranceProviderId=${id}&quoteUuId=${page.props.record.uuid}`)
@@ -71,6 +72,7 @@ const setCarPlans = () => {
         value: plan.id,
         label: plan.text,
       }));
+      page.processing = false;
     })
     .catch(error => {
       console.error('Error fetching insurance provider plans:', error);
@@ -90,6 +92,11 @@ const creatQuotePlan = isValid => {
   });
 };
 
+const preventExponent = (event) =>{
+  if (event.key === 'e' || event.key === 'E') {
+      event.preventDefault();
+    }
+}
 </script>
 <template>
   <x-form @submit="creatQuotePlan" :auto-focus="false">
@@ -117,6 +124,7 @@ const creatQuotePlan = isValid => {
             :options="insuranceProviderPlanOptions"
             placeholder="Select plan"
             class="w-full"
+            :loading="page.processing"
             />
             </x-field>
           </div>
@@ -131,6 +139,7 @@ const creatQuotePlan = isValid => {
         class="w-full"
         type="number"
         placeholder="Enter Premium without vat"
+        @keydown = "preventExponent"
         />
         </x-field>
       </div>
@@ -142,6 +151,7 @@ const creatQuotePlan = isValid => {
         class="w-full"
         type="number"
         placeholder="Enter Car value"
+        @keydown = "preventExponent"
         />
         </x-field>
       </div>
@@ -153,6 +163,7 @@ const creatQuotePlan = isValid => {
         class="w-full"
         type="number"
         placeholder="Enter excess"
+        @keydown = "preventExponent"
         />
         </x-field>
       </div>
