@@ -5,18 +5,15 @@ namespace App\Http\Controllers\V2;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
-use App\Services\CentralService;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
 {
-
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -28,7 +25,7 @@ class CarQuoteController extends Controller
 
         return inertia('LostQuotes/CarSold', [
             'quotes' => $quotes,
-            'advisors' => $advisors
+            'advisors' => $advisors,
         ]);
     }
 
@@ -43,7 +40,7 @@ class CarQuoteController extends Controller
 
         return inertia('LostQuotes/CarUncontactable', [
             'quotes' => $quotes,
-            'advisors' => $advisors
+            'advisors' => $advisors,
         ]);
     }
 
@@ -85,7 +82,7 @@ class CarQuoteController extends Controller
     {
         $response = CarQuoteRepository::create($request->validated());
 
-        if (!empty($response->errors) || !empty($response->msg)) {
+        if (! empty($response->errors) || ! empty($response->msg)) {
             vAbort($response->msg);
         }
 

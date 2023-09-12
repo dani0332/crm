@@ -34,7 +34,7 @@ class CarSoldResubmissions implements ShouldQueue
         //
     }
 
-      /**
+    /**
      * Execute the job.
      *
      * @return void

@@ -64,13 +64,13 @@ class UpdateLeadStatusRequest extends FormRequest
             //check for deadline date
             $batch = RenewalBatch::where([
                 'name' => $quote->renewal_batch,
-            ])->with('deadline', function($q) {
-                $q->where('quote_status_id' , request()->leadStatus);
+            ])->with('deadline', function ($q) {
+                $q->where('quote_status_id', request()->leadStatus);
             })->first();
 
             if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
-                isset($batch->deadline) ) {
-                if ( now()->gt(($batch->deadline->deadline_date . ' 23:59:59'))) {
+                isset($batch->deadline)) {
+                if (now()->gt(($batch->deadline->deadline_date.' 23:59:59'))) {
                     vAbort('Not possible to select the lead status after the deadline has passed.');
                 }
             }

@@ -50,13 +50,11 @@ class CarLostStatusRejected implements ShouldQueue
             'notes' => $this->carLostQuoteLog->notes,
         ];
 
-
-
         $to = $this->quote->advisor->email;
 
         $cc = [];
 
-        if($rejectionEmailCc = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC)->first()) {
+        if ($rejectionEmailCc = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC)->first()) {
             $cc[] = $rejectionEmailCc->value;
         }
 
@@ -64,7 +62,7 @@ class CarLostStatusRejected implements ShouldQueue
             $cc = array_merge($cc, $this->quote->advisor->managers->pluck('email')->toArray());
         }
 
-        if(sizeof($cc)) {
+        if (count($cc)) {
             $cc = implode(',', $cc);
         }
 

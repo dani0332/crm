@@ -4,12 +4,10 @@ namespace App\Jobs;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarTeamType;
-use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\ApplicationStorage;
 use App\Models\RenewalBatch;
-use App\Models\RenewalStatusProcess;
 use App\Models\User;
 use App\Repositories\RenewalBatchRepository;
 use App\Services\SIBService;
@@ -52,40 +50,39 @@ class UnconSubmissionReminder implements ShouldQueue
         //get next uncontactable batch
         $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
-        if(!isset($upcomingBatch->id))
-        {
+        if (! isset($upcomingBatch->id)) {
             info('No upcoming batch available for uncontactable resubmission reminder. no need to send email');
+
             return true;
         }
 
         //include next 3 more batches for information
-        $nextBatches = RenewalBatch::whereHas('deadline', function($q) use($upcomingBatch) {
-                $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
+        $nextBatches = RenewalBatch::whereHas('deadline', function ($q) use ($upcomingBatch) {
+            $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
                 ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
-            })->with(['deadline' => function($q) use($upcomingBatch) {
-                $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
+        })->with(['deadline' => function ($q) use ($upcomingBatch) {
+            $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
                 ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
-            }])
+        }])
             ->limit(3)->get();
 
         $emailData['batches'][] = [
             'batch' => $upcomingBatch->name,
             'deadline_date' => Carbon::parse($upcomingBatch->deadline->deadline_date)->format('jS M Y'),
-            'highlight' => true
+            'highlight' => true,
         ];
 
-        foreach ($nextBatches as $batch)
-        {
+        foreach ($nextBatches as $batch) {
             $emailData['batches'][] = [
                 'batch' => $batch->name,
                 'deadline_date' => Carbon::parse($batch->deadline->deadline_date)->format('jS M Y'),
-                'highlight' => false
+                'highlight' => false,
             ];
         }
 
-        $advisors = User::whereHas('teams', function($q){
+        $advisors = User::whereHas('teams', function ($q) {
             $q->whereIn('name', [CarTeamType::RENEWALS, CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::MOTOR_CORPLINE_RENEWALS]);
-        })->whereHas('roles', function($q){
+        })->whereHas('roles', function ($q) {
             $q->whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         })->with(['managers'])->get();
 

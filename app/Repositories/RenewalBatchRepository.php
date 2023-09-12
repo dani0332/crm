@@ -4,7 +4,6 @@ namespace App\Repositories;
 
 use App\Models\RenewalBatch;
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
 
 class RenewalBatchRepository extends BaseRepository
 {
@@ -22,14 +21,14 @@ class RenewalBatchRepository extends BaseRepository
     {
         $nextMonday = Carbon::now()->next('Monday');
 
-        $query = $this->whereHas('deadline', function($q) use($quoteStatusId, $nextMonday) {
+        $query = $this->whereHas('deadline', function ($q) use ($quoteStatusId, $nextMonday) {
 
             $q->whereBetween('deadline_date', [Carbon::now(), $nextMonday])->orderBy('deadline_date');
 
             if ($quoteStatusId != null) {
                 $q->where('quote_status_id', $quoteStatusId);
             }
-        })->with(['deadline' => function($q) use($quoteStatusId, $nextMonday) {
+        })->with(['deadline' => function ($q) use ($quoteStatusId, $nextMonday) {
 
             $q->whereBetween('deadline_date', [Carbon::now(), $nextMonday])->orderBy('deadline_date');
 
