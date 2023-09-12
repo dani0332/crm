@@ -34,9 +34,9 @@ const quoteForm = useForm({
   direction_code: props.quote?.direction_code
     ? props.quote?.direction_code
     : editMode.value &&
-      props.quote?.destination_id_text == 'United Arab Emirates'
+      props.quote?.region_cover_for_id == 3
     ? 'travelUaeInbound'
-    : editMode.value && props.destination_id_text != 'United Arab Emirates'
+    : editMode.value && props.quote?.currently_located_in_id_text=='UAE' && props.quote?.region_cover_for_id != 3
     ? 'travelUaeOutbound'
     : null,
   has_arrived_uae:
