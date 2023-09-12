@@ -272,14 +272,20 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-        $renewalQuotes = RenewalQuoteProcess::query()
+
+        $query = RenewalQuoteProcess::query()
             ->select('batch as renewal_batch')
             ->where([
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
-            ])
-            ->groupBy('batch');
-        $renewalQuotes = $renewalQuotes->simplePaginate();
+            ]);
+
+        if(!empty($request->batch)) {
+            $query->where('batch', $request->batch);
+        }
+
+        $renewalQuotes = $query->groupBy('batch')
+            ->simplePaginate();
 
         return inertia('Renewals/Batches', [
             'batches' => $renewalQuotes,
