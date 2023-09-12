@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -142,7 +143,8 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier'
+                'cqr.car_value_tier',
+                DB::raw('IF(cqr.customer_id = cqr.customer_id, "'.CustomerTypeEnum::Individual.'", "'.CustomerTypeEnum::Entity.'") as customer_type')
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -698,6 +700,8 @@ class CarQuoteService extends BaseService
             case 'show_renewal_upload_leads':
                 $title = 'Show Renewal Upload';
                 break;
+            case 'customer_type':
+                $title = 'Customer Type';
             default:
                 break;
         }

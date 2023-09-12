@@ -39,6 +39,7 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
+  customerTypeEnum: Array
 });
 
 const page = usePage();
@@ -1194,6 +1195,10 @@ onMounted(() => {
             <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CUSTOMER TYPE</dt>
+              <dd>{{ quote.customer_type }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
             <dd>{{ quote.created_at }}</dd>
           </div>
@@ -1249,60 +1254,6 @@ onMounted(() => {
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
-            <dd>{{ quote.first_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
-            <dd>{{ quote.last_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MOBILE NUMBER</dt>
-            <dd>{{ quote.mobile_no }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GENDER</dt>
-            <dd>{{ genderText(quote.gender).value }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MARITAL STATUS</dt>
-            <dd>{{ quote.marital_status_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NATIONALITY</dt>
-            <dd>{{ quote.nationality_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMIRATE OF VISA</dt>
-            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MEMBER CATEGORY</dt>
-            <dd>{{ quote.member_category_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SALARY BAND</dt>
-            <dd>{{ quote.salary_band_id_text }}</dd>
           </div>
         </dl>
       </div>
@@ -1367,6 +1318,129 @@ onMounted(() => {
         </dl>
       </div>
     </div>
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div>
+              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+              <x-divider class="mb-4 mt-1" />
+          </div>
+          <div class="text-sm">
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED FIRST NAME</dt>
+                      <dd>
+                          <x-input
+                              placeholder="INSURED FIRST NAME"
+                              class="w-full"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED LAST NAME</dt>
+                      <dd>
+                          <x-input
+                              placeholder="INSURED LAST NAME"
+                              class="w-full"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">NATIONALITY</dt>
+                      <dd>{{ quote.nationality_id_text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">DATE OF BIRTH</dt>
+                      <dd>{{ quote.dob }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                      <dd>
+                          <x-input
+                              placeholder="EMIRATES ID NUMBER"
+                              class="w-full"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                      <dd>
+                          <DatePicker
+                              placeholder="EMIRATES ID EXPIRY DATE"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATE OF VISA</dt>
+                      <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">GENDER</dt>
+                      <dd>{{ genderText(quote.gender).value }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MARITAL STATUS</dt>
+                      <dd>{{ quote.marital_status_id_text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">SALARY BAND</dt>
+                      <dd>{{ quote.salary_band_id_text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MEMBER CATEGORY</dt>
+                      <dd>{{ quote.member_category_id_text }}</dd>
+                  </div>
+              </dl>
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY NAME</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+              </dl>
+              <div class="flex justify-end">
+                  <x-button
+                      class="mt-4"
+                      color="emerald"
+                      size="sm"
+                      :loading="leadStatusForm.processing"
+                      @click.prevent="onLeadStatus"
+                  >
+                      Update Profile
+                  </x-button>
+              </div>
+          </div>
+      </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
