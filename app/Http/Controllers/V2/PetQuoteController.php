@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -64,7 +65,7 @@ class PetQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('/personal-quotes/pet/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
+        return redirect(route('pet-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -83,7 +84,7 @@ class PetQuoteController extends Controller
 
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
 
@@ -95,6 +96,8 @@ class PetQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
 
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
 
         return inertia('PetQuote/Show', [
             'quoteType' => QuoteTypes::PET,
@@ -111,6 +114,7 @@ class PetQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 
@@ -141,6 +145,6 @@ class PetQuoteController extends Controller
     {
         PetQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote is updated successfully.');
+        return redirect(route('pet-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
 }

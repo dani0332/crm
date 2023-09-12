@@ -10,6 +10,7 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -69,9 +70,11 @@ class BikeQuoteController extends Controller
 
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('BikeQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
+        return inertia(
+            'BikeQuote/Form',
+            array_merge($data, [
+                'quote' => $quote,
+            ])
         );
     }
 
@@ -87,7 +90,7 @@ class BikeQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BIKE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
 
@@ -97,6 +100,8 @@ class BikeQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::BIKE->id(), $quote->id);
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
@@ -112,6 +117,7 @@ class BikeQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 

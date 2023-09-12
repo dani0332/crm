@@ -24,6 +24,7 @@ defineProps({
   lostReasons: Object,
   quoteStatusEnum: Object,
   duplicateAllowedLobs: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -34,7 +35,6 @@ const historyLoading = ref(false);
 
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
-
 
 const modals = reactive({
   duplicate: false,
@@ -57,7 +57,7 @@ const openDuplicate = () => {
 
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -84,14 +84,14 @@ const onCreateDuplicate = isValid => {
         </x-button>
         <Link
           v-if="can(permissionsEnum.PetQuotesEdit)"
-          :href="`/personal-quotes/pet/${quote.uuid}/edit`"
+          :href="route('pet-quotes-edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
         <Link
           v-if="can(permissionsEnum.PetQuotesList)"
-          href="/personal-quotes/pet"
+          :href="route('pet-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
@@ -102,31 +102,32 @@ const onCreateDuplicate = isValid => {
         <template #header> Duplicate Lead </template>
         <x-form @submit="onCreateDuplicate" :auto-focus="false">
           <div class="grid gap-4">
-            <x-select
-              v-model="leadDuplicateForm.lob_team"
-              label="LOBs"
-              :options="
-                duplicateAllowedLobs.map(lob => ({
-                  value: lob,
-                  label: lob,
-                }))
-              "
-              :rules="[isRequired]"
-              placeholder="Select LOB For Duplication"
-              class="w-full"
-              multiple
-            />
-            <x-select
-              v-model="leadDuplicateForm.lob_team_sub_selection"
-              label="Reason"
-              :rules="[isRequired]"
-              class="w-full"
-              :options="[
-                { value: 'new_enquiry', label: 'New enquiry' },
-                { value: 'record_only', label: 'Record purposes only' },
-              ]"
-            />
-
+            <x-field label="LOBs" required>
+              <x-select
+                v-model="leadDuplicateForm.lob_team"
+                :options="
+                  duplicateAllowedLobs.map(lob => ({
+                    value: lob,
+                    label: lob,
+                  }))
+                "
+                :rules="[isRequired]"
+                placeholder="Select LOB For Duplication"
+                class="w-full"
+                multiple
+              />
+            </x-field>
+            <x-field label="Reason" required>
+              <x-select
+                v-model="leadDuplicateForm.lob_team_sub_selection"
+                :rules="[isRequired]"
+                class="w-full"
+                :options="[
+                  { value: 'new_enquiry', label: 'New enquiry' },
+                  { value: 'record_only', label: 'Record purposes only' },
+                ]"
+              />
+            </x-field>
             <x-button
               color="orange"
               type="submit"
@@ -143,15 +144,17 @@ const onCreateDuplicate = isValid => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -275,15 +278,17 @@ const onCreateDuplicate = isValid => {
             <dd>{{ quote.quote_detail?.lost_reason?.text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Parent Ref-ID
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.parent_duplicate_quote_id }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
         </dl>
       </div>
@@ -356,6 +361,12 @@ const onCreateDuplicate = isValid => {
     />
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <LeadHistory :quote="quote" />
 

@@ -125,6 +125,9 @@ class DashboardController extends Controller
         $car = $this->getProductByName(quoteTypeCode::Car);
         $teams = $this->getTeamsByProductId($car->id);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
+        $teams = $teams->filter(function ($item) use ($commonTeams) {
+            return in_array($item->id, $commonTeams);
+        });
         $tiers = $this->tierService->getTPLTiers();
         $commonTeam = 0;
         if (count($commonTeams) > 0) {
@@ -160,6 +163,8 @@ class DashboardController extends Controller
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -171,7 +176,16 @@ class DashboardController extends Controller
             $records->whereIn('tiers.id', $tiers);
         }
 
-        if ($tplTeam != null) {
+        if (isset($request->team_filter) && $request->team_filter != 'undefined') {
+            $records->whereIn('users.id', function ($query) use ($request) {
+                $query->distinct()
+                    ->select('users.id')
+                    ->from('users')
+                    ->join('user_team', 'user_team.user_id', 'users.id')
+                    ->join('teams', 'teams.id', 'user_team.team_id')
+                    ->whereIn('teams.id', $request->team_filter);
+            });
+        } elseif ($tplTeam != null) {
             $records->whereIn('users.id', function ($query) use ($tplTeam) {
                 $query->distinct()
                     ->select('users.id')
@@ -180,6 +194,15 @@ class DashboardController extends Controller
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->where('teams.id', $tplTeam->id);
             });
+        }
+
+        if (isset($request->userFilter) && $request->userFilter != 'null') {
+            $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
+        }
+
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];
@@ -265,6 +288,8 @@ class DashboardController extends Controller
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -285,6 +310,10 @@ class DashboardController extends Controller
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->whereIn('teams.id', $request->team_filter);
             });
+
+            if (isset($request->sub_team_filter) && $request->sub_team_filter != 'undefined') {
+                $records->whereIn('users.sub_team_id', $request->sub_team_filter);
+            }
         } else {
             $organicTeam = Team::where('name', 'Organic')->first();
             $records->whereIn('users.id', function ($query) use ($organicTeam) {
@@ -299,6 +328,11 @@ class DashboardController extends Controller
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
+        }
+
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];
@@ -344,19 +378,17 @@ class DashboardController extends Controller
 
     public function renderComprehensiveDashboard(Request $request)
     {
-        $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
+        // $carUsers = $this->getUsersByProductName(quoteTypeCode::Car);
         $tiers = Tier::where('can_handle_tpl', 0)->orderBy('name', 'asc')->where('name', '!=', TiersEnum::TIER_R)->where('is_active', 1)->get();
         $comprehensiveDashboardStats = $this->getComprehensiveDashboardStats($request, $tiers);
         info('inside renderComprehensiveDashboard comp stats are : '.json_encode($comprehensiveDashboardStats));
         $teams = $this->getTeamsByProductName(quoteTypeCode::Car);
         $commonTeams = $this->getCommonTeamsForCurrentUserWithCar();
-        info('inside renderComprehensiveDashboard common teams are : '.json_encode($commonTeams));
-        $commonTeam = 0;
-        if (count($commonTeams) > 0) {
-            $commonTeam = $commonTeams[0];
-        }
+        $teams = $teams->filter(function ($item) use ($commonTeams) {
+            return in_array($item->id, $commonTeams);
+        });
 
-        return view('dashboard.comprehensive_dashboard', compact('carUsers', 'tiers', 'comprehensiveDashboardStats', 'teams', 'commonTeam'));
+        return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
     }
 
     public function conversionStats($quoteType)
@@ -428,5 +460,15 @@ class DashboardController extends Controller
     public function getUsersByTeam(Request $request)
     {
         return $this->getUsersByTeamId($request->team_filter);
+    }
+
+    public function getSubTeamsByTeam(Request $request)
+    {
+        return $this->getSubTeamsByTeamIds($request->team_filter);
+    }
+
+    public function getUsersBySubTeam(Request $request)
+    {
+        return $this->getUsersBySubTeamIds($request->sub_team_filter);
     }
 }

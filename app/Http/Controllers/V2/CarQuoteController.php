@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
+use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
@@ -133,6 +134,13 @@ class CarQuoteController extends Controller
     public function changeInsurer(ChangeInsurerRequest $request)
     {
         $response = CarQuoteRepository::changeInsurer($request->validated());
+
+        return response()->json($response);
+    }
+
+    public function updateCarPlanDetails(UpdateCarQuotePlanDetailsRequest $request)
+    {
+        $response = CarQuoteRepository::updateCareQuotePlanDetails($request->validated());
 
         return response()->json($response);
     }

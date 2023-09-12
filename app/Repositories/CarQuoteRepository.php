@@ -100,4 +100,18 @@ class CarQuoteRepository extends BaseRepository
     {
         return UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
     }
+
+    public function fetchUpdateCareQuotePlanDetails($data)
+    {
+        $payLoad = [
+            'quoteUID' => $data['quote_uuid'],
+            'update' => true,
+        ];
+        $payLoad['plans'][] = (object) [
+            'planId' => (int) $data['plan_id'],
+            'isPayLaterActive' => true,
+        ];
+
+        return Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
+    }
 }

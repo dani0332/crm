@@ -34,443 +34,673 @@ use App\Repositories\UserRepository;
         return newDate;
     }
     $(document).ready(function() {
-        // Getting the required objects from laravel into javascript for checks and handling of data based on roles
-        var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
-        var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
-        var isManagerOrDeputy = $("#isManagerOrDeputy").val();
-        let canExtractData = '{{ auth()->user()->can(PermissionsEnum::DATA_EXTRACTION) }}';
-        var isLeadPool = $("#isLeadPool").val();
-        var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
-        var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
-        var isCarAdvisor = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('CAR_ADVISOR')); ?>');
-        // Adding custom search fields for admin role
-        if (isAdmin) {
-            model.searchProperties.push('is_ecommerce');
-            model.searchProperties.push('payment_status_id');
-        }
-        // validation before form submit usually for date fields
-        $('#searchGenericSubmit').on('click', function(e) {
-            e.preventDefault();
-            if ($('#advisor_assigned_date').val() != '' && $('#advisor_assigned_date_end').val() == '') {
-                $('#assigned_to_date_end').next().html('Please select assigned to end date');
-                return false;
-            }
-            if ($('#advisor_assigned_date').val() == '' && $('#advisor_assigned_date_end').val() != '') {
-                $('#advisor_assigned_date').next().html('Please select assigned start date');
-                return false;
-            }
-            if ($('#renewal_expiry_date').val() == '' && $('#renewal_expiry_date_end').val() != '') {
-                $('#renewal_expiry_date').next().html('Please select renewal start date');
-                return false;
-            }
-            if ($('#renewal_expiry_date').val() != '' && $('#renewal_expiry_date_end').val() == '') {
-                $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
-                return false;
-            }
-            if ($('#previous_policy_expiry_date').val() != '' && $('#previous_policy_expiry_date_end')
-                .val() == '') {
-                $('#previous_policy_expiry_date_end').next().html(
-                    'Please select previous policy expiry date to end date');
-                return false;
-            }
-            if ($('#created_at').val() != '' && $('#created_at_end').val() == '') {
-                $('#created_at_end').next().html('Please select created end date');
-                return false;
-            }
-            if ($('#created_at').val() == '' && $('#created_at_end').val() != '') {
-                $('#created_at').next().html('Please select created start date');
-                return false;
-            }
-            if ($('#next_followup_date').val() != '' && $('#next_followup_date_end').val() == '') {
-                $('#next_followup_date_end').next().html('Please select next followup end date');
-                return false;
-            }
-            if ($('#next_followup_date').val() == '' && $('#next_followup_date_end').val() != '') {
-                $('#next_followup_date').next().html('Please select next followup start date');
-                return false;
-            }
-            $("span").each(function(k, v) {
-                if ($(v).hasClass('text-danger')) {
-                    $(v).html('');
+                // Getting the required objects from laravel into javascript for checks and handling of data based on roles
+                var model = JSON.parse('<?php echo json_encode(get_object_vars($model)); ?>');
+                var isAdmin = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('ADMIN')); ?>');
+                var isManagerOrDeputy = $("#isManagerOrDeputy").val();
+                let canExtractData = '{{ auth()->user()->can(PermissionsEnum::DATA_EXTRACTION) }}';
+                var isLeadPool = $("#isLeadPool").val();
+                var isNewBusinessUser = JSON.parse('<?php echo json_encode($isNewBusinessUser); ?>');
+                var isManualAllocationAllowed = JSON.parse('<?php echo json_encode($isManualAllocationAllowed); ?>');
+                var isCarAdvisor = JSON.parse('<?php echo json_encode(Auth::user()->hasRole('CAR_ADVISOR')); ?>');
+                // Adding custom search fields for admin role
+                if (isAdmin) {
+                    model.searchProperties.push('is_ecommerce');
+                    model.searchProperties.push('payment_status_id');
                 }
-            });
-            $('#searchTable').submit();
-        });
-        var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car', 'pet'];
-        var skipPropertiesArray = [];
-        // Getting the skip properties based on loggedin user role
-        skipPropertiesArray = model.skipProperties['list'].split(',');
-
-        // MS: Hide columns for car_advisor - part1
-        if (model.modelType == '{{ quoteTypeCode::Car }}' &&
-            '{{ Auth::user()->hasRole(RolesEnum::CarAdvisor) }}') {
-            skipPropertiesArray.push('source');
-            skipPropertiesArray.push('lost_reason');
-        }
-        if (model.modelType == '{{ quoteTypeCode::Car }}' &&
-            '{{ Auth::user()->hasRole(RolesEnum::CarManager) }}') {
-            model.searchProperties.push('show_renewal_upload_leads');
-        }
-        var modelPropertiesArray = convertObjectToArray(model.properties);
-        $('#modelType').val(model.modelType);
-        var dataTableColumns = [];
-        for (var i = 0; i < modelPropertiesArray.length; i++) {
-            if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
-                // checking if the model type is either leadstatus or teams because it needs to be handled differently
-                if (model.modelType == 'LeadStatus' || model.modelType == 'Team') {
-                    // checking if the property is id field to add link on id field
-                    if (modelPropertiesArray[i].name == 'id') {
-                        dataTableColumns.push({
-                            data: "id",
-                            name: "id",
-                            render: function(data, type, row) {
-                                var url = '/quotes/' + model.modelType.toLowerCase();
-                                return "<a target='_blank' href='" + url + '/' + row.uuid + "'>" +
-                                    row.id + "</a>";
-                            },
-                        });
-                    } else {
-                        // adding all columns except id field
-                        dataTableColumns.push({
-                            data: modelPropertiesArray[i].name,
-                            name: modelPropertiesArray[i].name
-                        });
+                // validation before form submit usually for date fields
+                $('#searchGenericSubmit').on('click', function(e) {
+                    e.preventDefault();
+                    if ($('#advisor_assigned_date').val() != '' && $('#advisor_assigned_date_end').val() == '') {
+                        $('#assigned_to_date_end').next().html('Please select assigned to end date');
+                        return false;
                     }
-                } else {
-                    // adding properties for all types except leadstatus and teams
-                    if (modelPropertiesArray[i].name == 'id') {
-                        // Handling id field
-                        if (isManualAllocationAllowed && allowedModelTypes.includes(model.modelType
-                                .toLocaleLowerCase())) {
-                            // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
-                            dataTableColumns.push({
-                                data: "id",
-                                name: "id",
-                                render: function(data, type, row, meta) {
-                                    if (row.quote_status_id !=
-                                        '{{ QuoteStatusEnum::TransactionApproved }}' || isLeadPool) {
-                                        return (
-                                            '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
-                                            data + '">'
-                                        );
-                                    } else {
-                                        return '';
-                                    }
-
-                                },
-                            });
+                    if ($('#advisor_assigned_date').val() == '' && $('#advisor_assigned_date_end').val() != '') {
+                        $('#advisor_assigned_date').next().html('Please select assigned start date');
+                        return false;
+                    }
+                    if ($('#renewal_expiry_date').val() == '' && $('#renewal_expiry_date_end').val() != '') {
+                        $('#renewal_expiry_date').next().html('Please select renewal start date');
+                        return false;
+                    }
+                    if ($('#renewal_expiry_date').val() != '' && $('#renewal_expiry_date_end').val() == '') {
+                        $('#renewal_expiry_date_end').next().html('Please select renewal to end date');
+                        return false;
+                    }
+                    if ($('#previous_policy_expiry_date').val() != '' && $('#previous_policy_expiry_date_end')
+                        .val() == '') {
+                        $('#previous_policy_expiry_date_end').next().html(
+                            'Please select previous policy expiry date to end date');
+                        return false;
+                    }
+                    if ($('#created_at').val() != '' && $('#created_at_end').val() == '') {
+                        $('#created_at_end').next().html('Please select created end date');
+                        return false;
+                    }
+                    if ($('#created_at').val() == '' && $('#created_at_end').val() != '') {
+                        $('#created_at').next().html('Please select created start date');
+                        return false;
+                    }
+                    if ($('#next_followup_date').val() != '' && $('#next_followup_date_end').val() == '') {
+                        $('#next_followup_date_end').next().html('Please select next followup end date');
+                        return false;
+                    }
+                    if ($('#next_followup_date').val() == '' && $('#next_followup_date_end').val() != '') {
+                        $('#next_followup_date').next().html('Please select next followup start date');
+                        return false;
+                    }
+                    $("span").each(function(k, v) {
+                        if ($(v).hasClass('text-danger')) {
+                            $(v).html('');
                         }
-                        // Adding link field for id field
-                        var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
-                        dataTableColumns.push({
-                            data: 'code',
-                            name: 'code',
-                            render: function(data, type, row) {
-                                var url = '/quotes/' + model.modelType.toLowerCase();
-                                var href = "<a target='_blank' href='" + url + '/' + row.uuid +
-                                    "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
-                                return href;
-                            }
-                        });
-                    } else {
-                        // Adding all columns except id field
-                        if (modelPropertiesArray[i].name !== 'code') {
-                            // Handling select field separately because there data is selected in query as field name with suffix of text
-                            if (modelPropertiesArray[i].value.indexOf('select') > -1) {
+                    });
+                    $('#searchTable').submit();
+                });
+                var allowedModelTypes = ['home', 'health', 'life', 'business', 'travel', 'car', 'pet'];
+                var skipPropertiesArray = [];
+                // Getting the skip properties based on loggedin user role
+                skipPropertiesArray = model.skipProperties['list'].split(',');
+
+                // MS: Hide columns for car_advisor - part1
+                if (model.modelType == '{{ quoteTypeCode::Car }}' &&
+                    '{{ Auth::user()->hasRole(RolesEnum::CarAdvisor) }}') {
+                    skipPropertiesArray.push('source');
+                    skipPropertiesArray.push('lost_reason');
+                }
+                if (model.modelType == '{{ quoteTypeCode::Car }}' &&
+                    '{{ Auth::user()->hasRole(RolesEnum::CarManager) }}') {
+                    model.searchProperties.push('show_renewal_upload_leads');
+                }
+                var modelPropertiesArray = convertObjectToArray(model.properties);
+                $('#modelType').val(model.modelType);
+                var dataTableColumns = [];
+                for (var i = 0; i < modelPropertiesArray.length; i++) {
+                    if (!skipPropertiesArray.includes(modelPropertiesArray[i].name)) {
+                        // checking if the model type is either leadstatus or teams because it needs to be handled differently
+                        if (model.modelType == 'LeadStatus' || model.modelType == 'Team') {
+                            // checking if the property is id field to add link on id field
+                            if (modelPropertiesArray[i].name == 'id') {
                                 dataTableColumns.push({
-                                    data: modelPropertiesArray[i].name + '_text',
-                                    name: modelPropertiesArray[i].name
+                                    data: "id",
+                                    name: "id",
+                                    render: function(data, type, row) {
+                                        var url = '/quotes/' + model.modelType.toLowerCase();
+                                        return "<a target='_blank' href='" + url + '/' + row.uuid + "'>" +
+                                            row.id + "</a>";
+                                    },
                                 });
                             } else {
+                                // adding all columns except id field
                                 dataTableColumns.push({
                                     data: modelPropertiesArray[i].name,
                                     name: modelPropertiesArray[i].name
                                 });
                             }
+                        } else {
+                            // adding properties for all types except leadstatus and teams
+                            if (modelPropertiesArray[i].name == 'id') {
+                                // Handling id field
+                                if (isManualAllocationAllowed && allowedModelTypes.includes(model.modelType
+                                        .toLocaleLowerCase())) {
+                                    // Checkboxes should be available if the user is Manager Or deputy also the model type is allowed
+                                    dataTableColumns.push({
+                                        data: "id",
+                                        name: "id",
+                                        render: function(data, type, row, meta) {
+                                            if (row.quote_status_id !=
+                                                '{{ QuoteStatusEnum::TransactionApproved }}' || isLeadPool) {
+                                                return (
+                                                    '<input type="checkbox" id="tmLeadID" class="tmleadCheckbox" name="tmLeadID" value="' +
+                                                    data + '">'
+                                                );
+                                            } else {
+                                                return '';
+                                            }
+
+                                        },
+                                    });
+                                }
+                                // Adding link field for id field
+                                var isAllowedModel = allowedModelTypes.includes(model.modelType.toLocaleLowerCase());
+                                dataTableColumns.push({
+                                    data: 'code',
+                                    name: 'code',
+                                    render: function(data, type, row) {
+                                        var url = '/quotes/' + model.modelType.toLowerCase();
+                                        var href = "<a target='_blank' href='" + url + '/' + row.uuid +
+                                            "'>" + (isAllowedModel ? row.code : row.id) + "</a>";
+                                        return href;
+                                    }
+                                });
+                            } else {
+                                // Adding all columns except id field
+                                if (modelPropertiesArray[i].name !== 'code') {
+                                    // Handling select field separately because there data is selected in query as field name with suffix of text
+                                    if (modelPropertiesArray[i].value.indexOf('select') > -1) {
+                                        dataTableColumns.push({
+                                            data: modelPropertiesArray[i].name + '_text',
+                                            name: modelPropertiesArray[i].name
+                                        });
+                                    } else {
+                                        dataTableColumns.push({
+                                            data: modelPropertiesArray[i].name,
+                                            name: modelPropertiesArray[i].name
+                                        });
+                                    }
+                                }
+                            }
                         }
-                    }
+                    } <<
+                    << << < HEAD
                 }
-            }
-        }
-        // Initializing the datatable
-        var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
-            ordering: false,
-            info: true,
-            searching: false,
-            dom: 'rBfrtip',
-            bLengthChange: false,
-            stateSave: true,
-            serverSide: true,
-            paging: true,
-            processing: true,
-            scrollX: true,
-            ajax: {
-                url: '/quotes/' + model.modelType.toLowerCase(),
-                data: function(d) {
-                    var carProps = model.searchProperties;
-                    carProps = [...new Set(carProps)];
-                    carProps.forEach(element => {
-                        d[element] = $('#' + element).val();
-                    });
-                    if (!isCarAdvisor) {
-                        d.advisor_id = $('#advisor_id').val();
-                    }
-                    d.advisor_assigned_date = $('#advisor_assigned_date').val();
-                    d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
-                    d.renewal_expiry_date = $('#renewal_expiry_date').val();
-                    d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
-                    d.policy_number = $('#policy_number').val();
-                    if (isManagerOrDeputy == '1') d.show_renewal_upload_leads = $('#show_renewal_upload_leads').val();
-                    if (model.properties['created_at'] && model.properties['created_at'].indexOf(
-                            'range') > -1) {
-                        d['created_at_end'] = $('#created_at_end').val();
-                    }
-                    if (model.properties['previous_policy_expiry_date'] && model.properties[
-                            'previous_policy_expiry_date'].indexOf(
-                            'range') > -1) {
-                        d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end')
-                            .val();
-                    }
-                    if (model.properties['next_followup_date'] && model.properties['next_followup_date'].indexOf('range') > -1) {
-                        d['next_followup_date_end'] = $('#next_followup_date_end').val();
-                    }
-                }
-            },
-            language: {
-                "processing": "<span class='fa-stack fa-lg'>\n\
+                // Initializing the datatable
+                var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
+                        ordering: false,
+                        info: true,
+                        searching: false,
+                        dom: 'rBfrtip',
+                        bLengthChange: false,
+                        stateSave: true,
+                        serverSide: true,
+                        paging: true,
+                        processing: true,
+                        scrollX: true,
+                        ajax: {
+                            url: '/quotes/' + model.modelType.toLowerCase(),
+                            data: function(d) {
+                                var carProps = model.searchProperties;
+                                carProps = [...new Set(carProps)];
+                                carProps.forEach(element => {
+                                    d[element] = $('#' + element).val();
+                                });
+                                if (!isCarAdvisor) {
+                                    d.advisor_id = $('#advisor_id').val(); ===
+                                    === =
+                                    var totalRecords = 0;
+                                    // Initializing the datatable
+                                    var vehicleTypeDataTable = $("#dtBasicExample").DataTable({
+                                                ordering: false,
+                                                info: true,
+                                                searching: false,
+                                                dom: 'rBfrtip',
+                                                bLengthChange: false,
+                                                stateSave: true,
+                                                serverSide: true,
+                                                paging: true,
+                                                processing: true,
+                                                scrollX: true,
+                                                ajax: {
+                                                    url: '/quotes/' + model.modelType.toLowerCase(),
+                                                    data: function(d) {
+                                                        var carProps = model.searchProperties;
+                                                        carProps = [...new Set(carProps)];
+                                                        carProps.forEach(element => {
+                                                            d[element] = $('#' + element).val();
+                                                        });
+                                                        if (!isCarAdvisor) {
+                                                            d.advisor_id = $('#advisor_id').val();
+                                                        }
+                                                        d.advisor_assigned_date = $('#advisor_assigned_date').val();
+                                                        d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
+                                                        d.renewal_expiry_date = $('#renewal_expiry_date').val();
+                                                        d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
+                                                        d.policy_number = $('#policy_number').val();
+                                                        if (isManagerOrDeputy == '1') d.show_renewal_upload_leads = $('#show_renewal_upload_leads').val();
+                                                        if (model.properties['created_at'] && model.properties['created_at'].indexOf(
+                                                                'range') > -1) {
+                                                            d['created_at_end'] = $('#created_at_end').val();
+                                                        }
+                                                        if (model.properties['previous_policy_expiry_date'] && model.properties[
+                                                                'previous_policy_expiry_date'].indexOf(
+                                                                'range') > -1) {
+                                                            d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end')
+                                                                .val();
+                                                        }
+                                                        if (model.properties['next_followup_date'] && model.properties['next_followup_date'].indexOf('range') > -1) {
+                                                            d['next_followup_date_end'] = $('#next_followup_date_end').val();
+                                                        } >>>
+                                                        >>> > develop
+                                                    }
+                                                    d.advisor_assigned_date = $('#advisor_assigned_date').val();
+                                                    d.advisor_assigned_date_end = $('#advisor_assigned_date_end').val();
+                                                    d.renewal_expiry_date = $('#renewal_expiry_date').val();
+                                                    d.renewal_expiry_date_end = $('#renewal_expiry_date_end').val();
+                                                    d.policy_number = $('#policy_number').val();
+                                                    if (isManagerOrDeputy == '1') d.show_renewal_upload_leads = $('#show_renewal_upload_leads').val();
+                                                    if (model.properties['created_at'] && model.properties['created_at'].indexOf(
+                                                            'range') > -1) {
+                                                        d['created_at_end'] = $('#created_at_end').val();
+                                                    }
+                                                    if (model.properties['previous_policy_expiry_date'] && model.properties[
+                                                            'previous_policy_expiry_date'].indexOf(
+                                                            'range') > -1) {
+                                                        d['previous_policy_expiry_date_end'] = $('#previous_policy_expiry_date_end')
+                                                            .val();
+                                                    }
+                                                    if (model.properties['next_followup_date'] && model.properties['next_followup_date'].indexOf('range') > -1) {
+                                                        d['next_followup_date_end'] = $('#next_followup_date_end').val();
+                                                    }
+                                                }
+                                            },
+                                            language: {
+                                                "processing": "<span class='fa-stack fa-lg'>\n\
                                             <i class='fa fa-spinner fa-spin fa-stack-2x fa-fw'></i>\n\
                                     </span>&emsp;Processing ...",
-            },
-            columns: dataTableColumns,
-            buttons: canExtractData ? [{
-                extend: 'excel',
-                text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
-                title: model.modelType + ' Listing',
-                action: newexportaction
-            }] : []
-        });
-        vehicleTypeDataTable.on('draw', function() {
-            var rows = $('#dtBasicExample tr');
-            var headerRowColumns = $(rows[0]).children();
-            var nextFollowupDateColumn = -10;
-            var checkboxIndexes = [];
-            for (let i = 0; i < headerRowColumns.length; i++) {
-                const element = headerRowColumns[i];
-                if ($(element).data('type') == 'checkbox' || $(element).data('type') == 'static') {
-                    checkboxIndexes.push(i);
-                }
-                if (element.outerText == "NEXT FOLLOWUP DATE") {
-                    nextFollowupDateColumn = i;
-                }
-            }
-            for (let index = 1; index < rows.length; index++) {
-                var columns = $(rows[index]).children();
-                for (let i = 0; i < columns.length; i++) {
-                    if (checkboxIndexes.includes(i)) {
-                        const element = columns[i];
-                        if ($(element).text() == '1') {
-                            $(element).text('Yes');
-                        } else if ($(element).text() == '0') {
-                            $(element).text('No');
+                                                <<
+                                                << << < HEAD
+                                            },
+                                            columns: dataTableColumns,
+                                            buttons: canExtractData ? [{
+                                                extend: 'excel',
+                                                text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
+                                                title: model.modelType + ' Listing',
+                                                action: newexportaction
+                                            }] : [] ===
+                                            === =
+                                        },
+                                        columns: dataTableColumns,
+                                        buttons: canExtractData ? [{
+                                            extend: 'excel',
+                                            text: '<i class="fa fa-file-excel-o" style="color:green;" ></i><div style="font-weight:bold;">Export</div>',
+                                            title: model.modelType + ' Listing',
+                                            action: newexportaction
+                                        }] : []
+                                });
+                            vehicleTypeDataTable.on('draw', function() {
+                                var rows = $('#dtBasicExample tr');
+                                var headerRowColumns = $(rows[0]).children();
+                                var nextFollowupDateColumn = -10;
+                                var checkboxIndexes = [];
+                                for (let i = 0; i < headerRowColumns.length; i++) {
+                                    const element = headerRowColumns[i];
+                                    if ($(element).data('type') == 'checkbox' || $(element).data('type') == 'static') {
+                                        checkboxIndexes.push(i);
+                                    }
+                                    if (element.outerText == "NEXT FOLLOWUP DATE") {
+                                        nextFollowupDateColumn = i;
+                                    }
+                                }
+                                for (let index = 1; index < rows.length; index++) {
+                                    var columns = $(rows[index]).children();
+                                    for (let i = 0; i < columns.length; i++) {
+                                        if (checkboxIndexes.includes(i)) {
+                                            const element = columns[i];
+                                            if ($(element).text() == '1') {
+                                                $(element).text('Yes');
+                                            } else if ($(element).text() == '0') {
+                                                $(element).text('No');
+                                            }
+                                        }
+                                    }
+                                }
+                                totalRecords = vehicleTypeDataTable.page.info().recordsTotal;
+                            });
+                            $("#searchTable").submit(function(e) {
+                                e.preventDefault();
+                                $(".loader").show();
+                                vehicleTypeDataTable.draw();
+                                setTimeout(() => {
+                                    $(".loader").hide();
+                                }, 1000);
+                            });
+                            $('#reset-btn-generic').click(function(e) {
+                                $("span").each(function(k, v) {
+                                    if ($(v).hasClass('text-danger')) {
+                                        $(v).html('');
+                                    }
+                                });
+                                $(':input', '#searchTable')
+                                    .not(':button, :submit, :reset, :hidden')
+                                    .val('')
+                                    .prop('checked', false)
+                                    .prop('selected', false);
+                                $(".loader").show();
+                                vehicleTypeDataTable.draw();
+                                setTimeout(() => {
+                                    $(".loader").hide();
+                                }, 1000);
+                                location.reload();
+                            });
+
+                            function showErrorMessage(msg) {
+                                $(".errorMsg").empty().hide();
+                                $(".errorMsg").append('<div class="alert alert-danger">' + msg + '</div>');
+                                $(".errorMsg").fadeIn(300);
+                                setTimeout(function() {
+                                    $(".errorMsg").fadeOut(300, function() {
+                                        $(".errorMsg").empty().hide();
+                                    });
+                                }, 3200);
+                            }
+
+                            function validateDateRange(startDateStr, endDateStr) {
+
+                                if (!startDateStr && !endDateStr) {
+                                    showErrorMessage('For Export : date range must be selected either created date or advisor assigned date.');
+                                    return false;
+                                }
+
+                                if (startDateStr && endDateStr) {
+                                    var startDateParts = startDateStr.split("-");
+                                    var endDateParts = endDateStr.split("-");
+
+                                    var startDate = new Date(startDateParts[2], startDateParts[1] - 1, startDateParts[0]);
+                                    var endDate = new Date(endDateParts[2], endDateParts[1] - 1, endDateParts[0]);
+
+
+                                    if (endDate <= startDate) {
+                                        showErrorMessage('Note : End date must be greater than start date.');
+                                        return false;
+                                    }
+
+                                    var differenceInMilliseconds = endDate - startDate;
+                                    var differenceInDays = differenceInMilliseconds / (1000 * 60 * 60 * 24);
+
+                                    if (differenceInDays > 31) {
+                                        showErrorMessage('Note : Date range cannot exceed 31 days.');
+                                        return false;
+                                    }
+
+                                    return true;
+                                } else {
+                                    return false;
+                                }
+                            }
+
+                            function newexportaction(e, dt, button, config) {
+                                var advisorStartDate = $('#advisor_assigned_date').val();
+                                var advisorEndDate = $('#advisor_assigned_date_end').val();
+                                var createdStartDate = $('#created_at').val();
+                                var createdEndDate = $('#created_at_end').val();
+
+                                if (!validateDateRange(advisorStartDate, advisorEndDate) && !validateDateRange(createdStartDate, createdEndDate)) {
+                                    return;
+                                }
+
+                                var self = this;
+                                var oldStart = dt.settings()[0]._iDisplayStart;
+
+                                dt.one('preXhr', function(e, s, data) {
+                                    data.start = 0;
+                                    data.length = totalRecords;
+                                    dt.one('preDraw', function(e, settings) {
+                                        var btnClass = button[0].className;
+
+                                        if (btnClass.indexOf('buttons-copy') >= 0) {
+                                            $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button, config);
+                                        } else if (btnClass.indexOf('buttons-excel') >= 0) {
+                                            ($.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
+                                                $.fn.dataTable.ext.buttons.excelHtml5.action : $.fn.dataTable.ext.buttons.excelFlash.action)
+                                            .call(self, e, dt, button, config);
+                                        } else if (btnClass.indexOf('buttons-csv') >= 0) {
+                                            ($.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                                                $.fn.dataTable.ext.buttons.csvHtml5.action : $.fn.dataTable.ext.buttons.csvFlash.action)
+                                            .call(self, e, dt, button, config);
+                                        } else if (btnClass.indexOf('buttons-pdf') >= 0) {
+                                            ($.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
+                                                $.fn.dataTable.ext.buttons.pdfHtml5.action : $.fn.dataTable.ext.buttons.pdfFlash.action)
+                                            .call(self, e, dt, button, config);
+                                        } else if (btnClass.indexOf('buttons-print') >= 0) {
+                                            $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
+                                        }
+
+                                        dt.one('preXhr', function(e, s, data) {
+                                            settings._iDisplayStart = oldStart;
+                                            data.start = oldStart;
+                                        });
+
+                                        setTimeout(dt.ajax.reload, 0);
+                                        return false;
+                                    });
+                                });
+
+                                dt.ajax.reload();
+                            }
+
+
+                            $(".toggle-btn-2").on("click", function() {
+                                $(".show-visual-cards").addClass("hideme");
+                                $(".show-visual-cards").removeClass("showme");
+                                $(".show-container").addClass("showme");
+                                $(".show-container").removeClass("hideme");
+                                $(this).addClass("active");
+                                $(".toggle-btn").removeClass("active");
+                            });
+                            $(".toggle-btn").on("click", function() {
+                                $(".show-visual-cards").addClass("showme");
+                                $(".show-visual-cards").removeClass("hideme");
+                                $(".show-container").removeClass("showme");
+                                $(".show-container").addClass("hideme");
+                                $(this).addClass("active");
+                                $(".toggle-btn").removeClass("active");
+                            });
+
+                            $('.date-search-field').datepicker({
+                                dateFormat: "dd-mm-yy",
+                                changeMonth: true,
+                                changeYear: true,
+                            });
+                            $('.date-search-field').prop('readonly', true); >>>
+                            >>> > develop
+                        }); vehicleTypeDataTable.on('draw', function() {
+                        var rows = $('#dtBasicExample tr');
+                        var headerRowColumns = $(rows[0]).children();
+                        var nextFollowupDateColumn = -10;
+                        var checkboxIndexes = [];
+                        for (let i = 0; i < headerRowColumns.length; i++) {
+                            const element = headerRowColumns[i];
+                            if ($(element).data('type') == 'checkbox' || $(element).data('type') == 'static') {
+                                checkboxIndexes.push(i);
+                            }
+                            if (element.outerText == "NEXT FOLLOWUP DATE") {
+                                nextFollowupDateColumn = i;
+                            }
                         }
-                    }
-                }
-            }
-        });
-        $("#searchTable").submit(function(e) {
-            e.preventDefault();
-            $(".loader").show();
-            vehicleTypeDataTable.draw();
-            setTimeout(() => {
-                $(".loader").hide();
-            }, 1000);
-        });
-        $('#reset-btn-generic').click(function(e) {
-            $("span").each(function(k, v) {
-                if ($(v).hasClass('text-danger')) {
-                    $(v).html('');
-                }
-            });
-            $(':input', '#searchTable')
-                .not(':button, :submit, :reset, :hidden')
-                .val('')
-                .prop('checked', false)
-                .prop('selected', false);
-            $(".loader").show();
-            vehicleTypeDataTable.draw();
-            setTimeout(() => {
-                $(".loader").hide();
-            }, 1000);
-            location.reload();
-        });
-        // Custom export function to export all the available rows in grid not just the visible ones
-        function newexportaction(e, dt, button, config) {
-            var self = this;
-            var oldStart = dt.settings()[0]._iDisplayStart;
-            dt.one('preXhr', function(e, s, data) {
-                data.start = 0;
-                data.length = 2147483647;
-                dt.one('preDraw', function(e, settings) {
-                    if (button[0].className.indexOf('buttons-copy') >= 0) {
-                        $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button,
-                            config);
-                    } else if (button[0].className.indexOf('buttons-excel') >= 0) {
-                        $.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
-                            $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt,
-                                button, config) :
-                            $.fn.dataTable.ext.buttons.excelFlash.action.call(self, e, dt,
-                                button, config);
-                    } else if (button[0].className.indexOf('buttons-csv') >= 0) {
-                        $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
-                            $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button,
-                                config) :
-                            $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button,
-                                config);
-                    } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
-                        $.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
-                            $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button,
-                                config) :
-                            $.fn.dataTable.ext.buttons.pdfFlash.action.call(self, e, dt, button,
-                                config);
-                    } else if (button[0].className.indexOf('buttons-print') >= 0) {
-                        $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
-                    }
-                    dt.one('preXhr', function(e, s, data) {
-                        settings._iDisplayStart = oldStart;
-                        data.start = oldStart;
+                        for (let index = 1; index < rows.length; index++) {
+                            var columns = $(rows[index]).children();
+                            for (let i = 0; i < columns.length; i++) {
+                                if (checkboxIndexes.includes(i)) {
+                                    const element = columns[i];
+                                    if ($(element).text() == '1') {
+                                        $(element).text('Yes');
+                                    } else if ($(element).text() == '0') {
+                                        $(element).text('No');
+                                    }
+                                }
+                            }
+                        }
+                    }); $("#searchTable").submit(function(e) {
+                        e.preventDefault();
+                        $(".loader").show();
+                        vehicleTypeDataTable.draw();
+                        setTimeout(() => {
+                            $(".loader").hide();
+                        }, 1000);
+                    }); $('#reset-btn-generic').click(function(e) {
+                        $("span").each(function(k, v) {
+                            if ($(v).hasClass('text-danger')) {
+                                $(v).html('');
+                            }
+                        });
+                        $(':input', '#searchTable')
+                            .not(':button, :submit, :reset, :hidden')
+                            .val('')
+                            .prop('checked', false)
+                            .prop('selected', false);
+                        $(".loader").show();
+                        vehicleTypeDataTable.draw();
+                        setTimeout(() => {
+                            $(".loader").hide();
+                        }, 1000);
+                        location.reload();
                     });
-                    setTimeout(dt.ajax.reload, 0);
-                    return false;
+                    // Custom export function to export all the available rows in grid not just the visible ones
+                    function newexportaction(e, dt, button, config) {
+                        var self = this;
+                        var oldStart = dt.settings()[0]._iDisplayStart;
+                        dt.one('preXhr', function(e, s, data) {
+                            data.start = 0;
+                            data.length = 2147483647;
+                            dt.one('preDraw', function(e, settings) {
+                                if (button[0].className.indexOf('buttons-copy') >= 0) {
+                                    $.fn.dataTable.ext.buttons.copyHtml5.action.call(self, e, dt, button,
+                                        config);
+                                } else if (button[0].className.indexOf('buttons-excel') >= 0) {
+                                    $.fn.dataTable.ext.buttons.excelHtml5.available(dt, config) ?
+                                        $.fn.dataTable.ext.buttons.excelHtml5.action.call(self, e, dt,
+                                            button, config) :
+                                        $.fn.dataTable.ext.buttons.excelFlash.action.call(self, e, dt,
+                                            button, config);
+                                } else if (button[0].className.indexOf('buttons-csv') >= 0) {
+                                    $.fn.dataTable.ext.buttons.csvHtml5.available(dt, config) ?
+                                        $.fn.dataTable.ext.buttons.csvHtml5.action.call(self, e, dt, button,
+                                            config) :
+                                        $.fn.dataTable.ext.buttons.csvFlash.action.call(self, e, dt, button,
+                                            config);
+                                } else if (button[0].className.indexOf('buttons-pdf') >= 0) {
+                                    $.fn.dataTable.ext.buttons.pdfHtml5.available(dt, config) ?
+                                        $.fn.dataTable.ext.buttons.pdfHtml5.action.call(self, e, dt, button,
+                                            config) :
+                                        $.fn.dataTable.ext.buttons.pdfFlash.action.call(self, e, dt, button,
+                                            config);
+                                } else if (button[0].className.indexOf('buttons-print') >= 0) {
+                                    $.fn.dataTable.ext.buttons.print.action(e, dt, button, config);
+                                }
+                                dt.one('preXhr', function(e, s, data) {
+                                    settings._iDisplayStart = oldStart;
+                                    data.start = oldStart;
+                                });
+                                setTimeout(dt.ajax.reload, 0);
+                                return false;
+                            });
+                        });
+                        dt.ajax.reload();
+                    }
+                    $(".toggle-btn-2").on("click", function() {
+                        $(".show-visual-cards").addClass("hideme");
+                        $(".show-visual-cards").removeClass("showme");
+                        $(".show-container").addClass("showme");
+                        $(".show-container").removeClass("hideme");
+                        $(this).addClass("active");
+                        $(".toggle-btn").removeClass("active");
+                    }); $(".toggle-btn").on("click", function() {
+                        $(".show-visual-cards").addClass("showme");
+                        $(".show-visual-cards").removeClass("hideme");
+                        $(".show-container").removeClass("showme");
+                        $(".show-container").addClass("hideme");
+                        $(this).addClass("active");
+                        $(".toggle-btn").removeClass("active");
+                    });
+
+                    $('.date-search-field').datepicker({
+                        dateFormat: "dd-mm-yy",
+                        changeMonth: true,
+                        changeYear: true,
+                    }); $('.date-search-field').prop('readonly', true);
+                });
+            var ENDPOINT = "{{ url('/') }}";
+            var page;
+            var temp_status = '';
+
+            function loadMore(status) {
+                if (localStorage.getItem('page' + status) == null)
+                    page = 2;
+                else
+                    page = localStorage.getItem('page' + status);
+                infinteLoadMore(page, status);
+            }
+
+            function infinteLoadMore(page, status) {
+                $.ajaxSetup({
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    }
+                });
+                $.ajax({
+                        url: ENDPOINT + "/quotes/records?page=" + page + "&modelType=" + "{{ $model->modelType }}" +
+                            "&status=" + status,
+                        datatype: "html",
+                        type: "post",
+                        beforeSend: function() {
+                            $('.loader').show();
+                        }
+                    })
+                    .done(function(response) {
+                        $('.loader').hide();
+                        if (response.length == 0) {
+                            localStorage.removeItem('page' + status, page);
+                            $("#load_more_btn" + status).hide();
+                            alert("Nothing to Show");
+                            return;
+                        }
+                        $(".status_list" + status + " li:last").append(response);
+                        temp_status = status;
+                        page = parseInt(page) + 1;
+                        localStorage.setItem('page' + status, page);
+                    })
+                    .fail(function(jqXHR, ajaxOptions, thrownError) {
+                        console.log('Server error occured');
+                    });
+            }
+
+            function searchTerm(element) {
+                var term = $(element).val();
+                var status = $(element).attr('name');
+                if (term) {
+                    $.ajaxSetup({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        }
+                    });
+                    $.ajax({
+                            url: ENDPOINT + "/quotes/records/search?term=" + term + "&status=" + status + "&modelType=" +
+                                "{{ $model->modelType }}",
+                            datatype: "html",
+                            type: "post",
+                            beforeSend: function() {
+                                $('.loader').show();
+                            }
+                        })
+                        .done(function(response) {
+                            $("#load_more_btn" + status).hide();
+                            $(element).val('');
+                            $('.loader').hide();
+                            if (response.length == 0) {
+                                alert("Nothing to Show");
+                                return;
+                            }
+                            $(".status_list" + status).empty();
+                            $(".status_list" + status).append(response);
+                        })
+                        .fail(function(jqXHR, ajaxOptions, thrownError) {
+                            console.log('Server error occured');
+                        });
+                }
+            }
+            $(document).on("click", ".const-create-car-lead", function(e) {
+                e.preventDefault();
+                $('#createCarLeadModal').modal('show');
+                $('.const-car-lead-cnfrm-btn').on('click', function(e) {
+                    var confirm = $("input[name='reason-manual-lead']:checked").attr('data-confirmation');
+                    if (confirm) {
+                        window.location.href = "{{ url('quotes/' . strtolower($model->modelType) . '/create') }}";
+                        localStorage.setItem('throughConfirmation', true);
+                        $('#createCarLeadModal').modal('hide');
+                    } else {
+                        $('#createCarLeadModal').modal('hide');
+                    }
                 });
             });
-            dt.ajax.reload();
-        }
-        $(".toggle-btn-2").on("click", function() {
-            $(".show-visual-cards").addClass("hideme");
-            $(".show-visual-cards").removeClass("showme");
-            $(".show-container").addClass("showme");
-            $(".show-container").removeClass("hideme");
-            $(this).addClass("active");
-            $(".toggle-btn").removeClass("active");
-        });
-        $(".toggle-btn").on("click", function() {
-            $(".show-visual-cards").addClass("showme");
-            $(".show-visual-cards").removeClass("hideme");
-            $(".show-container").removeClass("showme");
-            $(".show-container").addClass("hideme");
-            $(this).addClass("active");
-            $(".toggle-btn").removeClass("active");
-        });
 
-        $('.date-search-field').datepicker({
-            dateFormat: "dd-mm-yy",
-            changeMonth: true,
-            changeYear: true,
-        });
-        $('.date-search-field').prop('readonly', true);
-    });
-    var ENDPOINT = "{{ url('/') }}";
-    var page;
-    var temp_status = '';
-
-    function loadMore(status) {
-        if (localStorage.getItem('page' + status) == null)
-            page = 2;
-        else
-            page = localStorage.getItem('page' + status);
-        infinteLoadMore(page, status);
-    }
-
-    function infinteLoadMore(page, status) {
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            window.onload = function() {
+                window.localStorage.clear();
             }
-        });
-        $.ajax({
-                url: ENDPOINT + "/quotes/records?page=" + page + "&modelType=" + "{{ $model->modelType }}" +
-                    "&status=" + status,
-                datatype: "html",
-                type: "post",
-                beforeSend: function() {
-                    $('.loader').show();
-                }
-            })
-            .done(function(response) {
-                $('.loader').hide();
-                if (response.length == 0) {
-                    localStorage.removeItem('page' + status, page);
-                    $("#load_more_btn" + status).hide();
-                    alert("Nothing to Show");
-                    return;
-                }
-                $(".status_list" + status + " li:last").append(response);
-                temp_status = status;
-                page = parseInt(page) + 1;
-                localStorage.setItem('page' + status, page);
-            })
-            .fail(function(jqXHR, ajaxOptions, thrownError) {
-                console.log('Server error occured');
-            });
-    }
-
-    function searchTerm(element) {
-        var term = $(element).val();
-        var status = $(element).attr('name');
-        if (term) {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-            $.ajax({
-                    url: ENDPOINT + "/quotes/records/search?term=" + term + "&status=" + status + "&modelType=" +
-                        "{{ $model->modelType }}",
-                    datatype: "html",
-                    type: "post",
-                    beforeSend: function() {
-                        $('.loader').show();
-                    }
-                })
-                .done(function(response) {
-                    $("#load_more_btn" + status).hide();
-                    $(element).val('');
-                    $('.loader').hide();
-                    if (response.length == 0) {
-                        alert("Nothing to Show");
-                        return;
-                    }
-                    $(".status_list" + status).empty();
-                    $(".status_list" + status).append(response);
-                })
-                .fail(function(jqXHR, ajaxOptions, thrownError) {
-                    console.log('Server error occured');
-                });
-        }
-    }
-    $(document).on("click", ".const-create-car-lead", function(e) {
-        e.preventDefault();
-        $('#createCarLeadModal').modal('show');
-        $('.const-car-lead-cnfrm-btn').on('click', function(e) {
-            var confirm = $("input[name='reason-manual-lead']:checked").attr('data-confirmation');
-            if (confirm) {
-                window.location.href = "{{ url('quotes/' . strtolower($model->modelType) . '/create') }}";
-                localStorage.setItem('throughConfirmation', true);
-                $('#createCarLeadModal').modal('hide');
-            } else {
-                $('#createCarLeadModal').modal('hide');
-            }
-        });
-    });
-
-    window.onload = function() {
-        window.localStorage.clear();
-    }
 </script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel" style="overflow:hidden">
             <div class="x_title">
+                <div class="errorMsg"></div>
                 <h2>{{ str_contains(strtolower($model->modelType), 'team')
                         ? 'Team'
                         : (str_contains(strtolower($model->modelType), 'leadstatus')

@@ -23,8 +23,16 @@ class DatabaseSeeder extends Seeder
             addCarQuoteNewStatuses::class,
             LookupSeeder::class,
             CarLostPermissionSeeder::class,
+            CommercialKeywordsSeeder::class,
+            RuleTypeSeeder::class,
+            CommercialMakeModelKeywordsPermissionsSeeder::class,
+            FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
+            AddPersonalLobsProducts::class,
+            addTeamThresholdViewPermission::class,
             // PetBikeMigrationSeeder::class
             InsurerQuoteTypeMappingSeeder::class,
+            addTeamAllocationThresholdViewPermission::class,
+            CreateAndAssignSubTeamsToAdvisors::class,
         ]);
     }
 }

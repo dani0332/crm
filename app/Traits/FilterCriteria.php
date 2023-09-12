@@ -45,6 +45,10 @@ trait FilterCriteria
                                 $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key.'_start'}));
                                 $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key.'_end'}));
                                 $query->whereBetween(DB::raw('date('.$key.')'), [$startDate, $endDate]);
+                            } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
+                                $query->whereBetween($key, [$startDate, $endDate]);
                             }
                             break;
                         default:
