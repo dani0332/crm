@@ -286,6 +286,15 @@ const onUpdatePlan = () => {
           </dl>
 
           <div class="flex justify-end">
+              <span class="font-medium text-end">Created Date:</span>
+              <span>{{ props.record.created_at }}</span>
+          </div>
+          <div class="flex justify-end">
+              <span class="font-medium text-end">Updated At:</span>
+              <span>{{ props.record.updated_at }}</span>
+          </div><br />
+
+          <div class="flex justify-end">
             <x-button 
               v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || notAdvisorAndManagerAndPA"
               color="primary"

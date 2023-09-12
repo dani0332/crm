@@ -949,6 +949,9 @@ html.dark{
 .mt-\[23px\]{
   margin-top: 23px;
 }
+.mb-10{
+  margin-bottom: 2.5rem;
+}
 .box-content{
   box-sizing: content-box;
 }
@@ -2212,6 +2215,9 @@ html.dark{
 }
 .text-justify{
   text-align: justify;
+}
+.text-end{
+  text-align: end;
 }
 .align-baseline{
   vertical-align: baseline;
