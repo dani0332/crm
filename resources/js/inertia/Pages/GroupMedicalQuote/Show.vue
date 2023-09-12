@@ -1,15 +1,14 @@
 <script setup>
-
 defineProps({
-    quote: Object,
-    quoteDetails: Object,
-    allowedDuplicateLOB: Array,
-    genderOptions: Object,
-    typeCode: String,
-    lostReasons: Object,
-    quoteStatuses: Object,
-    quoteStatusEnum: Object,
-    customerAdditionalContacts: Array,
+  quote: Object,
+  quoteDetails: Object,
+  allowedDuplicateLOB: Array,
+  genderOptions: Object,
+  typeCode: String,
+  lostReasons: Object,
+  quoteStatuses: Object,
+  quoteStatusEnum: Object,
+  customerAdditionalContacts: Array,
 });
 
 const page = usePage();
@@ -20,125 +19,134 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
 const historyData = ref(null),
-    historyLoading = ref(false);
+  historyLoading = ref(false);
 
 const isDuplicateAllowed = computed(() => {
-    return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
 });
 
 const genderText = gender =>
-    computed(() => {
-        return page.props.genderOptions[gender];
-    });
+  computed(() => {
+    return page.props.genderOptions[gender];
+  });
 
 const modals = reactive({
-    duplicate: false,
-    member: false,
-    memberConfirm: false,
-    doc: false,
-    docConfirm: false,
-    plan: false,
-    createPlan: false,
-    activity: false,
-    activityConfirm: false,
-    addContact: false,
-    contactDeleteConfirm: false,
-    contactPrimaryConfirm: false,
+  duplicate: false,
+  member: false,
+  memberConfirm: false,
+  doc: false,
+  docConfirm: false,
+  plan: false,
+  createPlan: false,
+  activity: false,
+  activityConfirm: false,
+  addContact: false,
+  contactDeleteConfirm: false,
+  contactPrimaryConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
-    lob_team: [],
-    lob_team_sub_selection: null,
+  lob_team: [],
+  lob_team_sub_selection: null,
 });
 
 const openDuplicate = () => {
-    modals.duplicate = true;
-    leadDuplicateForm.reset();
+  modals.duplicate = true;
+  leadDuplicateForm.reset();
 };
 
 const onCreateDuplicate = isValid => {
-    if (!isValid) return;
-    let data = {
-        modelType: 'business',
-        parentType: 'business',
-        entityId: page.props.quote.id,
-        entityCode: page.props.quote.code,
-        entityUId: page.props.quote.uuid,
-        lob_team: leadDuplicateForm.lob_team,
-        lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
-    };
-    axios
-        .post('/quotes/createDuplicate', data)
-        .then(res => {
-            modals.duplicate = false;
-            notification.success('Lead duplicated successfully');
-        })
-        .catch(err => {
-            notification.error('Something went wrong');
-        });
+  if (!isValid) return;
+  let data = {
+    modelType: 'business',
+    parentType: 'business',
+    entityId: page.props.quote.id,
+    entityCode: page.props.quote.code,
+    entityUId: page.props.quote.uuid,
+    lob_team: leadDuplicateForm.lob_team,
+    lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
+  };
+  axios
+    .post(route('createDuplicate'), data)
+    .then(res => {
+      modals.duplicate = false;
+      notification.success({
+        title: 'Lead duplicated successfully',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      notification.error('Something went wrong');
+    });
 };
 
 const leadStatusForm = useForm({
-    modelType: 'Business',
-    leadId: page.props.quote.id,
-    quote_uuid: page.props.quote.uuid,
-    assigned_to_user_id: page.props.quote.advisor_id,
-    leadStatus: page.props.quote.quote_status_id || null,
-    notes: page.props.quoteDetails.notes || null,
-    trans_code: page.props.quote.transapp_code || null,
-    lostReason: page.props.quoteDetails.lost_reason_id || null,
+  modelType: 'Business',
+  leadId: page.props.quote.id,
+  quote_uuid: page.props.quote.uuid,
+  assigned_to_user_id: page.props.quote.advisor_id,
+  leadStatus: page.props.quote.quote_status_id || null,
+  notes: page.props.quoteDetails.notes || null,
+  trans_code: page.props.quote.transapp_code || null,
+  lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
 const leadStatusOptions = computed(() => {
-    return page.props.quoteStatuses.map(status => ({
-        value: status.id,
-        label: status.text,
-    }));
+  return page.props.quoteStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const onLeadStatus = () => {
-    let data = {
+  let data = {
+    modelType: 'Business',
+    leadId: leadStatusForm.leadId,
+    quote_uuid: leadStatusForm.quote_uuid,
+    assigned_to_user_id: leadStatusForm.assigned_to_user_id,
+    leadStatus: leadStatusForm.leadStatus,
+    notes: leadStatusForm.notes,
+    trans_code: leadStatusForm.trans_code,
+    lostReason: leadStatusForm.lostReason,
+  };
+  axios
+    .post(
+      route('updateLeadStatus', {
+        QuoteUId: page.props.quote.id,
         modelType: 'Business',
-        leadId: leadStatusForm.leadId,
-        quote_uuid: leadStatusForm.quote_uuid,
-        assigned_to_user_id: leadStatusForm.assigned_to_user_id,
-        leadStatus: leadStatusForm.leadStatus,
-        notes: leadStatusForm.notes,
-        trans_code: leadStatusForm.trans_code,
-        lostReason: leadStatusForm.lostReason,
-    };
-
-    axios
-    .post(`/quotes/Business/${page.props.quote.id}/update-lead-status`, data)
-        .then(res => {
-            console.log(res);
-            notification.success({
-                title: 'Lead Status Updated',
-                position: 'top',
-            });
-        })
-        .catch(err => {
-            console.log(err);
-        });
+      }),
+      data,
+    )
+    .then(res => {
+      notification.success({
+        title: 'Lead Status Updated',
+        position: 'top',
+      });
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const onLoadHistoryData = async () => {
-    historyLoading.value = true;
-    const res = await fetch(
-        `/quotes/getLeadHistory?modelType=business&recordId=${page.props.quote.id}`,
-    );
-    const finalRes = await res.json();
-    historyData.value = finalRes;
-    historyLoading.value = false;
+  historyLoading.value = true;
+  const res = await fetch(
+    route('getLeadHistory', {
+      modelType: 'business',
+      recordId: page.props.quote.id,
+    }),
+  );
+  const finalRes = await res.json();
+  historyData.value = finalRes;
+  historyLoading.value = false;
 };
 
 const historyDataTable = [
-    { text: 'Modified At', value: 'ModifiedAt' },
-    { text: 'Modified By', value: 'ModifiedBy' },
-    { text: 'Notes', value: 'NewNotes' },
-    { text: 'Lead Status', value: 'NewStatus' },
+  { text: 'Modified At', value: 'ModifiedAt' },
+  { text: 'Modified By', value: 'ModifiedBy' },
+  { text: 'Notes', value: 'NewNotes' },
+  { text: 'Lead Status', value: 'NewStatus' },
 ];
-
 </script>
 
 <template>
@@ -155,14 +163,14 @@ const historyDataTable = [
                 >
                     Duplicate Lead
                 </x-button>
-                <Link href="/medical/amt" preserve-scroll>
+                <Link :href="route('amt.index')" preserve-scroll>
                     <x-button size="sm" color="primary" tag="div">
                         Group Medical List
                     </x-button>
                 </Link>
                 <Link
-                    v-if="can(permissionsEnum.canEditQuote)"
-                    :href="`${quote.uuid}/edit`"
+                    v-if="!can(permissionsEnum.canEditQuote)"
+                    :href="route('amt.edit', quote.uuid)"
                 >
                     <x-button size="sm" tag="div">Edit</x-button>
                 </Link>
@@ -463,5 +471,5 @@ const historyDataTable = [
                 :rows-per-page="15"
                 :hide-footer="historyData.length < 15"/>
         </div>
-    </div>
+      </div>
 </template>

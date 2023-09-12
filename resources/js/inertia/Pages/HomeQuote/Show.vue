@@ -12,6 +12,12 @@ defineProps({
   allowedDuplicateLOB: Array,
   isBetaUser: Boolean,
   can: Object,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
   embeddedProducts: Array,
 });
 
@@ -97,17 +103,14 @@ const leadStatusForm = useForm({
 
 const onLeadStatus = () => {
   leadStatusForm.post(
-    `/quotes/Home/${page.props.quote.id}/update-lead-status`,
+    route('updateLeadStatus', {
+      modelType: 'Home',
+      QuoteUId: page.props.quote.id,
+    }),
     {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
       },
     },
   );
@@ -146,7 +149,7 @@ const addActivity = () => {
 
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -176,7 +179,7 @@ const activityEdit = data => {
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
-    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+    activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -189,14 +192,10 @@ const onActivitySubmit = isValid => {
       },
     });
   } else {
-    activityForm.post(`/activities/create-activity`, {
+    activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onSuccess: () => {
         activityForm.reset();
-        notification.success({
-          title: 'Activity Added',
-          position: 'top',
-        });
       },
       onFinish: () => {
         modals.activity = false;
@@ -212,7 +211,7 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
+    route('activities.destroy', confirmDeleteData.activity),
     {
       isInertia: true,
       quote_uuid: page.props.quote.uuid,
@@ -238,7 +237,10 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=home&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'home',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -290,11 +292,11 @@ const policyDetails = useForm({
           Duplicate Lead
         </x-button>
 
-        <Link href="/quotes/home" preserve-scroll>
+        <Link :href="route('home.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Home List </x-button>
         </Link>
 
-        <Link :href="`${quote.uuid}/edit`">
+        <Link :href="route('home.edit', quote.uuid)">
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
       </div>
@@ -545,36 +547,40 @@ const policyDetails = useForm({
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/3">
           <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="Status"
-              :options="leadStatusOptions"
-              :disabled="quote.quote_status_id == 15"
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-input
-              v-if="leadStatusForm.leadStatus == 15"
-              v-model="leadStatusForm.trans_code"
+            <x-field label="Status">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                :options="leadStatusOptions"
+                :disabled="quote.quote_status_id == 15"
+                placeholder="Lead Status"
+                class="w-full"
+              />
+            </x-field>
+            <x-field
               label="TransApp Code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-            <x-select
-              v-if="leadStatusForm.leadStatus == 17"
-              v-model="leadStatusForm.lostReason"
-              label="Lost Reason"
-              :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
-              "
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
+              v-if="leadStatusForm.leadStatus == 15"
+            >
+              <x-input
+                v-model="leadStatusForm.trans_code"
+                placeholder="TransApp Code is required"
+                class="w-full"
+                :error="leadStatusForm.errors.trans_code"
+              />
+            </x-field>
+            <x-field label="Lost Reason" v-if="leadStatusForm.leadStatus == 17">
+              <x-select
+                v-model="leadStatusForm.lostReason"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+              />
+            </x-field>
           </div>
         </div>
       </div>
@@ -741,6 +747,16 @@ const policyDetails = useForm({
       </x-modal>
     </div>
 
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="can"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <customerAdditionalContacts
       quoteType="Home"
       :customerId="quote.customer_id"

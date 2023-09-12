@@ -75,10 +75,20 @@ const paymentStatus = id => {
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
+
+const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white">
+  <div
+    v-if="
+      hasAnyRole([
+        $page.props.rolesEnum.Engineering,
+        $page.props.rolesEnum.BetaUser,
+      ])
+    "
+    class="p-4 rounded shadow mb-6 bg-white"
+  >
     <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>

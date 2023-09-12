@@ -285,10 +285,11 @@ use App\Enums\PermissionsEnum;
         @endcan
         <div class="md:w-1/4">
             <label>Commercial</label>
-            <select name="isCommercial" id="commercial-filter">
+            <select name="isCommercial" id="commercial-filter" placeholder="Select any option">
                 <option data-placeholder="true"></option>
+                <option value="All" selected>All</option>
                 <option value="true">Yes</option>
-                <option value="false" selected>No</option>
+                <option value="false">No</option>
             </select>
         </div>
         <div class="md:w-1/4">

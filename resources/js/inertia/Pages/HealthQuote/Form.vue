@@ -9,7 +9,7 @@ const props = defineProps({
   },
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 const isEmptyField = ref(false);
 
 const isEdit = computed(() => {
@@ -135,7 +135,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />

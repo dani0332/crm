@@ -59,6 +59,7 @@ use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AMLController as V2AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
+use App\Http\Controllers\V2\CarQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -140,7 +141,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
 
         if (in_array(quoteTypeCode::Life, newUi())) {
-            Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-list');
+            Route::get('quotes/life/cards', [LifeQuoteController::class, 'cardsView'])->name('life-quotes-card');
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
         Route::resource('customer', CustomerController::class)->names(generateRouteNames('customers'));
@@ -187,8 +188,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
 
-    Route::post('/activities/create-activity', [ActivitesController::class, 'store']);
-    Route::post('activities/{id}/update', [ActivitesController::class, 'update']);
+    Route::post('/activities/create-activity', [ActivitesController::class, 'store'])->name('activities.create-activity');
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update-activity');
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
@@ -265,7 +266,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::post('/store', [CommercialVehicleConfigurationContoller::class, 'store'])->name('admin.configure.commerical.vehicles.store');
             Route::get('/edit/{carMake}', [CommercialVehicleConfigurationContoller::class, 'edit'])->name('admin.configure.commerical.vehicles.edit');
             Route::post('/update', [CommercialVehicleConfigurationContoller::class, 'update'])->name('admin.configure.commerical.vehicles.update');
-
         });
     });
 
@@ -275,11 +275,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
 
-        Route::get('home-cards', [CRUDController::class, 'cardsViewHome']);
+        Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
         Route::resource('business', CRUDController::class);
         if (in_array(quoteTypeCode::Business, newUi())) {
-            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView']);
+            Route::get('business/cards/view', [BusinessQuoteController::class, 'cardsView'])->name('business.cards');
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
@@ -406,7 +406,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
-            Route::get('amt/cards', [V2AmtController::class, 'cardsView']);
+            Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');
             Route::resource('amt', V2AmtController::class);
         } else {
             Route::resource('amt', AMTController::class);
@@ -442,6 +442,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/update-payment-status', [AjaxController::class, 'updatePaymentStatus']);
     // Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansBasedOnInsuranceProvider']); to be removed
     Route::post('/generate-payment-link', [AjaxController::class, 'generatePaymentLink']);
+    Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
 
     Route::resource('members', MembersDetailController::class);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
