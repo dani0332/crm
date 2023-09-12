@@ -836,6 +836,9 @@ html.dark{
 .mb-1{
   margin-bottom: 0.25rem;
 }
+.mb-10{
+  margin-bottom: 2.5rem;
+}
 .mb-14{
   margin-bottom: 3.5rem;
 }
@@ -948,9 +951,6 @@ html.dark{
 }
 .mt-\[23px\]{
   margin-top: 23px;
-}
-.mb-10{
-  margin-bottom: 2.5rem;
 }
 .box-content{
   box-sizing: content-box;
@@ -4004,6 +4004,10 @@ label{
 
   .sm\:grid-cols-3{
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sm\:grid-cols-4{
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .sm\:items-center{

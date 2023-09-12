@@ -775,7 +775,11 @@ class CarQuoteService extends BaseService
             if (
                 in_array('created_at', $searchProperties)
                 && isset($request->created_at) && $request->created_at != ''
-                && (empty($request->email) && empty($request->code))) {
+                && empty($request->email)
+                && empty($request->code)
+                && empty($request->renewal_batch)
+                && empty($request->quote_batch_id)
+            ) {
                 $dateFrom = $this->parseDate($request['created_at'], true);
                 $dateTo = $this->parseDate($request['created_at_end'], false);
                 $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
@@ -808,6 +812,7 @@ class CarQuoteService extends BaseService
                                 $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
                             }
                         } else {
+                            if($item == 'email' && $searchedValue == '0') continue;
                             $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
                         }
                     }

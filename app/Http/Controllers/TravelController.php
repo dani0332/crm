@@ -248,7 +248,7 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
 
-        return inertia('TravelQuote/Create', [
+        return inertia('TravelQuote/Form', [
             'model' => json_encode($model->properties),
             'quotePlans' => null,
             'customTitles' => $customTitles,
@@ -315,7 +315,7 @@ class TravelController extends Controller
         $fields['mobile_no']['disabled'] = true;
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
 
-        return inertia('TravelQuote/Create', [
+        return inertia('TravelQuote/Form', [
             'quote' => $record,
             'quotePlans' => $quotePlans,
             'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
