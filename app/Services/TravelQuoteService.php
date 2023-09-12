@@ -221,7 +221,7 @@ class TravelQuoteService extends BaseService
                 $q->where('tqr.coverage_code', $request->coverage_code)
                     ->orWhere(function($qInner) use ($request){
                         if(TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP == $request->coverage_code){
-                            $qInner->where('days_cover_for','=<', 92);
+                            $qInner->where('days_cover_for','<', 93);
                         }
                         if(TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP == $request->coverage_code || TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP == $request->coverage_code){
                             $qInner->where('days_cover_for','>', 92);
