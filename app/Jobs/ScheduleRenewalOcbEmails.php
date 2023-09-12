@@ -15,8 +15,9 @@ use Illuminate\Queue\SerializesModels;
 class ScheduleRenewalOcbEmails implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $batch = null;
-    protected  $renewalsBatchEmail = null;
+    protected $renewalsBatchEmail = null;
 
     /**
      * Create a new job instance.
@@ -55,7 +56,6 @@ class ScheduleRenewalOcbEmails implements ShouldQueue
     }
 
     /**
-     * @param Throwable $exception
      * @return void
      */
     public function failed(Throwable $exception)

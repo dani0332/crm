@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -17,7 +16,6 @@ use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
-use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\RenewalsQuoteAmlJob;
 use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\AML;
@@ -28,9 +26,7 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Yajra\Datatables\Datatables;
@@ -280,7 +276,7 @@ class RenewalsUploadController extends Controller
                 'type' => RenewalsUploadType::UPDATE_LEADS,
             ]);
 
-        if(!empty($request->batch)) {
+        if (! empty($request->batch)) {
             $query->where('batch', $request->batch);
         }
 
@@ -339,8 +335,6 @@ class RenewalsUploadController extends Controller
     }
 
     /**
-     * @param ScheduleRenewalsOcbRequest $request
-     * @param $batch
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function scheduleRenewalsOcb(ScheduleRenewalsOcbRequest $request, $batch)
@@ -354,7 +348,7 @@ class RenewalsUploadController extends Controller
             'total_sent' => 0,
             'total_bounced' => 0,
             'total_failed' => 0,
-            'created_by_id' => auth()->id()
+            'created_by_id' => auth()->id(),
         ]);
 
         ScheduleRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);

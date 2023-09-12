@@ -2,10 +2,8 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use App\Models\RenewalsBatchEmails;
-use App\Repositories\PersonalQuoteRepository;
 use App\Services\RenewalsUploadService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
@@ -13,9 +11,9 @@ use Illuminate\Foundation\Http\FormRequest;
 class ScheduleRenewalsOcbRequest extends FormRequest
 {
     protected $renewalsUploadService;
-    function __construct(RenewalsUploadService $renewalsUploadService)
+    public function __construct(RenewalsUploadService $renewalsUploadService)
     {
-       $this->renewalsUploadService = $renewalsUploadService;
+        $this->renewalsUploadService = $renewalsUploadService;
     }
 
     /**
@@ -42,8 +40,7 @@ class ScheduleRenewalsOcbRequest extends FormRequest
 
     public function withValidator($validator)
     {
-        $validator->after(function ($validator)
-        {
+        $validator->after(function ($validator) {
             $batch = request()->batch;
 
             $lastScheduleTime = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
@@ -54,7 +51,7 @@ class ScheduleRenewalsOcbRequest extends FormRequest
 
             $totalLeads = $this->renewalsUploadService->getPendingOcbLeadsTotal($batch);
             if ($totalLeads == 0) {
-                $validator->errors()->add('error', 'No leads found for batch - ' . $batch);
+                $validator->errors()->add('error', 'No leads found for batch - '.$batch);
             }
         });
     }
