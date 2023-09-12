@@ -102,7 +102,6 @@ class QuoteAllocation extends Command
                 foreach ($leads as $lead) {
                     info('------ Lead allocation started for '.QuoteTypeId::getDescription($quoteType)." lead: $lead->uuid ------");
                     $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->id);
-                    info('Allocation strategy is created: '.json_encode($allocationStrategy));
                     $allocationStrategy->executeSteps();
                     $processedRecords++;
                 }

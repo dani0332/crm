@@ -50,7 +50,6 @@ class LeadsReassignment extends Command
 
         $start_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
         $end_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
         $shouldProceed = now()->between($start_time, $end_time);
         if ($shouldProceed) {
             dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));

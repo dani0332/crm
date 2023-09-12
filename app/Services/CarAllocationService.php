@@ -403,7 +403,6 @@ class CarAllocationService extends AllocationService
     {
         $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
         $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
-        info('Reassignment job : business start time is : '.$start_time.' and end time is : '.$end_time);
         $shouldProceed = now()->between($start_time, $end_time);
 
         return $shouldProceed;

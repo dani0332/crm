@@ -44,7 +44,7 @@ class Kernel extends ConsoleKernel
             ->command('QuoteAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule
-            ->command('LeadsReassignment:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+            ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
     }
 
