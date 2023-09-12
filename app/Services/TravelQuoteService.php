@@ -304,7 +304,7 @@ class TravelQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
-         //   $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+             $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);
@@ -365,7 +365,7 @@ class TravelQuoteService extends BaseService
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
         if ($column != '' && $column != 0 && $direction != '') {
-            $isAdmin = true; // Auth::user()->hasRole('ADMIN');
+            $isAdmin = Auth::user()->hasRole('ADMIN');
             if ($isAdmin || $isManagerORDeputy == '1') {
                 if ($column == 6) {
                     $column = 'tqr.created_at';
