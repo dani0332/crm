@@ -216,32 +216,32 @@ class TravelQuoteService extends BaseService
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
-        if(isset($request->coverage_code)){
-            $this->query->where(function($q) use ($request){
+        if (isset($request->coverage_code)) {
+            $this->query->where(function ($q) use ($request) {
                 $q->where('tqr.coverage_code', $request->coverage_code)
-                    ->orWhere(function($qInner) use ($request){
-                        if(TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP == $request->coverage_code){
-                            $qInner->where('days_cover_for','<', 93);
+                    ->orWhere(function ($qInner) use ($request) {
+                        if (TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP == $request->coverage_code) {
+                            $qInner->where('days_cover_for', '<', 93);
                         }
-                        if(TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP == $request->coverage_code || TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP == $request->coverage_code){
-                            $qInner->where('days_cover_for','>', 92);
+                        if (TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP == $request->coverage_code || TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP == $request->coverage_code) {
+                            $qInner->where('days_cover_for', '>', 92);
                         }
 
                     });
             });
         }
-        if(isset($request->direction_code)){
-            if($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND){
-                $this->query->where(function($q) use ($request){
+        if (isset($request->direction_code)) {
+            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
+                $this->query->where(function ($q) use ($request) {
                     $q->where('tqr.direction_code', $request->direction_code)
-                    ->orWhere(function($qInner) use ($request){
+                        ->orWhere(function ($qInner) {
                             $qInner->where('currently_located_in_id', 1)
-                                ->where('region_cover_for_id','!=', 3);
+                                ->where('region_cover_for_id', '!=', 3);
                         });
                 });
             }
-            if($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND){
-                $this->query->where(function($q) use ($request){
+            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
+                $this->query->where(function ($q) use ($request) {
                     $q->where('tqr.direction_code', $request->direction_code)
                         ->orWhere('region_cover_for_id', 3);
                 });
@@ -304,7 +304,7 @@ class TravelQuoteService extends BaseService
         }
         if (Auth::user()->isSpecificTeamAdvisor('Travel')) {
             // if user has advisor Role then fetch leads assigned to the user only
-             $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
+            $this->query->where('tqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         if (isset($request->previous_quote_policy_number) && $request->previous_quote_policy_number != '') {
             $this->query->where('tqr.previous_quote_policy_number', $request->previous_quote_policy_number);

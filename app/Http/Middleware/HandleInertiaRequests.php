@@ -58,7 +58,7 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
-            'travelQuoteEnum' =>  TravelQuoteEnum::asArray(),
+            'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
