@@ -19,8 +19,8 @@ class CarLostPermissionSeeder extends Seeder
     {
         $permissions = [];
 
-        $permissions[] = Permission::findOrCreate(PermissionsEnum::CarSoldList, 'web')->id;
-        $permissions[] = Permission::findOrCreate(PermissionsEnum::CarUncontactableList, 'web')->id;
+        $permissions[] = Permission::findOrCreate(PermissionsEnum::CAR_SOLD_LIST, 'web')->id;
+        $permissions[] = Permission::findOrCreate(PermissionsEnum::CAR_UNCONTACTABLE_LIST, 'web')->id;
 
         $moRole = Role::findOrCreate(RolesEnum::MarketingOperations, 'web');
         $moRole->givePermissionTo($permissions);

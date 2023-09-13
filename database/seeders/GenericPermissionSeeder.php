@@ -19,8 +19,8 @@ class GenericPermissionSeeder extends Seeder
     {
         $permissions = [
             ['name' => PermissionsEnum::DATA_EXTRACTION],
-            ['name' => PermissionsEnum::CarSoldList,            'role' => RolesEnum::MarketingOperations],
-            ['name' => PermissionsEnum::CarUncontactableList,   'role' => RolesEnum::MarketingOperations],
+            ['name' => PermissionsEnum::CAR_SOLD_LIST,            'role' => RolesEnum::MarketingOperations],
+            ['name' => PermissionsEnum::CAR_UNCONTACTABLE_LIST,   'role' => RolesEnum::MarketingOperations],
         ];
 
         foreach ($permissions as $permission) {

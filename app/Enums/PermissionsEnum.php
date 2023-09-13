@@ -207,8 +207,8 @@ final class PermissionsEnum extends Enum
     const JetskiQuotesEdit = 'jetski-quotes-edit';
     const JetskiQuotesShow = 'jetski-quotes-show';
     const RenewalBatchUpdate = 'renewal-batch-update';
-    const CarSoldList = 'car-sold-list';
-    const CarUncontactableList = 'car-uncontactable-list';
+    const CAR_SOLD_LIST = 'car-sold-list';
+    const CAR_UNCONTACTABLE_LIST = 'car-uncontactable-list';
     public const ActivitiesAssignedToView = 'activities-assigned-to-view';
     public const RenewalsUploadedLeadList = 'renewals-uploaded-leads-list';
     public const RenewalsUploadUpdate = 'renewals-upload-update';
