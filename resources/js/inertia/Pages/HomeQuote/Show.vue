@@ -19,11 +19,13 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
+  customerTypeEnum: Array
 });
 
 const page = usePage();
 
 const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
 
 const modals = reactive({
   duplicate: false,
@@ -400,6 +402,42 @@ const policyDetails = useForm({
   modelType: page.props.modelType,
   quote_id: page.props.quote.id,
 });
+
+const disableCustProfFields = computed(() => {
+    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+});
+
+const customerProfileForm = useForm({
+    insured_first_name: page.props.quote.insured_first_name || '',
+    insured_last_name: page.props.quote.insured_last_name || '',
+    emirates_id_number: page.props.quote.emirates_id_number || null,
+    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+});
+
+const updateProfileDetails = () => {
+
+    let data = {
+        customer_id: page.props.quote.customer_id,
+        insured_first_name: customerProfileForm.insured_first_name,
+        insured_last_name: customerProfileForm.insured_last_name,
+        emirates_id_number: customerProfileForm.emirates_id_number,
+        emirates_id_expiry_date: customerProfileForm.emirates_id_expiry_date,
+    };
+
+    axios.post(route('update-customer-profile'), data).then(response => {
+        if (response.status == 200) {
+            notification.success({
+                title: 'Customer profile details update successfully',
+                position: 'top',
+            });
+        } else {
+            notification.error({
+                title: 'Customer profile details not updated',
+                position: 'top',
+            });
+        }
+    });
+}
 </script>
 
 <template>
@@ -480,20 +518,24 @@ const policyDetails = useForm({
             </div>
             <div>{{ quote.code }}</div>
           </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote.customer_type }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Advisor</dt>
+            <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Created Date</dt>
+            <dt class="font-medium">CREATED DATE</dt>
             <dd>{{ quote.created_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Source</dt>
+            <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Last Modified Date</dt>
+            <dt class="font-medium">LAST MODIFIED DATE</dt>
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -510,46 +552,16 @@ const policyDetails = useForm({
             <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Renewal Batch</dt>
+            <dt class="font-medium">RENEWAL BATCH</dt>
             <dd>{{ quote.renewal_batch }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Renewal import code</dt>
+            <dt class="font-medium">RENEWAL IMPORT CODE</dt>
             <dd>{{ quote.renewal_import_code }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Device</dt>
+            <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">First Name</dt>
-            <dd>{{ quote.first_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Last Name</dt>
-            <dd>{{ quote.last_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Mobile Number</dt>
-            <dd>{{ quote.mobile_no }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Email</dt>
-            <dd>{{ quote.email }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Address</dt>
-            <dd>{{ quote.address }}</dd>
           </div>
         </dl>
       </div>
@@ -562,51 +574,51 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">I am</dt>
+            <dt class="font-medium">I AM</dt>
             <dd>{{ quote.iam_possesion_type_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">I Live In</dt>
+            <dt class="font-medium">I LIVE IN</dt>
             <dd>{{ quote.ilivein_accommodation_type_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Has Contents</dt>
+            <dt class="font-medium">HAS CONTENTS</dt>
             <dd>{{ quote.has_contents ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Contents Aed</dt>
+            <dt class="font-medium">CONTENTS AED</dt>
             <dd>{{ quote.contents_aed }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Has Building</dt>
+            <dt class="font-medium">HAS BUILDING</dt>
             <dd>{{ quote.has_building ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Building Aed</dt>
+            <dt class="font-medium">BUILDING AED</dt>
             <dd>{{ quote.building_aed }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Has Personal Belongings</dt>
+            <dt class="font-medium">HAS PERSONAL BELONGINGS</dt>
             <dd>{{ quote.has_personal_belongings ? 'Yes' : 'No' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Personal Belongings Aed</dt>
+            <dt class="font-medium">PERSONAL BELONGINGS AED</dt>
             <dd>{{ quote.personal_belongings_aed }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Currently Insured With</dt>
+            <dt class="font-medium">CURRENTLY INSURED WITH</dt>
             <dd>{{ quote.currently_insured_with_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Type Of Plan</dt>
+            <dt class="font-medium">TYPE OF PLAN</dt>
             <dd>{{ quote.plan_id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Next FollowUp Date</dt>
+            <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
             <dd>{{ quote.next_followup_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Details</dt>
+            <dt class="font-medium">DETAILS</dt>
             <dd>{{ quote.details }}</dd>
           </div>
         </dl>
@@ -622,15 +634,15 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Previous Policy Number</dt>
+            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
             <dd>{{ quote.previous_quote_policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Previous Policy Expiry Date</dt>
+            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
             <dd>{{ quote.previous_policy_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Previous Quote Price</dt>
+            <dt class="font-medium">PREVIOUS QUOTE PRICE</dt>
             <dd>{{ quote.previous_quote_policy_premium }}</dd>
           </div>
         </dl>
@@ -644,20 +656,135 @@ const policyDetails = useForm({
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Policy Number</dt>
+            <dt class="font-medium">POLICY NUMBER</dt>
             <dd>{{ quote.policy_number }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Price</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">TransApp Code</dt>
+            <dt class="font-medium">TRANSAPP CODE</dt>
             <dd>{{ quote.transapp_code }}</dd>
           </div>
         </dl>
       </div>
     </div>
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div>
+              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+              <x-divider class="mb-4 mt-1" />
+          </div>
+          <div class="text-sm">
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED FIRST NAME</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.insured_first_name"
+                              placeholder="INSURED FIRST NAME"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED LAST NAME</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.insured_last_name"
+                              placeholder="INSURED LAST NAME"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">NATIONALITY</dt>
+                      <dd>{{ quote.nationality_id_text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">DATE OF BIRTH</dt>
+                      <dd>{{ quote.dob }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.emirates_id_number"
+                              placeholder="EMIRATES ID NUMBER"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                      <dd>
+                          <DatePicker
+                              v-model="customerProfileForm.emirates_id_expiry_date"
+                              placeholder="EMIRATES ID EXPIRY DATE"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">ADDRESS</dt>
+                      <dd>{{ quote.address }}</dd>
+                  </div>
+              </dl>
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY NAME</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+              </dl>
+              <div class="flex justify-end">
+                  <x-button
+                      v-if="disableCustProfFields"
+                      class="mt-4"
+                      color="emerald"
+                      size="sm"
+                      @click="updateProfileDetails"
+                  >
+                      Update Profile
+                  </x-button>
+              </div>
+          </div>
+      </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>

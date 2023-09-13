@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -72,7 +73,8 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_policy_premium',
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
-            'hqr.renewal_import_code'
+            'hqr.renewal_import_code',
+            DB::raw('IF(hqr.customer_id = hqr.customer_id, "'.CustomerTypeEnum::Individual.'", "'.CustomerTypeEnum::Entity.'") as customer_type')
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')

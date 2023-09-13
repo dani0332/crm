@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -89,7 +90,8 @@ class TravelQuoteService extends BaseService
             'end_date',
             'direction_code',
             'coverage_code',
-            'tqr.primary_member_id'
+            'tqr.primary_member_id',
+            DB::raw('IF(tqr.customer_id = tqr.customer_id, "'.CustomerTypeEnum::Individual.'", "'.CustomerTypeEnum::Entity.'") as customer_type')
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -484,22 +486,23 @@ class TravelQuoteService extends BaseService
         return [
             'id' => 'readonly|none',
             'code' => 'input|title',
-            'first_name' => 'input|text|required',
-            'last_name' => 'input|text|required',
-            'email' => 'input|email|required',
-            'mobile_no' => 'input|title|number|required',
+            'customer_type' => 'input|title',
+//            'first_name' => 'input|text|required',
+//            'last_name' => 'input|text|required',
+//            'email' => 'input|email|required',
+//            'mobile_no' => 'input|title|number|required',
             'quote_status_id' => 'select|title|multiple',
             'advisor_id' => 'select|title|multiple',
             'created_at' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
-            'dob' => 'input|date|title',
+//            'dob' => 'input|date|title',
             'next_followup_date' => 'input|date|title|range',
             'transapp_code' => 'readonly|none',
             'lost_reason' => 'input|text',
             'source' => 'input|text',
             'premium' => 'input|number|title',
             'policy_number' => 'input|text',
-            'nationality_id' => 'select|title|required',
+//            'nationality_id' => 'select|title|required',
             'previous_quote_id' => 'readonly|title',
             'renewal_expiry_date' => 'input|date|title|range',
             'is_renewal' => '|static|Yes,No',
@@ -594,6 +597,9 @@ class TravelQuoteService extends BaseService
                 break;
             case 'parent_duplicate_quote_id':
                 $title = 'Parent Ref-ID';
+                break;
+            case 'customer_type':
+                $title = 'Customer Type';
                 break;
             default:
                 break;

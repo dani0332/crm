@@ -1054,13 +1054,51 @@ const sendPolicyToClient = () => {
   }
 };
 
+const disableCustProfFields = computed(() => {
+    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+});
+
+const customerProfileForm = useForm({
+    insured_first_name: page.props.quote.insured_first_name || '',
+    insured_last_name: page.props.quote.insured_last_name || '',
+    emirates_id_number: page.props.quote.emirates_id_number || null,
+    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+});
+
+const updateProfileDetails = () => {
+
+    let data = {
+        customer_id: page.props.quote.customer_id,
+        insured_first_name: customerProfileForm.insured_first_name,
+        insured_last_name: customerProfileForm.insured_last_name,
+        emirates_id_number: customerProfileForm.emirates_id_number,
+        emirates_id_expiry_date: customerProfileForm.emirates_id_expiry_date,
+    };
+
+    axios.post(route('update-customer-profile'), data).then(response => {
+        if (response.status == 200) {
+            notification.success({
+                title: 'Customer profile details update successfully',
+                position: 'top',
+            });
+        } else {
+            notification.error({
+                title: 'Customer profile details not updated',
+                position: 'top',
+            });
+        }
+    });
+}
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
 });
+
 </script>
+
 <template>
   <div>
     <Head title="Health Detail" />
@@ -1288,7 +1326,7 @@ onMounted(() => {
             <dd>{{ quote.details }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Additional Notes</dt>
+            <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
         </dl>
@@ -1338,8 +1376,10 @@ onMounted(() => {
                       <dt class="font-medium">INSURED FIRST NAME</dt>
                       <dd>
                           <x-input
+                              v-model="customerProfileForm.insured_first_name"
                               placeholder="INSURED FIRST NAME"
                               class="w-full"
+                              :disabled="!disableCustProfFields"
                           />
                       </dd>
                   </div>
@@ -1347,8 +1387,10 @@ onMounted(() => {
                       <dt class="font-medium">INSURED LAST NAME</dt>
                       <dd>
                           <x-input
+                              v-model="customerProfileForm.insured_last_name"
                               placeholder="INSURED LAST NAME"
                               class="w-full"
+                              :disabled="!disableCustProfFields"
                           />
                       </dd>
                   </div>
@@ -1372,8 +1414,10 @@ onMounted(() => {
                       <dt class="font-medium">EMIRATES ID NUMBER</dt>
                       <dd>
                           <x-input
+                              v-model="customerProfileForm.emirates_id_number"
                               placeholder="EMIRATES ID NUMBER"
                               class="w-full"
+                              :disabled="!disableCustProfFields"
                           />
                       </dd>
                   </div>
@@ -1381,7 +1425,9 @@ onMounted(() => {
                       <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
                       <dd>
                           <DatePicker
+                              v-model="customerProfileForm.emirates_id_expiry_date"
                               placeholder="EMIRATES ID EXPIRY DATE"
+                              :disabled="!disableCustProfFields"
                           />
                       </dd>
                   </div>
@@ -1430,11 +1476,11 @@ onMounted(() => {
               </dl>
               <div class="flex justify-end">
                   <x-button
+                      v-if="disableCustProfFields"
                       class="mt-4"
                       color="emerald"
                       size="sm"
-                      :loading="leadStatusForm.processing"
-                      @click.prevent="onLeadStatus"
+                      @click="updateProfileDetails"
                   >
                       Update Profile
                   </x-button>

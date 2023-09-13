@@ -38,9 +38,11 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
+  customerTypeEnum: Array
 });
 
 const page = usePage();
+const hasRole = role => useHasRole(role);
 
 const dateFormat = date => {
   if (!date) return '';
@@ -902,6 +904,43 @@ onMounted(() => {
     });
   }
 });
+
+const disableCustProfFields = computed(() => {
+    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+});
+
+const customerProfileForm = useForm({
+    insured_first_name: page.props.quote.insured_first_name || '',
+    insured_last_name: page.props.quote.insured_last_name || '',
+    emirates_id_number: page.props.quote.emirates_id_number || null,
+    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+});
+
+const updateProfileDetails = () => {
+
+    let data = {
+        customer_id: page.props.quote.customer_id,
+        insured_first_name: customerProfileForm.insured_first_name,
+        insured_last_name: customerProfileForm.insured_last_name,
+        emirates_id_number: customerProfileForm.emirates_id_number,
+        emirates_id_expiry_date: customerProfileForm.emirates_id_expiry_date,
+    };
+
+    axios.post(route('update-customer-profile'), data).then(response => {
+        if (response.status == 200) {
+            notification.success({
+                title: 'Customer profile details update successfully',
+                position: 'top',
+            });
+        } else {
+            notification.error({
+                title: 'Customer profile details not updated',
+                position: 'top',
+            });
+        }
+    });
+}
+
 </script>
 <template>
   <div>
@@ -1011,7 +1050,7 @@ onMounted(() => {
                 <label
                   class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
                 >
-                  Traveling Where
+                  TRAVELING WHERE
                 </label>
                 <template #tooltip> Traveling Where</template>
               </x-tooltip>
@@ -1029,7 +1068,7 @@ onMounted(() => {
               <label
                 class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
               >
-                Arrived at UAE
+                ARRIVED AT UAE
               </label>
             </dt>
             <dt class="font-medium">
@@ -1046,7 +1085,7 @@ onMounted(() => {
               <label
                 class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
               >
-                Arrived at Destination
+                ARRIVED AT DESTINATION
               </label>
             </dt>
             <dt class="font-medium">
@@ -1059,7 +1098,7 @@ onMounted(() => {
                 <label
                   class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                 >
-                  Days Covers
+                  DAYS COVERS
                 </label>
                 <template #tooltip>Days Covers</template>
               </x-tooltip>
@@ -1072,7 +1111,7 @@ onMounted(() => {
                 <label
                   class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                 >
-                  Travel Start Date
+                  TRAVEL START DATE
                 </label>
                 <template #tooltip> Travel Start Date</template>
               </x-tooltip>
@@ -1089,7 +1128,7 @@ onMounted(() => {
                 <label
                   class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                 >
-                  Travel End Date
+                  TRAVEL END DATE
                 </label>
                 <template #tooltip> Travel End Date</template>
               </x-tooltip>
@@ -1102,7 +1141,7 @@ onMounted(() => {
                 <label
                   class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                 >
-                  Travel Coverage
+                  TRAVEL COVERAGE
                 </label>
                 <template #tooltip> Travel Coverage</template>
               </x-tooltip>
@@ -1115,7 +1154,7 @@ onMounted(() => {
                 <label
                   class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
                 >
-                  Region Coverage
+                  REGION COVERAGE
                 </label>
                 <template #tooltip>Region Cover</template>
               </x-tooltip>
@@ -1148,6 +1187,117 @@ onMounted(() => {
         </dl>
       </div>
     </div>
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div>
+              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+              <x-divider class="mb-4 mt-1" />
+          </div>
+          <div class="text-sm">
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED FIRST NAME</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.insured_first_name"
+                              placeholder="INSURED FIRST NAME"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED LAST NAME</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.insured_last_name"
+                              placeholder="INSURED LAST NAME"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">NATIONALITY</dt>
+                      <dd>{{ quote.nationality_id_text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">DATE OF BIRTH</dt>
+                      <dd>{{ quote.dob }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.emirates_id_number"
+                              placeholder="EMIRATES ID NUMBER"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                      <dd>
+                          <DatePicker
+                              v-model="customerProfileForm.emirates_id_expiry_date"
+                              placeholder="EMIRATES ID EXPIRY DATE"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+              </dl>
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY NAME</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+              </dl>
+              <div class="flex justify-end">
+                  <x-button
+                      v-if="disableCustProfFields"
+                      class="mt-4"
+                      color="emerald"
+                      size="sm"
+                      @click="updateProfileDetails"
+                  >
+                      Update Profile
+                  </x-button>
+              </div>
+          </div>
+      </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>

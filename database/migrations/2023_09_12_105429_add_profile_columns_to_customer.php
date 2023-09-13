@@ -15,11 +15,21 @@ class AddProfileColumnsToCustomer extends Migration
     {
         Schema::table('customer', function (Blueprint $table) {
             if (! Schema::hasColumn('customer', 'insured_first_name')) {
-                $table->string('insured_first_name');
-                $table->string('insured_last_name');
-                $table->string('emirates_id_number');
-                $table->date('emirates_id_expiry_date');
+                $table->string('insured_first_name')->nullable();
             }
+
+            if (! Schema::hasColumn('customer', 'insured_last_name')) {
+                $table->string('insured_last_name')->nullable();
+            }
+
+            if (! Schema::hasColumn('customer', 'emirates_id_number')) {
+                $table->string('emirates_id_number')->nullable();
+            }
+
+            if (! Schema::hasColumn('customer', 'emirates_id_expiry_date')) {
+                $table->date('emirates_id_expiry_date')->nullable();
+            }
+
         });
     }
 

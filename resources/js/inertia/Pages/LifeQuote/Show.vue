@@ -12,9 +12,11 @@ defineProps({
   lostReasons: Array,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
+  customerTypeEnum: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
+const hasRole = role => useHasRole(role);
 
 const modals = reactive({
   duplicate: false,
@@ -287,6 +289,43 @@ const onLeadStatus = () => {
     },
   );
 };
+
+const disableCustProfFields = computed(() => {
+    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+});
+
+const customerProfileForm = useForm({
+    insured_first_name: page.props.quote.insured_first_name || '',
+    insured_last_name: page.props.quote.insured_last_name || '',
+    emirates_id_number: page.props.quote.emirates_id_number || null,
+    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+});
+
+const updateProfileDetails = () => {
+
+    let data = {
+        customer_id: page.props.quote.customer_id,
+        insured_first_name: customerProfileForm.insured_first_name,
+        insured_last_name: customerProfileForm.insured_last_name,
+        emirates_id_number: customerProfileForm.emirates_id_number,
+        emirates_id_expiry_date: customerProfileForm.emirates_id_expiry_date,
+    };
+
+    axios.post(route('update-customer-profile'), data).then(response => {
+        if (response.status == 200) {
+            notification.success({
+                title: 'Customer profile details update successfully',
+                position: 'top',
+            });
+        } else {
+            notification.error({
+                title: 'Customer profile details not updated',
+                position: 'top',
+            });
+        }
+    });
+}
+
 </script>
 
 <template>
@@ -376,125 +415,61 @@ const onLeadStatus = () => {
             </div>
             <div>{{ quote.code }}</div>
           </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
-            <dd>{{ quote.first_name }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
-            <dd>{{ quote.last_name }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote?.email }}</dd>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MOBILE NUMBER</dt>
-            <dd>{{ quote?.mobile_no }}</dd>
-          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor?.name }}</dd>
           </div>
-
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
             <dd>{{ quote.created_at }}</dd>
           </div>
-
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LAST MODIFIED DATE</dt>
             <dd>{{ quote.updated_at }}</dd>
           </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob }}</dd>
-            <dd></dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NATIONALITY</dt>
-            <dd>{{ quote.nationality?.text }}</dd>
-            <dd></dd>
-          </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SUM INSURED VALUE</dt>
             <dd>{{ quote.sum_insured_value }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
             <dd>{{ quote.life_quote_request_detail?.next_followup_date }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRANSAPP CODE</dt>
             <dd>{{ quote.life_quote_request_detail?.transapp_code }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.life_quote_request_detail?.lost_reason?.text }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CURRENCY</dt>
             <dd>{{ quote.currency?.text }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PURPOSE OF INSURANCE</dt>
             <dd>{{ quote.purpose_of_insurance?.text }}</dd>
-            <dd></dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MARITAL STATUS</dt>
-            <dd>{{ quote.marital_status?.text }}</dd>
-            <dd></dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">CHILDREN</dt>
-            <dd>{{ quote.childern?.text }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF INSURANCE</dt>
             <dd>{{ quote.insurance_tenure?.text }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TENURE OF COVER</dt>
             <dd>{{ quote.number_of_years?.text }}</dd>
-            <dd></dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GENDER</dt>
-            <dd>{{ quote.gender }}</dd>
-            <dd></dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">IS SMOKER</dt>
-            <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">OTHERS INFO</dt>
             <dd>{{ quote.others_info }}</dd>
-            <dd></dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">RENEWAL EXPIRY DATE</dt>
@@ -543,6 +518,133 @@ const onLeadStatus = () => {
         </dl>
       </div>
     </div>
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div>
+              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type !== page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+              <x-divider class="mb-4 mt-1" />
+          </div>
+          <div class="text-sm">
+              <dl v-if="quote.customer_type !== page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED FIRST NAME</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.insured_first_name"
+                              placeholder="INSURED FIRST NAME"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">INSURED LAST NAME</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.insured_last_name"
+                              placeholder="INSURED LAST NAME"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">NATIONALITY</dt>
+                      <dd>{{ quote.nationality?.text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">DATE OF BIRTH</dt>
+                      <dd>{{ quote.dob }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.emirates_id_number"
+                              placeholder="EMIRATES ID NUMBER"
+                              class="w-full"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                      <dd>
+                          <DatePicker
+                              v-model="customerProfileForm.emirates_id_expiry_date"
+                              placeholder="EMIRATES ID EXPIRY DATE"
+                              :disabled="!disableCustProfFields"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">GENDER</dt>
+                      <dd>{{ quote.gender }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MARITAL STATUS</dt>
+                      <dd>{{ quote.marital_status?.text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">CHILDREN</dt>
+                      <dd>{{ quote.childern?.text }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">IS SMOKER</dt>
+                      <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
+                  </div>
+              </dl>
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">FIRST NAME</dt>
+                      <dd>{{ quote.first_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">LAST NAME</dt>
+                      <dd>{{ quote.last_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">MOBILE NUMBER</dt>
+                      <dd>{{ quote.mobile_no }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMAIL</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY NAME</dt>
+                      <dd>{{ quote.email }}</dd>
+                  </div>
+              </dl>
+              <div class="flex justify-end">
+                  <x-button
+                      v-if="disableCustProfFields"
+                      class="mt-4"
+                      color="emerald"
+                      size="sm"
+                      @click="updateProfileDetails"
+                  >
+                      Update Profile
+                  </x-button>
+              </div>
+          </div>
+      </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>

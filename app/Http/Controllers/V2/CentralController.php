@@ -10,8 +10,10 @@ use App\Exports\LifeQuotesExport;
 use App\Exports\PersonalQuotesExport;
 use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Models\Customer;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -93,5 +95,14 @@ class CentralController extends Controller
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
+    }
+
+    public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
+    {
+        Customer::first($customerProfileRequest->customer_id)->update($customerProfileRequest->only([
+            'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date'
+        ]));
+
+        return response()->json(['success' => 'Customer profile details update successfully']);
     }
 }

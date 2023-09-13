@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
@@ -118,6 +119,7 @@ class LifeQuoteController extends Controller
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray()
         ]);
     }
 

@@ -21,6 +21,7 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
+use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -609,6 +610,7 @@ class CRUDController extends Controller
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
                 'embeddedProducts' => $embeddedProducts,
+                'customerTypeEnum' => CustomerTypeEnum::asArray(),
             ]);
         }
 
@@ -1141,6 +1143,18 @@ class CRUDController extends Controller
             if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
                 return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
             }
+
+            $customerProfileDetails = Customer::where('id', $lead->customer_id)->firstOrFail([
+                'insured_first_name',
+                'insured_last_name',
+                'emirates_id_number',
+                'emirates_id_expiry_date'
+            ])->toArray();
+
+            if (in_array(null, $customerProfileDetails) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                return redirect()->back()->with('message', 'Please update customer profile information before moving to TRANSACTION APPROVED status');
+            }
+
         }
         if ($request->leadStatus == QuoteStatusEnum::Lost) {
             $this->validate($request, [
