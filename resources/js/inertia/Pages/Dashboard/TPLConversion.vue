@@ -1,7 +1,4 @@
 <script setup>
-import axios from 'axios';
-import ColumnChart from '../../Components/Charts/ColumnChart.vue';
-
 let props = defineProps({
   tplDashboardStats: Array,
   teams: Object,
@@ -119,7 +116,7 @@ onMounted(() => {
         />
       </x-field>
     </div>
-    <ColumnChart :data="columnChartData" />
+    <ChartsColumnChart :data="columnChartData" />
     <div class="mt-auto">
       <span class="text-xs">
         © AFIA Insurance Brokerage Services LLC, registration no. 85, under UAE

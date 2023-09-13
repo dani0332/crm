@@ -1,4 +1,5 @@
 <script setup>
+import { Chart } from 'highcharts-vue';
 const props = defineProps({
   data: {
     type: Array,
@@ -76,5 +77,5 @@ const chartOptions = ref({
 });
 </script>
 <template>
-  <charts ref="chartRef" :options="chartOptions"></charts>
+  <Chart ref="chartRef" :options="chartOptions"></Chart>
 </template>

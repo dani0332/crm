@@ -35,6 +35,7 @@
         "@vuepic/vue-datepicker": "^4.2.1",
         "@vueuse/core": "^10.2.1",
         "cypress-file-upload": "^5.0.8",
+        "highcharts": "^11.1.0",
         "highcharts-vue": "^1.4.3",
         "md-editor-v3": "^4.1.1",
         "vue": "^3.2.45",
