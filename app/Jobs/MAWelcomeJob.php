@@ -54,8 +54,8 @@ class MAWelcomeJob implements ShouldQueue
                 info('MAWelcomeJob - Email Sent to customer '.$this->customer->email.' - Invite Code - '.$customerInviteCode);
                 $customer = CustomerService::getCustomerByEmail($this->customer->email);
                 if ($customer) {
-                    $customer->is_we_sent = true;
-                    $customer->save();
+                    // $customer->is_we_sent = true; // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
+                    // $customer->save(); // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
 
                     $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->get();
                     if ($myAlfredUser->isEmpty()) {
