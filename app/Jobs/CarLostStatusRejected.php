@@ -17,8 +17,8 @@ class CarLostStatusRejected implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 15;
-    public $backoff = 300;
+    public $timeout = 40;
+    public $backoff = 360;
     private $quote = null;
     private $carLostQuoteLog = null;
 
@@ -54,7 +54,10 @@ class CarLostStatusRejected implements ShouldQueue
 
         $cc = [];
 
-        if ($rejectionEmailCc = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC)->first()) {
+        if (
+            ($rejectionEmailCc = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC)->first())
+            && !empty($rejectionEmailCc->value)
+        ) {
             $cc[] = $rejectionEmailCc->value;
         }
 

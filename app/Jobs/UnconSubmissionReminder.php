@@ -22,12 +22,12 @@ use Throwable;
 /**
  * send reminder email for uncontactable renewal batches submission to advisors
  */
-class UnconSubmissionReminder implements ShouldQueue
+class UnconSubmissionReminder //implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 80;
-    public $backoff = 20;
+    public $timeout = 60;
+    public $backoff = 360;
     public $tries = 3;
 
     /**
@@ -93,6 +93,9 @@ class UnconSubmissionReminder implements ShouldQueue
 
         info('Sending Uncontactable Submissions reminder email');
 
+        $to = 'faisal.abbas@insurancemarket.ae';
+        $cc = 'faisal.abbas@insurancemarket.ae';
+        //dd($emailData, $to, $cc);
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
         info('Uncontactable Submission reminder email is sent');

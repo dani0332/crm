@@ -20,8 +20,8 @@ class CarSoldResubmissions implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $timeout = 80;
-    public $backoff = 20;
+    public $timeout = 60;
+    public $backoff = 360;
     public $tries = 3;
 
     /**
