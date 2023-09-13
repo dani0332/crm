@@ -22,9 +22,14 @@ Route::middleware(['basicAuth'])->group(function () {
 });
 
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
+
 Route::prefix('v1')->group(function () {
+
+    Route::post('quotes/car/update-lead-status', [CarQuoteController::class, 'updateLeadStatus']);
+
     Route::get('quotes/car', [CarQuoteController::class, 'index']);
     Route::get('quotes/car/{uuid}/ocb-details', [CarQuoteController::class, 'getOcbDetails']);
+
     Route::post('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'store']);
     Route::get('quotes/{quoteType}/{quoteUuid}/documents', [QuoteDocumentController::class, 'index']);
     Route::delete('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'destroy']);

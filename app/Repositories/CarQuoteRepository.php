@@ -2,11 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
+use App\Models\QuoteStatusLog;
 use App\Traits\CentralTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CarQuoteRepository extends BaseRepository
 {
@@ -68,5 +73,31 @@ class CarQuoteRepository extends BaseRepository
         ];
 
         return Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
+    }
+
+    /**
+     * @param $data
+     * @return void
+     */
+    public function fetchUpdateLeadStatus($data)
+    {
+        return DB::transaction(function() use($data)
+        {
+            $quote = $this->where('uuid', $data['quote_uuid'])->first();
+
+            $previousStatusId = $quote->quote_status_id;
+
+            $quote->update(['quote_status_id' => $data['quote_status_id']]);
+
+            QuoteStatusLog::create([
+                'quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $quote->id,
+                'current_quote_status_id' => $data['quote_status_id'],
+                'previous_quote_status_id' => $previousStatusId,
+                'notes' => $data['notes'] ?? null
+            ]);
+
+            return $quote;
+        });
     }
 }

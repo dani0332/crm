@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Resources\CarQuoteResource;
 use App\Models\CarQuote;
 use App\Repositories\CarQuoteRepository;
@@ -37,5 +38,16 @@ class CarQuoteController extends Controller
         $ocbDetails = $carQuoteService->getOcbDetails($uuid);
 
         return response()->json($ocbDetails);
+    }
+
+    /**
+     * @param UpdateLeadStatusRequest $request
+     * @return void
+     */
+    public function updateLeadStatus(UpdateLeadStatusRequest $request)
+    {
+        CarQuoteRepository::updateLeadStatus($request->validated());
+        
+        return response()->json(['message' => 'Lead status updated successfully']);
     }
 }
