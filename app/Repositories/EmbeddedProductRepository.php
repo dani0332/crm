@@ -4,10 +4,15 @@ namespace App\Repositories;
 
 use App\Models\EmbeddedProduct;
 use App\Models\GenericDocument;
+use App\Services\PostMarkService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Support\Facades\DB;
+use PDF;
 
 class EmbeddedProductRepository extends BaseRepository
 {
+    use GenericQueriesAllLobs;
+
     public function model()
     {
         return EmbeddedProduct::class;
@@ -134,5 +139,67 @@ class EmbeddedProductRepository extends BaseRepository
                 $query->where('quote_request_id', $quoteRequestId);
             }])
             ->get();
+    }
+
+    public function fetchSendDocument()
+    {
+        $quoteId = request()->quoteId;
+        $modelType = request()->modelType;
+        $epId = request()->epId;
+
+        $ep = $this->where('id', $epId)->first();
+        $product_name = $short_code = '';
+        if ($ep) {
+            $product_name = $ep->product_name;
+            $short_code = $ep->short_code;
+        }
+        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+        $advisorData = [];
+        if ($quoteObject->advisor) {
+            $advisor = $quoteObject->advisor;
+            $advisorData['email'] = $advisor->email;
+            $advisorData['name'] = $advisor->name;
+            $advisorData['phone'] = $advisor->mobile_no;
+        }
+        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
+        $viewData['dob'] = $quoteObject->dob;
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+
+        $attachments[] = [
+            'Content' => base64_encode($pdf->output()),
+            'Name' => 'Certificate.pdf',
+            'ContentType' => 'application/pdf',
+        ];
+
+        $body = json_encode([
+            'From' => config('constants.MA_FROM_EMAIL'),
+            'ReplyTo' => isset($advisorEmail) ? $advisorEmail : null,
+            // 'To' => $quoteObject->email,
+            'To' => 'nouman.hussain@insurancemarket.ae',
+            'Tag' => '',
+            'TemplateAlias' => 'embedded-products-payment-auth',
+            'Attachments' => isset($attachments) ? $attachments : null,
+            'TemplateModel' => [
+                'params' => [
+                    'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
+                    'isMedex' => true,
+                    'productName' => 'demo',
+                    'productDescription' => 'this is desc',
+                    'advisor' => (object) $advisorData,
+                ],
+                'subject' => 'Thank you for your purchase of '.$product_name.' with Alfred - < '.$short_code.'-'.$quoteObject->code.' >',
+            ],
+            'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+        ], JSON_UNESCAPED_SLASHES);
+
+        $obj = new PostMarkService();
+
+        $res = $obj->sendEmail($body);
+        if ($res == 200) {
+            return redirect()->back()->with('success', 'Certificate send Successfully');
+        } else {
+            return redirect()->back()->with('error', 'Send Certificate  failed');
+        }
     }
 }

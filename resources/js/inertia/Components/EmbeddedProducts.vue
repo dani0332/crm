@@ -1,4 +1,5 @@
 <script setup>
+const notification = useNotifications('toast');
 const props = defineProps({
   data: {
     type: Array,
@@ -12,8 +13,34 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  modelType: {
+    type: String,
+    default: '',
+  },
+  quote: {
+    type: Object,
+    default: {},
+  },
 });
 
+const sendDocumentForm = useForm({
+  quoteId: props.quote.id,
+  modelType: props.modelType,
+  isInertia: true,
+});
+
+const sendDcoument = id => {
+  sendDocumentForm
+    .transform(data => ({
+      ...data,
+      epId: id,
+    }))
+    .post('/embedded-products/send-document', {
+      preserveScroll: true,
+      onSuccess: () => {},
+      onError: () => {},
+    });
+};
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -59,7 +86,6 @@ const ppDoc = str => {
 };
 
 const { copy, copied } = useClipboard();
-const notification = useNotifications('toast');
 
 const onCopyText = () => {
   copy(props.link);
@@ -155,7 +181,11 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
       <template #item-actions="item">
         <div class="flex flex-col gap-1">
-          <x-button size="xs" color="emerald" disabled>
+          <x-button
+            size="xs"
+            color="emerald"
+            @click.prevent="sendDcoument(item.id)"
+          >
             Send Documents
           </x-button>
           <x-button size="xs" color="#ff5e00" disabled>

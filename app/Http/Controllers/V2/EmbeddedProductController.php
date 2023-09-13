@@ -103,4 +103,9 @@ class EmbeddedProductController extends Controller
             'message' => 'Embedded Product status updated',
         ]);
     }
+
+    public function sendDocument()
+    {
+        return EmbeddedProductRepository::sendDocument();
+    }
 }
