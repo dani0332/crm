@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CarTeamType;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
@@ -36,6 +37,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -152,8 +154,17 @@ class CRUDController extends Controller
         $renewalAdvisors = $upcomingBatch = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
+        $showDeadlineAlert = false;
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
+
+            if(isset($upcomingBatch->deadline->deadline_date) &&
+                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
+                UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS] )
+            ) {
+                $showDeadlineAlert = true;
+            }
+
             $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
         } else {
             $userRoles = Auth::user()->usersroles()->get();
@@ -244,7 +255,7 @@ class CRUDController extends Controller
         }
 
 
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount', 'upcomingBatch'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount', 'upcomingBatch', 'showDeadlineAlert'));
     }
 
     /**

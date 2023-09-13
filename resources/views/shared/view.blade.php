@@ -912,9 +912,7 @@ use App\Repositories\UserRepository;
                     </form>
 
 
-                    @if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
-                    isset($upcomingBatch->deadline->deadline_date) &&
-                    UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS] ))
+                    @if(isset($showDeadlineAlert) && $showDeadlineAlert)
                     <div class="row">
                         <div class="col-sm-12 text-center">
                             <span class="text-danger">Alert! Deadline for submission for Batch {{$upcomingBatch->name}} uncontactable is on {{$upcomingBatch->deadline->deadline_date}}</span>
