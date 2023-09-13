@@ -5,6 +5,9 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  seriesName: String,
+  title: String,
+  yAxisTitle: String,
 });
 
 const chartRef = ref(null);
@@ -36,7 +39,7 @@ const chartOptions = ref({
   },
   title: {
     align: 'center',
-    text: 'TPL CONVERSION REPORT',
+    text: props.title,
     fontSize: '40',
   },
   xAxis: {
@@ -44,7 +47,7 @@ const chartOptions = ref({
   },
   yAxis: {
     title: {
-      text: 'Total Net Conversion',
+      text: props.yAxisTitle,
     },
   },
   legend: {
@@ -66,7 +69,7 @@ const chartOptions = ref({
   },
   series: [
     {
-      name: 'Net Conversion',
+      name: props.seriesName,
       colorByPoint: true,
       data: props.data,
     },

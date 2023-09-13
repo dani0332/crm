@@ -74,8 +74,9 @@ onMounted(() => {
 </script>
 
 <template>
+  <Head title="TPL Conversion" />
   <div class="flex flex-col h-[85vh]">
-    <div class="flex gap-2 justify-end">
+    <div class="flex gap-3 justify-end">
       <x-field label="Teams">
         <ComboBox
           v-model="selectedTeams"
@@ -116,7 +117,12 @@ onMounted(() => {
         />
       </x-field>
     </div>
-    <ChartsColumnChart :data="columnChartData" />
+    <ChartsColumn
+      :title="'TPL CONVERSION REPORT'"
+      :yAxisTitle="'Total Net Conversion'"
+      :seriesName="'Net Conversion'"
+      :data="columnChartData"
+    />
     <div class="mt-auto">
       <span class="text-xs">
         © AFIA Insurance Brokerage Services LLC, registration no. 85, under UAE

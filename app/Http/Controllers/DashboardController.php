@@ -17,7 +17,6 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
@@ -134,7 +133,7 @@ class DashboardController extends Controller
         if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];
         }
-        return Inertia::render('Dashboard/TPLConversion', [
+        return inertia('Dashboard/TPLConversion', [
             'tplDashboardStats' =>  $tplDashboardStats,
             'teams' => $teams,
             'commonTeam' => $commonTeam,
