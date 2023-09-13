@@ -49,7 +49,7 @@ class MAWelcomeJob implements ShouldQueue
         ];
         try {
             //$statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source); // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
-            $statusCode = 50;
+            $statusCode = 500;
 
             if ($statusCode == 200) {
                 info('MAWelcomeJob - Email Sent to customer '.$this->customer->email.' - Invite Code - '.$customerInviteCode);
