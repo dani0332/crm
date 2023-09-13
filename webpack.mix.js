@@ -56,15 +56,18 @@ mix
         extensions: ['vue'],
         resolvers: [
           HeadlessUiResolver(),
-          name => {
-            if (name === 'Head') {
+          name =>
+          {
+            if (name === 'Head')
+            {
               return {
                 importName: 'Head',
                 path: '@inertiajs/vue3',
               };
             }
 
-            if (name === 'Link') {
+            if (name === 'Link')
+            {
               return {
                 importName: 'Link',
                 path: '@inertiajs/vue3',

@@ -17,6 +17,7 @@ use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
@@ -133,8 +134,14 @@ class DashboardController extends Controller
         if (count($commonTeams) > 0) {
             $commonTeam = $commonTeams[0];
         }
+        return Inertia::render('Dashboard/TPLConversion', [
+            'tplDashboardStats' =>  $tplDashboardStats,
+            'teams' => $teams,
+            'commonTeam' => $commonTeam,
+            'tiers' => $tiers
+        ]);
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
+        // return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -231,7 +238,7 @@ class DashboardController extends Controller
             $data[] = number_format((float) $total * 100, 2, '.', '');
             $labels[] = $record['batch_name'].'-('.$record['start_date'].' to '.$record['end_date'].')';
         }
-
+        
         return isset($request->tier_filter) || isset($request->source) ? [json_encode($labels, JSON_OBJECT_AS_ARRAY), json_encode($data, JSON_OBJECT_AS_ARRAY)] : [$labels, $data];
     }
 

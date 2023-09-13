@@ -5,21 +5,25 @@ import MainLayout from '@/inertia/Layouts/MainLayout.vue';
 import icons from './icons';
 import Vue3EasyDataTable from 'vue3-easy-data-table';
 import { ZiggyVue } from 'ziggy';
+import HighchartsVue from 'highcharts-vue'
 
 const appName =
   window.document.getElementsByTagName('title')[0]?.innerText || 'IMCRM';
 
 createInertiaApp({
   title: title => `${title} - ${appName}`,
-  resolve: name => {
+  resolve: name =>
+  {
     const page = require(`./Pages/${name}`);
     page.default.layout = page.default.layout || MainLayout;
     return page;
   },
-  setup({ el, App, props, plugin }) {
+  setup({ el, App, props, plugin })
+  {
     createApp({
       name: 'IMCRM',
-      mounted: () => {
+      mounted: () =>
+      {
         // Remove Data Page for Protection
         document.querySelector('[data-page]')?.removeAttribute('data-page');
       },
@@ -29,6 +33,7 @@ createInertiaApp({
       .use(ZiggyVue)
       .use(plugin)
       .use(UI, { icons })
+      .use(HighchartsVue, { tagName: 'charts' })
       .mount(el);
   },
 });

@@ -1,0 +1,80 @@
+<script setup>
+const props = defineProps({
+  data: {
+    type: Array,
+    required: true,
+  },
+});
+
+const chartRef = ref(null);
+
+watch(
+  () => props.data,
+  () => {
+    updateSeries();
+  },
+  { deep: true },
+);
+
+const updateSeries = () => {
+  const chart = chartRef.value.chart;
+  chart.showLoading();
+  chart.update({
+    series: [
+      {
+        data: props.data,
+      },
+    ],
+  });
+  chart.hideLoading();
+};
+
+const chartOptions = ref({
+  chart: {
+    type: 'column',
+  },
+  title: {
+    align: 'center',
+    text: 'TPL CONVERSION REPORT',
+    fontSize: '40',
+  },
+  xAxis: {
+    type: 'category',
+  },
+  yAxis: {
+    title: {
+      text: 'Total Net Conversion',
+    },
+  },
+  legend: {
+    enabled: false,
+  },
+  plotOptions: {
+    series: {
+      borderWidth: 0,
+      dataLabels: {
+        enabled: true,
+        format: '{point.y:.2f}%',
+      },
+    },
+  },
+  tooltip: {
+    headerFormat: '<span style="font-size:11px">{series.name}</span><br>',
+    pointFormat:
+      '<span style="color:{point.color}">{point.name}</span>: <b>{point.y:.2f}%</b>',
+  },
+  series: [
+    {
+      name: 'Net Conversion',
+      colorByPoint: true,
+      data: props.data,
+    },
+  ],
+  credits: {
+    enabled: false,
+  },
+});
+</script>
+<template>
+  <charts ref="chartRef" :options="chartOptions"></charts>
+</template>
