@@ -29,8 +29,8 @@ class RenewalsPermissionSeeder extends Seeder
 
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsUploadUpdate, 'web')->id;
         $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalsBatches, 'web')->id;
-        $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalBatchConfigs, 'web')->id;
-        $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalBatchReport, 'web')->id;
+        // $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalBatchConfigs, 'web')->id;
+        // $permissions[] = Permission::findOrCreate(PermissionsEnum::RenewalBatchReport, 'web')->id;
 
         $renewalsManagerRole = Role::findOrCreate(RolesEnum::RenewalsManager, 'web');
         foreach ($permissions as $permission) {
@@ -39,17 +39,17 @@ class RenewalsPermissionSeeder extends Seeder
             }
         }
 
-        $reportPermission = Permission::findOrCreate(PermissionsEnum::RenewalBatchReport, 'web')->id;
+        // $reportPermission = Permission::findOrCreate(PermissionsEnum::RenewalBatchReport, 'web')->id;
 
-        $carManagerRole = Role::findOrCreate(RolesEnum::CarManager, 'web');
-        if (! $carManagerRole->hasPermissionTo($reportPermission)) {
-            $carManagerRole->givePermissionTo($reportPermission);
-        }
+        // $carManagerRole = Role::findOrCreate(RolesEnum::CarManager, 'web');
+        // if (! $carManagerRole->hasPermissionTo($reportPermission)) {
+        //     $carManagerRole->givePermissionTo($reportPermission);
+        // }
 
-        $carDeputyManagerRole = Role::findOrCreate(RolesEnum::CarDeputyManager, 'web');
-        if (! $carDeputyManagerRole->hasPermissionTo($reportPermission)) {
-            $carDeputyManagerRole->givePermissionTo($reportPermission);
-        }
+        // $carDeputyManagerRole = Role::findOrCreate(RolesEnum::CarDeputyManager, 'web');
+        // if (! $carDeputyManagerRole->hasPermissionTo($reportPermission)) {
+        //     $carDeputyManagerRole->givePermissionTo($reportPermission);
+        // }
 
     }
 }
