@@ -77,46 +77,54 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex gap-2 justify-end">
-    <x-field label="Teams">
-      <ComboBox
-        v-model="selectedTeams"
-        name="team_name"
-        placeholder="Select Teams"
-        :options="
-          allTeams.map(item => ({
-            value: item.id,
-            label: item.name,
-          }))
-        "
-      />
-    </x-field>
-    <x-field label="Advisor">
-      <ComboBox
-        v-model="selectedAdvisor"
-        placeholder="Select Advisor"
-        :options="
-          advisors.map(item => ({
-            value: item.id,
-            label: item.name,
-          }))
-        "
-        :disabled="selectedTeams.length == 0"
-        :class="{ 'cursor-no-drop': selectedTeams.length == 0 }"
-      />
-    </x-field>
-    <x-field label="Commercial">
-      <x-select
-        v-model="commercialFilterValue"
-        placeholder="Select any option"
-        :options="[
-          { value: 'All', label: 'All' },
-          { value: 'Yes', label: 'Yes' },
-          { value: 'No', label: 'No' },
-        ]"
-        class="w-full"
-      />
-    </x-field>
+  <div class="flex flex-col h-[85vh]">
+    <div class="flex gap-2 justify-end">
+      <x-field label="Teams">
+        <ComboBox
+          v-model="selectedTeams"
+          name="team_name"
+          placeholder="Select Teams"
+          :options="
+            allTeams.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
+        />
+      </x-field>
+      <x-field label="Advisor">
+        <ComboBox
+          v-model="selectedAdvisor"
+          placeholder="Select Advisor"
+          :options="
+            advisors.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
+          :disabled="selectedTeams.length == 0"
+          :class="{ 'cursor-no-drop': selectedTeams.length == 0 }"
+        />
+      </x-field>
+      <x-field label="Commercial">
+        <x-select
+          v-model="commercialFilterValue"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 'Yes', label: 'Yes' },
+            { value: 'No', label: 'No' },
+          ]"
+          class="w-full"
+        />
+      </x-field>
+    </div>
+    <ColumnChart :data="columnChartData" />
+    <div class="mt-auto">
+      <span class="text-xs">
+        © AFIA Insurance Brokerage Services LLC, registration no. 85, under UAE
+        Insurance Authority</span
+      >
+    </div>
   </div>
-  <ColumnChart :data="columnChartData" />
 </template>
