@@ -100,6 +100,7 @@ function onSubmit(isValid) {
             type="email"
             :rules="[isRequired, isEmail]"
             class="w-full"
+            :disabled="editMode"
             :error="quoteForm.errors.email"
           />
         </x-field>
@@ -110,6 +111,7 @@ function onSubmit(isValid) {
             :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
+            :disabled="editMode"
           />
         </x-field>
         <x-field label="JetSki Make" required>
