@@ -48,15 +48,14 @@ class MAWelcomeJob implements ShouldQueue
             'inviteCode' => $customerInviteCode,
         ];
         try {
-            //$statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source); // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
-            $statusCode = 500;
+            $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
-            if ($statusCode == 200) {
+            if ($statusCode == 201) {
                 info('MAWelcomeJob - Email Sent to customer '.$this->customer->email.' - Invite Code - '.$customerInviteCode);
                 $customer = CustomerService::getCustomerByEmail($this->customer->email);
                 if ($customer) {
-                    // $customer->is_we_sent = true; // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
-                    // $customer->save(); // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
+                    $customer->is_we_sent = true;
+                    $customer->save();
 
                     $myAlfredUser = MyAlFredUser::where('customer_id', $customer->id)->get();
                     if ($myAlfredUser->isEmpty()) {

@@ -45,7 +45,7 @@ class RewardsWEJob implements ShouldQueue
                 $email = new MailerService($this->request);
                 Mail::to($this->request->to)->send($email);
                 Log::info('Email sent to customer having id: '.$this->customerId);
-                // $customer->is_we_sent = true; // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
+                $customer->is_we_sent = true;
                 $customer->save();
                 Log::info('isWESent flag set to true for customer having id: '.$this->customerId);
             } else {
