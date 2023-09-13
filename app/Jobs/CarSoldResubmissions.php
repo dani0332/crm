@@ -50,8 +50,9 @@ class CarSoldResubmissions implements ShouldQueue
             ->having('car_lost_quote_logs_count', '>=', 2)
             ->get();
 
-        if($quotes->count() <= 0) {
+        if ($quotes->count() <= 0) {
             info('no quotes available to send resubmission reminder');
+
             return true;
         }
 

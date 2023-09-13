@@ -490,5 +490,3 @@ Route::group(['middleware' => ['auth.rest']], function () {
 
 Route::POST('/processInslyRenewalData', [RenewalDataProcessingController::class, 'FetchAndProcessInslyData'])
     ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
-
-

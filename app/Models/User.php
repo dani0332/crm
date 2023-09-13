@@ -178,7 +178,7 @@ class User extends Authenticatable implements AuditableContract
         $userRoles = Auth::user()->usersroles()->get();
         $isAdvisor = false;
         foreach ($userRoles as $userRole) {
-            if (str_contains(strtolower($userRole->name), strtolower($teamType) . '_advisor')) {
+            if (str_contains(strtolower($userRole->name), strtolower($teamType).'_advisor')) {
                 $isAdvisor = true;
             }
         }

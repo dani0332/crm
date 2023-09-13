@@ -7,7 +7,6 @@ use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class GenericPermissionSeeder extends Seeder
 {
@@ -24,17 +23,15 @@ class GenericPermissionSeeder extends Seeder
             ['name' => PermissionsEnum::CarUncontactableList,   'role' => RolesEnum::MarketingOperations],
         ];
 
-        foreach ($permissions as $permission)
-        {
+        foreach ($permissions as $permission) {
             Permission::findOrCreate($permission['name'], 'web');
 
-            if(!empty($permission['role'])) {
-                if( ($role = Role::where('name', $permission['role'])->first()) && !$role->hasPermissionTo($permission['name']))  {
+            if (! empty($permission['role'])) {
+                if (($role = Role::where('name', $permission['role'])->first()) && ! $role->hasPermissionTo($permission['name'])) {
                     $role->givePermissionTo($permission['name']);
                 }
             }
         }
-
 
     }
 }

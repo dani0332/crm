@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
-use App\Enums\GenericRequestEnum;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Auth;
@@ -20,7 +19,6 @@ class CarQuote extends BaseModel
     protected $casts = [
         'dob' => 'datetime',
     ];
-
     public $filterables = [
         'first_name' => FilterTypes::FREE,
         'last_name' => FilterTypes::FREE,
@@ -29,7 +27,6 @@ class CarQuote extends BaseModel
         'email' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
     ];
-
     protected $guarded = [];
 
     public function getFullNameAttribute()
@@ -39,7 +36,7 @@ class CarQuote extends BaseModel
 
     public function fullName()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function uaeLicenseHeldFor()
@@ -339,7 +336,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('pa')) {
-                if (!array_key_exists('pa_id', $filters)) {
+                if (! array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -358,7 +355,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('payment')) {
-                if (!array_key_exists('pa_id', $filters)) {
+                if (! array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -374,7 +371,7 @@ class CarQuote extends BaseModel
             } //invoicing
 
             if (Auth::user()->hasRole('invoicing')) {
-                if (!array_key_exists('pa_id', $filters)) {
+                if (! array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];

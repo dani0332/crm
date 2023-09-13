@@ -8,7 +8,6 @@ use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
 use Spatie\Navigation\Section;
@@ -80,7 +79,7 @@ class HandleInertiaRequests extends Middleware
 
     protected function buildNavigation()
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
@@ -260,7 +259,6 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CarUncontactableList), 'Car Uncontactable', '/quotes/car-uncontactable', fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }
-
 
         // if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
         //     $nav = $nav->add('Discount Management', '', function (Section $section) {

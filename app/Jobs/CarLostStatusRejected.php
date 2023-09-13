@@ -56,7 +56,7 @@ class CarLostStatusRejected implements ShouldQueue
 
         if (
             ($rejectionEmailCc = ApplicationStorage::where('key_name', ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC)->first())
-            && !empty($rejectionEmailCc->value)
+            && ! empty($rejectionEmailCc->value)
         ) {
             $cc[] = $rejectionEmailCc->value;
         }
