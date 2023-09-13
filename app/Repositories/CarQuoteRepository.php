@@ -23,7 +23,8 @@ class CarQuoteRepository extends BaseRepository
     public function fetchGetData()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id'])->orderBy('created_at', 'desc')->Paginate();
+            ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id']
+        )->orderBy('created_at', 'desc')->Paginate();
     }
 
     /**
@@ -53,5 +54,19 @@ class CarQuoteRepository extends BaseRepository
     public function fetchGetAdvisors()
     {
         return UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
+    }
+
+    public function fetchUpdateCareQuotePlanDetails($data)
+    {
+        $payLoad = [
+            'quoteUID' => $data['quote_uuid'],
+            'update' => true,
+        ];
+        $payLoad['plans'][] = (object) [
+            'planId' => (int) $data['plan_id'],
+            'isPayLaterActive' => true,
+        ];
+
+        return Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
     }
 }

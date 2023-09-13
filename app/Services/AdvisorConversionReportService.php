@@ -181,6 +181,8 @@ class AdvisorConversionReportService extends BaseService
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
             ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->whereNull('car_quote_request.renewal_import_code')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->orderBy('car_quote_request_detail.advisor_assigned_date', 'desc');
@@ -311,12 +313,9 @@ class AdvisorConversionReportService extends BaseService
             })->where('source', '=', LeadSourceEnum::IMCRM);
         }
 
-        if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
-            $query->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $query->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         return $query;
