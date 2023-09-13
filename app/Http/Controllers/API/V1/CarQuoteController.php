@@ -44,10 +44,10 @@ class CarQuoteController extends Controller
      * @param UpdateLeadStatusRequest $request
      * @return void
      */
-    public function updateLeadStatus(UpdateLeadStatusRequest $request)
+    public function updateQuoteStatus(UpdateLeadStatusRequest $request)
     {
-        CarQuoteRepository::updateLeadStatus($request->validated());
-        
+        CarQuoteRepository::updateQuoteStatus($request->validated());
+
         return response()->json(['message' => 'Lead status updated successfully']);
     }
 }
