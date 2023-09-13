@@ -218,6 +218,17 @@ final class PermissionsEnum extends Enum
     public const CarSoldList = 'car-sold-list';
     public const CarUncontactableList = 'car-uncontactable-list';
     public const ViewTeamsFilters = 'view-teams-filters';
+    public const COMMERCIAL_KEYWORDS = 'admin-commercial-keywords';
+    public const COMMERCIAL_KEYWORDS_SHOW = 'admin-commercial-keywords-show';
+    public const COMMERCIAL_KEYWORDS_CREATE = 'admin-commercial-keywords-create';
+    public const COMMERCIAL_KEYWORDS_STORE = 'admin-commercial-keywords-store';
+    public const COMMERCIAL_KEYWORDS_EDIT = 'admin-commercial-keywords-edit';
+    public const COMMERCIAL_KEYWORDS_UPDATE = 'admin-commercial-keywords-update';
+    public const CONFIGURE_COMMERCIAL_VEHICLES = 'admin-configure-commerical-vehicles';
+    public const CONFIGURE_COMMERCIAL_VEHICLES_SHOW = 'admin-configure-commerical-vehicles-show';
+    public const CONFIGURE_COMMERCIAL_VEHICLES_CREATE = 'admin-configure-commerical-vehicles-create';
+    public const CONFIGURE_COMMERCIAL_VEHICLES_STORE = 'admin-configure-commerical-vehicles-store';
+    public const CONFIGURE_COMMERCIAL_VEHICLES_EDIT = 'admin-configure-commerical-vehicles-edit';
     public const RenewalBatchConfigs = 'renewal-batch-list';
     public const RenewalBatchReport = 'renewal-batch-report';
 }

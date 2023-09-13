@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('title','GM Lead Detail')
 @section('content')
+
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
 <div class="row">
     <div class="col-md-12 col-sm-12 admin-detail">
         <div class="x_panel">
@@ -229,6 +231,7 @@
         </div>
     </div>
 </div>
+<x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$record" :insuranceProviders="$insuranceProviders" :modeltype="$model->modelType" />
 
 <x-lead-status-update
     :lead="$record"

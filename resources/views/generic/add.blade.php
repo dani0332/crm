@@ -77,7 +77,11 @@
                                     @endif
                                     @if(strpos($value, 'select') !== false)
 
-                                    <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6" @endif id={{$property.'_div'}}>
+                                    <div @if(count($model->properties) <6) class="col-md-12" @else class="col-md-6"
+                                        @if ( $property === 'lead_source_id' || $property === 'rule_car_make_id' || $property === 'rule_car_model_id' )
+                                            style="display: none"
+                                        @endif
+                                        @endif id={{$property.'_div'}}>
                                     <div class="col">
                                         <span class="col-form-label col-md-6 col-sm-6" for="name">
                                             @if(strpos($value, 'title'))
@@ -97,8 +101,7 @@
                                                 <option value="">{{"Please select ".str_replace("id"," ",str_replace("_"," ",$property)) }}</option>
                                             @endif
                                             @foreach($dropdownSource[$property] as $item)
-
-                                                <option value="{{ $item->id }}" @if(old($property) == $item->id) selected @endif @if($id == $item->id) selected @endif>{{ $item->text ?? $item->name }}</option>
+                                                <option value="{{ $item->id }}" @if(old($property) == $item->id) selected @endif @if($id == $item->id) selected @endif @if($property === 'rule_car_make_id') {{ "data-id=".$item->code }} @endif>{{ $item->text ?? $item->name }}</option>
                                             @endforeach
                                         </select>
                                         @if ($errors->has($property))
@@ -215,4 +218,11 @@
             </div>
         </div>
     </div>
+
+    {{-- <script>
+        $(document).ready(function() {
+
+        });
+        </script> --}}
+
 @endsection

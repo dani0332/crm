@@ -348,6 +348,7 @@ use App\Enums\PermissionsEnum;
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
+                PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
                 PermissionsEnum::RenewalBatchConfigs])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
@@ -364,7 +365,8 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::RenewalBatchConfigs)
                             <li><a href="{{ route('renewal-batch.index') }}">Renewal Batches</a></li>
                             @endcan
-                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView])
+                            @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
+                            PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
                                     @can(PermissionsEnum::TIER_CONFIG_LIST)
@@ -378,6 +380,12 @@ use App\Enums\PermissionsEnum;
                                     @endcan
                                     @can(PermissionsEnum::TeamThresholdView)
                                         <li><a href="{{ url('generic/allocation-threshold') }}">Team Threshold </a></li>
+                                    @endcan
+                                    @can(PermissionsEnum::COMMERCIAL_KEYWORDS)
+                                        <li><a href="{{ route('admin.commercial.keywords') }}">Commerical Keywords</a></li>
+                                    @endcan
+                                    @can(PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES)
+                                        <li><a href="{{ route('admin.configure.commerical.vehicles') }}">Configure Commercial Vehicles</a></li>
                                     @endcan
                                 </ul>
                             </li>

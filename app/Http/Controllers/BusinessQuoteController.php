@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -13,6 +14,7 @@ use App\Enums\RolesEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -90,7 +92,7 @@ class BusinessQuoteController extends Controller
 
         $model = $this->genericModel;
 
-        return inertia('CorpLineQuote/Create', [
+        return inertia('CorpLineQuote/Form', [
             'quote' => new BusinessQuote(),
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
@@ -144,6 +146,41 @@ class BusinessQuoteController extends Controller
         $activities = $this->businessQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->businessQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $payments = $paymentEntityModel->payments;
+        $paymentMethods = $this->lookupService->getPaymentMethods();
+        $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+            return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+        })->map(function ($paymentMethod) {
+            return [
+                'value' => $paymentMethod->code,
+                'label' => $paymentMethod->name,
+            ];
+        })->values();
+
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
+        $filteredInsuranceProviders = [];
+        if (! empty($insuranceProviders)) {
+
+            $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+        }
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+
+        $payments->each(function ($payment) {
+            $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
+            $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
+            $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
+            $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
+                && ! auth()->user()->hasRole(RolesEnum::PA);
+
+            $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
+        });
+
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         return inertia('CorpLineQuote/Show', [
@@ -166,6 +203,11 @@ class BusinessQuoteController extends Controller
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            'payments' => $payments,
+            'quoteRequest' => $paymentEntityModel,
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'paymentMethods' => $filteredPaymentMethods,
+            'insuranceProviders' => $filteredInsuranceProviders,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -178,6 +220,9 @@ class BusinessQuoteController extends Controller
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
                 'canEditQuote' => auth()->user()->can('corpline-quotes-edit'),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
@@ -198,7 +243,7 @@ class BusinessQuoteController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
 
-        return inertia('CorpLineQuote/Edit', [
+        return inertia('CorpLineQuote/Form', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,

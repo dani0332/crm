@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\PaymentMethodsEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PersonalQuotePaymentRequest extends FormRequest
@@ -31,13 +30,7 @@ class PersonalQuotePaymentRequest extends FormRequest
             'captured_amount' => 'required|numeric',
             'payment_methods_code' => 'required',
             'insurance_provider_id' => 'required|int|exists:insurance_provider,id',
-            'plan_id' => 'required|int|exists:personal_plans,id',
-            'reference' => 'nullable',
         ];
-
-        if (! empty($data['payment_method_code']) && $data['payment_method_code'] != PaymentMethodsEnum::CreditCard) {
-            $rules['reference'] = 'required';
-        }
 
         return $rules;
     }
