@@ -15,8 +15,6 @@ const selectedTeams = ref([]);
 const selectedAdvisor = ref([]);
 const advisors = ref([]);
 
-const allTeams = computed(() => [...Object.values(props.teams)]);
-
 const filters = computed(() => {
   return {
     team_filter: selectedTeams.value,
@@ -25,6 +23,8 @@ const filters = computed(() => {
       commercialFilterValue.value == 'All' ? '' : commercialFilterValue.value,
   };
 });
+
+const allTeams = computed(() => [...Object.values(props.teams)]);
 
 function setState() {
   columnChartData.value = [];
