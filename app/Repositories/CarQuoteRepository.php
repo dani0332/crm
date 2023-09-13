@@ -3,14 +3,12 @@
 namespace App\Repositories;
 
 use App\Enums\GenericRequestEnum;
-use App\Models\CarLostQuoteLog;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
-use App\Models\PersonalQuote;
-use Illuminate\Support\Facades\DB;
 use App\Models\InsuranceProvider;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\DB;
 
 class CarQuoteRepository extends BaseRepository
 {
@@ -47,19 +45,19 @@ class CarQuoteRepository extends BaseRepository
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->where('cqr.quote_status_id', $quoteStatusId);
 
-        if (!empty(request()->approval_status)) {
+        if (! empty(request()->approval_status)) {
             $query->where('clql.status', request()->approval_status);
         }
 
-        if (!empty(request()->advisor_id)) {
+        if (! empty(request()->advisor_id)) {
             $query->whereIn('cqr.advisor_id', request()->advisor_id);
         }
 
-        if (!empty(request()->renewal_batch)) {
+        if (! empty(request()->renewal_batch)) {
             $query->where('cqr.renewal_batch', request()->renewal_batch);
         }
 
-        return $query->orderBy(DB::raw(' IF (clql.status = "' . GenericRequestEnum::PENDING . '", 0, 1) '))->simplePaginate();
+        return $query->orderBy(DB::raw(' IF (clql.status = "'.GenericRequestEnum::PENDING.'", 0, 1) '))->simplePaginate();
     }
 
     /*
@@ -86,7 +84,7 @@ class CarQuoteRepository extends BaseRepository
             'userId' => strval(auth()->id()),
         ];
 
-        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
+        info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
 
         return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
     }

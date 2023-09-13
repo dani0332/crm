@@ -208,8 +208,7 @@ class CRUDService extends BaseService
 
     public function updateQuoteStatus(Request $request)
     {
-        return DB::transaction(function() use($request)
-        {
+        return DB::transaction(function () use ($request) {
             $quoteDetailEntity = $this->{strtolower($request->modelType).'QuoteService'}->getDetailEntity($request->leadId);
 
             if (isset($request->lostReason) && $request->lostReason != '') {
@@ -256,15 +255,14 @@ class CRUDService extends BaseService
                 SyncSIBContactJob::dispatch($entity);
             }
 
-            if(strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
 
-                if(!empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations))
-                {
+                if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
                         'car_quote_request_id' => $entity->id,
-                        'id' => $request->car_lost_quote_log_id
+                        'id' => $request->car_lost_quote_log_id,
                     ])->firstOrFail();
 
                     $lostQuoteLogData = [
@@ -272,16 +270,15 @@ class CRUDService extends BaseService
                         'quote_status_id' => $request->leadStatus,
                         'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
                         'notes' => $request->lost_notes,
-                        'action_by_id' => auth()->user()->id
+                        'action_by_id' => auth()->user()->id,
                     ];
 
                     $carLostQuoteLog->update($lostQuoteLogData);
 
-                    if($request->hasFile('mo_proof_document'))
-                    {
+                    if ($request->hasFile('mo_proof_document')) {
                         $fileName = $request->mo_proof_document->getClientOriginalName();
 
-                        $azureFileName = get_guid() . '_' . $fileName;
+                        $azureFileName = get_guid().'_'.$fileName;
                         $azureFilePath = $request->file('mo_proof_document')
                             ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
 
@@ -289,28 +286,25 @@ class CRUDService extends BaseService
                             'name' => $fileName,
                             'path' => $azureFilePath,
                             'mime_type' => $request->mo_proof_document->getClientMimeType(),
-                            'created_by_id' => auth()->user()->id
+                            'created_by_id' => auth()->user()->id,
                         ]);
                     }
 
-                    if($request->lost_approval_status == GenericRequestEnum::REJECTED)
-                    {
+                    if ($request->lost_approval_status == GenericRequestEnum::REJECTED) {
                         //send rejection email
                         CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
                     }
-                }
-                else if(auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]))
-                {
+                } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
                     //store request of car sold/uncontactable with proof
                     $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
                         'advisor_id' => auth()->user()->id,
                         'quote_status_id' => $request->leadStatus,
-                        'status'          => GenericRequestEnum::PENDING,
+                        'status' => GenericRequestEnum::PENDING,
                     ]);
 
                     $fileName = $request->proof_document->getClientOriginalName();
 
-                    $azureFileName = get_guid() . '_' . $fileName;
+                    $azureFileName = get_guid().'_'.$fileName;
                     $azureFilePath = $request->file('proof_document')
                         ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
 
@@ -318,7 +312,7 @@ class CRUDService extends BaseService
                         'name' => $fileName,
                         'path' => $azureFilePath,
                         'mime_type' => $request->proof_document->getClientMimeType(),
-                        'created_by_id' => auth()->user()->id
+                        'created_by_id' => auth()->user()->id,
                     ]);
                 }
             }
