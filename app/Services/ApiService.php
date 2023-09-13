@@ -47,7 +47,7 @@ class ApiService
     {
         $WEGenerateUrlResponse = BerlinService::getCustomerWeUrl();
         if (gettype($WEGenerateUrlResponse) == 'string') {
-            // Customer::where('id', $customer->id)->update(['is_we_sent' => true]); // 13Sep2023 Shaji: need to uncomment after move from PostMark to Brevo
+            Customer::where('id', $customer->id)->update(['is_we_sent' => true]);
 
             $newMyAlFredUser = new MyAlFredUser();
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
