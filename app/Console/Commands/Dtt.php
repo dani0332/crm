@@ -63,7 +63,7 @@ class Dtt extends Command
                     $q->orWhereDate('created_at', '=', $dateTwo);
                 })
 
-                ->whereNotNull(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture', 'payment_status_id'])
+                ->whereNotNull(['email'])
                 ->where(function ($q) use ($datethirtyDaysBefore) {
                     $q->where('source', '!=', LeadSourceEnum::REVIVAL)
                         ->where('created_at', '<=', $datethirtyDaysBefore);
