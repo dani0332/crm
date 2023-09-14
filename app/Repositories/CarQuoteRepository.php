@@ -76,10 +76,11 @@ class CarQuoteRepository extends BaseRepository
     }
 
     /**
+     * update quote status
      * @param $data
      * @return void
      */
-    public function fetchUpdateLeadStatus($data)
+    public function fetchUpdateQuoteStatus($data)
     {
         return DB::transaction(function() use($data)
         {

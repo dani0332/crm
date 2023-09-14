@@ -10,6 +10,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
@@ -44,6 +45,7 @@ use App\Models\RenewalsUploadLeads;
 use App\Models\Tier;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
+use App\Repositories\CarQuoteRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -1268,9 +1270,18 @@ class RenewalsUploadService
 
             $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
-            if ($responseCode == 201) {
+            if ($responseCode == 201)
+            {
+                //update quote status to quoted
+                CarQuoteRepository::updateQuoteStatus([
+                    'quote_uuid' => $carQuote->uuid,
+                    'quote_status_id' => QuoteStatusEnum::Quoted,
+                    'notes' => 'Change quote status to Quoted as OCB sent'
+                ]);
+
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
                 $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
+
             } else {
                 Log::error('renewalBatchEmailProcess EmailNotSent: '.$responseCode.' batchEmailId:'.$batchEmailId.' Customer EmailAddress:'.$carQuote->email);
             }
