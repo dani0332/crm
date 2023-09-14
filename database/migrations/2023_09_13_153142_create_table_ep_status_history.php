@@ -13,14 +13,14 @@ class CreateTableEpStatusHistory extends Migration
      */
     public function up()
     {
-        if (! Schema::hasTable('ep_status_history')) {
-            Schema::create('ep_status_history', function (Blueprint $table) {
+        if (! Schema::hasTable('embedded_status_history')) {
+            Schema::create('embedded_status_history', function (Blueprint $table) {
                 $table->id();
-                $table->string('ep_code',25)->index();
-                $table->foreign('ep_code')->references('code')->on('embedded_transactions')
+                $table->string('embedded_transaction_code',25)->index();
+                $table->foreign('embedded_transaction_code')->references('code')->on('embedded_transactions')
                     ->cascadeOnUpdate();
-                $table->string('ep_status_code',20)->index();
-                $table->foreign('ep_status_code')->references('code')->on('lookups')
+                $table->string('embedded_transaction_status_code',20)->index();
+                $table->foreign('embedded_transaction_status_code')->references('code')->on('lookups')
                 ->cascadeOnUpdate();
                 $table->dateTime('created_at')->index()->useCurrent();
                 $table->dateTime('updated_at')->useCurrent();

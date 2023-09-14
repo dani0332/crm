@@ -14,9 +14,9 @@ class AddEpCodeStatusColumnEmbeddedTransaction extends Migration
     public function up()
     {
         Schema::table('embedded_transactions', function (Blueprint $table) {
-            if (! Schema::hasColumn('embedded_transactions', 'ep_status_code')) {
-                $table->string('ep_status_code',25)->index();
-                $table->foreign('ep_status_code')->references('code')->on('lookups')->cascadeOnUpdate();
+            if (! Schema::hasColumn('embedded_transactions', 'embedded_transaction_status_code')) {
+                $table->string('embedded_transaction_status_code',25)->index();
+                $table->foreign('embedded_transaction_status_code')->references('code')->on('lookups')->cascadeOnUpdate();
             }
         });
     }
@@ -29,8 +29,8 @@ class AddEpCodeStatusColumnEmbeddedTransaction extends Migration
     public function down()
     {
         Schema::table('embedded_transactions', function (Blueprint $table) {
-            if (Schema::hasColumn('embedded_transactions', 'ep_status_code')) {
-                $table->dropColumn('ep_status_code');
+            if (Schema::hasColumn('embedded_transactions', 'embedded_transaction_status_code')) {
+                $table->dropColumn('embedded_transaction_status_code');
             }
         });
     }

@@ -24,7 +24,7 @@ class CreateTablePaymentActions extends Migration
                 $table->boolean('is_fulfilled')->default(false);
                 $table->string('created_by', 255);
                 $table->string('reason')->nullable();
-                $table->boolean('manager_approval')->default(false);
+                $table->boolean('is_manager_approved')->default(false);
                 $table->dateTime('created_at')->index()->useCurrent();
                 $table->dateTime('updated_at')->useCurrent();
 
