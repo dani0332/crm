@@ -13,7 +13,19 @@ const props = defineProps({
     default: '',
   },
 });
+const modals = reactive({
+    cancelPayment: false,
+});
 
+const cancelPaymentForm = () => {
+    paymentForm.reset();
+   // activityActionEdit.value = false;
+    modals.cancelPayment = true;
+};
+const paymentForm = useForm({
+    reason: null,
+    amount: null
+});
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -75,7 +87,23 @@ const paymentStatus = id => {
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
+const onActivitySubmit = isValid => {
+    if (!isValid) return;
+        paymentForm.post(`/activities/create-activity`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                paymentForm.reset();
+                notification.success({
+                    title: 'Activity Added',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                modals.activity = false;
+            },
+        });
 
+};
 const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
@@ -168,10 +196,54 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             target="_blank"
             :disabled="ppDoc(item.company_documents) === ''"
           >
-            Download Product Wordings
+            Download Product Wordingss
           </x-button>
+            <x-button size="xs" color="#ff5e00" @click.prevent="cancelPaymentForm">
+                Cancel Paymentss
+            </x-button>
         </div>
       </template>
     </DataTable>
+      <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
+          <template #header>
+              Cancel Payment
+          </template>
+
+          <x-form @submit="onActivitySubmit" :auto-focus="false">
+              <div class="grid gap-4">
+                  <x-input
+                      v-model="paymentForm.amount"
+                      label="Amount"
+                      :rules="[isRequired]"
+                      class="w-full"
+                  />
+
+                  <x-textarea
+                      v-model="paymentForm.reason"
+                      label="Reason"
+                      :adjust-to-text="false"
+                      class="w-full"
+                  />
+
+
+
+              </div>
+
+              <div class="text-right space-x-4 mt-12">
+                  <x-button size="sm" @click.prevent="modals.cancelPayment = false">
+                      Cancel
+                  </x-button>
+
+                  <x-button
+                      size="sm"
+                      color="emerald"
+                      :loading="paymentForm.processing"
+                      type="submit"
+                  >
+                     Cancel
+                  </x-button>
+              </div>
+          </x-form>
+      </x-modal>
   </div>
 </template>
