@@ -98,6 +98,26 @@ class EmbeddedProductRepository extends BaseRepository
     /**
      * @return mixed
      */
+    public function fetchDownloadCertificate($data)
+    {
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $epId = $data['epId'];
+
+        $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+
+        $advisorData = [];
+        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
+        $viewData['dob'] = $quoteObject->dob;
+
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Certificate']);
+    }
+
+    /**
+     * @return mixed
+     */
     public function fetchUploadDocument($file, $title)
     {
         $type = 'embedded_product';
@@ -141,11 +161,11 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
     }
 
-    public function fetchSendDocument()
+    public function fetchSendDocument($data)
     {
-        $quoteId = request()->quoteId;
-        $modelType = request()->modelType;
-        $epId = request()->epId;
+        $quoteId = $data['quoteId'];
+        $modelType = $data['modelType'];
+        $epId = $data['epId'];
 
         $ep = $this->where('id', $epId)->first();
         $product_name = $short_code = '';
@@ -154,6 +174,7 @@ class EmbeddedProductRepository extends BaseRepository
             $short_code = $ep->short_code;
         }
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
+
         $advisorData = [];
         if ($quoteObject->advisor) {
             $advisor = $quoteObject->advisor;
@@ -174,7 +195,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $body = json_encode([
             'From' => config('constants.MA_FROM_EMAIL'),
-            'ReplyTo' => isset($advisorEmail) ? $advisorEmail : null,
+            'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             // 'To' => $quoteObject->email,
             'To' => 'nouman.hussain@insurancemarket.ae',
             'Tag' => '',

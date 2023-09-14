@@ -23,13 +23,49 @@ const props = defineProps({
   },
 });
 
+const downloadLoader = ref(false);
+const sendDocumentLoader = ref(false);
 const sendDocumentForm = useForm({
   quoteId: props.quote.id,
   modelType: props.modelType,
   isInertia: true,
 });
 
+const downloadDcoument = id => {
+  downloadLoader.value = true;
+  axios
+    .post(
+      '/embedded-products/download-document',
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epId: id,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Certificate Downloaded',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      downloadLoader.value = false;
+    });
+};
 const sendDcoument = id => {
+  sendDocumentLoader.value = true;
   sendDocumentForm
     .transform(data => ({
       ...data,
@@ -37,8 +73,12 @@ const sendDcoument = id => {
     }))
     .post('/embedded-products/send-document', {
       preserveScroll: true,
-      onSuccess: () => {},
-      onError: () => {},
+      onSuccess: () => {
+        sendDocumentLoader.value = false;
+      },
+      onError: () => {
+        sendDocumentLoader.value = false;
+      },
     });
 };
 const dateFormat = date =>
@@ -184,11 +224,17 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           <x-button
             size="xs"
             color="emerald"
+            :loading="sendDocumentLoader"
             @click.prevent="sendDcoument(item.id)"
           >
             Send Documents
           </x-button>
-          <x-button size="xs" color="#ff5e00" disabled>
+          <x-button
+            size="xs"
+            color="#ff5e00"
+            :loading="downloadLoader"
+            @click.prevent="downloadDcoument(item.id)"
+          >
             Download Certificate
           </x-button>
           <x-button

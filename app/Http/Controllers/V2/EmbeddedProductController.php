@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Repositories\EmbeddedProductRepository;
 
@@ -104,8 +105,15 @@ class EmbeddedProductController extends Controller
         ]);
     }
 
-    public function sendDocument()
+    public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
-        return EmbeddedProductRepository::sendDocument();
+        $response = EmbeddedProductRepository::sendDocument($request->validated());
+
+        return $response;
+    }
+
+    public function downloadDocument(EmbeddedProducDocumentRequest $request)
+    {
+        return EmbeddedProductRepository::downloadCertificate($request->validated());
     }
 }
