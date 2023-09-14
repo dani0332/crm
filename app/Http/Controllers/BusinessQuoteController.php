@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
@@ -229,6 +230,7 @@ class BusinessQuoteController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'typeCode' => quoteTypeCode::CORPLINE,
+            'customerTypeEnum' => CustomerTypeEnum::asArray()
         ]);
     }
 

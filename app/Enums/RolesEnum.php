@@ -94,4 +94,5 @@ final class RolesEnum extends Enum
     public const JetskiAdvisor = 'JETSKI_ADVISOR';
     public const JetskiManager = 'JETSKI_MANAGER';
     public const CallDesk = 'CALL_DESK';
+    public const NRA = 'NON_RETAIL_ACCOUNTS';
 }

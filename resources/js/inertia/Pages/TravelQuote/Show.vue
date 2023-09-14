@@ -42,7 +42,7 @@ defineProps({
 });
 
 const page = usePage();
-const hasRole = role => useHasRole(role);
+const hasRole = role => useHasAnyRole(role);
 
 const dateFormat = date => {
   if (!date) return '';
@@ -906,6 +906,7 @@ onMounted(() => {
 });
 
 const disableCustProfFields = computed(() => {
+    return hasAnyRole(page.props.rolesEnum.PA, page.props.rolesEnum.OE)
     return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
 });
 

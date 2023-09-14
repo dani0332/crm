@@ -39,13 +39,14 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
-  customerTypeEnum: Array
+  customerTypeEnum: Object
 });
 
 const page = usePage();
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
@@ -1054,8 +1055,12 @@ const sendPolicyToClient = () => {
   }
 };
 
-const disableCustProfFields = computed(() => {
-    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+const isProfileUpdateAllow = computed(() => {
+    return !hasAnyRole([
+        page.props.rolesEnum.PA,
+        page.props.rolesEnum.OE,
+        page.props.rolesEnum.NRA
+    ]);
 });
 
 const customerProfileForm = useForm({
@@ -1087,7 +1092,14 @@ const updateProfileDetails = () => {
                 position: 'top',
             });
         }
-    });
+    }).catch(err => {
+        notification.error({
+            title: 'Error',
+            message: 'Plan Details Not Found',
+            position: 'top',
+        });
+        console.log(err.response.data);
+    });;
 }
 
 onMounted(() => {
@@ -1379,7 +1391,7 @@ onMounted(() => {
                               v-model="customerProfileForm.insured_first_name"
                               placeholder="INSURED FIRST NAME"
                               class="w-full"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -1390,7 +1402,7 @@ onMounted(() => {
                               v-model="customerProfileForm.insured_last_name"
                               placeholder="INSURED LAST NAME"
                               class="w-full"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -1417,7 +1429,7 @@ onMounted(() => {
                               v-model="customerProfileForm.emirates_id_number"
                               placeholder="EMIRATES ID NUMBER"
                               class="w-full"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -1427,7 +1439,7 @@ onMounted(() => {
                           <DatePicker
                               v-model="customerProfileForm.emirates_id_expiry_date"
                               placeholder="EMIRATES ID EXPIRY DATE"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -1476,7 +1488,7 @@ onMounted(() => {
               </dl>
               <div class="flex justify-end">
                   <x-button
-                      v-if="disableCustProfFields"
+                      v-if="isProfileUpdateAllow"
                       class="mt-4"
                       color="emerald"
                       size="sm"

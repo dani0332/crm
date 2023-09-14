@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -256,6 +257,7 @@ class AmtController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray()
         ]);
     }
 

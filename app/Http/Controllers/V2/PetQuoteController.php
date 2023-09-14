@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -115,6 +116,7 @@ class PetQuoteController extends Controller
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray()
         ]);
     }
 
