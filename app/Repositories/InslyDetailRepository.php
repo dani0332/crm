@@ -51,8 +51,12 @@ class InslyDetailRepository extends BaseRepository
         $policy = $this->where('policy_no', $policyNumber)->first();
         $email = $policy['customer']['email'] ?? null;
 
-        $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
-        $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
+        // $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
+        // $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
+
+        $inslyPolicyIssueDate = '2020-09-21';
+
+        // dd($inslyPolicyIssueDate);
         $appUrl = env('APP_URL');
         $inslyCoverageArray = $this->inslyInsurances();
         if (!empty($policy)) {
