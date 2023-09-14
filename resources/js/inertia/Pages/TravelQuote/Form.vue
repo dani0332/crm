@@ -312,6 +312,7 @@ onMounted(() => {
           <x-input
             v-model="quoteForm.email"
             class="w-full"
+            :disabled="editMode"
             :rules="[isEmail]"
           />
         </x-field>
@@ -319,6 +320,7 @@ onMounted(() => {
           <x-input
             v-model="quoteForm.mobile_no"
             class="w-full"
+            :disabled="editMode"
             :rules="[isRequired, isMobileNo]"
             :error="quoteForm.errors.mobile_no"
           />
