@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\CarLost;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteStatusEnum;
@@ -69,10 +69,10 @@ class CarLostStatusRejected implements ShouldQueue
             $cc = implode(',', $cc);
         }
 
-        info('before sending Status rejected email for UUID: '.$this->quote->uuid.' to Advisor '.$this->quote->advisor->email);
+        info('CarLostStatusRejected - before sending Status rejected email for UUID: '.$this->quote->uuid.' to Advisor '.$this->quote->advisor->email);
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
-        info('status rejected email has been sent');
+        info('CarLostStatusRejected - status rejected email has been sent');
     }
 }

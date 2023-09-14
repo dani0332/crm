@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\CarLost;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarTeamType;
@@ -22,7 +22,7 @@ use Throwable;
 /**
  * send reminder email for uncontactable renewal batches submission to advisors
  */
-class UnconSubmissionReminder //implements ShouldQueue
+class UnconSubmissionReminder implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -51,7 +51,7 @@ class UnconSubmissionReminder //implements ShouldQueue
         $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
         if (! isset($upcomingBatch->id)) {
-            info('No upcoming batch available for uncontactable resubmission reminder. no need to send email');
+            info('UnconSubmissionReminder - No upcoming batch available for uncontactable resubmission reminder. no need to send email');
 
             return true;
         }
@@ -91,14 +91,11 @@ class UnconSubmissionReminder //implements ShouldQueue
 
         $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE)->value('value');
 
-        info('Sending Uncontactable Submissions reminder email');
+        info('UnconSubmissionReminder - Sending Uncontactable Submissions reminder email');
 
-        $to = 'faisal.abbas@insurancemarket.ae';
-        $cc = 'faisal.abbas@insurancemarket.ae';
-        //dd($emailData, $to, $cc);
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
-        info('Uncontactable Submission reminder email is sent');
+        info('UnconSubmissionReminder - Uncontactable Submission reminder email is sent');
     }
 
     /**

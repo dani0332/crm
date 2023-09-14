@@ -2,8 +2,8 @@
 
 namespace App\Console;
 
-use App\Jobs\CarSoldResubmissions;
-use App\Jobs\UnconSubmissionReminder;
+use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Jobs\CarLost\UnconSubmissionReminder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 

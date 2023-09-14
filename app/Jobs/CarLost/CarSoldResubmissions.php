@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\CarLost;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
@@ -51,8 +51,7 @@ class CarSoldResubmissions implements ShouldQueue
             ->get();
 
         if ($quotes->count() <= 0) {
-            info('no quotes available to send resubmission reminder');
-
+            info('CarSoldResubmissions - no quotes available to send resubmission reminder');
             return true;
         }
 
@@ -85,11 +84,11 @@ class CarSoldResubmissions implements ShouldQueue
             ];
         }
 
-        info('Sending Car Sold Resubmissions email total Leads: '.$quotes->count());
+        info('CarSoldResubmissions - Sending Car Sold Resubmissions email total Leads: '.$quotes->count());
 
         SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
 
-        info('Car Sold Resubmissions email sent');
+        info('CarSoldResubmissions - Car Sold Resubmissions email sent');
 
     }
 
