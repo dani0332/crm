@@ -41,7 +41,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RenewalBatchReport])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RENEWAL_BATCH_REPORT])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart"
                         aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
@@ -61,7 +61,7 @@ use App\Enums\PermissionsEnum;
                                 @can(PermissionsEnum::UtmLeadsSalesReport)
                                     <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
                                 @endcan
-                            @can(PermissionsEnum::RenewalBatchReport)
+                            @can(PermissionsEnum::RENEWAL_BATCH_REPORT)
                                 <li><a href="{{ url('reports/renewal-report') }}">Daily Renewal Report</a></li>
                             @endcan
                         </ul>
@@ -349,7 +349,7 @@ use App\Enums\PermissionsEnum;
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
                 PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
-                PermissionsEnum::RenewalBatchConfigs])
+                PermissionsEnum::RENEWAL_BATCHES_LIST])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -362,8 +362,8 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/team') }}">Teams</a></li>
                             @endcan
-                            @can(PermissionsEnum::RenewalBatchConfigs)
-                            <li><a href="{{ route('renewal-batch.index') }}">Renewal Batches</a></li>
+                            @can(PermissionsEnum::RENEWAL_BATCHES_LIST)
+                            <li><a href="{{ route('renewal-batches-list') }}">Renewal Batches</a></li>
                             @endcan
                             @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
                             PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES])

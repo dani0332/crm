@@ -346,7 +346,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::group(['prefix' => 'generic'], function () {
         Route::resource('allocation-threshold', AllocationThresholdController::class);
         Route::resource('team', TeamController::class);
-        Route::resource('renewal-batch', RenewalBatchController::class);
+        Route::resource('renewal-batches', RenewalBatchController::class)
+            ->names(generateRouteNames('renewal-batches'))
+            ->middleware('check_route_access');
         Route::resource('tier', GenericCrudController::class);
         Route::resource('quadrant', GenericCrudController::class);
         Route::resource('rule', GenericCrudController::class);

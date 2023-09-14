@@ -7,7 +7,7 @@
             <div class="x_title">
                 <h2>Renewal Batches</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a href="{{ route('renewal-batch.create') }}" class="btn btn-warning btn-sm">Create Renewal Batch</a></li>
+                    <li><a href="{{ route('renewal-batches-create') }}" class="btn btn-warning btn-sm">Create Renewal Batch</a></li>
                 </ul>
                 <div class="clearfix"></div>
             </div>

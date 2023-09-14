@@ -124,7 +124,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
-            PermissionsEnum::RenewalBatchReport,
+            PermissionsEnum::RENEWAL_BATCH_REPORT,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
@@ -133,7 +133,7 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RenewalBatchReport), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -418,7 +418,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
-            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES, PermissionsEnum::RenewalBatchConfigs,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES, PermissionsEnum::RENEWAL_BATCHES_LIST,
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
@@ -441,9 +441,9 @@ class HandleInertiaRequests extends Middleware
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(
-                        auth()->user()->can(PermissionsEnum::RenewalBatchConfigs),
+                        auth()->user()->can(PermissionsEnum::RENEWAL_BATCHES_LIST),
                         'Renewal Batches',
-                        route('renewal-batch.index'),
+                        route('renewal-batches-list'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

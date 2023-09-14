@@ -10,7 +10,7 @@
                 </div>
 
                 <div class="x_content">
-                    <form method="POST" action="{{ route('renewal-batch.store') }}">
+                    <form method="POST" action="{{ route('renewal-batches-store') }}">
                         @csrf
                         <div class="card mb-3">
                             <h5 class="card-header">Batch Details</h5>

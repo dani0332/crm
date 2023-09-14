@@ -10,7 +10,7 @@
                 </div>
 
                 <div class="x_content">
-                    <form method="post" action="{{ route('renewal-batch.update' , [$renewalBatch]) }}">
+                    <form method="post" action="{{ route('renewal-batches-update' , [$renewalBatch]) }}">
                         @csrf
                         @method('PUT')
                         <div class="card mb-3">

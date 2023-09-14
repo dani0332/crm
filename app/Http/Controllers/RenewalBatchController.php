@@ -83,7 +83,7 @@ class RenewalBatchController extends Controller
 
         RenewalBatch::create($attributes);
 
-        return redirect()->route('renewal-batch.index')->with('message', 'Renewal Batch Successfully created');
+        return redirect()->route('renewal-batches-list')->with('message', 'Renewal Batch Successfully created');
     }
 
     /**
@@ -144,7 +144,7 @@ class RenewalBatchController extends Controller
 
         $renewalBatch->update($attributes);
 
-        return redirect()->route('renewal-batch.index')->with('message', 'Renewal Batch Successfully updated');
+        return redirect()->route('renewal-batches-list')->with('message', 'Renewal Batch Successfully updated');
     }
 
     /**
