@@ -8,7 +8,7 @@ const props = defineProps({
   quotePlans: Array,
   errors: Array,
 });
-
+const travelQuoteEnum = page.props.travelQuoteEnum;
 const editMode = computed(() =>
   props.quote && props.quote.uuid ? true : false,
 );
@@ -34,10 +34,10 @@ const quoteForm = useForm({
   direction_code: props.quote?.direction_code
     ? props.quote?.direction_code
     : editMode.value &&
-      props.quote?.region_cover_for_id == 3
-    ? 'travelUaeInbound'
-    : editMode.value && props.quote?.currently_located_in_id_text=='UAE' && props.quote?.region_cover_for_id != 3
-    ? 'travelUaeOutbound'
+      props.quote?.region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+    ? travelQuoteEnum.TRAVEL_UAE_INBOUND
+    : editMode.value && props.quote?.currently_located_in_id_text==travelQuoteEnum.LOCATION_UAE_TEXT && props.quote?.region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+    ? travelQuoteEnum.TRAVEL_UAE_OUTBOUND
     : null,
   has_arrived_uae:
     props.quote?.has_arrived_uae?.toString() ||
@@ -91,8 +91,8 @@ const {
 } = useRules();
 
 const subTeamOptions = [
-  { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
-  { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' },
+  { value: travelQuoteEnum.TRAVEL_UAE_INBOUND, label: 'To the UAE (Inbound)' },
+  { value: travelQuoteEnum.TRAVEL_UAE_OUTBOUND, label: 'Outside UAE (OutBound)' },
 ];
 const alreadylived = [
   { value: '1', label: 'Yes' },
@@ -103,12 +103,12 @@ const genderList = [
   { value: 'F', label: 'Female' },
 ];
 const inboundCoverageCode = [
-  { value: 'singleTrip', label: 'Single Trip' },
-  { value: 'multiTrip', label: 'Multi Trip' },
+  { value: travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP, label: 'Single Trip' },
+  { value: travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP, label: 'Multi Trip' },
 ];
 const outboundCoverageCode = [
-  { value: 'singleTrip', label: 'Single Trip' },
-  { value: 'annualTrip', label: 'Annual Trip' },
+  { value: travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP, label: 'Single Trip' },
+  { value: travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP, label: 'Annual Trip' },
 ];
 const outboundRegions = [
   { value: '1', label: 'Worldwide (excl. US/Canada)' },
@@ -194,7 +194,7 @@ onMounted(() => {
           />
         </x-field>
         <x-field
-          v-if="quoteForm.direction_code == 'travelUaeInbound'"
+          v-if="quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND"
           :label="'Have you already arrived in UAE?'"
           required
         >
@@ -231,7 +231,7 @@ onMounted(() => {
           <x-select
             v-model="quoteForm.coverage_code"
             :options="
-              quoteForm.direction_code == 'travelUaeInbound'
+              quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND
                 ? inboundCoverageCode
                 : outboundCoverageCode
             "
@@ -243,7 +243,7 @@ onMounted(() => {
           label="Which regions do you need cover for?*"
           v-if="
             quoteForm.has_arrived_destination == '0' &&
-            quoteForm.direction_code == 'travelUaeOutbound'
+            quoteForm.direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND
           "
           required
         >
@@ -258,7 +258,7 @@ onMounted(() => {
           <DatePicker v-model="quoteForm.start_date" name="created_at_start" />
         </x-field>
         <x-field
-          v-if="quoteForm.coverage_code == 'singleTrip'"
+          v-if="quoteForm.coverage_code == travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP"
           label="Travel End Date"
           required
         >

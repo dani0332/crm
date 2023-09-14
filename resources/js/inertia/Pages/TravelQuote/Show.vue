@@ -1008,7 +1008,7 @@ onMounted(() => {
                 <template #tooltip> Traveling Where</template>
               </x-tooltip>
             </dt>
-            <dt class="font-medium uppercase">{{ (quote.direction_code!=null?quote.direction_code:((quote?.currently_located_in_id_text=='UAE' && quote?.region_cover_for_id != 3)?enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND:(quote?.destination_id_text=='United Arab Emirates' || quote?.region_cover_for_id == 3 ?enums.travelQuoteEnum.TRAVEL_UAE_INBOUND:'')))}}</dt>
+            <dt class="font-medium uppercase">{{ (quote.direction_code!=null?quote.direction_code:((quote?.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_UAE_TEXT && quote?.region_cover_for_id != enums.travelQuoteEnum.REGION_COVER_ID_UAE)?enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND:(quote?.destination_id_text==enums.travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || quote?.region_cover_for_id == enums.travelQuoteEnum.REGION_COVER_ID_UAE ?enums.travelQuoteEnum.TRAVEL_UAE_INBOUND:'')))}}</dt>
           </div>
 
           <div
@@ -1025,7 +1025,7 @@ onMounted(() => {
               </label>
             </dt>
             <dt class="font-medium">
-              {{ quote.has_arrived_uae == 1 || quote.currently_located_in_id_text=='UAE' ? 'Yes' : 'No' }}
+              {{ quote.has_arrived_uae == 1 || quote.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_UAE_TEXT ? 'Yes' : 'No' }}
             </dt>
           </div>
           <div v-else
@@ -1039,7 +1039,7 @@ onMounted(() => {
               </label>
             </dt>
             <dt class="font-medium">
-              {{ quote.has_arrived_destination == 1 || quote.currently_located_in_id_text=='Outside UAE"'? 'Yes' : 'No' }}
+              {{ quote.has_arrived_destination == 1 || quote.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE? 'Yes' : 'No' }}
             </dt>
           </div>
           <div class="grid sm:grid-cols-2">

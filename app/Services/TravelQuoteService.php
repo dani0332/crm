@@ -235,15 +235,15 @@ class TravelQuoteService extends BaseService
                 $this->query->where(function ($q) use ($request) {
                     $q->where('tqr.direction_code', $request->direction_code)
                         ->orWhere(function ($qInner) {
-                            $qInner->where('currently_located_in_id', 1)
-                                ->where('region_cover_for_id', '!=', 3);
+                            $qInner->where('currently_located_in_id', TravelQuoteEnum::CURRENTLY_LOCATED_ID_UAE)
+                                ->where('region_cover_for_id', '!=', TravelQuoteEnum::REGION_COVER_ID_UAE);
                         });
                 });
             }
             if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
                 $this->query->where(function ($q) use ($request) {
                     $q->where('tqr.direction_code', $request->direction_code)
-                        ->orWhere('region_cover_for_id', 3);
+                        ->orWhere('region_cover_for_id', TravelQuoteEnum::REGION_COVER_ID_UAE);
                 });
             }
         }

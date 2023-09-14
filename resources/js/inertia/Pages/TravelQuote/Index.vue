@@ -472,8 +472,8 @@ onMounted(() => {
         </template>
         <template #item-direction_code="{currently_located_in_id, direction_code,currently_located_in_id_text,destination_id_text,region_cover_for_id_text,region_cover_for_id }">
             <div class="text-center">
-               {{direction_code=='travelUaeOutbound' ?'Outbound':
-                (direction_code=='travelUaeInbound'?'Inbound':((currently_located_in_id_text=='UAE' && region_cover_for_id != 3)?'Outbound':(destination_id_text=='United Arab Emirates' || region_cover_for_id == 3 ?'Inbound':'')))}}
+               {{direction_code==travelQuoteEnum.TRAVEL_UAE_OUTBOUND ?'Outbound':
+                (direction_code==travelQuoteEnum.TRAVEL_UAE_INBOUND?'Inbound':((currently_located_in_id_text==travelQuoteEnum.LOCATION_UAE_TEXT && region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE)?'Outbound':(destination_id_text==travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE ?'Inbound':'')))}}
 
 
             </div>
