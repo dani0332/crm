@@ -359,7 +359,7 @@ onMounted(() => {
                     name="advisor_assigned_date_end"
                     label="Advisor Assigned Date End"
                 />
-                <x-select
+                <ComboBox
                     v-model="filters.payment_status_id"
                     label="Payment Status"
                     name="payment_status_id"

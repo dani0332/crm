@@ -145,7 +145,18 @@ const onUpdatePlan = () => {
     })	
     .finally(() => {	
     });	
-}
+  }
+
+  const validateDecimal = (event) => {
+    if (event.key === '.' || event.key === 'Backspace' || event.key === 'Delete') {
+        return;
+    }
+    const regex = /^\d+(\.\d{0,2})?$/;
+    if (!regex.test(event.key)) {
+        event.preventDefault();
+    }
+  }
+
 </script>
 
 <template>
@@ -178,7 +189,7 @@ const onUpdatePlan = () => {
             <div class="grid sm:grid-cols-2 mb-3">
               <x-toggle
                 v-model="hidePlan"
-                color="error"
+                color="success"
                 label="Hide Plan?"
                 @change="onTogglePlans"
                 :loading="toggleLoader"
@@ -187,22 +198,22 @@ const onUpdatePlan = () => {
             <div class="grid sm:grid-cols-2 mb-3">
               <x-toggle
                 v-model="isManual"
-                color="error"
+                color="success"
                 label="Manual"
                 :disabled="plan.isManualUpdate"
-                :loading="toggleLoader"
+                
               />
           </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Provider Name</dt>
+              <dt class="">Provider Name</dt>
               <dd>{{ props.plan.providerName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Repair Type:</dt>
+              <dt class="">Repair Type:</dt>
               <dd>{{ props.plan.repairType }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium mt-2">Insurer Quote No.:</dt>
+              <dt class="mt-2">Insurer Quote No.:</dt>
               <x-input
                 :value="insurerQuoteNoValue"
                 v-model = "insurerQuoteNoValue"
@@ -212,7 +223,7 @@ const onUpdatePlan = () => {
               <!-- <dd>{{ props.plan.insurerQuoteNo }}</dd> -->
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium mt-2">Actual Premium:</dt>
+              <dt class="mt-2">Actual Premium:</dt>
               <x-input
                 :value="actualPremiumValue"
                 v-model = "actualPremiumValue"
@@ -222,7 +233,7 @@ const onUpdatePlan = () => {
               <!-- <dd>{{ props.plan.actualPremium }}</dd> -->
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium mt-2">Discounted Premium:	</dt>
+              <dt class="mt-2">Discounted Premium:	</dt>
               <x-input
                 :value="discountPremium"
                 v-model = "discountPremium"
@@ -230,7 +241,7 @@ const onUpdatePlan = () => {
               />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium mt-2">Car value:</dt>
+              <dt class="mt-2">Car value:</dt>
               <x-input
                 :value="carValue"
                 v-model = "carValue"
@@ -239,7 +250,7 @@ const onUpdatePlan = () => {
               />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium mt-2">Excess:</dt>
+              <dt class="mt-2">Excess:</dt>
               <x-input
                 :value="excessValue"
                 v-model = "excessValue"
@@ -249,7 +260,7 @@ const onUpdatePlan = () => {
               />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium mt-2">Ancillary Excess:</dt>
+              <dt class="mt-2">Ancillary Excess:</dt>
               <x-select
                 v-model="ancillaryExcessValue"
                 placeholder="Select Option"
@@ -258,7 +269,7 @@ const onUpdatePlan = () => {
               />
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Car Trim</dt>
+              <dt class="">Car Trim</dt>
               <x-select
                 v-model="insurerTrimIdValue"
                 placeholder="Select Option"
@@ -269,31 +280,34 @@ const onUpdatePlan = () => {
             <div class="grid sm:grid-cols-2">
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Features:</dt>
+              <dt class="font-bold">Features:</dt>
             </div>
             <div class="grid sm:grid-cols-2" />
             <template v-for="feature in plan.benefits.feature" :key="feature">
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">{{ feature?.text }}</dt>
+                <dt class="font-small">{{ feature?.text }}</dt>
                 <dd>{{ feature.value }}</dd>
               </div>
               <div class="grid sm:grid-cols-2" />
-            </template>            
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Total Premium with VAT:</dt>
-              <dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
-            </div>
+            </template>    
+            <x-divider class="mt-1" />
           </dl>
-
-          <div class="flex justify-end">
+          <dl class="grid md:grid-cols-2 gap-x-6 border-top pl-4">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-bold">Total Premium with VAT:</dt>
+              <dd >AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
+            </div>
+            <div class="flex justify-end">
               <span class="font-medium text-end">Created Date:</span>
               <span>{{ props.record.created_at }}</span>
-          </div>
-          <div class="flex justify-end">
-              <span class="font-medium text-end">Updated At:</span>
-              <span>{{ props.record.updated_at }}</span>
-          </div><br />
-
+            </div>
+            <br/>
+            <div class="flex justify-end">
+                <span class="font-medium text-end">Updated At:</span>
+                <span>{{ props.record.updated_at }}</span>
+            </div>
+          </dl>
+          <br/>
           <div class="flex justify-end">
             <x-button 
               v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || notAdvisorAndManagerAndPA"
@@ -314,16 +328,21 @@ const onUpdatePlan = () => {
                 <div class="flex my-2">
                   <span class="w-60">{{ addon.text }}</span>
                   <span class="w-60">{{ option.value }}</span>
-                  <x-input class="w-20 mr-10" type="text" :value="option.price" :disabled="!isManual" size="sm" />
+                  <x-input class="w-20 mr-10" type="text" :value="option.price" :disabled="!isManual || !option.isSelected" size="sm" v-model="option.price" @keydown="validateDecimal" />
                   <x-toggle
                     v-model="option.isSelected"
                     :disabled="!isManual"
-                    color="error"
+                    color="success"
                     class="mt-2"
                   />
                 </div>                  
               </template>
             </template>
+            <x-divider class="mb-3 mt-3" />
+            <div class="grid sm:grid-cols-4">
+              <dt class="font-bold">Total Premium with VAT:</dt>
+              <dd >AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
+            </div>
             <div class="flex justify-end">
               <x-button 
                 v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || notAdvisorAndManagerAndPA"
@@ -381,7 +400,7 @@ const onUpdatePlan = () => {
               v-for="data in props.plan.policyWordings || []"
               :key="data"
             >
-              <a :href="data.link" class="font-medium mb-1">{{ data.text }}</a>
+              <a :href="data.link" class="font-medium mb-1" target="_blank">{{ data.text }}</a>
             </div>
           </dl>
         </TabPanel>

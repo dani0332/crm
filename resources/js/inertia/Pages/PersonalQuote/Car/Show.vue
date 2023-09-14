@@ -21,6 +21,7 @@ defineProps({
 	activities: Array,
 	customerAdditionalContacts: Array,
 	lostReasons: Array,
+	tiers: Array,
 	quoteStatusEnum: Object,
 	carPlanFeaturesCodeEnum: Object,
 	carPlanExclusionsCodeEnum: Object,
@@ -65,6 +66,7 @@ const notification = useNotifications('toast');
 
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
+const leadSourceEnum = page.props.leadSourceEnum;
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -80,6 +82,8 @@ const leadStatusForm = useForm({
   notes: page.props.record.notes || null,
   trans_code: page.props.record.transapp_code || null,
   lostReason: page.props.record.lost_reason_id || null,
+  next_followup_date: page.props.record.next_followup_date || null,
+  tier_id : page.props.record.tier_id || null,
 });
 const { copy, copied } = useClipboard();
 const paymentDetailsTable = reactive({
@@ -292,7 +296,23 @@ const paymentItems = computed(() => {
 })
 
 const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
+
+  const isAdmin = hasRole(rolesEnum.Admin);
+  const isLeadPool = isAdmin || hasRole(rolesEnum.LeadPool);
+  const isPA = isAdmin || hasRole(rolesEnum.PA);
+  const renewal_batch = page.props.record.renewal_batch;
+  const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
+  const source = page.props.record.source;
+  const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD; 	
+  
+  const filteredLeadStatuses = page.props.leadStatuses.filter(status => {
+    if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
+      return false;
+    }
+    return true;
+  });
+
+  return filteredLeadStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
@@ -1315,16 +1335,6 @@ const confirmSendEmail = () => {
 				<x-divider class="mb-4 mt-1" />
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-				<div class="w-full md:w-2/3">
-					<x-textarea
-						v-model="leadStatusForm.notes"
-						type="text"
-						label="Notes"
-						placeholder="Lead Notes"
-						class="w-full"
-						:disabled="record.quote_status_id == 15"
-					/>
-				</div>
 				<div class="w-full md:w-1/3">
 					<div class="flex flex-col gap-4">
 						<x-select
@@ -1335,7 +1345,69 @@ const confirmSendEmail = () => {
 							placeholder="Lead Status"
 							class="w-full"
 						/>
+						
+						<x-input
+							v-if="leadStatusForm.leadStatus == 15"
+							v-model="leadStatusForm.trans_code"
+							label="TransApp Code"
+							placeholder="TransApp Code is required"
+							class="w-full"
+							:error="leadStatusForm.errors.trans_code"
+						/>
+						
+						<x-select
+							v-if="leadStatusForm.leadStatus == 17"
+							v-model="leadStatusForm.lostReason"
+							label="Lost Reason"
+							:options="
+								lostReasons?.map(item => ({
+								value: item.id,
+								label: item.text,
+								}))
+							"
+							placeholder="Lost Reason is required"
+							class="w-full"
+							:error="leadStatusForm.errors.lostReason"
+							/>
+
+						<x-input
+							v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer"
+							v-model="leadStatusForm.next_followup_date"
+							label="Followup Date"
+							type="datetime-local"
+							placeholder="Please select follow-up date & time"
+							class="w-full"
+							:error="leadStatusForm.errors.next_followup_date"
+						/>
+
+						<x-select
+							v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
+							v-model="leadStatusForm.tier_id"
+							label="Tier"
+
+							:options="[
+							{ value: null, label: 'Select Tier' },
+								...tiers?.map(item => ({
+								value: item.id,
+								label: item.name,
+								}))
+							]"
+							placeholder="Please Select Tier"
+							class="w-full"
+							:error="leadStatusForm.errors.tier_id"
+							/>
 					</div>
+					
+				</div>
+				<div class="w-full md:w-2/3">
+					<x-textarea
+						v-model="leadStatusForm.notes"
+						type="text"
+						label="Notes"
+						placeholder="Lead Notes"
+						class="w-full"
+						:disabled="record.quote_status_id == 15"
+					/>
 
 					<div class="flex justify-end">
 						<x-button
