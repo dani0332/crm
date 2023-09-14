@@ -91,7 +91,11 @@ class TravelQuoteService extends BaseService
             'direction_code',
             'coverage_code',
             'tqr.primary_member_id',
-            DB::raw('IF(tqr.customer_id = tqr.customer_id, "'.CustomerTypeEnum::Individual.'", "'.CustomerTypeEnum::Entity.'") as customer_type')
+            DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = tqr.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type'),
+            'c.insured_first_name',
+            'c.insured_last_name',
+            'c.emirates_id_number',
+            'c.emirates_id_expiry_date'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -103,7 +107,8 @@ class TravelQuoteService extends BaseService
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
-            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id');
+            ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
+            ->leftJoin('customer as c','tqr.customer_id', 'c.id');
     }
 
     public function saveTravelQuote(Request $request)

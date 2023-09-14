@@ -26,10 +26,10 @@ class CustomerProfileRequest extends FormRequest
     {
         return [
             'customer_id' => 'required|int',
-            'insured_first_name' => 'nullable',
-            'insured_last_name' => 'nullable',
-            'emirates_id_number'=> 'nullable',
-            'emirates_id_expiry_date' => 'nullable|after_or_equal:today|date_format:Y-m-d'
+            'insured_first_name' => 'required',
+            'insured_last_name' => 'required',
+            'emirates_id_number'=> 'required',
+            'emirates_id_expiry_date' => 'required|after_or_equal:today|date_format:Y-m-d'
         ];
     }
 

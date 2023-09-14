@@ -99,10 +99,12 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
-        Customer::first($customerProfileRequest->customer_id)->update($customerProfileRequest->only([
+        $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+
+        $customer->update($customerProfileRequest->only([
             'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date'
         ]));
 
-        return response()->json(['success' => 'Customer profile details update successfully']);
+        return redirect()->back();
     }
 }

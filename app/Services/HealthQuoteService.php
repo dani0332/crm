@@ -109,7 +109,11 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
-            DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = hqr.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type')
+            DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = hqr.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type'),
+            'c.insured_first_name',
+            'c.insured_last_name',
+            'c.emirates_id_number',
+            'c.emirates_id_expiry_date'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -124,7 +128,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
-            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
+            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
+            ->leftJoin('customer as c','hqr.customer_id', 'c.id');
     }
 
     public function getEntity($id)
