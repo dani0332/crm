@@ -394,7 +394,12 @@ class DashboardController extends Controller
             return in_array($item->id, $commonTeams);
         });
 
-        return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
+        return inertia('Dashboard/ComperhensiveConversion', [
+            'comprehensiveDashboardStats' =>  $comprehensiveDashboardStats,
+            'teams' => $teams,
+            'tiers' => $tiers
+        ]);
+        // return view('dashboard.comprehensive_dashboard', compact('tiers', 'comprehensiveDashboardStats', 'teams'));
     }
 
     public function conversionStats($quoteType)

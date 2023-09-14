@@ -1,20 +1,23 @@
 <script setup>
-let props = defineProps({
-  tplDashboardStats: Array,
+const props = defineProps({
+  comprehensiveDashboardStats: Array,
   teams: Object,
-  commonTeam: Number,
-  tiers: Object,
+  tiers: Array,
 });
 
 const params = useUrlSearchParams('history');
+
 const columnChartData = ref([]);
 const advisors = ref([]);
+const subTeams = ref([]);
 
 const allTeams = computed(() => [...Object.values(props.teams)]);
 
 const filters = reactive({
   team_filter: [],
   userFilter: [],
+  sub_team_filter: [],
+  tier_filter: [],
   isCommercial: 'All',
 });
 
@@ -30,12 +33,29 @@ function setQueryStringFilters() {
 
 function setState() {
   columnChartData.value = [];
-  for (let index = 0; index < props.tplDashboardStats[0].length; index++) {
+  const data = props.comprehensiveDashboardStats.map(x => {
+    if (typeof x == 'string') return JSON.parse(x);
+    else return x;
+  });
+  for (let index = 0; index < data[0].length; index++) {
     columnChartData.value.push({
-      name: props.tplDashboardStats[0][index],
-      y: Number(props.tplDashboardStats[1][index]),
+      name: data[0][index],
+      y: Number(data[1][index]),
     });
   }
+}
+
+function getComprehensiveConversionStats() {
+  Object.keys(filters).forEach(
+    key => filters[key] === '' && delete filters[key],
+  );
+  router.visit(route('comprehensive-dashboard-view'), {
+    method: 'get',
+    data: filters,
+    preserveState: true,
+    preserveScroll: true,
+    onSuccess: () => setState(),
+  });
 }
 
 function fetchTeamUsers() {
@@ -47,25 +67,24 @@ function fetchTeamUsers() {
     .catch(error => {
       console.log(error);
     });
+  fetchSubTeams();
 }
 
-function getTplFilterStats() {
-  Object.keys(filters).forEach(
-    key => filters[key] === '' && delete filters[key],
-  );
-  router.visit(route('tpl-dashboard-view'), {
-    method: 'get',
-    data: filters,
-    preserveState: true,
-    preserveScroll: true,
-    onSuccess: () => setState(),
-  });
+function fetchSubTeams() {
+  axios
+    .post(route('getSubTeamsByTeams'), {
+      team_filter: filters.team_filter,
+    })
+    .then(response => {
+      subTeams.value = [...response.data];
+    })
+    .catch(error => console.log(error));
 }
 
 watch(
   () => filters,
   () => {
-    getTplFilterStats();
+    getComprehensiveConversionStats();
   },
   { deep: true },
   { immediate: true },
@@ -77,9 +96,8 @@ onMounted(() => {
   setQueryStringFilters();
 });
 </script>
-
 <template>
-  <Head title="TPL Conversion" />
+  <Head title="Comprehensive Conversion" />
   <div class="flex flex-col h-[85vh]">
     <div class="flex gap-3 justify-end">
       <x-field label="Teams">
@@ -95,6 +113,20 @@ onMounted(() => {
           "
         />
       </x-field>
+      <x-field label="Sub Teams">
+        <ComboBox
+          v-model="filters.sub_team_filter"
+          name="team_name"
+          placeholder="Select Sub Teams"
+          :options="
+            subTeams.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
+          :disabled="filters.team_filter.length == 0"
+        />
+      </x-field>
       <x-field label="Advisor">
         <ComboBox
           v-model="filters.userFilter"
@@ -106,7 +138,19 @@ onMounted(() => {
             }))
           "
           :disabled="filters.team_filter.length == 0"
-          :class="{ 'cursor-no-drop': filters.team_filter.length == 0 }"
+        />
+      </x-field>
+      <x-field label="Tiers">
+        <ComboBox
+          v-model="filters.tier_filter"
+          name="team_name"
+          placeholder="Select Teams"
+          :options="
+            tiers.map(item => ({
+              value: item.id,
+              label: item.name,
+            }))
+          "
         />
       </x-field>
       <x-field label="Commercial">
@@ -123,7 +167,7 @@ onMounted(() => {
       </x-field>
     </div>
     <ChartsColumn
-      :title="'TPL CONVERSION REPORT'"
+      :title="'COMPREHENSIVE CONVERSION REPORT'"
       :yAxisTitle="'Total Net Conversion'"
       :seriesName="'Net Conversion'"
       :data="columnChartData"
