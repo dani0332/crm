@@ -66,51 +66,51 @@ class CustomerRepository extends BaseRepository
         $_return = true;
         try {
             DB::beginTransaction();
-            if ($request->key == GenericRequestEnum::EMAIL) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $quoteObject->email = $request->value;
+            if ($request['key'] == GenericRequestEnum::EMAIL) {
+                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request['value']);
+                $quoteObject->email = $request['value'];
                 $customerService = new CustomerService();
-                $customer = $customerService::getCustomerByEmail($request->value);
+                $customer = $customerService::getCustomerByEmail($request['value']);
                 if ($customer) {
                     $quoteObject->customer_id = $customer->id;
-                    if (isset($request->quote_primary_email_address) && isset($request->quote_customer_id)) {
+                    if (isset($request['quote_primary_email_address']) && isset($request['quote_customer_id'])) {
                         CustomerAdditionalContact::updateOrCreate([
-                            'customer_id' => $request->quote_customer_id,
+                            'customer_id' => $request['quote_customer_id'],
                             'key' => GenericRequestEnum::EMAIL,
-                            'value' => strtolower($request->quote_primary_email_address),
+                            'value' => strtolower($request['quote_primary_email_address']),
                         ]);
 
                         // Replicate Old additional contact info with new customer
-                        CustomerRepository::replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
+                        $this->fetchReplicatePreviousAdditionalContacts($request['quote_customer_id'], $customer->id);
                     }
                 } else {
                     // Move current customer to additional contacts if not exists
                     CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request->quote_customer_id,
+                        'customer_id' => $request['quote_customer_id'],
                         'key' => GenericRequestEnum::EMAIL,
-                        'value' => strtolower($request->quote_primary_email_address),
+                        'value' => strtolower($request['quote_primary_email_address']),
                     ]);
 
                     $customer = Customer::create([
                         'first_name' => $quoteObject->first_name,
                         'last_name' => $quoteObject->last_name,
                         'mobile_no' => $quoteObject->mobile_no,
-                        'email' => $request->value,
+                        'email' => $request['value'],
                     ]);
 
                     $quoteObject->customer_id = $customer->id;
 
                     // Replicate Old additional contact info with new customer
-                    CustomerRepository::replicatePreviousAdditionalContacts($request->quote_customer_id, $customer->id);
+                    $this->fetchReplicatePreviousAdditionalContacts($request['quote_customer_id'], $customer->id);
                 }
-            } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
-                $quoteObject->mobile_no = $request->value;
-                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
+            } elseif ($request['key'] == GenericRequestEnum::MOBILE_NO) {
+                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request['value']);
+                $quoteObject->mobile_no = $request['value'];
+                if (isset($request['quote_primary_mobile_no']) && isset($request['quote_customer_id'])) {
                     CustomerAdditionalContact::updateOrCreate([
-                        'customer_id' => $request->quote_customer_id,
+                        'customer_id' => $request['quote_customer_id'],
                         'key' => 'mobile_no',
-                        'value' => trim($request->quote_primary_mobile_no),
+                        'value' => trim($request['quote_primary_mobile_no']),
                     ]);
                 }
             }
