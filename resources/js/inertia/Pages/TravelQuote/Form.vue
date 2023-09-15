@@ -32,14 +32,14 @@ const quoteForm = useForm({
   first_name: props.quote?.first_name || null,
   last_name: props.quote?.last_name || null,
   email: props.quote?.email || null,
-  direction_code: props.quote?.direction_code
-    ? props.quote?.direction_code
-    : editMode.value &&
-      props.quote?.region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
-    ? travelQuoteEnum.TRAVEL_UAE_INBOUND
-    : editMode.value && props.quote?.currently_located_in_id_text==travelQuoteEnum.LOCATION_UAE_TEXT && props.quote?.region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
-    ? travelQuoteEnum.TRAVEL_UAE_OUTBOUND
-    : null,
+    direction_code: props.quote?.direction_code
+        ? props.quote?.direction_code
+        : editMode.value &&
+        props.quote?.region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE
+            ? travelQuoteEnum.TRAVEL_UAE_INBOUND
+            : editMode.value && props.quote?.currently_located_in_id_text == travelQuoteEnum.LOCATION_UAE_TEXT && props.quote?.region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE
+                ? travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                : null,
   has_arrived_uae:
     props.quote?.has_arrived_uae?.toString() ||
     (editMode.value && props.quotePlans && props.quote?.has_arrived_uae
@@ -313,6 +313,7 @@ onMounted(() => {
           <x-input
             v-model="quoteForm.email"
             class="w-full"
+            :disabled="editMode"
             :rules="[isEmail]"
           />
         </x-field>
@@ -320,6 +321,7 @@ onMounted(() => {
           <x-input
             v-model="quoteForm.mobile_no"
             class="w-full"
+            :disabled="editMode"
             :rules="[isRequired, isMobileNo]"
             :error="quoteForm.errors.mobile_no"
           />

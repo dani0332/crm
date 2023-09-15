@@ -361,13 +361,13 @@ onMounted(() => {
 
           />
         </x-field>
-        <x-field label="Travel Coverage" required>
-          <x-select
-              v-model="filters.coverage_code"
-              :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
-              class="w-full"
-          />
-        </x-field>
+          <x-field label="Travel Coverage" required>
+              <x-select
+                  v-model="filters.coverage_code"
+                  :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
+                  class="w-full"
+              />
+          </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -466,15 +466,17 @@ onMounted(() => {
       </template>
         <template #item-coverage_code="{ coverage_code,days_cover_for }">
             <div class="text-center">
-                {{coverage_code!=null?coverage_code:(days_cover_for <= 92?travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP:travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP+'/'+travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP)}}
+                {{ coverage_code != null ? coverage_code : (days_cover_for <= 92 ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP + '/' + travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP) }}
 
             </div>
         </template>
-        <template #item-direction_code="{currently_located_in_id, direction_code,currently_located_in_id_text,destination_id_text,region_cover_for_id_text,region_cover_for_id }">
+        <template
+            #item-direction_code="{currently_located_in_id, direction_code,currently_located_in_id_text,destination_id_text,region_cover_for_id_text,region_cover_for_id }">
             <div class="text-center">
-               {{direction_code==travelQuoteEnum.TRAVEL_UAE_OUTBOUND ?'Outbound':
-                (direction_code==travelQuoteEnum.TRAVEL_UAE_INBOUND?'Inbound':((currently_located_in_id_text==travelQuoteEnum.LOCATION_UAE_TEXT && region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE)?'Outbound':(destination_id_text==travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE ?'Inbound':'')))}}
-
+                {{
+                    direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND ? 'Outbound' :
+                        (direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND ? 'Inbound' : ((currently_located_in_id_text == travelQuoteEnum.LOCATION_UAE_TEXT && region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE) ? 'Outbound' : (destination_id_text == travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE ? 'Inbound' : '')))
+                }}
 
             </div>
         </template>
