@@ -39,7 +39,7 @@ class LegacyPolicyController extends Controller
 
         $expiryDate = now()->addDay(); //The link will be expire after 1
         $url = 'afia/2020_09/21/10037772/31948184.png';
-        $temporaryUrl = Storage::disk('s3')->temporaryUrl($url, $expiryDate);
+     //   $temporaryUrl = Storage::disk('s3')->temporaryUrl($url, $expiryDate);
 
         // dd($temporaryUrl);
 
@@ -51,7 +51,7 @@ class LegacyPolicyController extends Controller
 
         // dd($url);
 
-        $s3 = Storage::disk('s3');
+      //  $s3 = Storage::disk('s3');
         // $file = 'afia/2020_09/21/10037772/31948184.png';
         // $s3_file = $s3->getDriver()->getAdapter()->getClient()->getObject([
         //     'Bucket' => env('AWS_BUCKET'),

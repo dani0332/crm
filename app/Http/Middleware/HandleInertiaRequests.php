@@ -387,7 +387,9 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
-        $nav = $nav->add('Legacy Policy', url('legacy-policy'));
+
+        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser),'Legacy Policy', url('legacy-policy'));
+
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
                 $section

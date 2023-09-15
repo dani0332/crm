@@ -66,6 +66,7 @@ const moveToImcrm = async policyNumber => {
 
       <div class="flex gap-2">
         <x-button
+          v-show="false"
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"

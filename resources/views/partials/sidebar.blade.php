@@ -312,9 +312,12 @@ use App\Enums\PermissionsEnum;
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
                 @endhasanyrole
+
+                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
                     <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy policy</a>
                 </ul>
+                @endif
 
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">

@@ -8,6 +8,7 @@ use App\Models\InslyDetail;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use MongoDB\BSON\UTCDateTime;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -19,12 +20,15 @@ class InslyDetailRepository extends BaseRepository
     public function fetchGetData()
     {
         $query = InslyDetail::query();
+
         if (!empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
         }
+
         if (!empty(request()->email)) {
             $query->where('customer.email', '=', request()->email);
         }
+
         if (!empty(request()->mobile_no)) {
             $query->where('customer.mobile_phone', '=', request()->mobile_no);
         }
