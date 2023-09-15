@@ -285,9 +285,9 @@ class SendEmailCustomerService extends BaseService
             $appEnv = config('constants.APP_ENV');
             //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
             if ($source == 'CORPORATE') {
-                $emailTemplateId = 502;
+                $emailTemplateId = (int) config('constants.SIB_CORPORATE_TEMPLATE');
             } else {
-                $emailTemplateId = 501;
+                $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
             info('sendMyAlfredWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
@@ -322,7 +322,7 @@ class SendEmailCustomerService extends BaseService
                 [
                     'headers' => $headers,
                     'body' => $body,
-                    'timeout' => 10000,
+                    'timeout' => 20,
                 ]
             );
 

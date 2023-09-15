@@ -1870,7 +1870,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
                 )
               "
             >
