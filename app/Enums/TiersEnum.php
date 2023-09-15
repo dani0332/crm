@@ -12,4 +12,5 @@ final class TiersEnum extends Enum
     public const TIER6_ECOM = 'Tier 6 (Ecom)';
     public const TIER6_NONECOM = 'Tier 6 (non ecom)';
     public const TIER_H = 'Tier H';
+    public const TIER_L = 'Tier L';
 }

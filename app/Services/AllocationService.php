@@ -40,4 +40,35 @@ class AllocationService
                 'updated_at' => now(),
             ]);
     }
+
+    public function getValuation($carModelDetailId , $yearOfManufacture)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-vehicle-value';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+
+        $client = new \GuzzleHttp\Client();
+        $request = $client->post(
+            $apiEndPoint,
+            [
+                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
+                'body' => json_encode([
+                    'carModelDetailId' => $carModelDetailId,
+                    'yearOfManufacture' => $yearOfManufacture,
+                ]),
+                'timeout' => $apiTimeout,
+            ]
+        );
+
+        $getStatusCode = $request->getStatusCode();
+
+        if ($getStatusCode == 200) {
+            $getContents = $request->getBody();
+            $getdecodeContents = json_decode($getContents);
+            return $getdecodeContents;
+        } else {
+            info(' call to ken api failed for getting car valuation ');
+            return 'API failed';
+        }
+    }
 }

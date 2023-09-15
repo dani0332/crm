@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -13,6 +14,7 @@ use App\Jobs\IntroEmailJob;
 use App\Models\CarQuote;
 use App\Models\CarQuotePlanDetail;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\InsuranceProvider;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
@@ -59,11 +61,25 @@ class CarAllocationService extends AllocationService
 
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
-        if (($carLead->car_value === null || $carLead->car_value <= 0 || in_array($carLead->car_value, ['?', '']))) {
-            info('Selecting tier which can handle null value leads');
-            $tiersQuery->where('can_handle_null_value', 1);
+        $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+
+        $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
+
+        $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
+            return $provider->providerId == $axaProvider->id;
+        });
+
+        $carValue = 0;
+
+        if($axaProvider) {
+            $carValue = $axaValuation->carValue;
+        }
+
+        if($carLead->car_model_detail_id == null || !$carValue || $carValue == 0) {
+            $tiersQuery->where('name', TiersEnum::TIER_L)->first();
+            return;
         } else {
-            $tiersQuery->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
+            $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
     }
 
