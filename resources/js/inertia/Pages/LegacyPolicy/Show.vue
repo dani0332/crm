@@ -27,7 +27,7 @@ const tableHeader = [
 
 const moveToImcrm = async policyNumber => {
   try {
-    const response = await axios.post('/move-to-imcrm', {
+    const response = await axios.post('/legacy-policy/move-to-imcrm', {
       policyNumber: policyNumber,
       isInertia: true,
     });
