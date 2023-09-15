@@ -73,7 +73,7 @@ class RenewalBatch extends Model implements AuditableContract
     {
         return $this->hasOne(RenewalBatchDeadline::class);
     }
-    
+
     /**
      * get renewal batch team wise slabs function
      */
