@@ -42,6 +42,5 @@ class RenewalsPermissionSeeder extends Seeder
         Permission::findOrCreate(PermissionsEnum::RENEWAL_BATCHES_EDIT, 'web')->id;
         Permission::findOrCreate(PermissionsEnum::RENEWAL_BATCH_REPORT, 'web')->id;
 
-
     }
 }
