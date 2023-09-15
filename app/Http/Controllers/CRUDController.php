@@ -537,6 +537,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
                 'paymentEntityModel', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'embeddedProducts', 'lostApproveReasons', 'lostRejectReasons',
+                'allowQuoteLogAction', 'carLostChangeStatus'
             ]));
         }
 
