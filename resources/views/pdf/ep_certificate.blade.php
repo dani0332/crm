@@ -7,27 +7,25 @@
 
     <style>
         @page {
-            margin:0;
+            margin: 0;
             padding: 0;
         }
+
         html {
             line-height: 1.5;
-            margin:0;
+            margin: 0;
             padding: 0;
         }
+
         body {
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
-
-        }
-        header{
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 200px;
+            max-width: 80%;
             width: 100%;
-            display: block;
+            margin: 0px auto;
+            position: relative;
         }
+
         div,
         span,
         table,
@@ -52,164 +50,70 @@
         pre {
             margin: 0;
         }
+
         a {
             text-decoration: inherit;
         }
+
         b,
         strong {
             font-weight: bolder;
         }
-        table.tbl-dec {
-            border: none;
-        }
-        table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
+
         table {
-            min-width: 1220px;
-            width: 1220px;
-            text-indent: 0;
             border-color: #bfbfbf;
-            max-width: 1220px;
-            margin: 7px 12px auto;
             border-spacing: 0;
         }
-        tbody{
-            margin-bottom: 130px;
+
+        tbody>tr>td {
+            border: 1px solid #bfbfbf;
+            padding: 4px 8px;
         }
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 16px;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 57px;
-            max-height: 57px;
-        }
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
-        .header h3 {
-            float: right;
-            text-align: right;
-            padding-right: 18px;
-        }
-        tbody > tr > td {
+
+        thead>tr>th {
             border: 1px solid #bfbfbf;
         }
-        thead > tr > th {
-            border: 1px solid #bfbfbf;
-        }
-        td > p, th > p {
-            padding: 4px;
-            font-size: 14px;
-            text-align: center;
-            font-weight: normal;
-        }
+
         .text-left {
             text-align: left;
         }
+
         .text-xs {
             font-size: 13px;
         }
+
         .text-sm {
             font-size: 14px;
         }
+
         .text-xl {
             font-size: 16px;
         }
-        .blue-box {
-            background: #ddfdfc;
+
+        .text-red {
+            color: red;
         }
-        .bg-light-blue {
-            border: 1px solid #bfbfbf;
-            background: #EFF6FF;
-            padding: 8px;
-            color: #252525;
+
+        .my-4 {
+            margin: 16px 0;
         }
-        .text-black{color: #000000;}
-        .provider {
-            border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 28px;
-            font-weight: 400;
-            color: #4ea4a8;
-            vertical-align: middle;
-            max-height: 50px;
-            height: 50px;
+
+        .my-8 {
+            margin: 56px 0;
         }
-        .spacer {
-            padding: 3px;
+
+        .mb-2 {
+            margin-bottom: 8px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;}
-        .quote-info {
-            text-align: right;
-            vertical-align: bottom;
-            margin-top: -1px;
-            background: #EFF6FF;
-            font-size: 14px;
-            text-align: left;
-            padding: 8px;
-            max-width: 100%;
-            font-weight: normal;
+
+        .italic {
+            font-style: italic;
         }
-        .info h5 {
-            background: #1d83bc;
-            color: #ffffff;
-            padding: 3px;
-            font-weight: normal;
-            margin: 0 0 10px 0;
+
+        header {
+            padding-top: 32px;
         }
-        .info p {
-            font-size: 12px;
-        }
-        .btn-all-quotes {
-            background-color: #1d83bc;
-            color: #ffffff;
-            padding: 8px 25px;
-            margin-top: 50px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 5px;
-            margin-bottom: 0px;
-        }
-        .btn-buy
-        {
-            background-color: #FE7333;
-            color: #ffffff;
-            padding: 12px 15px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 5px;
-        }
-        .btn-buy:hover{
-            background-color: #d7fbd0;
-        }
-        .text-heading {
-            color: #ffffff;
-            background-color: #1d83bc;
-        }
-        .heading-desc {
-            font-size: 12px;
-        }
-        .provider-logo {
-            width: 100px;
-        }
-        .no-border {border: none;}
+
         footer {
             position: fixed;
             bottom: 0px;
@@ -226,126 +130,113 @@
             z-index: 1500;
         }
 
-        table.tbl-footer {
-            padding: 18px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
+        .text-center {
+            text-align: center;
         }
-        th.provider-name {
-            padding: 0;
-            margin: 0;
-        }
-        table.tbl-footer tr td, table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
-            font-size: 14px;
-        }
-        .text-left {text-align: left;}
-        .text-right {text-align: right;}
-        .full-page-image {
-            width: 100%;
-            z-index: 999;
-        }
-        .text-center {text-align: center;}
-        .text-white { color: #ffffff}
-        .text-underline{text-decoration:underline }
 
+        .title {
+            margin-bottom: 16px;
+        }
+
+        .title>h3 {
+            text-align: center;
+            text-decoration: underline;
+            margin: 16px 0;
+        }
+
+        .table-fixed {
+            width: 100%;
+        }
     </style>
 </head>
 
 <body>
-{{--
+
     <header>
         <div>
-            <img src="{{public_path('images/header.png')}}">
+            <img src="{{public_path('images/ep/logos/salama.png')}}" width="300" height="172" alt="Salama Logo">
         </div>
-    </header> --}}
+    </header>
 
-    {{-- PDF Page Footer --}}
-    <footer>
-
-    </footer>
-
-    {{-- PDF Page Inner Content --}}
     <main>
-        <table class="tbl-dec">
+        <div class="title">
+            <h3>CERTIFICATE</h3>
+            <p>This is to certify that the below member is an eligible customer under the Personal Accident and Medical Expenses cover for holders of an Individual Motor Policy sold via Insurancemarket.ae.</p>
+        </div>
+
+        <h4 class="mb-2">Details</h4>
+
+        <table class="table-fixed">
+            <colgroup>
+                <col width="275px" />
+                <col />
+            </colgroup>
             <tbody>
                 <tr>
                     <td>
-                        <span class="text-center"><b>CERTIFICATE</b></span>
-                        <p class="text-center">This is to certify that the below member is an eligible customer under the Personal Accident and Medical Expenses cover for holders of an Individual Motor Policy sold via Insurancemarket.ae.</p>
-
+                        <p>Policy Number</p>
+                        <p class="text-red">(Master Policy issued by Salama)</p>
                     </td>
+                    <td>Maria Anders</td>
+
                 </tr>
-            </tbody>
-        </table>
-      <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
-
-            <tr>
-              <td>Policy Number
-                (Master Policy issued by Salama)</td>
-              <td>Maria Anders</td>
-
-            </tr>
-            <tr>
-              <td>Certificate Number
-                (Issued by Insurancemarket.ae)</td>
-              <td>Francisco Chang</td>
-
-            </tr>
-            <tr>
-              <td>Full Name of Covered Member</td>
-              <td>{{$viewData['name']}}</td>
-            </tr>
-            <tr>
-              <td>Date of Birth</td>
-              <td>{{$viewData['dob']}}</td>
-
-            </tr>
-            <tr>
-              <td>Emirates ID</td>
-              <td>Yoshi Tannamuri</td>
-
-            </tr>
-            <tr>
-              <td>Date of Enrollment</td>
-              <td>Giovanni Rovelli</td>
-
-            </tr>
-            <tr>
-              <td>Covered Benefits</td>
-              <td>Giovanni Rovelli</td>
-
-            </tr>
-            <tr>
-              <td>Age Limit</td>
-              <td>Giovanni Rovelli</td>
-
-            </tr>
-            <tr>
-              <td>Type of Vehicle</td>
-              <td>Giovanni Rovelli</td>
-
-            </tr>
-            <tr>
-              <td>Annual Contribution Amount*</td>
-              <td>Giovanni Rovelli</td>
-
-            </tr>
-          </table>
-
-          <table class="tbl-dec">
-            <tbody>
                 <tr>
                     <td>
-                          <p class="text-left text-xs">* Kindly note that no refunds apply for mid-term cancellations</p>
-                     </td>
+                        <p>Certificate Number</p>
+                        <p class="text-red">(Issued by Insurancemarket.ae)
+                        </p>
+                    </td>
+                    <td>Francisco Chang</td>
+
+                </tr>
+                <tr>
+                    <td>Full Name of Covered Member</td>
+                    <td>{{$viewData['name']}}</td>
+                </tr>
+                <tr>
+                    <td>Date of Birth</td>
+                    <td>{{$viewData['dob']}}</td>
+
+                </tr>
+                <tr>
+                    <td>Emirates ID</td>
+                    <td>Yoshi Tannamuri</td>
+
+                </tr>
+                <tr>
+                    <td>Date of Enrollment</td>
+                    <td>Giovanni Rovelli</td>
+
+                </tr>
+                <tr>
+                    <td>Covered Benefits</td>
+                    <td>Giovanni Rovelli</td>
+
+                </tr>
+                <tr>
+                    <td>Age Limit</td>
+                    <td>Giovanni Rovelli</td>
+
+                </tr>
+                <tr>
+                    <td>Type of Vehicle</td>
+                    <td>Giovanni Rovelli</td>
+
+                </tr>
+                <tr>
+                    <td>Annual Contribution Amount*</td>
+                    <td>Giovanni Rovelli</td>
 
                 </tr>
             </tbody>
         </table>
-    </table>
+
+        <div>
+            <p class="my-4 italic">* Kindly note that no refunds apply for mid-term cancellations</p>
+            <p class="my-4"><b>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</b></p>
+            <div class="my-8">Signature Authorized</div>
+            <div class="italic">Subject to the terms and conditions and exclusions as laid out in the Master Plan No. _________________________ issued by SALAMA which is considered renewed every year unless advised otherwise.</div>
+        </div>
     </main>
 </body>
 
