@@ -8,6 +8,7 @@ const props = defineProps({
   quotePlans: Array,
   errors: Array,
 });
+const page = usePage();
 const travelQuoteEnum = page.props.travelQuoteEnum;
 const editMode = computed(() =>
   props.quote && props.quote.uuid ? true : false,
