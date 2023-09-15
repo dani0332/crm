@@ -71,12 +71,13 @@ class CarAllocationService extends AllocationService
 
         $carValue = 0;
 
-        if($axaProvider) {
+        if ($axaProvider) {
             $carValue = $axaValuation->carValue;
         }
 
-        if($carLead->car_model_detail_id == null || !$carValue || $carValue == 0) {
+        if ($carLead->car_model_detail_id == null || ! $carValue || $carValue == 0) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
+
             return;
         } else {
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
