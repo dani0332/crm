@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
             AddPersonalLobsProducts::class,
             addCarQuoteNewStatuses::class,
             LookupSeeder::class,
-            CarLostPermissionSeeder::class,
             CommercialKeywordsSeeder::class,
             RuleTypeSeeder::class,
             CommercialMakeModelKeywordsPermissionsSeeder::class,
@@ -33,6 +32,7 @@ class DatabaseSeeder extends Seeder
             InsurerQuoteTypeMappingSeeder::class,
             addTeamAllocationThresholdViewPermission::class,
             CreateAndAssignSubTeamsToAdvisors::class,
+            GenericPermissionSeeder::class
         ]);
     }
 }
