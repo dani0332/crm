@@ -17,10 +17,10 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
           <div class="col-auto mr-auto"></div>
           <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
           <div class="col-auto">
-           
+
           </div>
         </div>
-        
+
 
         <table id="dataTableCarEmbeddedProducts" class="table table-striped jambo_table datatable-car-embedded-products" style="width:100%">
           <thead>
@@ -73,10 +73,10 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
              </td>
               <td>
                 <div>
-                <button class="btn btn-success btn-sm" disabled>
-                   Send Documents 
+                <button class="btn btn-success btn-sm" data-recordid="{{$record->id}}" data-epid="{{$item->id}}" id="send-documents">
+                   Send Documents
                 </button>
-                <button class="btn btn-warning btn-sm" disabled>
+                <button class="btn btn-warning btn-sm"  data-recordid="{{$record->id}}" data-epid="{{$item->id}}" id="download-documents">
                 Download Certificate
                 </button>
                 <a href="{{$pwDoc}}" target="_blank" class="btn btn-info btn-sm {{ $pwDoc == '' ? 'disabled': ''}}">
@@ -89,13 +89,76 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
           </tbody>
         </table>
         <span class="alert alert-success" id="payment-link-copy-msg" style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
-        
+
       </div>
     </div>
   </div>
 </div>
 
 <script>
+	$(document).ready(function() {
+
+		$('#send-documents').on('click', function() {
+     let recordId=$(this).data('recordid');
+     let epId= $(this).data('epid');
+
+			ajaxCallScript(recordId,epId)
+		});
+
+    $('#download-documents').on('click', function() {
+     let recordId=$(this).data('recordid');
+     let epId= $(this).data('epid');
+
+			ajaxDownloadDocument(recordId,epId)
+		});
+
+    function ajaxDownloadDocument(recordId,epId) {
+      $(".loader").show();
+			$.ajax({
+				url: "{{ url('/embedded-products/download-document') }}",
+				type: "POST",
+				data: {
+					quoteId: recordId,
+					modelType: 'Car',
+					epId: epId,
+          _token: '{{ csrf_token() }}'
+				},
+				success: function(res) {
+          $(".loader").hide();
+          const data = res.data;
+          const link = document.createElement('a');
+          link.setAttribute('href', data);
+          link.setAttribute('download', 'Certificate.pdf'); // Need to modify filename ...
+          link.click();
+
+				},
+			});
+		}
+
+		function ajaxCallScript(recordId,epId) {
+      $(".loader").show();
+			$.ajax({
+				url: "{{ url('/embedded-products/send-document') }}",
+				type: "POST",
+				data: {
+					quoteId: recordId,
+					modelType: 'Car',
+					epId: epId,
+          _token: '{{ csrf_token() }}'
+				},
+				success: function(data) {
+					if (data.statuss ==  200) {
+            $(".loader").hide();
+					} else {
+            $(".loader").hide();
+					}
+				},
+			});
+		}
+
+    });
+
+
 $('#flowcheckall_ep').click(function (e) {
   if ($(this).hasClass('checkedAll')) {
     $('.car_ep_checkbox').prop('checked', false);

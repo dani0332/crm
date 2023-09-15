@@ -108,8 +108,20 @@ class EmbeddedProductController extends Controller
     public function sendDocument(EmbeddedProducDocumentRequest $request)
     {
         $response = EmbeddedProductRepository::sendDocument($request->validated());
+        if ($request->has('isInertia')) {
+            if ($response == 200) {
+                return redirect()->back()->with('success', 'Certificate send Successfully');
+            } else {
+                return redirect()->back()->with('error', 'Send Certificate failed');
+            }
+        } else {
+            if ($response == 200) {
 
-        return $response;
+                return response()->json(['status' => 200, 'success' => 'Certificate send Successfully.']);
+            } else {
+                return response()->json(['status' => 400, 'error' => 'Send Certificate failed.']);
+            }
+        }
     }
 
     public function downloadDocument(EmbeddedProducDocumentRequest $request)

@@ -40,6 +40,7 @@ const downloadDcoument = id => {
         quoteId: props.quote.id,
         modelType: props.modelType,
         epId: id,
+        isInertia: true,
       },
       {
         responseType: 'json',
@@ -224,6 +225,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           <x-button
             size="xs"
             color="emerald"
+            :disabled="!item.send_document_button"
             :loading="sendDocumentLoader"
             @click.prevent="sendDcoument(item.id)"
           >
@@ -232,6 +234,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           <x-button
             size="xs"
             color="#ff5e00"
+            :disabled="!item.send_document_button"
             :loading="downloadLoader"
             @click.prevent="downloadDcoument(item.id)"
           >
