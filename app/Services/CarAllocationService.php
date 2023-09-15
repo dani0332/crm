@@ -37,9 +37,6 @@ class CarAllocationService extends AllocationService
         return Tier::where('id', $tierId)->first();
     }
 
-    /**
-     * @return array
-     */
     public function getStatusOrder(): array
     {
         $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
@@ -51,7 +48,10 @@ class CarAllocationService extends AllocationService
             UserStatusEnum::OFFLINE,
         ];
 
-        if (!$isBusinessHours) $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        if (! $isBusinessHours) {
+            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
         return $statusOrder;
     }
 
@@ -60,7 +60,7 @@ class CarAllocationService extends AllocationService
         return CarQuote::whereNull('advisor_id')->where('deferred', 1)->whereBetween('deferred_at', [now()->subDay(2)->toDateTimeString(), now()]);
     }
 
-    public function findTier($carLead): Tier|null
+    public function findTier($carLead): ?Tier
     {
         info('Started searching tier for car lead: '.json_encode($carLead->code));
 
@@ -407,9 +407,10 @@ class CarAllocationService extends AllocationService
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp]);
-        if($advisorId != 0){
+        if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
         }
+
         return $leads->get();
     }
 
