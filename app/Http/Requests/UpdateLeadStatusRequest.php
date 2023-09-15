@@ -6,11 +6,13 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\Customer;
-use App\Models\HealthQuote;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateLeadStatusRequest extends FormRequest
 {
+    use GenericQueriesAllLobs;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -62,27 +64,28 @@ class UpdateLeadStatusRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
+
+            $quoteObject = $this->getQuoteObject(strtolower(request()->modelType), request()->leadId);
+
+            if(!$quoteObject) {
+                $validator->errors()->add('value', 'Lead not found please try again.');
+            }
+
+            $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
+                'insured_first_name',
+                'insured_last_name',
+                'emirates_id_number',
+                'emirates_id_expiry_date'
+            ])->toArray();
+
+            if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
+            }
+
             if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
-                $healthQuoteDetails = HealthQuote::where('id', request()->leadId)->first();
-
-                if(!$healthQuoteDetails) {
-                    $validator->errors()->add('value', 'Lead not found please try again.');
-                }
-
-                if( ($healthQuoteDetails->health_team_type == null || $healthQuoteDetails->health_team_type == quoteTypeCode::WCU) &&
+                if( ($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
                     request()->leadStatus == QuoteStatusEnum::Qualified) {
                     $validator->errors()->add('value', 'Please select team type before moving to '.quoteStatusCode::QUALIFIED.' status');
-                }
-
-                $customerProfileDetails = Customer::where('id', $healthQuoteDetails->customer_id)->first([
-                    'insured_first_name',
-                    'insured_last_name',
-                    'emirates_id_number',
-                    'emirates_id_expiry_date'
-                ])->toArray();
-
-                if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                    $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
                 }
             }
         });

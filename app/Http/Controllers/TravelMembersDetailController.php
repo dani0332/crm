@@ -2,25 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TravelMemberDetailRequest;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 
 class TravelMembersDetailController extends Controller
 {
     /**
      * Store a newly created resource in storage.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(TravelMemberDetailRequest $request)
     {
-        $data = [
-            'travel_quote_request_id' => $request->travel_quote_request_id,
-            'dob' => $request->dob,
-        ];
-        TravelMemberDetail::create($data);
+        TravelMemberDetail::create($request->validated());
         TravelQuote::find($request->travel_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
 
         return redirect()->back();
@@ -43,21 +39,15 @@ class TravelMembersDetailController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(Request $request, $id)
+    public function update(TravelMemberDetailRequest $request, $id)
     {
-        $data = [
-            'travel_quote_request_id' => $request->travel_quote_request_id,
-            'dob' => $request->dob,
-        ];
-        $memberDetail = TravelMemberDetail::find($id);
-        if ($memberDetail) {
-            $memberDetail->update($data);
-            TravelQuote::find($request->travel_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
-            unset($data['travel_quote_request_id']);
-            TravelQuote::where('primary_member_id', $memberDetail->id)->update($data);
-        }
+        TravelMemberDetail::findOrFail($id)->update($request->validated());
+        TravelQuote::find($request->travel_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+
+        $travelhMemberData = $request->only(['dob', 'nationality_id']);
+        TravelQuote::where('primary_member_id', $id)->update($travelhMemberData);
 
         return redirect()->back();
     }

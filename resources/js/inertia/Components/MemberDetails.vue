@@ -2,19 +2,26 @@
 
 defineProps({
     membersDetails: Object,
-    nationalities: Array
+    memberRelations: Array,
+    nationalities: Array,
 });
 
 const page = usePage();
 const modals = reactive({
     member: false,
-    // memberConfirm: false,
 });
 
 const nationalitiesOptions = computed(() => {
     return page.props.nationalities.map(nat => ({
         value: nat.id,
         label: nat.text,
+    }));
+});
+
+const memberRelationOptions = computed(() => {
+    return page.props.memberRelations.map(relation => ({
+        value: relation.code,
+        label: relation.text,
     }));
 });
 
@@ -41,18 +48,89 @@ const memberDetailsTable = reactive({
     ],
 });
 
+const memberFieldReq = reactive({
+    nationality: false,
+    dob: false,
+});
+
 const memberForm = useForm({
     id: null,
-    name: '',
-    nationality_id: null ,
+    first_name: '',
+    nationality_id: null,
     dob: null,
-    relation_id: null,
+    relation_code: null,
 });
 
 const addMemberModal = () => {
     memberForm.reset();
-    // memberActionEdit.value = false;
+    memberActionEdit.value = false;
     modals.member = true;
+};
+
+function onEditMember(data) {
+    memberActionEdit.value = true;
+    modals.member = true;
+    memberForm.id = data.id;
+    memberForm.first_name = data.first_name;
+    memberForm.dob = data.dob;
+    memberForm.relation_code = data.relation_code;
+    memberForm.nationality_id = data.nationality_id;
+}
+
+const onMemberSubmit = isValid => {
+
+    memberFieldReq.nationality = (memberForm.nationality == null);
+    memberFieldReq.dob = (memberForm.dob == null);
+    if (!isValid) return;
+
+    if (memberActionEdit.value) {
+        memberForm.put(`/members/${memberForm.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                notification.success({
+                    title: 'Member Updated',
+                    position: 'top',
+                });
+                memberForm.reset();
+            },
+            onFinish: () => {
+                modals.member = false;
+            },
+        });
+    } else {
+        memberForm.post(`/members`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                notification.success({
+                    title: 'Member Added',
+                    position: 'top',
+                });
+            },
+            onFinish: () => {
+                modals.member = false;
+            },
+        });
+    }
+};
+
+const memberDelete = id => {
+    modals.memberConfirm = true;
+    confirmDeleteData.member = id;
+};
+
+const memberDeleteConfirmed = () => {
+    memberForm.delete(`/members/${confirmDeleteData.member}`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            notification.success({
+                title: 'Member Deleted',
+                position: 'top',
+            });
+        },
+        onFinish: () => {
+            modals.memberConfirm = false;
+        },
+    });
 };
 
 </script>
@@ -62,32 +140,66 @@ const addMemberModal = () => {
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
                 Member Details
-                <x-tag size="sm">{{ 0 }}</x-tag>
+                <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
             </h3>
             <x-button @click.prevent="addMemberModal" size="sm" color="orange">
                 Add Member
             </x-button>
         </div>
+
         <DataTable
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
-            :items="[]"
+            :items="membersDetails || []"
             show-index
             border-cell
             hide-rows-per-page
             hide-footer
-        />
+        >
+            <template #item-index="{ index }">
+                <div>Member {{ index }}</div>
+            </template>
+            <template #item-dob="{ dob }">
+                {{ dateFormat(dob) }}
+            </template>
+            <template #item-relation="{ relation }">
+                {{ relation?.text }}
+            </template>
+            <template #item-nationality="{ nationality }">
+                {{ nationality?.text }}
+            </template>
+            <template #item-action="item">
+                <div class="flex gap-2">
+                    <x-button
+                        size="xs"
+                        color="primary"
+                        outlined
+                        @click.prevent="onEditMember(item)"
+                    >
+                        Edit
+                    </x-button>
+                    <x-button
+                        size="xs"
+                        color="error"
+                        outlined
+                        @click.prevent="memberDelete(item.id)"
+                    >
+                        Delete
+                    </x-button>
+                </div>
+            </template>
+        </DataTable>
 
         <x-modal v-model="modals.member" size="lg" show-close backdrop>
             <template #header>
                 {{ memberActionEdit ? 'Edit' : 'Add' }} Member
             </template>
 
-            <x-form :auto-focus="false">
+            <x-form @submit="onMemberSubmit" :auto-focus="false">
                 <div class="grid md:grid-cols-2 gap-4">
                     <input type="hidden" :value="memberForm.id" />
                     <x-input
-                        v-model="memberForm.name"
+                        v-model="memberForm.first_name"
                         label="Member Name"
                         placeholder="Member Name"
                     />
@@ -97,15 +209,17 @@ const addMemberModal = () => {
                         :options="nationalitiesOptions"
                         placeholder="Select Nationality"
                         :single="true"
+                        :hasError="memberFieldReq.nationality"
                     />
                     <DatePicker
                         v-model="memberForm.dob"
-                        label="Date of Birth"
+                        label="DOB"
+                        :hasError="memberFieldReq.dob"
                     />
                     <x-select
-                        v-model="memberForm.relation_id"
+                        v-model="memberForm.relation_code"
                         label="Relation"
-                        :options="relationOptions"
+                        :options="memberRelationOptions"
                         placeholder="Select Relation"
                         class="w-full"
                     />
@@ -128,5 +242,28 @@ const addMemberModal = () => {
             </x-form>
         </x-modal>
 
+        <x-modal v-model="modals.memberConfirm" show-close backdrop>
+        <template #header> Delete Member Detail </template>
+        <p>Are you sure you want to delete this?</p>
+        <template #actions>
+            <div class="text-right space-x-4">
+                <x-button
+                    size="sm"
+                    ghost
+                    @click.prevent="modals.memberConfirm = false"
+                >
+                    Cancel
+                </x-button>
+                <x-button
+                    size="sm"
+                    color="error"
+                    @click.prevent="memberDeleteConfirmed"
+                    :loading="memberForm.processing"
+                >
+                    Delete
+                </x-button>
+            </div>
+        </template>
+    </x-modal>
     </div>
 </template>

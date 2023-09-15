@@ -41,6 +41,7 @@ defineProps({
   embeddedProducts: Array,
   customerTypeEnum: Object,
   nationalities: Array,
+  memberRelations: Array,
 });
 
 const page = usePage();
@@ -190,21 +191,47 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
+          notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
+      onSuccess: response => {
+        const flash_messages = response.props.flash;
+        if(!flash_messages){
+            notification.success({
+                title: 'Lead Status Updated',
+                position: 'top',
+            });
+        }
       },
     },
   );
 };
 
+
+const nationalityOptions = computed(() => {
+    return page.props.nationalities.map(nat => ({
+        value: nat.id,
+        label: nat.text,
+    }));
+});
+
+const memberRelationOptions = computed(() => {
+    return page.props.memberRelations.map(relation => ({
+        value: relation.code,
+        label: relation.text,
+    }));
+});
+
 const travelerForm = useForm({
-  dob: '',
-  travel_quote_request_id: page.props.quote.id,
+    travel_quote_request_id: page.props.quote.id,
+    first_name: null,
+    dob: '',
+    nationality_id: null,
+    relation_code: null
+});
+
+const travelerFieldReq = reactive({
+    nationality: false,
+    dob: false,
 });
 
 const travelerTable = reactive({
@@ -213,20 +240,20 @@ const travelerTable = reactive({
   processing: false,
   columns: [
     {
-      text: 'Name',
-      value: 'name',
+      text: 'Member Name',
+      value: 'first_name',
     },
+      {
+          text: 'Nationality',
+          value: 'nationality',
+      },
     {
-      text: 'DOB',
+      text: 'Date of Birth',
       value: 'dob',
     },
     {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Updated At',
-      value: 'updated_at',
+      text: 'Relation',
+      value: 'relation',
     },
     {
       text: 'Action',
@@ -236,12 +263,13 @@ const travelerTable = reactive({
 });
 
 const submitTraveler = isValid => {
-  if (!isValid) return;
-  if (travelerForm.id) {
-    editTraveler(isValid);
-  } else {
-    addTravelMember(isValid);
-  }
+    if (!isValid) return;
+
+    if (travelerForm.id) {
+        editTraveler(isValid);
+    } else {
+       addTravelMember(isValid);
+    }
 };
 
 const addTravelMember = isValid => {
@@ -250,18 +278,21 @@ const addTravelMember = isValid => {
   travelerForm.post('/travelers', {
     preserveScroll: true,
     onBefore: () => {
-      travelerTable.processing = true;
+        travelerForm.processing = true;
     },
     onSuccess: () => {
       notification.success({
-        title: 'Traveler Added',
+        title: 'Member Added',
         position: 'top',
       });
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
-      travelerTable.processing = false;
+      travelerForm.processing = false;
+      travelerForm.first_name = '';
       travelerForm.dob = '';
+      travelerForm.nationality_id = '';
+      travelerForm.relation_code = '';
       travelerForm.id = null;
       travelerForm.reset();
     },
@@ -270,7 +301,10 @@ const addTravelMember = isValid => {
 
 const onAddTraveler = () => {
   travelerForm.reset();
+  travelerForm.first_name = '';
   travelerForm.dob = '';
+  travelerForm.nationality_id = '';
+  travelerForm.relation_code = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
 };
@@ -279,8 +313,11 @@ const travelerName = ref('');
 
 const onEditTraveler = traveler => {
   travelerName.value = `Traveler ${traveler.index}`;
-  travelerForm.dob = traveler.dob;
   travelerForm.id = traveler.id;
+  travelerForm.first_name = traveler.first_name;
+  travelerForm.dob = traveler.dob;
+  travelerForm.relation_code = traveler.relation_code;
+  travelerForm.nationality_id = traveler.nationality_id;
   travelerTable.addTraveler = true;
 };
 
@@ -290,18 +327,21 @@ const editTraveler = isValid => {
   travelerForm.put(`/travelers/${travelerForm.id}`, {
     preserveScroll: true,
     onBefore: () => {
-      travelerTable.processing = true;
+      travelerForm.processing = true;
     },
     onSuccess: () => {
       notification.success({
-        title: 'Traveler Updated',
+        title: 'Member Updated',
         position: 'top',
       });
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
-      travelerTable.processing = false;
+      travelerForm.processing = false;
+      travelerForm.first_name = '';
       travelerForm.dob = '';
+      travelerForm.nationality_id = '';
+      travelerForm.relation_code = '';
       travelerForm.id = null;
       travelerForm.reset();
     },
@@ -316,7 +356,7 @@ const deleteTraveler = id => {
     },
     onSuccess: () => {
       notification.success({
-        title: 'Traveler Deleted',
+        title: 'Member Deleted',
         position: 'top',
       });
     },
@@ -1311,11 +1351,138 @@ onMounted(() => {
           </div>
           </x-form>
       </div>
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                  Member Details
+                  <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+              </h3>
+              <div class="flex flex-wrap gap-3">
+                  <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
+                      Add Member
+                  </x-button>
+              </div>
+          </div>
+          <DataTable
+              table-class-name="tablefixed compact"
+              :headers="travelerTable.columns"
+              :items="travelers || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="travelers.length < 15"
+              show-index
+          >
+              <template #item-index="{ index }">
+                  <div>Member {{ index }}</div>
+              </template>
+              <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
 
-      <MemberDetails
-          :quote="quote"
-          :nationalities="nationalities"
-      />
+              <template #item-relation="{ relation }">
+                  {{ relation?.text }}
+              </template>
+              <template #item-nationality="{ nationality }">
+                  {{ nationality?.text }}
+              </template>
+
+              <template #item-action="item">
+                  <div class="flex gap-2 justify-center">
+                      <x-button
+                          size="xs"
+                          color="primary"
+                          @click.prevent="onEditTraveler(item)"
+                          outlined
+                      >
+                          Edit
+                      </x-button>
+                      <x-button
+                          size="xs"
+                          color="error"
+                          @click.prevent="
+                            confirmModal.onConfirm = () => deleteTraveler(item.id);
+                            confirmModal.show = true;
+                          "
+                          outlined
+                      >
+                          Delete
+                      </x-button>
+                  </div>
+              </template>
+          </DataTable>
+          <x-modal
+              v-model="travelerTable.addTraveler"
+              size="lg"
+              show-close
+              backdrop
+          >
+              <template #header>
+                  {{ travelerForm.id ? 'Edit' : 'Add' }} Member
+              </template>
+              <x-form @submit="submitTraveler" :auto-focus="false">
+                  <div class="grid md:grid-cols-2 gap-4">
+                      <x-input
+                          v-model="travelerForm.first_name"
+                          label="Member Name"
+                          placeholder="Member Name"
+                      />
+                      <ComboBox
+                          v-model="travelerForm.nationality_id"
+                          label="Nationality"
+                          :options="nationalityOptions"
+                          placeholder="Select Nationality"
+                          :single="true"
+                          :hasError="travelerFieldReq.nationality"
+                      />
+                      <DatePicker
+                          v-model="travelerForm.dob"
+                          label="Date of Birth"
+                          :hasError="travelerFieldReq.dob"
+                      />
+                      <x-select
+                          v-model="travelerForm.relation_code"
+                          label="Relation"
+                          :options="memberRelationOptions"
+                          placeholder="Select Relation"
+                          class="w-full"
+                      />
+                  </div>
+                  <div class="text-right space-x-4 mt-8">
+                      <x-button size="sm" @click.prevent="modals.addTraveler = false">
+                          Cancel
+                      </x-button>
+
+                      <x-button
+                          size="sm"
+                          color="emerald"
+                          :loading="travelerForm.processing"
+                          type="submit"
+                      >
+                          {{ travelerForm.id ? 'Update' : 'Save' }}
+                      </x-button>
+                  </div>
+              </x-form>
+          </x-modal>
+      </div>
+
+      <x-modal v-model="confirmModal.show" show-close backdrop>
+          <template #header> {{ confirmModal.title }} </template>
+          <p>{{ confirmModal.message }}</p>
+          <template #actions>
+              <div class="text-right space-x-4">
+                  <x-button size="sm" ghost @click.prevent="confirmModal.show = false">
+                      Cancel
+                  </x-button>
+                  <x-button
+                      size="sm"
+                      color="error"
+                      @click.prevent="confirmModal.onConfirm"
+                      :loading="confirmModal.processing"
+                  >
+                      Delete
+                  </x-button>
+              </div>
+          </template>
+      </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1417,122 +1584,6 @@ onMounted(() => {
         </dl>
       </div>
     </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Travelers
-          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-        </h3>
-        <div class="flex flex-wrap gap-3">
-          <x-button size="sm" color="primary" @click.prevent="onAddTraveler">
-            Add Member
-          </x-button>
-        </div>
-      </div>
-      <DataTable
-        table-class-name="tablefixed compact"
-        :headers="travelerTable.columns"
-        :items="travelers || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="travelers.length < 15"
-        show-index
-      >
-        <template #item-name="item"> Traveler {{ item.index }} </template>
-        <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
-
-        <template #item-created_at="{ created_at }">
-          {{ dateTimeFormat(created_at).value }}
-        </template>
-
-        <template #item-updated_at="{ updated_at }">
-          {{ dateTimeFormat(updated_at).value }}
-        </template>
-
-        <template #item-action="item">
-          <div class="flex gap-2 justify-center">
-            <x-button
-              size="xs"
-              color="primary"
-              @click.prevent="onEditTraveler(item)"
-              outlined
-            >
-              Edit
-            </x-button>
-            <x-button
-              size="xs"
-              color="emerald"
-              @click.prevent="
-                confirmModal.onConfirm = () => deleteTraveler(item.id);
-                confirmModal.show = true;
-              "
-              outlined
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-      <x-modal
-        v-model="travelerTable.addTraveler"
-        size="lg"
-        show-close
-        backdrop
-      >
-        <template #header>
-          {{ travelerForm.id ? 'Edit: ' + travelerName : 'New Member' }}
-        </template>
-        <x-form @submit="submitTraveler" :auto-focus="false">
-          <x-input
-            label="Name"
-            placeholder="Name"
-            value="Member"
-            readonly
-            disabled
-            class="w-full"
-          />
-          <DatePicker
-            v-model="travelerForm.dob"
-            label="Date of Birth"
-            input-classes="w-full "
-            :rules="[isRequired]"
-          />
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              type="submit"
-              :loading="travelerTable.processing"
-            >
-              Save
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-    </div>
-
-    <x-modal v-model="confirmModal.show" show-close backdrop>
-      <template #header> {{ confirmModal.title }} </template>
-      <p>{{ confirmModal.message }}</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="confirmModal.show = false">
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmModal.onConfirm"
-            :loading="confirmModal.processing"
-          >
-            Delete
-          </x-button>
-        </div>
-      </template>
-    </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
