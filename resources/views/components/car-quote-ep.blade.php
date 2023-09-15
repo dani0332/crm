@@ -73,10 +73,10 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
              </td>
               <td>
                 <div>
-                <button class="btn btn-success btn-sm" data-recordid="{{$record->id}}" data-epid="{{$item->id}}" id="send-documents">
+                <button class="btn btn-success btn-sm"   id="send_documents" onClick="sendDocument({{$record->id}}, '{{$item->id}}')"	{{ !$transaction->send_document_button ? 'disabled' : '' }}>
                    Send Documents
                 </button>
-                <button class="btn btn-warning btn-sm"  data-recordid="{{$record->id}}" data-epid="{{$item->id}}" id="download-documents">
+                <button class="btn btn-warning btn-sm"   id="download_documents" onClick="downloadDocument({{$record->id}}, '{{$item->id}}')" {{ !$transaction->send_document_button ? 'disabled' : '' }}>
                 Download Certificate
                 </button>
                 <a href="{{$pwDoc}}" target="_blank" class="btn btn-info btn-sm {{ $pwDoc == '' ? 'disabled': ''}}">
@@ -96,23 +96,29 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 </div>
 
 <script>
-	$(document).ready(function() {
 
-		$('#send-documents').on('click', function() {
-     let recordId=$(this).data('recordid');
-     let epId= $(this).data('epid');
+function sendDocument(recordId,epId) {
+      $(".loader").show();
+			$.ajax({
+				url: "{{ url('/embedded-products/send-document') }}",
+				type: "POST",
+				data: {
+					quoteId: recordId,
+					modelType: 'Car',
+					epId: epId,
+          _token: '{{ csrf_token() }}'
+				},
+				success: function(data) {
+					if (data.statuss ==  200) {
+            $(".loader").hide();
+					} else {
+            $(".loader").hide();
+					}
+				},
+			});
+	}
 
-			ajaxCallScript(recordId,epId)
-		});
-
-    $('#download-documents').on('click', function() {
-     let recordId=$(this).data('recordid');
-     let epId= $(this).data('epid');
-
-			ajaxDownloadDocument(recordId,epId)
-		});
-
-    function ajaxDownloadDocument(recordId,epId) {
+    function downloadDocument(recordId,epId) {
       $(".loader").show();
 			$.ajax({
 				url: "{{ url('/embedded-products/download-document') }}",
@@ -134,29 +140,6 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 				},
 			});
 		}
-
-		function ajaxCallScript(recordId,epId) {
-      $(".loader").show();
-			$.ajax({
-				url: "{{ url('/embedded-products/send-document') }}",
-				type: "POST",
-				data: {
-					quoteId: recordId,
-					modelType: 'Car',
-					epId: epId,
-          _token: '{{ csrf_token() }}'
-				},
-				success: function(data) {
-					if (data.statuss ==  200) {
-            $(".loader").hide();
-					} else {
-            $(".loader").hide();
-					}
-				},
-			});
-		}
-
-    });
 
 
 $('#flowcheckall_ep').click(function (e) {

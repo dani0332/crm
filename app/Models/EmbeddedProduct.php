@@ -25,7 +25,6 @@ class EmbeddedProduct extends Model
         'is_active',
     ];
 
-
     public function insuranceProvider()
     {
         return $this->belongsTo(InsuranceProvider::class, 'insurance_provider_id', 'id');

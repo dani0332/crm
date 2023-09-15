@@ -62,7 +62,7 @@ class EmbeddedProductRepository extends BaseRepository
             $prices = $product->prices()->get();
 
             foreach ($prices as $price) {
-                if (!in_array($price->id, array_column($data['pricings'], 'id'))) {
+                if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
                     $price->delete();
                 }
             }
@@ -107,12 +107,12 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
 
         $advisorData = [];
-        $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
+        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
         $viewData['dob'] = $quoteObject->dob;
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
-        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => 'Certificate']);
+        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Certificate']);
     }
 
     /**
@@ -122,21 +122,21 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $type = 'embedded_product';
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
+        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
         $fileMimeType = $file->getClientMimeType();
 
-        $fileNameAzure = uniqid() . '_' . $type . '_' . $docName;
+        $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
         $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
 
         //generate unique uuid
         $docUuid = uniqid();
         while (GenericDocument::where('uuid', $docUuid)->first()) {
-            $docUuid = uniqid() . rand(1, 100);
+            $docUuid = uniqid().rand(1, 100);
         }
 
         GenericDocument::create([
             'uuid' => $docUuid,
-            'name' => $title . '_' . $originalName,
+            'name' => $title.'_'.$originalName,
             'path' => $filePathAzure,
             'mime_type' => $fileMimeType,
             'documentable_type' => 'App\Models\EmbeddedProduct',
@@ -188,7 +188,7 @@ class EmbeddedProductRepository extends BaseRepository
             $advisorData['name'] = $advisor->name;
             $advisorData['phone'] = $advisor->mobile_no;
         }
-        $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
+        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
         $viewData['dob'] = $quoteObject->dob;
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
@@ -209,13 +209,13 @@ class EmbeddedProductRepository extends BaseRepository
             'Attachments' => isset($attachments) ? $attachments : null,
             'TemplateModel' => [
                 'params' => [
-                    'customerName' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
+                    'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
                     'isMedex' => true,
                     'productName' => 'demo',
                     'productDescription' => 'this is desc',
                     'advisor' => (object) $advisorData,
                 ],
-                'subject' => 'Thank you for your purchase of ' . $product_name . ' with Alfred - < ' . $short_code . '-' . $quoteObject->code . ' >',
+                'subject' => 'Thank you for your purchase of '.$product_name.' with Alfred - < '.$short_code.'-'.$quoteObject->code.' >',
             ],
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
