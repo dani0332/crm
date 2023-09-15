@@ -1667,6 +1667,8 @@ onMounted(() => {
       :data="embeddedProducts"
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

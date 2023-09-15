@@ -8,6 +8,8 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 <div class="row">
   <div class="col-md-12 col-sm-12">
     <div class="x_panel">
+      <div class="alert alert-success" style="display: none" id="sucess-div"></div>
+      <div class="alert alert-error" style="display: none" id="error-div"></div>
       <div class="x_title">
         <h2>Embedded Products</h2>
         <div class="clearfix"></div>
@@ -109,10 +111,12 @@ function sendDocument(recordId,epId) {
           _token: '{{ csrf_token() }}'
 				},
 				success: function(data) {
-					if (data.statuss ==  200) {
+					if (data.status ==  200) {
             $(".loader").hide();
+            $('#sucess-div').text('Documents send successfully').show().delay(5000).hide(0);
 					} else {
             $(".loader").hide();
+            $('#error-div').text('Documents sending failed').show().delay(5000).hide(0);
 					}
 				},
 			});

@@ -729,6 +729,8 @@ const policyDetails = useForm({
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

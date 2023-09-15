@@ -10,6 +10,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
@@ -88,12 +89,12 @@ class TravelController extends Controller
     {
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        abort_if(! $record, 404);
+        abort_if(!$record, 404);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
 
-        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType) . 'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $paymentMethods = $this->lookupService->getPaymentMethods();
         $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -107,7 +108,7 @@ class TravelController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
-        if (! empty($insuranceProviders)) {
+        if (!empty($insuranceProviders)) {
 
             $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
                 return [
@@ -119,11 +120,11 @@ class TravelController extends Controller
         $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
         $payments->each(function ($payment) {
-            $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
+            $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && !auth()->user()->hasRole(RolesEnum::PA);
             $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
             $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
             $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
-                && ! auth()->user()->hasRole(RolesEnum::PA);
+                && !auth()->user()->hasRole(RolesEnum::PA);
 
             $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
         });
@@ -148,9 +149,9 @@ class TravelController extends Controller
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
-        if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
+        if (!auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
 
@@ -187,10 +188,11 @@ class TravelController extends Controller
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
             'embeddedProducts' => $embeddedProducts,
             'message' => session('message'),
+            'quoteType' => QuoteTypes::TRAVEL,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
-                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
+                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
                 'travelAdvisor' => auth()->user()->hasRole(RolesEnum::TravelAdvisor),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'displaySendPolicyButton' => $displaySendPolicyButton,
@@ -199,8 +201,8 @@ class TravelController extends Controller
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
-                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType) . '-quotes-edit'),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && !auth()->user()->hasRole(RolesEnum::PA),
                 'isPA' => auth()->user()->hasRole(RolesEnum::PA),
 
             ],
@@ -340,7 +342,7 @@ class TravelController extends Controller
 
         $this->travelQuoteService->updateTravelQuote($request, $id);
 
-        return redirect('/quotes/travel/'.$id)->with('message', 'Record updated successfully');
+        return redirect('/quotes/travel/' . $id)->with('message', 'Record updated successfully');
     }
 
     public function planDetails($quoteId, $planId)

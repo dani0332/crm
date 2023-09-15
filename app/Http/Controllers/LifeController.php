@@ -9,6 +9,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreLifeRequest;
 use App\Services\CRUDService;
@@ -146,7 +147,7 @@ class LifeController extends Controller
     public function show($uuid)
     {
         $quote = $this->lifeQuoteService->getEntity($uuid);
-        abort_if(! $quote, 404);
+        abort_if(!$quote, 404);
         $quoteType = strtolower($this->genericModel->modelType);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $quote->code);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
@@ -176,14 +177,15 @@ class LifeController extends Controller
         $customerAdditionalContacts = $this->lifeQuoteService->getAdditionalContacts($quote->customer_id, $quote->mobile_no);
         $activities = $this->lifeQuoteService->getActivityByLeadId($quote->id, strtolower($this->genericModel->modelType));
 
-        $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
+        $cdnPath = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
 
-        if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
+        if (!auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
 
         return inertia('LifeQuote/Show', [
             'quote' => $quote,
+            'quoteType' => QuoteTypes::LIFE,
             'fieldsToDisplay' => $fields,
             'activities' => $activities,
             'modelType' => $this->genericModel->modelType,
@@ -205,14 +207,14 @@ class LifeController extends Controller
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
-                'notProductionApproval' => ! auth()->user()->hasRole(RolesEnum::PA),
+                'notProductionApproval' => !auth()->user()->hasRole(RolesEnum::PA),
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'displaySendPolicyButton' => $displaySendPolicyButton,
                 'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                 'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),
                 'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
-                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
+                'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType) . '-quotes-edit'),
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
@@ -290,7 +292,7 @@ class LifeController extends Controller
 
         $modelSkipPropertiesList = json_decode($request->get('modelSkipProperties'), true);
         foreach ($modelPropertiesList as $property => $value) {
-            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && ! strpos($modelSkipPropertiesList['update'], $property)) {
+            if (strpos($value, 'required') && $property != 'id' && $property != 'code' && $property != 'email' && $property != 'mobile_no' && $modelSkipPropertiesList != null && !strpos($modelSkipPropertiesList['update'], $property)) {
                 $validateArray[$property] = 'required';
             }
         }
@@ -298,7 +300,7 @@ class LifeController extends Controller
         $this->validate($request, $validateArray);
         $this->crudService->updateModelByType(json_decode($request->modelType, true), $request, $id);
 
-        return redirect('/quotes/life'.'/'.$id)->with('success', json_decode($request->modelType, true).' has been updated');
+        return redirect('/quotes/life' . '/' . $id)->with('success', json_decode($request->modelType, true) . ' has been updated');
     }
 
     public function cardsView(Request $request)
