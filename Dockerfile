@@ -21,7 +21,7 @@ RUN pecl install redis \
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    build-essential libssl-dev pkg-config \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
