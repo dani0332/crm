@@ -52,6 +52,7 @@ class CarSoldResubmissions implements ShouldQueue
 
         if ($quotes->count() <= 0) {
             info('CarSoldResubmissions - no quotes available to send resubmission reminder');
+
             return true;
         }
 
