@@ -1,5 +1,6 @@
 FROM php:8.1-fpm
 ARG IMCRM_TOKEN
+ARG NODE_MAJOR=20
 #ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
 #ARG NEW_RELIC_APP_NAME
@@ -38,10 +39,12 @@ RUN apt-get update && apt-get install -y \
     gnupg
 RUN docker-php-ext-install gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
-# Install node 16
-RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
-RUN bash /tmp/nodesource_setup.sh
-RUN apt install nodejs -y
+# Install node 20
+#RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
+#RUN bash /tmp/nodesource_setup.sh
+RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN apt update && apt install nodejs -y
 
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
