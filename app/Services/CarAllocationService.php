@@ -86,7 +86,7 @@ class CarAllocationService extends AllocationService
             if (count($plans) > 0) {
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
 
-                return $tiersQuery()->first();
+                return $tiersQuery->first();
             } else {
 
                 if ($carLead->car_value >= 300000) {
@@ -104,7 +104,7 @@ class CarAllocationService extends AllocationService
             // case when car year of manufacture is older or equal than 15 years
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
-            return $tiersQuery()->first();
+            return $tiersQuery->first();
         }
     }
 
