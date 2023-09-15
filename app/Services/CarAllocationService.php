@@ -3,13 +3,16 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarPlanType;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\TiersEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\IntroEmailJob;
 use App\Models\CarQuote;
+use App\Models\CarQuotePlanDetail;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
@@ -55,6 +58,21 @@ class CarAllocationService extends AllocationService
         return $statusOrder;
     }
 
+    /**
+     * @param $carLead
+     * @param $tiersQuery
+     * @return void
+     */
+    public function getTierBasedOnValue($carLead, $tiersQuery): void
+    {
+        if (($carLead->car_value === null || $carLead->car_value <= 0 || in_array($carLead->car_value, ['?', '']))) {
+            info('Selecting tier which can handle null value leads');
+            $tiersQuery->where('can_handle_null_value', 1);
+        } else {
+            $tiersQuery->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
+        }
+    }
+
     protected function getDeferredLeads(): mixed
     {
         return CarQuote::whereNull('advisor_id')->where('deferred', 1)->whereBetween('deferred_at', [now()->subDay(2)->toDateTimeString(), now()]);
@@ -64,63 +82,32 @@ class CarAllocationService extends AllocationService
     {
         info('Started searching tier for car lead: '.json_encode($carLead->code));
 
+        $plans = CarQuotePlanDetail::where('quote_uuid', $carLead->uuid)->where('repair_type', CarPlanType::COMP)->get();
+
         $tiersQuery = Tier::where('is_active', 1); // Query to get all active tiers
 
-        info('Car ecommerce info is: '.json_encode($carLead->is_ecommerce));
+        $yearOfManufacture = now()->subYear(15)->year;
 
-        if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::ThirdPartyOnly) {
-            info('Selecting tier which can handle TPL leads');
-            $tiersQuery->where('can_handle_tpl', 1);
-
-            if ($carLead->is_ecommerce) {
-                $tiersQuery->where('can_handle_ecommerce', 1);
-            }
-        }
-
-        if (
-            $carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive
-            && ($carLead->car_value === null || $carLead->car_value <= 0 || in_array($carLead->car_value, ['?', '']))
-        ) {
-            info('Selecting tier which can handle null value leads');
-            $tiersQuery->where('can_handle_null_value', 1);
-        }
-
-        if ($carLead->car_type_insurance_id == CarTypeOfInsuranceIdEnum::Comprehensive && $carLead->car_value > 0) {
-            $highestValueTier = Tier::where('is_active', 1)->orderByDesc('max_price')->first();
-
-            if ($carLead->car_value > $highestValueTier->max_price) {
-                info('Lead '.$carLead->uuid.' has value higher than all tiers, selecting tier '.$highestValueTier->name);
-
-                return $highestValueTier;
+        if($carLead->year_of_manufacture < $yearOfManufacture) // case when car year of manufacture is newer than 15 years
+        {
+            if(count($plans) > 0) {
+                $this->getTierBasedOnValue($carLead, $tiersQuery);
+                return $tiersQuery()->first();
             } else {
-                info('Filtering tiers based on car value: '.$carLead->car_value);
-                $tiersQuery->where('min_price', '<=', $carLead->car_value)->where('max_price', '>=', $carLead->car_value);
+
+                if($carLead->car_value >= 300000) return $tiersQuery->Where('name', TiersEnum::TIER_H)->get();
+
+                $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
+                $ageInYears = $userDob->age;
+
+                if($carLead->car_value < 300000 || $ageInYears >= 21)
+                    return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->get();
             }
+        } else {
+            // case when car year of manufacture is older or equal than 15 years
+            $this->getTierBasedOnValue($carLead, $tiersQuery);
+            return $tiersQuery()->first();
         }
-
-        if ($carLead->source == LeadSourceEnum::TPL_RENEWALS) {
-            info('Filtering tiers for TPL renewals check');
-            $tiersQuery->where('is_tpl_renewals', 1);
-
-            if ($carLead->is_ecommerce) {
-                $tiersQuery->where('can_handle_ecommerce', 1);
-            }
-        }
-
-        $tiersSql = $tiersQuery->toSql();
-        $tiersBindings = $tiersQuery->getBindings();
-
-        info('Tiers query: '.$tiersSql.' with bindings: '.json_encode($tiersBindings));
-
-        $tiers = $tiersQuery->get();
-
-        if ($tiers->isNotEmpty()) {
-            info('First tier after filtration: '.json_encode($tiers->first()->name));
-
-            return $tiers->first();
-        }
-
-        return null;
     }
 
     public function getEligibleUserForAllocation($tierId, $advisorId = null)
