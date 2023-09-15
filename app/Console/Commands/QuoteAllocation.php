@@ -60,8 +60,8 @@ class QuoteAllocation extends Command
                     'allocationKey' => 'advisor_id',
                     'conditions' => function ($lead) {
                         return $lead instanceof CarQuote
-                            && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-                            && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+                            && !in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+                            && !in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
                             && $lead->is_renewal_tier_email_sent === 0;
                     },
                 ],
@@ -72,7 +72,7 @@ class QuoteAllocation extends Command
                         return $lead instanceof HealthQuote
                             && $lead->quote_status_id === QuoteStatusEnum::Qualified
                             && $lead->health_quote_request->price_starting_from !== null
-                            && ! $lead->health_quote_request->is_error_email_sent
+                            && !$lead->health_quote_request->is_error_email_sent
                             && $lead->health_quote_request->advisor_id === null;
                     },
                 ],

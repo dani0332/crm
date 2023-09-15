@@ -37,6 +37,24 @@ class CarAllocationService extends AllocationService
         return Tier::where('id', $tierId)->first();
     }
 
+    /**
+     * @return array
+     */
+    public function getStatusOrder(): array
+    {
+        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+        $isBusinessHours = now()->between($start_time, $end_time);
+
+        $statusOrder = [
+            UserStatusEnum::ONLINE,
+            UserStatusEnum::OFFLINE,
+        ];
+
+        if (!$isBusinessHours) $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        return $statusOrder;
+    }
+
     protected function getDeferredLeads(): mixed
     {
         return CarQuote::whereNull('advisor_id')->where('deferred', 1)->whereBetween('deferred_at', [now()->subDay(2)->toDateTimeString(), now()]);
@@ -117,11 +135,7 @@ class CarAllocationService extends AllocationService
 
         info('Tier users: '.json_encode($tierUserIds));
 
-        $statusOrder = [
-            UserStatusEnum::ONLINE,
-            UserStatusEnum::OFFLINE,
-            UserStatusEnum::UNAVAILABLE,
-        ];
+        $statusOrder = $this->getStatusOrder();
 
         foreach ($statusOrder as $status) {
             $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds);
