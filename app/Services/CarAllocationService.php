@@ -393,9 +393,10 @@ class CarAllocationService extends AllocationService
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp]);
-        if($advisorId != 0){
+        if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
         }
+
         return $leads->get();
     }
 
