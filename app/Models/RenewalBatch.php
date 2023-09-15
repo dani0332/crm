@@ -67,6 +67,14 @@ class RenewalBatch extends Model implements AuditableContract
      */
 
     /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function deadline()
+    {
+        return $this->hasOne(RenewalBatchDeadline::class);
+    }
+    
+    /**
      * get renewal batch team wise slabs function
      */
     public function teams(): BelongsToMany

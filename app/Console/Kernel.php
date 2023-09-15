@@ -2,6 +2,8 @@
 
 namespace App\Console;
 
+use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Jobs\CarLost\UnconSubmissionReminder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -27,6 +29,18 @@ class Kernel extends ConsoleKernel
 
         $schedule
             ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->job(new UnconSubmissionReminder)
+            ->tuesdays()
+            ->fridays()
+            ->withoutOverlapping(1)->onOneServer()
+            ->at('9:00');
+
+        //send leads which are resubmitted for car sold approval yesterday
+        $schedule->job((new CarSoldResubmissions))
+            ->daily()
+            ->withoutOverlapping(1)->onOneServer()
+            ->at('9:00');
 
         $schedule
             ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);
