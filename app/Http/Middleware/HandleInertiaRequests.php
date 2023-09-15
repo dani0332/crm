@@ -250,6 +250,18 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::CAR_SOLD_LIST,
+            PermissionsEnum::CAR_UNCONTACTABLE_LIST,
+        ])) {
+
+            $nav = $nav->add('Car Sold / Uncon', '', function (Section $section) {
+                $section
+                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_SOLD_LIST), 'Car Sold', '/quotes/car-sold', fn ($s) => $s->attributes(['icon' => 'car']))
+                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_UNCONTACTABLE_LIST), 'Car Uncontactable', '/quotes/car-uncontactable', fn ($s) => $s->attributes(['icon' => 'car']));
+            });
+        }
+
         // if (auth()->user()->can(PermissionsEnum::DiscountManagement)) {
         //     $nav = $nav->add('Discount Management', '', function (Section $section) {
         //         $section

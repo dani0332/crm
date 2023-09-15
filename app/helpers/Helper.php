@@ -438,6 +438,20 @@ if (! function_exists('newUi')) {
     }
 }
 
+if (! function_exists('isCarLostStatus')) {
+    function isCarLostStatus($quoteStatus): bool
+    {
+        return $quoteStatus == \App\Enums\QuoteStatusEnum::CarSold || $quoteStatus == \App\Enums\QuoteStatusEnum::Uncontactable;
+    }
+}
+
+if (! function_exists('createCdnUrl')) {
+    function createCdnUrl($path): string
+    {
+        return config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/'.$path;
+    }
+}
+
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
