@@ -37,6 +37,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg
 RUN docker-php-ext-install gd
+RUN pecl install mongodb && docker-php-ext-enable mongodb
 # Install node 16
 RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
