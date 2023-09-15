@@ -130,12 +130,13 @@ use App\Enums\PermissionsEnum;
     })
     $(function() {
         createComprehensiveConversionChart(comprehensiveDashboardStats);
-        $('#tier-filter, #user-filter, #team-filter, #sub-team-filter, #excludeManualFilter').on('change', function(e) {
+        $('#tier-filter, #user-filter, #team-filter, #sub-team-filter, #excludeManualFilter, #commercial-filter').on('change', function(e) {
             var tierFilterValue = $('#tier-filter').val();
             var userFilterValue = $('#user-filter').val();
             var teamFilterValue = $('#team-filter').val();
             var subTeamFilterValue = $('#sub-team-filter').val();
 
+            var commercialFilterValue = $('#commercial-filter').val();
             if (e.target.id == 'team-filter') {
                 if (!teamFilterValue) return;
                 fetchSubTeams(teamFilterValue);
@@ -179,7 +180,8 @@ use App\Enums\PermissionsEnum;
                     'team_filter': teamFilterValue,
                     'sub_team_filter': subTeamFilterValue,
                     'userFilter': userFilterValue,
-                    'excludeFilter': excludeFilterValue
+                    'excludeFilter': excludeFilterValue,
+                    'isCommercial': commercialFilterValue
                 },
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -252,6 +254,13 @@ use App\Enums\PermissionsEnum;
             }
         });
     }
+    new SlimSelect({
+        select: '#commercial-filter',
+        settings: {
+            allowDeselect: false,
+            placeholderText: 'Commercial filter',
+        }
+    })
 </script>
 @endpush
 
@@ -275,10 +284,19 @@ use App\Enums\PermissionsEnum;
             </div>
         @endcan
         <div class="md:w-1/4">
+            <label>Commercial</label>
+            <select name="isCommercial" id="commercial-filter" placeholder="Select any option">
+                <option data-placeholder="true"></option>
+                <option value="All" selected>All</option>
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </select>
+        </div>
+        <div class="md:w-1/4">
             <label>Advisor</label>
             <select multiple name="users[]" id="user-filter">
                 <option data-placeholder="true"></option>
-                
+
             </select>
         </div>
         <div class="md:w-1/4">
@@ -290,7 +308,7 @@ use App\Enums\PermissionsEnum;
                 @endforeach
             </select>
         </div>
-        
+
     </div>
     <div>
         <div id="comprehensiveConversion"></div>

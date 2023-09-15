@@ -25,8 +25,14 @@ class CarQuote extends BaseModel
         'previous_quote_policy_number' => FilterTypes::EXACT,
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
+        'renewal_batch' => FilterTypes::EXACT,
     ];
     protected $guarded = [];
+
+    public function getFullNameAttribute()
+    {
+        return $this->first_name.' '.$this->last_name;
+    }
 
     public function fullName()
     {
@@ -407,5 +413,18 @@ class CarQuote extends BaseModel
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function carLostQuoteLogs()
+    {
+        return $this->hasMany(CarLostQuoteLog::class, 'car_quote_request_id');
+    }
+
+    public function carLostQuoteLog()
+    {
+        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->latestOfMany();
     }
 }

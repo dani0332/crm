@@ -413,8 +413,15 @@ $(document).ready(function () {
         d.transapp_approval_code = $('#transapp_approval_code').val();
         d.transapp_customer_email = $('#customer_email').val();
         d.transapp_customer_name = $('#customer_name').val();
+        d.team_id = $('#team').val();
       },
     },
+      drawCallback: function () {
+         let tableData = this.api().data();
+          if(tableData[0]){
+              $('#total_premium_value').html(tableData[0].premium_total);
+          }
+      },
     columns: [
       { data: 'approval_code', name: 'approval_code' },
       { data: 'created_at', name: 'created_at' },
@@ -1527,10 +1534,9 @@ $(document).ready(function () {
     }
   });
 
-  $('#healthPlansAll').on('click', function()
-  {
-    if($(this).is(":checked")) {
-      $('.health-plans-checkbox').prop('checked',this.checked);
+  $('#healthPlansAll').on('click', function () {
+    if ($(this).is(':checked')) {
+      $('.health-plans-checkbox').prop('checked', this.checked);
     } else {
       $('.health-plans-checkbox').removeAttr('checked');
     }
@@ -2295,53 +2301,51 @@ $(document).ready(function () {
     });
   });
 
-  $('.btn-change-insurer').on('click', function(){
-      if(confirm('Are you sure to change insurer')) {
+  $('.btn-change-insurer').on('click', function () {
+    if (confirm('Are you sure to change insurer')) {
+      let btn = $(this);
+      $(btn).btnLoader();
 
-          let btn = $(this);
-          $(btn).btnLoader();
-
-          $.ajax({
-              url: '/quotes/car/change-insurer',
-              method: 'POST',
-              data: {
-                  uuid: $(this).attr('data-uuid'),
-                  plan_id: $(this).attr('data-planId'),
-                  provider_code: $(this).attr('data-providerCode'),
-                  _token: $('input[name=_token]').val(),
-              },
-              success: function (data) {
-                  $(btn).btnResetLoader();
-                  setTimeout(function () {
-                      alert(data.message);
-                      window.location.reload();
-                  }, 0);
-              },
-              error: function (response) {
-                  $(btn).btnResetLoader();
-                  let errorMsg = '';
-                  $.each(response.responseJSON.errors, function(key,error) {
-                        errorMsg += error + '\n';
-                  });
-                 alert(errorMsg);
-              }
+      $.ajax({
+        url: '/quotes/car/change-insurer',
+        method: 'POST',
+        data: {
+          uuid: $(this).attr('data-uuid'),
+          plan_id: $(this).attr('data-planId'),
+          provider_code: $(this).attr('data-providerCode'),
+          _token: $('input[name=_token]').val(),
+        },
+        success: function (data) {
+          $(btn).btnResetLoader();
+          setTimeout(function () {
+            alert(data.message);
+            window.location.reload();
+          }, 0);
+        },
+        error: function (response) {
+          $(btn).btnResetLoader();
+          let errorMsg = '';
+          $.each(response.responseJSON.errors, function (key, error) {
+            errorMsg += error + '\n';
           });
-
-      } else {
-          return false;
-      }
+          alert(errorMsg);
+        },
+      });
+    } else {
+      return false;
+    }
   });
 
-  $.fn.btnLoader = function() {
-    let loading_text  = "<i class='fa fa-spinner fa-spin'></i> " + this.html();
+  $.fn.btnLoader = function () {
+    let loading_text = "<i class='fa fa-spinner fa-spin'></i> " + this.html();
     this.data('original-text', this.html());
-    this.html(loading_text).attr('disabled', 'disabled')
+    this.html(loading_text).attr('disabled', 'disabled');
     return this;
   };
 
-  $.fn.btnResetLoader = function() {
-    let original_text = this.data("original-text");
-    this.html(original_text).removeAttr('disabled')
+  $.fn.btnResetLoader = function () {
+    let original_text = this.data('original-text');
+    this.html(original_text).removeAttr('disabled');
     return this;
   };
 
@@ -2357,6 +2361,23 @@ $(document).ready(function () {
     setTimeout(function () {
       $(self).text('Copy');
     }, 2000);
+  });
+  $('.enable-bnpl').on('click', function () {
+    var planId = $(this).attr('data-planId');
+    var quoteUUID = $(this).attr('data-quoteUUId');
+
+    $.ajax({
+      url: '/update-car-plan-details',
+      method: 'POST',
+      data: {
+        plan_id: planId,
+        quote_uuid: quoteUUID,
+        _token: config._token,
+      },
+      success: function (data) {
+        window.location.reload();
+      },
+    });
   });
 
   $('#btn_download_plan_pdf').on('click', function () {
@@ -2379,10 +2400,26 @@ $(document).ready(function () {
     $('#plan_ids').val(plan_ids);
     $('#form_plans_pdf').submit();
   });
+
+  $('select[name="segment_volume[]"]').change(function() {
+    var selectedValues = $(this).val();
+    $('select[name="segment_value[]"] option').prop('disabled', false);
+    $('select[name="segment_value[]"] option').filter(function() {
+        return selectedValues.includes($(this).val());
+    }).prop('disabled', true).addClass('unavailable-option');
+  });
+
+  $('select[name="segment_value[]"]').change(function() {
+    var selectedValues = $(this).val();
+    $('select[name="segment_volume[]"] option').prop('disabled', false);
+    $('select[name="segment_volume[]"] option').filter(function() {
+        return selectedValues.includes($(this).val());
+    }).prop('disabled', true).addClass('unavailable-option');
+    });
+
 });
 
 $('#btn_download_plan_pdf_health').on('click', function () {
-
   if ($("input[name='health_plans_checkbox']:checked").length < 3) {
     alert('Please select at least three (3) plans.');
     return false;
@@ -2402,7 +2439,6 @@ $('#btn_download_plan_pdf_health').on('click', function () {
   $('#plan_ids').val(plan_ids);
   $('#form_plans_pdf').submit();
 });
-
 
 $('#renewals-upload-button').click(function () {
   $('#renewals-upload-button').hide();
@@ -2787,6 +2823,121 @@ var teamsDataTable = $('.teams-data-table').DataTable({
   ],
 });
 
+var renewalBatchesDataTable = $('.renewal-batches-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        // render: function (data, type, row) {
+        //   return (
+        //     "<a href='" +
+        //     config.routes.teams_datatable_route +
+        //     '/' +
+        //     row.id +
+        //     "'>" +
+        //     row.id +
+        //     '</a>'
+        //   );
+        // },
+      },
+      { data: 'name', name: 'name' },
+      { data: 'start_date', name: 'start_date' },
+      { data: 'end_date', name: 'end_date' },
+      { data: 'action', name: 'action', orderable: false, searchable: false,
+            render: function (data, type, row) {
+            return (
+                "<a class='btn btn-info' href='" +
+                config.routes.renewal_batched_datatable_route +
+                '/' +
+                row.id +
+                "/edit'>Edit</a>"
+            );
+            },
+       },
+
+    ],
+  });
+
+/**
+ * Commercial keywords datatable
+ */
+var commercialKeywordsDataTable = $('.commercial-keywords-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_keywords_datatable_route,
+      data: function (d) {
+        d.name = $('#name').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_keywords_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'key', name: 'key' },
+      { data: 'name', name: 'name' },
+      { data: 'created_at', name: 'created_at' },
+      { data: 'updated_at', name: 'updated_at' },
+    ],
+  });
+
+/**
+ * Commercial vehicles datatable
+ */
+var commercialVehiclesDataTable = $('.commercial-vehicles-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    ajax: {
+      url: config.routes.commercial_vehicles_datatable_route,
+      data: function (d) {
+        d.text = $('#text').val();
+      },
+    },
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        render: function (data, type, row) {
+          return (
+            "<a href='" +
+            config.routes.commercial_vehicles_datatable_route +
+            '/view/' +
+            row.id +
+            "'>" +
+            row.id +
+            '</a>'
+          );
+        },
+      },
+      { data: 'text', name: 'text' },
+      { data: 'code', name: 'code' },
+      { data: 'car_models', name: 'car_models' , title: 'Commercial Car Models'},
+    ],
+  });
+
 $('#search-teams').submit(function (e) {
   e.preventDefault();
   $('.loader').show();
@@ -2794,4 +2945,127 @@ $('#search-teams').submit(function (e) {
   setTimeout(() => {
     $('.loader').hide();
   }, 1000);
+});
+
+$('#search-keywords').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialKeywordsDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+  $('#search-car-make').submit(function (e) {
+    e.preventDefault();
+    $('.loader').show();
+    commercialVehiclesDataTable.draw();
+    setTimeout(() => {
+      $('.loader').hide();
+    }, 1000);
+  });
+
+// Listen for change events on select1
+$('#rule_type').change(function() {
+    var selectedValue = $(this).val(); // Get the selected value
+
+    if (selectedValue == 1) {
+        $('#lead_source_id_div').show();
+    } else {
+        $('#lead_source_id_div').hide();
+        $('#lead_source_id').val('');
+
+    }
+});
+
+$('#rule_car_make_id').on('change', function (e) {
+    console.log("changed");
+    var make_code = $('#rule_car_make_id option:selected').attr('data-id');
+    if (!make_code) {
+      console.log("Car make code not found");
+      return;
+    }
+    $.get('/commercial-car-model-by-id?make_code=' + make_code, function (data) {
+      var carmodel = $('#rule_car_model_id').empty();
+      carmodel.append(
+        '<option data-id="" value="">Please select rule car model</option>',
+      );
+      if (data.length > 0) {
+        $.each(data, function (create, carmodelObj) {
+          var option = $('<option/>', { id: create, value: carmodelObj });
+          carmodel.append(
+            '<option data-id="' +
+              carmodelObj.code +
+              '" value="' +
+              carmodelObj.id +
+              '" selected>' +
+              carmodelObj.text +
+              '</option>',
+          );
+        });
+      }else{
+        carmodel.append(
+            '<option disabled>No commercial vehicle record found for this car make</option>',
+          );
+      }
+    });
+  });
+
+  function triggerTest()
+  {
+    console.log("Triggered");
+  }
+
+var amlDetailKycLogsDatatable = $('.aml-detail-data-table').DataTable({
+    ordering: false,
+    info: true,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    processing: true,
+    ajax: {
+        url: config.routes.aml_kyc_logs_datatable_route,
+        data: {
+            'quote_type_id' : $(location).attr('href').split("/").splice(5)[0],
+            'quote_request_id': $(location).attr('href').split("/").splice(5)[2]
+        }
+    },
+    columns: [
+        {
+            data: 'id',
+            name: 'id',
+            render: function(data, type, row){
+                return ( "<a href='" +config.routes.aml_datatable_route +'/' + row.id +"'>" + row.id + '</a>' );
+            }
+        },
+        { data: 'input', name: 'input' },
+        { data: 'search_type', name: 'search_type' },
+        {
+            data: 'screenshot',
+            name: 'screenshot',
+            render: function(data){
+                var imgSrc = data;
+                if (imgSrc != null) {
+                    return ( '<a href="' + imgSrc + '" target="_blank">' + '<img class="img-responsive" src="' + imgSrc + '" alt="screenshot" height="80px" width="80px"></a>' );
+                }
+            }
+        },
+        { data: 'match_found', name: 'match_found', render: function(data, type, row){
+                return ( ( row.match_found > 0) ? 'True' : 'False');
+            }
+        },
+        { data: 'results_found', name: 'results_found' },
+        { data: 'created_at', name: 'created_at' },
+        { data: 'updated_at', name: 'updated_at' },
+    ]
+});
+
+$(window).on('load', function(){
+    if($("table").hasClass('aml-detail-data-table')){
+        $('.loader').show();
+        amlDetailKycLogsDatatable.draw();
+        setTimeout(() => {
+            $('.loader').hide();
+        }, 1000);
+    }
 });
