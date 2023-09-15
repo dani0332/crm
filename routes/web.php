@@ -164,7 +164,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Artisan::call('view:cache');
         Artisan::call('config:cache');
 
-        return '<h1>All cache cleared and optimized. LARAVEL Version='.Artisan::call('--version').'</h1>';
+        return '<h1>All cache cleared and optimized. LARAVEL Version='.app()->version().'</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
