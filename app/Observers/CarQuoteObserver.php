@@ -26,8 +26,8 @@ class CarQuoteObserver
 
         if ($lead->isDirty('advisor_id')) {
 
-                $oldAdvisorId = $changes['advisor_id'];
-                $oldAssignmentType = $changes['assignment_type'];
+            $oldAdvisorId = $changes['advisor_id'];
+            $oldAssignmentType = $changes['assignment_type'];
 
             event(new CarQuoteAdvisorUpdated($lead, $oldAdvisorId, $oldAssignmentType));
         }
