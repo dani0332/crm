@@ -1,5 +1,6 @@
 <script setup>
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
+import MemberDetails from "../../Components/MemberDetails.vue";
 
 defineProps({
   quote: Object,
@@ -13,6 +14,8 @@ defineProps({
   quoteStatusEnum: Object,
   embeddedProducts: Array,
   customerTypeEnum: Array,
+  nationalities: Array,
+  memberRelations: Array,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -42,6 +45,7 @@ const advisorOptions = computed(() => {
 
 const page = usePage();
 const can = permission => useCan(permission);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
 
 const historyLoading = ref(false);
@@ -290,39 +294,41 @@ const onLeadStatus = () => {
   );
 };
 
-const disableCustProfFields = computed(() => {
-    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+const isProfileUpdateAllow = computed(() => {
+    return !hasAnyRole([
+        page.props.rolesEnum.PA,
+        page.props.rolesEnum.OE,
+        page.props.rolesEnum.NRA
+    ]);
 });
 
 const customerProfileForm = useForm({
-    insured_first_name: page.props.quote.insured_first_name || '',
-    insured_last_name: page.props.quote.insured_last_name || '',
-    emirates_id_number: page.props.quote.emirates_id_number || null,
-    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+    customer_id: page.props.quote.customer_id,
+    insured_first_name: page.props.quote?.customer.insured_first_name || '',
+    insured_last_name: page.props.quote?.customer.insured_last_name || '',
+    emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
+    emirates_id_expiry_date: page.props.quote?.customer.emirates_id_expiry_date || null,
 });
 
-const updateProfileDetails = () => {
+const updateProfileDetails = isValid => {
+    if (!isValid) return;
 
-    let data = {
-        customer_id: page.props.quote.customer_id,
-        insured_first_name: customerProfileForm.insured_first_name,
-        insured_last_name: customerProfileForm.insured_last_name,
-        emirates_id_number: customerProfileForm.emirates_id_number,
-        emirates_id_expiry_date: customerProfileForm.emirates_id_expiry_date,
-    };
-
-    axios.post(route('update-customer-profile'), data).then(response => {
-        if (response.status == 200) {
+    customerProfileForm.post(route('update-customer-profile'), {
+        preserveScroll: true,
+        onSuccess: () => {
             notification.success({
-                title: 'Customer profile details update successfully',
+                title: 'Customer profile details update Successfully',
                 position: 'top',
             });
-        } else {
-            notification.error({
-                title: 'Customer profile details not updated',
-                position: 'top',
+        },
+        onError: errors => {
+            Object.keys(errors).forEach(function(key) {
+                notification.error({
+                    title: errors[key],
+                    position: 'top',
+                });
             });
-        }
+        },
     });
 }
 
@@ -521,11 +527,12 @@ const updateProfileDetails = () => {
 
       <div class="p-4 rounded shadow mb-6 bg-white">
           <div>
-              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type !== page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
               <x-divider class="mb-4 mt-1" />
           </div>
-          <div class="text-sm">
-              <dl v-if="quote.customer_type !== page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <x-form @submit="updateProfileDetails" :auto-focus="false">
+            <div class="text-sm">
+              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                   <div class="grid sm:grid-cols-2">
                       <dt class="font-medium">FIRST NAME</dt>
                       <dd>{{ quote.first_name }}</dd>
@@ -539,9 +546,10 @@ const updateProfileDetails = () => {
                       <dd>
                           <x-input
                               v-model="customerProfileForm.insured_first_name"
+                              :rules="[isRequired]"
                               placeholder="INSURED FIRST NAME"
                               class="w-full"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -550,9 +558,10 @@ const updateProfileDetails = () => {
                       <dd>
                           <x-input
                               v-model="customerProfileForm.insured_last_name"
+                              :rules="[isRequired]"
                               placeholder="INSURED LAST NAME"
                               class="w-full"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -577,9 +586,10 @@ const updateProfileDetails = () => {
                       <dd>
                           <x-input
                               v-model="customerProfileForm.emirates_id_number"
+                              :rules="[isRequired]"
                               placeholder="EMIRATES ID NUMBER"
                               class="w-full"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
                           />
                       </dd>
                   </div>
@@ -588,8 +598,10 @@ const updateProfileDetails = () => {
                       <dd>
                           <DatePicker
                               v-model="customerProfileForm.emirates_id_expiry_date"
+                              :rules="[isRequired]"
                               placeholder="EMIRATES ID EXPIRY DATE"
-                              :disabled="!disableCustProfFields"
+                              :disabled="!isProfileUpdateAllow"
+                              :min-date="new Date()"
                           />
                       </dd>
                   </div>
@@ -634,17 +646,27 @@ const updateProfileDetails = () => {
               </dl>
               <div class="flex justify-end">
                   <x-button
-                      v-if="disableCustProfFields"
+                      v-if="isProfileUpdateAllow"
                       class="mt-4"
                       color="emerald"
                       size="sm"
-                      @click="updateProfileDetails"
+                      :loading="customerProfileForm.processing"
+                      type="submit"
                   >
                       Update Profile
                   </x-button>
               </div>
           </div>
+          </x-form>
       </div>
+
+    <MemberDetails
+        :quote="quote"
+        :membersDetails="[]"
+        :nationalities="nationalities"
+        :memberRelations="memberRelations"
+        :quote_type=quoteType
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>

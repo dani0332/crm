@@ -1,9 +1,22 @@
 <script setup>
 
-defineProps({
+const props = defineProps({
+    quote: Object,
     membersDetails: Object,
-    memberRelations: Array,
-    nationalities: Array,
+    memberRelations: {
+        required: true,
+        type: Array,
+        default: []
+    },
+    nationalities: {
+        required: true,
+        type: Array,
+        default: []
+    },
+    quote_type: {
+        required: true,
+        type: String,
+    }
 });
 
 const page = usePage();
@@ -59,6 +72,8 @@ const memberForm = useForm({
     nationality_id: null,
     dob: null,
     relation_code: null,
+    quote_request_id: page.props.quote.id,
+    quote_type_id: props.quoteTypeId
 });
 
 const addMemberModal = () => {
@@ -79,7 +94,7 @@ function onEditMember(data) {
 
 const onMemberSubmit = isValid => {
 
-    memberFieldReq.nationality = (memberForm.nationality == null);
+    memberFieldReq.nationality = (memberForm.nationality_id == null);
     memberFieldReq.dob = (memberForm.dob == null);
     if (!isValid) return;
 

@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -83,7 +84,11 @@ class LifeQuoteRepository extends BaseRepository
     {
         return $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'childern', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo'])->firstOrFail();
+            'paymentStatus', 'customer.additionalContactInfo'])
+            ->select([
+                'life_quote_request.*',
+                \DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = life_quote_request.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type')
+            ])->firstOrFail();
     }
 
     /**

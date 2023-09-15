@@ -2,24 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\MemberDetail;
+use App\Enums\quoteTypeCode;
+use App\Http\Requests\MemberDetailRequest;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
+use App\Models\QuoteMemberDetail;
 use App\Services\LookupService;
+use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
 class MembersDetailController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(MemberDetail $request)
+    public function store(MemberDetailRequest $request)
     {
-        HealthMemberDetail::create($request->validated());
-        HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health)) {
+            HealthMemberDetail::create($request->validated());
+            HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+        } else {
+            $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
+
+            if( $quoteObject ) {
+                QuoteMemberDetail::create($request->validated());
+                $quoteObject->quote_updated_at = Carbon::now();
+                $quoteObject->save();
+            }
+        }
 
         return redirect()->back();
     }
@@ -47,7 +62,7 @@ class MembersDetailController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function update(MemberDetail $request, $id)
+    public function update(MemberDetailRequest $request, $id)
     {
 
         HealthMemberDetail::findOrFail($id)->update($request->validated());
