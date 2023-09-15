@@ -7,6 +7,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -18,10 +19,10 @@ use App\Enums\RolesEnum;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
-use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -34,6 +35,7 @@ use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -632,7 +634,7 @@ class CRUDController extends Controller
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);
             $ecomHealthInsuranceQuoteUrl = config('constants.ECOM_HEALTH_INSURANCE_QUOTE_URL');
             $leadStatuses = $this->healthQuoteService->statusesToDisplay($leadStatuses, $record);
-
+            $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
@@ -696,6 +698,7 @@ class CRUDController extends Controller
                 'ecomDetails' => $ecomDetails,
                 'membersDetail' => $membersDetail,
                 'memberCategories' => $memberCategories,
+                'memberRelations' => $memberRelations,
                 'salaryBands' => $salaryBands,
                 'listQuotePlans' => $listQuotePlans,
                 'ecomHealthInsuranceQuoteUrl' => $ecomHealthInsuranceQuoteUrl,
@@ -1130,42 +1133,8 @@ class CRUDController extends Controller
         }
     }
 
-    public function updateLeadStatus(Request $request)
+    public function updateLeadStatus(UpdateLeadStatusRequest $request)
     {
-        if (! $request->leadStatus) {
-            return redirect()->back()->with('message', 'Please select lead status and try again.');
-        }
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
-            $lead = $this->healthQuoteService->getEntityPlain($request->get('leadId'));
-            if (! $lead) {
-                return redirect()->back()->with('message', 'Lead not found please try again.');
-            }
-            if (($lead->health_team_type == null || $lead->health_team_type == quoteTypeCode::WCU) && $request->leadStatus == QuoteStatusEnum::Qualified) {
-                return redirect()->back()->with('message', 'Please select team type before moving to QUALIFIED status');
-            }
-
-            $customerProfileDetails = Customer::where('id', $lead->customer_id)->firstOrFail([
-                'insured_first_name',
-                'insured_last_name',
-                'emirates_id_number',
-                'emirates_id_expiry_date'
-            ])->toArray();
-
-            if (in_array(null, $customerProfileDetails) && $request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-                return redirect()->back()->with('message', 'Please update customer profile information before moving to TRANSACTION APPROVED status');
-            }
-
-        }
-        if ($request->leadStatus == QuoteStatusEnum::Lost) {
-            $this->validate($request, [
-                'lostReason' => 'required',
-            ]);
-        }
-        if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $this->validate($request, [
-                'trans_code' => 'required',
-            ]);
-        }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);
@@ -1173,37 +1142,25 @@ class CRUDController extends Controller
                 // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
             }
-            if (
-                $request->leadStatus == QuoteStatusEnum::FollowupCall ||
-                $request->leadStatus == QuoteStatusEnum::Interested ||
-                $request->leadStatus == QuoteStatusEnum::NoAnswer
-            ) {
-                $dateFormat = config('constants.DATETIME_DISPLAY_FORMAT');
-                $this->validate($request, [
-                    'next_followup_date' => 'required',
-                    'next_followup_date' => 'date_format:'.$dateFormat.'|after_or_equal:'.date($dateFormat),
-                    'notes' => 'required',
-                ]);
+
+            if (in_array($request->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
                 if (isset($request->quote_uuid)) {
                     $record = $this->crudService->getEntity($request->modelType, $request->quote_uuid);
                     $this->activityService->createActivity($request, $record);
                 }
             }
-            if ($request->leadStatus == QuoteStatusEnum::IMRenewal) {
-                if (! isset($request->tier_id)) {
-                    $this->validate($request, [
-                        'tier_id' => 'required',
-                    ]);
-                }
 
+            if ($request->leadStatus == QuoteStatusEnum::IMRenewal) {
                 // MS: Send email
                 if (isset($request->leadId)) {
                     CarRenewalEmailJob::dispatch($lead);
                 }
             }
         }
+
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
+
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {

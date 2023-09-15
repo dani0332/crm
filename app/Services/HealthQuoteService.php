@@ -938,7 +938,7 @@ class HealthQuoteService extends BaseService
 
     public function getMembersDetail($id)
     {
-        return HealthMemberDetail::where('health_quote_request_id', $id)->with('nationality', 'emirate')->get();
+        return HealthMemberDetail::where('health_quote_request_id', $id)->with('nationality', 'emirate', 'relation')->get();
     }
 
     public function validateRequest($request)

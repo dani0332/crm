@@ -15,8 +15,10 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Models\Nationality;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\NationalityRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -132,6 +134,7 @@ class TravelController extends Controller
         $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
+        $nationalities = NationalityRepository::withActive()->get();
 
         $ecomDetails = [
             'premium' => $record->premium,
@@ -211,6 +214,7 @@ class TravelController extends Controller
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'nationalities' => $nationalities
         ]);
     }
 

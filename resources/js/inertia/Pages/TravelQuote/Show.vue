@@ -1,6 +1,7 @@
 <script setup>
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import MemberDetails from "../../Components/MemberDetails.vue";
 
 defineProps({
   quote: Object,
@@ -38,7 +39,8 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
-  customerTypeEnum: Object
+  customerTypeEnum: Object,
+  nationalities: Array,
 });
 
 const page = usePage();
@@ -934,14 +936,6 @@ const updateProfileDetails = isValid => {
     });
 }
 
-const disabledDates = computed(() => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    return [yesterday];
-});
-
 onMounted(() => {
   if (page.props.message) {
     notification.success({
@@ -1275,7 +1269,7 @@ onMounted(() => {
                               :rules="[isRequired]"
                               placeholder="EMIRATES ID EXPIRY DATE"
                               :disabled="!isProfileUpdateAllow"
-                              :disabled-dates="disabledDates"
+                              :min-date="new Date()"
                           />
                       </dd>
                   </div>
@@ -1317,6 +1311,11 @@ onMounted(() => {
           </div>
           </x-form>
       </div>
+
+      <MemberDetails
+          :quote="quote"
+          :nationalities="nationalities"
+      />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>

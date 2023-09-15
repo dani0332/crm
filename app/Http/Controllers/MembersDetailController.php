@@ -14,21 +14,11 @@ class MembersDetailController extends Controller
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(MemberDetail $request)
     {
-        // $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
-        $data = [
-            'health_quote_request_id' => $request->health_quote_request_id,
-            'gender' => $request->gender,
-            'dob' => isset($request->dob) ? $request->dob : null,
-            'nationality_id' => $request->nationality_id,
-            'emirate_of_your_visa_id' => $request->emirate_of_your_visa_id,
-            'member_category_id' => $request->member_category_id,
-            'salary_band_id' => $request->salary_band_id,
-        ];
-        HealthMemberDetail::create($data);
+        HealthMemberDetail::create($request->validated());
         HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
 
         return redirect()->back();
@@ -55,36 +45,22 @@ class MembersDetailController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function update(MemberDetail $request, $id)
     {
-        // $dob = isset($request->dob) ? Carbon::createFromFormat('d-m-Y', $request->dob)->format(get_dob_date_format()) : null;
-        $data = [
-            'health_quote_request_id' => isset($request->health_quote_request_id) ? $request->health_quote_request_id : null,
-            'gender' => isset($request->gender) ? $request->gender : null,
-            'dob' => isset($request->dob) ? $request->dob : null,
-            'nationality_id' => isset($request->nationality_id) ? $request->nationality_id : null,
-            'emirate_of_your_visa_id' => isset($request->emirate_of_your_visa_id) ? $request->emirate_of_your_visa_id : null,
-            'member_category_id' => isset($request->member_category_id) ? $request->member_category_id : null,
-            'salary_band_id' => isset($request->salary_band_id) ? $request->salary_band_id : null,
-        ];
 
-        $memberDetail = HealthMemberDetail::find($id);
+        HealthMemberDetail::findOrFail($id)->update($request->validated());
 
-        if ($memberDetail) {
-            $memberDetail->update($data);
+        $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
+        HealthQuote::where('primary_member_id', $id)->update($healthMemberData);
 
-            unset($data['health_quote_request_id']);
-            HealthQuote::where('primary_member_id', $memberDetail->id)->update($data);
-
-            $updateHealthLeadData = ['quote_updated_at' => Carbon::now()];
-            if ($request->update_lead_against_member) {
-                $updateHealthLeadData = array_merge($updateHealthLeadData, $data);
-            }
-
-            HealthQuote::find($request->health_quote_request_id)->update($updateHealthLeadData);
+        $heathLeadData = ['quote_updated_at' => Carbon::now()];
+        if($request->update_lead_against_member){
+            $heathLeadData = array_merge($heathLeadData, $healthMemberData);
         }
+
+        HealthQuote::find($request->health_quote_request_id)->update($heathLeadData);
 
         return redirect()->back();
     }

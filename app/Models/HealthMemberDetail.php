@@ -38,6 +38,11 @@ class HealthMemberDetail extends Model
         return $this->belongsTo(SalaryBand::class, 'salary_band_id', 'id');
     }
 
+    public function relation()
+    {
+        return $this->belongsTo(Lookup::class, 'relation_code', 'code');
+    }
+
     public function getDobAttribute($value)
     {
         return Carbon::parse($value)->format('Y-m-d');

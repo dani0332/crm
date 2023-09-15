@@ -10,6 +10,7 @@ defineProps({
   ecomDetails: Object,
   membersDetail: Array,
   memberCategories: Array,
+  memberRelations: Array,
   salaryBands: Array,
   nationalities: Array,
   emirates: Array,
@@ -207,6 +208,13 @@ const memberCategoriesOptions = computed(() => {
   }));
 });
 
+const memberRelationOptions = computed(() => {
+    return page.props.memberRelations.map(relation => ({
+        value: relation.code,
+        label: relation.text,
+    }));
+});
+
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
@@ -304,13 +312,16 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
+          notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
+      onSuccess: response => {
+          const flash_messages = response.props.flash;
+          if(!flash_messages){
+              notification.success({
+                  title: 'Lead Status Updated',
+                  position: 'top',
+              });
+          }
       },
     },
   );
@@ -319,6 +330,10 @@ const onLeadStatus = () => {
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
+      {
+          text: 'Member Name',
+          value: 'first_name',
+      },
     {
       text: 'Gender',
       value: 'gender',
@@ -327,6 +342,10 @@ const memberDetailsTable = reactive({
       text: 'DOB',
       value: 'dob',
     },
+      {
+          text: 'Relation',
+          value: 'relation',
+      },
     {
       text: 'Nationality',
       value: 'nationality',
@@ -350,16 +369,14 @@ const memberForm = useForm({
   id: null,
   gender: null,
   dob: null,
-  nationality_id: page.props.membersDetail.length
-    ? null
-    : page.props.quote.nationality_id,
+  nationality_id: page.props.membersDetail.length ? null : page.props.quote.nationality_id,
   salary_band_id: null,
-  emirate_of_your_visa_id: page.props.membersDetail.length
-    ? null
-    : page.props.quote.emirate_of_your_visa_id,
+  emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
   health_quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
+  first_name: null,
+  relation_code: null
 });
 
 function onEditMember(data) {
@@ -373,6 +390,8 @@ function onEditMember(data) {
   memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
+  memberForm.first_name = data.first_name;
+  memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
 }
 
@@ -1092,14 +1111,6 @@ const updateProfileDetails = isValid => {
     });
 }
 
-const disabledDates = computed(() => {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    return [yesterday];
-});
-
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
@@ -1443,7 +1454,7 @@ onMounted(() => {
                                   :rules="[isRequired]"
                                   placeholder="EMIRATES ID EXPIRY DATE"
                                   :disabled="!isProfileUpdateAllow"
-                                  :disabled-dates="disabledDates"
+                                  :min-date="new Date()"
                               />
                           </dd>
                       </div>
@@ -1535,6 +1546,9 @@ onMounted(() => {
         <template #item-dob="{ dob }">
           {{ dateFormat(dob) }}
         </template>
+          <template #item-relation="{ relation }">
+              {{ relation?.text }}
+          </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
         </template>
@@ -1574,7 +1588,11 @@ onMounted(() => {
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4">
             <input type="hidden" :value="memberForm.id" />
-
+              <x-input
+                  v-model="memberForm.first_name"
+                  label="Member Name"
+                  placeholder="Member Name"
+              />
             <ComboBox
               v-model="memberForm.nationality_id"
               label="Nationality"
@@ -1601,13 +1619,11 @@ onMounted(() => {
               placeholder="Select Gender"
               class="w-full"
             />
-
             <DatePicker
               v-model="memberForm.dob"
               label="DOB"
               :hasError="memberFieldReq.dob"
             />
-
             <x-select
               v-model="memberForm.member_category_id"
               label="Member Category"
@@ -1616,7 +1632,13 @@ onMounted(() => {
               placeholder="Select Member Category"
               class="w-full"
             />
-
+            <x-select
+              v-model="memberForm.relation_code"
+              label="Relation"
+              :options="memberRelationOptions"
+              placeholder="Select Relation"
+              class="w-full"
+            />
             <x-select
               v-model="memberForm.salary_band_id"
               label="Salary Band"

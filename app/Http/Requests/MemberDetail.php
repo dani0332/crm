@@ -24,9 +24,15 @@ class MemberDetail extends FormRequest
     public function rules()
     {
         return [
+            'health_quote_request_id' => 'required',
             'gender' => 'required',
             'dob' => 'required',
-            'health_quote_request_id' => 'required',
+            'nationality_id' => 'nullable',
+            'emirate_of_your_visa_id' => 'nullable',
+            'member_category_id' => 'nullable',
+            'salary_band_id' => 'nullable',
+            'first_name' => 'nullable',
+            'relation_code' => 'nullable',
             'modelType' => '',
         ];
     }
