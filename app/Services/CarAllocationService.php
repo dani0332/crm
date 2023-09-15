@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
-use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
@@ -58,11 +57,6 @@ class CarAllocationService extends AllocationService
         return $statusOrder;
     }
 
-    /**
-     * @param $carLead
-     * @param $tiersQuery
-     * @return void
-     */
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
         if (($carLead->car_value === null || $carLead->car_value <= 0 || in_array($carLead->car_value, ['?', '']))) {
@@ -88,24 +82,28 @@ class CarAllocationService extends AllocationService
 
         $yearOfManufacture = now()->subYear(15)->year;
 
-        if($carLead->year_of_manufacture < $yearOfManufacture) // case when car year of manufacture is newer than 15 years
-        {
-            if(count($plans) > 0) {
+        if ($carLead->year_of_manufacture < $yearOfManufacture) { // case when car year of manufacture is newer than 15 years
+            if (count($plans) > 0) {
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
+
                 return $tiersQuery()->first();
             } else {
 
-                if($carLead->car_value >= 300000) return $tiersQuery->Where('name', TiersEnum::TIER_H)->get();
+                if ($carLead->car_value >= 300000) {
+                    return $tiersQuery->Where('name', TiersEnum::TIER_H)->get();
+                }
 
                 $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
                 $ageInYears = $userDob->age;
 
-                if($carLead->car_value < 300000 || $ageInYears >= 21)
+                if ($carLead->car_value < 300000 || $ageInYears >= 21) {
                     return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->get();
+                }
             }
         } else {
             // case when car year of manufacture is older or equal than 15 years
             $this->getTierBasedOnValue($carLead, $tiersQuery);
+
             return $tiersQuery()->first();
         }
     }
