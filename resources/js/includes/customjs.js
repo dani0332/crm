@@ -2400,6 +2400,23 @@ $(document).ready(function () {
     $('#plan_ids').val(plan_ids);
     $('#form_plans_pdf').submit();
   });
+
+  $('select[name="segment_volume[]"]').change(function() {
+    var selectedValues = $(this).val();
+    $('select[name="segment_value[]"] option').prop('disabled', false);
+    $('select[name="segment_value[]"] option').filter(function() {
+        return selectedValues.includes($(this).val());
+    }).prop('disabled', true).addClass('unavailable-option');
+  });
+
+  $('select[name="segment_value[]"]').change(function() {
+    var selectedValues = $(this).val();
+    $('select[name="segment_volume[]"] option').prop('disabled', false);
+    $('select[name="segment_volume[]"] option').filter(function() {
+        return selectedValues.includes($(this).val());
+    }).prop('disabled', true).addClass('unavailable-option');
+    });
+
 });
 
 $('#btn_download_plan_pdf_health').on('click', function () {
@@ -2805,6 +2822,46 @@ var teamsDataTable = $('.teams-data-table').DataTable({
     { data: 'is_active', name: 'is_active' },
   ],
 });
+
+var renewalBatchesDataTable = $('.renewal-batches-data-table').DataTable({
+    ordering: false,
+    info: false,
+    searching: false,
+    bLengthChange: false,
+    serverSide: true,
+    columns: [
+      {
+        data: 'id',
+        name: 'id',
+        // render: function (data, type, row) {
+        //   return (
+        //     "<a href='" +
+        //     config.routes.teams_datatable_route +
+        //     '/' +
+        //     row.id +
+        //     "'>" +
+        //     row.id +
+        //     '</a>'
+        //   );
+        // },
+      },
+      { data: 'name', name: 'name' },
+      { data: 'start_date', name: 'start_date' },
+      { data: 'end_date', name: 'end_date' },
+      { data: 'action', name: 'action', orderable: false, searchable: false,
+            render: function (data, type, row) {
+            return (
+                "<a class='btn btn-info' href='" +
+                config.routes.renewal_batched_datatable_route +
+                '/' +
+                row.id +
+                "/edit'>Edit</a>"
+            );
+            },
+       },
+
+    ],
+  });
 
 /**
  * Commercial keywords datatable

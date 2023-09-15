@@ -50,7 +50,7 @@ class MAWelcomeJob implements ShouldQueue
         try {
             $statusCode = $sendEmailCustomerService->sendMyAlfredWelcomeEmail($data, $this->tag, $this->source);
 
-            if ($statusCode == 200) {
+            if ($statusCode == 201) {
                 info('MAWelcomeJob - Email Sent to customer '.$this->customer->email.' - Invite Code - '.$customerInviteCode);
                 $customer = CustomerService::getCustomerByEmail($this->customer->email);
                 if ($customer) {

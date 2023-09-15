@@ -6,6 +6,8 @@ use App\Events\CarQuoteAdvisorUpdated;
 use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
+use App\Models\RenewalBatch;
+use App\Observers\RenewalBatchObserver;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
@@ -41,6 +43,6 @@ class EventServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        RenewalBatch::observe(RenewalBatchObserver::class);
     }
 }

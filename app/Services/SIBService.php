@@ -95,7 +95,7 @@ class SIBService extends BaseService
                 }
                 $to = $emails;
             } else {
-                $to = $emailTo;
+                $to = [['email' => $emailTo]];
             }
             info('sendEmailUsingSIB -- to recipients are : '.json_encode($to));
 
@@ -111,6 +111,8 @@ class SIBService extends BaseService
                     $cc[] = ['email' => $renewalEmailCcRecipients];
                 }
             }
+
+            info('sendEmailUsingSIB -- CC recipients are : '.json_encode($cc));
 
             $body = [
                 'to' => $to,

@@ -128,6 +128,7 @@ function onSubmit(isValid) {
             type="email"
             :rules="[isRequired, isEmail]"
             class="w-full"
+            :disabled="isEdit"
           />
         </x-field>
 
@@ -137,6 +138,7 @@ function onSubmit(isValid) {
             type="tel"
             :rules="[isRequired, isMobileNo]"
             class="w-full"
+            :disabled="isEdit"
             :error="quoteForm.errors.mobile_no"
           />
         </x-field>

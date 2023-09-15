@@ -12,7 +12,7 @@ trait FilterCriteria
     {
         $filters = request()->all();
 
-        if (count($filters) && count($this->filterables)) {
+        if (count($filters) && isset($this->filterables) && count($this->filterables)) {
             foreach ($this->filterables as $key => $operator) {
                 if (isset(request()->{$key}) || $operator == FilterTypes::DATE_BETWEEN) {
                     $value = request()->{$key};
