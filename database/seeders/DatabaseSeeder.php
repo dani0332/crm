@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RuleTypeSeeder::class,
             CommercialMakeModelKeywordsPermissionsSeeder::class,
             FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
+            SlabsTableSeeder::class,
             AddPersonalLobsProducts::class,
             addTeamThresholdViewPermission::class,
             // PetBikeMigrationSeeder::class

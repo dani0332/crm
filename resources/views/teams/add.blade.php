@@ -82,7 +82,14 @@ use App\Enums\TeamTypeEnum;
                             @endif
                         </div>
                         <div class="col">
-                            <span class="col-form-label col-md-6 col-sm-6">Is Active
+                            <span class="col-form-label col-md-3 col-sm-3">Slabs Count <span class="required">*</span></span>
+                            <input type="number" id="slabs_count" placeholder="Allowed slabs count" name="slabs_count" value="{{ old('allowed_slabs') }}" class="form-control">
+                            @if ($errors->has('allowed_slabs'))
+                                <span class="text-danger">{{ $errors->first('allowed_slabs') }}</span>
+                            @endif
+                        </div>
+                        <div class="col">
+                            <span class="col-form-label col-md-3 col-sm-3">Is Active
                                 <br />
                                 <input type="checkbox"  style="margin-top:12px" checked id='is_active' name='is_active'>
                             </span>

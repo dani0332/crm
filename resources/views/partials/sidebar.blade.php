@@ -40,7 +40,7 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RENEWAL_BATCH_REPORT])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-line-chart" aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -56,8 +56,11 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW)
                             <li><a href="{{ url('reports/lead-distribution') }}">Lead Distribution</a></li>
                             @endcan
-                            @can(PermissionsEnum::UtmLeadsSalesReport)
-                            <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
+                                @can(PermissionsEnum::UtmLeadsSalesReport)
+                                    <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
+                                @endcan
+                            @can(PermissionsEnum::RENEWAL_BATCH_REPORT)
+                                <li><a href="{{ url('reports/renewal-report') }}">Daily Renewal Report</a></li>
                             @endcan
                         </ul>
                     </li>
@@ -178,6 +181,7 @@ use App\Enums\PermissionsEnum;
                             </ul>
                     </ul>
                 @endcanany
+               
                 @canany([PermissionsEnum::VehicleDepreciationList, PermissionsEnum::VehicleValuationList])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
@@ -355,7 +359,8 @@ use App\Enums\PermissionsEnum;
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
-                PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES])
+                PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+                PermissionsEnum::RENEWAL_BATCHES_LIST])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -367,6 +372,9 @@ use App\Enums\PermissionsEnum;
                             @endcan
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/team') }}">Teams</a></li>
+                            @endcan
+                            @can(PermissionsEnum::RENEWAL_BATCHES_LIST)
+                            <li><a href="{{ route('renewal-batches-list') }}">Renewal Batches</a></li>
                             @endcan
                             @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
                             PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES])

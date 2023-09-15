@@ -5,8 +5,10 @@ namespace App\Models;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Sanctum\HasApiTokens;
@@ -265,11 +267,47 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * get renewal batches segment wise for a particularadvisors function
      */
-    public function teams()
+    public function renewalBatch(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class, 'user_team');
+        return $this->belongsToMany(
+            RenewalBatch::class,
+            'renewal_batch_segment_user',
+            'advisor_id',
+            'renewal_batch_id',
+            'id',
+            'id',
+            'renewalBatch'
+        )->withTimestamps()->withPivot('segment_type');
+    }
+
+    /**
+     * get user all teams function
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Team::class,
+            'user_team',
+            'user_id',
+            'team_id',
+            'id',
+            'id',
+            'teams'
+        )->withTimestamps()->withPivot('manager_id');
+    }
+
+    /**
+     * get user all teams id function
+     *
+     * @param  int  $userId
+     */
+    public function getUserTeamsIds($userId): Collection
+    {
+        $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
+
+        return Team::whereIn('id', $userTeamIds)->get()->pluck('id');
     }
 
     /**

@@ -288,19 +288,19 @@ function getDataAgainstSearchTerm($modelType, $request)
             }
         } else {
             if (Auth::user()->isRenewalAdvisor()) {
-                $result['leads_list'] = $modelType::where('quote_status_id', $status)
+                $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNotNull('previous_quote_id')
                     ->where('advisor_id', \Auth::user()->id)
                     ->get();
             } elseif (Auth::user()->isNewBusinessAdvisor()) {
-                $result['leads_list'] = $modelType::where('quote_status_id', $status)
+                $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->whereNull('previous_quote_id')
                     ->where('advisor_id', \Auth::user()->id)
                     ->get();
             } else {
-                $result['leads_list'] = $modelType::where('quote_status_id', $status)
+                $result['leads_list'] = $modelType::where('quote_status_id', $request->status)
                     ->whereRaw('MATCH (company_name, first_name, last_name, code, mobile_no, email) AGAINST (? IN BOOLEAN MODE)', [$request->term.'*'])
                     ->get();
             }

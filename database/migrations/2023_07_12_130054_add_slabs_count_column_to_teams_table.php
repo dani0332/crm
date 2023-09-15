@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSourceEnumInCustomer extends Migration
+class AddSlabsCountColumnToTeamsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,10 @@ class CreateSourceEnumInCustomer extends Migration
      */
     public function up()
     {
-        if (Schema::hasTable('customer')) {
-            Schema::table('customer', function ($table) {
-                if (! Schema::hasColumn('customer', 'source')) {
-                    $table->string('source', 50)->index()->nullable()->default(null);
+        if (Schema::hasTable('teams')) {
+            Schema::table('teams', function ($table) {
+                if (! Schema::hasColumn('teams', 'slabs_count')) {
+                    $table->integer('slabs_count')->after('is_active')->nullable();
                 }
             });
         }
@@ -29,8 +29,8 @@ class CreateSourceEnumInCustomer extends Migration
      */
     public function down()
     {
-        Schema::table('customer', function (Blueprint $table) {
-            $table->dropColumn('source');
+        Schema::table('teams', function (Blueprint $table) {
+            $table->dropColumn('slabs_count');
         });
     }
 }
