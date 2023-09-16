@@ -41,7 +41,7 @@ class AllocationService
             ]);
     }
 
-    public function getValuation($carModelDetailId , $yearOfManufacture)
+    public function getValuation($carModelDetailId, $yearOfManufacture)
     {
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-vehicle-value';
         $apiToken = config('constants.KEN_API_TOKEN');
@@ -65,9 +65,11 @@ class AllocationService
         if ($getStatusCode == 200) {
             $getContents = $request->getBody();
             $getdecodeContents = json_decode($getContents);
+
             return $getdecodeContents;
         } else {
             info(' call to ken api failed for getting car valuation ');
+
             return 'API failed';
         }
     }

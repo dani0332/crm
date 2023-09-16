@@ -265,7 +265,6 @@ class CRUDService extends BaseService
                 }
             }
 
-
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
 

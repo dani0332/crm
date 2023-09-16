@@ -90,7 +90,7 @@ class SendSmsCustomerService extends BaseService
      *
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function sendSMS(mixed $customerMobile, string $smsMessage, Customer $customer, ?string $inviteCode = null): mixed
+    public function sendSMS(mixed $customerMobile, string $smsMessage, Customer $customer, string $inviteCode = null): mixed
     {
         try {
             $smsEndpoint = config('constants.SMS_ENDPOINT');
