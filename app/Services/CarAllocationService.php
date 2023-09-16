@@ -72,7 +72,6 @@ class CarAllocationService extends AllocationService
         $carValue = 0;
 
         if (! empty($axaValuation)) {
-            info('axa provider return value is : '.json_encode($axaValuation));
             $firstAxaValuation = reset($axaValuation); // Get the first element of the array
             $carValue = $firstAxaValuation->carValue;
         }
@@ -147,8 +146,6 @@ class CarAllocationService extends AllocationService
         }
 
         $tierUserIds = $tierUserQuery->pluck('user_id');
-
-        info('Tier users: '.json_encode($tierUserIds));
 
         $statusOrder = $this->getStatusOrder();
 
