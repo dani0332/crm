@@ -75,6 +75,8 @@ class CarAllocationService extends AllocationService
             $carValue = $axaValuation->carValue;
         }
 
+        info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
+
         if ($carLead->car_model_detail_id == null || ! $carValue || $carValue == 0) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
 
@@ -82,6 +84,8 @@ class CarAllocationService extends AllocationService
         } else {
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
+
+        info('At the end tier query for is : '.json_encode($tiersQuery->toSql()));
     }
 
     protected function getDeferredLeads(): mixed
@@ -99,8 +103,14 @@ class CarAllocationService extends AllocationService
 
         $yearOfManufacture = now()->subYear(15)->year;
 
+        info('yearOfManufacture is : '.$yearOfManufacture);
+
+        info('number of plans found are : '.count($plans));
+
         if ($carLead->year_of_manufacture < $yearOfManufacture) { // case when car year of manufacture is newer than 15 years
+            info('Inside year of manufacture block and car year of manufacture is : '.$carLead->year_of_manufacture);
             if (count($plans) > 0) {
+                info('more than one plans found against car lead  : '.$carLead->uuid);
                 $this->getTierBasedOnValue($carLead, $tiersQuery);
 
                 return $tiersQuery->first();
@@ -119,6 +129,7 @@ class CarAllocationService extends AllocationService
             }
         } else {
             // case when car year of manufacture is older or equal than 15 years
+            info('Inside year of manufacture older block and car year of manufacture is : '.$carLead->year_of_manufacture);
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
             return $tiersQuery->first();

@@ -44,8 +44,6 @@ class ApiController extends Controller
 
                 $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
 
-                info('Allocation strategy is created : '.json_encode($allocationStrategy));
-
                 $allocationStrategy->executeSteps();
 
                 info('------ Lead allocation ended for lead : '.$allocationId.' ------');

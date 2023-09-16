@@ -22,46 +22,53 @@ class CarAllocation implements Allocation
 
     public function executeSteps()
     {
-        // Fetch the lead to process
-        $lead = $this->fetchLead();
+        try {
+            // Fetch the lead to process
+            $lead = $this->fetchLead();
 
-        if (! $lead) {
-            info('Lead not found or either was not under assignment criteria');
+            if (! $lead) {
+                info('Lead not found or either was not under assignment criteria');
 
-            return false; // when lead is not on criteria or not found
-        }
+                return false; // when lead is not on criteria or not found
+            }
 
-        // Find the appropriate tier for the lead
-        $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
+            // Find the appropriate tier for the lead
+            $tier = $lead->tier_id != null ? $this->getTier($lead->tier_id) : $this->findTier($lead);
 
-        // If a valid tier is found
-        if ($tier) {
-            // Find available users for the tier
-            $availableUsers = $this->findAvailableUsers($tier->id);
+            // If a valid tier is found
+            if ($tier) {
+                // Find available users for the tier
+                $availableUsers = $this->findAvailableUsers($tier->id);
 
-            // Find custom rules for the lead
-            $rules = $this->findRules($lead);
+                // Find custom rules for the lead
+                $rules = $this->findRules($lead);
 
-            // Determine the final advisor for the lead based on tier, users, and rules
-            $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
+                // Determine the final advisor for the lead based on tier, users, and rules
+                $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
-            if ($advisorId && $advisorId != 0) {
-                DB::beginTransaction();
-                try {
-                    // Assign the lead to the advisor and send an email
-                    $this->assignLead($lead, $advisorId, $tier);
-                    DB::commit();
-                } catch (\Exception $e) {
-                    DB::rollback();
-                    Log::error($e->getMessage());
+                if ($advisorId && $advisorId != 0) {
+                    DB::beginTransaction();
+                    try {
+                        // Assign the lead to the advisor and send an email
+                        $this->assignLead($lead, $advisorId, $tier);
+                        DB::commit();
+                    } catch (\Exception $e) {
+                        DB::rollback();
+                        Log::error($e->getMessage());
+                    }
+                } else {
+                    // Update the lead's tier information
+                    $this->updateLeadTier($lead, $tier);
                 }
             } else {
-                // Update the lead's tier information
-                $this->updateLeadTier($lead, $tier);
+                // Log that tier was not found for the lead and skip processing
+                info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
             }
-        } else {
-            // Log that tier was not found for the lead and skip processing
-            info('Tier not found for lead: '.$lead->uuid.'. Skipping for now.');
+        } catch (\Throwable $th) {
+            info('exception occurred in car lead allocation with error : '.$th->getMessage());
+            info('exception occurred in car lead allocation with error stack as  : '.$th->getTraceAsString());
+
+            return false;
         }
     }
 
