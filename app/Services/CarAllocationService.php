@@ -72,7 +72,8 @@ class CarAllocationService extends AllocationService
         $carValue = 0;
 
         if ($axaProvider) {
-            $carValue = $axaValuation->carValue;
+            info('axa provider return value is : '. json_encode($axaProvider));
+            $carValue = $axaValuation['carValue'];
         }
 
         info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
