@@ -72,7 +72,7 @@ class CarAllocationService extends AllocationService
         $carValue = 0;
 
         if ($axaProvider) {
-            info('axa provider return value is : '. json_encode($axaProvider));
+            info('axa provider return value is : '.json_encode($axaProvider));
             $carValue = $axaValuation['carValue'];
         }
 
