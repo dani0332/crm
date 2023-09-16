@@ -71,7 +71,7 @@ class CarAllocationService extends AllocationService
 
         $carValue = 0;
 
-        if (!empty($axaValuation)) {
+        if (! empty($axaValuation)) {
             info('axa provider return value is : '.json_encode($axaValuation));
             $firstAxaValuation = reset($axaValuation); // Get the first element of the array
             $carValue = $firstAxaValuation->carValue;
