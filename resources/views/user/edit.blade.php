@@ -189,7 +189,7 @@
                             <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Avatar </label>
                             <div class="col-md-6 col-sm-6 d-flex justify-content-center">
                                 <div class="nav-avatar nav-user-avatar">
-                                    <img src="{{$user->profile_photo_path != null?$user->profile_photo_path:'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
+                                    <img src="{{$user->profile_photo_path != null?substr($user->profile_photo_path, 0, -6):'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
                                 </div>
                         </div>
 
