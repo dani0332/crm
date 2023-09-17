@@ -287,6 +287,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
+        Route::post('cancel-payment', [CRUDController::class, 'cancelPayment'])->name('cancelPayment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
 

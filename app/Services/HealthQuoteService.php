@@ -16,6 +16,7 @@ use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\Payment;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -815,7 +816,7 @@ class HealthQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
-        $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
+        $quoteUuId = HealthQuote::where('uuid', '=', 'BMY7E8MX')->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -824,7 +825,7 @@ class HealthQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
-            'quoteUID' => $quoteUuId,
+            'quoteUID' => 'BMY7E8MX',
             'lang' => 'en',
         ];
 
@@ -1303,5 +1304,17 @@ class HealthQuoteService extends BaseService
 
             return $response;
         }
+    }
+
+    public function cancelPayment($request){
+        $payment = Payment::where('code','TYI-CAR-WS8Y538E')->first();
+        $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+        if($maxAmount < $request->amount) {
+           return response(['amount'=>'should not be maximum'], 403);
+        }else{
+            return response('Hello World', 200);
+            dd('no tttt');
+        }
+
     }
 }

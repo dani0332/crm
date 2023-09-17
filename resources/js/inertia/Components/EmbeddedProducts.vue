@@ -17,6 +17,8 @@ const modals = reactive({
     cancelPayment: false,
 });
 
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+
 const cancelPaymentForm = () => {
     paymentForm.reset();
    // activityActionEdit.value = false;
@@ -24,7 +26,8 @@ const cancelPaymentForm = () => {
 };
 const paymentForm = useForm({
     reason: null,
-    amount: null
+    amount: null,
+    modelType: 'Health'
 });
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -89,7 +92,16 @@ const paymentStatus = id => {
 };
 const onActivitySubmit = isValid => {
     if (!isValid) return;
-        paymentForm.post(`/activities/create-activity`, {
+    // route('createDuplicate')
+    axios
+        .post('/quotes/cancel-payment', paymentForm)
+        .then(res => {
+            notification.success('Lead duplicated successfully');
+        })
+        .catch(err => {
+            notification.error('Something went wrong');
+        });
+       /* paymentForm.post(`/quotes/cancel-payment`, {
             preserveScroll: true,
             onSuccess: () => {
                 paymentForm.reset();
@@ -101,7 +113,11 @@ const onActivitySubmit = isValid => {
             onFinish: () => {
                 modals.activity = false;
             },
-        });
+            onError: errors => {
+                console.log(errors);
+            },
+
+        }); */
 
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -240,7 +256,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                       :loading="paymentForm.processing"
                       type="submit"
                   >
-                     Cancel
+                     Cancel Payment
                   </x-button>
               </div>
           </x-form>

@@ -1581,6 +1581,14 @@ class CRUDController extends Controller
         ]);
     }
 
+    public function cancelPayment(Request $request)
+    {
+         $this->healthQuoteService->cancelPayment($request);
+        return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '], 403);
+
+        dd($request);
+    }
+
     /**
      * Remove the specified resource from storage.
      *
