@@ -29,7 +29,7 @@ const quoteForm = useForm({
   claim_history: props.quote?.jetski_quote?.claim_history,
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const isEmptyField = ref(false);
 const editMode = computed(() => (props.quote ? true : false));
@@ -100,6 +100,7 @@ function onSubmit(isValid) {
             type="email"
             :rules="[isRequired, isEmail]"
             class="w-full"
+            :disabled="editMode"
             :error="quoteForm.errors.email"
           />
         </x-field>
@@ -107,9 +108,10 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
+            :disabled="editMode"
           />
         </x-field>
         <x-field label="JetSki Make" required>

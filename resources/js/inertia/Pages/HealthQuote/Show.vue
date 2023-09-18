@@ -142,7 +142,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -1936,7 +1936,9 @@ onMounted(() => {
             </x-button>
             <template #content> {{ planFiltersCount }} </template>
           </x-badge>
+
           <x-button
+            v-if="false"
             size="sm"
             color="primary"
             @click.prevent="modals.createPlan = true"
@@ -2006,7 +2008,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
                 )
               "
             >
@@ -2412,7 +2414,7 @@ onMounted(() => {
                 isRequired,
                 additionalContact.additional_contact_type === 'email'
                   ? isEmail
-                  : isNumber,
+                  : isMobileNo,
               ]"
               class="w-full"
             />

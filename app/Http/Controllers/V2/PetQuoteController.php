@@ -70,7 +70,7 @@ class PetQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('/personal-quotes/pet/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
+        return redirect(route('pet-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -154,6 +154,6 @@ class PetQuoteController extends Controller
     {
         PetQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote is updated successfully.');
+        return redirect(route('pet-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
 }

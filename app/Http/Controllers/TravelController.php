@@ -59,12 +59,10 @@ class TravelController extends Controller
     public function index(Request $request)
     {
         $searchProperties = array_flip($this->genericModel->searchProperties);
-
         $dropdownSource = $this->travelQuoteService->dropdownSource($searchProperties, self::TYPE_ID);
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
 
@@ -256,7 +254,7 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
 
-        return inertia('TravelQuote/Create', [
+        return inertia('TravelQuote/Form', [
             'model' => json_encode($model->properties),
             'quotePlans' => null,
             'customTitles' => $customTitles,
@@ -323,7 +321,7 @@ class TravelController extends Controller
         $fields['mobile_no']['disabled'] = true;
         $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
 
-        return inertia('TravelQuote/Create', [
+        return inertia('TravelQuote/Form', [
             'quote' => $record,
             'quotePlans' => $quotePlans,
             'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
