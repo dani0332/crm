@@ -37,7 +37,7 @@ class CarAllocation implements Allocation
 
             // If a valid tier is found
             if ($tier) {
-                info('Tier finalized for lead : '. $lead->uuid . ' is : '. $tier->name);
+                info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
                 $availableUsers = $this->findAvailableUsers($tier->id);
 

@@ -147,7 +147,7 @@ class CarAllocationService extends AllocationService
 
         $tierUserIds = $tierUserQuery->pluck('user_id');
 
-        info('Tier users are '. json_encode($tierUserIds));
+        info('Tier users are '.json_encode($tierUserIds));
 
         $statusOrder = $this->getStatusOrder();
 
@@ -178,8 +178,9 @@ class CarAllocationService extends AllocationService
             })
             ->whereIn('user_id', $tierUserIds)
             ->orderByDesc('last_allocated');
-        info('query for advisor selection '. $query->toSql());
-        info('query for advisor bindings '. json_encode($query->getBindings()));
+        info('query for advisor selection '.$query->toSql());
+        info('query for advisor bindings '.json_encode($query->getBindings()));
+
         return $query->get();
     }
 
