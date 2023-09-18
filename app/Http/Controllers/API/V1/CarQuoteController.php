@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\FollowupStartedRequest;
 use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Resources\CarQuoteResource;
 use App\Models\CarQuote;
@@ -50,4 +51,17 @@ class CarQuoteController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }
+
+    /**
+     * this will be called when 1st followup email will be sent
+     * upon this need to update quote status to followed-up
+     * and set kyo followup id in detail table
+     * @param FollowupStartedRequest $request
+     * @return void
+     */
+    public function followupStarted(FollowupStartedRequest $request)
+    {
+        CarQuoteRepository::followupStarted($request->validated());
+    }
+
 }

@@ -101,5 +101,21 @@ class CarQuoteRepository extends BaseRepository
             return $quote;
         });
     }
-    
+
+    /**
+     * @param $data
+     * @return null
+     */
+    public function fetchFollowupStarted($data)
+    {
+        $quote = $this->fetchUpdateQuoteStatus($data);
+
+        //set followup id coming from kyo
+        $quote->carQuoteRequestDetail->updateOrCreate(
+            ['car_quote_request_id' => $quote->id], ['followup_id' => $data['followup_id']]
+        );
+
+        return $quote;
+    }
+
 }

@@ -25,6 +25,7 @@ Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuote
 
 Route::prefix('v1')->group(function () {
 
+    Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/update-quote-status', [CarQuoteController::class, 'updateQuoteStatus']);
 
     Route::get('quotes/car', [CarQuoteController::class, 'index']);
