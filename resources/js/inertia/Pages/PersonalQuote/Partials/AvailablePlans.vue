@@ -55,6 +55,7 @@ const hidePlan = ref(props.plan.isHidden),
 const planAddons = ref(props.plan.addons);
 
 const toggleLoader = ref(false);
+const toggleManualLoader = ref(false);
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -156,7 +157,12 @@ const onUpdatePlan = () => {
         event.preventDefault();
     }
   }
-
+  const onToggleManual = ()=> {
+    toggleManualLoader.value = true;
+    setTimeout(() => {
+      toggleManualLoader.value = false;
+    }, 300);
+  };
 </script>
 
 <template>
@@ -201,7 +207,8 @@ const onUpdatePlan = () => {
                 color="success"
                 label="Manual"
                 :disabled="plan.isManualUpdate"
-                
+                @change = "onToggleManual" 
+                :loading="toggleManualLoader"
               />
           </div>
             <div class="grid sm:grid-cols-2">
@@ -229,6 +236,7 @@ const onUpdatePlan = () => {
                 v-model = "actualPremiumValue"
                 :disabled="!isManual"
                 size="sm"
+                @keydown="validateDecimal"
               />
               <!-- <dd>{{ props.plan.actualPremium }}</dd> -->
             </div>
@@ -238,6 +246,7 @@ const onUpdatePlan = () => {
                 :value="discountPremium"
                 v-model = "discountPremium"
                 size="sm"
+                @keydown="validateDecimal"
               />
             </div>
             <div class="grid sm:grid-cols-2">
@@ -247,6 +256,7 @@ const onUpdatePlan = () => {
                 v-model = "carValue"
                 :helper="isManual ? `Min: AED ${props.plan.carValueLowerLimit} - Max: AED ${props.plan.carValueUpperLimit}` : ''"              
                 size="sm"
+                @keydown="validateDecimal"
               />
             </div>
             <div class="grid sm:grid-cols-2">

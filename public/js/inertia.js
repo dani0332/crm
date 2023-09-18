@@ -14425,6 +14425,7 @@ __webpack_require__.r(__webpack_exports__);
       newPremiums = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
     var planAddons = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(props.plan.addons);
     var toggleLoader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
+    var toggleManualLoader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
     var canUpdate = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
     });
@@ -14523,6 +14524,12 @@ __webpack_require__.r(__webpack_exports__);
         event.preventDefault();
       }
     };
+    var onToggleManual = function onToggleManual() {
+      toggleManualLoader.value = true;
+      setTimeout(function () {
+        toggleManualLoader.value = false;
+      }, 300);
+    };
     var __returned__ = {
       props: props,
       notification: notification,
@@ -14537,6 +14544,7 @@ __webpack_require__.r(__webpack_exports__);
       newPremiums: newPremiums,
       planAddons: planAddons,
       toggleLoader: toggleLoader,
+      toggleManualLoader: toggleManualLoader,
       canUpdate: canUpdate,
       dateFormat: dateFormat,
       tabs: tabs,
@@ -14550,6 +14558,7 @@ __webpack_require__.r(__webpack_exports__);
       insurerTrimIdValue: insurerTrimIdValue,
       onUpdatePlan: onUpdatePlan,
       validateDecimal: validateDecimal,
+      onToggleManual: onToggleManual,
       computed: vue__WEBPACK_IMPORTED_MODULE_0__.computed
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
@@ -43754,8 +43763,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                 }),
                 color: "success",
                 label: "Manual",
-                disabled: $props.plan.isManualUpdate
-              }, null, 8 /* PROPS */, ["modelValue", "disabled"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.props.plan.providerName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.props.plan.repairType), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
+                disabled: $props.plan.isManualUpdate,
+                onChange: $setup.onToggleManual,
+                loading: $setup.toggleManualLoader
+              }, null, 8 /* PROPS */, ["modelValue", "disabled", "loading"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_5, [_hoisted_6, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.props.plan.providerName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_7, [_hoisted_8, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_0__.toDisplayString)($setup.props.plan.repairType), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_9, [_hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.insurerQuoteNoValue,
                 modelValue: $setup.insurerQuoteNoValue,
                 "onUpdate:modelValue": _cache[2] || (_cache[2] = function ($event) {
@@ -43770,14 +43781,16 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                   return $setup.actualPremiumValue = $event;
                 }),
                 disabled: !$setup.isManual,
-                size: "sm"
+                size: "sm",
+                onKeydown: $setup.validateDecimal
               }, null, 8 /* PROPS */, ["value", "modelValue", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createCommentVNode)(" <dd>{{ props.plan.actualPremium }}</dd> ")]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_13, [_hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.discountPremium,
                 modelValue: $setup.discountPremium,
                 "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
                   return $setup.discountPremium = $event;
                 }),
-                size: "sm"
+                size: "sm",
+                onKeydown: $setup.validateDecimal
               }, null, 8 /* PROPS */, ["value", "modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_15, [_hoisted_16, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.carValue,
                 modelValue: $setup.carValue,
@@ -43785,7 +43798,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                   return $setup.carValue = $event;
                 }),
                 helper: $setup.isManual ? "Min: AED ".concat($setup.props.plan.carValueLowerLimit, " - Max: AED ").concat($setup.props.plan.carValueUpperLimit) : '',
-                size: "sm"
+                size: "sm",
+                onKeydown: $setup.validateDecimal
               }, null, 8 /* PROPS */, ["value", "modelValue", "helper"])]), (0,vue__WEBPACK_IMPORTED_MODULE_0__.createElementVNode)("div", _hoisted_17, [_hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_0__.createVNode)(_component_x_input, {
                 value: $setup.excessValue,
                 modelValue: $setup.excessValue,
