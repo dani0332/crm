@@ -99,8 +99,8 @@ class CarAllocationService extends AllocationService
         info('Started searching tier for car lead: '.json_encode($carLead->code));
 
         $plans = CarQuotePlanDetail::where('quote_uuid', $carLead->uuid)
-                ->where('is_rating_available', true)
-                ->where('repair_type', CarPlanType::COMP)->get();
+            ->where('is_rating_available', true)
+            ->where('repair_type', CarPlanType::COMP)->get();
 
         $tiersQuery = Tier::where('is_active', 1); // Query to get all active tiers
 
