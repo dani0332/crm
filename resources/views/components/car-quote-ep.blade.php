@@ -8,8 +8,6 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 <div class="row">
   <div class="col-md-12 col-sm-12">
     <div class="x_panel">
-      <div class="alert alert-success" style="display: none" id="sucess-div"></div>
-      <div class="alert alert-error" style="display: none" id="error-div"></div>
       <div class="x_title">
         <h2>Embedded Products</h2>
         <div class="clearfix"></div>
@@ -75,10 +73,10 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
              </td>
               <td>
                 <div>
-                <button class="btn btn-success btn-sm"   id="send_documents" onClick="sendDocument({{$record->id}}, '{{$transaction->id}}')"	{{ !$transaction->send_document_button ? 'disabled' : '' }}>
+                <button class="btn btn-success btn-sm" disabled>
                    Send Documents
                 </button>
-                <button class="btn btn-warning btn-sm"   id="download_documents" onClick="downloadDocument({{$record->id}}, '{{$transaction->id}}')" {{ !$transaction->send_document_button ? 'disabled' : '' }}>
+                <button class="btn btn-warning btn-sm" disabled>
                 Download Certificate
                 </button>
                 <a href="{{$pwDoc}}" target="_blank" class="btn btn-info btn-sm {{ $pwDoc == '' ? 'disabled': ''}}">
@@ -98,54 +96,6 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 </div>
 
 <script>
-
-function sendDocument(recordId,epId) {
-      // $(".loader").show();
-			$.ajax({
-				url: "{{ url('/embedded-products/send-document') }}",
-				type: "POST",
-				data: {
-					quoteId: recordId,
-					modelType: 'Car',
-					epId: epId,
-          _token: '{{ csrf_token() }}'
-				},
-				success: function(data) {
-					if (data.status ==  200) {
-            $(".loader").hide();
-            $('#sucess-div').text('Documents send successfully').show().delay(5000).hide(0);
-					} else {
-            $(".loader").hide();
-            $('#error-div').text('Documents sending failed').show().delay(5000).hide(0);
-					}
-				},
-			});
-	}
-
-    function downloadDocument(recordId,epId) {
-      // $(".loader").show();
-			$.ajax({
-				url: "{{ url('/embedded-products/download-document') }}",
-				type: "POST",
-				data: {
-					quoteId: recordId,
-					modelType: 'Car',
-					epId: epId,
-          _token: '{{ csrf_token() }}'
-				},
-				success: function(res) {
-          $(".loader").hide();
-          const data = res.data;
-          const link = document.createElement('a');
-          link.setAttribute('href', data);
-          link.setAttribute('download', 'Certificate.pdf'); // Need to modify filename ...
-          link.click();
-
-				},
-			});
-		}
-
-
 $('#flowcheckall_ep').click(function (e) {
   if ($(this).hasClass('checkedAll')) {
     $('.car_ep_checkbox').prop('checked', false);

@@ -177,7 +177,7 @@
                         <p>Policy Number</p>
                         <p class="text-red">(Master Policy issued by Salama)</p>
                     </td>
-                    <td></td>
+                    <td>{{$viewData['master_policy_number']}}</td>
 
                 </tr>
                 <tr>
@@ -186,7 +186,7 @@
                         <p class="text-red">(Issued by Insurancemarket.ae)
                         </p>
                     </td>
-                    <td></td>
+                    <td>{{$viewData['certificate_number']}}</td>
 
                 </tr>
                 <tr>

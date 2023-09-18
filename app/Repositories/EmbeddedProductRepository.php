@@ -2,13 +2,16 @@
 
 namespace App\Repositories;
 
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
+use App\Models\QuoteType;
 use App\Services\PostMarkService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
+use finfo;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
@@ -163,9 +166,33 @@ class EmbeddedProductRepository extends BaseRepository
             }])
             ->get();
 
-        $ep->each(function ($item) {
-            // $item->send_document_button = strtolower($item->short_code) == 'mdx' && strtolower($item->product_name) == 'medex';
-            $item->send_document_button = true;
+        $modelType = QuoteType::where('id', '=', $quoteTypeId)->value('code');
+        $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
+
+            $item->send_document_button = false;
+            if ($item->product_category == 'bolt-on') {
+                $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
+
+                if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
+
+                    $item->send_document_button = true;
+                }
+            } elseif ($item->product_category == 'stand-alone') {
+                if ($item->prices) {
+                    $optionsIds = $item->prices->pluck('id');
+
+                    // dd($quoteTypeId . '--' . $quoteRequestId . '--' . $optionsIds);
+                    $transaction = EmbeddedTransaction::where([
+                        ['quote_type_id', '=', $quoteTypeId],
+                        ['quote_request_id',  '=', $quoteRequestId],
+                        ['is_selected',  '=', true],
+                        ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
+                    ])->whereIn('product_id', $optionsIds)->get();
+                    if ($transaction->isNotEmpty()) {
+                        $item->send_document_button = true;
+                    }
+                }
+            }
         });
 
         return $ep;
@@ -178,10 +205,34 @@ class EmbeddedProductRepository extends BaseRepository
         $epId = $data['epId'];
 
         $ep = $this->where('id', $epId)->first();
-        $product_name = $short_code = '';
+        $product_name = $short_code = $product_description = '';
         if ($ep) {
             $product_name = $ep->product_name;
+            $product_description = $ep->description;
             $short_code = $ep->short_code;
+            $websiteURL = config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/';
+            $documents = json_decode($ep->company_documents);
+            if (!empty($documents)) {
+                foreach ($documents as $item) {
+
+                    $path = $item->path;
+                    $pwDoc = $path !== '' ? $websiteURL . $path : '';
+                    if (!empty($path)) {
+
+                        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
+
+                        $exploded = explode('/', $path);
+
+                        $file = file_get_contents($pwDoc);
+                        $mimeType = $fileInfo->buffer($file);
+                        $attachments[] =  [
+                            'Content' => base64_encode(file_get_contents($pwDoc)),
+                            'Name' => end($exploded),
+                            'ContentType' => $mimeType,
+                        ];
+                    }
+                }
+            }
         }
 
         // ep multiple options
@@ -193,24 +244,6 @@ class EmbeddedProductRepository extends BaseRepository
         $premium = "";
 
         $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-
-        // dd($quoteTypeId . '--' . $quoteId . '--' . $optionsIds);
-        // $transaction = EmbeddedTransaction::where([
-        //     ['quote_type_id', '=', $quoteTypeId],
-        //     ['quote_request_id',  '=', $quoteId]
-        // ])->whereIn('product_id', $optionsIds)->get();
-
-        // dd($transaction->toArray());
-        // if (!$transaction->isEmpty()) {
-        //     $this
-        //         ->update([
-        //             'certificate_number_count' => DB::raw('certificate_number_count + 1')
-        //         ]);
-        // }
-        // dd('m here');
-
-
-
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
 
         $advisorData = [];
@@ -221,12 +254,14 @@ class EmbeddedProductRepository extends BaseRepository
             $advisorData['phone'] = $advisor->mobile_no;
         }
 
+        // certificate generation
         $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
         $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
         $viewData['type'] = $modelType;
+        $viewData['master_policy_number'] = "";
+        $viewData['certificate_number'] = "";
         $viewData['premium'] = $premium;
-
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
         $attachments[] = [
@@ -247,8 +282,8 @@ class EmbeddedProductRepository extends BaseRepository
                 'params' => [
                     'customerName' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
                     'isMedex' => true,
-                    'productName' => 'demo',
-                    'productDescription' => 'this is desc',
+                    'productName' => $product_name,
+                    'productDescription' => $product_description,
                     'advisor' => (object) $advisorData,
                 ],
                 'subject' => 'Thank you for your purchase of ' . $product_name . ' with Alfred - < ' . $short_code . '-' . $quoteObject->code . ' >',
