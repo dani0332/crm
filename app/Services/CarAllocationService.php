@@ -147,6 +147,8 @@ class CarAllocationService extends AllocationService
 
         $tierUserIds = $tierUserQuery->pluck('user_id');
 
+        info('Tier users are '. json_encode($tierUserIds));
+
         $statusOrder = $this->getStatusOrder();
 
         foreach ($statusOrder as $status) {
@@ -164,7 +166,7 @@ class CarAllocationService extends AllocationService
 
     public function getAdvisorsByStatus($status, $tierUserIds)
     {
-        return LeadAllocation::with('leadAllocationUser')
+        $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
                 $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
                     ->where('is_available', 1)
@@ -175,7 +177,10 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->orderByDesc('last_allocated')->get();
+            ->orderByDesc('last_allocated');
+        info('query for advisor selection '. $query->toSql());
+        info('query for advisor bindings '. json_encode($query->getBindings()));
+        return $query->get();
     }
 
     public function getRules($carLead)
