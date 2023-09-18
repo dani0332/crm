@@ -23,8 +23,6 @@ class CreateCustomerMemberTable extends Migration
                 $table->string('code', 200)->nullable();
                 $table->string('first_name', 50)->nullable();
                 $table->string('last_name', 50)->nullable();
-                $table->string('email', 150)->nullable(false);
-                $table->string('mobile_no', 20)->nullable();
                 $table->string('gender', 8)->nullable();
                 $table->date('dob')->nullable();
                 $table->integer('nationality_id')->nullable();
