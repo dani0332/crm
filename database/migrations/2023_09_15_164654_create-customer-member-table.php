@@ -16,10 +16,8 @@ class CreateCustomerMemberTable extends Migration
         if (! Schema::hasTable('customer_members')) {
             Schema::create('customer_members', function (Blueprint $table) {
                 $table->bigIncrements('id')->primary();
-
-                $table->bigInteger('customer_id')->nullable(true);
-                $table->index('customer_id');
-
+                $table->bigInteger('memberable_id');
+                $table->string('memberable_type');
                 $table->string('code', 200)->nullable();
                 $table->string('first_name', 50)->nullable();
                 $table->string('last_name', 50)->nullable();
@@ -28,8 +26,9 @@ class CreateCustomerMemberTable extends Migration
                 $table->integer('nationality_id')->nullable();
                 $table->timestamps();
 
-                $table->foreign('customer_id')->references('id')->on('customer')->onDelete('no action');
+                $table->foreign('memberable_id')->references('id')->on('customer')->onDelete('no action');
 
+                $table->index(['memberable_id', 'memberable_type'], 'customer_members_memberable_index');
             });
         }
     }
@@ -41,7 +40,7 @@ class CreateCustomerMemberTable extends Migration
      */
     public function down()
     {
-        if ( Schema::hasTable('customer_members')) {
+        if (Schema::hasTable('customer_members')) {
             Schema::drop('customer_members');
         }
     }
