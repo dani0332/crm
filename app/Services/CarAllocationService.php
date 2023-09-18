@@ -61,28 +61,25 @@ class CarAllocationService extends AllocationService
 
     public function getTierBasedOnValue($carLead, $tiersQuery): void
     {
-        $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
-
-        $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
-
-        $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
-            return $provider->providerId == $axaProvider->id;
-        });
-
-        $carValue = 0;
-
-        if (! empty($axaValuation)) {
-            $firstAxaValuation = reset($axaValuation); // Get the first element of the array
-            $carValue = $firstAxaValuation->carValue;
-        }
-
-        info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
-
-        if ($carLead->car_model_detail_id == null || ! $carValue || $carValue == 0) {
+        if ($carLead->car_model_detail_id == null) {
             $tiersQuery->where('name', TiersEnum::TIER_L)->first();
-
-            return;
         } else {
+            $valuations = $this->getValuation($carLead->car_model_detail_id, $carLead->year_of_manufacture);
+
+            $axaProvider = InsuranceProvider::where('code', InsuranceProvidersEnum::AXA)->first();
+
+            $axaValuation = array_filter($valuations, function ($provider) use ($axaProvider) {
+                return $provider->providerId == $axaProvider->id;
+            });
+
+            $carValue = 0;
+
+            if (! empty($axaValuation)) {
+                $firstAxaValuation = reset($axaValuation); // Get the first element of the array
+                $carValue = $firstAxaValuation->carValue;
+            }
+
+            info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
 
