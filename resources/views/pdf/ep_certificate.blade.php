@@ -177,7 +177,7 @@
                         <p>Policy Number</p>
                         <p class="text-red">(Master Policy issued by Salama)</p>
                     </td>
-                    <td>Maria Anders</td>
+                    <td></td>
 
                 </tr>
                 <tr>
@@ -186,7 +186,7 @@
                         <p class="text-red">(Issued by Insurancemarket.ae)
                         </p>
                     </td>
-                    <td>Francisco Chang</td>
+                    <td></td>
 
                 </tr>
                 <tr>
@@ -200,32 +200,32 @@
                 </tr>
                 <tr>
                     <td>Emirates ID</td>
-                    <td>Yoshi Tannamuri</td>
+                    <td></td>
 
                 </tr>
                 <tr>
                     <td>Date of Enrollment</td>
-                    <td>Giovanni Rovelli</td>
+                    <td>{{$viewData['date_of_enrollment']}}</td>
 
                 </tr>
                 <tr>
                     <td>Covered Benefits</td>
-                    <td>Giovanni Rovelli</td>
+                    <td></td>
 
                 </tr>
                 <tr>
                     <td>Age Limit</td>
-                    <td>Giovanni Rovelli</td>
+                    <td></td>
 
                 </tr>
                 <tr>
                     <td>Type of Vehicle</td>
-                    <td>Giovanni Rovelli</td>
+                    <td>{{$viewData['type']}}</td>
 
                 </tr>
                 <tr>
                     <td>Annual Contribution Amount*</td>
-                    <td>Giovanni Rovelli</td>
+                    <td>{{$viewData['premium']}}</td>
 
                 </tr>
             </tbody>

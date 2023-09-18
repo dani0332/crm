@@ -75,10 +75,10 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
              </td>
               <td>
                 <div>
-                <button class="btn btn-success btn-sm"   id="send_documents" onClick="sendDocument({{$record->id}}, '{{$item->id}}')"	{{ !$transaction->send_document_button ? 'disabled' : '' }}>
+                <button class="btn btn-success btn-sm"   id="send_documents" onClick="sendDocument({{$record->id}}, '{{$transaction->id}}')"	{{ !$transaction->send_document_button ? 'disabled' : '' }}>
                    Send Documents
                 </button>
-                <button class="btn btn-warning btn-sm"   id="download_documents" onClick="downloadDocument({{$record->id}}, '{{$item->id}}')" {{ !$transaction->send_document_button ? 'disabled' : '' }}>
+                <button class="btn btn-warning btn-sm"   id="download_documents" onClick="downloadDocument({{$record->id}}, '{{$transaction->id}}')" {{ !$transaction->send_document_button ? 'disabled' : '' }}>
                 Download Certificate
                 </button>
                 <a href="{{$pwDoc}}" target="_blank" class="btn btn-info btn-sm {{ $pwDoc == '' ? 'disabled': ''}}">
@@ -100,7 +100,7 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
 <script>
 
 function sendDocument(recordId,epId) {
-      $(".loader").show();
+      // $(".loader").show();
 			$.ajax({
 				url: "{{ url('/embedded-products/send-document') }}",
 				type: "POST",
@@ -123,7 +123,7 @@ function sendDocument(recordId,epId) {
 	}
 
     function downloadDocument(recordId,epId) {
-      $(".loader").show();
+      // $(".loader").show();
 			$.ajax({
 				url: "{{ url('/embedded-products/download-document') }}",
 				type: "POST",

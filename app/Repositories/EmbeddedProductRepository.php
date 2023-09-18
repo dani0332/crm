@@ -2,10 +2,13 @@
 
 namespace App\Repositories;
 
+use App\Enums\QuoteTypeId;
 use App\Models\EmbeddedProduct;
+use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Services\PostMarkService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PDF;
 
@@ -62,7 +65,7 @@ class EmbeddedProductRepository extends BaseRepository
             $prices = $product->prices()->get();
 
             foreach ($prices as $price) {
-                if (! in_array($price->id, array_column($data['pricings'], 'id'))) {
+                if (!in_array($price->id, array_column($data['pricings'], 'id'))) {
                     $price->delete();
                 }
             }
@@ -107,12 +110,12 @@ class EmbeddedProductRepository extends BaseRepository
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
 
         $advisorData = [];
-        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
+        $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
         $viewData['dob'] = $quoteObject->dob;
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
-        return response()->json(['data' => 'data:application/pdf;base64,'.base64_encode($pdf->stream()), 'name' => 'Certificate']);
+        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => 'Certificate']);
     }
 
     /**
@@ -122,21 +125,21 @@ class EmbeddedProductRepository extends BaseRepository
     {
         $type = 'embedded_product';
         $originalName = $file->getClientOriginalName();
-        $docName = preg_replace('/\s+/', '', uniqid().'_'.$originalName);
+        $docName = preg_replace('/\s+/', '', uniqid() . '_' . $originalName);
         $fileMimeType = $file->getClientMimeType();
 
-        $fileNameAzure = uniqid().'_'.$type.'_'.$docName;
+        $fileNameAzure = uniqid() . '_' . $type . '_' . $docName;
         $filePathAzure = $file->storeAs('documents/embedded_products', $fileNameAzure, 'azureIM');
 
         //generate unique uuid
         $docUuid = uniqid();
         while (GenericDocument::where('uuid', $docUuid)->first()) {
-            $docUuid = uniqid().rand(1, 100);
+            $docUuid = uniqid() . rand(1, 100);
         }
 
         GenericDocument::create([
             'uuid' => $docUuid,
-            'name' => $title.'_'.$originalName,
+            'name' => $title . '_' . $originalName,
             'path' => $filePathAzure,
             'mime_type' => $fileMimeType,
             'documentable_type' => 'App\Models\EmbeddedProduct',
@@ -161,7 +164,8 @@ class EmbeddedProductRepository extends BaseRepository
             ->get();
 
         $ep->each(function ($item) {
-            $item->send_document_button = strtolower($item->short_code) == 'mdx' && strtolower($item->product_name) == 'medex';
+            // $item->send_document_button = strtolower($item->short_code) == 'mdx' && strtolower($item->product_name) == 'medex';
+            $item->send_document_button = true;
         });
 
         return $ep;
@@ -179,6 +183,34 @@ class EmbeddedProductRepository extends BaseRepository
             $product_name = $ep->product_name;
             $short_code = $ep->short_code;
         }
+
+        // ep multiple options
+        $optionsIds = [];
+        if ($ep->prices) {
+            $premium = $ep->prices->sum('price');
+            $optionsIds = $ep->prices->pluck('id');
+        }
+        $premium = "";
+
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+        // dd($quoteTypeId . '--' . $quoteId . '--' . $optionsIds);
+        // $transaction = EmbeddedTransaction::where([
+        //     ['quote_type_id', '=', $quoteTypeId],
+        //     ['quote_request_id',  '=', $quoteId]
+        // ])->whereIn('product_id', $optionsIds)->get();
+
+        // dd($transaction->toArray());
+        // if (!$transaction->isEmpty()) {
+        //     $this
+        //         ->update([
+        //             'certificate_number_count' => DB::raw('certificate_number_count + 1')
+        //         ]);
+        // }
+        // dd('m here');
+
+
+
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
 
         $advisorData = [];
@@ -188,8 +220,12 @@ class EmbeddedProductRepository extends BaseRepository
             $advisorData['name'] = $advisor->name;
             $advisorData['phone'] = $advisor->mobile_no;
         }
-        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-        $viewData['dob'] = $quoteObject->dob;
+
+        $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
+        $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
+        $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
+        $viewData['type'] = $modelType;
+        $viewData['premium'] = $premium;
 
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
@@ -209,13 +245,13 @@ class EmbeddedProductRepository extends BaseRepository
             'Attachments' => isset($attachments) ? $attachments : null,
             'TemplateModel' => [
                 'params' => [
-                    'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
+                    'customerName' => $quoteObject->first_name . ' ' . $quoteObject->last_name,
                     'isMedex' => true,
                     'productName' => 'demo',
                     'productDescription' => 'this is desc',
                     'advisor' => (object) $advisorData,
                 ],
-                'subject' => 'Thank you for your purchase of '.$product_name.' with Alfred - < '.$short_code.'-'.$quoteObject->code.' >',
+                'subject' => 'Thank you for your purchase of ' . $product_name . ' with Alfred - < ' . $short_code . '-' . $quoteObject->code . ' >',
             ],
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
