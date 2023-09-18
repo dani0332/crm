@@ -13,8 +13,8 @@ class CreateCustomerMemberTable extends Migration
      */
     public function up()
     {
-        if (! Schema::hasTable('customer_member')) {
-            Schema::create('customer_member', function (Blueprint $table) {
+        if (! Schema::hasTable('customer_members')) {
+            Schema::create('customer_members', function (Blueprint $table) {
                 $table->bigIncrements('id')->primary();
 
                 $table->bigInteger('customer_id')->nullable(true);
@@ -43,8 +43,8 @@ class CreateCustomerMemberTable extends Migration
      */
     public function down()
     {
-        if ( Schema::hasTable('customer_member')) {
-            Schema::drop('customer_member');
+        if ( Schema::hasTable('customer_members')) {
+            Schema::drop('customer_members');
         }
     }
 }
