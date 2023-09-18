@@ -1279,6 +1279,11 @@ class RenewalsUploadService
                     'notes' => 'Change quote status to Quoted as OCB sent'
                 ]);
 
+                //record ocb sent datetime
+                $carQuote->carQuoteRequestDetail->updateOrCreate(
+                    ['car_quote_request_id' => $carQuote->id], ['ocb_sent_date' => Carbon::now()]
+                );
+
                 Log::info('renewalBatchEmailProcess EmailSent: '.$responseCode);
                 $this->updateRenewalQuoteEmailSent($batch, $carQuote->id);
 

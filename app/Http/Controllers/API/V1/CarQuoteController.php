@@ -48,6 +48,6 @@ class CarQuoteController extends Controller
     {
         CarQuoteRepository::updateQuoteStatus($request->validated());
 
-        return response()->json(['message' => 'Lead status updated successfully']);
+        return response()->json(['success' => true, 'message' => 'Lead status updated successfully']);
     }
 }

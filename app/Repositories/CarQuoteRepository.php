@@ -6,6 +6,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
+use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteStatusLog;
 use App\Traits\CentralTrait;
@@ -46,7 +47,7 @@ class CarQuoteRepository extends BaseRepository
             'userId' => strval(auth()->id()),
         ];
 
-        info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
+        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
 
         return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
     }
@@ -67,8 +68,8 @@ class CarQuoteRepository extends BaseRepository
             'quoteUID' => $data['quote_uuid'],
             'update' => true,
         ];
-        $payLoad['plans'][] = (object) [
-            'planId' => (int) $data['plan_id'],
+        $payLoad['plans'][] = (object)[
+            'planId' => (int)$data['plan_id'],
             'isPayLaterActive' => true,
         ];
 
@@ -82,8 +83,7 @@ class CarQuoteRepository extends BaseRepository
      */
     public function fetchUpdateQuoteStatus($data)
     {
-        return DB::transaction(function() use($data)
-        {
+        return DB::transaction(function () use ($data) {
             $quote = $this->where('uuid', $data['quote_uuid'])->first();
 
             $previousStatusId = $quote->quote_status_id;
@@ -101,4 +101,5 @@ class CarQuoteRepository extends BaseRepository
             return $quote;
         });
     }
+    
 }
