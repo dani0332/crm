@@ -177,7 +177,7 @@
                         <p>Policy Number</p>
                         <p class="text-red">(Master Policy issued by Salama)</p>
                     </td>
-                    <td>{{$viewData['master_policy_number']}}</td>
+                    <td  colspan="2">{{$viewData['master_policy_number'] ?? ""}}</td>
                 </tr>
                 <tr>
                     <td>
@@ -185,26 +185,26 @@
                         <p class="text-red">(Issued by Insurancemarket.ae)
                         </p>
                     </td>
-                    <td>{{$viewData['certificate_number']}}</td>
+                    <td  colspan="2">{{$viewData['certificate_number'] ?? ""}}</td>
 
                 </tr>
                 <tr>
                     <td>Full Name of Covered Member</td>
-                    <td>{{$viewData['name']}}</td>
+                    <td  colspan="2">{{$viewData['name'] ?? ""}}</td>
                 </tr>
                 <tr>
                     <td>Date of Birth</td>
-                    <td>{{$viewData['dob']}}</td>
+                    <td  colspan="2">{{$viewData['dob'] ?? ""}}</td>
 
                 </tr>
                 <tr>
                     <td>Emirates ID</td>
-                    <td></td>
+                    <td colspan="2"></td>
 
                 </tr>
                 <tr>
                     <td>Date of Enrollment</td>
-                    <td>{{$viewData['date_of_enrollment']}}</td>
+                    <td colspan="2">{{$viewData['date_of_enrollment'] ?? ""}}</td>
 
                 </tr>
                 <tr>
@@ -215,21 +215,33 @@
                             <li>Medical Expense (as an RTA extension)</li>
                         </ul>
                     </td>
+                    <td>
+                        <ul>
+                            <li>AED 10,000</li>
+                            <li>AED 50,000</li>
+                        </ul>
+                    </td>
 
                 </tr>
                 <tr>
                     <td>Age Limit</td>
-                    <td></td>
+                    <td  colspan="2">
+                        <ul>
+                            <li>Minimum Entry Age:  18 years</li>
+                            <li>Maximum Entry Age:  59 years</li>
+                            <li>Maximum Expiry Age:  60 years</li>
+                        </ul>
+                    </td>
 
                 </tr>
                 <tr>
                     <td>Type of Vehicle</td>
-                    <td>{{$viewData['type']}}</td>
+                    <td  colspan="2" >{{$viewData['type'] ?? ""}}</td>
 
                 </tr>
                 <tr>
                     <td>Annual Contribution Amount*</td>
-                    <td>{{$viewData['premium']}}</td>
+                    <td  colspan="2">{{$viewData['premium'] ?? ""}}</td>
 
                 </tr>
             </tbody>
