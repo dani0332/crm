@@ -24,8 +24,6 @@ class CreateCustomerMemberTable extends Migration
                 $table->date('dob')->nullable();
                 $table->integer('nationality_id')->nullable();
                 $table->timestamps();
-
-                $table->index(['memberable_id', 'memberable_type'], 'customer_members_memberable_index');
             });
         }
     }
