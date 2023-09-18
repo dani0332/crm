@@ -19,10 +19,9 @@ use App\Enums\PermissionsEnum;
                 <ul class="nav side-menu">
                     <li> <a href="{{ url('/home') }}"><i class="fa fa-home"></i> Home</a></li>
                 </ul>
-            @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW, PermissionsEnum::UtmLeadsSalesReport])
+                @canany([PermissionsEnum::DashboardView, PermissionsEnum::TPL_DASHBOARD_VIEW, PermissionsEnum::COMPREHENSIVE_DASHBOARD_VIEW, PermissionsEnum::MAIN_DASHBOARD_VIEW, PermissionsEnum::UtmLeadsSalesReport])
                 <ul class="nav side-menu">
-                    <li><a><i class="fa fa-tachometer"
-                        aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
+                    <li><a><i class="fa fa-tachometer" aria-hidden="true"></i>Dashboard <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             @can(PermissionsEnum::DashboardView)
                             <li><a href="{{ url('dashboard/car-conversion') }}">Car Conversion</a></li>
@@ -41,10 +40,9 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcanany
-                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport])
+                @canany([PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW, PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW, PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW, PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,PermissionsEnum::UtmLeadsSalesReport, PermissionsEnum::RENEWAL_BATCH_REPORT])
                 <ul class="nav side-menu">
-                    <li><a><i class="fa fa-line-chart"
-                        aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
+                    <li><a><i class="fa fa-line-chart" aria-hidden="true"></i>Reports <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             @can(PermissionsEnum::ADVISOR_CONVERSION_REPORT_VIEW)
                             <li><a href="{{ url('reports/advisor-conversion') }}">Advisor Conversion</a></li>
@@ -61,6 +59,9 @@ use App\Enums\PermissionsEnum;
                                 @can(PermissionsEnum::UtmLeadsSalesReport)
                                     <li><a href="{{ url('reports/utm-report') }}">UTM Report</a></li>
                                 @endcan
+                            @can(PermissionsEnum::RENEWAL_BATCH_REPORT)
+                                <li><a href="{{ url('reports/renewal-report') }}">Daily Renewal Report</a></li>
+                            @endcan
                         </ul>
                     </li>
                 </ul>
@@ -86,17 +87,17 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endcan
                 @canany([
-                    PermissionsEnum::CarQuotesList,
-                    PermissionsEnum::HealthQuotesList,
-                    PermissionsEnum::TravelQuotesList,
-                    PermissionsEnum::LifeQuotesList,
-                    PermissionsEnum::HomeQuotesList,
-                    PermissionsEnum::PetQuotesList,
-                    PermissionsEnum::BikeQuotesList,
-                    PermissionsEnum::CycleQuotesList,
-                    PermissionsEnum::YachtQuotesList,
-                    PermissionsEnum::JetskiQuotesList,
-                    PermissionsEnum::UtmLeadsSalesReport
+                PermissionsEnum::CarQuotesList,
+                PermissionsEnum::HealthQuotesList,
+                PermissionsEnum::TravelQuotesList,
+                PermissionsEnum::LifeQuotesList,
+                PermissionsEnum::HomeQuotesList,
+                PermissionsEnum::PetQuotesList,
+                PermissionsEnum::BikeQuotesList,
+                PermissionsEnum::CycleQuotesList,
+                PermissionsEnum::YachtQuotesList,
+                PermissionsEnum::JetskiQuotesList,
+                PermissionsEnum::UtmLeadsSalesReport
                 ])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-quote-left"></i> Personal Quotes <span class="fa fa-chevron-down"></span></a>
@@ -105,7 +106,7 @@ use App\Enums\PermissionsEnum;
                             <li><a>Car<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
                                     @can(PermissionsEnum::CarQuoteSearch)
-                                        <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Search</a></li>
+                                    <li><a href="{{ url('/personal-quotes/car/car-quotes-search') }}">Search</a></li>
                                     @endcan
                                     <li><a href="{{ url('quotes/car') }}">Lead List</a></li>
                                 </ul>
@@ -124,31 +125,31 @@ use App\Enums\PermissionsEnum;
                             <li><a href="{{ url('quotes/home') }}">Home Quotes</a></li>
                             @endcan
                             @can(PermissionsEnum::PetQuotesList)
-                                @if(in_array(quoteTypeCode::Pet, newUi()))
-                                <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
-                                @else
-                                <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
-                                @endif
+                            @if(in_array(quoteTypeCode::Pet, newUi()))
+                            <li><a href="{{ url('personal-quotes/pet') }}">Pet Quotes</a></li>
+                            @else
+                            <li><a href="{{ url('quotes/pet') }}">Pet Quotes</a></li>
+                            @endif
                             @endcan
                             @can(PermissionsEnum::BikeQuotesList)
-                                @if(in_array(quoteTypeCode::Bike, newUi()))
-                                    <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
-                                @endif
+                            @if(in_array(quoteTypeCode::Bike, newUi()))
+                            <li><a href="{{ url('personal-quotes/bike') }}">Bike Quotes</a></li>
+                            @endif
                             @endcan
                             @can(PermissionsEnum::CycleQuotesList)
-                                @if(in_array(quoteTypeCode::Cycle, newUi()))
-                                    <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
-                                @endif
+                            @if(in_array(quoteTypeCode::Cycle, newUi()))
+                            <li><a href="{{ url('personal-quotes/cycle') }}">Cycle Quotes</a></li>
+                            @endif
                             @endcan
                             @can(PermissionsEnum::YachtQuotesList)
-                                @if(in_array(quoteTypeCode::Yacht, newUi()))
-                                    <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
-                                @endif
+                            @if(in_array(quoteTypeCode::Yacht, newUi()))
+                            <li><a href="{{ url('personal-quotes/yacht') }}">Yacht Quotes</a></li>
+                            @endif
                             @endcan
                             @can(PermissionsEnum::JetskiQuotesList)
-                                @if(in_array(quoteTypeCode::Jetski, newUi()))
-                                    <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
-                                @endif
+                            @if(in_array(quoteTypeCode::Jetski, newUi()))
+                            <li><a href="{{ url('personal-quotes/jetski') }}">JetSki Quotes</a></li>
+                            @endif
                             @endcan
                         </ul>
                     </li>
@@ -156,8 +157,7 @@ use App\Enums\PermissionsEnum;
                 @endcanany
                 @canany([PermissionsEnum::GMQuotesList, PermissionsEnum::CorpLineQuotesList])
                 <ul class="nav side-menu">
-                    <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span
-                                class="fa fa-chevron-down"></span></a>
+                    <li> <a><i class="fa fa-quote-right"></i> Business Quotes <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                             @can(PermissionsEnum::GMQuotesList)
                             <li><a href="{{ url('medical/amt') }}"> Group Medical Quotes </a></li>
@@ -168,6 +168,20 @@ use App\Enums\PermissionsEnum;
                         </ul>
                 </ul>
                 @endcanany
+                @canany([PermissionsEnum::CAR_SOLD_LIST, PermissionsEnum::CAR_UNCONTACTABLE_LIST])
+                    <ul class="nav side-menu">
+                        <li> <a><i class="fa fa-quote-right"></i>Car Sold / Uncon <span class="fa fa-chevron-down"></span></a>
+                            <ul class="nav child_menu">
+                                @can(PermissionsEnum::CAR_SOLD_LIST)
+                                    <li><a href="{{ url('/quotes/car-sold') }}"> Car Sold </a></li>
+                                @endcan
+                                @can(PermissionsEnum::CAR_UNCONTACTABLE_LIST)
+                                    <li><a href="{{ url('/quotes/car-uncontactable') }}"> Car Uncontactable </a></li>
+                                @endcan
+                            </ul>
+                    </ul>
+                @endcanany
+               
                 @canany([PermissionsEnum::VehicleDepreciationList, PermissionsEnum::VehicleValuationList])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
@@ -313,6 +327,12 @@ use App\Enums\PermissionsEnum;
                 </ul>
                 @endhasanyrole
 
+                @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+                <ul class="nav side-menu">
+                    <li><a href="{{ url('legacy-policy') }}"><i></i>Legacy policy</a>
+                </ul>
+                @endif
+
                 {{-- @if (auth()->check() && auth()->user()->isAdmin())
                 <ul class="nav side-menu">
                     <li><a href="{{ url('assignOE') }}"><i></i> Assign OE </a>
@@ -345,7 +365,8 @@ use App\Enums\PermissionsEnum;
                 @endcan
                 @canany([PermissionsEnum::UsersList, PermissionsEnum::RoleList, PermissionsEnum::TeamsList,
                 PermissionsEnum::InsuranceProviderList, PermissionsEnum::ApplicationStorageList,PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
-                PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES])
+                PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+                PermissionsEnum::RENEWAL_BATCHES_LIST])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-user"></i> Admin <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
@@ -358,18 +379,21 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::TeamsList)
                             <li><a href="{{ url('generic/team') }}">Teams</a></li>
                             @endcan
+                            @can(PermissionsEnum::RENEWAL_BATCHES_LIST)
+                            <li><a href="{{ route('renewal-batches-list') }}">Renewal Batches</a></li>
+                            @endcan
                             @canany([PermissionsEnum::RULE_CONFIG_LIST, PermissionsEnum::QUAD_CONFIG_LIST , PermissionsEnum::TIER_CONFIG_LIST, PermissionsEnum::TeamThresholdView,
                             PermissionsEnum::COMMERCIAL_KEYWORDS, PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES])
                             <li><a>Allocation Config<span class="fa fa-chevron-down" style="color: white;"></span></a>
                                 <ul class="nav child_menu">
                                     @can(PermissionsEnum::TIER_CONFIG_LIST)
-                                        <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
+                                    <li><a href="{{ url('generic/tier') }}">Tiers</a></li>
                                     @endcan
                                     @can(PermissionsEnum::QUAD_CONFIG_LIST)
-                                        <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
+                                    <li><a href="{{ url('generic/quadrant') }}">Quadrants</a></li>
                                     @endcan
                                     @can(PermissionsEnum::RULE_CONFIG_LIST)
-                                        <li><a href="{{ url('generic/rule') }}">Rules</a></li>
+                                    <li><a href="{{ url('generic/rule') }}">Rules</a></li>
                                     @endcan
                                     @can(PermissionsEnum::TeamThresholdView)
                                         <li><a href="{{ url('generic/allocation-threshold') }}">Team Threshold </a></li>
