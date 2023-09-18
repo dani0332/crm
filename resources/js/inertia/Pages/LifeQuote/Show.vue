@@ -13,9 +13,10 @@ defineProps({
   lostReasons: Array,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
-  customerTypeEnum: Array,
+  customerTypeEnum: Object,
   nationalities: Array,
   memberRelations: Array,
+  membersDetails: Array
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -422,6 +423,10 @@ const updateProfileDetails = isValid => {
             <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CUSTOMER TYPE</dt>
+              <dd>{{ quote.customer_type }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
             <dd>{{ quote.advisor?.name }}</dd>
           </div>
@@ -662,7 +667,7 @@ const updateProfileDetails = isValid => {
 
     <MemberDetails
         :quote="quote"
-        :membersDetails="[]"
+        :membersDetails="membersDetails"
         :nationalities="nationalities"
         :memberRelations="memberRelations"
         :quote_type=quoteType

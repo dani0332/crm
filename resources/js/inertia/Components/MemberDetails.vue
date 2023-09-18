@@ -20,9 +20,13 @@ const props = defineProps({
 });
 
 const page = usePage();
+const notification = useToast();
 const modals = reactive({
     member: false,
 });
+
+const dateFormat = date =>
+    date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const nationalitiesOptions = computed(() => {
     return page.props.nationalities.map(nat => ({
@@ -44,7 +48,7 @@ const memberDetailsTable = reactive({
     columns: [
         {
             text: 'Member Name',
-            value: 'gender',
+            value: 'first_name',
         },
         {
             text: 'Nationality',
@@ -56,7 +60,11 @@ const memberDetailsTable = reactive({
         },
         {
             text: 'Relation',
-            value: 'emirate',
+            value: 'relation',
+        },
+        {
+            text: 'Action',
+            value: 'action',
         },
     ],
 });
@@ -69,11 +77,11 @@ const memberFieldReq = reactive({
 const memberForm = useForm({
     id: null,
     first_name: '',
-    nationality_id: null,
     dob: null,
     relation_code: null,
+    nationality_id: null,
     quote_request_id: page.props.quote.id,
-    quote_type_id: props.quoteTypeId
+    quote_type: props.quote_type
 });
 
 const addMemberModal = () => {
@@ -90,6 +98,8 @@ function onEditMember(data) {
     memberForm.dob = data.dob;
     memberForm.relation_code = data.relation_code;
     memberForm.nationality_id = data.nationality_id;
+    memberForm.quote_request_id = data.quote_request_id;
+    memberForm.quote_type = props.quote_type;
 }
 
 const onMemberSubmit = isValid => {
@@ -127,6 +137,9 @@ const onMemberSubmit = isValid => {
         });
     }
 };
+const confirmDeleteData = reactive({
+    member: null,
+});
 
 const memberDelete = id => {
     modals.memberConfirm = true;
@@ -134,7 +147,7 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-    memberForm.delete(`/members/${confirmDeleteData.member}`, {
+    memberForm.delete(`/members/${props.quote_type}-${confirmDeleteData.member}`, {
         preserveScroll: true,
         onSuccess: () => {
             notification.success({

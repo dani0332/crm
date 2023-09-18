@@ -15,7 +15,7 @@ class QuoteMemberDetail extends Model
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
+        return $this->belongsTo(Nationality::class, 'nationality_id');
     }
 
     public function relation()
@@ -26,6 +26,14 @@ class QuoteMemberDetail extends Model
     public function getDobAttribute($value)
     {
         return Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY'));
+    }
+
+    /**
+     * @return mixed
+     */
+    public function scopeByQuoteTypeId($query, $quoteTypeId)
+    {
+        return $query->where('quote_type_id', $quoteTypeId);
     }
 
 }

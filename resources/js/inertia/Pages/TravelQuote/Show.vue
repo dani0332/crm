@@ -1386,7 +1386,7 @@ onMounted(() => {
               </template>
 
               <template #item-action="item">
-                  <div class="flex gap-2 justify-center">
+                  <div class="flex gap-2">
                       <x-button
                           size="xs"
                           color="primary"

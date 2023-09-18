@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
+use App\Models\QuoteMemberDetail;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -17,6 +18,7 @@ use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
@@ -84,6 +86,7 @@ class LifeQuoteController extends Controller
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+        $membersDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypes::LIFE->id());
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $nationalities = NationalityRepository::withActive()->get();
@@ -126,6 +129,7 @@ class LifeQuoteController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
+            'membersDetails' => $membersDetails
         ]);
     }
 

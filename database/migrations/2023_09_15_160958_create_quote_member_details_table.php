@@ -20,11 +20,12 @@ class CreateQuoteMemberDetailsTable extends Migration
             $table->integer('quote_request_id');
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
-            $table->dateTime('dob')->nullable();
+            $table->date('dob')->nullable();
             $table->integer('nationality_id')->nullable();
             $table->foreign('nationality_id')->references('id')->on('nationality');
             $table->string('relation_code')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

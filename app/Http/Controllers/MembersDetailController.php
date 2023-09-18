@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
@@ -29,9 +30,10 @@ class MembersDetailController extends Controller
         } else {
             $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
 
-            if( $quoteObject ) {
-                QuoteMemberDetail::create($request->validated());
-                $quoteObject->quote_updated_at = Carbon::now();
+            if($quoteObject) {
+                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));
+                QuoteMemberDetail::updateOrCreate(array_merge($request->validated(), ['quote_type_id' => $quoteTypeId]));
+                $quoteObject->updated_at = Carbon::now();
                 $quoteObject->save();
             }
         }
@@ -64,18 +66,26 @@ class MembersDetailController extends Controller
      */
     public function update(MemberDetailRequest $request, $id)
     {
+        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health)) {
+            HealthMemberDetail::findOrFail($id)->update($request->validated());
 
-        HealthMemberDetail::findOrFail($id)->update($request->validated());
+            $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
+            HealthQuote::where('primary_member_id', $id)->update($healthMemberData);
 
-        $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
-        HealthQuote::where('primary_member_id', $id)->update($healthMemberData);
+            $heathLeadData = ['quote_updated_at' => Carbon::now()];
+            if ($request->update_lead_against_member) {
+                $heathLeadData = array_merge($heathLeadData, $healthMemberData);
+            }
 
-        $heathLeadData = ['quote_updated_at' => Carbon::now()];
-        if($request->update_lead_against_member){
-            $heathLeadData = array_merge($heathLeadData, $healthMemberData);
+            HealthQuote::find($request->health_quote_request_id)->update($heathLeadData);
+        } else {
+            $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));
+            QuoteMemberDetail::findOrFail($id)->update(array_merge($request->validated(), ['quote_type_id' => $quoteTypeId]));
+            $quoteObject->updated_at = Carbon::now();
+            $quoteObject->save();
+
         }
-
-        HealthQuote::find($request->health_quote_request_id)->update($heathLeadData);
 
         return redirect()->back();
     }
@@ -84,14 +94,26 @@ class MembersDetailController extends Controller
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy($id)
     {
-        $data = HealthMemberDetail::find($id);
-        if ($data) {
-            HealthQuote::find($data->health_quote_request_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
-            $data->delete();
+        $explode = explode('-', $id);
+
+        if (strtolower($explode[0]) == strtolower(quoteTypeCode::Health)) {
+            $data = HealthMemberDetail::find($explode[1]);
+            if ($data) {
+                HealthQuote::find($data->health_quote_request_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
+                $data->delete();
+            }
+        } else {
+            $memberDetails = QuoteMemberDetail::findOrFail($explode[1]);
+            $memberDetails->delete();
+
+            $quoteObject = $this->getQuoteObject(strtolower($explode[0]), $memberDetails->quote_request_id);
+            $quoteObject->updated_at = Carbon::now();
+            $quoteObject->save();
+
         }
 
         return redirect()->back();
