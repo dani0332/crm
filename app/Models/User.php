@@ -11,7 +11,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
-use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -19,7 +18,6 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements AuditableContract
 {
     use Auditable;
-    use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
     use HasRoles;

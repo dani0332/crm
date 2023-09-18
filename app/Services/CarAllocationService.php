@@ -98,7 +98,9 @@ class CarAllocationService extends AllocationService
     {
         info('Started searching tier for car lead: '.json_encode($carLead->code));
 
-        $plans = CarQuotePlanDetail::where('quote_uuid', $carLead->uuid)->where('repair_type', CarPlanType::COMP)->get();
+        $plans = CarQuotePlanDetail::where('quote_uuid', $carLead->uuid)
+                ->where('is_rating_available', true)
+                ->where('repair_type', CarPlanType::COMP)->get();
 
         $tiersQuery = Tier::where('is_active', 1); // Query to get all active tiers
 
@@ -147,8 +149,6 @@ class CarAllocationService extends AllocationService
 
         $tierUserIds = $tierUserQuery->pluck('user_id');
 
-        info('Tier users are '.json_encode($tierUserIds));
-
         $statusOrder = $this->getStatusOrder();
 
         foreach ($statusOrder as $status) {
@@ -178,8 +178,6 @@ class CarAllocationService extends AllocationService
             })
             ->whereIn('user_id', $tierUserIds)
             ->orderByDesc('last_allocated');
-        info('query for advisor selection '.$query->toSql());
-        info('query for advisor bindings '.json_encode($query->getBindings()));
 
         return $query->get();
     }
