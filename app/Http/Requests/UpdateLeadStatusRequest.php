@@ -83,11 +83,68 @@ class UpdateLeadStatusRequest extends FormRequest
             }
         }
 
+        if (request()->leadStatus == QuoteStatusEnum::Lost) {
+            $rules['lostReason'] = 'required';
+        }
+
+        if (request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            $rules['trans_code'] = 'required';
+        }
+
+        if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
+            if(in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
+                $rules['next_followup_date'] = 'required|date_format:'.config('constants.DATETIME_DISPLAY_FORMAT').'|after_or_equal:'.date(config('constants.DATETIME_DISPLAY_FORMAT'));
+                $rules['notes'] = 'required';
+            }
+
+            if (request()->leadStatus == QuoteStatusEnum::IMRenewal) {
+                if (!isset(request()->tier_id)) {
+                    $rules['tier_id'] = 'required';
+                }
+            }
+        }
+
         return $rules;
+    }
+
+    /**
+     * validate quote record and maximum number of alread uploaded files
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            $quoteObject = $this->getQuoteObject(strtolower(request()->modelType), request()->leadId);
+
+            if(!$quoteObject) {
+                $validator->errors()->add('value', 'Lead not found please try again.');
+            }
+
+            $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
+                'insured_first_name',
+                'insured_last_name',
+                'emirates_id_number',
+                'emirates_id_expiry_date'
+            ])->toArray();
+
+            if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
+            }
+
+            if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
+                if( ($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
+                    request()->leadStatus == QuoteStatusEnum::Qualified) {
+                    $validator->errors()->add('value', 'Please select team type before moving to '.quoteStatusCode::QUALIFIED.' status');
+                }
+            }
+        });
     }
 
     public function messages()
     {
-        return ['proof_document.required' => 'In order to change the status to Car Sold or Uncontactable, a proof document is required'];
+        return [
+            'proof_document.required' => 'In order to change the status to Car Sold or Uncontactable, a proof document is required',
+            'leadStatus.required' => 'Please select lead status and try again.',
+        ];
     }
 }
