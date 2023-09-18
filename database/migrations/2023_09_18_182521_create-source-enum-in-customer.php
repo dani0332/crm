@@ -16,7 +16,7 @@ class CreateSourceEnumInCustomer extends Migration
         if (Schema::hasTable('customer')) {
             Schema::table('customer', function ($table) {
                 if (! Schema::hasColumn('customer', 'source')) {
-                    $table->string('source', 50)->index()->nullable()->default(null);
+                    $table->string('source', 30)->index()->nullable()->default(null);
                 }
             });
         }
