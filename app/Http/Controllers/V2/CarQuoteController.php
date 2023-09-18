@@ -2,15 +2,48 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 
 class CarQuoteController extends Controller
 {
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function getCarSoldQuotes()
+    {
+        $quotes = CarQuoteRepository::getLostQuotes(QuoteStatusEnum::CarSold);
+
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
+
+        return inertia('LostQuotes/CarSold', [
+            'quotes' => $quotes,
+            'advisors' => $advisors,
+        ]);
+    }
+
+    /**
+     * @return \Inertia\Response|\Inertia\ResponseFactory
+     */
+    public function getCarUncontactableQuotes()
+    {
+        $quotes = CarQuoteRepository::getLostQuotes(QuoteStatusEnum::Uncontactable);
+
+        $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
+
+        return inertia('LostQuotes/CarUncontactable', [
+            'quotes' => $quotes,
+            'advisors' => $advisors,
+        ]);
+    }
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */

@@ -6,10 +6,12 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
+use App\Enums\CarTeamType;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
 use App\Enums\LeadSourceEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -22,6 +24,7 @@ use App\Exports\CarQuoteExport;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
 use App\Http\Requests\ExportPlansPdfRequest;
+use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
@@ -37,6 +40,9 @@ use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
+use App\Repositories\RenewalBatchRepository;
+use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -150,10 +156,20 @@ class CRUDController extends Controller
      */
     public function index(Request $request)
     {
-        $renewalAdvisors = [];
+        $renewalAdvisors = $upcomingBatch = [];
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
+        $showDeadlineAlert = false;
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
+            $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
+
+            if (isset($upcomingBatch->deadline->deadline_date) &&
+                auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
+                UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS])
+            ) {
+                $showDeadlineAlert = true;
+            }
+
             $isManualAllocationAllowed = Auth::user()->isAdmin() || Auth::user()->hasRole(RolesEnum::LeadPool) ? true : false;
         } else {
             $userRoles = Auth::user()->usersroles()->get();
@@ -257,7 +273,7 @@ class CRUDController extends Controller
                 ->make(true);
         }
 
-        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount'));
+        return view('shared.view', compact('model', 'dropdownSource', 'customTitles', 'advisors', 'isManagerORDeputy', 'isRenewalUser', 'renewalAdvisors', 'isNewBusinessUser', 'isLeadPool', 'isCarLeadAllocationOn', 'tiers', 'isManualAllocationAllowed', 'userMaxCap', 'todayAssignmentCount', 'upcomingBatch', 'showDeadlineAlert'));
     }
 
     /**
@@ -522,6 +538,30 @@ class CRUDController extends Controller
                 $payment->payment_method_name = $payment->paymentMethod->name;
             }
 
+            $lostRejectReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->get();
+            $lostApproveReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_APPROVE_REASONS)->get();
+
+            if (isCarLostStatus($record->quote_status_id)) {
+                $paymentEntityModel->load(['carLostQuoteLogs' => function ($q) {
+                    $q->with(['advisor', 'quoteStatus', 'documents', 'actionBy'])->orderBy('id', 'desc');
+                }, 'carLostQuoteLog']);
+            }
+
+            [$allowQuoteLogAction, $carLostChangeStatus, $leadStatuses] = $this->carQuoteService->checkCarLostPermissions($record, $paymentEntityModel, $leadStatuses);
+
+            if ($record->source != LeadSourceEnum::RENEWAL_UPLOAD || auth()->user()->hasRole(RolesEnum::CarManager)) {
+                $leadStatuses = $leadStatuses->whereNotIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+            }
+
+            $daysAfterCapturedPayment = null;
+            if (($capturedPaymentDate = PaymentStatusLog::where([
+                'quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $record->id,
+                'current_payment_status_id' => PaymentStatusEnum::CAPTURED,
+            ])->first())) {
+                $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
+            }
+
             $daysAfterCapturedPayment = null;
             if (($capturedPaymentDate = PaymentStatusLog::where([
                 'quote_type_id' => QuoteTypeId::Car,
@@ -564,7 +604,7 @@ class CRUDController extends Controller
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts',
-                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts',
+                'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl'
             ]));
         }
@@ -1201,7 +1241,7 @@ class CRUDController extends Controller
         }
     }
 
-    public function updateLeadStatus(Request $request)
+    public function updateLeadStatus(UpdateLeadStatusRequest $request)
     {
         if (! $request->leadStatus) {
             return redirect()->back()->with('message', 'Please select lead status and try again.');

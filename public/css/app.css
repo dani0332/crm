@@ -1,6 +1,6 @@
 @import url(https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap);
 /*
-! tailwindcss v3.3.2 | MIT License | https://tailwindcss.com
+! tailwindcss v3.3.3 | MIT License | https://tailwindcss.com
 */
 
 /*
@@ -170,6 +170,8 @@ optgroup,
 select,
 textarea {
   font-family: inherit; /* 1 */
+  font-feature-settings: inherit; /* 1 */
+  font-variation-settings: inherit; /* 1 */
   font-size: 100%; /* 1 */
   font-weight: inherit; /* 1 */
   line-height: inherit; /* 1 */
@@ -304,6 +306,14 @@ ul,
 menu {
   list-style: none;
   margin: 0;
+  padding: 0;
+}
+
+/*
+Reset default styling for dialogs.
+*/
+
+dialog {
   padding: 0;
 }
 
@@ -568,6 +578,15 @@ html.dark{
   padding-right: 2.5rem;
   -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+}
+.form-select:where([size]:not([size="1"])){
+  background-image: initial;
+  background-position: initial;
+  background-repeat: unset;
+  background-size: initial;
+  padding-right: 0.75rem;
+  -webkit-print-color-adjust: unset;
+          print-color-adjust: unset;
 }
 .pointer-events-none{
   pointer-events: none;
@@ -858,8 +877,7 @@ html.dark{
   margin-bottom: 1.5rem;
 }
 .me-0{
-  -webkit-margin-end: 0px;
-          margin-inline-end: 0px;
+  margin-inline-end: 0px;
 }
 .ml-0{
   margin-left: 0px;
@@ -910,8 +928,7 @@ html.dark{
   margin-right: auto;
 }
 .ms-0{
-  -webkit-margin-start: 0px;
-          margin-inline-start: 0px;
+  margin-inline-start: 0px;
 }
 .mt-0{
   margin-top: 0px;
@@ -1666,6 +1683,10 @@ html.dark{
   --tw-bg-opacity: 1;
   background-color: rgb(65 131 189 / var(--tw-bg-opacity));
 }
+.bg-\[\#ffff00\]{
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 255 0 / var(--tw-bg-opacity));
+}
 .bg-\[color\:var\(--x-badge-bg\)\]{
   background-color: var(--x-badge-bg);
 }
@@ -2351,6 +2372,10 @@ html.dark{
 .text-\[color\:var\(--x-tag-text\)\]{
   color: var(--x-tag-text);
 }
+.text-amber-500{
+  --tw-text-opacity: 1;
+  color: rgb(245 158 11 / var(--tw-text-opacity));
+}
 .text-black{
   --tw-text-opacity: 1;
   color: rgb(0 0 0 / var(--tw-text-opacity));
@@ -2406,6 +2431,10 @@ html.dark{
 .text-indigo-800{
   --tw-text-opacity: 1;
   color: rgb(55 48 163 / var(--tw-text-opacity));
+}
+.text-orange-500{
+  --tw-text-opacity: 1;
+  color: rgb(249 115 22 / var(--tw-text-opacity));
 }
 .text-primary{
   --tw-text-opacity: 1;
