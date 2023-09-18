@@ -3,19 +3,23 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
+use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
@@ -105,11 +109,12 @@ class CycleQuoteController extends Controller
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-
+        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypes::CYCLE->id());
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CYCLE->value);
-
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::CYCLE->id(),
             'quote_request_id' => $quote->id,
@@ -136,7 +141,10 @@ class CycleQuoteController extends Controller
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
             'embeddedProducts' => $embeddedProducts,
-            'customerTypeEnum' => CustomerTypeEnum::asArray()
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'membersDetails' => $membersDetail,
+            'memberRelations' => $memberRelations,
+            'nationalities' => $nationalities,
         ]);
     }
 }

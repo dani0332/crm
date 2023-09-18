@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -122,12 +123,18 @@ class CycleQuoteRepository extends BaseRepository
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
                 },
+                'customer',
                 'createdBy',
                 'updatedBy',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-            ])->firstOrFail();
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = '.$this->getTable().'.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type')
+            ])
+            ->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         return $quote;

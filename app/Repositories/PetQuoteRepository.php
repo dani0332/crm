@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -128,7 +129,12 @@ class PetQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-            ])->firstOrFail();
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = '.$this->getTable().'.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type')
+            ])
+            ->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
         return $quote;

@@ -12,7 +12,6 @@ defineProps({
   isManualAllocationAllowed: Boolean,
   genderOptions: Object,
   leadStatuses: Array,
-  permissions: Object,
   enums: Object,
   lostReasons: Array,
   ecomDetails: Object,

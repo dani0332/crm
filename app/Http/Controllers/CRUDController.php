@@ -36,6 +36,7 @@ use App\Models\User;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Services\ActivitiesService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
@@ -542,12 +543,13 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+            $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
-
+            $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::HOME->id());
             $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
 
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
@@ -613,6 +615,9 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'embeddedProducts' => $embeddedProducts,
                 'customerTypeEnum' => CustomerTypeEnum::asArray(),
+                'membersDetails' => $membersDetail,
+                'memberRelations' => $memberRelations,
+                'nationalities' => $nationalities,
             ]);
         }
 
