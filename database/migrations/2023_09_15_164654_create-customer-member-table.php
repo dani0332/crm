@@ -24,8 +24,8 @@ class CreateCustomerMemberTable extends Migration
                 $table->date('dob')->nullable();
                 $table->integer('nationality_id')->nullable();
                 $table->timestamps();
-                
-                $table->foreign('nationality_id')->references('id')->on('nationality');
+
+                $table->foreign('nationality_id')->references('id')->on('nationality')->onDelete('no action');
                 $table->foreign('memberable_id')->references('id')->on('customer')->onDelete('no action');
                 $table->index(['memberable_id', 'memberable_type'], 'customer_members_memberable_index');
             });
