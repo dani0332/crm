@@ -129,12 +129,8 @@ class DashboardController extends Controller
             return in_array($item->id, $commonTeams);
         });
         $tiers = $this->tierService->getTPLTiers();
-        $commonTeam = 0;
-        if (count($commonTeams) > 0) {
-            $commonTeam = $commonTeams[0];
-        }
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'tiers'));
     }
 
     public function getTPLDashboardStats(Request $request): array
