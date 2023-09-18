@@ -20,9 +20,6 @@
         body {
             line-height: 1;
             font-family: "DejaVu Sans", sans-serif;
-            max-width: 80%;
-            width: 100%;
-            margin: 0px auto;
             position: relative;
         }
 
@@ -61,33 +58,26 @@
         }
 
         table {
-            border-color: #bfbfbf;
+            width: 100%;
             border-spacing: 0;
         }
 
-        tbody>tr>td {
-            border: 1px solid #bfbfbf;
+        table.bordered {
+            border-color: #444444;
+            border-spacing: 0;
+        }
+
+        table.bordered tbody>tr>td {
+            border: 1px solid #444444;
             padding: 4px 8px;
         }
 
-        thead>tr>th {
-            border: 1px solid #bfbfbf;
+        table.bordered thead>tr>th {
+            border: 1px solid #444444;
         }
 
         .text-left {
             text-align: left;
-        }
-
-        .text-xs {
-            font-size: 13px;
-        }
-
-        .text-sm {
-            font-size: 14px;
-        }
-
-        .text-xl {
-            font-size: 16px;
         }
 
         .text-red {
@@ -102,8 +92,16 @@
             margin: 56px 0;
         }
 
+        .mb-1 {
+            margin-bottom: 1rem;
+        }
+
         .mb-2 {
-            margin-bottom: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .mb-3 {
+            margin-bottom: 3rem;
         }
 
         .italic {
@@ -112,6 +110,16 @@
 
         header {
             padding-top: 32px;
+            max-width: 90%;
+            width: 100%;
+            margin: 0px auto;
+        }
+
+        main {
+            max-width: 80%;
+            width: 100%;
+            margin: 0px auto;
+            font-size: 17px;
         }
 
         footer {
@@ -119,15 +127,10 @@
             bottom: 0px;
             left: 0px;
             right: 0px;
-            padding: 0px;
-            margin: 80px 0 0 0;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-            position: fixed;
-            bottom: 0px;
-            height: 145px;
-            z-index: 1500;
+            z-index: 10;
+            max-width: 90%;
+            width: 100%;
+            margin: 0px auto;
         }
 
         .text-center {
@@ -135,13 +138,14 @@
         }
 
         .title {
-            margin-bottom: 16px;
+            margin-bottom: 2rem;
         }
 
         .title>h3 {
             text-align: center;
             text-decoration: underline;
-            margin: 16px 0;
+            margin: 1.5rem 0;
+            font-size: 22px;
         }
 
         .table-fixed {
@@ -164,21 +168,16 @@
             <p>This is to certify that the below member is an eligible customer under the Personal Accident and Medical Expenses cover for holders of an Individual Motor Policy sold via Insurancemarket.ae.</p>
         </div>
 
-        <h4 class="mb-2">Details</h4>
+        <h4 style="margin-bottom: 5px;">Details</h4>
 
-        <table class="table-fixed">
-            <colgroup>
-                <col width="275px" />
-                <col />
-            </colgroup>
+        <table class="bordered">
             <tbody>
                 <tr>
-                    <td>
+                    <td width="150">
                         <p>Policy Number</p>
                         <p class="text-red">(Master Policy issued by Salama)</p>
                     </td>
                     <td>{{$viewData['master_policy_number']}}</td>
-
                 </tr>
                 <tr>
                     <td>
@@ -210,7 +209,12 @@
                 </tr>
                 <tr>
                     <td>Covered Benefits</td>
-                    <td></td>
+                    <td>
+                        <ul>
+                            <li>Accidental Death Benefit</li>
+                            <li>Medical Expense (as an RTA extension)</li>
+                        </ul>
+                    </td>
 
                 </tr>
                 <tr>
@@ -231,13 +235,46 @@
             </tbody>
         </table>
 
-        <div>
-            <p class="my-4 italic">* Kindly note that no refunds apply for mid-term cancellations</p>
-            <p class="my-4"><b>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</b></p>
-            <div class="my-8">Signature Authorized</div>
-            <div class="italic">Subject to the terms and conditions and exclusions as laid out in the Master Plan No. _________________________ issued by SALAMA which is considered renewed every year unless advised otherwise.</div>
+        <p class="my-4 italic">* Kindly note that no refunds apply for mid-term cancellations</p>
+
+        <div style="margin: 2rem 0 3rem;">
+            <strong>Signed on behalf of SALAMA Islamic Arab Insurance Co. (P.S.C.)</strong>
         </div>
+
+        <div class="mb-3">
+            <p>__________________________</p>
+        Signature Authorized
+        </div>
+        <div class="italic mb-2">Subject to the terms and conditions and exclusions as laid out in the Master Plan No. _________________________ issued by SALAMA which is considered renewed every year unless advised otherwise.</div>
     </main>
+
+    <footer>
+        <table>
+            <tr>
+                <td>
+                    <div style="font-size: 14px;">
+                        SALAMA - Islamic Arab Insurance Co. (PJC) <br />
+                        Family Takaful Division <br />
+                        P.O. Box 10214, Dubai, UAE
+                    </div>
+                </td>
+                <td>
+                    <div style="text-align: center; font-size: 16px; vertical-align: bottom;">SALAMA - Internal</div>
+                </td>
+                <td>
+                    <div style="font-size: 14px; text-align: right;">
+                        Call Center No.: 800-SALAMA (725262) <br />
+                        Customer Service: cs.ft@salamalife.ae <br />
+                        Claims Department: claims@salamalife.ae</div>
+                </td>
+            </tr>
+        </table>
+
+        <div style="margin-top: 2rem;">
+            <span style="background-color: #246b71; width: 500px; height: 20px; display: inline-block;"></span>
+            <span style="background-color: #fdcc00; width: 100px; height: 20px;  display: inline-block; margin-left: -5px;"></span>
+        </div>
+    </footer>
 </body>
 
 </html>
