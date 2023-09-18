@@ -9,4 +9,6 @@ enum LookupsEnum: string
     case PET_AGES = 'pet-ages';
     case PET_TYPES = 'pet-types';
     case MEMBER_RELATION = 'member-relation';
+    case UBO_RELATION = 'ubo-relation';
+    case COMPANY_TYPE = 'company-type';
 }

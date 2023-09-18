@@ -9,7 +9,6 @@ defineProps({
   enums: Object,
   activities: Array,
   advisors: Array,
-  permissions: Object,
   typeCode: String,
   isBetaUser: Boolean,
   payments: Array,
@@ -18,13 +17,16 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   lostReasons: Object,
-  customerTypeEnum: Array
+  customerTypeEnum: Array,
+  companyTypes: Array,
+  nationalities: Array,
+  UBORelations: Array,
+  UBOsDetails: Array
 });
 
-const { isRequired } = useRules();
-
 const page = usePage();
-const hasRole = role => useHasRole(role);
+const { isRequired } = useRules();
+const hasAnyRole = roles => useHasAnyRole(roles);
 const notification = useNotifications('toast');
 
 const { copy, copied } = useClipboard();
@@ -59,6 +61,7 @@ const modals = reactive({
   createPlan: false,
   activity: false,
   activityConfirm: false,
+  customerEntityNotFound: false
 });
 
 const leadDuplicateForm = useForm({
@@ -359,36 +362,48 @@ const onAssignLead = () => {
   );
 };
 
-const disableCustProfFields = computed(() => {
-    return (hasRole(page.props.rolesEnum.PA) || hasRole(page.props.rolesEnum.OE)) ? false : true;
+const companyConcernOptions = [
+    { label: 'Parent', value: 'parent'},
+    { label: 'Sub Entity', value: 'sub_entity' },
+];
+
+const companyTypeOptions = computed(() => {
+    return page.props.companyTypes.map(comp_type => ({
+        value: comp_type.code,
+        label: comp_type.text,
+    }));
 });
 
-const customerProfileForm = reactive({
-    insured_first_name: page.props.quote.insured_first_name || '',
-    insured_last_name: page.props.quote.insured_last_name || '',
-    emirates_id_number: page.props.quote.emirates_id_number || null,
-    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+const isProfileUpdateAllow = computed(() => {
+    return !hasAnyRole([
+        page.props.rolesEnum.PA,
+        page.props.rolesEnum.OE,
+        page.props.rolesEnum.NRA
+    ]);
 });
 
-const updateProfileDetails = () => {
+const customerProfileForm = useForm({
+    customer_id: page.props.quote.customer_id,
+    trade_license_no: ''
+});
+
+const searchCustomerEntity = isValid => {
+    if (!isValid) return;
 
     let data = {
-        customer_id: page.props.quote.customer_id,
-        insured_first_name: customerProfileForm.insured_first_name,
-        insured_last_name: customerProfileForm.insured_last_name,
-        emirates_id_number: customerProfileForm.emirates_id_number,
-        emirates_id_expiry_date: customerProfileForm.emirates_id_expiry_date,
+        trade_license_no: customerProfileForm.trade_license_no,
     };
 
-    axios.post(route('update-customer-profile'), data).then(response => {
+    axios.post(route('get-customer-entity'), data).then(response => {
         if (response.status == 200) {
-            notification.success({
-                title: 'Customer profile details update successfully',
-                position: 'top',
-            });
+            if(response.data.customer_entity.length) {
+                // Modal Popup will come here
+            } else {
+                modals.customerEntityNotFound = true;
+            }
         } else {
             notification.error({
-                title: 'Customer profile details not updated',
+                title: 'Something went wrong',
                 position: 'top',
             });
         }
@@ -396,6 +411,7 @@ const updateProfileDetails = () => {
 }
 
 </script>
+
 <template>
   <div>
     <Head title="Business Quote Detail" />
@@ -489,11 +505,10 @@ const updateProfileDetails = () => {
             </div>
             <div>{{ quote.code }}</div>
           </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">COMPANY NAME</dt>
-            <dd>{{ quote.company_name }}</dd>
-          </div>
+            <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">CUSTOMER TYPE</dt>
+                <dd>{{ quote.customer_type }}</dd>
+            </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
             <dd>{{ quote.next_followup_date }}</dd>
@@ -618,82 +633,14 @@ const updateProfileDetails = () => {
         </dl>
       </div>
     </div>
+
       <div class="p-4 rounded shadow mb-6 bg-white">
           <div>
-              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type !== page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+              <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
               <x-divider class="mb-4 mt-1" />
           </div>
           <div class="text-sm">
-              <dl v-if="quote.customer_type !== page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">FIRST NAME</dt>
-                      <dd>{{ quote.first_name }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">LAST NAME</dt>
-                      <dd>{{ quote.last_name }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">INSURED FIRST NAME</dt>
-                      <dd>
-                          <x-input
-                              v-model="customerProfileForm.insured_first_name"
-                              placeholder="INSURED FIRST NAME"
-                              class="w-full"
-                              :disabled="!disableCustProfFields"
-                          />
-                      </dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">INSURED LAST NAME</dt>
-                      <dd>
-                          <x-input
-                              v-model="customerProfileForm.insured_last_name"
-                              placeholder="INSURED LAST NAME"
-                              class="w-full"
-                              :disabled="!disableCustProfFields"
-                          />
-                      </dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">MOBILE NUMBER</dt>
-                      <dd>{{ quote.mobile_no }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">EMAIL</dt>
-                      <dd>{{ quote.email }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">NATIONALITY</dt>
-                      <dd>{{ quote.nationality_id_text }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">DATE OF BIRTH</dt>
-                      <dd>{{ quote.dob }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">EMIRATES ID NUMBER</dt>
-                      <dd>
-                          <x-input
-                              v-model="customerProfileForm.emirates_id_number"
-                              placeholder="EMIRATES ID NUMBER"
-                              class="w-full"
-                              :disabled="!disableCustProfFields"
-                          />
-                      </dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
-                      <dd>
-                          <DatePicker
-                              v-model="customerProfileForm.emirates_id_expiry_date"
-                              placeholder="EMIRATES ID EXPIRY DATE"
-                              :disabled="!disableCustProfFields"
-                          />
-                      </dd>
-                  </div>
-              </dl>
-              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+              <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                   <div class="grid sm:grid-cols-2">
                       <dt class="font-medium">FIRST NAME</dt>
                       <dd>{{ quote.first_name }}</dd>
@@ -712,22 +659,86 @@ const updateProfileDetails = () => {
                   </div>
                   <div class="grid sm:grid-cols-2">
                       <dt class="font-medium">COMPANY NAME</dt>
-                      <dd>{{ quote.email }}</dd>
+                      <dd>{{ quote.company_name }}</dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">TRADE LICENSE NO</dt>
+                      <dd>
+                          <x-input
+                              v-model="customerProfileForm.trade_license_no"
+                              placeholder="TRADE LICENSE NO"
+                              :rules="[isRequired]"
+                              :disabled="!isProfileUpdateAllow"
+                          />
+                          <x-button
+                              color="primary"
+                              size="sm"
+                              class="ml-2"
+                              @click.prevent="searchCustomerEntity"
+                          >
+                              Search
+                          </x-button>
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                      <dd></dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY ADDRESS</dt>
+                      <dd></dd>
+                  </div>
+
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY TYPE</dt>
+                      <dd>
+                          <x-select
+                              v-model="customerProfileForm.company_type"
+                              :options="companyTypeOptions"
+                              placeholder="Select Company Type"
+                              class="w-full"
+                          />
+                      </dd>
+                  </div>
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">COMPANY CONCERN</dt>
+                      <dd>
+                          <x-select
+                              v-model="customerProfileForm.company_concern"
+                              :options="companyConcernOptions"
+                              placeholder="Select Company Concern"
+                              class="w-full"
+                          />
+                      </dd>
                   </div>
               </dl>
-              <div class="flex justify-end">
-                  <x-button
-                      v-if="disableCustProfFields"
-                      class="mt-4"
-                      color="emerald"
-                      size="sm"
-                      @click="updateProfileDetails"
-                  >
-                      Update Profile
-                  </x-button>
-              </div>
           </div>
       </div>
+
+      <x-modal v-model="modals.customerEntityNotFound" show-close backdrop>
+          <template #header> Entity Information </template>
+          <p>No other Entity Found with the entered Trade License No. Please create a new entity</p>
+          <template #actions>
+              <div class="text-right space-x-4">
+                  <x-button
+                      size="sm"
+                      color="error"
+                      @click.prevent="modals.customerEntityNotFound = false"
+                  >
+                      Close
+                  </x-button>
+              </div>
+          </template>
+      </x-modal>
+
+      <UBODetails
+          :quote="quote"
+          :UBOsDetails="UBOsDetails"
+          :nationalities="nationalities"
+          :UBORelations="UBORelations"
+          quote_type="Business"
+      />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>

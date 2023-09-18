@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
@@ -53,6 +54,26 @@ class BusinessQuoteRepository extends BaseRepository
             ->orderBy('created_at', 'desc');
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function fetchGetBy($queryWhere)
+    {
+        $quote = $this->where($queryWhere)
+            ->with([
+                'advisor',
+                'businessQuoteRequestDetail.lostReason',
+                'customer'
+            ])
+            ->select([
+                $this->getTable().'.*',
+                \DB::raw('("' . CustomerTypeEnum::Entity . '") as customer_type')
+            ])
+            ->firstOrFail();
+
+        return $quote;
     }
 
     public function fetchCreateDuplicate(array $dataArr): object

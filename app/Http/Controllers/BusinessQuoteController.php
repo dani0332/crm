@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -11,11 +12,15 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
+use App\Models\Nationality;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -160,6 +165,11 @@ class BusinessQuoteController extends Controller
         })->values();
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
+        $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id());
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
 
@@ -230,7 +240,11 @@ class BusinessQuoteController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'typeCode' => quoteTypeCode::CORPLINE,
-            'customerTypeEnum' => CustomerTypeEnum::asArray()
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'companyTypes' => $companyType,
+            'UBOsDetails' => $membersDetail,
+            'UBORelations' => $memberRelations,
+            'nationalities' => $nationalities,
         ]);
     }
 

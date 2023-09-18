@@ -318,6 +318,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
         Route::post('update-customer-profile', [CentralController::class, 'updateCustomerProfileDetails'])->name('update-customer-profile');
+        Route::post('get-customer-entity', [\App\Http\Controllers\V2\CustomerController::class, 'getCustomerEntity'])->name('get-customer-entity');
 
         if (! in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);

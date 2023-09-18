@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
@@ -13,7 +14,11 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\GroupMedicalType;
+use App\Models\Nationality;
+use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -232,20 +237,20 @@ class AmtController extends Controller
      */
     public function show($id)
     {
-        $record = BusinessQuote::with(
-            'advisor',
-            'businessQuoteRequestDetail.lostReason'
-        )->where([
+        $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
-        ])->first();
-        abort_if(! $record, 404);
+        ]);
 
+        $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id());
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
 
         return inertia('GroupMedicalQuote/Show', [
             'quote' => $record,
@@ -257,7 +262,11 @@ class AmtController extends Controller
             'quoteStatuses' => $quoteStatuses,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
-            'customerTypeEnum' => CustomerTypeEnum::asArray()
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'companyTypes' => $companyType,
+            'UBOsDetails' => $membersDetail,
+            'UBORelations' => $memberRelations,
+            'nationalities' => $nationalities,
         ]);
     }
 

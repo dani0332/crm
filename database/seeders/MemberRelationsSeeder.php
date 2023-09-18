@@ -24,5 +24,8 @@ class MemberRelationsSeeder extends Seeder
         Lookup::updateOrCreate(['key' => 'member-relation', 'code' => 'relSister'], ['text' => 'Sister']);
         Lookup::updateOrCreate(['key' => 'member-relation', 'code' => 'relFriend'], ['text' => 'Friend']);
         Lookup::updateOrCreate(['key' => 'member-relation', 'code' => 'relBusinessPartner'], ['text' => 'Business Partner']);
+
+        Lookup::updateOrCreate(['key' => 'ubo-relation', 'code' => 'relOwner'], ['text' => 'Owner']);
+        Lookup::updateOrCreate(['key' => 'ubo-relation', 'code' => 'relPartner'], ['text' => 'Partner']);
     }
 }

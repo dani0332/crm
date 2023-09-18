@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Repositories\CustomerRepository;
+use Illuminate\Http\Request;
 
 class CustomerController extends Controller
 {
@@ -16,5 +17,10 @@ class CustomerController extends Controller
         CustomerRepository::storeAdditionalContact($customerId, $request->validated());
 
         return back();
+    }
+
+    public function getCustomerEntity(Request $request)
+    {
+        return response()->json(['customer_entity' => []]);
     }
 }

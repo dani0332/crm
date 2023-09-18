@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
@@ -66,13 +67,19 @@ class BusinessQuoteService extends BaseService
                 'bqr.device',
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id',
-                'bqr.renewal_import_code'
+                'bqr.renewal_import_code',
+                DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                'c.insured_first_name',
+                'c.insured_last_name',
+                'c.emirates_id_number',
+                'c.emirates_id_expiry_date'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
-            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
+            ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
+            ->leftJoin('customer as c','bqr.customer_id', 'c.id');
     }
 
     public function getEntity($id)

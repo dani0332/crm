@@ -627,28 +627,6 @@ const updateProfileDetails = isValid => {
                       <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
                   </div>
               </dl>
-              <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">FIRST NAME</dt>
-                      <dd>{{ quote.first_name }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">LAST NAME</dt>
-                      <dd>{{ quote.last_name }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">MOBILE NUMBER</dt>
-                      <dd>{{ quote.mobile_no }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">EMAIL</dt>
-                      <dd>{{ quote.email }}</dd>
-                  </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">COMPANY NAME</dt>
-                      <dd>{{ quote.email }}</dd>
-                  </div>
-              </dl>
               <div class="flex justify-end">
                   <x-button
                       v-if="isProfileUpdateAllow"
