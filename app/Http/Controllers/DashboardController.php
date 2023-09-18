@@ -47,6 +47,13 @@ class DashboardController extends Controller
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
         $startDate = now()->startOfDay()->format($dateFormat);
         $endDate = now()->endOfDay()->format($dateFormat);
+        // if (isset($request->range)) {
+        //     $startDate = Carbon::parse(explode(',', $request->range)[0])->startOfDay()->format($dateFormat);
+        //     $endDate = Carbon::parse(explode(',', $request->range)[1])->endOfDay()->format($dateFormat);
+        // } else {
+        //     $startDate = now()->startOfDay()->format($dateFormat);
+        //     $endDate = now()->endOfDay()->format($dateFormat);
+        // }
 
         $todaysLeads = CarQuote::whereBetween('created_at', [now()->startOfDay(), now()->endOfDay()])
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -79,9 +86,24 @@ class DashboardController extends Controller
         $assignedLeadsBySource = $this->dashboardService->getAssignedLeadsCountBySource($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
-        return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
-            'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
-            'revivalLeadsCount', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
+        return inertia('Dashboard/AccumulativeDashboard', [
+            'totalLeadsReceived' =>  $totalLeadsReceived,
+            'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce,
+            'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
+            'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce,
+            'teams' => $teams,
+            'carAdvisors' => $carAdvisors,
+            'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
+            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads,
+            'leadsCountByTier' => $leadsCountByTier,
+            'unAssignedLeadsByTier' => $unAssignedLeadsByTier,
+            'revivalLeadsCount' => $revivalLeadsCount,
+            'advisorLeadsAssignedData' => $advisorLeadsAssignedData,
+            'assignedLeadsBySource' => $assignedLeadsBySource,
+        ]);
+        // return view('dashboard.main_dashboard', compact(['totalLeadsReceived', 'totalLeadsReceivedEcommerce', 'totalUnAssignedLeadsReceived', 'totalUnAssignedLeadsReceivedEcommerce',
+        //     'teams', 'carAdvisors', 'teamWiseLeadsAssignedAverage', 'totalUnAssignedRevivalLeads', 'leadsCountByTier', 'unAssignedLeadsByTier',
+        //     'revivalLeadsCount', 'advisorLeadsAssignedData', 'assignedLeadsBySource', ]));
     }
 
     public function getRecentDailyStats(Request $request)
@@ -114,9 +136,11 @@ class DashboardController extends Controller
         $unAssignedLeadsByTier = $this->dashboardService->getUnAssignedLeadsCountByTier($filters);
         $advisorLeadsAssignedData = $this->dashboardService->getAdvisorLeadAssignedData($filters);
 
+
+
         return ['totalLeadsReceived' => $totalLeadsReceived, 'totalLeadsReceivedEcommerce' => $totalLeadsReceivedEcommerce, 'totalUnAssignedLeadsReceived' => $totalUnAssignedLeadsReceived,
             'totalUnAssignedLeadsReceivedEcommerce' => $totalUnAssignedLeadsReceivedEcommerce, 'teamWiseLeadsAssignedAverage' => $teamWiseLeadsAssignedAverage,
-            'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
+             'totalUnAssignedRevivalLeads' => $totalUnAssignedRevivalLeads, 'leadsCountByTier' => $leadsCountByTier, 'revivalLeadsCount' => $revivalLeadsCount, 'advisorLeadsAssignedData' => $advisorLeadsAssignedData, 'unAssignedLeadsByTier' => $unAssignedLeadsByTier];
     }
 
     public function renderTplDashboard(Request $request)
@@ -407,7 +431,12 @@ class DashboardController extends Controller
         $statsArray = $this->getWeeklyStats($quoteType);
         $headingArray = $this->getWeeklyHeading();
 
-        return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
+        return inertia('Dashboard/QuoteConversion', [
+            'statsArray' => $statsArray,
+            'headingArray' => $headingArray,
+            'qouteType' => $quoteType
+        ]);
+        // return view('dashboard.'.$quoteType.'-conversion', compact('statsArray', 'headingArray'));
     }
 
     public function getWeeklyStats($type): array
@@ -439,10 +468,10 @@ class DashboardController extends Controller
     public function getWeeklyHeading(): array
     {
         return [
-            '1WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(0),
-            '2WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(1),
-            '3WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(2),
-            '4WeekHeadingDate' => $this->dashboardService->getWeekHeadingDate(3),
+            '1Week' => $this->dashboardService->getWeekHeadingDate(0),
+            '2Week' => $this->dashboardService->getWeekHeadingDate(1),
+            '3Week' => $this->dashboardService->getWeekHeadingDate(2),
+            '4Week' => $this->dashboardService->getWeekHeadingDate(3),
         ];
     }
 
