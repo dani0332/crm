@@ -418,9 +418,12 @@ $(document).ready(function () {
     },
       drawCallback: function () {
          let tableData = this.api().data();
-          if(tableData[0]){
-              $('#total_premium_value').html(tableData[0].premium_total);
-          }
+        if(tableData[0]){
+          let totalPremium = tableData[0].premium_total.toFixed(2);
+          $('#total_premium_value').html(totalPremium);
+        }else{
+          $('#total_premium_value').html('0');
+        }
       },
     columns: [
       { data: 'approval_code', name: 'approval_code' },

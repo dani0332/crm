@@ -50,6 +50,8 @@ return [
             'bucket' => env('AWS_BUCKET'),
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
+            // 'visibility' => 'public',
+            'bucket_endpoint' => true,  //add this
         ],
         'azure' => [
             'driver' => 'azure',

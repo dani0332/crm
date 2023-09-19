@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -57,6 +58,7 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
@@ -405,6 +407,9 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
+
+        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
+
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
                 $section
