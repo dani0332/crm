@@ -644,11 +644,13 @@ watch(
     }
   },
 );
+
+const plansData = ref(page.props.listQuotePlans);
+
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort(
-    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
-  ),
+  plansData.value.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden)),
 );
+
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
@@ -689,6 +691,7 @@ const onPlanFiltersSubmit = () => {
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
 };
+
 const onPlanFiltersReset = () => {
   planFilters.insurer = [];
   planFilters.network = [];
@@ -699,6 +702,47 @@ const onPlanFiltersReset = () => {
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
 };
+
+const isMounted = ref(false);
+
+const selectedCoPay = reactive({
+  id: null,
+  premium: null,
+  planId: null,
+});
+
+const getSmallestCopayRateAsDefaultValue = () => {
+  let smallestCopayValue = 0;
+  let defaultCopayId = 0;
+  plansData.value.forEach(element => {
+    element.ratesPerCopay.forEach(function callback(value, index) {
+      if (index == 0) {
+        smallestCopayValue = value.premium;
+        defaultCopayId = value.healthPlanCoPaymentId;
+      } else if (value.premium < smallestCopayValue) {
+        smallestCopayValue = value.premium;
+        defaultCopayId = value.healthPlanCoPaymentId;
+      }
+    });
+
+    if (isMounted.value && selectedCoPay.planId == element.id) {
+      element.actualPremium = selectedCoPay.premium;
+      element.selectedCopayId = selectedCoPay.id;
+    } else {
+      element.selectedCopayId = defaultCopayId;
+      element.actualPremium = smallestCopayValue;
+    }
+  });
+};
+
+const onSelectedCopay = data => {
+  console.log('parent', data);
+  selectedCoPay.id = data.id;
+  selectedCoPay.premium = data.premium;
+  selectedCoPay.planId = data.planId;
+  getSmallestCopayRateAsDefaultValue();
+};
+
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -1053,33 +1097,13 @@ const sendPolicyToClient = () => {
   }
 };
 
-const getSmallestCopayRateAsDefaultValue = () => {
-
-    let smallestCopayValue = 0;
-    let defaultCopayId = 0;
-    page.props.listQuotePlans.forEach(element => {
-        element.ratesPerCopay.forEach(function callback(value, index) {
-            if (index == 0) {
-                smallestCopayValue = value.premium
-                defaultCopayId = value.healthPlanCoPaymentId
-            }
-            else if (value.premium < smallestCopayValue) {
-                smallestCopayValue = value.premium
-                defaultCopayId = value.healthPlanCoPaymentId
-            }
-        });
-        element.actualPremium = smallestCopayValue
-        element.selectedCopayId = defaultCopayId
-    });
-
-};
-
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   getSmallestCopayRateAsDefaultValue();
+  isMounted.value = true;
 });
 </script>
 <template>
@@ -1906,7 +1930,11 @@ onMounted(() => {
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
-        <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
+        <LazyAvailablePlan
+          :plan="selectedPlan"
+          :genders="genderOptions"
+          @copay-update="onSelectedCopay"
+        />
       </x-modal>
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>

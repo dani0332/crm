@@ -4,6 +4,8 @@ const props = defineProps({
   genders: Object,
 });
 
+const emit = defineEmits(['copayUpdate']);
+
 const notification = useToast();
 
 const genderText = v => {
@@ -127,11 +129,14 @@ const onCoPaySelect = copayId => {
                 'premium' : element.premium,
                 'discounted_premium' : element.discountPremium,
                 'vat' : element.vat,
+                'planId': props.plan.id,
             }
 
             selectedCopay = copayDetails
         }
     });
+
+    emit('copayUpdate', selectedCopay);
 
     console.log(selectedCopay);
 };
