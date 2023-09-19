@@ -14,11 +14,11 @@ class CreateSourceEnumInCustomer extends Migration
     public function up()
     {
         if (Schema::hasTable('customer')) {
-                Schema::table('customer', function ($table) {
-                    if (!Schema::hasColumn('customer', 'source')) {
-                        $table->string('source', 50)->index()->nullable()->default(null);
-                    }
-                });
+            Schema::table('customer', function ($table) {
+                if (! Schema::hasColumn('customer', 'source')) {
+                    $table->string('source', 15)->index()->nullable()->default(null);
+                }
+            });
         }
     }
 

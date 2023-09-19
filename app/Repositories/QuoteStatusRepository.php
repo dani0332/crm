@@ -23,4 +23,9 @@ class QuoteStatusRepository extends BaseRepository
             ->leftjoin('quote_status_map', 'quote_status.id', 'quote_status_map.quote_status_id')
             ->orderBy('quote_status_map.sort_order', 'asc');
     }
+
+    public function fetchGetQuoteStatusesByIds($quoteStatusIds)
+    {
+        return $this->whereIn('id', $quoteStatusIds)->orderBy('sort_order')->get();
+    }
 }

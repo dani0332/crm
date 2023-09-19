@@ -4972,3 +4972,8 @@ ul.notifications {
 #ui-datepicker-div td.ui-datepicker-week-end {
     width: unset !important;
 }
+
+.unavailable-option {
+    color: #999;
+    text-decoration: line-through;
+}
