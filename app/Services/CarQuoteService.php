@@ -143,7 +143,8 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier'
+                'cqr.car_value_tier',
+                'cqr.assignment_type'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -510,6 +511,7 @@ class CarQuoteService extends BaseService
             'payment_status_id' => 'select|title|ss:7',
             'is_ecommerce' => '|static|title|ss:8|Yes,No',
             'tier_id' => 'select|title|multiple|ss:10',
+            'assignment_type' => 'readonly|title|none',
             'visit_count' => 'readonly|none',
             'next_followup_date' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
