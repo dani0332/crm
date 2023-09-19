@@ -118,14 +118,14 @@ class CarAllocationService extends AllocationService
             } else {
 
                 if ($carLead->car_value >= 300000) {
-                    return $tiersQuery->Where('name', TiersEnum::TIER_H)->get();
+                    return $tiersQuery->Where('name', TiersEnum::TIER_H)->first();
                 }
 
                 $userDob = Carbon::createFromFormat('Y-m-d H:i:s', $carLead->dob);
                 $ageInYears = $userDob->age;
 
                 if ($carLead->car_value < 300000 || $ageInYears >= 21) {
-                    return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->get();
+                    return $tiersQuery->Where('name', $carLead->is_ecommerce ? TiersEnum::TIER6_ECOM : TiersEnum::TIER6_NONECOM)->first();
                 }
             }
         } else {
