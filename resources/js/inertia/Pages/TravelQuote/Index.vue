@@ -40,17 +40,28 @@ const filters = reactive({
   is_ecommerce: '',
   payment_status_id: '',
   page: 1,
+  direction_code:'',
+  coverage_code:''
 });
 
 const loader = reactive({
   table: false,
   export: false,
 });
-
+const inboundCoverageCode = [
+  { value: 'singleTrip', label: 'Single Trip' },
+  { value: 'multiTrip', label: 'Multi Trip' }
+];
+const outboundCoverageCode = [
+  { value: 'singleTrip', label: 'Single Trip' },
+  { value: 'annualTrip', label: 'Annual Trip' }
+];
 const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
+    { text: 'Travel Type', value: 'direction_code' },
+    { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -95,6 +106,11 @@ const leadsStatusOptions = computed(() => {
   });
 });
 
+const subTeamOptions = [
+    { value: 'travelUaeInbound', label: 'To the UAE (Inbound)' },
+    { value: 'travelUaeOutbound', label: 'Outside UAE (OutBound)' }
+];
+
 function filterQuotes(isValid) {
   if (!isValid) {
     return;
@@ -105,7 +121,7 @@ function filterQuotes(isValid) {
     }
   }
 
-  router.visit('/quotes/travel', {
+  router.visit(route('travel.index'), {
     method: 'get',
     data: filters,
 
@@ -122,7 +138,7 @@ function filterQuotes(isValid) {
 }
 
 function resetFilters() {
-  router.visit('/quotes/travel', {
+  router.visit(route('travel.index'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -155,7 +171,7 @@ function onAssignLead(isValid) {
         ...data,
         selectTmLeadId: `${selected}`,
       }))
-      .post('/quotes/travel/manualLeadAssign', {
+      .post(route('manualLeadAssign', { quoteType: 'travel' }), {
         preserveScroll: true,
         preserveState: true,
         onSuccess: res => {
@@ -194,6 +210,7 @@ function setQueryFilters() {
 
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const travelQuoteEnum = page.props.travelQuoteEnum;
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
@@ -224,10 +241,10 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/travel-cards">
+        <Link :href="route('travel.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
-        <Link href="/quotes/travel/create">
+        <Link :href="route('travel.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -235,124 +252,150 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-              <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-              </x-tooltip>
-              <x-input
-                  v-model="filters.code"
-                  type="search"
-                  name="code"
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
+        <x-field label="First Name">
+          <x-input
+            v-model="filters.first_name"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Search by First Name"
+          />
+        </x-field>
+        <x-field label="Last Name">
+          <x-input
+            v-model="filters.last_name"
+            type="search"
+            name="last_name"
+            class="w-full"
+            placeholder="Search by Last Name"
+          />
+        </x-field>
+        <x-field label="Email">
+          <x-input
+            v-model="filters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+          />
+        </x-field>
+        <x-field label="Mobile Number">
+          <x-input
+            v-model="filters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+          />
+        </x-field>
+
+        <x-field label="Created Date Start">
+          <DatePicker
+            v-model="filters.created_at_start"
+            name="created_at_start"
+          />
+        </x-field>
+        <x-field label="Created Date End">
+          <DatePicker v-model="filters.created_at_end" name="created_at_end" />
+        </x-field>
+        <x-field label="Lead Status">
+          <ComboBox
+            v-model="filters.quote_status_id"
+            name="quote_status_id"
+            placeholder="Search by Lead Status"
+            :options="leadsStatusOptions"
+          />
+        </x-field>
+        <x-field label="Advisor">
+          <ComboBox
+            v-if="!permissions.travelAdvisor"
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorsOptions"
+          />
+        </x-field>
+        <x-field label="Ecommerce">
+          <x-select
+            v-model="filters.is_ecommerce"
+            placeholder="Search by Ecommerce"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Payment Status">
+          <x-select
+            name="payment_status_id"
+            v-model="filters.payment_status_id"
+            placeholder="Search by Payment Status"
+            :options="paymentStatusOptions"
+            class="w-full"
+
+          />
+        </x-field>
+        <x-field label="Travel Type" required>
+          <x-select
+              v-model="filters.direction_code"
+              :options="subTeamOptions"
+              class="w-full"
+
+          />
+        </x-field>
+          <x-field label="Travel Coverage" required>
+              <x-select
+                  v-model="filters.coverage_code"
+                  :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
                   class="w-full"
-                  placeholder="Search by Ref-ID"
               />
-          </div>
-        <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <x-input
-          v-model="filters.email"
-          type="search"
-          name="email"
-          label="Email"
-          class="w-full"
-          placeholder="Search by Email"
-        />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          label="Mobile Number"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-        />
-        <DatePicker
-          v-model="filters.created_at_start"
-          name="created_at_start"
-          label="Created Date Start"
-        />
-        <DatePicker
-          v-model="filters.created_at_end"
-          name="created_at_end"
-          label="Created Date End"
-        />
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status_id"
-          placeholder="Search by Lead Status"
-          :options="leadsStatusOptions"
-        />
-        <ComboBox
-          v-if="!permissions.travelAdvisor"
-          v-model="filters.advisor_id"
-          label="Advisor"
-          placeholder="Search by Advisor"
-          :options="advisorsOptions"
-        />
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
-        <x-select
-          name="payment_status_id"
-          v-model="filters.payment_status_id"
-          label="Payment Status"
-          placeholder="Search by Payment Status"
-          :options="paymentStatusOptions"
-          class="w-full"
-        />
+          </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="resetFilters">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
@@ -364,14 +407,16 @@ onMounted(() => {
         >
           <x-form @submit="onAssignLead" :auto-focus="false">
             <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[rules.isRequired]"
-              />
+              <x-field label="Assign Advisor">
+                <x-select
+                  v-model="assignForm.assigned_to_id_new"
+                  :options="advisorOptions"
+                  placeholder="Select Advisor"
+                  class="flex-1 w-auto"
+                  :rules="[rules.isRequired]"
+                />
+              </x-field>
+
               <div class="mb-3 md:pt-6">
                 <x-button
                   color="orange"
@@ -387,7 +432,6 @@ onMounted(() => {
         </div>
       </div>
     </Transition>
-
     <DataTable
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
@@ -401,7 +445,7 @@ onMounted(() => {
     >
       <template #item-code="{ code, uuid }">
         <a
-          :href="`/quotes/travel/${uuid}`"
+          :href="route('travel.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
@@ -420,6 +464,23 @@ onMounted(() => {
           </x-tag>
         </div>
       </template>
+        <template #item-coverage_code="{ coverage_code,days_cover_for }">
+            <div class="text-center">
+                {{ coverage_code != null ? coverage_code : (days_cover_for <= 92 ? travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP : travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP + '/' + travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP) }}
+
+            </div>
+        </template>
+        <template
+            #item-direction_code="{currently_located_in_id, direction_code,currently_located_in_id_text,destination_id_text,region_cover_for_id_text,region_cover_for_id }">
+            <div class="text-center">
+                {{
+                    direction_code == travelQuoteEnum.TRAVEL_UAE_OUTBOUND ? 'Outbound' :
+                        (direction_code == travelQuoteEnum.TRAVEL_UAE_INBOUND ? 'Inbound' : ((currently_located_in_id_text == travelQuoteEnum.LOCATION_UAE_TEXT && region_cover_for_id != travelQuoteEnum.REGION_COVER_ID_UAE) ? 'Outbound' : (destination_id_text == travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || region_cover_for_id == travelQuoteEnum.REGION_COVER_ID_UAE ? 'Inbound' : '')))
+                }}
+
+            </div>
+        </template>
+
     </DataTable>
 
     <Pagination

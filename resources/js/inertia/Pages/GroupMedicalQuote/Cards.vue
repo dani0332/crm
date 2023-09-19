@@ -1,5 +1,4 @@
 <script setup>
-
 const page = usePage();
 const dateFormat = date => {
   return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
@@ -21,10 +20,13 @@ const onLoadMore = id => {
   };
   axios
     .post(
-      `/quotes/records?page=${quotes.pages[id]}&modelType=Business&status=${id}`,
+      route('loadMoreRecords', {
+        page: quotes.pages[id],
+        modelType: 'Business',
+        status: id,
+      }),
     )
-      .then(({ data }) => {
-        console.log(data);
+    .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
         if (quote.id === id) {
           quote.data.leads_list = {
@@ -50,8 +52,15 @@ const onSearch = id => {
     quotes.queries[id] === '' ||
     quotes.queries[id] === null
   ) {
+    // `/quotes/records?page=1&modelType=Business&status=${id}`
     axios
-      .post(`/quotes/records?page=1&modelType=Business&status=${id}`)
+      .post(
+        route('loadMoreRecords', {
+          page: 1,
+          modelType: 'Business',
+          status: id,
+        }),
+      )
       .then(({ data }) => {
         quotes.data = quotes.data.map(quote => {
           if (quote.id === id) {
@@ -70,8 +79,13 @@ const onSearch = id => {
   }
   axios
     .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Business`,
+      route('searchLead', {
+        term: quotes.queries[id],
+        status: id,
+        modelType: 'Business',
+      }),
     )
+    // `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Business`,
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
         if (quote.id === id) {
@@ -91,7 +105,6 @@ const onSearch = id => {
       quotes.searching = false;
     });
 };
-
 </script>
 
 <template>
@@ -100,11 +113,11 @@ const onSearch = id => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/medical/amt">
+        <Link :href="route('amt.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/medical/amt/create">
+        <Link :href="route('amt.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>

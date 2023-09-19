@@ -69,6 +69,7 @@ class TeamController extends Controller
         $validateArray = [
             'name' => 'required',
             'type' => 'required',
+            'slabs_count' => 'required|numeric',
         ];
         if (isset($request->type) && TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';
@@ -82,6 +83,7 @@ class TeamController extends Controller
         $team->name = $request->name;
         $team->type = $request->type;
         $team->is_active = 1;
+        $team->slabs_count = $request->get('slabs_count');
         $team->created_at = now();
         $team->updated_at = now();
         $team->save();
@@ -128,6 +130,7 @@ class TeamController extends Controller
         $validateArray = [
             'name' => 'required',
             'type' => 'required',
+            'slabs_count' => 'required|numeric',
         ];
         if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $validateArray['parent_team_id'] = 'required';
@@ -144,6 +147,7 @@ class TeamController extends Controller
         $team->name = $request->name;
         $team->type = $request->type;
         $team->is_active = $request->is_active == 'on' ? 1 : 0;
+        $team->slabs_count = $request->get('slabs_count');
         $team->created_at = now();
         $team->updated_at = now();
         $team->save();

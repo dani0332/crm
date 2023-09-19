@@ -37,7 +37,7 @@ const quoteForm = useForm({
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -107,7 +107,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :disabled="editMode"
             :error="quoteForm.errors.mobile_no"

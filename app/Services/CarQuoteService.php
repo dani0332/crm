@@ -775,7 +775,11 @@ class CarQuoteService extends BaseService
             if (
                 in_array('created_at', $searchProperties)
                 && isset($request->created_at) && $request->created_at != ''
-                && (empty($request->email) && empty($request->code))) {
+                && empty($request->email)
+                && empty($request->code)
+                && empty($request->renewal_batch)
+                && empty($request->quote_batch_id)
+            ) {
                 $dateFrom = $this->parseDate($request['created_at'], true);
                 $dateTo = $this->parseDate($request['created_at_end'], false);
                 $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
@@ -808,6 +812,9 @@ class CarQuoteService extends BaseService
                                 $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
                             }
                         } else {
+                            if ($item == 'email' && $searchedValue == '0') {
+                                continue;
+                            }
                             $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
                         }
                     }
@@ -1558,5 +1565,47 @@ class CarQuoteService extends BaseService
 
             return false;
         }
+    }
+
+    /**
+     * @return bool[]
+     */
+    public function checkCarLostPermissions($lead, $paymentEntityModel, $statuses)
+    {
+        $carLostChangeStatus = true;
+        $allowQuoteLogAction = true;
+
+        //mo can only change status when status is car sold / uncontactable, based on condition below
+        if (! isCarLostStatus($lead->quote_status_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+            $carLostChangeStatus = false;
+            $allowQuoteLogAction = false;
+        }
+
+        if (isCarLostStatus($lead->quote_status_id)) {
+            //when status is car sold / uncontactable, default lead status change is blocked, will allow agains validations below
+            $carLostChangeStatus = false;
+            $allowQuoteLogAction = false;
+
+            //validations for Car Advisor / Deputy Manager Role
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+                $allowQuoteLogAction = false;
+
+                if ($lead->quote_status_id == QuoteStatusEnum::CarSold && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::REJECTED && count($paymentEntityModel->carLostQuoteLogs) <= 2) {
+                    $carLostChangeStatus = true;
+                    $statuses = $statuses->whereIn('id', [$lead->quote_status_id])->all();
+                }
+            }
+
+            //validations for MO role
+            if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                $carLostChangeStatus = false;
+                if (isCarLostStatus($lead->quote_status_id) && $paymentEntityModel?->carLostQuoteLog?->status == GenericRequestEnum::PENDING) {
+                    $allowQuoteLogAction = true;
+                    $statuses = $statuses->whereIn('id', [QuoteStatusEnum::CarSold, QuoteStatusEnum::Uncontactable])->all();
+                }
+            }
+        }
+
+        return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
 }
