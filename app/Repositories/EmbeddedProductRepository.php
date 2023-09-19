@@ -4,6 +4,8 @@ namespace App\Repositories;
 
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Facades\PostMark;
+use App\Facades\PostMarkFacade;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
@@ -305,10 +307,6 @@ class EmbeddedProductRepository extends BaseRepository
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
-        $obj = new PostMarkService();
-
-        $res = $obj->sendEmail($body);
-
-        return $res;
+        return PostMark::sendEmail($body);
     }
 }
