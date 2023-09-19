@@ -82,26 +82,21 @@ class HandleCarAdvisorUpdated
 
     public function triggerCarQuoteEmail($lead)
     {
-        $emailData = "";
+        $emailData = '';
 
         $plans = CarQuotePlanDetail::where('quote_uuid', $lead->uuid)
-                            ->where('is_rating_available', true)
-                            ->where('repair_type', CarPlanType::COMP)->get();
+            ->where('is_rating_available', true)
+            ->where('repair_type', CarPlanType::COMP)->get();
 
-        $emailTemplateId = "";
+        $emailTemplateId = '';
 
-        if(count($plans) == 0)
-        {
+        if (count($plans) == 0) {
             $emailData = $this->carQuoteService->buildNoPlansEmailData($lead);
             $emailTemplateId = 494;
-        }
-        else if (count($plans) == 1)
-        {
+        } elseif (count($plans) == 1) {
             $emailData = $this->carQuoteService->buildOnePlansEmailData($lead, reset($plans));
             $emailTemplateId = 490;
-        }
-        else
-        {
+        } else {
             $emailData = $this->carQuoteService->buildMultiplePlansEmailData($lead, reset($plans));
             $emailTemplateId = 493;
         }

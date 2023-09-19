@@ -7,10 +7,8 @@ use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Enums\UserStatusEnum;
-use App\Jobs\IntroEmailJob;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -452,6 +450,7 @@ class CarAllocationService extends AllocationService
             'documentUrl' => [$documentUrl],
             'customerEmail' => $carQuote->email,
         ];
+
         return $emailData;
     }
 
@@ -472,8 +471,9 @@ class CarAllocationService extends AllocationService
             'carValue' => $carQuote->car_value,
             'excessAed' => $plan->excess,
             'repairType' => $plan->repair_type,
-            'discountPremium' => $plan->discount_premium
+            'discountPremium' => $plan->discount_premium,
         ];
+
         return $emailData;
     }
 
@@ -483,13 +483,12 @@ class CarAllocationService extends AllocationService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
 
         $insurerPlans = [];
-        foreach($plans as $plan)
-        {
+        foreach ($plans as $plan) {
             $insurerPlans[] = [
                 'carValue' => $carQuote->car_value,
                 'excessAed' => $plan->excess,
                 'repairType' => $plan->repair_type,
-                'discountPremium' => $plan->discount_premium
+                'discountPremium' => $plan->discount_premium,
             ];
         }
 
@@ -506,7 +505,6 @@ class CarAllocationService extends AllocationService
             'plans' => $insurerPlans,
         ];
 
-
         return $emailData;
     }
 
@@ -514,7 +512,7 @@ class CarAllocationService extends AllocationService
     {
 
         $vehicleName = '';
-        if (!empty($lead->car_make_id)) {
+        if (! empty($lead->car_make_id)) {
             $carMake = CarMake::find($lead->car_make_id);
 
             if ($carMake) {
@@ -522,20 +520,20 @@ class CarAllocationService extends AllocationService
             }
         }
 
-        if (!empty($lead->car_model_id)) {
+        if (! empty($lead->car_model_id)) {
             $carModel = CarModel::find($lead->car_model_id);
 
             if ($carModel) {
                 // Update $vehicleName with car model text
-                $vehicleName .= ' ' . $carModel->text;
+                $vehicleName .= ' '.$carModel->text;
             }
         }
-        if (!empty($lead->car_model_detail_id)) {
+        if (! empty($lead->car_model_detail_id)) {
             $carModelDetail = CarModelDetail::find($lead->car_model_detail_id);
 
             if ($carModelDetail) {
                 // Update $vehicleName with car model detail text
-                $vehicleName .= ' ' . $carModelDetail->text;
+                $vehicleName .= ' '.$carModelDetail->text;
             }
         }
     }
