@@ -25,7 +25,7 @@ class CustomerRepository extends BaseRepository
     public function fetchGetData()
     {
         $query = [];
-        $filterColumns = ['email'];
+        $filterColumns = ['email', 'first_name', 'mobile_no', 'uuid', 'insured_first_name'];
 
         if ((! empty(request()->get('search_type')) && ! empty(request()->get('search_value'))) &&
             in_array(request()->get('search_type'), $filterColumns)) {

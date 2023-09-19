@@ -17,15 +17,16 @@ const loader = reactive({
 });
 
 const tableHeader = [
-    { text: 'ID', value: 'id' },
+    { text: 'CUSTOMER ID', value: 'uuid' },
     { text: 'NAME', value: 'first_name' },
-    { text: 'EMAIL', value: 'email' },
-    { text: 'MOBILE NO', value: 'mobile_no' },
-    { text: 'GENDER', value: 'gender' },
-    { text: 'HAS ALFRED ACCESS', value: 'has_alfred_access' },
-    { text: 'DOB', value: 'dob' },
-    { text: 'CREATED DATE', value: 'created_at' },
-    { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+    { text: 'INSURED NAME', value: 'insured_first_name' },
+    { text: 'CREATED AT', value: 'created_at' },
+    { text: 'UPDATED AT', value: 'updated_at' },
+    { text: 'POLICY NUMBER', value: 'mobile_no' },
+    { text: 'POLICY START DATE', value: 'gender' },
+    { text: 'POLICY END DATE', value: 'has_alfred_access' },
+    { text: 'TYPE OF POLICY', value: 'dob' },
+    { text: 'ADVISOR', value: 'dob' },
 ];
 
 function onSubmit(isValid){
@@ -77,7 +78,12 @@ function onReset(){
                     v-model="filters.search_type"
                     label="Search By"
                     :options="[
-                        { value: 'email', label: 'Email' },
+                        { value: 'email', label: 'Email Address' },
+                        { value: 'first_name', label: 'Customer Name' },
+                        { value: 'entity_name', label: 'Entity Name' },
+                        { value: 'insured_first_name', label: 'Insured Name' },
+                        { value: 'mobile_no', label: 'Mobile Number' },
+                        { value: 'uuid', label: 'Customer ID' },
                       ]"
                     placeholder="Search By"
                     class="w-full"
