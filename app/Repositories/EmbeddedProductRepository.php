@@ -3,14 +3,11 @@
 namespace App\Repositories;
 
 use App\Enums\PaymentStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Facades\PostMark;
-use App\Facades\PostMarkFacade;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
 use App\Models\QuoteType;
-use App\Services\PostMarkService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use finfo;
