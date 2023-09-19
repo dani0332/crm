@@ -1053,11 +1053,33 @@ const sendPolicyToClient = () => {
   }
 };
 
+const getSmallestCopayRateAsDefaultValue = () => {
+
+    let smallestCopayValue = 0;
+    let defaultCopayId = 0;
+    page.props.listQuotePlans.forEach(element => {
+        element.ratesPerCopay.forEach(function callback(value, index) {
+            if (index == 0) {
+                smallestCopayValue = value.premium
+                defaultCopayId = value.healthPlanCoPaymentId
+            }
+            else if (value.premium < smallestCopayValue) {
+                smallestCopayValue = value.premium
+                defaultCopayId = value.healthPlanCoPaymentId
+            }
+        });
+        element.actualPremium = smallestCopayValue
+        element.selectedCopayId = defaultCopayId
+    });
+
+};
+
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
+  getSmallestCopayRateAsDefaultValue();
 });
 </script>
 <template>
@@ -1849,8 +1871,8 @@ onMounted(() => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, vat, basmah }">
-          {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
+        <template #item-total="{ actualPremium, policyFee, basmah }">
+          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0)) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1870,7 +1892,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
                 )
               "
             >
