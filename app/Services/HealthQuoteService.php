@@ -1310,11 +1310,43 @@ class HealthQuoteService extends BaseService
         $payment = Payment::where('code','TYI-CAR-WS8Y538E')->first();
         $maxAmount = $payment->premium_captured - $payment->premium_refunded;
         if($maxAmount < $request->amount) {
+            $paymentAction = new PaymentAction();
+            $paymentAction->save();
+            $this->processCancelPayment($data);
            return response(['amount'=>'should not be maximum'], 403);
         }else{
             return response('Hello World', 200);
             dd('no tttt');
         }
 
+    }
+    public function processCancelPayment($data)
+    {
+            $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
+            $apiToken = config('constants.MARSHALL_API_TOKEN');
+            $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
+            $apiUserName = config('constants.MARSHALL_API_USER');
+            $apiPassword = config('constants.MARSHALL_API_PWD');
+
+            $carPlanData = [
+                'quoteUID' => $data->uuid,
+                'quoteTypeId' => $data->type,
+                'payments' => [
+                    [
+                        'codeRef' =>  $data->car_plan_id,
+                    ],
+                ],
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+
+            $response = $this->httpService->processRequest($carPlanData, $apiCreds);
+        return $response;
     }
 }
