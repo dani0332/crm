@@ -123,7 +123,7 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
+          notification.error({ title: errors.value, position: 'top' });
       },
     },
   );

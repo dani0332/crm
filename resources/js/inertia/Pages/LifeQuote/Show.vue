@@ -274,7 +274,6 @@ const leadStatusForm = useForm({
 });
 
 const onLeadStatus = () => {
-  // `/quotes/Life/${page.props.quote.id}/update-lead-status`,
   leadStatusForm.post(
     route('updateLeadStatus', {
       modelType: 'Life',
@@ -283,7 +282,7 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
+          notification.error({ title: errors.value, position: 'top' });
       },
       onSuccess: () => {
         notification.success({

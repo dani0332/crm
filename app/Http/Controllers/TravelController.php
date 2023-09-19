@@ -157,6 +157,10 @@ class TravelController extends Controller
             unset($fields['id']);
         }
 
+        // Remove Duplicate fields which are already visible in Customer Profile Section
+        $removeFields = ['first_name', 'last_name', 'email', 'mobile_no', 'dob'];
+        $fields = array_diff_key($fields, array_flip($removeFields));
+
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
 
         return inertia('TravelQuote/Show', [

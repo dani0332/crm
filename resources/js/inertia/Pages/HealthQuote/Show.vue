@@ -51,7 +51,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
-  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+  date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -376,7 +376,8 @@ const memberForm = useForm({
   health_quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
   first_name: null,
-  relation_code: null
+  relation_code: null,
+  quote_type: page.props.modelType
 });
 
 function onEditMember(data) {

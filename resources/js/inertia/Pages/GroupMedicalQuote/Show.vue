@@ -125,13 +125,19 @@ const onLeadStatus = () => {
       data,
     )
     .then(res => {
-      notification.success({
-        title: 'Lead Status Updated',
-        position: 'top',
-      });
+        notification.success({
+            title: 'Lead Status Updated',
+            position: 'top',
+        });
     })
     .catch(err => {
-      console.log(err);
+        const flash_messages = err.response.data.errors.value;
+        Object.keys(flash_messages).forEach(function(key) {
+            notification.error({
+                title: flash_messages[key],
+                position: 'top',
+            });
+        });
     });
 };
 

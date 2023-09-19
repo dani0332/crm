@@ -24,7 +24,6 @@ class MemberDetailRequest extends FormRequest
      */
     public function rules()
     {
-
         $rules = [
             'dob' => 'required',
             'nationality_id' => 'nullable',
@@ -32,7 +31,7 @@ class MemberDetailRequest extends FormRequest
             'relation_code' => 'nullable',
         ];
 
-        if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
+        if (strtolower(request()->quote_type) == strtolower(quoteTypeCode::Health)) {
             $rules['health_quote_request_id'] = 'required';
             $rules['gender'] = 'required';
             $rules['emirate_of_your_visa_id'] = 'nullable';
