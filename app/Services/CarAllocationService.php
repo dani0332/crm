@@ -11,6 +11,9 @@ use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\IntroEmailJob;
+use App\Models\CarMake;
+use App\Models\CarModel;
+use App\Models\CarModelDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuotePlanDetail;
 use App\Models\CarQuoteRequestDetail;
@@ -166,7 +169,6 @@ class CarAllocationService extends AllocationService
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
                 $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                    ->where('is_available', 1)
                     ->where('status', $status);
             })
             ->where(function ($query) {
@@ -385,13 +387,6 @@ class CarAllocationService extends AllocationService
         ];
     }
 
-    private function sendIntroEmailForLeadAssignment($emailData): void
-    {
-        $emailTemplateId = $this->getLMSIntroEmailTemplateId();
-
-        IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email');
-    }
-
     private function getLMSIntroEmailAttachmentUrl(): string
     {
         return $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
@@ -436,25 +431,6 @@ class CarAllocationService extends AllocationService
         return $shouldProceed;
     }
 
-    public function buildEmailDateForLMSIntroEmail($carQuote)
-    {
-        $user = User::where('id', $carQuote->advisor_id)->first();
-        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        $emailData = (object) [
-            'customerEmail' => $carQuote->email,
-            'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'advisorName' => $user->name,
-            'landLine' => $user->landline_no,
-            'mobilePhone' => $user->mobile_no,
-            'advisorEmail' => $user->email,
-            'carQuoteId' => $carQuote->code,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-        ];
-
-        return $emailData;
-    }
-
     public function isLeadReassigned($lead)
     {
         $leadDetail = CarQuoteRequestDetail::where('car_quote_request_id', $lead->id)->first();
@@ -462,6 +438,105 @@ class CarAllocationService extends AllocationService
             return true;
         } else {
             return false;
+        }
+    }
+
+    public function buildNoPlansEmailData($carQuote)
+    {
+        $user = User::where('id', $carQuote->advisor_id)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+        $emailData = (object) [
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'mobilePhone' => $user->mobile_no,
+            'advisorEmail' => $user->email,
+            'documentUrl' => [$documentUrl],
+            'customerEmail' => $carQuote->email,
+        ];
+        return $emailData;
+    }
+
+    public function buildOnePlansEmailData($carQuote, $plan)
+    {
+        $advisor = User::where('id', $carQuote->advisor_id)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+        $emailData = (object) [
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'customerEmail' => $carQuote->email,
+            'mobilePhone' => $advisor->mobile_no,
+            'landLine' => $advisor->landline_no,
+            'advisorEmail' => $advisor->email,
+            'advisorName' => $advisor->name,
+            'documentUrl' => [$documentUrl],
+            'vehicleName' => $this->getVehicleName($carQuote),
+            'currentInsurer' => $carQuote->currently_insured_with,
+            'carValue' => $carQuote->car_value,
+            'excessAed' => $plan->excess,
+            'repairType' => $plan->repair_type,
+            'discountPremium' => $plan->discount_premium
+        ];
+        return $emailData;
+    }
+
+    public function buildMultiplePlansEmailData($carQuote, $plans)
+    {
+        $advisor = User::where('id', $carQuote->advisor_id)->first();
+        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
+        $insurerPlans = [];
+        foreach($plans as $plan)
+        {
+            $insurerPlans[] = [
+                'carValue' => $carQuote->car_value,
+                'excessAed' => $plan->excess,
+                'repairType' => $plan->repair_type,
+                'discountPremium' => $plan->discount_premium
+            ];
+        }
+
+        $emailData = (object) [
+            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'customerEmail' => $carQuote->email,
+            'mobilePhone' => $advisor->mobile_no,
+            'landLine' => $advisor->landline_no,
+            'advisorEmail' => $advisor->email,
+            'advisorName' => $advisor->name,
+            'documentUrl' => [$documentUrl],
+            'vehicleName' => $this->getVehicleName($carQuote),
+            'currentInsurer' => $carQuote->currently_insured_with,
+            'plans' => $insurerPlans,
+        ];
+
+
+        return $emailData;
+    }
+
+    public function getVehicleName($lead)
+    {
+
+        $vehicleName = '';
+        if (!empty($lead->car_make_id)) {
+            $carMake = CarMake::find($lead->car_make_id);
+
+            if ($carMake) {
+                $vehicleName = $carMake->text;
+            }
+        }
+
+        if (!empty($lead->car_model_id)) {
+            $carModel = CarModel::find($lead->car_model_id);
+
+            if ($carModel) {
+                // Update $vehicleName with car model text
+                $vehicleName .= ' ' . $carModel->text;
+            }
+        }
+        if (!empty($lead->car_model_detail_id)) {
+            $carModelDetail = CarModelDetail::find($lead->car_model_detail_id);
+
+            if ($carModelDetail) {
+                // Update $vehicleName with car model detail text
+                $vehicleName .= ' ' . $carModelDetail->text;
+            }
         }
     }
 }

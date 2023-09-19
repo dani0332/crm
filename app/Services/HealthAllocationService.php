@@ -98,7 +98,6 @@ class HealthAllocationService extends AllocationService
 
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('teams as t', 't.id', '=', 'users.sub_team_id')
-            ->where('la.is_available', 1)
             ->where('users.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
             ->where('users.status', $status)
             ->where(function ($query) {

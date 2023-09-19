@@ -3,9 +3,11 @@
 namespace App\Listeners;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CarPlanType;
 use App\Enums\quoteTypeCode;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\IntroEmailJob;
+use App\Models\CarQuotePlanDetail;
 use App\Models\Customer;
 use App\Services\CarAllocationService;
 use App\Services\SendSmsCustomerService;
@@ -80,12 +82,32 @@ class HandleCarAdvisorUpdated
 
     public function triggerCarQuoteEmail($lead)
     {
-        $emailData = $this->carQuoteService->buildEmailDateForLMSIntroEmail($lead); // create email body for intro email
+        $emailData = "";
 
-        $isLeadReassigned = $this->carQuoteService->isLeadReassigned($lead);
+        $plans = CarQuotePlanDetail::where('quote_uuid', $lead->uuid)
+                            ->where('is_rating_available', true)
+                            ->where('repair_type', CarPlanType::COMP)->get();
+
+        $emailTemplateId = "";
+
+        if(count($plans) == 0)
+        {
+            $emailData = $this->carQuoteService->buildNoPlansEmailData($lead);
+            $emailTemplateId = 494;
+        }
+        else if (count($plans) == 1)
+        {
+            $emailData = $this->carQuoteService->buildOnePlansEmailData($lead, reset($plans));
+            $emailTemplateId = 490;
+        }
+        else
+        {
+            $emailData = $this->carQuoteService->buildMultiplePlansEmailData($lead, reset($plans));
+            $emailTemplateId = 493;
+        }
 
         $emailTemplateId = (int) $this->carQuoteService->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
 
-        IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'send-lms-intro-email');
+        IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'lms-intro-email');
     }
 }
