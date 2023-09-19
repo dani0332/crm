@@ -65,6 +65,14 @@
                         </div>
                     </div>
                 </div>
+                <div class="item form-group">
+                    <div class="col-6">
+                        <label class="col-form-label col-md-3 col-sm-3 label-align" for="slabs_count"><b> Slabs count </b></label>
+                        <div class="col-md-3 col-sm-3 ">
+                            <p class="label-align-center">{{ $team->slabs_count ?: 0 }}</p>
+                        </div>
+                    </div>
+                </div>
                     <div class="ln_solid"></div>
                     <div class="row">
                     <div class="col-auto mr-auto"></div>
