@@ -19270,8 +19270,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
-/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
+/* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
 /* harmony import */ var _home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
 /* unplugin-vue-components disabled */
 
@@ -19288,14 +19288,16 @@ __webpack_require__.r(__webpack_exports__);
     errors: Array
   },
   setup: function setup(__props, _ref) {
-    var _props$quote, _props$quote2, _props$quote3, _props$quote4, _props$quote5, _props$quote6, _props$quote7, _props$quote8, _props$quote9, _props$quote10, _props$quote11, _props$quote12, _props$quote13, _props$quote14, _props$quote15, _props$quote16, _props$quote17, _props$quote18, _props$quote19, _props$quote20, _props$quote21;
+    var _props$quote, _props$quote2, _props$quote3, _props$quote4, _props$quote5, _props$quote6, _props$quote7, _props$quote8, _props$quote9, _props$quote10, _props$quote11, _props$quote12, _props$quote13, _props$quote14, _props$quote15, _props$quote16, _props$quote17, _props$quote18, _props$quote19, _props$quote20, _props$quote21, _props$quote22, _props$quote23;
     var __expose = _ref.expose;
     __expose();
     var props = __props;
-    var editMode = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+    var page = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.usePage)();
+    var travelQuoteEnum = page.props.travelQuoteEnum;
+    var editMode = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
       return props.quote && props.quote.uuid ? true : false;
     });
-    var genderSelect = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+    var genderSelect = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
       return Object.keys(props.genderOptions).map(function (status) {
         return {
           value: status,
@@ -19303,7 +19305,7 @@ __webpack_require__.r(__webpack_exports__);
         };
       });
     });
-    var formFields = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
+    var formFields = (0,vue__WEBPACK_IMPORTED_MODULE_1__.computed)(function () {
       return Object.keys(props.fields).map(function (key) {
         return {
           value: key,
@@ -19311,25 +19313,25 @@ __webpack_require__.r(__webpack_exports__);
         };
       });
     });
-    var quoteForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_1__.useForm)({
+    var quoteForm = (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_0__.useForm)({
       first_name: ((_props$quote = props.quote) === null || _props$quote === void 0 ? void 0 : _props$quote.first_name) || null,
       last_name: ((_props$quote2 = props.quote) === null || _props$quote2 === void 0 ? void 0 : _props$quote2.last_name) || null,
       email: ((_props$quote3 = props.quote) === null || _props$quote3 === void 0 ? void 0 : _props$quote3.email) || null,
-      direction_code: (_props$quote4 = props.quote) !== null && _props$quote4 !== void 0 && _props$quote4.direction_code ? (_props$quote5 = props.quote) === null || _props$quote5 === void 0 ? void 0 : _props$quote5.direction_code : editMode.value && ((_props$quote6 = props.quote) === null || _props$quote6 === void 0 ? void 0 : _props$quote6.destination_id_text) == 'United Arab Emirates' ? 'travelUaeInbound' : editMode.value && props.destination_id_text != 'United Arab Emirates' ? 'travelUaeOutbound' : null,
-      has_arrived_uae: ((_props$quote7 = props.quote) === null || _props$quote7 === void 0 || (_props$quote7 = _props$quote7.has_arrived_uae) === null || _props$quote7 === void 0 ? void 0 : _props$quote7.toString()) || (editMode.value && props.quotePlans && (_props$quote8 = props.quote) !== null && _props$quote8 !== void 0 && _props$quote8.has_arrived_uae ? '1' : editMode.value && props.quotePlans == null ? '0' : null),
-      has_arrived_destination: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 || (_props$quote9 = _props$quote9.has_arrived_destination) === null || _props$quote9 === void 0 ? void 0 : _props$quote9.toString()) || (editMode.value && props.quotePlans && props.quote.has_arrived_destination ? '1' : editMode.value && props.quotePlans == null ? '0' : null),
-      coverage_code: ((_props$quote10 = props.quote) === null || _props$quote10 === void 0 ? void 0 : _props$quote10.coverage_code) || null,
-      uuid: editMode.value ? (_props$quote11 = props.quote) === null || _props$quote11 === void 0 ? void 0 : _props$quote11.uuid : null,
-      mobile_no: ((_props$quote12 = props.quote) === null || _props$quote12 === void 0 ? void 0 : _props$quote12.mobile_no) || null,
-      nationality_id: ((_props$quote13 = props.quote) === null || _props$quote13 === void 0 ? void 0 : _props$quote13.nationality_id) || null,
-      start_date: ((_props$quote14 = props.quote) === null || _props$quote14 === void 0 ? void 0 : _props$quote14.start_date) || null,
-      end_date: ((_props$quote15 = props.quote) === null || _props$quote15 === void 0 ? void 0 : _props$quote15.end_date) || null,
-      region_cover_for_id: ((_props$quote16 = props.quote) === null || _props$quote16 === void 0 || (_props$quote16 = _props$quote16.region_cover_for_id) === null || _props$quote16 === void 0 ? void 0 : _props$quote16.toString()) || null,
-      premium: ((_props$quote17 = props.quote) === null || _props$quote17 === void 0 ? void 0 : _props$quote17.premium) || null,
-      policy_number: ((_props$quote18 = props.quote) === null || _props$quote18 === void 0 ? void 0 : _props$quote18.policy_number) || null,
-      iam_possesion_type_id: ((_props$quote19 = props.quote) === null || _props$quote19 === void 0 ? void 0 : _props$quote19.iam_possesion_type_id) || null,
-      ilivein_accommodation_type_id: ((_props$quote20 = props.quote) === null || _props$quote20 === void 0 ? void 0 : _props$quote20.ilivein_accommodation_type_id) || null,
-      days_cover_for: ((_props$quote21 = props.quote) === null || _props$quote21 === void 0 ? void 0 : _props$quote21.days_cover_for) || null,
+      direction_code: (_props$quote4 = props.quote) !== null && _props$quote4 !== void 0 && _props$quote4.direction_code ? (_props$quote5 = props.quote) === null || _props$quote5 === void 0 ? void 0 : _props$quote5.direction_code : editMode.value && ((_props$quote6 = props.quote) === null || _props$quote6 === void 0 ? void 0 : _props$quote6.region_cover_for_id) == travelQuoteEnum.REGION_COVER_ID_UAE ? travelQuoteEnum.TRAVEL_UAE_INBOUND : editMode.value && ((_props$quote7 = props.quote) === null || _props$quote7 === void 0 ? void 0 : _props$quote7.currently_located_in_id_text) == travelQuoteEnum.LOCATION_UAE_TEXT && ((_props$quote8 = props.quote) === null || _props$quote8 === void 0 ? void 0 : _props$quote8.region_cover_for_id) != travelQuoteEnum.REGION_COVER_ID_UAE ? travelQuoteEnum.TRAVEL_UAE_OUTBOUND : null,
+      has_arrived_uae: ((_props$quote9 = props.quote) === null || _props$quote9 === void 0 || (_props$quote9 = _props$quote9.has_arrived_uae) === null || _props$quote9 === void 0 ? void 0 : _props$quote9.toString()) || (editMode.value && props.quotePlans && (_props$quote10 = props.quote) !== null && _props$quote10 !== void 0 && _props$quote10.has_arrived_uae ? '1' : editMode.value && props.quotePlans == null ? '0' : null),
+      has_arrived_destination: ((_props$quote11 = props.quote) === null || _props$quote11 === void 0 || (_props$quote11 = _props$quote11.has_arrived_destination) === null || _props$quote11 === void 0 ? void 0 : _props$quote11.toString()) || (editMode.value && props.quotePlans && props.quote.has_arrived_destination ? '1' : editMode.value && props.quotePlans == null ? '0' : null),
+      coverage_code: ((_props$quote12 = props.quote) === null || _props$quote12 === void 0 ? void 0 : _props$quote12.coverage_code) || null,
+      uuid: editMode.value ? (_props$quote13 = props.quote) === null || _props$quote13 === void 0 ? void 0 : _props$quote13.uuid : null,
+      mobile_no: ((_props$quote14 = props.quote) === null || _props$quote14 === void 0 ? void 0 : _props$quote14.mobile_no) || null,
+      nationality_id: ((_props$quote15 = props.quote) === null || _props$quote15 === void 0 ? void 0 : _props$quote15.nationality_id) || null,
+      start_date: ((_props$quote16 = props.quote) === null || _props$quote16 === void 0 ? void 0 : _props$quote16.start_date) || null,
+      end_date: ((_props$quote17 = props.quote) === null || _props$quote17 === void 0 ? void 0 : _props$quote17.end_date) || null,
+      region_cover_for_id: ((_props$quote18 = props.quote) === null || _props$quote18 === void 0 || (_props$quote18 = _props$quote18.region_cover_for_id) === null || _props$quote18 === void 0 ? void 0 : _props$quote18.toString()) || null,
+      premium: ((_props$quote19 = props.quote) === null || _props$quote19 === void 0 ? void 0 : _props$quote19.premium) || null,
+      policy_number: ((_props$quote20 = props.quote) === null || _props$quote20 === void 0 ? void 0 : _props$quote20.policy_number) || null,
+      iam_possesion_type_id: ((_props$quote21 = props.quote) === null || _props$quote21 === void 0 ? void 0 : _props$quote21.iam_possesion_type_id) || null,
+      ilivein_accommodation_type_id: ((_props$quote22 = props.quote) === null || _props$quote22 === void 0 ? void 0 : _props$quote22.ilivein_accommodation_type_id) || null,
+      days_cover_for: ((_props$quote23 = props.quote) === null || _props$quote23 === void 0 ? void 0 : _props$quote23.days_cover_for) || null,
       members: [{
         value: 'male',
         label: 'Male',
@@ -19359,10 +19361,10 @@ __webpack_require__.r(__webpack_exports__);
       isEmail = _useRules.isEmail,
       isMobileNo = _useRules.isMobileNo;
     var subTeamOptions = [{
-      value: 'travelUaeInbound',
+      value: travelQuoteEnum.TRAVEL_UAE_INBOUND,
       label: 'To the UAE (Inbound)'
     }, {
-      value: 'travelUaeOutbound',
+      value: travelQuoteEnum.TRAVEL_UAE_OUTBOUND,
       label: 'Outside UAE (OutBound)'
     }];
     var alreadylived = [{
@@ -19380,17 +19382,17 @@ __webpack_require__.r(__webpack_exports__);
       label: 'Female'
     }];
     var inboundCoverageCode = [{
-      value: 'singleTrip',
+      value: travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP,
       label: 'Single Trip'
     }, {
-      value: 'multiTrip',
+      value: travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP,
       label: 'Multi Trip'
     }];
     var outboundCoverageCode = [{
-      value: 'singleTrip',
+      value: travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP,
       label: 'Single Trip'
     }, {
-      value: 'annualTrip',
+      value: travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP,
       label: 'Annual Trip'
     }];
     var outboundRegions = [{
@@ -19440,11 +19442,13 @@ __webpack_require__.r(__webpack_exports__);
         quoteForm.members = listing;
       }
     }
-    (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
+    (0,vue__WEBPACK_IMPORTED_MODULE_1__.onMounted)(function () {
       addUpdatedTraveller();
     });
     var __returned__ = {
       props: props,
+      page: page,
+      travelQuoteEnum: travelQuoteEnum,
       editMode: editMode,
       genderSelect: genderSelect,
       formFields: formFields,
@@ -19556,12 +19560,28 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       advisor_id: [],
       is_ecommerce: '',
       payment_status_id: '',
-      page: 1
+      page: 1,
+      direction_code: '',
+      coverage_code: ''
     });
     var loader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.reactive)({
       table: false,
       "export": false
     });
+    var inboundCoverageCode = [{
+      value: 'singleTrip',
+      label: 'Single Trip'
+    }, {
+      value: 'multiTrip',
+      label: 'Multi Trip'
+    }];
+    var outboundCoverageCode = [{
+      value: 'singleTrip',
+      label: 'Single Trip'
+    }, {
+      value: 'annualTrip',
+      label: 'Annual Trip'
+    }];
     var tableHeader = [{
       text: 'Ref-ID',
       value: 'code'
@@ -19571,6 +19591,12 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     }, {
       text: 'LAST NAME',
       value: 'last_name'
+    }, {
+      text: 'Travel Type',
+      value: 'direction_code'
+    }, {
+      text: 'Travel Coverage',
+      value: 'coverage_code'
     }, {
       text: 'LEAD STATUS',
       value: 'quote_status_id_text'
@@ -19641,6 +19667,13 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         };
       });
     });
+    var subTeamOptions = [{
+      value: 'travelUaeInbound',
+      label: 'To the UAE (Inbound)'
+    }, {
+      value: 'travelUaeOutbound',
+      label: 'Outside UAE (OutBound)'
+    }];
     function filterQuotes(isValid) {
       if (!isValid) {
         return;
@@ -19757,6 +19790,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       return (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_can_js__WEBPACK_IMPORTED_MODULE_2__.useCan)(permission);
     };
     var permissionsEnum = page.props.permissionsEnum;
+    var travelQuoteEnum = page.props.travelQuoteEnum;
     var onDataExport = function onDataExport() {
       var data = (0,_home_usmanejaz_usman_projects_afia_blanka_resources_js_inertia_Composables_utilities_js__WEBPACK_IMPORTED_MODULE_3__.useObjToUrl)(filters);
       var url = route('data-extraction', 'travel');
@@ -19785,10 +19819,13 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       notification: notification,
       filters: filters,
       loader: loader,
+      inboundCoverageCode: inboundCoverageCode,
+      outboundCoverageCode: outboundCoverageCode,
       tableHeader: tableHeader,
       paymentStatusOptions: paymentStatusOptions,
       advisorsOptions: advisorsOptions,
       leadsStatusOptions: leadsStatusOptions,
+      subTeamOptions: subTeamOptions,
       filterQuotes: filterQuotes,
       resetFilters: resetFilters,
       advisorOptions: advisorOptions,
@@ -19797,6 +19834,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       setQueryFilters: setQueryFilters,
       can: can,
       permissionsEnum: permissionsEnum,
+      travelQuoteEnum: travelQuoteEnum,
       onDataExport: onDataExport
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
@@ -29674,14 +29712,14 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               }),
               _: 2 /* DYNAMIC */
             }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" {{ form.company_documents[index].path }} ")])) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_FileUploader, {
+              key: 1,
               modelValue: $setup.form.company_documents[index].path,
               "onUpdate:modelValue": function onUpdateModelValue($event) {
                 return $setup.form.company_documents[index].path = $event;
               },
               "upload-route": "embedded-products.upload-document",
               accept: ".pdf",
-              title: "product_wordings",
-              key: _ctx.vform.company_documents[index].path
+              title: "product_wordings"
             }, null, 8 /* PROPS */, ["modelValue", "onUpdate:modelValue"]))], 64 /* STABLE_FRAGMENT */)) : ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_4__.Fragment, {
               key: 1
             }, [((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_divider, {
@@ -29695,16 +29733,15 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
               "class": "w-full",
               placeholder: "Document Type",
               key: $setup.form.company_documents[index].title
-            }, null, 8 /* PROPS */, ["modelValue", "onUpdate:modelValue"])), ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_FileUploader, {
+            }, null, 8 /* PROPS */, ["modelValue", "onUpdate:modelValue"])), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_FileUploader, {
               modelValue: $setup.form.company_documents[index].path,
               "onUpdate:modelValue": function onUpdateModelValue($event) {
                 return $setup.form.company_documents[index].path = $event;
               },
               "upload-route": "embedded-products.upload-document",
               accept: ".pdf",
-              title: $setup.form.company_documents[index].title,
-              key: $setup.form.company_documents[index].title
-            }, null, 8 /* PROPS */, ["modelValue", "onUpdate:modelValue", "title"])), ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
+              title: $setup.form.company_documents[index].title
+            }, null, 8 /* PROPS */, ["modelValue", "onUpdate:modelValue", "title"]), ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_button, {
               size: "xs",
               outlined: "",
               block: "",
@@ -51203,7 +51240,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8 /* PROPS */, ["modelValue", "rules"])];
         }),
         _: 1 /* STABLE */
-      }), $setup.quoteForm.direction_code == 'travelUaeInbound' ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_field, {
+      }), $setup.quoteForm.direction_code == $setup.travelQuoteEnum.TRAVEL_UAE_INBOUND ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_field, {
         key: 0,
         label: 'Have you already arrived in UAE?',
         required: ""
@@ -51249,13 +51286,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "onUpdate:modelValue": _cache[3] || (_cache[3] = function ($event) {
               return $setup.quoteForm.coverage_code = $event;
             }),
-            options: $setup.quoteForm.direction_code == 'travelUaeInbound' ? $setup.inboundCoverageCode : $setup.outboundCoverageCode,
+            options: $setup.quoteForm.direction_code == $setup.travelQuoteEnum.TRAVEL_UAE_INBOUND ? $setup.inboundCoverageCode : $setup.outboundCoverageCode,
             "class": "w-full",
             rules: [$setup.isRequired]
           }, null, 8 /* PROPS */, ["modelValue", "options", "rules"])];
         }),
         _: 1 /* STABLE */
-      }), $setup.quoteForm.has_arrived_destination == '0' && $setup.quoteForm.direction_code == 'travelUaeOutbound' ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_field, {
+      }), $setup.quoteForm.has_arrived_destination == '0' && $setup.quoteForm.direction_code == $setup.travelQuoteEnum.TRAVEL_UAE_OUTBOUND ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_field, {
         key: 0,
         label: "Which regions do you need cover for?*",
         required: ""
@@ -51286,7 +51323,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8 /* PROPS */, ["modelValue"])];
         }),
         _: 1 /* STABLE */
-      }), $setup.quoteForm.coverage_code == 'singleTrip' ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_field, {
+      }), $setup.quoteForm.coverage_code == $setup.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createBlock)(_component_x_field, {
         key: 1,
         label: "Travel End Date",
         required: ""
@@ -51558,6 +51595,12 @@ var _hoisted_16 = {
 var _hoisted_17 = {
   "class": "text-center"
 };
+var _hoisted_18 = {
+  "class": "text-center"
+};
+var _hoisted_19 = {
+  "class": "text-center"
+};
 function render(_ctx, _cache, $props, $setup, $data, $options) {
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_4__.Head;
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_5__.resolveComponent)("x-button");
@@ -51795,6 +51838,36 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           }, null, 8 /* PROPS */, ["modelValue", "options"])];
         }),
         _: 1 /* STABLE */
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_x_field, {
+        label: "Travel Type",
+        required: ""
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_x_select, {
+            modelValue: $setup.filters.direction_code,
+            "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+              return $setup.filters.direction_code = $event;
+            }),
+            options: $setup.subTeamOptions,
+            "class": "w-full"
+          }, null, 8 /* PROPS */, ["modelValue"])];
+        }),
+        _: 1 /* STABLE */
+      }), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_x_field, {
+        label: "Travel Coverage",
+        required: ""
+      }, {
+        "default": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function () {
+          return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_x_select, {
+            modelValue: $setup.filters.coverage_code,
+            "onUpdate:modelValue": _cache[12] || (_cache[12] = function ($event) {
+              return $setup.filters.coverage_code = $event;
+            }),
+            options: $setup.filters.direction_code == 'travelUaeInbound' ? $setup.inboundCoverageCode : $setup.outboundCoverageCode,
+            "class": "w-full"
+          }, null, 8 /* PROPS */, ["modelValue", "options"])];
+        }),
+        _: 1 /* STABLE */
       })]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_6, [$setup.can($setup.permissionsEnum.DATA_EXTRACTION) ? ((0,vue__WEBPACK_IMPORTED_MODULE_5__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementBlock)("div", _hoisted_7, [$setup.canExport ? ((0,vue__WEBPACK_IMPORTED_MODULE_5__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createBlock)(_component_x_button, {
         key: 0,
         size: "sm",
@@ -51863,7 +51936,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function () {
               return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_x_select, {
                 modelValue: $setup.assignForm.assigned_to_id_new,
-                "onUpdate:modelValue": _cache[11] || (_cache[11] = function ($event) {
+                "onUpdate:modelValue": _cache[13] || (_cache[13] = function ($event) {
                   return $setup.assignForm.assigned_to_id_new = $event;
                 }),
                 options: $setup.advisorOptions,
@@ -51891,7 +51964,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     _: 1 /* STABLE */
   }), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_DataTable, {
     "items-selected": $setup.quotesSelected,
-    "onUpdate:itemsSelected": _cache[12] || (_cache[12] = function ($event) {
+    "onUpdate:itemsSelected": _cache[14] || (_cache[14] = function ($event) {
       return $setup.quotesSelected = $event;
     }),
     "table-class-name": "tablefixed",
@@ -51929,6 +52002,22 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         _: 2 /* DYNAMIC */
       }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["color"])])];
     }),
+    "item-coverage_code": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function (_ref4) {
+      var coverage_code = _ref4.coverage_code,
+        days_cover_for = _ref4.days_cover_for;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_5__.toDisplayString)(coverage_code != null ? coverage_code : days_cover_for <= 92 ? $setup.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP : $setup.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP + '/' + $setup.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP), 1 /* TEXT */)];
+    }),
+
+    "item-direction_code": (0,vue__WEBPACK_IMPORTED_MODULE_5__.withCtx)(function (_ref5) {
+      var currently_located_in_id = _ref5.currently_located_in_id,
+        direction_code = _ref5.direction_code,
+        currently_located_in_id_text = _ref5.currently_located_in_id_text,
+        destination_id_text = _ref5.destination_id_text,
+        region_cover_for_id_text = _ref5.region_cover_for_id_text,
+        region_cover_for_id = _ref5.region_cover_for_id;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_5__.createElementVNode)("div", _hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_5__.toDisplayString)(direction_code == $setup.travelQuoteEnum.TRAVEL_UAE_OUTBOUND ? 'Outbound' : direction_code == $setup.travelQuoteEnum.TRAVEL_UAE_INBOUND ? 'Inbound' : currently_located_in_id_text == $setup.travelQuoteEnum.LOCATION_UAE_TEXT && region_cover_for_id != $setup.travelQuoteEnum.REGION_COVER_ID_UAE ? 'Outbound' : destination_id_text == $setup.travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || region_cover_for_id == $setup.travelQuoteEnum.REGION_COVER_ID_UAE ? 'Inbound' : ''), 1 /* TEXT */)];
+    }),
+
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["items-selected", "loading", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_5__.createVNode)(_component_Pagination, {
     links: {
@@ -52809,6 +52898,7 @@ var _hoisted_127 = {
   "class": "text-center py-3"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
+  var _$props$quote, _$props$quote2, _$props$quote3, _$props$quote4, _$props$quote5;
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_5__.Head;
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_6__.resolveComponent)("x-button");
   var _component_Link = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_5__.Link;
@@ -52992,7 +53082,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [_hoisted_14];
     }),
     _: 1 /* STABLE */
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.direction_code), 1 /* TEXT */)]), $props.enums.travelQuoteEnum.TravelUaeInbound == $props.quote.direction_code ? ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementBlock)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.has_arrived_uae == 1 ? 'Yes' : 'No'), 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_6__.createCommentVNode)("v-if", true), $props.enums.travelQuoteEnum.TravelUaeOutbound == $props.quote.direction_code ? ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementBlock)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.has_arrived_destination == 1 ? 'Yes' : 'No'), 1 /* TEXT */)])) : (0,vue__WEBPACK_IMPORTED_MODULE_6__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("div", _hoisted_22, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", null, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createVNode)(_component_x_tooltip, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.direction_code != null ? $props.quote.direction_code : ((_$props$quote = $props.quote) === null || _$props$quote === void 0 ? void 0 : _$props$quote.currently_located_in_id_text) == $props.enums.travelQuoteEnum.LOCATION_UAE_TEXT && ((_$props$quote2 = $props.quote) === null || _$props$quote2 === void 0 ? void 0 : _$props$quote2.region_cover_for_id) != $props.enums.travelQuoteEnum.REGION_COVER_ID_UAE ? $props.enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND : ((_$props$quote3 = $props.quote) === null || _$props$quote3 === void 0 ? void 0 : _$props$quote3.destination_id_text) == $props.enums.travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || ((_$props$quote4 = $props.quote) === null || _$props$quote4 === void 0 ? void 0 : _$props$quote4.region_cover_for_id) == $props.enums.travelQuoteEnum.REGION_COVER_ID_UAE ? $props.enums.travelQuoteEnum.TRAVEL_UAE_INBOUND : ''), 1 /* TEXT */)]), $props.enums.travelQuoteEnum.TRAVEL_UAE_INBOUND == $props.quote.direction_code || ((_$props$quote5 = $props.quote) === null || _$props$quote5 === void 0 ? void 0 : _$props$quote5.region_cover_for_id) == 3 ? ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementBlock)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.has_arrived_uae == 1 || $props.quote.currently_located_in_id_text == $props.enums.travelQuoteEnum.LOCATION_UAE_TEXT ? 'Yes' : 'No'), 1 /* TEXT */)])) : ((0,vue__WEBPACK_IMPORTED_MODULE_6__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementBlock)("div", _hoisted_19, [_hoisted_20, (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.has_arrived_destination == 1 || $props.quote.currently_located_in_id_text == $props.enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE ? 'Yes' : 'No'), 1 /* TEXT */)])), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("div", _hoisted_22, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", null, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createVNode)(_component_x_tooltip, {
     position: "bottom"
   }, {
     tooltip: (0,vue__WEBPACK_IMPORTED_MODULE_6__.withCtx)(function () {
@@ -53032,7 +53122,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [_hoisted_32];
     }),
     _: 1 /* STABLE */
-  })]), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.coverage_code), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("div", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", null, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createVNode)(_component_x_tooltip, {
+  })]), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_6__.toDisplayString)($props.quote.coverage_code != null ? $props.quote.coverage_code : $props.quote.days_cover_for <= 92 ? $props.enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP : $props.enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP + '/' + $props.enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("div", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createElementVNode)("dt", null, [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createVNode)(_component_x_tooltip, {
     position: "bottom"
   }, {
     tooltip: (0,vue__WEBPACK_IMPORTED_MODULE_6__.withCtx)(function () {
