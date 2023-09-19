@@ -140,8 +140,11 @@ class CarQuoteService extends BaseService
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
-                DB::raw('(CASE WHEN cqr.assignment_type = 1 THEN "System Assigned" WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
-                WHEN cqr.assignment_type = 3 THEN "Manual Assigned" WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                DB::raw('(CASE
+                WHEN cqr.assignment_type = 1 THEN "System Assigned"
+                WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')

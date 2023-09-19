@@ -448,6 +448,7 @@ class CarAllocationService extends AllocationService
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
+            'advisorName' => $user->name,
             'documentUrl' => [$documentUrl],
             'customerEmail' => $carQuote->email,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
