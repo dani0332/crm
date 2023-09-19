@@ -736,7 +736,6 @@ const getSmallestCopayRateAsDefaultValue = () => {
 };
 
 const onSelectedCopay = data => {
-  console.log('parent', data);
   selectedCoPay.id = data.id;
   selectedCoPay.premium = data.premium;
   selectedCoPay.planId = data.planId;

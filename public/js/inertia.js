@@ -7573,8 +7573,10 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     plan: Object,
     genders: Object
   },
+  emits: ['copayUpdate'],
   setup: function setup(__props, _ref) {
-    var __expose = _ref.expose;
+    var __expose = _ref.expose,
+      emit = _ref.emit;
     __expose();
     var props = __props;
     var notification = (0,_Users_bilal_Projects_insurance_market_blanka_resources_js_inertia_Composables_toast_js__WEBPACK_IMPORTED_MODULE_0__.useToast)();
@@ -7696,11 +7698,13 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
             'id': element.healthPlanCoPaymentId,
             'premium': element.premium,
             'discounted_premium': element.discountPremium,
-            'vat': element.vat
+            'vat': element.vat,
+            'planId': props.plan.id
           };
           selectedCopay = copayDetails;
         }
       });
+      emit('copayUpdate', selectedCopay);
       console.log(selectedCopay);
     };
     var onTogglePlans = function onTogglePlans() {
@@ -7748,6 +7752,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     });
     var __returned__ = {
       props: props,
+      emit: emit,
       notification: notification,
       genderText: genderText,
       coPayOptions: coPayOptions,
@@ -8670,7 +8675,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         });
       }
     });
-    var listQuotePlansFiltered = (0,vue__WEBPACK_IMPORTED_MODULE_6__.ref)(page.props.listQuotePlans.sort(function (a, b) {
+    var plansData = (0,vue__WEBPACK_IMPORTED_MODULE_6__.ref)(page.props.listQuotePlans);
+    var listQuotePlansFiltered = (0,vue__WEBPACK_IMPORTED_MODULE_6__.ref)(plansData.value.sort(function (a, b) {
       return Number(!b.isHidden) - Number(!a.isHidden);
     }));
     var onPlanFiltersSubmit = function onPlanFiltersSubmit() {
@@ -8723,6 +8729,41 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       planFiltersCount.value = 0;
       planDataTable.value.updatePage(1);
     };
+    var isMounted = (0,vue__WEBPACK_IMPORTED_MODULE_6__.ref)(false);
+    var selectedCoPay = (0,vue__WEBPACK_IMPORTED_MODULE_6__.reactive)({
+      id: null,
+      premium: null,
+      planId: null
+    });
+    var getSmallestCopayRateAsDefaultValue = function getSmallestCopayRateAsDefaultValue() {
+      var smallestCopayValue = 0;
+      var defaultCopayId = 0;
+      plansData.value.forEach(function (element) {
+        element.ratesPerCopay.forEach(function callback(value, index) {
+          if (index == 0) {
+            smallestCopayValue = value.premium;
+            defaultCopayId = value.healthPlanCoPaymentId;
+          } else if (value.premium < smallestCopayValue) {
+            smallestCopayValue = value.premium;
+            defaultCopayId = value.healthPlanCoPaymentId;
+          }
+        });
+        if (isMounted.value && selectedCoPay.planId == element.id) {
+          element.actualPremium = selectedCoPay.premium;
+          element.selectedCopayId = selectedCoPay.id;
+        } else {
+          element.selectedCopayId = defaultCopayId;
+          element.actualPremium = smallestCopayValue;
+        }
+      });
+    };
+    var onSelectedCopay = function onSelectedCopay(data) {
+      selectedCoPay.id = data.id;
+      selectedCoPay.premium = data.premium;
+      selectedCoPay.planId = data.planId;
+      getSmallestCopayRateAsDefaultValue();
+    };
+
     // quoteDocuments
 
     var quoteDocumentsTable = (0,vue__WEBPACK_IMPORTED_MODULE_6__.reactive)({
@@ -9070,29 +9111,13 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         });
       }
     };
-    var getSmallestCopayRateAsDefaultValue = function getSmallestCopayRateAsDefaultValue() {
-      var smallestCopayValue = 0;
-      var defaultCopayId = 0;
-      page.props.listQuotePlans.forEach(function (element) {
-        element.ratesPerCopay.forEach(function callback(value, index) {
-          if (index == 0) {
-            smallestCopayValue = value.premium;
-            defaultCopayId = value.healthPlanCoPaymentId;
-          } else if (value.premium < smallestCopayValue) {
-            smallestCopayValue = value.premium;
-            defaultCopayId = value.healthPlanCoPaymentId;
-          }
-        });
-        element.actualPremium = smallestCopayValue;
-        element.selectedCopayId = defaultCopayId;
-      });
-    };
     (0,vue__WEBPACK_IMPORTED_MODULE_6__.onMounted)(function () {
       var isHealthAdvisor = page.props.advisors.find(function (a) {
         return a.id == page.props.quote.advisor_id;
       });
       if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
       getSmallestCopayRateAsDefaultValue();
+      isMounted.value = true;
     });
     var __returned__ = {
       page: page,
@@ -9160,9 +9185,14 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       planFilters: planFilters,
       planFiltersCount: planFiltersCount,
       options: options,
+      plansData: plansData,
       listQuotePlansFiltered: listQuotePlansFiltered,
       onPlanFiltersSubmit: onPlanFiltersSubmit,
       onPlanFiltersReset: onPlanFiltersReset,
+      isMounted: isMounted,
+      selectedCoPay: selectedCoPay,
+      getSmallestCopayRateAsDefaultValue: getSmallestCopayRateAsDefaultValue,
+      onSelectedCopay: onSelectedCopay,
       quoteDocumentsTable: quoteDocumentsTable,
       onDocDelete: onDocDelete,
       confirmDeleteDoc: confirmDeleteDoc,
@@ -9187,7 +9217,6 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       cancelPolicyFrom: cancelPolicyFrom,
       submitPolicyDetails: submitPolicyDetails,
       sendPolicyToClient: sendPolicyToClient,
-      getSmallestCopayRateAsDefaultValue: getSmallestCopayRateAsDefaultValue,
       LazyDocumentUploader: _Partials_DocumentUploader_vue__WEBPACK_IMPORTED_MODULE_0__["default"],
       LazyAvailablePlan: _Partials_AvailablePlans_vue__WEBPACK_IMPORTED_MODULE_1__["default"],
       LazyCreatePlan: _Partials_CreatePlan_vue__WEBPACK_IMPORTED_MODULE_2__["default"],
@@ -31731,7 +31760,8 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_6__.withCtx)(function () {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_6__.createVNode)($setup["LazyAvailablePlan"], {
         plan: $setup.selectedPlan,
-        genders: $props.genderOptions
+        genders: $props.genderOptions,
+        onCopayUpdate: $setup.onSelectedCopay
       }, null, 8 /* PROPS */, ["plan", "genders"])];
     }),
     _: 1 /* STABLE */

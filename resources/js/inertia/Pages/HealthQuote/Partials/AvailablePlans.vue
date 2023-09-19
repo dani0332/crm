@@ -137,7 +137,6 @@ const onCoPaySelect = copayId => {
     });
 
     emit('copayUpdate', selectedCopay);
-
     console.log(selectedCopay);
 };
 
