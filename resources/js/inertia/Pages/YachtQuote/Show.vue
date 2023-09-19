@@ -37,7 +37,7 @@ const permissionsEnum = page.props.permissionsEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
 
 const isProfileUpdateAllow = computed(() => {
-    return !hasAnyRole([
+    return hasAnyRole([
         page.props.rolesEnum.PA,
         page.props.rolesEnum.OE,
         page.props.rolesEnum.NRA
