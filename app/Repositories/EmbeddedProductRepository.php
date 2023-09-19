@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Facades\PostMark;
 use App\Models\EmbeddedProduct;
@@ -178,14 +179,14 @@ class EmbeddedProductRepository extends BaseRepository
         $ep->each(function ($item) use ($modelType, $quoteTypeId, $quoteRequestId) {
 
             $item->send_document_button = false;
-            if ($item->product_category == 'bolt-on') {
+            if ($item->product_category == EpCategoryEnum::BOLT_ON) {
                 $quoteObject = $this->getQuoteObject($modelType, $quoteRequestId);
 
                 if ($quoteObject->payment_status_id == PaymentStatusEnum::CAPTURED) {
 
                     $item->send_document_button = true;
                 }
-            } elseif ($item->product_category == 'stand-alone') {
+            } elseif ($item->product_category == EpCategoryEnum::STAND_ALONE) {
                 if ($item->prices) {
                     $optionsIds = $item->prices->pluck('id');
                     $transaction = EmbeddedTransaction::where([
