@@ -42,6 +42,8 @@ class AdvisorPerformanceReportService extends BaseService
             ->leftJoin('quote_view_count', 'quote_view_count.quote_id', 'car_quote_request.id')
             ->join('user_team', 'user_team.user_id', 'users.id')
             ->join('teams', 'teams.id', 'user_team.team_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id')
@@ -148,6 +150,11 @@ class AdvisorPerformanceReportService extends BaseService
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
             info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         return $query;

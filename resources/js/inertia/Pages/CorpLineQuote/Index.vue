@@ -85,7 +85,10 @@ const tableHeader = [
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'PRICE', value: 'premium' },
   { text: 'NUMBER OF EMPLOYEES', value: 'number_of_employees' },
-  { text: 'BUSINESS INSURANCE TYPE', value: 'business_type_of_insurance_id_text'},
+  {
+    text: 'BUSINESS INSURANCE TYPE',
+    value: 'business_type_of_insurance_id_text',
+  },
   { text: 'GENDER', value: 'gender' },
 ];
 
@@ -93,7 +96,7 @@ function resetFilters() {
   for (const key in filters) {
     filters[key] = '';
   }
-  router.visit('/quotes/business', {
+  router.visit(route('business.index'), {
     method: 'get',
     preserveState: true,
     preserveScroll: true,
@@ -122,8 +125,7 @@ function filterQuotes(isValid) {
   if (filters.created_at_end) {
     filters.created_at_end = filters.created_at_end.split('T')[0];
   }
-
-  router.visit('/quotes/business', {
+  router.visit(route('business.index'), {
     method: 'get',
     data: filters,
     preserveState: true,
@@ -153,12 +155,12 @@ function onAssignLead(isValid) {
         ...data,
         selectTmLeadId: `${selected}`,
       }))
-      .post('/quotes/business/manualLeadAssign', {
+      .post(route('manualLeadAssign', { quoteType: 'business' }), {
         preserveScroll: true,
         preserveState: true,
-        onSuccess: res => {
-          displayNotification();
-        },
+        // onSuccess: res => {
+        //   displayNotification();
+        // },
       });
   }
 }
@@ -218,10 +220,10 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/business/cards/view">
+        <Link :href="route('business.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View</x-button>
         </Link>
-        <Link href="/quotes/business/create">
+        <Link :href="route('business.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead</x-button>
         </Link>
       </div>
@@ -229,125 +231,135 @@ onMounted(() => {
     <x-divider class="my-4" />
     <x-form @submit="filterQuotes" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div>
+        <div>
           <x-tooltip position="bottom">
-              <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                  Ref-ID
-              </label>
-              <template #tooltip> Reference ID </template>
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
           </x-tooltip>
           <x-input
-              v-model="filters.code"
-              type="search"
-              name="code"
-              class="w-full"
-              placeholder="Search by Ref-ID"
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
           />
-      </div>
-        <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <x-input
-          v-model="filters.email"
-          type="search"
-          name="email"
-          label="Email"
-          class="w-full"
-          placeholder="Search by Email"
-        />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          label="Mobile Number"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-        />
-
-        <x-input
-          v-model="filters.company_name"
-          type="search"
-          name="company_name"
-          label="Company Name"
-          class="w-full"
-          placeholder="Search by Company Name"
-        />
-
-        <DatePicker
-          v-model="filters.created_at"
-          name="created_at"
-          label="Created Date Start"
-          :rules="[created_at_rule]"
-        />
-        <DatePicker
-          v-model="filters.created_at_end"
-          name="created_at_end"
-          label="Created Date End"
-          :rules="[created_at_end_rule]"
-        />
-
-        <x-select
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status_id"
-          placeholder="Search by Lead Status"
-          :options="leadStatusOptions"
-        />
-
-        <x-select
-          v-model="filters.business_type_of_insurance_id"
-          label="BUSINESS INSURANCE TYPE"
-          placeholder="INSURANCE TYPE"
-          :options="insuranceTypeOptions"
-        />
-
-        <x-select
-          v-model="filters.advisor_id"
-          label="Advisor"
-          placeholder="Search by Advisor"
-          :options="advisorOptions"
-        />
+        </div>
+        <x-field label="First Name">
+          <x-input
+            v-model="filters.first_name"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Search by First Name"
+          />
+        </x-field>
+        <x-field label="Last Name">
+          <x-input
+            v-model="filters.last_name"
+            type="search"
+            name="last_name"
+            class="w-full"
+            placeholder="Search by Last Name"
+          />
+        </x-field>
+        <x-field label="Email">
+          <x-input
+            v-model="filters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+          />
+        </x-field>
+        <x-field label="Mobile Number">
+          <x-input
+            v-model="filters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+          />
+        </x-field>
+        <x-field label="Company Name">
+          <x-input
+            v-model="filters.company_name"
+            type="search"
+            name="company_name"
+            class="w-full"
+            placeholder="Search by Company Name"
+          />
+        </x-field>
+        <x-field label="Created Date Start">
+          <DatePicker
+            v-model="filters.created_at"
+            name="created_at"
+            :rules="[created_at_rule]"
+          />
+        </x-field>
+        <x-field label="Created Date End">
+          <DatePicker
+            v-model="filters.created_at_end"
+            name="created_at_end"
+            :rules="[created_at_end_rule]"
+          />
+        </x-field>
+        <x-field label="Lead Status">
+          <x-select
+            v-model="filters.quote_status_id"
+            name="quote_status_id"
+            placeholder="Search by Lead Status"
+            :options="leadStatusOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="BUSINESS INSURANCE TYPE">
+          <x-select
+            v-model="filters.business_type_of_insurance_id"
+            placeholder="INSURANCE TYPE"
+            :options="insuranceTypeOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Advisor">
+          <x-select
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
+            class="w-full"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="resetFilters">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="resetFilters">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
@@ -395,7 +407,7 @@ onMounted(() => {
     >
       <template #item-code="{ code, uuid }">
         <a
-          :href="`/quotes/business/${uuid}`"
+          :href="route('business.show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

@@ -1,53 +1,40 @@
 <script setup>
 const toast = useToast();
+const page = usePage();
 
-const onceDone = ref(false);
+const flash = computed(() => page.props.flash || '');
 
-const notification = flash => {
-  if (onceDone.value) return;
-
-  if (flash.message) {
+watch(flash, async () => {
+  if (!flash.value) return;
+  if (flash.value.message) {
     toast.success({
-      title: flash.message,
+      title: flash.value.message,
       position: 'top',
     });
-  } else if (flash.error) {
+  } else if (flash.value.error) {
     toast.error({
-      title: flash.error,
+      title: flash.value.error,
       position: 'top',
     });
-  } else if (flash.success) {
+  } else if (flash.value.success) {
     toast.success({
-      title: flash.success,
+      title: flash.value.success,
       position: 'top',
     });
-  } else if (flash.warning) {
+  } else if (flash.value.warning) {
     toast.warning({
-      title: flash.warning,
+      title: flash.value.warning,
       position: 'top',
     });
-  } else if (flash.info) {
+  } else if (flash.value.info) {
     toast.info({
-      title: flash.info,
+      title: flash.value.info,
       position: 'top',
     });
   }
-
-  onceDone.value = true;
-};
+});
 </script>
 
 <template>
-  <div
-    v-if="
-      $page.props.flash.message ||
-      $page.props.flash.error ||
-      $page.props.flash.success ||
-      $page.props.flash.warning ||
-      $page.props.flash.info
-    "
-    class="hidden"
-  >
-    {{ notification($page.props.flash) }}
-  </div>
+  <div class="hidden"></div>
 </template>

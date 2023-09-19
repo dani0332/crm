@@ -10,6 +10,7 @@ use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
@@ -84,7 +85,7 @@ class YachtQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::YACHT->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::YACHT->value);
 
@@ -94,6 +95,8 @@ class YachtQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
 
         return inertia('YachtQuote/Show', [
             'quoteType' => QuoteTypes::YACHT,
@@ -109,6 +112,7 @@ class YachtQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 

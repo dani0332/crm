@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
@@ -61,7 +62,7 @@ class LifeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('/quotes/life/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
+        return redirect(route('life-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -80,6 +81,8 @@ class LifeQuoteController extends Controller
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
@@ -114,6 +117,7 @@ class LifeQuoteController extends Controller
             'customerAdditionalContacts' => CustomerRepository::GetAdditionalContacts($quote->customer_id, $quote->mobile_no),
             'lostReasons' => $lostReasons,
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 
@@ -143,7 +147,7 @@ class LifeQuoteController extends Controller
     {
         LifeQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote is updated successfully.');
+        return redirect(route('life-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
 
     public function cardsView(Request $request)

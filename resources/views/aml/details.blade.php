@@ -912,7 +912,7 @@
                 </div>
                 <div class="x_content">
                     <br />
-                    <table id="datatable" class="table table-striped jambo_table" style="width:100%">
+                    <table class="table table-striped jambo_table aml-detail-data-table" style="width:100%">
                         <thead>
                             <tr>
                                 <th>AML Id</th>
@@ -925,22 +925,7 @@
                                 <th>Updated At</th>
                             </tr>
                         </thead>
-
                         <tbody>
-                            @foreach ($kycLogs as $key => $kycLog)
-                                <tr>
-                                    <td><a href="/kyc/aml/{{ $kycLog->id }}">{{ $kycLog->id }}</a></td>
-                                    <td>{{ $kycLog->input }}</td>
-                                    <td>{{ $kycLog->search_type }}</td>
-                                    <td><a href="{{ $kycLog->screenshot }}" target="_blank"><img class="img-responsive"
-                                                src="{{ $kycLog->screenshot }}" alt="screenshot" height="80px"
-                                                width="80px"></a></td>
-                                    <td>@if ($kycLog->results_found > 0) True @else False @endif </td>
-                                    <td>{{ $kycLog->results_found }}</td>
-                                    <td>{{ $kycLog->created_at }}</td>
-                                    <td>{{ $kycLog->updated_at }}</td>
-                                </tr>
-                            @endforeach
                         </tbody>
                     </table>
                 </div>

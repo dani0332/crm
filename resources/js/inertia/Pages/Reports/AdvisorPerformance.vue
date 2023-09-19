@@ -57,6 +57,7 @@ const filters = reactive({
   advisorAssignedDates: [],
   tiers: [],
   teams: [],
+  isCommercial: 'All',
   page: 1,
 });
 
@@ -182,6 +183,16 @@ onMounted(() => {
           "
           :max-limit="3"
           deselect-all
+        />
+        <x-select
+          v-model="filters.isCommercial"
+          label="Commercial"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+          ]"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
