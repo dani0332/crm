@@ -5,10 +5,12 @@ namespace App\Listeners;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
 use App\Enums\quoteTypeCode;
+use App\Enums\TiersEnum;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\IntroEmailJob;
 use App\Models\CarQuotePlanDetail;
 use App\Models\Customer;
+use App\Models\Tier;
 use App\Services\CarAllocationService;
 use App\Services\SendSmsCustomerService;
 
@@ -38,33 +40,9 @@ class HandleCarAdvisorUpdated
         info('inside handle car update advisor');
 
         $lead = $event->lead;
-        $oldAdvisorId = $event->oldAdvisorId;
-        $oldAssignmentType = $event->oldAssignmentType;
 
-        if ($lead->assignment_type == AssignmentTypeEnum::SYSTEM_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_ASSIGNED) {
+        $this->triggerCarQuoteEmail($lead);
 
-        }
-
-        if ($lead->assignment_type == AssignmentTypeEnum::SYSTEM_REASSIGNED || $lead->assignment_type == AssignmentTypeEnum::MANUAL_REASSIGNED) {
-
-        }
-
-        if ($lead->assignment_type === AssignmentTypeEnum::SYSTEM_REASSIGNED) {
-            // reassignmenet template
-            if ($oldAdvisorId != null && $oldAdvisorId !== $lead->advisor_id()) {
-                // reassignmenet template
-            } else {
-                // assignment template
-            }
-
-        } elseif ($lead->assignment_type === AssignmentTypeEnum::SYSTEM_ASSIGNED) {
-            // assignment template
-        }
-
-        //$this->triggerCarQuoteEmail($lead);
-        info('Email sending code reached');
-
-        //$this->buildSMS($lead);
         info('SMS sending code reached');
 
     }
@@ -83,7 +61,7 @@ class HandleCarAdvisorUpdated
     public function triggerCarQuoteEmail($lead)
     {
         $emailData = '';
-
+        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active',1)->first();
         $plans = CarQuotePlanDetail::where('quote_uuid', $lead->uuid)
             ->where('is_rating_available', true)
             ->where('repair_type', CarPlanType::COMP)->get();
@@ -91,18 +69,21 @@ class HandleCarAdvisorUpdated
         $emailTemplateId = '';
 
         if (count($plans) == 0) {
+            info('Inside zero plan for sending email');
             $emailData = $this->carQuoteService->buildNoPlansEmailData($lead);
-            $emailTemplateId = 494;
+            $emailTemplateId = $lead->tier_id == $tierR->id ?  492 : 494;
         } elseif (count($plans) == 1) {
+            info('Inside single plan for sending email');
             $emailData = $this->carQuoteService->buildOnePlansEmailData($lead, reset($plans));
-            $emailTemplateId = 490;
+            $emailTemplateId = $lead->tier_id == $tierR->id ?  497 : 490;
         } else {
+            info('Inside multiple plan for sending email');
             $emailData = $this->carQuoteService->buildMultiplePlansEmailData($lead, reset($plans));
-            $emailTemplateId = 493;
+            $emailTemplateId = $lead->tier_id == $tierR->id ?  491 : 493;
         }
 
-        $emailTemplateId = (int) $this->carQuoteService->getAppStorageValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID'); // template id for LMS intro email
-
+        info('email data is : '. json_encode($emailData));
+        info('email template id is : '. json_encode($emailTemplateId));
         IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'lms-intro-email');
     }
 }

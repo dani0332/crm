@@ -391,14 +391,7 @@ class SendEmailCustomerService extends BaseService
                 'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
                 'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
-                'params' => [
-                    'clientFullName' => $emailData->clientFullName,
-                    'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
-                    'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,
-                    'mobilePhone' => isset($emailData->mobilePhone) ? preg_replace('/\s+/', '', $emailData->mobilePhone) : null,
-                    'carQuoteId' => isset($emailData->carQuoteId) ? $emailData->carQuoteId : null,
-                    'quoteLink' => isset($emailData->quoteLink) ? $emailData->quoteLink : null,
-                ],
+                'params' => $emailData,
                 'tags' => [
                     $tag,
                 ],

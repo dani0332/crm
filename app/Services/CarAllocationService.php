@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
@@ -449,6 +450,7 @@ class CarAllocationService extends AllocationService
             'advisorEmail' => $user->email,
             'documentUrl' => [$documentUrl],
             'customerEmail' => $carQuote->email,
+            'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
         return $emailData;
@@ -472,6 +474,7 @@ class CarAllocationService extends AllocationService
             'excessAed' => $plan->excess,
             'repairType' => $plan->repair_type,
             'discountPremium' => $plan->discount_premium,
+            'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
         return $emailData;
@@ -503,6 +506,7 @@ class CarAllocationService extends AllocationService
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'plans' => $insurerPlans,
+            'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
         return $emailData;

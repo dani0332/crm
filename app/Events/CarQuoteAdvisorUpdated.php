@@ -15,10 +15,8 @@ class CarQuoteAdvisorUpdated
     public $oldAdvisorId;
     public $oldAssignmentType;
 
-    public function __construct(CarQuote $lead, $oldAdvisorId, $oldAssignmentType)
+    public function __construct(CarQuote $lead)
     {
         $this->lead = $lead;
-        $this->oldAdvisorId = $oldAdvisorId;
-        $this->oldAssignmentType = $oldAssignmentType;
     }
 }

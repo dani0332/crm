@@ -144,11 +144,8 @@ class CarQuoteService extends BaseService
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
-                DB::raw('(CASE
-                WHEN cqr.assignment_type = 1 THEN "System Assigned"
-                WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
-                WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
-                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                DB::raw('(CASE WHEN cqr.assignment_type = 1 THEN "System Assigned" WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN cqr.assignment_type = 3 THEN "Manual Assigned" WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -1300,32 +1297,11 @@ class CarQuoteService extends BaseService
 
             $lead->auto_assigned = false;
 
-            $lead->save();
-
             if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
-                info('Inside sending email for manual assignment');
-
-                $currentAdvisor = User::where('id', $userId)->first();
-
-                $documentUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL)->first()->value;
-
-                $emailData = (object) [
-                    'customerEmail' => $lead->email,
-                    'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
-                    'clientFullName' => $lead->first_name.' '.$lead->last_name,
-                    'advisorName' => $currentAdvisor->name,
-                    'landLine' => $currentAdvisor->landline_no,
-                    'mobilePhone' => $currentAdvisor->mobile_no,
-                    'advisorEmail' => $currentAdvisor->email,
-                    'carQuoteId' => $lead->code,
-                    'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid,
-                ];
-
-                $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
-                $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
-
-                IntroEmailJob::dispatch(quoteTypeCode::Car, $isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
+                $lead->send_manual_assignment_email = true;
             }
+
+            $lead->save();
         }
 
         return [];
