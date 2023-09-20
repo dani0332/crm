@@ -411,6 +411,7 @@ class SendEmailCustomerService extends BaseService
             info('sendLMSIntroEmail ---- Request Sent');
             $responseCode = $clientRequest->getStatusCode();
             info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
+            info('sendLMSIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
