@@ -381,6 +381,8 @@ const updateProfileDetails = isValid => {
           </x-form>
       </div>
 
+      <AdditionalContacts :quote="quote" :quote-type="quoteType" />
+
       <MemberDetails
           :quote="quote"
           :membersDetails="membersDetails"
@@ -407,8 +409,6 @@ const updateProfileDetails = isValid => {
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"

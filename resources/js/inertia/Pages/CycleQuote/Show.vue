@@ -6,6 +6,7 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import MemberDetails from "../../Components/MemberDetails.vue";
+import AdditionalContacts from "../PersonalQuote/Partials/AdditionalContacts.vue";
 
 defineProps({
   quote: Object,
@@ -483,6 +484,8 @@ const updateProfileDetails = isValid => {
           </x-form>
       </div>
 
+      <AdditionalContacts :quote="quote" :quote-type="quoteType" />
+
       <MemberDetails
           :quote="quote"
           :membersDetails="membersDetails"
@@ -509,8 +512,6 @@ const updateProfileDetails = isValid => {
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
     />
-
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteStatus
       :quote="quote"

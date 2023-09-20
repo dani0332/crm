@@ -642,6 +642,13 @@ const updateProfileDetails = isValid => {
           </x-form>
       </div>
 
+      <customerAdditionalContacts
+          quoteType="Life"
+          :customerId="quote.customer_id"
+          :quoteId="quote.id"
+          :contacts="customerAdditionalContacts"
+      />
+
     <MemberDetails
         :quote="quote"
         :membersDetails="membersDetails"
@@ -867,13 +874,6 @@ const updateProfileDetails = isValid => {
         </template>
       </x-modal>
     </div>
-
-    <customerAdditionalContacts
-      quoteType="Life"
-      :customerId="quote.customer_id"
-      :quoteId="quote.id"
-      :contacts="customerAdditionalContacts"
-    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

@@ -503,6 +503,14 @@ const searchCustomerEntity = isValid => {
             </template>
         </x-modal>
 
+        <!-- Additional Contact -->
+        <customerAdditionalContacts
+            quoteType="Business"
+            :customerId="quote.customer_id"
+            :quoteId="quote.id"
+            :contacts="customerAdditionalContacts"
+        />
+
         <UBODetails
             :quote="quote"
             :UBOsDetails="UBOsDetails"
@@ -574,14 +582,6 @@ const searchCustomerEntity = isValid => {
                 </x-button>
             </div>
         </div>
-
-        <!-- Additional Contact -->
-        <customerAdditionalContacts
-            quoteType="Business"
-            :customerId="quote.customer_id"
-            :quoteId="quote.id"
-            :contacts="customerAdditionalContacts"
-        />
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div>

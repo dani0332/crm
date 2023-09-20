@@ -740,6 +740,14 @@ const searchCustomerEntity = isValid => {
           </template>
       </x-modal>
 
+      <!-- Additional Contact -->
+      <customerAdditionalContacts
+          quoteType="Business"
+          :customerId="quote.customer_id"
+          :quoteId="quote.id"
+          :contacts="customerAdditionalContacts"
+      />
+
       <UBODetails
           :quote="quote"
           :UBOsDetails="UBOsDetails"
@@ -961,14 +969,6 @@ const searchCustomerEntity = isValid => {
         </template>
       </x-modal>
     </div>
-
-    <!-- Additional Contact -->
-    <customerAdditionalContacts
-      quoteType="Business"
-      :customerId="quote.customer_id"
-      :quoteId="quote.id"
-      :contacts="customerAdditionalContacts"
-    />
 
     <!-- Payments -->
     <PaymentTable

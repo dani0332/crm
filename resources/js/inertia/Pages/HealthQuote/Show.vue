@@ -1495,6 +1495,120 @@ onMounted(() => {
           </x-form>
       </div>
 
+      <div class="p-4 rounded shadow mb-6 bg-white">
+          <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+              <h3 class="font-semibold text-primary-800 text-lg">
+                  Customer Additional Contacts
+                  <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+              </h3>
+              <x-button
+                  size="sm"
+                  color="orange"
+                  @click.prevent="
+            additionalContact.reset();
+            modals.addContact = true;
+          "
+              >
+                  Add Additional Contacts
+              </x-button>
+          </div>
+
+          <DataTable
+              table-class-name="compact"
+              :headers="additionalContactTable"
+              :items="customerAdditionalContacts || []"
+              border-cell
+              hide-rows-per-page
+              hide-footer
+          >
+              <template #item-key="{ key }">
+                  <span v-if="key === 'email'"> Email Address </span>
+                  <span v-else> Mobile Number </span>
+              </template>
+              <template #item-action="item">
+                  <x-button
+                      size="xs"
+                      color="emerald"
+                      outlined
+                      @click.prevent="additionalContactPrimary(item)"
+                  >
+                      Make Primary
+                  </x-button>
+              </template>
+          </DataTable>
+
+          <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+              <template #header> Add Additional Contacts </template>
+
+              <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+                  <div class="grid gap-4">
+                      <x-select
+                          v-model="additionalContact.additional_contact_type"
+                          label="Type"
+                          :options="[
+                { value: 'email', label: 'Email' },
+                { value: 'mobile_no', label: 'Mobile Number' },
+              ]"
+                          :rules="[isRequired]"
+                          placeholder="Select Type"
+                          class="w-full"
+                      />
+
+                      <x-input
+                          v-model="additionalContact.additional_contact_val"
+                          label="Value"
+                          :rules="[
+                isRequired,
+                additionalContact.additional_contact_type === 'email'
+                  ? isEmail
+                  : isMobileNo,
+              ]"
+                          class="w-full"
+                      />
+                  </div>
+
+                  <div class="text-right space-x-4 mt-12">
+                      <x-button size="sm" @click.prevent="modals.addContact = false">
+                          Cancel
+                      </x-button>
+
+                      <x-button
+                          size="sm"
+                          color="emerald"
+                          :loading="additionalContact.processing"
+                          type="submit"
+                      >
+                          Save
+                      </x-button>
+                  </div>
+              </x-form>
+          </x-modal>
+
+          <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+              <template #header> Primary Additional Contact </template>
+              <p>Are you sure you want to make this information as Primary?</p>
+              <template #actions>
+                  <div class="text-right space-x-4">
+                      <x-button
+                          size="sm"
+                          ghost
+                          @click.prevent="modals.contactPrimaryConfirm = false"
+                      >
+                          Cancel
+                      </x-button>
+                      <x-button
+                          size="sm"
+                          color="emerald"
+                          @click.prevent="additionalContactPrimaryConfirmed"
+                          :loading="contactLoader"
+                      >
+                          Confirm
+                      </x-button>
+                  </div>
+              </template>
+          </x-modal>
+      </div>
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
@@ -2342,120 +2456,6 @@ onMounted(() => {
               @click.prevent="activityDeleteConfirmed"
             >
               Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Customer Additional Contacts
-          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-        </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="
-            additionalContact.reset();
-            modals.addContact = true;
-          "
-        >
-          Add Additional Contacts
-        </x-button>
-      </div>
-
-      <DataTable
-        table-class-name="compact"
-        :headers="additionalContactTable"
-        :items="customerAdditionalContacts || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-key="{ key }">
-          <span v-if="key === 'email'"> Email Address </span>
-          <span v-else> Mobile Number </span>
-        </template>
-        <template #item-action="item">
-          <x-button
-            size="xs"
-            color="emerald"
-            outlined
-            @click.prevent="additionalContactPrimary(item)"
-          >
-            Make Primary
-          </x-button>
-        </template>
-      </DataTable>
-
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts </template>
-
-        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
-
-            <x-input
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[
-                isRequired,
-                additionalContact.additional_contact_type === 'email'
-                  ? isEmail
-                  : isMobileNo,
-              ]"
-              class="w-full"
-            />
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.addContact = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="additionalContact.processing"
-              type="submit"
-            >
-              Save
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact </template>
-        <p>Are you sure you want to make this information as Primary?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactPrimaryConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="additionalContactPrimaryConfirmed"
-              :loading="contactLoader"
-            >
-              Confirm
             </x-button>
           </div>
         </template>
