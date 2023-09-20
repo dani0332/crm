@@ -1056,14 +1056,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsInclusions as $key =>
-										$listQuotePlanBenefitsInclusion)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text)
-												}}</td>
-											<td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsInclusions))
+											@foreach ($listQuotePlanBenefitsInclusions as $key => $listQuotePlanBenefitsInclusion)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text)
+													}}</td>
+												<td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
