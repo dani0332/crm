@@ -1845,9 +1845,9 @@ onMounted(() => {
           </x-badge>
 
           <x-button
-            v-if="false"
+            v-if="isBetaUser"
             size="sm"
-            color="primary"
+            color="emerald"
             @click.prevent="modals.createPlan = true"
           >
             Add Plan
