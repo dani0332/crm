@@ -110,12 +110,12 @@ const tableHeader = [
       hide-footer
       fixed-checkbox
     >
-      <template #item-policy_no="{ policy_no }">
+      <template #item-policy_no="item">
         <Link
-          :href="`/legacy-policy/${policy_no}`"
+          :href="`/legacy-policy/${item._id}`"
           class="text-primary-500 hover:underline"
         >
-          {{ policy_no }}
+          {{ item.policy_no }}
         </Link>
       </template>
     </DataTable>
