@@ -6,6 +6,9 @@ const props = defineProps({
 });
 
 const params = useUrlSearchParams('history');
+const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const columnChartData = ref([]);
 const advisors = ref([]);
@@ -111,6 +114,7 @@ onMounted(() => {
               label: item.name,
             }))
           "
+          :disabled="can(permissionsEnum.ViewTeamsFilters)"
         />
       </x-field>
       <x-field label="Sub Teams">
@@ -124,7 +128,10 @@ onMounted(() => {
               label: item.name,
             }))
           "
-          :disabled="filters.team_filter.length == 0"
+          :disabled="
+            filters.team_filter.length == 0 ||
+            can(permissionsEnum.ViewTeamsFilters)
+          "
         />
       </x-field>
       <x-field label="Advisor">

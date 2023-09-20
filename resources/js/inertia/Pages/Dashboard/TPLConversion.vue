@@ -10,6 +10,10 @@ const params = useUrlSearchParams('history');
 const columnChartData = ref([]);
 const advisors = ref([]);
 
+const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const allTeams = computed(() => [...Object.values(props.teams)]);
 
 const filters = reactive({
@@ -93,6 +97,7 @@ onMounted(() => {
               label: item.name,
             }))
           "
+          :disabled="can(permissionsEnum.ViewTeamsFilters)"
         />
       </x-field>
       <x-field label="Advisor">

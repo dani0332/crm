@@ -41,6 +41,7 @@ class DashboardController extends Controller
         return view('dashboard');
     }
 
+
     public function renderMainDashboard(Request $request)
     {
         $loggedInUserId = auth()->user()->id;
@@ -430,8 +431,7 @@ class DashboardController extends Controller
     {
         $statsArray = $this->getWeeklyStats($quoteType);
         $headingArray = $this->getWeeklyHeading();
-
-        return inertia('Dashboard/QuoteConversion', [
+        return inertia('Dashboard/'.ucwords($quoteType).'Conversion', [
             'statsArray' => $statsArray,
             'headingArray' => $headingArray,
             'qouteType' => $quoteType
