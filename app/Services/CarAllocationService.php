@@ -516,6 +516,7 @@ class CarAllocationService extends AllocationService
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+        info('plan passed for email is : '. json_encode($plan). ' and type is : '. gettype($plan));
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
