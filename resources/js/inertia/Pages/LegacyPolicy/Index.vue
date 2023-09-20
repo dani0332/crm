@@ -49,6 +49,7 @@ let availableFilters = {
 };
 const filters = reactive(availableFilters);
 const tableHeader = [
+  { text: 'ID', value: '_id' },
   { text: 'Policy Number', value: 'policy_no' },
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
@@ -110,17 +111,18 @@ const tableHeader = [
       hide-footer
       fixed-checkbox
     >
-      <template #item-policy_no="{ policy_no }">
+      <template #item-_id="item">
         <Link
-          :href="`/legacy-policy/${policy_no}`"
+          :href="`/legacy-policy/${item._id}`"
           class="text-primary-500 hover:underline"
         >
-          {{ policy_no }}
+          {{ item._id }}
         </Link>
       </template>
     </DataTable>
 
     <Pagination
+      v-if="policies.data && policies.data.length > 0"
       :links="{
         next: policies.next_page_url,
         prev: policies.prev_page_url,
