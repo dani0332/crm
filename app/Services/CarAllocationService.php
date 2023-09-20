@@ -420,9 +420,30 @@ class CarAllocationService extends AllocationService
             ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp]);
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
+        }else{
+            $advisors = $this->getUnavailableAdvisor();
+            if(count($advisors) > 0){
+                $advisorIds = $advisors->pluck('user_id');
+                $leads->whereIn('advisor_id', $advisorIds);
+            }
         }
 
         return $leads->get();
+    }
+
+    public function getUnavailableAdvisor()
+    {
+        $query = LeadAllocation::with('leadAllocationUser')
+            ->whereHas('leadAllocationUser', function ($query) {
+                $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE , UserStatusEnum::SICK]);
+            })
+            ->where(function ($query) {
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->orderByDesc('last_allocated');
+
+        return $query->get();
     }
 
     public function shouldProceed(): bool
