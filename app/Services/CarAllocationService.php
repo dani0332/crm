@@ -512,8 +512,9 @@ class CarAllocationService extends AllocationService
         return $emailData;
     }
 
-    public function buildOnePlansEmailData($carQuote, $plan)
+    public function buildOnePlansEmailData($carQuote, $planArray)
     {
+        $plan = (object) $planArray[0];
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         info('plan passed for email is : '.json_encode($plan).' and type is : '.gettype($plan));
@@ -573,7 +574,7 @@ class CarAllocationService extends AllocationService
     {
 
         $vehicleName = '';
-        if (! empty($lead->car_make_id)) {
+        if ($lead->car_make_id != null) {
             $carMake = CarMake::find($lead->car_make_id);
 
             if ($carMake) {
@@ -581,7 +582,7 @@ class CarAllocationService extends AllocationService
             }
         }
 
-        if (! empty($lead->car_model_id)) {
+        if ($lead->car_model_id != null) {
             $carModel = CarModel::find($lead->car_model_id);
 
             if ($carModel) {
@@ -589,7 +590,7 @@ class CarAllocationService extends AllocationService
                 $vehicleName .= ' '.$carModel->text;
             }
         }
-        if (! empty($lead->car_model_detail_id)) {
+        if ($lead->car_model_detail_id != null) {
             $carModelDetail = CarModelDetail::find($lead->car_model_detail_id);
 
             if ($carModelDetail) {
