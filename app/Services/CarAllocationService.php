@@ -476,9 +476,9 @@ class CarAllocationService extends AllocationService
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'carValue' => $carQuote->car_value,
-            'excessAed' => $plan->excess,
-            'repairType' => $plan->repair_type,
-            'discountPremium' => $plan->discount_premium,
+            'excessAed' => $plan->excess ? $plan->excess : '' ,
+            'repairType' => $plan->repair_type ? $plan->repair_type : '',
+            'discountPremium' => $plan->discount_premium ? $plan->discount_premium : '',
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
