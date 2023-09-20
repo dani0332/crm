@@ -8,6 +8,7 @@ use App\Enums\CarPlanType;
 use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\RuleTypeEnum;
 use App\Enums\TiersEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\CarMake;
@@ -16,10 +17,12 @@ use App\Models\CarModelDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuotePlanDetail;
 use App\Models\CarQuoteRequestDetail;
+use App\Models\CommercialKeyword;
 use App\Models\InsuranceProvider;
 use App\Models\LeadAllocation;
 use App\Models\LeadSource;
 use App\Models\QuoteBatches;
+use App\Models\Rule;
 use App\Models\RuleLeadSource;
 use App\Models\Tier;
 use App\Models\TierUser;
@@ -31,11 +34,13 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-        return CarQuote::where('uuid', $quoteId)
+        $query =  CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('is_renewal_tier_email_sent', 0)
-            ->first();
+            ->where('is_renewal_tier_email_sent', 0);
+        info('query for : '. $query->toSql());
+        info('query for binding : '. json_encode($query->getBindings()));
+        return $query->first();
     }
 
     public function getTier($tierId)
@@ -182,15 +187,7 @@ class CarAllocationService extends AllocationService
 
     public function getRules($carLead)
     {
-        // $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
-
-        // foreach ($commercialKeywords as $keyword) {
-        //     if (str_contains(strtolower(trim($carLead->full_name)), strtolower(trim($keyword->name)))) {
-        //         return $this->getRulesForCarMakeAndModel($carLead->car_make_id, $carLead->car_model_id);
-        //     }
-        // }
-
-        return $this->getRulesForLeadSource($carLead->source);
+        return $this->getRulesForLeadSource($carLead);
     }
 
     public function getAppStorageValuesForCarLeads(): array
@@ -203,46 +200,78 @@ class CarAllocationService extends AllocationService
         return [$from, $to, $limit, $isFIFO];
     }
 
-    private function getRulesForCarMakeAndModel($carMake, $carModel)
+    private function getRulesForLeadSource($lead)
     {
-        // return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
-        //     ->join('rule_users', 'rule_users.rule_id', 'rules.id')
-        //     ->join('users', 'users.id', 'rule_users.user_id')
-        //     ->where('rule_details.car_make_id', $carMake)
-        //     ->where('rule_details.car_model_id', $carModel)
-        //     ->where('rules.is_active', 1)
-        //     ->groupBy('rule_details.rule_id')
-        //     ->select(DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers'))
-        //     ->get();
+        $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
+
+        $commercialCarMake = CarMake::where('id', $lead->car_make_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        $commercialCarModel = CarModel::where('id', $lead->car_model_id)
+            ->where('is_commercial', true)
+            ->select('id')
+            ->first();
+
+        foreach ($commercialKeywords as $keyword) {
+            if (
+                str_contains(
+                    strtolower(trim($lead->full_name)),
+                    strtolower(trim($keyword->name))
+                )
+                ||
+                ($commercialCarMake && $commercialCarModel)
+            ) {
+                $records = $this->getCommercialRule();
+
+                info('commercial records: '.json_encode($records->get()));
+
+                return $records->get();
+
+            }
+        }
+
+        info('keyword not found and vehicle is not commercial as well, so checking for normal rules');
+
+        $records = LeadSource::leftJoin('rule_details', 'rule_details.lead_source_id', 'lead_sources.id')
+            ->join('rules', 'rules.id', 'rule_details.rule_id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('lead_sources.name', $lead->source)
+            ->where('rules.is_active', 1)
+            ->where('lead_sources.is_applicable_for_rules', 1)
+            ->groupBy('rule_details.lead_source_id')
+            ->select(
+                'lead_sources.name AS leadSourceName',
+                'lead_sources.id AS leadSourceId',
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            );
+
+        info('lead source records: '.json_encode($records->get()));
+
+        return $records->get();
     }
 
-    private function getRulesForLeadSource($leadSource)
+    public function getCommercialRule()
     {
-        return LeadSource::with(['ruleDetails.rule.users'])
-            ->where('name', $leadSource)
-            ->whereHas('ruleDetails.rule', function ($query) {
-                $query->where('is_active', 1);
-            })
-            ->where('is_applicable_for_rules', 1)
+        return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
+            ->join('users', 'users.id', 'rule_users.user_id')
+            ->where('rule_type', RuleTypeEnum::CAR_MAKE_MODEL)
+            ->where('rules.is_active', 1)
+            ->groupBy('rule_details.rule_id')
             ->select(
-                'name AS leadSourceName',
-                'id AS leadSourceId'
-            )
-            ->get()
-            ->map(function ($leadSource) {
-                $leadSource->leadSourceUsers = $leadSource->ruleDetails->flatMap(function ($detail) {
-                    return $detail->rule->users->pluck('id');
-                });
-
-                return $leadSource;
-            })->toArray();
+                DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
+            );
     }
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
     {
         if (count($rules) > 0) {
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-            $finalEligibleUserIds = array_intersect($eligibleUsers, $ruleUserIds);
+
+            $finalEligibleUserIds = array_intersect(collect($eligibleUsers)->pluck('id')->toArray(), $ruleUserIds);
 
             info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
         } else {

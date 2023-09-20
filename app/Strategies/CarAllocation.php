@@ -97,7 +97,7 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getEligibleUserForAllocation($tierId);
     }
 
-    protected function findRules($lead): array
+    protected function findRules($lead)
     {
         return $this->carAllocationService->getRules($lead);
     }
