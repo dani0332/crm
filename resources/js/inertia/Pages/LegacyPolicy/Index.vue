@@ -121,6 +121,7 @@ const tableHeader = [
     </DataTable>
 
     <Pagination
+      v-if="policies.data && policies.data.length > 0"
       :links="{
         next: policies.next_page_url,
         prev: policies.prev_page_url,
