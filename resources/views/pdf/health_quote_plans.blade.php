@@ -276,7 +276,13 @@
                 }
             }
 
-            $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            if(isset($addons[$quotePlan->id])) {
+                $planCoPatientAddon = json_decode($quotePlan->addons);
+                $planCoPatientAddon->{$quotePlan->id}->{'coPayment'} = $addons[$quotePlan->id]['coPayment'];
+                $quotePlan->addons = json_encode($planCoPatientAddon);
+            }
+
+            $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             foreach ($quotePlan->benefits as &$benefit) {
 
@@ -338,6 +344,7 @@
             ["code" => "newBorn", "title" => "Newborn Cover", "type" => 'maternityCover'],
 
             ["code" => "heading", "title" => "Co‐pay or Co‐insurance"],
+            ["code" => "coPayment", "title" => "Outpatient co-pay", "type" => 'coInsurance'],
             ["code" => "consultation", "title" => "Outpatient Consultation", "type" => 'coInsurance'],
             ["code" => "diagnostics", "title" => "Outpatient Diagnostics", "type" => 'coInsurance'],
             ["code" => "physiotherapy", "title" => "Outpatient Physiotherapy", "type" => 'coInsurance'],
