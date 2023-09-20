@@ -322,7 +322,6 @@ function onSubmit(isValid) {
                   upload-route="embedded-products.upload-document"
                   accept=".pdf"
                   :title="`product_wordings`"
-                  :key="vform.company_documents[index].path"
                 />
               </template>
               <template v-else>
@@ -341,7 +340,6 @@ function onSubmit(isValid) {
                   upload-route="embedded-products.upload-document"
                   accept=".pdf"
                   :title="form.company_documents[index].title"
-                  :key="form.company_documents[index].title"
                 />
                 <x-button
                   size="xs"
