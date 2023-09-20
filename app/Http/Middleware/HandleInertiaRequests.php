@@ -47,7 +47,8 @@ class HandleInertiaRequests extends Middleware
             $roles = auth()->user()->getRoleNames()->toArray();
         }
 
-        return array_merge(parent::share($request), [
+        return [
+            ...parent::share($request),
             'auth.user' => fn () => $request->user()
                 ? $request->user()->only('id', 'name', 'email')
                 : null,
@@ -63,7 +64,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
-        ]);
+        ];
     }
 
     protected function shareFlashData(Request $request)
@@ -256,7 +257,6 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CAR_SOLD_LIST,
             PermissionsEnum::CAR_UNCONTACTABLE_LIST,
         ])) {
-
             $nav = $nav->add('Car Sold / Uncon', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_SOLD_LIST), 'Car Sold', '/quotes/car-sold', fn ($s) => $s->attributes(['icon' => 'car']))
