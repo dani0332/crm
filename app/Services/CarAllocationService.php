@@ -300,6 +300,10 @@ class CarAllocationService extends AllocationService
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
     {
+        if (! empty($lead->advisor_id)) {
+            info('lead with uuid : '.$lead->uuid.' was previously assigned to user id : '.$lead->advisor_id.' and now getting assigned to user id : '.$userId);
+        }
+
         $updatedData = [
             'tier_id' => $tier->id,
             'advisor_id' => $userId,
@@ -307,10 +311,6 @@ class CarAllocationService extends AllocationService
             'auto_assigned' => true,
             'assignment_type' => $assignmentType,
         ];
-
-        if(!empty($lead->advisor_id)) {
-            info('lead with uuid : '. $lead->uuid. ' was previously assigned to user id : '. $lead->advisor_id . ' and now getting assigned to user id : '. $userId);
-        }
 
         if ($lead->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();
