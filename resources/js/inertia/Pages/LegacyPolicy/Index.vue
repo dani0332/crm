@@ -49,6 +49,7 @@ let availableFilters = {
 };
 const filters = reactive(availableFilters);
 const tableHeader = [
+  { text: 'ID', value: '_id' },
   { text: 'Policy Number', value: 'policy_no' },
   { text: 'Customer name', value: 'customer.name' },
   { text: 'Currently insured with', value: 'policy.insurer' },
@@ -110,12 +111,12 @@ const tableHeader = [
       hide-footer
       fixed-checkbox
     >
-      <template #item-policy_no="item">
+      <template #item-_id="item">
         <Link
           :href="`/legacy-policy/${item._id}`"
           class="text-primary-500 hover:underline"
         >
-          {{ item.policy_no }}
+          {{ item._id }}
         </Link>
       </template>
     </DataTable>
