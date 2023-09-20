@@ -34,12 +34,13 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-        $query =  CarQuote::where('uuid', $quoteId)
+        $query = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
-        info('query for : '. $query->toSql());
-        info('query for binding : '. json_encode($query->getBindings()));
+        info('query for : '.$query->toSql());
+        info('query for binding : '.json_encode($query->getBindings()));
+
         return $query->first();
     }
 
