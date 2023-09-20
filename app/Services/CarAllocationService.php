@@ -308,6 +308,10 @@ class CarAllocationService extends AllocationService
             'assignment_type' => $assignmentType,
         ];
 
+        if(!empty($lead->advisor_id)) {
+            info('lead with uuid : '. $lead->uuid. ' was previously assigned to user id : '. $lead->advisor_id . ' and now getting assigned to user id : '. $userId);
+        }
+
         if ($lead->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();
             info('About to assign quote batch with id: '.$quoteBatch->id.' and name: '.$quoteBatch->name.' to quote: '.$lead->uuid);
