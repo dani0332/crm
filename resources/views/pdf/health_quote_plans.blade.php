@@ -276,13 +276,7 @@
                 }
             }
 
-            if(isset($addons[$quotePlan->id])) {
-                $planCoPatientAddon = json_decode($quotePlan->addons);
-                $planCoPatientAddon->{$quotePlan->id}->{'coPayment'} = $addons[$quotePlan->id]['coPayment'];
-                $quotePlan->addons = json_encode($planCoPatientAddon);
-            }
-
-            $quotePlan->addons = json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             foreach ($quotePlan->benefits as &$benefit) {
 
@@ -465,6 +459,11 @@
             </thead>
             <tbody>
                 @foreach($features as $feature)
+
+                @if($feature['code'] == 'coPayment' && !isset($addons[$planId]['coPayment']))
+                    @php continue; @endphp
+                @endif
+
                 {{-- heading row --}}
                 @if(@$feature['code'] == 'heading')
                 <tr>
@@ -512,7 +511,11 @@
                                 @endforeach
                                 {!! ($value)  !!}
                             @else
-                                {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
+                                @if($feature['code'] == 'coPayment')
+                                    {{ $addons[$planId]['coPayment']['text'] ?? '' }}
+                                @else
+                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
+                                @endif
                             @endif
                         </p>
                     </td>
