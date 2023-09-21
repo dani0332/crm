@@ -168,6 +168,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
         Artisan::call('view:cache');
+        Artisan::call('route:clear');
         Artisan::call('config:cache');
 
         return '<h1>All cache cleared and optimized. LARAVEL Version='.app()->version().'</h1>';
@@ -194,7 +195,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('activities', [ActivityController::class, 'index'])->name('activities.index');
     Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
 
-    Route::post('/activities/create-activity', [ActivitesController::class, 'store'])->name('activities.create-activity');
+    Route::post('/activities/create-activity', [ActivitesController::class, 'store'])->name('activities.create.activity');
     Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update-activity');
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
