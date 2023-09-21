@@ -49,7 +49,11 @@ const onLoadMore = id => {
   };
   axios
     .post(
-      `/quotes/records?page=${quotes.pages[id]}&modelType=Home&status=${id}`,
+      route('loadMoreRecords', {
+        page: quotes.pages[id],
+        modelType: 'Home',
+        status: id,
+      }),
     )
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
@@ -74,7 +78,13 @@ const onSearch = id => {
   quotes.searching = true;
   if (!quotes.queries[id]) {
     axios
-      .post(`/quotes/records?page=1&modelType=Home&status=${id}`)
+      .post(
+        route('loadMoreRecords', {
+          page: 1,
+          modelType: 'Home',
+          status: id,
+        }),
+      )
       .then(({ data }) => {
         quotes.data = quotes.data.map(quote => {
           if (quote.id === id) {
@@ -93,7 +103,11 @@ const onSearch = id => {
   }
   axios
     .post(
-      `/quotes/records/search?term=${quotes.queries[id]}&status=${id}&modelType=Home`,
+      route('searchLead', {
+        term: 1,
+        modelType: 'Home',
+        status: id,
+      }),
     )
     .then(({ data }) => {
       quotes.data = quotes.data.map(quote => {
@@ -122,11 +136,11 @@ const onSearch = id => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Home List</h2>
       <div class="space-x-3">
-        <Link href="/quotes/home">
+        <Link :href="route('home.index')">
           <x-button size="sm" color="#1d83bc"> List View </x-button>
         </Link>
 
-        <Link href="/quotes/home/create">
+        <Link :href="route('home.create')">
           <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
         </Link>
       </div>
@@ -190,7 +204,7 @@ const onSearch = id => {
               updated_at,
             } in quote.data.leads_list.data"
             :key="id"
-            :href="`/quotes/home/${uuid}`"
+            :href="route('home.show', uuid)"
             target="_blank"
             title="View Lead"
             class="block p-3 mt-2 border border-gray-300 bg-white space-y-2 hover:transition hover:border-primary-500 rounded"

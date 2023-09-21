@@ -37,7 +37,7 @@ const quoteForm = useForm({
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 function onSubmit(isValid) {
   if (isValid) {
@@ -45,18 +45,10 @@ function onSubmit(isValid) {
     let url = editMode.value
       ? route('life-quotes-update', props.quote.uuid)
       : route('life-quotes-store');
-    let title = editMode.value ? '' : 'Quote saved successfully';
 
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
-      },
-      onSuccess: () => {
-        if (title != '')
-          notification.success({
-            title: title,
-            position: 'top',
-          });
       },
     });
   }
@@ -115,7 +107,7 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :disabled="editMode"
             :error="quoteForm.errors.mobile_no"

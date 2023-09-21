@@ -1,16 +1,24 @@
 <script setup>
-
 const props = defineProps({
-  quote: Object,
   businessInsuranceType: Object,
+  quote: Object,
   gmTypes: Object,
   selectedGmType: Object,
 });
 
+const notification = useToast();
+const isEdit = computed(() => (props.quote.uuid ? true : false));
 const genderSelect = computed(() => {
   return Object.keys(props.genderOptions).map(status => ({
     value: status,
     label: props.genderOptions[status],
+  }));
+});
+
+const formFields = computed(() => {
+  return Object.keys(props.fields).map(field => ({
+    value: field,
+    label: props.fields[field].label,
   }));
 });
 
@@ -24,38 +32,46 @@ const quoteForm = useForm({
   company_name: props.quote.company_name,
   number_of_employees: props.quote.number_of_employees,
   business_type_of_insurance_id: props.quote.business_type_of_insurance_id,
-  group_medical_type_id: props.selectedGmType,
+  group_medical_type_id: props.selectedGmType ?? '',
   brief_details: props.quote.brief_details,
 });
 
-const { isRequired, isNumber, isDecimal, isEmail  } = useRules();
+const { isRequired, emptyOrDecimal, isNumber, isEmail, isMobileNo } =
+  useRules();
 
 const isEmptyField = ref(false);
 
 function onSubmit(isValid) {
-  if (isValid) {
-    quoteForm.put(`/medical/amt/${props.quote.uuid}`, {
-      onSuccess: () => {
-        router.get(`/medical/amt/${props.quote.uuid}`);
-      },
-      onStart: () => {
-        quoteForm.clearErrors();
-      },
-    });
-  }
+  if (!isValid) return;
+  const method = isEdit.value ? 'put' : 'post';
+  const url = isEdit.value
+    ? route('amt.update', props.quote.uuid)
+    : route('amt.store');
+
+  const options = {
+    onError: errors => {
+      quoteForm.setError(errors);
+    },
+    onStart: () => {
+      quoteForm.clearErrors();
+    },
+  };
+  quoteForm.submit(method, url, options);
 }
 </script>
 
 <template>
   <div>
-    <Head title="Edit Group Medical" />
+    <Head :title="isEdit ? 'Edit Group Medical' : 'Create Group Medical'" />
     <div class="flex justify-between items-center">
-      <h2 class="text-xl font-semibold">Edit Group Medical Lead</h2>
+      <h2 class="text-xl font-semibold">
+        {{ isEdit ? 'Update' : 'Create' }} Group Medical Lead
+      </h2>
       <div class="space-x-4">
-        <Link :href="`/medical/amt/${props.quote.uuid}`">
-          <x-button size="sm" tag="div"> Cancel </x-button>
+        <Link v-if="isEdit" :href="route('amt.show', props.quote.uuid)">
+          <x-button size="sm" tag="div"> View </x-button>
         </Link>
-        <Link href="/medical/amt">
+        <Link :href="route('amt.index')">
           <x-button size="sm" color="#ff5e00" tag="div"> Quotes List </x-button>
         </Link>
       </div>
@@ -63,12 +79,7 @@ function onSubmit(isValid) {
     <x-divider class="my-4" />
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 gap-4">
-        <label>
-          <p>
-            FIRST NAME
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="FIRST NAME" required>
           <x-input
             v-model="quoteForm.first_name"
             type="text"
@@ -76,14 +87,9 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.first_name"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            LAST NAME
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="LAST NAME" required>
           <x-input
             v-model="quoteForm.last_name"
             type="text"
@@ -91,46 +97,31 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.last_name"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            EMAIL
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="EMAIL" required>
           <x-input
             v-model="quoteForm.email"
             type="email"
             :rules="[isRequired, isEmail]"
-            :disabled="true"
             class="w-full"
+            :disabled="isEdit"
             :error="quoteForm.errors.email"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            MOBILE NUMBER
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="MOBILE NUMBER" required>
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
-            :rules="[isRequired]"
-            :disabled="true"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
+            :disabled="isEdit"
             :error="quoteForm.errors.mobile_no"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            COMPANY NAME
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="COMPANY NAME" required>
           <x-input
             v-model="quoteForm.company_name"
             type="text"
@@ -138,29 +129,19 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.company_name"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            NUMBER OF EMPLOYEES
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="NUMBER OF EMPLOYEES" required>
           <x-input
             v-model="quoteForm.number_of_employees"
-            type="text"
+            type="number"
             :rules="[isRequired, isNumber]"
             class="w-full"
             :error="quoteForm.errors.number_of_employees"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            Business Insurance Type
-            <sup class="text-red-500">*</sup>
-          </p>
-
+        <x-field label="Business Insurance Type" required>
           <x-select
             v-model="quoteForm.business_type_of_insurance_id"
             :options="
@@ -173,14 +154,28 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.business_type_of_insurance_id"
           />
-        </label>
+        </x-field>
 
-        <label>
-          <p>
-            Group Medical Type
-            <sup class="text-red-500">*</sup>
-          </p>
+        <x-field label="BRIEF DETAILS" required>
+          <x-textarea
+            v-model="quoteForm.brief_details"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.brief_details"
+          />
+        </x-field>
 
+        <x-field label="PRICE">
+          <x-input
+            v-model="quoteForm.premium"
+            type="number"
+            class="w-full"
+            :rules="[emptyOrDecimal]"
+            :error="quoteForm.errors.premium"
+          />
+        </x-field>
+
+        <x-field label="Group Medical Type" required v-if="isEdit">
           <x-select
             v-model="quoteForm.group_medical_type_id"
             :options="
@@ -193,35 +188,7 @@ function onSubmit(isValid) {
             class="w-full"
             :error="quoteForm.errors.group_medical_type_id"
           />
-        </label>
-
-        <label>
-          <p>
-            PRICE
-            <sup class="text-red-500">*</sup>
-          </p>
-          <x-input
-            v-model="quoteForm.premium"
-            type="text"
-            :rules="[isRequired, isDecimal]"
-            class="w-full"
-            :error="quoteForm.errors.premium"
-          />
-        </label>
-
-        <label>
-          <p>
-            BRIEF DETAILS
-            <sup class="text-red-500">*</sup>
-          </p>
-
-          <x-textarea
-            v-model="quoteForm.brief_details"
-            :rules="[isRequired]"
-            class="w-full"
-            :error="quoteForm.errors.brief_details"
-          />
-        </label>
+        </x-field>
       </div>
       <x-divider class="my-4" />
       <div class="flex justify-end gap-3 mb-4">
@@ -231,7 +198,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Update
+          {{ isEdit ? 'Update' : 'Create' }}
         </x-button>
       </div>
     </x-form>

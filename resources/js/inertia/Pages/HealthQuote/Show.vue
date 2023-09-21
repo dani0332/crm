@@ -2,7 +2,6 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
   quote: Object,
@@ -31,6 +30,7 @@ defineProps({
   isQuoteDocumentEnabled: Boolean,
   isBetaUser: Boolean,
   payments: Array,
+  mainPayment: Object,
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
@@ -45,6 +45,7 @@ const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -137,7 +138,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -454,7 +455,6 @@ const memberDataDocs = membersDetail => {
 };
 
 // plans
-
 const planDataTable = ref();
 
 const plansTable = reactive({
@@ -1611,7 +1611,16 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ ecomDetails.paymentStatus }}</dd>
+            <dd>{{ quote.payment_status_text }}</dd>
+          </div>
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="
+              page.props.quote.payment_status_id == paymentStatusEnum.DECLINED
+            "
+          >
+            <dt class="font-medium">REASON</dt>
+            <dd>{{ mainPayment?.payment_status_message }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1636,6 +1645,7 @@ onMounted(() => {
       :isBetaUser="isBetaUser"
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
 
@@ -1760,16 +1770,6 @@ onMounted(() => {
             Download PDF
           </x-button>
 
-          <!-- hide add plan button for rm deployment -->
-          <x-button
-            size="sm"
-            color="primary"
-            v-show="false"
-            @click.prevent="modals.createPlan = true"
-          >
-            Add Plan
-          </x-button>
-
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1780,7 +1780,6 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
-
           <x-badge
             size="sm"
             color="error"
@@ -1798,7 +1797,9 @@ onMounted(() => {
             </x-button>
             <template #content> {{ planFiltersCount }} </template>
           </x-badge>
+
           <x-button
+            v-if="false"
             size="sm"
             color="primary"
             @click.prevent="modals.createPlan = true"
@@ -1868,7 +1869,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
                 )
               "
             >
@@ -2274,7 +2275,7 @@ onMounted(() => {
                 isRequired,
                 additionalContact.additional_contact_type === 'email'
                   ? isEmail
-                  : isNumber,
+                  : isMobileNo,
               ]"
               class="w-full"
             />

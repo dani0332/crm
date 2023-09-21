@@ -11,4 +11,5 @@ final class LeadSourceEnum extends Enum
     const TPL_RENEWALS = 'TPL_RENEWALS';
     const IMCRM = 'IMCRM';
     const REVIVAL = 'REVIVAL';
+    const INSLY = 'Insly';
 }

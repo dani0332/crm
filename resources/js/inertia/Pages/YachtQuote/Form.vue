@@ -18,7 +18,7 @@ const quoteForm = useForm({
   operator_experience: props.quote?.yacht_quote?.operator_experience || '',
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 const editMode = computed(() => {
   return props.quote && props.quote.uuid ? true : false;
 });
@@ -30,18 +30,10 @@ function onSubmit(isValid) {
     const url = editMode.value
       ? route('yacht-quotes-update', props.quote.uuid)
       : route('yacht-quotes-store');
-    let title = editMode.value ? '' : 'Quote saved successfully';
 
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
-      },
-      onSuccess: () => {
-        if (title != '')
-          notification.success({
-            title: title,
-            position: 'top',
-          });
       },
     });
   }
@@ -100,8 +92,8 @@ function onSubmit(isValid) {
           <x-input
             v-model="quoteForm.mobile_no"
             type="tel"
+            :rules="[isRequired, isMobileNo]"
             :disabled="editMode"
-            :rules="[isRequired]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />
