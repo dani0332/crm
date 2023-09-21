@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class SubTypeOfInsurance extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'business_type_of_insurance';
     protected $fillable = ['text', 'text_ar', 'sort_order', 'is_active'];

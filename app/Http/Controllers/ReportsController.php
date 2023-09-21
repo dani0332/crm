@@ -16,8 +16,8 @@ use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
-    use TeamHierarchyTrait;
     use GetUserTreeTrait;
+    use TeamHierarchyTrait;
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {

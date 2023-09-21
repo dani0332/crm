@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             CreateAndAssignSubTeamsToAdvisors::class,
             GenericPermissionSeeder::class,
-            AddApiLogViewToPermssion::class,        
-    ]);
+            AddApiLogViewToPermssion::class,
+        ]);
     }
 }
