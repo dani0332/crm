@@ -60,6 +60,8 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
+        $schedule->command('reset:user-allocation-count')->dailyAt('23:58');
+
     }
 
     /**
