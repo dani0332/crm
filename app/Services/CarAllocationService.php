@@ -446,7 +446,7 @@ class CarAllocationService extends AllocationService
         info('leads will be picked up in reassignment from : '.$from);
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->whereIn('quote_status_id', [QuoteStatusEnum::NewLead, QuoteStatusEnum::FollowedUp]);
+            ->where('quote_status_id', QuoteStatusEnum::NewLead);
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
         } else {
@@ -548,7 +548,6 @@ class CarAllocationService extends AllocationService
         $insurerPlans = [];
         $planAddons = [];
         foreach ($plans as $plan) {
-            info('plan with name : '.$plan->plan_name.' has addons : '.json_encode($plan->addons));
             $insurerPlans[] = [
                 'carValue' => $carQuote->car_value,
                 'excessAed' => $plan->excess,
@@ -565,7 +564,7 @@ class CarAllocationService extends AllocationService
                 ];
             }
         }
-        info('plan with options final : '.json_encode($planAddons));
+
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,

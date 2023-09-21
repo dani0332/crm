@@ -701,6 +701,9 @@ class CarQuoteService extends BaseService
             case 'show_renewal_upload_leads':
                 $title = 'Show Renewal Upload';
                 break;
+            case 'assignment_type':
+                $title = 'Assignment Type';
+                break;
             default:
                 break;
         }
