@@ -196,7 +196,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('activities/create', [ActivityController::class, 'create'])->name('activities.create');
 
     Route::post('/activities/create-activity', [ActivitesController::class, 'store'])->name('activities.create.activity');
-    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update-activity');
+    Route::post('activities/{id}/update', [ActivitesController::class, 'update'])->name('activities.update.activity');
     Route::post('activities/{id}/delete', [ActivitesController::class, 'destroy'])->name('activities.destroy');
     Route::post('activities/updateStatus', [ActivitesController::class, 'updateStatus'])->name('activities.updateStatus');
     Route::post('activities/getEditView', [ActivitesController::class, 'getEditView'])->name('activities.getEditView');
