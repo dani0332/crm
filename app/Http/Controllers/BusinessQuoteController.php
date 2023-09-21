@@ -92,7 +92,7 @@ class BusinessQuoteController extends Controller
 
         $model = $this->genericModel;
 
-        return inertia('CorpLineQuote/Create', [
+        return inertia('CorpLineQuote/Form', [
             'quote' => new BusinessQuote(),
             'dropdownSource' => $dropdownSource,
             'renewalAdvisors' => $renewalAdvisors ?? [],
@@ -243,7 +243,7 @@ class BusinessQuoteController extends Controller
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         $dropdownSource = $this->businessQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
 
-        return inertia('CorpLineQuote/Edit', [
+        return inertia('CorpLineQuote/Form', [
             'quote' => $record,
             'modelType' => $this->genericModel->modelType,
             'dropdownSource' => $dropdownSource,

@@ -24,8 +24,8 @@ class TravelQuoteService extends BaseService
 {
     protected $query;
 
-    use RolePermissionConditions;
     use AddPremiumAllLobs;
+    use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService)
     {
@@ -216,6 +216,37 @@ class TravelQuoteService extends BaseService
         $isRenewalManager = Auth::user()->isRenewalManager();
         $isNewManager = Auth::user()->isNewBusinessManager();
         $isNewAdvisor = Auth::user()->isNewBusinessAdvisor();
+        if (isset($request->coverage_code)) {
+            $this->query->where(function ($q) use ($request) {
+                $q->where('tqr.coverage_code', $request->coverage_code)
+                    ->orWhere(function ($qInner) use ($request) {
+                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
+                            $qInner->where('days_cover_for', '<', 93);
+                        }
+                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP || $request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP) {
+                            $qInner->where('days_cover_for', '>', 92);
+                        }
+
+                    });
+            });
+        }
+        if (isset($request->direction_code)) {
+            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_OUTBOUND) {
+                $this->query->where(function ($q) use ($request) {
+                    $q->where('tqr.direction_code', $request->direction_code)
+                        ->orWhere(function ($qInner) {
+                            $qInner->where('currently_located_in_id', TravelQuoteEnum::CURRENTLY_LOCATED_ID_UAE)
+                                ->where('region_cover_for_id', '!=', TravelQuoteEnum::REGION_COVER_ID_UAE);
+                        });
+                });
+            }
+            if ($request->direction_code == TravelQuoteEnum::TRAVEL_UAE_INBOUND) {
+                $this->query->where(function ($q) use ($request) {
+                    $q->where('tqr.direction_code', $request->direction_code)
+                        ->orWhere('region_cover_for_id', TravelQuoteEnum::REGION_COVER_ID_UAE);
+                });
+            }
+        }
         if ($isRenewalUser || $isRenewalManager || $isRenewalAdvisor) {
             $searchProperties = $model->renewalSearchProperties;
         } elseif ($isNewManager || $isNewAdvisor) {
@@ -244,7 +275,6 @@ class TravelQuoteService extends BaseService
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-
             $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
         }
 

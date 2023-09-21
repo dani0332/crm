@@ -291,7 +291,7 @@ watch(
       <template #item-uuid="{ code, uuid }">
         <Link
           v-if="can(permissionsEnum.JetskiQuotesShow)"
-          :href="route('jetski-quotes-edit', uuid)"
+          :href="route('jetski-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}

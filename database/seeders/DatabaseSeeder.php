@@ -18,10 +18,15 @@ class DatabaseSeeder extends Seeder
             addCarQuoteSearchPermission::class,
             QuoteStatusTableSeeder::class,
             UtmLeadsSalesReportSeeder::class,
+            CarLostStorageSeeder::class,
+            AddPersonalLobsProducts::class,
+            addCarQuoteNewStatuses::class,
+            LookupSeeder::class,
             CommercialKeywordsSeeder::class,
             RuleTypeSeeder::class,
             CommercialMakeModelKeywordsPermissionsSeeder::class,
             FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
+            SlabsTableSeeder::class,
             AddPersonalLobsProducts::class,
             addTeamThresholdViewPermission::class,
             // PetBikeMigrationSeeder::class
@@ -29,6 +34,8 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             CreateAndAssignSubTeamsToAdvisors::class,
             AutofollowupSeeder::class
+            GenericPermissionSeeder::class,
+            AddApiLogViewToPermssion::class,
         ]);
     }
 }

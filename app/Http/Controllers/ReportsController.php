@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\RenewalBatch;
 use App\Models\User;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use App\Services\AdvisorPerformanceReportService;
 use App\Services\LeadDistributionReportService;
+use App\Services\RenewalBatchReportService;
 use App\Services\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
@@ -14,8 +16,8 @@ use Illuminate\Http\Request;
 
 class ReportsController extends Controller
 {
-    use TeamHierarchyTrait;
     use GetUserTreeTrait;
+    use TeamHierarchyTrait;
 
     public function renderAdvisorConversionReport(Request $request, AdvisorConversionReportService $advisorConversionReportService)
     {
@@ -95,6 +97,37 @@ class ReportsController extends Controller
             ->toArray();
     }
 
+    public function fetchSubTeamsAdvisorListByTeam(Request $request)
+    {
+        $teamUsers = $this->getUsersByTeamIds($request->teamIds)->pluck('id')->toArray();
+
+        $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
+
+        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+
+        // subteams
+
+        $subTeams = $this->getSubTeamsByTeamIds($request->teamIds)->toArray();
+
+        $subTeams = array_reduce($subTeams, function ($carry, $item) {
+            $carry[$item['id']] = $item['name'];
+
+            return $carry;
+        }, []);
+
+        $advisors = User::whereIn('id', $advisorIdsByTeam)
+            ->select('name', 'id')
+            ->orderBy('name')
+            ->where('is_active', 1)
+            ->get()
+            ->toArray();
+
+        return [
+            'advisors' => $advisors,
+            'subTeams' => $subTeams,
+        ];
+    }
+
     public function utmLeadsSaleReport(Request $request, ReportService $reportService)
     {
         $resp = $reportService->utmReport($request);
@@ -102,6 +135,25 @@ class ReportsController extends Controller
         return inertia('Reports/UtmLeadsSale', [
             'quoteTypes' => $resp['lobs'],
             'reportData' => $resp['records'],
+        ]);
+    }
+
+    /**
+     * generate renewal reports function
+     *
+     * @return void
+     */
+    public function renderRenewalReport(Request $request, RenewalBatchReportService $renewalBatchReportService)
+    {
+        $renewalBatches = RenewalBatch::with(['slabs', 'teams' => function ($qry) {
+            $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
+        }])->get();
+
+        return inertia('Reports/RenewalBatch', [
+            'reportData' => $renewalBatchReportService->getReportData($request),
+            'filterOptions' => $renewalBatchReportService->getFilterOptions(),
+            'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
+            'renewalBatchesList' => $renewalBatches,
         ]);
     }
 }

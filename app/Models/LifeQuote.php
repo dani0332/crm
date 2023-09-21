@@ -13,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class LifeQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'life_quote_request';
     protected $guarded = [];
@@ -44,44 +44,57 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->hasOne(LifeQuoteRequestDetail::class, 'life_quote_request_id', 'id');
     }
+
     public function advisor()
     {
         return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
     }
+
     public function nationality()
     {
         return $this->belongsTo(Nationality::class);
     }
+
     public function purposeOfInsurance()
     {
         return $this->belongsTo(LifePurposeOfInsurance::class, 'purpose_of_insurance_id', 'id');
     }
+
     public function childern()
     {
         return $this->belongsTo(LifeChildren::class, 'children_id', 'id');
     }
+
     public function currency()
     {
         return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id', 'id');
     }
+
     public function insuranceTenure()
     {
         return $this->belongsTo(LifeInsuranceTenure::class, 'tenure_of_insurance_id', 'id');
     }
+
     public function numberOfYears()
     {
         return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
-    } public function maritalStatus()
+    }
+
+    public function maritalStatus()
     {
         return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');
-    }public function paymentStatus()
+    }
+
+    public function paymentStatus()
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
     }
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
     }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class);

@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class RenewalsUploadLeads extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $fillable = ['file_name', 'file_path', 'total_records', 'cannot_upload', 'good', 'status', 'renewal_import_code', 'renewal_import_type', 'created_by_id', 'skip_plans'];
     protected $table = 'renewals_upload_leads';

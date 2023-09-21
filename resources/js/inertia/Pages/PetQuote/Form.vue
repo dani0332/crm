@@ -32,7 +32,7 @@ const quoteForm = useForm({
   iam_possesion_type_id: props.quote?.pet_quote?.iam_possesion_type_id || '',
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 const editMode = computed(() => {
   return props.quote ? true : false;
 });
@@ -105,7 +105,7 @@ function onSubmit(isValid) {
             v-model="quoteForm.mobile_no"
             type="tel"
             :disabled="editMode"
-            :rules="[isRequired]"
+            :rules="[isRequired, isMobileNo]"
             class="w-full"
             :error="quoteForm.errors.mobile_no"
           />

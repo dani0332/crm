@@ -285,59 +285,56 @@ class SendEmailCustomerService extends BaseService
             $appEnv = config('constants.APP_ENV');
             //Todo: Remove SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID from doppler
             if ($source == 'CORPORATE') {
-                $emailTemplateId = (int) config('constants.MA_POSTMARK_CORPORATE_TEMPLATE');
+                $emailTemplateId = (int) config('constants.SIB_CORPORATE_TEMPLATE');
             } else {
-                $emailTemplateId = (int) config('constants.MA_POSTMARK_TEMPLATE');
+                $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
             info('sendMyAlfredWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
-                'Content-Type' => 'application/json',
                 'Accept' => 'application/json',
-                'X-Postmark-Server-Token' => config('constants.POSTMARK_TOKEN'),
+                'api-key' => config('constants.SENDINBLUE_KEY'),
                 'Content-Type' => 'application/json',
             ];
 
             $body = json_encode([
-                'From' => config('constants.MA_FROM_EMAIL'),
-                'ReplyTo' => config('constants.MAIL_MYALFRED_SUPPORT_REPLY_TO'),
-                'To' => $emailData->customerEmail,
-                'Tag' => $tag,
-                'TemplateId' => $emailTemplateId,
-                'TemplateModel' => [
-                    'params' => [
-                        'firstName' => $emailData->customerFirstName,
-                        'lastName' => $emailData->customerLastName,
-                        'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
-                        'email' => $emailData->customerEmail,
-                    ],
-                    'subject' => config('constants.MA_WELCOME_SUBJECT'),
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                ]],
+                'templateId' => $emailTemplateId,
+                'params' => [
+                    'customerName' => $emailData->customerFirstName.' '.$emailData->customerLastName,
+                    'customerEmail' => $emailData->customerEmail,
+                    'inviteCode' => isset($emailData->inviteCode) ? $emailData->inviteCode : null,
+                    'email' => $emailData->customerEmail,
                 ],
-                'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
+                'tags' => [
+                    $tag,
+                ],
             ], JSON_UNESCAPED_SLASHES);
 
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
-                config('constants.POSTMARK_URL'),
+                config('constants.SIB_URL'),
                 [
                     'headers' => $headers,
                     'body' => $body,
-                    'timeout' => 10,
+                    'timeout' => 20,
                 ]
             );
 
             $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
             $responseCode = $clientRequest->getStatusCode();
 
-            if ($responseCode == 200) {
+            if ($responseCode == 201) {
                 $isEmailSent = 1;
             }
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
-            $responseDetail = 'PostMark Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteRefID: '.$quoteCdbId.' Class: '.get_class();
+            $responseDetail = 'Brevo Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' Class: '.get_class();
             Log::error($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
             $isEmailSent = 0;

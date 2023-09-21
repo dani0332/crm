@@ -378,6 +378,5 @@ class PermissionTableSeeder extends Seeder
             'name' => 'rent-a-car-delete',
             'guard_name' => 'web',
         ]);
-
     }
 }

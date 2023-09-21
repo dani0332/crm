@@ -62,7 +62,7 @@ class LifeQuoteController extends Controller
             vAbort($response->msg);
         }
 
-        return redirect('/quotes/life/'.$response->quoteUID)->with('message', 'Quote is created successfully.');
+        return redirect(route('life-quotes-show', $response->quoteUID))->with('message', 'Quote is created successfully.');
     }
 
     /**
@@ -147,7 +147,7 @@ class LifeQuoteController extends Controller
     {
         LifeQuoteRepository::update($uuid, $request->validated());
 
-        return back()->with('message', 'Quote is updated successfully.');
+        return redirect(route('life-quotes-show', $uuid))->with('message', 'Quote is updated successfully.');
     }
 
     public function cardsView(Request $request)
