@@ -277,11 +277,7 @@ class CarAllocationService extends AllocationService
             info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
             $finalEligibleUserIds = [];
             info('eligibleUsers are : '.json_encode(collect($eligibleUsers)->pluck('user_id')));
-            foreach ($eligibleUsers as $eligibleUserId) {
-                if (! in_array($eligibleUserId, $ruleUsers)) {
-                    array_push($finalEligibleUserIds, $eligibleUserId);
-                }
-            }
+            $finalEligibleUserIds = array_diff($eligibleUsers, $ruleUsers);
             $finalEligibleUserIds = collect($finalEligibleUserIds)->pluck('user_id')->unique()->toArray();
             info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
