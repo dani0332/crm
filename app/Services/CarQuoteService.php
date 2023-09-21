@@ -990,7 +990,7 @@ class CarQuoteService extends BaseService
     public function getOcbDetails($uuid)
     {
         $carQuote = CarQuote::select(
-            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'car_model_id']
+            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'car_model_id', 'currently_insured_with']
         )->with(['advisor', 'carMake', 'carModel'])
             ->where('uuid', $uuid)->first();
 

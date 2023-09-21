@@ -29,6 +29,15 @@ class CarQuoteController extends Controller
         return response()->json($quotes);
     }
 
+    public function show($uuid)
+    {
+        $quote = CarQuote::where('uuid', $uuid)
+            ->with('advisor')
+            ->first();
+
+        return response()->json($quote);
+    }
+
     /**
      * get ocb details
      * @param $uuid

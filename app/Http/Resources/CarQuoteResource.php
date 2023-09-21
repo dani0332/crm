@@ -18,7 +18,11 @@ class CarQuoteResource extends JsonResource
             'id' => $this->id,
             'uuid' => $this->uuid,
             'code' => $this->code,
-            'renewal_batch' => $this->renewal_batch
+            'renewal_batch' => $this->renewal_batch,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
+
         ];
     }
 }

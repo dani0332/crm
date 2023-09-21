@@ -227,7 +227,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no']);
     }
 
     public function batch()
