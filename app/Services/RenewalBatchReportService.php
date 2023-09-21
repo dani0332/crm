@@ -263,7 +263,9 @@ class RenewalBatchReportService extends BaseService
             $userIds = $this->walkTree($authUserId);
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         } elseif (! isset($filters->advisors) && $authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager) {
-            $query->where('car_quote_request.advisor_id', $authUserId);
+            $userIds = array_unique (array_merge ($volumeSegmentAdvisorsId, $valueSegmentAdvisorsId));
+            $query->whereIn('car_quote_request.advisor_id', $userIds);
+            // $query->where('car_quote_request.advisor_id', $authUserId);
         }
 
         // segment wise advisors filter

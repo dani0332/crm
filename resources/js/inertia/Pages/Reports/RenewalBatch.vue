@@ -296,6 +296,13 @@ function calculateValuesAndHighlight() {
         ).toFixed(2);
         imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
 
+        console.log("hayya hayya");
+        console.log(item.total_by_value_segment_advisors);
+        console.log(item.renewed_by_value_segment_advisors);
+        console.log(item.car_sold);
+        console.log(item.uncontactable);
+        console.log("end");
+
         let valueSegmentConversion = (
             (
                 parseInt(item.renewed_by_value_segment_advisors) /
@@ -328,7 +335,7 @@ function calculateValuesAndHighlight() {
         const monthlySum = calculateMonthlySum(page.props.reportData.data, index);
         const rawRetention = ((item.renewed / item.total_allocated_leads) * 100).toFixed(2);
 
-        console.log(monthlySum);
+        // console.log(monthlySum);
 
         item.ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
         item.advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
