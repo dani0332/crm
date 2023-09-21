@@ -268,7 +268,7 @@ class CarAllocationService extends AllocationService
         info('tier eligible users are : '.json_encode($eligibleUsers));
         if (count($rules) > 0) {
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
-
+            info('rule userIds are : '.json_encode($ruleUserIds));
             $finalEligibleUserIds = array_intersect(collect($eligibleUsers)->pluck('id')->toArray(), $ruleUserIds);
 
             info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
