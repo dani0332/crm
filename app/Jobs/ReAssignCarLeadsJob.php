@@ -101,12 +101,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId): array
+    protected function findAvailableUsers($tierId)
     {
         return $this->carAllocationService->getEligibleUserForAllocation($tierId, $this->advisorId);
     }
 
-    protected function findRules($lead): array
+    protected function findRules($lead)
     {
         return $this->carAllocationService->getRules($lead);
     }
@@ -116,12 +116,12 @@ class ReAssignCarLeadsJob implements ShouldQueue
         return $this->carAllocationService->determineFinalUserId($lead, $users, $rules);
     }
 
-    protected function assignLead($lead, $userId, $tier): void
+    protected function assignLead($lead, $userId, $tier)
     {
         $this->carAllocationService->processLeadAssignment($lead, $userId, $tier, AssignmentTypeEnum::SYSTEM_REASSIGNED);
     }
 
-    private function updateLeadTier($lead, $tier): void
+    private function updateLeadTier($lead, $tier)
     {
         $this->carAllocationService->updateLeadTier($lead, $tier);
     }
