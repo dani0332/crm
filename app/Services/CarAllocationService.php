@@ -34,14 +34,10 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-        $query = CarQuote::where('uuid', $quoteId)
+        return CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('is_renewal_tier_email_sent', 0);
-        info('query for : '.$query->toSql());
-        info('query for binding : '.json_encode($query->getBindings()));
-
-        return $query->first();
+            ->where('is_renewal_tier_email_sent', 0)->first();
     }
 
     public function getTier($tierId)
@@ -269,6 +265,7 @@ class CarAllocationService extends AllocationService
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
     {
+        info('tier eligible users are : '.json_encode($eligibleUsers));
         if (count($rules) > 0) {
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
 
@@ -506,6 +503,7 @@ class CarAllocationService extends AllocationService
             'advisorName' => $user->name,
             'documentUrl' => [$documentUrl],
             'customerEmail' => $carQuote->email,
+            'carQuoteId' => $carQuote->code,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
@@ -532,7 +530,9 @@ class CarAllocationService extends AllocationService
             'excessAed' => $plan->excess ? $plan->excess : '',
             'repairType' => $plan->repair_type ? $plan->repair_type : '',
             'discountPremium' => $plan->discount_premium ? $plan->discount_premium : '',
+            'carQuoteId' => $carQuote->code,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
+            'planName' => $plan->plan_name
         ];
 
         return $emailData;
@@ -550,6 +550,7 @@ class CarAllocationService extends AllocationService
                 'excessAed' => $plan->excess,
                 'repairType' => $plan->repair_type,
                 'discountPremium' => $plan->discount_premium,
+                'planName' => $plan->plan_name
             ];
         }
 
@@ -563,6 +564,7 @@ class CarAllocationService extends AllocationService
             'documentUrl' => [$documentUrl],
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
+            'carQuoteId' => $carQuote->code,
             'plans' => $insurerPlans,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
