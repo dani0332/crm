@@ -34,6 +34,7 @@ let availableFilters = {
   last_name: '',
   email: '',
   previous_quote_policy_number: '',
+  renewal_batch: '',
   page: 1,
 };
 
@@ -59,9 +60,9 @@ function onSubmit(isValid) {
     });
   } else {
     notification.error({
-    title: 'Error while fetching quotes. Please try again',
-    position: 'top',
-  });
+      title: 'Error while fetching quotes. Please try again',
+      position: 'top',
+    });
   }
 }
 
@@ -100,7 +101,8 @@ const tableHeader = [
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
   { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance_id' },
   { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
-  { text: 'CREATED DATE', value: 'created_at' },  {
+  { text: 'CREATED DATE', value: 'created_at' },
+  {
     text: 'ADVISOR ASSIGNED DATE',
     value: 'advisor_assigned_date',
   },
@@ -116,11 +118,11 @@ const quotesSelected = ref([]),
   isDisabled = ref(false);
 
 const manualAssignmentSuccess = () => {
-    quotesSelected.value = [];
-    notification.success({
-        title: `${quoteType.capitalizeFirstChar()} Manual Leads Assigned`,
-        position: 'top',
-      });
+  quotesSelected.value = [];
+  notification.success({
+    title: `${quoteType.capitalizeFirstChar()} Manual Leads Assigned`,
+    position: 'top',
+  });
 };
 
 const manualAssignmentError = () => {
@@ -151,21 +153,23 @@ const manualAssignmentError = () => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-              <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-              </x-tooltip>
-              <x-input
-                  v-model="filters.code"
-                  type="search"
-                  name="code"
-                  class="w-full"
-                  placeholder="Search by Ref-ID"
-              />
-          </div>
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
         <x-input
           v-model="filters.email"
           type="search"
@@ -181,6 +185,15 @@ const manualAssignmentError = () => {
           label="Policy Number"
           class="w-full"
           placeholder="Search by Policy Number"
+        />
+
+        <x-input
+          v-model="filters.renewal_batch"
+          type="search"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
         />
       </div>
       <div class="flex justify-end gap-3 mb-4">
@@ -209,7 +222,7 @@ const manualAssignmentError = () => {
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
-      :items=" quotes.data || []"
+      :items="quotes.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -217,12 +230,12 @@ const manualAssignmentError = () => {
     >
       <template #item-code="{ code, uuid }">
         <a
-            :href="route('car.show', uuid)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary-500 hover:underline"
-            >
-            {{ code }}
+          :href="route('car.show', uuid)"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary-500 hover:underline"
+        >
+          {{ code }}
         </a>
       </template>
 
@@ -253,7 +266,6 @@ const manualAssignmentError = () => {
       <template #item-advisor_assigned_date="item">
         {{ item?.car_quote_request_detail?.advisor_assigned_date }}
       </template>
-
     </DataTable>
 
     <Pagination
