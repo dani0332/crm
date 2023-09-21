@@ -127,7 +127,7 @@ class EmbeddedProductRepository extends BaseRepository
         $viewData['premium'] = $premium;
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
-        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => 'Certificate']);
+        return response()->json(['data' => 'data:application/pdf;base64,' . base64_encode($pdf->stream()), 'name' => 'Salama_Certificate']);
     }
 
     /**
@@ -280,7 +280,7 @@ class EmbeddedProductRepository extends BaseRepository
 
         $attachments[] = [
             'Content' => base64_encode($pdf->output()),
-            'Name' => 'Certificate.pdf',
+            'Name' => 'Salama_Certificate.pdf',
             'ContentType' => 'application/pdf',
         ];
 
