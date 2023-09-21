@@ -265,11 +265,11 @@ class CarAllocationService extends AllocationService
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
     {
-        info('tier eligible users are : '.json_encode($eligibleUsers));
+        info('tier eligible users are : '.json_encode(collect($eligibleUsers)->pluck('user_id')->toArray()));
         if (count($rules) > 0) {
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
             info('rule userIds are : '.json_encode($ruleUserIds));
-            $finalEligibleUserIds = array_intersect(collect($eligibleUsers)->pluck('id')->toArray(), $ruleUserIds);
+            $finalEligibleUserIds = array_intersect(collect($eligibleUsers)->pluck('user_id')->toArray(), $ruleUserIds);
 
             info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
         } else {
