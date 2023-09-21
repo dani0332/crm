@@ -546,7 +546,7 @@ class CarAllocationService extends AllocationService
         $insurerPlans = [];
         $planAddons = [];
         foreach ($plans as $plan) {
-            info('plan with name : '. $plan->plan_name. ' has addons : '. json_encode($plan->addons));
+            info('plan with name : '.$plan->plan_name.' has addons : '.json_encode($plan->addons));
             $insurerPlans[] = [
                 'carValue' => $carQuote->car_value,
                 'excessAed' => $plan->excess,
@@ -555,7 +555,7 @@ class CarAllocationService extends AllocationService
                 'planName' => $plan->plan_name,
                 'providerCode' => strtolower($plan->provider_code),
             ];
-            $planAddonsArray =  json_decode($plan->addons);
+            $planAddonsArray = json_decode($plan->addons);
 
             foreach ($planAddonsArray as $addon) {
                 $planAddons[] = [
@@ -563,7 +563,7 @@ class CarAllocationService extends AllocationService
                 ];
             }
         }
-        info('plan with options final : '. json_encode($planAddons));
+        info('plan with options final : '.json_encode($planAddons));
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
