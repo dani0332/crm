@@ -177,7 +177,7 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
-            ->orderByDesc('last_allocated');
+            ->orderBy('last_allocated');
 
         return $query->get();
     }
