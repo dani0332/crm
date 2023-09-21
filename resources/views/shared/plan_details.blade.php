@@ -1075,14 +1075,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsExclusions as $key =>
-										$listQuotePlanBenefitsExclusion)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text)
-												}}</td>
-											<td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsExclusions))
+											@foreach ($listQuotePlanBenefitsExclusions as $key => $listQuotePlanBenefitsExclusion)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text)
+													}}</td>
+												<td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1093,13 +1094,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsRsas as $key => $listQuotePlanBenefitsRsa)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsRsa->text) }}
-											</td>
-											<td>{{ ucwords($listQuotePlanBenefitsRsa->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsRsas))
+											@foreach ($listQuotePlanBenefitsRsas as $key => $listQuotePlanBenefitsRsa)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsRsa->text) }}
+												</td>
+												<td>{{ ucwords($listQuotePlanBenefitsRsa->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1107,15 +1110,17 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					</div>
 					<div class="tab-pane fade" id="policy-detail" role="tabpanel" aria-labelledby="policy-detail-tab">
 						<table cellpadding="3" cellspacing="3">
-							@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
-							<tr>
-								<td>
-									<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
-										📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
-									</a>
-								</td>
-							</tr>
-							@endforeach
+							@if(isset($listQuotePlanBenefitsPolicyDetails))
+								@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
+								<tr>
+									<td>
+										<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
+											📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
+										</a>
+									</td>
+								</tr>
+								@endforeach
+							@endif
 						</table>
 					</div>
 				</div>
