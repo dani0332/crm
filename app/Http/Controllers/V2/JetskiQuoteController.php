@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JetskiQuoteRequest;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\JetskiQuoteRepository;
 use App\Repositories\LostReasonRepository;
@@ -69,9 +70,11 @@ class JetskiQuoteController extends Controller
 
         $quote = JetskiQuoteRepository::getBy('uuid', $uuid);
 
-        return inertia('JetskiQuote/Form', array_merge($data, [
-            'quote' => $quote,
-        ])
+        return inertia(
+            'JetskiQuote/Form',
+            array_merge($data, [
+                'quote' => $quote,
+            ])
         );
     }
 
@@ -91,7 +94,7 @@ class JetskiQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::JETSKI->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 
@@ -101,6 +104,8 @@ class JetskiQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::JETSKI->id(), $quote->id);
 
         return inertia('JetskiQuote/Show', [
             'quoteType' => QuoteTypes::JETSKI,
@@ -116,6 +121,7 @@ class JetskiQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'embeddedProducts' => $embeddedProducts,
         ]);
     }
 

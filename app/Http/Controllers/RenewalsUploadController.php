@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Enums\FetchPlansStatuses;
+use App\Enums\GenericRequestEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
 use App\Enums\RolesEnum;
+use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
 use App\Imports\RenewalsImport;
@@ -221,30 +223,32 @@ class RenewalsUploadController extends Controller
      */
     public function index(Request $request, RenewalsUploadLeads $renewalsUploadLeads, Datatables $datatables)
     {
-        if ($request->ajax()) {
-            $dataRenewalUpload = $renewalsUploadLeads::select(
-                'renewals_upload_leads.id as id',
-                'renewals_upload_leads.renewal_import_type as renewal_import_type',
-                'renewals_upload_leads.renewal_import_code as renewal_import_code',
-                'renewals_upload_leads.file_name as file_name',
-                'renewals_upload_leads.total_records as total_records',
-                'renewals_upload_leads.good as good',
-                'renewals_upload_leads.cannot_upload as cannot_upload',
-                'renewals_upload_leads.status as status',
-                'renewals_upload_leads.created_at as created_at',
-                'renewals_upload_leads.updated_at as updated_at',
-                'users.name as uploaded_by',
-                'renewals_upload_leads.skip_plans'
-            )
-                ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
-                ->orderBy('renewals_upload_leads.created_at', 'desc');
 
-            return $datatables::of($dataRenewalUpload)
-                ->addIndexColumn()
-                ->make(true);
-        }
+        $dataRenewalUpload = $renewalsUploadLeads::select(
+            'renewals_upload_leads.id as id',
+            'renewals_upload_leads.renewal_import_type as renewal_import_type',
+            'renewals_upload_leads.renewal_import_code as renewal_import_code',
+            'renewals_upload_leads.file_name as file_name',
+            'renewals_upload_leads.total_records as total_records',
+            'renewals_upload_leads.good as good',
+            'renewals_upload_leads.cannot_upload as cannot_upload',
+            'renewals_upload_leads.status as status',
+            'renewals_upload_leads.created_at as created_at',
+            'renewals_upload_leads.updated_at as updated_at',
+            'users.name as uploaded_by',
+            'renewals_upload_leads.skip_plans'
+        )
+            ->leftjoin('users', 'users.id', 'renewals_upload_leads.created_by_id')
+            ->orderBy('renewals_upload_leads.created_at', 'desc');
+        $dataRenewalUpload = $dataRenewalUpload->simplePaginate();
 
-        return view('renewals.view');
+        return inertia('Renewals/UploadedLeads', [
+            'leads' => $dataRenewalUpload,
+            'EnumGenericNo' => GenericRequestEnum::No,
+            'EnumGenericYes' => GenericRequestEnum::Yes,
+            'EnumSkipPlansNonGCC' => SkipPlansEnum::NON_GCC,
+        ]);
+
     }
 
     public function updateRenewals()
@@ -266,8 +270,18 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
+        $renewalQuotes = RenewalQuoteProcess::query()
+            ->select('batch as renewal_batch')
+            ->where([
+                'quote_type' => QuoteTypeShortCode::CAR,
+                'type' => RenewalsUploadType::UPDATE_LEADS,
+            ])
+            ->groupBy('batch');
+        $renewalQuotes = $renewalQuotes->simplePaginate();
 
-        return view('renewals.batches');
+        return inertia('Renewals/Batches', [
+            'batches' => $renewalQuotes,
+        ]);
     }
 
     /**
@@ -280,8 +294,17 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
+        $process = RenewalStatusProcess::query()
+            ->where([
+                'batch' => $batch,
+            ])->with('createdby');
+        $process = $process->simplePaginate();
 
-        return view('renewals.plan_processes', compact('batch'));
+        return inertia('Renewals/PlanProcesses', [
+            'process' => $process,
+            'batch' => $batch,
+        ]);
+
     }
 
     public function batchDetail($batch)
@@ -294,7 +317,17 @@ class RenewalsUploadController extends Controller
         $totalLeadsCompleted = $this->renewalsUploadFileService->getProcessTotalLeadsWithPlans($batch);
         $hideSendEmailButton = $totalLeadsCompleted != $totalLeads ? 1 : 0;
 
-        return view('renewals.batch_detail', compact('batch', 'hideSendEmailButton'));
+        $emailBatches = RenewalsBatchEmails::query()
+            ->where([
+                'batch' => $batch,
+            ])->with('createdby');
+        $emailBatches = $emailBatches->simplePaginate();
+
+        return inertia('Renewals/BatchDetail', [
+            'emailBatches' => $emailBatches,
+            'hideSendEmailButton' => $hideSendEmailButton,
+            'batch' => $batch,
+        ]);
     }
 
     public function runBatchProcess($batch)
@@ -437,4 +470,5 @@ class RenewalsUploadController extends Controller
 
         return redirect('/');
     }
+
 }

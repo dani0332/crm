@@ -11,6 +11,7 @@ use App\Models\BusinessQuote;
 use App\Models\GroupMedicalType;
 use App\Models\QuoteStatus;
 use App\Models\User;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
@@ -33,7 +34,9 @@ class AMTController extends Controller
     protected $customerService;
     protected $dropdownSourceService;
     protected $activityService;
+    protected $genericModel;
 
+    public const TYPE = quoteTypeCode::Business;
     use RolePermissionConditions;
 
     public function __construct(
@@ -50,6 +53,7 @@ class AMTController extends Controller
         $this->customerService = $customerService;
         $this->dropdownSourceService = $dropdownSourceService;
         $this->activityService = $activityService;
+        $this->genericModel = $this->businessQuoteService->getGenericModel(self::TYPE);
     }
 
     /**
@@ -247,6 +251,7 @@ class AMTController extends Controller
         $quoteType = 'business';
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
         $record = BusinessQuote::where([['uuid', $id], ['business_type_of_insurance_id', 5]])->first();
+        abort_if(! $record, 404);
         $leadStatuses = $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
         $lostReasons = DB::table('lost_reasons')
@@ -267,6 +272,11 @@ class AMTController extends Controller
             $assignedUser = User::where('id', $record->advisor_id)->first();
             $assignedUserName = $assignedUser->name;
         }
+        $model = $this->genericModel;
+        $payments = $record->payments;
+        $mainPayment = $record->payments()->where('code', '=', $record->code)->first();
+        $paymentMethods = $this->lookupService->getPaymentMethods();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::GroupMedical);
 
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $advisors = DB::table('users as u')
@@ -285,6 +295,11 @@ class AMTController extends Controller
         return view('amt.show', compact(
             'businessInsuranceType',
             'record',
+            'model',
+            'payments',
+            'mainPayment',
+            'paymentMethods',
+            'insuranceProviders',
             'selectedLeadStatus',
             'advisors',
             'assignedUserName',

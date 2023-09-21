@@ -7,7 +7,6 @@ import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
-import { useCan } from '../../Composables/can';
 
 defineProps({
   quote: Object,
@@ -24,6 +23,7 @@ defineProps({
   advisors: Object,
   lostReasons: Object,
   quoteStatusEnum: Object,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -41,14 +41,14 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="flex gap-2">
         <Link
           v-if="can(permissionsEnum.JetskiQuotesEdit)"
-          :href="`/personal-quotes/jetski/${quote.uuid}/edit`"
+          :href="route('jetski-quotes-edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
 
         <Link
           v-if="can(permissionsEnum.JetskiQuotesList)"
-          href="/personal-quotes/jetski"
+          :href="route('jetski-quotes-list')"
           preserve-scroll
         >
           <x-button size="sm" color="primary" tag="div">
@@ -62,15 +62,17 @@ const permissionsEnum = page.props.permissionsEnum;
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -309,6 +311,12 @@ const permissionsEnum = page.props.permissionsEnum;
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
+    />
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

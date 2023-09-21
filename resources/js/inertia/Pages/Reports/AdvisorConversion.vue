@@ -212,6 +212,7 @@ const filters = reactive({
   leadSources: [],
   advisors: [],
   teams: [],
+  isCommercial: 'All',
   page: 1,
 });
 
@@ -548,6 +549,16 @@ watch(
             :loading="loaders.advisorOptions"
           />
         </template>
+        <x-select
+            v-model="filters.isCommercial"
+            label="Commercial"
+            placeholder="Select any option"
+            :options="[
+                { value: 'All', label: 'All' },
+                { value: true, label: 'Yes' },
+                { value: false, label: 'No' },
+            ]"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
         <div class="flex-1">

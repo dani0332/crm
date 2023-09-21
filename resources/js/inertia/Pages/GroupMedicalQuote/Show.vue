@@ -1,21 +1,29 @@
 <script setup>
 defineProps({
   quote: Object,
-  genderOptions: Object,
-  assignedGMType: String,
-  allowedDuplicateLOB: Array,
   quoteDetails: Object,
-  customerAdditionalContacts: Array,
-  enums: Object,
-  permissions: Object,
+  allowedDuplicateLOB: Array,
+  genderOptions: Object,
   typeCode: String,
+  lostReasons: Object,
+  quoteStatuses: Object,
+  quoteStatusEnum: Object,
+  customerAdditionalContacts: Array,
 });
 
 const page = usePage();
-
-const notification = useNotifications('toast');
-
+const notification = useToast();
 const { isRequired } = useRules();
+
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
+const historyData = ref(null),
+  historyLoading = ref(false);
+
+const isDuplicateAllowed = computed(() => {
+  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
+});
 
 const genderText = gender =>
   computed(() => {
@@ -59,24 +67,18 @@ const onCreateDuplicate = isValid => {
     lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
   };
   axios
-    .post('/quotes/createDuplicate', data)
+    .post(route('createDuplicate'), data)
     .then(res => {
       modals.duplicate = false;
-      notification.success('Lead duplicated successfully');
+      notification.success({
+        title: 'Lead duplicated successfully',
+        position: 'top',
+      });
     })
     .catch(err => {
       notification.error('Something went wrong');
     });
 };
-
-// Lead Status
-
-const leadStatusOptions = computed(() => {
-  return page.props.leadStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
-});
 
 const leadStatusForm = useForm({
   modelType: 'Business',
@@ -86,7 +88,14 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason || null,
+  lostReason: page.props.quoteDetails.lost_reason_id || null,
+});
+
+const leadStatusOptions = computed(() => {
+  return page.props.quoteStatuses.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const onLeadStatus = () => {
@@ -100,11 +109,15 @@ const onLeadStatus = () => {
     trans_code: leadStatusForm.trans_code,
     lostReason: leadStatusForm.lostReason,
   };
-
   axios
-    .post(`/quotes/Business/${page.props.quote.id}/update-lead-status`, data)
+    .post(
+      route('updateLeadStatus', {
+        QuoteUId: page.props.quote.id,
+        modelType: 'Business',
+      }),
+      data,
+    )
     .then(res => {
-      console.log(res);
       notification.success({
         title: 'Lead Status Updated',
         position: 'top',
@@ -115,15 +128,13 @@ const onLeadStatus = () => {
     });
 };
 
-// Lead History
-
-const historyData = ref(null),
-  historyLoading = ref(false);
-
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=business&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'business',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -136,15 +147,12 @@ const historyDataTable = [
   { text: 'Notes', value: 'NewNotes' },
   { text: 'Lead Status', value: 'NewStatus' },
 ];
-
-const isDuplicateAllowed = computed(() => {
-  return page.props.allowedDuplicateLOB.includes(page.props.typeCode);
-});
 </script>
+
 <template>
   <div>
     <Head title="Group Medical Lead Detail" />
-    <div class="flex justify-between items-center flex-wrap gap-2">
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
       <div class="flex gap-2">
         <x-button
@@ -155,16 +163,14 @@ const isDuplicateAllowed = computed(() => {
         >
           Duplicate Lead
         </x-button>
-
-        <Link href="/medical/amt" preserve-scroll>
+        <Link :href="route('amt.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Group Medical List
           </x-button>
         </Link>
-
         <Link
-          v-if="permissions.canEditQuote == true"
-          :href="`${quote.uuid}/edit`"
+          v-if="!can(permissionsEnum.canEditQuote)"
+          :href="route('amt.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -189,7 +195,6 @@ const isDuplicateAllowed = computed(() => {
             class="w-full"
             multiple
           />
-
           <x-select
             v-model="leadDuplicateForm.lob_team_sub_selection"
             label="Reason"
@@ -200,7 +205,6 @@ const isDuplicateAllowed = computed(() => {
               { value: 'record_only', label: 'Record purposes only' },
             ]"
           />
-
           <x-button
             color="orange"
             type="submit"
@@ -212,8 +216,6 @@ const isDuplicateAllowed = computed(() => {
       </x-form>
     </x-modal>
 
-    <x-divider class="my-4" />
-
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -222,15 +224,17 @@ const isDuplicateAllowed = computed(() => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">FIRST NAME</dt>
@@ -269,12 +273,14 @@ const isDuplicateAllowed = computed(() => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.lost_reason }}</dd>
+            <dd>
+              {{ quote?.business_quote_request_detail?.lost_reason?.text }}
+            </dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">ADVISOR</dt>
-            <dd>{{ quote.advisor_id_text }}</dd>
+            <dd>{{ quote?.advisor?.name }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -318,15 +324,17 @@ const isDuplicateAllowed = computed(() => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Parent Ref-ID
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.parent_duplicate_quote_id }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -338,10 +346,10 @@ const isDuplicateAllowed = computed(() => {
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
           </div>
-        <div class="grid sm:grid-cols-2">
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
-        </div>
+          </div>
         </dl>
       </div>
 
@@ -368,118 +376,118 @@ const isDuplicateAllowed = computed(() => {
           </div>
         </dl>
       </div>
-      <x-divider class="mb-4 mt-1" />
+    </div>
 
-      <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-          <x-divider class="mb-4 mt-1" />
-        </div>
-        <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <div class="flex flex-col gap-4">
-              <x-select
-                v-model="leadStatusForm.leadStatus"
-                label="STATUS"
-                :options="leadStatusOptions"
-                :disabled="
-                  quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
-                "
-                placeholder="Lead Status"
-                class="w-full"
-              />
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                label="NOTES"
-                placeholder="Lead Notes"
-                class="w-full"
-                :disabled="
-                  quote.quote_status_id ==
-                  enums.quoteStatusEnum.TransactionApproved
-                "
-              />
-            </div>
-          </div>
-          <div class="w-full md:w-2/3">
-            <x-input
-              v-if="
-                leadStatusForm.leadStatus ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              v-model="leadStatusForm.trans_code"
-              label="TRANSAPP CODE"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
+    <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2">
+          <div class="flex flex-col gap-4">
             <x-select
-              v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-              v-model="leadStatusForm.lostReason"
-              label="LOST REASON"
-              :options="lostReasonsOptions"
-              placeholder="Lost Reason is required"
+              v-model="leadStatusForm.leadStatus"
+              label="Status"
+              :options="leadStatusOptions"
+              :disabled="
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved
+              "
+              placeholder="Lead Status"
               class="w-full"
-              :error="leadStatusForm.errors.lostReason"
+            />
+            <x-textarea
+              v-model="leadStatusForm.notes"
+              type="text"
+              label="Notes"
+              placeholder="Lead Notes"
+              class="w-full"
+              :disabled="
+                quote.quote_status_id == quoteStatusEnum.TransactionApproved
+              "
             />
           </div>
         </div>
-        <div class="flex justify-end">
-          <x-button
-            class="mt-4"
-            color="emerald"
-            size="sm"
-            :loading="leadStatusForm.processing"
-            @click.prevent="onLeadStatus"
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+        <div class="w-full md:w-2/3">
+          <x-input
+            v-if="
+              leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
             "
-          >
-            Change Status
-          </x-button>
+            :disabled="
+              quote.quote_status_id == quoteStatusEnum.TransactionApproved
+            "
+            v-model="leadStatusForm.trans_code"
+            label="TransApp Code"
+            placeholder="TransApp Code is required"
+            class="w-full"
+            :error="leadStatusForm.errors.trans_code"
+          />
+          <x-select
+            v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
+            v-model="leadStatusForm.lostReason"
+            label="Lost Reason"
+            :options="
+              lostReasons?.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            placeholder="Lost Reason is required"
+            class="w-full"
+            :error="leadStatusForm.errors.lostReason"
+          />
         </div>
       </div>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="emerald"
+          size="sm"
+          :loading="leadStatusForm.processing"
+          @click.prevent="onLeadStatus"
+          :disabled="
+            quote.quote_status_id == quoteStatusEnum.TransactionApproved
+          "
+        >
+          Change Status
+        </x-button>
+      </div>
+    </div>
 
-      <!-- Additional Contact -->
-      <customerAdditionalContacts
-        quoteType="Business"
-        :customerId="quote.customer_id"
-        :quoteId="quote.id"
-        :contacts="customerAdditionalContacts"
+    <!-- Additional Contact -->
+    <customerAdditionalContacts
+      quoteType="Business"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+    />
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <div v-if="historyData === null" class="text-center py-3">
+        <x-button
+          size="sm"
+          color="primary"
+          outlined
+          @click.prevent="onLoadHistoryData"
+          :loading="historyLoading"
+        >
+          Load History Data
+        </x-button>
+      </div>
+      <DataTable
+        v-else
+        table-class-name="compact"
+        :headers="historyDataTable"
+        :items="historyData || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="historyData.length < 15"
       />
-
-      <div class="p-4 rounded shadow mb-6 bg-white">
-        <div>
-          <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-          <x-divider class="mb-4 mt-1" />
-        </div>
-        <div v-if="historyData === null" class="text-center py-3">
-          <x-button
-            size="sm"
-            color="primary"
-            outlined
-            @click.prevent="onLoadHistoryData"
-            :loading="historyLoading"
-          >
-            Load History Data
-          </x-button>
-        </div>
-        <DataTable
-          v-else
-          table-class-name="compact"
-          :headers="historyDataTable"
-          :items="historyData || []"
-          border-cell
-          hide-rows-per-page
-          :rows-per-page="15"
-          :hide-footer="historyData.length < 15"
-        />
-      </div>
     </div>
   </div>
 </template>

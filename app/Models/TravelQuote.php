@@ -29,20 +29,6 @@ class TravelQuote extends Model implements AuditableContract
         'advisor_id' => FilterTypes::IN,
     ];
 
-    public function getCreatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
-    public function getUpdatedAtAttribute($table)
-    {
-        $date_time_format = Config::get('constants.datetime_format');
-
-        return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
-    }
-
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
@@ -66,6 +52,10 @@ class TravelQuote extends Model implements AuditableContract
     public function plan()
     {
         return $this->belongsTo(TravelPlan::class, 'plan_id');
+    }
+    public function quotePlan()
+    {
+        return $this->hasMany(TravelQuotePlan::class, 'travel_quote_request_id');
     }
 
     public function travelCoverFor()

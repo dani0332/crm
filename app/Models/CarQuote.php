@@ -39,11 +39,17 @@ class CarQuote extends BaseModel
         'advisor_id' => FilterTypes::IN,
         'created_at' => FilterTypes::DATE,
         'previous_quote_policy_number' => FilterTypes::EXACT,
+        'renewal_batch' => FilterTypes::EXACT,
     ];
+
+    public function getFullNameAttribute()
+    {
+        return $this->first_name . ' ' . $this->last_name;
+    }
 
     public function fullName()
     {
-        return $this->first_name.' '.$this->last_name;
+        return $this->first_name . ' ' . $this->last_name;
     }
 
     public function uaeLicenseHeldFor()
@@ -353,7 +359,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('pa')) {
-                if (! array_key_exists('pa_id', $filters)) {
+                if (!array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -372,7 +378,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('payment')) {
-                if (! array_key_exists('pa_id', $filters)) {
+                if (!array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -388,7 +394,7 @@ class CarQuote extends BaseModel
             } //invoicing
 
             if (Auth::user()->hasRole('invoicing')) {
-                if (! array_key_exists('pa_id', $filters)) {
+                if (!array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -435,5 +441,17 @@ class CarQuote extends BaseModel
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by', 'id');
+    }
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function carLostQuoteLogs()
+    {
+        return $this->hasMany(CarLostQuoteLog::class, 'car_quote_request_id');
+    }
+
+    public function carLostQuoteLog()
+    {
+        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->latestOfMany();
     }
 }

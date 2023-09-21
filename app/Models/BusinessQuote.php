@@ -53,7 +53,7 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->hasOne(BusinessQuoteRequestDetail::class, 'business_quote_request_id', 'id');
     }
 
-    public function typeOfInsurance()
+    public function businessTypeOfInsurance()
     {
         return $this->belongsTo(BusinessInsuranceType::class);
     }
@@ -63,4 +63,8 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(User::class, 'advisor_id');
     }
 
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
 }

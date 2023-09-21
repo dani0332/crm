@@ -46,8 +46,8 @@ class HealthQuoteService extends BaseService
             'hqr.uuid',
             'hqr.code',
             'hqr.first_name',
-            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%Y %H:%i:%s") as created_at'),
-            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%Y %H:%i:%s") as updated_at'),
+            DB::raw('DATE_FORMAT(hqr.created_at, "%d-%b-%Y %H:%i:%s") as created_at'),
+            DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%b-%Y %H:%i:%s") as updated_at'),
             'hqr.last_name',
             'hqr.payment_status_id',
             'hqr.email',
@@ -106,6 +106,7 @@ class HealthQuoteService extends BaseService
             'ins_provider.TEXT as currently_insured_with_id_text',
             'hqr.parent_duplicate_quote_id',
             'hqr.is_ecommerce',
+            'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
@@ -120,7 +121,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as wcu', 'wcu.id', '=', 'hqr.wcu_id')
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
-            ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id');
+            ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
+            ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
     }
 
     public function getEntity($id)
@@ -1118,7 +1120,7 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = $plan['actualPremium'] + $plan['basmah'] + $plan['policyFee'] + $plan['vat'];
+                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {

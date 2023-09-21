@@ -12,7 +12,7 @@ trait FilterCriteria
     {
         $filters = request()->all();
 
-        if (count($filters) && count($this->filterables)) {
+        if (count($filters) && isset($this->filterables) && count($this->filterables)) {
             foreach ($this->filterables as $key => $operator) {
                 if (isset(request()->{$key}) || $operator == FilterTypes::DATE_BETWEEN) {
                     $value = request()->{$key};
@@ -45,6 +45,10 @@ trait FilterCriteria
                                 $startDate = date('Y-m-d 00:00:00', strtotime(request()->{$key.'_start'}));
                                 $endDate = date('Y-m-d 23:59:59', strtotime(request()->{$key.'_end'}));
                                 $query->whereBetween(DB::raw('date('.$key.')'), [$startDate, $endDate]);
+                            } elseif (isset(request()->{$key.'_time_start'}) && isset(request()->{$key.'_time_end'})) {
+                                $startDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_start'}));
+                                $endDate = date('Y-m-d H:i:s', strtotime(request()->{$key.'_time_end'}));
+                                $query->whereBetween($key, [$startDate, $endDate]);
                             }
                             break;
                         default:

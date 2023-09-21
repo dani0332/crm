@@ -95,13 +95,30 @@ class BikeQuoteRepository extends BaseRepository
     {
         $quote = $this->byQuoteTypeId(QuoteTypes::BIKE->id())
             ->where($column, $value)
-            ->with(['bikeQuote' => function ($q) {
-                $q->with(['uaeLicenseHeldFor']);
-            }, 'advisor', 'nationality', 'quoteDetail.lostReason', 'currentlyInsuredWith', 'payments' => function ($q) {
-                $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-            }, 'createdBy', 'updatedBy', 'customer.additionalContactInfo', 'documents' => function ($q) {
-                $q->with('createdBy')->orderBy('created_at', 'desc');
-            }])->firstOrFail();
+            ->with([
+                'bikeQuote' => function ($q) {
+                    $q->with(['uaeLicenseHeldFor']);
+                },
+                'advisor',
+                'nationality',
+                'quoteDetail.lostReason',
+                'currentlyInsuredWith',
+                'payments' => function ($q) {
+                    $q->with([
+                        'paymentStatus',
+                        'personalPlan',
+                        'paymentMethod',
+                        'paymentStatusLogs',
+                        'insuranceProvider',
+                    ]);
+                },
+                'createdBy',
+                'updatedBy',
+                'customer.additionalContactInfo',
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])->firstOrFail();
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
@@ -121,7 +138,7 @@ class BikeQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter()
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 

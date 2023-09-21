@@ -136,7 +136,7 @@ class CentralService
     public function assignLeadToAdvisor($request)
     {
         $leadsIds = $request->assigned_lead_id;
-        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle];
+        $personalQuotes = [quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Pet, quoteTypeCode::Yacht];
         Log::info('Leads ids to assign: '.json_encode($leadsIds));
 
         if (str_starts_with($leadsIds, ',')) {

@@ -23,11 +23,11 @@ class PersonalQuoteRolesPermissionSeeder extends Seeder
 
         foreach ($lobs as $lob) {
             foreach ($roles as $role) {
-                Role::findOrCreate(strtoupper($lob).$role, 'web');
+                Role::findOrCreate(strtoupper($lob) . $role, 'web');
             }
 
             foreach ($permissions as $permission) {
-                Permission::findOrCreate(strtolower($lob).$permission, 'web');
+                Permission::findOrCreate(strtolower($lob) . $permission, 'web');
             }
         }
 

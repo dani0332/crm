@@ -2,9 +2,8 @@
 
 namespace App\Console;
 
-use App\Console\Commands\UpdateHealthStatus;
-use App\Jobs\LeadAllocationJob;
-use App\Jobs\TierAssignmentJob;
+use App\Jobs\CarLost\CarSoldResubmissions;
+use App\Jobs\CarLost\UnconSubmissionReminder;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -29,33 +28,31 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule
-            ->command('LeadAllocation:cron')
-            ->everyMinute()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+            ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping(1);
 
         //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
+        $schedule->job(new UnconSubmissionReminder)
+            ->tuesdays()
+            ->fridays()
+            ->withoutOverlapping(1)->onOneServer()
+            ->at('9:00');
 
-        $schedule->job(new TierAssignmentJob)->everyTwoMinutes()->withoutOverlapping(1)->onOneServer();
+        //send leads which are resubmitted for car sold approval yesterday
+        $schedule->job((new CarSoldResubmissions))
+            ->daily()
+            ->withoutOverlapping(1)->onOneServer()
+            ->at('9:00');
 
         $schedule
-            ->command('AddBatchNumber:cron')
-            ->timezone('Asia/Dubai')
-            ->weeklyOn(1, '0:00')
-            ->onOneServer()
-            ->withoutOverlapping(1);
+            ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);
 
-        //Disabling - Enable for RM Deployment
-        // $schedule->command(UpdateHealthStatus::class)
-        // ->timezone('Asia/Dubai')
-        // ->dailyAt('01:00')->onOneServer()
-        // ->withoutOverlapping(1);
+        $schedule
+            ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('telescope:prune --hours=48')->daily()
-            ->onOneServer()
-            ->withoutOverlapping(1);
+        $schedule
+            ->command('telescope:prune --hours=48')->daily()->onOneServer()->withoutOverlapping(1);
     }
 
     /**
@@ -65,7 +62,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }

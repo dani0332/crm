@@ -31,6 +31,13 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
+  embeddedProducts: Array,
 });
 
 const page = usePage();
@@ -95,17 +102,10 @@ const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
 };
-
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Quote duplicated successfully',
-        position: 'top',
-      });
-    },
     onFinish: () => {
       modals.duplicate = false;
     },
@@ -144,6 +144,7 @@ const travelFields = computed(() => {
     'previous_quote_policy_number',
     'previous_quote_policy_premium',
     'previous_policy_expiry_date',
+    'policy_start_date',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -174,17 +175,14 @@ const leadStatusOptions = computed(() => {
 
 const onLeadStatus = () => {
   leadStatusForm.post(
-    `/quotes/Travel/${page.props.quote.id}/update-lead-status`,
+    route('updateLeadStatus', {
+      modelType: 'Travel',
+      QuoteUId: page.props.quote.id,
+    }),
     {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
       },
     },
   );
@@ -234,8 +232,8 @@ const submitTraveler = isValid => {
 
 const addTravelMember = isValid => {
   if (!isValid) return;
-
-  travelerForm.post('/travelers', {
+  // '/travelers'
+  travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -274,8 +272,7 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-
-  travelerForm.put(`/travelers/${travelerForm.id}`, {
+  travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -297,7 +294,7 @@ const editTraveler = isValid => {
 };
 
 const deleteTraveler = id => {
-  router.delete(`/travelers/${id}`, {
+  router.delete(route('travelers.destroy', id), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -590,10 +587,9 @@ const addActivity = () => {
   activityActionEdit.value = false;
   modals.activity = true;
 };
-
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -640,7 +636,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+    activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -659,7 +655,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/create-activity`, {
+    activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -681,7 +677,7 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
+    route('activities.destroy', confirmDeleteData.activity),
     {
       isInertia: true,
       quote_uuid: page.props.quote.uuid,
@@ -832,7 +828,10 @@ const historyData = ref(null);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=travel&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'travel',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -909,14 +908,13 @@ onMounted(() => {
         >
           Duplicate Lead
         </x-button>
-
-        <Link href="/quotes/travel" preserve-scroll>
+        <Link :href="route('travel.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
         </Link>
 
         <Link
           v-if="permissions.canEditQuote == true"
-          :href="`${quote.uuid}/edit`"
+          :href="route('travel.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -927,30 +925,32 @@ onMounted(() => {
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
+          <x-field label="LOBs" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              :options="
+                allowedDuplicateLOB.map(lob => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+          </x-field>
+          <x-field label="Reason" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+          </x-field>
 
           <x-button
             color="orange"
@@ -973,24 +973,143 @@ onMounted(() => {
             v-for="field in travelFields"
             :key="field"
           >
-              <dt v-if="field.title == 'Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </dt>
-              <dt v-else-if="field.title == 'Parent Ref-ID'">
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          {{ field.title }}
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </dt>
-            <dt v-else class="font-medium">{{ field.title.toUpperCase() }}</dt>
+            <dt v-if="field.title == 'Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </dt>
+            <dt v-else-if="field.title == 'Parent Ref-ID'">
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  {{ field.title }}
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </dt>
+            <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
             <dd>{{ field?.value }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Traveling Where
+                </label>
+                <template #tooltip> Traveling Where</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium uppercase">{{ (quote.direction_code!=null?quote.direction_code:((quote?.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_UAE_TEXT && quote?.region_cover_for_id != enums.travelQuoteEnum.REGION_COVER_ID_UAE)?enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND:(quote?.destination_id_text==enums.travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || quote?.region_cover_for_id == enums.travelQuoteEnum.REGION_COVER_ID_UAE ?enums.travelQuoteEnum.TRAVEL_UAE_INBOUND:'')))}}</dt>
+          </div>
+
+          <div
+            v-if="
+         (enums.travelQuoteEnum.TRAVEL_UAE_INBOUND == quote.direction_code) || (quote?.region_cover_for_id == 3)
+            "
+            class="grid sm:grid-cols-2"
+          >
+            <dt>
+              <label
+                class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+              >
+                Arrived at UAE
+              </label>
+            </dt>
+            <dt class="font-medium">
+              {{ quote.has_arrived_uae == 1 || quote.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_UAE_TEXT ? 'Yes' : 'No' }}
+            </dt>
+          </div>
+          <div v-else
+            class="grid sm:grid-cols-2"
+          >
+            <dt>
+              <label
+                class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+              >
+                Arrived at Destination
+              </label>
+            </dt>
+            <dt class="font-medium">
+              {{ quote.has_arrived_destination == 1 || quote.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE? 'Yes' : 'No' }}
+            </dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Days Covers
+                </label>
+                <template #tooltip>Days Covers</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.days_cover_for }}</dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Travel Start Date
+                </label>
+                <template #tooltip> Travel Start Date</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">
+              {{
+                quote.start_date ? quote.start_date : quote.policy_start_date
+              }}
+            </dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Travel End Date
+                </label>
+                <template #tooltip> Travel End Date</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.end_date }}</dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Travel Coverage
+                </label>
+                <template #tooltip> Travel Coverage</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium"> {{quote.coverage_code!=null?quote.coverage_code:(quote.days_cover_for <= 92?enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP:enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP+'/'+enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP)}}</dt>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
+                >
+                  Region Coverage
+                </label>
+                <template #tooltip>Region Cover</template>
+              </x-tooltip>
+            </dt>
+            <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
           </div>
         </dl>
       </div>
@@ -1001,7 +1120,6 @@ onMounted(() => {
         </h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
@@ -1028,54 +1146,63 @@ onMounted(() => {
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="STATUS"
-              :options="leadStatusOptions"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="NOTES"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-            />
+            <x-field label="STATUS">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                :options="leadStatusOptions"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+                placeholder="Lead Status"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="NOTES">
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+              />
+            </x-field>
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-input
+          <x-field
+            label="TRANSAPP CODE"
             v-if="
               leadStatusForm.leadStatus ==
               enums.quoteStatusEnum.TransactionApproved
             "
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-            "
-            v-model="leadStatusForm.trans_code"
-            label="TRANSAPP CODE"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-            v-model="leadStatusForm.lostReason"
+          >
+            <x-input
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              v-model="leadStatusForm.trans_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+          </x-field>
+          <x-field
             label="LOST REASON"
-            :options="lostReasonsOptions"
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+          >
+            <x-select
+              v-model="leadStatusForm.lostReason"
+              :options="lostReasonsOptions"
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
@@ -1107,7 +1234,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ dateFormat(ecomDetails.paidAt).value }}</dd>
+            <dd>{{ ecomDetails.paidAt }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1140,6 +1267,7 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="travelers.length < 15"
         show-index
       >
         <template #item-name="item"> Traveler {{ item.index }} </template>
@@ -1154,7 +1282,7 @@ onMounted(() => {
         </template>
 
         <template #item-action="item">
-          <div class="flex gap-2 pr-2">
+          <div class="flex gap-2 justify-center">
             <x-button
               size="xs"
               color="primary"
@@ -1184,7 +1312,6 @@ onMounted(() => {
         backdrop
       >
         <template #header>
-          <i class="fa fa-user"></i>
           {{ travelerForm.id ? 'Edit: ' + travelerName : 'New Member' }}
         </template>
         <x-form @submit="submitTraveler" :auto-focus="false">
@@ -1240,7 +1367,6 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        03
         <x-divider class="mb-4 mt-1" />
       </div>
       <x-form @submit="submitPolicyDetails" :auto-focus="false">
@@ -1338,14 +1464,15 @@ onMounted(() => {
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
+        :hide-footer="emailStatuses.length < 15"
       >
         <template #item-email_status="item">
-          <span class="text-primary-600">{{
-            item.email_status.toUpperCase()
+          <span class="text-primary-600 uppercase">{{
+            item.email_status
           }}</span>
         </template>
         <template #item-reason="item">
-          <span class="text-primary-600">{{ item.reason.toUpperCase() }}</span>
+          <span class="text-primary-600 uppercase">{{ item.reason }}</span>
         </template>
       </DataTable>
     </div>
@@ -1457,6 +1584,17 @@ onMounted(() => {
       </x-modal>
     </div>
 
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
@@ -1472,10 +1610,10 @@ onMounted(() => {
 
       <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
         <p
-          class="text-center text-primary-600"
+          class="text-center text-primary-600 uppercase"
           v-if="typeof listQuotePlans == 'string'"
         >
-          {{ listQuotePlans?.toUpperCase() }}
+          {{ listQuotePlans }}
         </p>
       </div>
       <div v-else>
@@ -1486,14 +1624,15 @@ onMounted(() => {
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
+          :hide-footer="listQuotePlans.length < 15"
         >
           <template #item-providerName="item">
-            <span class="text-primary-600">{{
-              item.providerName?.toUpperCase()
+            <span class="text-primary-600 uppercase">{{
+              item.providerName
             }}</span>
           </template>
           <template #item-name="item">
-            <span class="text-primary-600">{{ item.name?.toUpperCase() }}</span>
+            <span class="text-primary-600 uppercase">{{ item.name }}</span>
           </template>
           <template #item-discountPremium="item">
             <span class="text-primary-600">{{
@@ -1520,6 +1659,12 @@ onMounted(() => {
         <LazyAvailablePlan :plan="planDetails" />
       </x-modal>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -1581,28 +1726,29 @@ onMounted(() => {
 
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee"
-              :options="advisorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
+            <x-field label="Title" required>
+              <x-input
+                v-model="activityForm.title"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Description">
+              <x-textarea
+                v-model="activityForm.description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Assignee" required>
+              <x-select
+                v-model="activityForm.assignee_id"
+                :options="advisorOptions"
+                :rules="[isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+            </x-field>
 
             <DatePicker
               :format="format"
@@ -1709,33 +1855,40 @@ onMounted(() => {
 
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
-
-            <x-input
+            <x-field label="Type" required>
+              <x-select
+                v-model="additionalContact.additional_contact_type"
+                :options="[
+                  { value: 'email', label: 'Email' },
+                  { value: 'mobile_no', label: 'Mobile Number' },
+                ]"
+                :rules="[isRequired]"
+                placeholder="Select Type"
+                class="w-full"
+              />
+            </x-field>
+            <x-field
+              label="Value"
+              required
               v-if="additionalContact.additional_contact_type === 'mobile_no'"
-              v-model="additionalContact.additional_contact_val"
+            >
+              <x-input
+                v-model="additionalContact.additional_contact_val"
+                :rules="[isRequired, isMobileNo]"
+                class="w-full"
+              />
+            </x-field>
+            <x-field
               label="Value"
-              :rules="[isRequired, isMobileNo]"
-              class="w-full"
-            />
-
-            <x-input
+              required
               v-if="additionalContact.additional_contact_type === 'email'"
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[isRequired, isEmail]"
-              class="w-full"
-            />
+            >
+              <x-input
+                v-model="additionalContact.additional_contact_val"
+                :rules="[isRequired, isEmail]"
+                class="w-full"
+              />
+            </x-field>
           </div>
 
           <div class="text-right space-x-4 mt-12">

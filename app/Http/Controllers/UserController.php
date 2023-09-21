@@ -14,6 +14,7 @@ use Auth;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -66,7 +67,6 @@ class UserController extends Controller
                                             ,u1.name
                                             ,u1.email
                                             ,u2.roles
-                                            ,teams.name
                                             ,u1.created_at
                                             ,u1.updated_at');
             $filteredData = $users;
@@ -208,7 +208,11 @@ class UserController extends Controller
     {
         $this->validate($request, [
             'name' => 'required|max:120',
-            'email' => 'required|email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users')->ignore($user->id),
+            ],
             'roles' => 'required',
             'teams' => 'required',
             'permissions' => 'nullable|array',
@@ -222,7 +226,7 @@ class UserController extends Controller
         $user->password = bcrypt($request->password);
         $user->is_active = $request->is_active == 'on' ? 1 : 0;
 
-        /**
+        /*
          * temp fix: health lead allocation is using team_id to target health product
          * this needs to be updated with new team/product structure
          */

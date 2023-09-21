@@ -1,11 +1,15 @@
 <script setup>
+import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
   advisors: Array,
+  quoteType: {
+    type: String,
+    default: 'pet',
+  },
 });
-
-const { isRequired } = useRules();
 
 const page = usePage();
 const loader = reactive({
@@ -41,7 +45,7 @@ function onSubmit(isValid) {
         delete filters[key],
     );
 
-    router.visit('/personal-quotes/pet', {
+    router.visit(route('pet-quotes-list'), {
       method: 'get',
       data: filters,
       preserveState: true,
@@ -55,7 +59,7 @@ function onSubmit(isValid) {
 }
 
 function onReset() {
-  router.visit('/personal-quotes/pet', {
+  router.visit(route('pet-quotes-list'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -74,6 +78,7 @@ const tableHeader = [
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
+  { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'SOURCE', value: 'source' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PRICE', value: 'premium' },
@@ -89,7 +94,6 @@ const tableHeader = [
   { text: 'ACCOMMODATION TYPE', value: 'accommodation_type' },
   { text: 'POSSESION TYPE', value: 'possesion_type' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
 ];
 
 const can = permission => useCan(permission);
@@ -116,50 +120,16 @@ const advisorOptions = computed(() => {
   }));
 });
 
-const notification = useNotifications('toast');
-
 const quotesSelected = ref([]);
-
-const assignForm = useForm({
-  assigned_to_id_new: null,
-  modelType: 'Pet',
-  selectTmLeadId: '',
-  isManagerOrDeputy: isManager,
-  isLeadPool: false,
-  isManualAllocationAllowed: isManualAllocationAllowed,
-});
-
-function onAssignLead(isValid) {
-  if (isValid) {
-    const selected = quotesSelected.value.map(e => e.id);
-    assignForm
-      .transform(data => ({
-        ...data,
-        selectTmLeadId: `${selected}`,
-      }))
-      .post('/quotes/pet/manualLeadAssign', {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          let title =
-            quotesSelected.value.length > 1
-              ? 'Pet Leads Assigned'
-              : 'Pet Lead Assigned';
-          quotesSelected.value = [];
-          notification.success({
-            title: title,
-            position: 'top',
-          });
-        },
-      });
-  }
-}
-
 
 const onDataExport = () => {
   const data = useObjToUrl(filters);
   const url = route('data-extraction', 'pet');
   window.open(url + '?' + new URLSearchParams(data).toString());
+};
+
+const onLeadAssigned = () => {
+  quotesSelected.value = [];
 };
 
 watch(
@@ -173,8 +143,6 @@ watch(
   },
   { deep: true, immediate: true },
 );
-
-
 </script>
 
 <template>
@@ -186,7 +154,7 @@ watch(
         v-if="can(permissionsEnum.PetQuotesCreate)"
         size="sm"
         color="#ff5e00"
-        href="/personal-quotes/pet/create"
+        :href="route('pet-quotes-create')"
       >
         Create Lead
       </x-button>
@@ -196,156 +164,147 @@ watch(
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-              <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-              </x-tooltip>
-              <x-input
-                  v-model="filters.code"
-                  type="search"
-                  name="code"
-                  class="w-full"
-                  placeholder="Search by Ref-ID"
-              />
-          </div>
-        <x-input
-          v-model="filters.first_name"
-          type="search"
-          name="first_name"
-          label="First Name"
-          class="w-full"
-          placeholder="Search by First Name"
-        />
-        <x-input
-          v-model="filters.last_name"
-          type="search"
-          name="last_name"
-          label="Last Name"
-          class="w-full"
-          placeholder="Search by Last Name"
-        />
-        <x-input
-          v-model="filters.email"
-          type="search"
-          name="email"
-          label="Email"
-          class="w-full"
-          placeholder="Search by Email"
-        />
-        <x-input
-          v-model="filters.mobile_no"
-          type="search"
-          name="mobile_no"
-          label="Mobile Number"
-          class="w-full"
-          placeholder="Search by Mobile Number"
-        />
-
-        <DatePicker
-          v-model="filters.created_at_start"
-          name="created_at_start"
-          label="Created Date Start"
-          class="w-full"
-        />
-        <DatePicker
-          v-model="filters.created_at_end"
-          name="created_at_end"
-          label="Created Date End"
-          class="w-full"
-        />
-
-        <ComboBox
-          v-model="filters.quote_status_id"
-          label="Lead Status"
-          name="quote_status"
-          placeholder="Search by Lead Status"
-          :options="
-            quoteStatuses.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-        />
-        <ComboBox
-          v-model="filters.advisor_id"
-          label="Advisor"
-          placeholder="Search by Advisor"
-          :options="advisorOptions"
-        />
-        <x-select
-          v-model="filters.is_ecommerce"
-          label="Is Ecommerce"
-          placeholder="Search by Ecommerce"
-          :options="[
-            { value: '', label: 'All' },
-            { value: 'Yes', label: 'Yes' },
-            { value: 'No', label: 'No' },
-          ]"
-          class="w-full"
-        />
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
+        <x-field label="First Name">
+          <x-input
+            v-model="filters.first_name"
+            type="search"
+            name="first_name"
+            class="w-full"
+            placeholder="Search by First Name"
+          />
+        </x-field>
+        <x-field label="Last Name">
+          <x-input
+            v-model="filters.last_name"
+            type="search"
+            name="last_name"
+            class="w-full"
+            placeholder="Search by Last Name"
+          />
+        </x-field>
+        <x-field label="Email">
+          <x-input
+            v-model="filters.email"
+            type="search"
+            name="email"
+            class="w-full"
+            placeholder="Search by Email"
+          />
+        </x-field>
+        <x-field label="Mobile Number">
+          <x-input
+            v-model="filters.mobile_no"
+            type="search"
+            name="mobile_no"
+            class="w-full"
+            placeholder="Search by Mobile Number"
+          />
+        </x-field>
+        <x-field label="Created Date Start">
+          <DatePicker
+            v-model="filters.created_at_start"
+            name="created_at_start"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Created Date End">
+          <DatePicker
+            v-model="filters.created_at_end"
+            name="created_at_end"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Lead Status">
+          <ComboBox
+            v-model="filters.quote_status_id"
+            name="quote_status"
+            placeholder="Search by Lead Status"
+            :options="
+              quoteStatuses.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="Advisor">
+          <ComboBox
+            v-model="filters.advisor_id"
+            placeholder="Search by Advisor"
+            :options="advisorOptions"
+          />
+        </x-field>
+        <x-field label="Is Ecommerce">
+          <x-select
+            v-model="filters.is_ecommerce"
+            placeholder="Search by Ecommerce"
+            :options="[
+              { value: '', label: 'All' },
+              { value: 'Yes', label: 'Yes' },
+              { value: 'No', label: 'No' },
+            ]"
+            class="w-full"
+          />
+        </x-field>
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
-          <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
-              <x-button
-                  v-if="canExport"
-                  size="sm"
-                  color="emerald"
-                  @click.prevent="onDataExport"
-                  class="justify-self-start"
-              >
-                  Export
-              </x-button>
-              <x-tooltip v-else position="right">
-                  <x-button tag="div" size="sm" color="emerald"> Export </x-button>
-                  <template #tooltip>
-            <span class="font-medium">
-              Created dates are required to export data.
-            </span>
-                  </template>
-              </x-tooltip>
-          </div>
-          <div v-else />
-          <div class="flex justify-self-end gap-3">
-              <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
-              <x-button size="sm" color="primary" @click.prevent="onReset">
-                  Reset
-              </x-button>
-          </div>
+        <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
+          <x-button
+            v-if="canExport"
+            size="sm"
+            color="emerald"
+            @click.prevent="onDataExport"
+            class="justify-self-start"
+          >
+            Export
+          </x-button>
+          <x-tooltip v-else position="right">
+            <x-button tag="div" size="sm" color="emerald"> Export </x-button>
+            <template #tooltip>
+              <span class="font-medium">
+                Created dates are required to export data.
+              </span>
+            </template>
+          </x-tooltip>
+        </div>
+        <div v-else />
+        <div class="flex justify-self-end gap-3">
+          <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
+          <x-button size="sm" color="primary" @click.prevent="onReset">
+            Reset
+          </x-button>
+        </div>
       </div>
     </x-form>
 
     <Transition name="fade">
-      <div v-if="quotesSelected.length > 0" class="mb-4">
-        <div
-          class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50"
-          v-if="isManualAllocationAllowed"
-        >
-          <x-form @submit="onAssignLead" :auto-focus="false">
-            <div class="w-full flex flex-col md:flex-row gap-4">
-              <x-select
-                v-model="assignForm.assigned_to_id_new"
-                label="Assign Advisor"
-                :options="advisorOptions"
-                placeholder="Select Advisor"
-                class="flex-1 w-auto"
-                :rules="[isRequired]"
-              />
-              <div class="mb-3 md:pt-6">
-                <x-button
-                  color="orange"
-                  size="sm"
-                  type="submit"
-                  :loading="assignForm.processing"
-                >
-                  Assign
-                </x-button>
-              </div>
-            </div>
-          </x-form>
-        </div>
+      <div
+        v-if="quotesSelected.length > 0 && isManualAllocationAllowed"
+        class="mb-4"
+      >
+        <LeadAssignment
+          :selected="quotesSelected.map(e => e.id)"
+          :advisors="advisorOptions"
+          :quoteType="quoteType"
+          @success="onLeadAssigned"
+        />
       </div>
     </Transition>
 
@@ -363,7 +322,7 @@ watch(
       <template #item-uuid="{ code, uuid }">
         <Link
           v-if="can(permissionsEnum.PetQuotesShow)"
-          :href="`/personal-quotes/pet/${uuid}`"
+          :href="route('pet-quotes-show', uuid)"
           class="text-primary-500 hover:underline"
         >
           {{ code }}
@@ -373,6 +332,10 @@ watch(
 
       <template #item-advisor="{ advisor }">
         {{ advisor?.name }}
+      </template>
+
+      <template #item-transapp_code="{ quote_detail }">
+        {{ quote_detail?.transapp_code }}
       </template>
 
       <template #item-quote_status="{ quote_status }">
@@ -398,7 +361,7 @@ watch(
 
       <template #item-breed_of_pet1="{ pet_quote }">
         {{ pet_quote?.breed_of_pet1 }}
-     </template>
+      </template>
 
       <template #item-is_microchipped="{ pet_quote }">
         {{ pet_quote?.is_microchipped ? 'Yes' : 'No' }}
@@ -420,7 +383,7 @@ watch(
       </template>
       <template #item-is_ecommerce="{ is_ecommerce }">
         <div class="text-center">
-            {{ is_ecommerce ? 'Yes' : 'No' }}
+          {{ is_ecommerce ? 'Yes' : 'No' }}
         </div>
       </template>
     </DataTable>

@@ -39,6 +39,8 @@ enum QuoteTypes: string
             QuoteTypes::PET => 9,
             QuoteTypes::CYCLE => 10,
             QuoteTypes::JETSKI => 11,
+            QuoteTypes::CORPLINE => 101,
+            QuoteTypes::GROUP_MEDICAL => 102,
         };
     }
 }

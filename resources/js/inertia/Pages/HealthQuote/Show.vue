@@ -2,7 +2,6 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import PaymentTable from './Partials/PaymentTable.vue';
 
 defineProps({
   quote: Object,
@@ -31,10 +30,14 @@ defineProps({
   isQuoteDocumentEnabled: Boolean,
   isBetaUser: Boolean,
   payments: Array,
+  mainPayment: Object,
   quoteRequest: Object,
   can: Object,
   paymentMethods: Object,
   sendPolicy: Boolean,
+  insuranceProviders: Array,
+  embeddedProducts: Array,
+  healthPlanTypes: Array,
 });
 
 const page = usePage();
@@ -42,6 +45,7 @@ const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 
+const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -54,6 +58,10 @@ const fixedValue = number => {
       maximumFractionDigits: 2,
     });
   }
+};
+
+const checkPlanType = id => {
+  return page.props.healthPlanTypes.find(type => type.id === id)?.text;
 };
 
 const modals = reactive({
@@ -69,6 +77,7 @@ const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
+  planFilters: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -113,6 +122,8 @@ const confirmData = reactive({
   contactPrimary: null,
 });
 
+const cleanObj = obj => useCleanObj(obj);
+
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
   assignLead = ref(null),
   memberActionEdit = ref(false),
@@ -127,7 +138,7 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
 
 const { copy, copied } = useClipboard();
 
-const { isRequired, isEmail, isNumber, isMobile } = useRules();
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const onCopyText = text => {
   copy(text);
@@ -152,7 +163,7 @@ const memberCategoryText = memberCategoryId =>
 
 const subTeamOptions = [
   { value: 'RM-NB', label: 'RM-NB' },
-  { value: 'RM-Speed', label: 'RM-Speed' },
+  { value: 'RM-SPEED', label: 'RM-SPEED' },
   { value: 'EBP', label: 'EBP' },
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
@@ -444,6 +455,8 @@ const memberDataDocs = membersDetail => {
 };
 
 // plans
+const planDataTable = ref();
+
 const plansTable = reactive({
   isLoading: false,
   columns: [
@@ -592,6 +605,99 @@ const onPlanError = () => {
   });
 };
 
+const planFilters = reactive({
+  insurer: [],
+  network: [],
+  manual_plan: null,
+  current_online: null,
+});
+const planFiltersCount = ref(0);
+const options = reactive({
+  network: [],
+  loading: false,
+});
+watch(
+  () => planFilters?.insurer,
+  value => {
+    if (value) {
+      options.loading = true;
+      const ids = planFilters.insurer.map(item => {
+        return item;
+      });
+      let url = `/insurance-provider-networks?insuranceProviderId=${ids.toString()}`;
+      axios
+        .get(url)
+        .then(res => {
+          if (res.data.length > 0) {
+            options.network = res.data;
+          } else {
+            options.network = [];
+          }
+        })
+        .catch(err => {
+          console.log(err);
+        })
+        .finally(() => {
+          options.loading = false;
+        });
+    }
+  },
+);
+const listQuotePlansFiltered = ref(
+  page.props.listQuotePlans.sort(
+    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
+  ),
+);
+const onPlanFiltersSubmit = () => {
+  const filters = cleanObj(planFilters);
+  planFiltersCount.value = Object.keys(filters).length;
+  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+    let isManualPlan = planFilters.manual_plan;
+    let isCurrentlyOnline = planFilters.current_online;
+    let network = planFilters.network;
+    let insurerIds =
+      planFilters.insurer?.map(item => {
+        return item;
+      }) || [];
+    let manualMatch = false;
+    let insurerMatch = false;
+    let networkMatch = false;
+    let onlineMatch = false;
+    if (isManualPlan != null) {
+      manualMatch = plan.isManualPlan == isManualPlan;
+    } else {
+      manualMatch = true;
+    }
+    if (isCurrentlyOnline != null) {
+      onlineMatch = !plan.isHidden == isCurrentlyOnline;
+    } else {
+      onlineMatch = true;
+    }
+    if (insurerIds?.length > 0) {
+      insurerMatch = insurerIds.includes(plan.providerId);
+    } else {
+      insurerMatch = true;
+    }
+    if (network?.length > 0) {
+      networkMatch = network.includes(plan.eligibilityName);
+    } else {
+      networkMatch = true;
+    }
+    return manualMatch && insurerMatch && networkMatch && onlineMatch;
+  });
+  modals.planFilters = false;
+  planDataTable.value.updatePage(1);
+};
+const onPlanFiltersReset = () => {
+  planFilters.insurer = [];
+  planFilters.network = [];
+  planFilters.manual_plan = null;
+  planFilters.current_online = null;
+  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  modals.planFilters = false;
+  planFiltersCount.value = 0;
+  planDataTable.value.updatePage(1);
+};
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -1074,15 +1180,17 @@ onMounted(() => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
@@ -1105,15 +1213,17 @@ onMounted(() => {
             <dd>{{ quote.updated_at }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Parent Ref-ID
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.parent_duplicate_quote_id }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">IS ECOMMERCE</dt>
@@ -1215,7 +1325,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TYPE OF PLAN</dt>
-            <dd>{{ quote.plan_id }}</dd>
+            <dd>{{ checkPlanType(quoteRequest.health_plan_type_id) }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">NEXT FOLLOWUP DATE</dt>
@@ -1501,7 +1611,16 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
-            <dd>{{ ecomDetails.paymentStatus }}</dd>
+            <dd>{{ quote.payment_status_text }}</dd>
+          </div>
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="
+              page.props.quote.payment_status_id == paymentStatusEnum.DECLINED
+            "
+          >
+            <dt class="font-medium">REASON</dt>
+            <dd>{{ mainPayment?.payment_status_message }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
@@ -1526,6 +1645,7 @@ onMounted(() => {
       :isBetaUser="isBetaUser"
       :quoteRequest="quoteRequest"
       :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
       :quote="quote"
     />
 
@@ -1650,16 +1770,6 @@ onMounted(() => {
             Download PDF
           </x-button>
 
-          <!-- hide add plan button for rm deployment -->
-          <x-button
-            size="sm"
-            color="primary"
-            v-show="false"
-            @click.prevent="modals.createPlan = true"
-          >
-            Add Plan
-          </x-button>
-
           <x-button
             v-if="listQuotePlans.length > 0"
             size="sm"
@@ -1670,8 +1780,26 @@ onMounted(() => {
           >
             Copy Link
           </x-button>
+          <x-badge
+            size="sm"
+            color="error"
+            outlined
+            animated
+            :show="planFiltersCount > 0"
+          >
+            <x-button
+              v-if="listQuotePlans.length > 0"
+              size="sm"
+              color="primary"
+              @click.prevent="modals.planFilters = true"
+            >
+              Filters
+            </x-button>
+            <template #content> {{ planFiltersCount }} </template>
+          </x-badge>
 
           <x-button
+            v-if="false"
             size="sm"
             color="primary"
             @click.prevent="modals.createPlan = true"
@@ -1681,14 +1809,15 @@ onMounted(() => {
         </div>
       </div>
       <DataTable
+        ref="planDataTable"
         v-model:items-selected="selectedPlans"
         table-class-name="tablefixed compact"
         :headers="plansTable.columns"
-        :items="listQuotePlans || []"
+        :items="listQuotePlansFiltered || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
-        :hide-footer="listQuotePlans.length < 15"
+        :hide-footer="listQuotePlansFiltered.length < 15"
       >
         <template #item-providerName="{ providerName, isManualPlan, isHidden }">
           <p>{{ providerName }}</p>
@@ -1708,6 +1837,14 @@ onMounted(() => {
               class="mt-0.5 text-[10px]"
             >
               Hidden
+            </x-tag>
+            <x-tag
+              v-if="!isHidden"
+              size="xs"
+              color="success"
+              class="mt-0.5 text-[10px]"
+            >
+              Currently Online
             </x-tag>
           </div>
         </template>
@@ -1732,7 +1869,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
                 )
               "
             >
@@ -1759,7 +1896,98 @@ onMounted(() => {
           @error="onPlanError"
         />
       </x-modal>
+
+      <x-modal v-model="modals.planFilters" size="lg" show-close backdrop>
+        <template #header> Filters </template>
+
+        <div class="grid sm:grid-cols-2 gap-4 py-8 min-h-[18rem]">
+          <ComboBox
+            v-model="planFilters.insurer"
+            label="Insurer"
+            :options="insuranceProviders"
+            :loading="planFilters.processing"
+            select-all
+            deselect-all
+          />
+          <ComboBox
+            v-model="planFilters.network"
+            :label="
+              planFilters.insurer?.length == 0
+                ? 'Network (please select insurer first)'
+                : 'Network'
+            "
+            :options="options.network"
+            :disabled="planFilters.insurer?.length == 0"
+            select-all
+            deselect-all
+          />
+
+          <div>
+            <x-tooltip position="right" class="arrow-l">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+              >
+                Manual Plan
+              </label>
+              <template #tooltip>Manually Added Plans</template>
+            </x-tooltip>
+            <x-select
+              v-model="planFilters.manual_plan"
+              :options="[
+                { value: '', label: 'All' },
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' },
+              ]"
+              class="w-full"
+            />
+          </div>
+
+          <div>
+            <x-tooltip position="right" class="arrow-l">
+              <label
+                class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+              >
+                Currently Online
+              </label>
+              <template #tooltip> Plans that are Currently Online </template>
+            </x-tooltip>
+            <x-select
+              v-model="planFilters.current_online"
+              :options="[
+                { value: '', label: 'All' },
+                { value: '1', label: 'Yes' },
+                { value: '0', label: 'No' },
+              ]"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mb-4">
+          <x-button
+            size="sm"
+            color="#ff5e00"
+            type="submit"
+            @click="onPlanFiltersSubmit"
+          >
+            Apply
+          </x-button>
+          <x-button
+            size="sm"
+            color="primary"
+            @click.prevent="onPlanFiltersReset"
+          >
+            Reset
+          </x-button>
+        </div>
+      </x-modal>
     </div>
+
+    <EmbeddedProducts
+      :data="embeddedProducts"
+      :link="quote.uuid"
+      :code="quote.code"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
@@ -2047,7 +2275,7 @@ onMounted(() => {
                 isRequired,
                 additionalContact.additional_contact_type === 'email'
                   ? isEmail
-                  : isNumber,
+                  : isMobileNo,
               ]"
               class="w-full"
             />

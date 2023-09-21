@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
@@ -10,8 +11,11 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Repositories\EmbeddedProductRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -55,7 +59,6 @@ class TravelController extends Controller
         $gridData = $this->travelQuoteService->getGridData($this->genericModel, $request);
         $quotes = $gridData->simplePaginate(10)->withQueryString();
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
-
         $isManager = auth()->user()->isManagerOrDeputy();
         $isManualAllocationAllowed = auth()->user()->isAdmin() ? true : $isManager;
 
@@ -83,10 +86,45 @@ class TravelController extends Controller
     {
         $quoteType = strtolower($this->genericModel->modelType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-
+        abort_if(! $record, 404);
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($quoteType, $record->code);
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $advisors = $this->crudService->getAdvisorsByModelType($this->genericModel->modelType);
+
+        $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
+        $payments = $paymentEntityModel->payments;
+        $paymentMethods = $this->lookupService->getPaymentMethods();
+        $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+            return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+        })->map(function ($paymentMethod) {
+            return [
+                'value' => $paymentMethod->code,
+                'label' => $paymentMethod->name,
+            ];
+        })->values();
+
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
+        $filteredInsuranceProviders = [];
+        if (! empty($insuranceProviders)) {
+
+            $filteredInsuranceProviders = $insuranceProviders->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->id,
+                    'label' => $paymentMethod->text,
+                ];
+            })->sortBy('label')->values();
+        }
+        $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
+
+        $payments->each(function ($payment) {
+            $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
+            $payment->copy_link_button = $allow && optional($payment->paymentMethod)->code == PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID;
+            $payment->edit_button = $allow && $payment->payment_status_id != PaymentStatusEnum::PAID;
+            $payment->approve_button = optional($payment->paymentMethod)->code != PaymentMethodsEnum::CreditCard && $payment->payment_status_id != PaymentStatusEnum::PAID && $payment->payment_status_id != PaymentStatusEnum::CAPTURED
+                && ! auth()->user()->hasRole(RolesEnum::PA);
+
+            $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
+        });
 
         $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
@@ -94,7 +132,7 @@ class TravelController extends Controller
 
         $ecomDetails = [
             'premium' => $record->premium,
-            'paidAt' => $record->paid_at,
+            'paidAt' => ($record->paid_at) ? Carbon::parse($record->paid_at)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '',
             'paymentStatus' => $record->payment_status_id_text,
             'planName' => $record->plan_id_text,
         ];
@@ -109,11 +147,12 @@ class TravelController extends Controller
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
-
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
+
+        $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -136,9 +175,15 @@ class TravelController extends Controller
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
             'listQuotePlans' => $this->travelQuoteService->listQuotePlans($id),
             'activities' => $activities,
+            'payments' => $payments,
+            'quoteRequest' => $paymentEntityModel,
+            'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
+            'paymentMethods' => $filteredPaymentMethods,
+            'insuranceProviders' => $filteredInsuranceProviders,
             'isAdmin' => auth()->user()->isAdmin(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
+            'embeddedProducts' => $embeddedProducts,
             'message' => session('message'),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
@@ -153,10 +198,14 @@ class TravelController extends Controller
                 'auditable' => auth()->user()->can(PermissionsEnum::Auditable),
                 'canNotApprovePayments' => auth()->user()->cannot(PermissionsEnum::ApprovePayments),
                 'canEditQuote' => auth()->user()->can(strtolower($this->genericModel->modelType).'-quotes-edit'),
+                'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
+                'isPA' => auth()->user()->hasRole(RolesEnum::PA),
+
             ],
             'enums' => [
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+                'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
         ]);
     }
@@ -197,8 +246,9 @@ class TravelController extends Controller
 
         $model = $this->genericModel;
 
-        return inertia('TravelQuote/Create', [
+        return inertia('TravelQuote/Form', [
             'model' => json_encode($model->properties),
+            'quotePlans' => null,
             'customTitles' => $customTitles,
             'fields' => $fields,
             'dropdownSource' => $dropdownSource,
@@ -222,7 +272,7 @@ class TravelController extends Controller
             return redirect()->back()->with('message', $record->message)->withInput();
         }
 
-        return redirect()->route('travel.show', data_get($record, 'quoteUID'))->with('message', 'Quote created successfully.');
+        return redirect('/quotes/travel')->with('message', 'Quote created successfully.');
     }
 
     /**
@@ -261,9 +311,12 @@ class TravelController extends Controller
         }
         $fields['email']['disabled'] = true;
         $fields['mobile_no']['disabled'] = true;
+        $quotePlans = $this->travelQuoteService->listTravelQuotePlans($record->id);
 
-        return inertia('TravelQuote/Edit', [
+        return inertia('TravelQuote/Form', [
             'quote' => $record,
+            'quotePlans' => $quotePlans,
+            'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
             'modelType' => $this->genericModel->modelType,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'dropdownSource' => $dropdownSource,

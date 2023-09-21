@@ -11,6 +11,13 @@ defineProps({
   advisors: Array,
   permissions: Object,
   typeCode: String,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
+  lostReasons: Object,
 });
 
 const { isRequired } = useRules();
@@ -75,7 +82,7 @@ const onCreateDuplicate = isValid => {
     lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
   };
   axios
-    .post('/quotes/createDuplicate', data)
+    .post(route('createDuplicate'), data)
     .then(res => {
       modals.duplicate = false;
       notification.success('Lead duplicated successfully');
@@ -102,7 +109,7 @@ const leadStatusForm = useForm({
   leadStatus: page.props.quote.quote_status_id || null,
   notes: page.props.quoteDetails.notes || null,
   trans_code: page.props.quote.transapp_code || null,
-  lostReason: page.props.quote.lost_reason || null,
+  lostReason: page.props.quoteDetails.lost_reason_id || null,
 });
 
 const onLeadStatus = () => {
@@ -117,9 +124,14 @@ const onLeadStatus = () => {
     lostReason: leadStatusForm.lostReason,
   };
   axios
-    .post(`/quotes/Business/${page.props.quote.id}/update-lead-status`, data)
+    .post(
+      route('updateLeadStatus', {
+        QuoteUId: page.props.quote.id,
+        modelType: 'Bussiness',
+      }),
+      data,
+    )
     .then(res => {
-      console.log(res);
       notification.success({
         title: 'Lead Status Updated',
         position: 'top',
@@ -141,7 +153,10 @@ const historyData = ref(null),
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=business&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'business',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -202,7 +217,7 @@ const addActivity = () => {
 
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -249,7 +264,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+    activityForm.post(route('activities.update-activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -268,14 +283,8 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/create-activity`, {
+    activityForm.post(route('activities.create-activity'), {
       preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Activity Added',
-          position: 'top',
-        });
-      },
       onFinish: () => {
         modals.activity = false;
       },
@@ -294,7 +303,7 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
+    route('activities.destroy', confirmDeleteData.activity),
     {
       isInertia: true,
       quote_uuid: page.props.quote.uuid,
@@ -327,7 +336,7 @@ const onAssignLead = () => {
     return;
   }
   router.post(
-    `/quotes/business/manualLeadAssign`,
+    route('manualLeadAssign', { quoteType: 'Business' }),
     {
       modelType: 'Business',
       entityId: page.props.quote.id,
@@ -366,7 +375,7 @@ const onAssignLead = () => {
           Duplicate Lead
         </x-button>
 
-        <Link href="/quotes/business" preserve-scroll>
+        <Link :href="route('business.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Business Quote List
           </x-button>
@@ -374,7 +383,7 @@ const onAssignLead = () => {
 
         <Link
           v-if="permissions.canEditQuote == true"
-          :href="`${quote.uuid}/edit`"
+          :href="route('business.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -385,31 +394,32 @@ const onAssignLead = () => {
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[rules.isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
+          <x-field label="LOBs">
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              :options="
+                allowedDuplicateLOB.map(lob => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[rules.isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+          </x-field>
+          <x-field label="Reason">
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+          </x-field>
 
           <x-button
             color="orange"
@@ -432,15 +442,17 @@ const onAssignLead = () => {
             <dd>{{ quote.id }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Ref-ID
-                      </label>
-                      <template #tooltip> Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.code }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">FIRST NAME</dt>
@@ -484,7 +496,7 @@ const onAssignLead = () => {
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.lost_reason }}</dd>
+            <dd>{{ quote?.lost_reason }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -503,7 +515,7 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREMIUM</dt>
+            <dt class="font-medium">PRICE</dt>
             <dd>{{ quote.premium }}</dd>
           </div>
 
@@ -538,15 +550,17 @@ const onAssignLead = () => {
           </div>
 
           <div class="grid sm:grid-cols-2">
-              <div>
-                  <x-tooltip position="bottom">
-                      <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700">
-                          Parent Ref-ID
-                      </label>
-                      <template #tooltip> Parent Reference ID </template>
-                  </x-tooltip>
-              </div>
-              <div>{{ quote.parent_duplicate_quote_id }}</div>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ quote.parent_duplicate_quote_id }}</div>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -636,7 +650,12 @@ const onAssignLead = () => {
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"
             label="LOST REASON"
-            :options="lostReasonsOptions"
+            :options="
+              lostReasons?.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
             placeholder="Lost Reason is required"
             class="w-full"
             :error="leadStatusForm.errors.lostReason"
@@ -802,6 +821,17 @@ const onAssignLead = () => {
       :contacts="customerAdditionalContacts"
     />
 
+    <!-- Payments -->
+    <PaymentTable
+      v-if="isBetaUser"
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>

@@ -645,9 +645,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td colspan="7"></td>
 								<td align="right">
-									@if(! auth()->user()->hasRole(RolesEnum::PA))
-										<button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
-									@endif
+                                    @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
+                                        <button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                        <button type="submit" class="btn btn-warning btn-sm" id="updatePremium">Update</button>@
+                                    @endif
 								</td>
 							</tr>
 							<tr>
@@ -944,17 +946,22 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							</tr>
 							<tr>
 								<td>Car Trim</td>
-								<td><select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
-										@foreach($insurerAvailableTrims as $trim)
-										<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
-											'selected="selected"' : '' }}>{{$trim->description}}</option>
-										@endforeach
-									</select>
+								<td>
+									@if(isset($insurerAvailableTrims))
+										<select class="form-control car-quote-plan-popup-trim-dropdown" id='insurerTrim' name="insurerTrim">
+											@foreach($insurerAvailableTrims as $trim)
+											<option value="{{$trim->admeId}}" {{ $trim->admeId == $insurerSelectedTrim ?
+												'selected="selected"' : '' }}>{{$trim->description}}</option>
+											@endforeach
+										</select>
+									@endif
 								</td>
 								<td valign="top"></td>
 								<td align="right">
-									@if(! auth()->user()->hasRole(RolesEnum::PA))
+									@if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
 										<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
 									@endif
 								</td>
 							</tr>
@@ -967,12 +974,14 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 						<p>
 							<strong>Features</strong>
 						<table cellpadding="3" cellspacing="3">
-							@foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
-							<tr>
-								<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
-								<td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td>
-							</tr>
-							@endforeach
+							@if(isset($listQuotePlanBenefitsFeatures))
+								@foreach ($listQuotePlanBenefitsFeatures as $key => $listQuotePlanBenefitsFeature)
+								<tr>
+									<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsFeature->text) }}</td>
+									<td>{{ ucwords($listQuotePlanBenefitsFeature->value) }}</td>
+								</tr>
+								@endforeach
+							@endif
 							<tr>
 								<td colspan="4"></td>
 							</tr>
@@ -990,26 +999,28 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanAddons as $listQuotePlanAddon)
-										@foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
-										<tr>
-											<td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
-											<td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
-											<td style="width: 430px;height: 30px;">
-												<input type="text" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" style="width: 100px;" onkeypress="return isNumberKey(event,this)" class="form-control addon_price">
-												<input type="hidden" id="addon_vat" name="addon_vat" value="{{ $carAddonOption->vat }}" class="addon_vat">
-												<input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
-												<input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
-											</td>
-											<td style="width: 430px;height: 30px;" id="plan_addons">
-												<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
-													<input type="checkbox" class="success addon_is_selected" id="addon_is_selected" name="addon_is_selected" @if(isset($carAddonOption->isSelected) &&
-													$carAddonOption->isSelected==true ) checked="checked" @endif>
-													<span class="slider round"></span>
-											</td>
-										</tr>
-										@endforeach
-										@endforeach
+										@if(isset($listQuotePlanAddons))
+											@foreach ($listQuotePlanAddons as $listQuotePlanAddon)
+												@foreach ($listQuotePlanAddon->carAddonOption as $carAddonOption)
+												<tr>
+													<td style="width: 430px;height: 30px;">{{ ucwords($listQuotePlanAddon->text) }}</td>
+													<td style="width: 800px;height: 30px;">{{ ucwords($carAddonOption->value) }}</td>
+													<td style="width: 430px;height: 30px;">
+														<input type="text" id="addon_price" name="addon_price" value="{{ $carAddonOption->price }}" style="width: 100px;" onkeypress="return isNumberKey(event,this)" class="form-control addon_price">
+														<input type="hidden" id="addon_vat" name="addon_vat" value="{{ $carAddonOption->vat }}" class="addon_vat">
+														<input type="hidden" id="addon_id" name="addon_id" value="{{ $listQuotePlanAddon->id }}" class="addon_id">
+														<input type="hidden" id="addon_option_id" name="addon_option_id" value="{{ $carAddonOption->id }}" class="addon_option_id">
+													</td>
+													<td style="width: 430px;height: 30px;" id="plan_addons">
+														<span class="status-text"></span><label class="switch" style="float: left;margin-top: 5px;">
+															<input type="checkbox" class="success addon_is_selected" id="addon_is_selected" name="addon_is_selected" @if(isset($carAddonOption->isSelected) &&
+															$carAddonOption->isSelected==true ) checked="checked" @endif>
+															<span class="slider round"></span>
+													</td>
+												</tr>
+												@endforeach
+											@endforeach
+										@endif
 										<tr>
 											<td colspan="3"> </td>
 											<td align="center"> </td>
@@ -1020,9 +1031,11 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 										</tr>
 										<tr>
 											<td colspan="4" align="right">
-												@if(! auth()->user()->hasRole(RolesEnum::PA))
-													<button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
-												@endif
+                                                    @if($access['carManagerCanEdit'] || $access['carAdvisorCanEdit'])
+                                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                                    @elseif(!auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager,RolesEnum::PA]))
+                                                        <button type="submit" class="btn btn-warning btn-sm update-car-quote-plan-button" {{ $carQuoteEditDisable }}>Update</button>
+                                                    @endif
 											</td>
 										</tr>
 										<tr>
@@ -1043,14 +1056,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsInclusions as $key =>
-										$listQuotePlanBenefitsInclusion)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text)
-												}}</td>
-											<td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsInclusions))
+											@foreach ($listQuotePlanBenefitsInclusions as $key => $listQuotePlanBenefitsInclusion)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsInclusion->text)
+													}}</td>
+												<td>{{ ucwords($listQuotePlanBenefitsInclusion->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1061,14 +1075,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsExclusions as $key =>
-										$listQuotePlanBenefitsExclusion)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text)
-												}}</td>
-											<td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsExclusions))
+											@foreach ($listQuotePlanBenefitsExclusions as $key => $listQuotePlanBenefitsExclusion)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text)
+													}}</td>
+												<td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1079,13 +1094,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsRsas as $key => $listQuotePlanBenefitsRsa)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsRsa->text) }}
-											</td>
-											<td>{{ ucwords($listQuotePlanBenefitsRsa->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsRsas))
+											@foreach ($listQuotePlanBenefitsRsas as $key => $listQuotePlanBenefitsRsa)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsRsa->text) }}
+												</td>
+												<td>{{ ucwords($listQuotePlanBenefitsRsa->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1093,15 +1110,17 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					</div>
 					<div class="tab-pane fade" id="policy-detail" role="tabpanel" aria-labelledby="policy-detail-tab">
 						<table cellpadding="3" cellspacing="3">
-							@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
-							<tr>
-								<td>
-									<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
-										📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
-									</a>
-								</td>
-							</tr>
-							@endforeach
+							@if(isset($listQuotePlanBenefitsPolicyDetails))
+								@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
+								<tr>
+									<td>
+										<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
+											📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
+										</a>
+									</td>
+								</tr>
+								@endforeach
+							@endif
 						</table>
 					</div>
 				</div>
