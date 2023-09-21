@@ -129,10 +129,10 @@ function onSubmit(isValid) {
 
   quoteForm.clearErrors();
 
-  const method = editMode.value ? 'put' : 'post';
-  const url = editMode.value
-    ? route('travel.update', props.quote.uuid)
-    : route('travel.store');
+  const method =  'post';
+  const url =  route('travel.store'); //editMode.value
+   // ? route('travel.update', props.quote.uuid)
+   // : route('travel.store');
 
   const options = {
     onError: errors => {
