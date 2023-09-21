@@ -544,18 +544,29 @@ class CarAllocationService extends AllocationService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
 
         $insurerPlans = [];
+        $planAddons = [];
         foreach ($plans as $plan) {
+            info('plan with name : '. $plan->plan_name. ' has addons : '. json_encode($plan->addons));
             $insurerPlans[] = [
                 'carValue' => $carQuote->car_value,
                 'excessAed' => $plan->excess,
                 'repairType' => $plan->repair_type,
                 'discountPremium' => $plan->discount_premium,
                 'planName' => $plan->plan_name,
+                'providerCode' => strtolower($plan->provider_code),
             ];
-        }
+            $planAddonsArray =  json_decode($plan->addons);
 
+            foreach ($planAddonsArray as $addon) {
+                $planAddons[] = [
+                    'value' => $addon->text,
+                ];
+            }
+        }
+        info('plan with options final : '. json_encode($planAddons));
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
             'mobilePhone' => $advisor->mobile_no,
             'landLine' => $advisor->landline_no,
@@ -566,6 +577,7 @@ class CarAllocationService extends AllocationService
             'currentInsurer' => $carQuote->currently_insured_with,
             'carQuoteId' => $carQuote->code,
             'plans' => $insurerPlans,
+            'benefits' => $planAddons,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
@@ -577,6 +589,7 @@ class CarAllocationService extends AllocationService
 
         $vehicleName = '';
         if ($lead->car_make_id != null) {
+
             $carMake = CarMake::find($lead->car_make_id);
 
             if ($carMake) {
@@ -600,5 +613,7 @@ class CarAllocationService extends AllocationService
                 $vehicleName .= ' '.$carModelDetail->text;
             }
         }
+
+        return $vehicleName;
     }
 }
