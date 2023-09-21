@@ -38,6 +38,7 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
+    paymentLink:String
 });
 
 const page = usePage();
@@ -1982,11 +1983,11 @@ onMounted(() => {
         </div>
       </x-modal>
     </div>
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :paymentLink="paymentLink"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

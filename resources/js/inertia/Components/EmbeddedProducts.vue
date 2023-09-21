@@ -12,6 +12,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  paymentLink: {
+    type: String,
+    default: '',
+  },
 });
 const modals = reactive({
     cancelPayment: false,
@@ -19,20 +23,25 @@ const modals = reactive({
 
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
-const cancelPaymentForm = () => {
+const cancelPaymentForm = (item) => {
     paymentForm.reset();
-   // activityActionEdit.value = false;
+    paymentForm.embedded_id = item.id;
+    paymentForm.quote_id = usePage().props.quote.id;
     modals.cancelPayment = true;
 };
 const paymentForm = useForm({
     reason: null,
     amount: null,
-    modelType: 'Health'
+    modelType: 'Health',
+    embedded_id:null,
+    quote_id:null,
+
 });
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const selectedItems = ref([]);
+const selectedEp = ref([]);
 
 const epTable = reactive({
   isLoading: false,
@@ -72,12 +81,25 @@ const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
 };
+const checkTransactionExist = item => {
+  for (let price of item.prices) {
+    for (let transaction of price.transactions) {
+      if(transaction.payment_status_id == 6){
+      return false;
+      }
+    }
+  }
+  return true;
+};
 
 const { copy, copied } = useClipboard();
 const notification = useNotifications('toast');
 
+
 const onCopyText = () => {
-  copy(props.link);
+  let ep_code = selectedEp.value[0];
+  let paymentLink = props.paymentLink + '?code='+ep_code+'&quoteTypeId=20';
+  copy(paymentLink);
   if (copied)
     notification.success({
       title: 'Link copied to clipboard',
@@ -90,34 +112,45 @@ const paymentStatus = id => {
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };
+
+const toggleProduct = (ep, event) => {
+  let id = ep.id;
+  if (event.target.checked) {
+    selectedEp.value.push(ep.transactions[0]?.code);
+  } else {
+    var index = selectedEp.value.indexOf(ep.embedded_product_id);
+    if (index !== -1) {
+      selectedEp.value.splice(ep.transactions[0].code, 1);
+    }
+  }
+  let data = {'quote_uuid': usePage().props.quote.uuid, 'id': id};
+  let requestUrl = '/quotes/' + usePage().props.modelType + '/toggle-product';
+  axios
+      .post(requestUrl, data)
+      .then(res => {
+        notification.success('Updated');
+      })
+      .catch(err => {
+        notification.error('Something went wrong');
+      });
+};
 const onActivitySubmit = isValid => {
     if (!isValid) return;
-    // route('createDuplicate')
-    axios
-        .post('/quotes/cancel-payment', paymentForm)
-        .then(res => {
-            notification.success('Lead duplicated successfully');
-        })
-        .catch(err => {
-            notification.error('Something went wrong');
-        });
-       /* paymentForm.post(`/quotes/cancel-payment`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                paymentForm.reset();
-                notification.success({
-                    title: 'Activity Added',
-                    position: 'top',
-                });
-            },
-            onFinish: () => {
-                modals.activity = false;
-            },
-            onError: errors => {
-                console.log(errors);
-            },
+    const method =  'post';
+    const url = '/quotes/cancel-payment';
+  axios
+      .post(url, paymentForm)
+      .then(res => {
+        notification.success('Processed');
+      })
+      .catch(err => {
+        if(err.response.data){
+          notification.error(err.response.data[0]);
+        }else{
+          notification.error('Something went wrong');
+        }
 
-        }); */
+      });
 
 };
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -139,7 +172,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
       </h3>
       <div class="flex flex-wrap gap-3">
         <x-button
-          v-if="selectedItems.length > 0"
+          v-if="selectedEp.length > 0"
           size="sm"
           @click.prevent="onCopyText()"
         >
@@ -147,9 +180,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         </x-button>
       </div>
     </div>
-
     <DataTable
-      v-model:items-selected="selectedItems"
+
       table-class-name="tablefixed"
       :headers="epTable.columns"
       :items="props.data || []"
@@ -171,12 +203,25 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             <x-tag color="primary">
               {{ (parseFloat(item.price) + (item.price * 5) / 100).toFixed(2) }}
             </x-tag>
-            <template #tooltip> {{ item.variant }} </template>
+            <template #tooltip>{{ item.variant }} </template>
           </x-tooltip>
         </div>
 
         <div v-else>
           <x-tag color="primary">
+              <x-checkbox
+                  v-if="prices[0].transactions[0]?.is_selected == '1'"
+                  @change="toggleProduct(prices[0],$event)"
+                  :model-value="true"
+                  color="primary"
+
+              />
+              <x-checkbox
+                  v-else
+                  @change="toggleProduct(prices[0].id,$event)"
+                  color="primary"
+
+              />
             {{
               (
                 parseFloat(prices[0]?.price) +
@@ -212,10 +257,11 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             target="_blank"
             :disabled="ppDoc(item.company_documents) === ''"
           >
-            Download Product Wordingss
+            Download Product Wordings
           </x-button>
-            <x-button size="xs" color="#ff5e00" @click.prevent="cancelPaymentForm">
-                Cancel Paymentss
+          {{item}}
+            <x-button size="xs" color="#ff5e00" :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
+                Cancel Payments
             </x-button>
         </div>
       </template>
@@ -230,13 +276,14 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                   <x-input
                       v-model="paymentForm.amount"
                       label="Amount"
-                      :rules="[isRequired]"
+                      :rules="[isRequired,isNumber]"
                       class="w-full"
                   />
 
                   <x-textarea
                       v-model="paymentForm.reason"
                       label="Reason"
+                      maxlength="250"
                       :adjust-to-text="false"
                       class="w-full"
                   />

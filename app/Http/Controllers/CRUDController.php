@@ -415,6 +415,7 @@ class CRUDController extends Controller
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
+        $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
         $paymentMethods = $this->lookupService->getPaymentMethods();
         $mappedQuoteTypeId = ($quoteTypeId == QuoteTypeId::Business) ? QuoteTypeId::Corpline : $quoteTypeId;
@@ -530,7 +531,7 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
             return view('shared.show', compact([
-                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
+                'paymentLink','record', 'model', 'customTitles', 'listQuotePlans', 'customTableList',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
@@ -609,7 +610,6 @@ class CRUDController extends Controller
                     ];
                 })->sortBy('label')->values();
             }
-
             return inertia('HomeQuote/Show', [
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
@@ -716,9 +716,11 @@ class CRUDController extends Controller
 
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
+            //dd($embeddedProducts);
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
             return inertia('HealthQuote/Show', [
+                'paymentLink'=>$paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
@@ -765,7 +767,7 @@ class CRUDController extends Controller
             ]);
         } else {
             return view('shared.show', compact([
-                'record', 'model', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'paymentEntityModel', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
+                'paymentLink','record', 'model', 'payments', 'mainPayment', 'paymentMethods', 'insuranceProviders', 'paymentEntityModel', 'customTitles', 'customTableList', 'advisors', 'leadStatuses', 'lostReasons',
                 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'activities', 'isRenewalUser',
                 'isNewBusinessUser', 'autoAllocationDisabled', 'isQuoteDocumentEnabled', 'quoteDocuments',
                 'displaySendPolicyButton', 'customerAdditionalContacts', 'quoteType', 'quoteTypeId', 'tiers', 'access',
@@ -1616,10 +1618,13 @@ class CRUDController extends Controller
 
     public function cancelPayment(Request $request)
     {
-         $this->healthQuoteService->cancelPayment($request);
-        return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '], 403);
+        return $this->healthQuoteService->cancelPayment($request);
+    }
 
-        dd($request);
+    public function toggleEmbeddedProduct(Request $request)
+    {
+        $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
+        return $this->healthQuoteService->toggleSelection($request,$quoteTypeId);
     }
 
     /**
