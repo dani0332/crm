@@ -532,7 +532,7 @@ class CarAllocationService extends AllocationService
             'discountPremium' => $plan->discount_premium ? $plan->discount_premium : '',
             'carQuoteId' => $carQuote->code,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
-            'planName' => $plan->plan_name
+            'planName' => $plan->plan_name,
         ];
 
         return $emailData;
@@ -550,7 +550,7 @@ class CarAllocationService extends AllocationService
                 'excessAed' => $plan->excess,
                 'repairType' => $plan->repair_type,
                 'discountPremium' => $plan->discount_premium,
-                'planName' => $plan->plan_name
+                'planName' => $plan->plan_name,
             ];
         }
 
