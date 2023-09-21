@@ -15,11 +15,12 @@ class LegacyPolicyController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-
-        $policies = InslyDetailRepository::getData();
-
+    public function index(Request $request)
+    {       
+        $policies = [];
+        if(!empty($request->all())){
+            $policies = InslyDetailRepository::getData();            
+        }
         return inertia('LegacyPolicy/Index', ['policies' => $policies]);
     }
 
@@ -29,7 +30,7 @@ class LegacyPolicyController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show($policyNo)
+    public function show($mongoId)
     {
 
         $expiryDate = now()->addDay(); //The link will be expire after 1
@@ -89,7 +90,7 @@ class LegacyPolicyController extends Controller
         // $url = $s3->getObjectUrl(env('AWS_BUCKET'), 'afia/2020_09/21/14094033/14094035.pdf');
 
         // dd($url);
-        $policy = InslyDetailRepository::getBy('policy_no', $policyNo);
+        $policy = InslyDetailRepository::getBy('_id', $mongoId);
 
         // dd($policy->toArray());
         return inertia('LegacyPolicy/Show', ['policy' => $policy]);

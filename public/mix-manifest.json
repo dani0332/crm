@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
     "/js/inertia.js": "/js/inertia.js?id=a51450aa3f8cb26c3964596ee3361192",
+=======
+    "/js/inertia.js": "/js/inertia.js?id=f3fe61fde14bdd8a913f951815feb340",
+>>>>>>> develop
     "/js/manifest.js": "/js/manifest.js?id=de02459fa8b72396fa2204fa971259f9",
     "/css/app.css": "/css/app.css?id=91f292e73e1fa319de8f70dbba7222c7",
     "/css/livewire.css": "/css/livewire.css?id=4ba0933a2b50c1ffb1e99b63697147c8",
