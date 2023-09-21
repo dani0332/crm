@@ -265,20 +265,26 @@ class CarAllocationService extends AllocationService
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
     {
-        info('tier eligible users are : '.json_encode(collect($eligibleUsers)->pluck('user_id')->toArray()));
+        $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
+
+        info('tier eligible users are : '.json_encode($availableUserIds));
+
         if (count($rules) > 0) {
+
             $ruleUserIds = $this->getUserIdsFromRuleRecords($rules);
+
             info('rule userIds are : '.json_encode($ruleUserIds));
-            $finalEligibleUserIds = array_intersect(collect($eligibleUsers)->pluck('user_id')->toArray(), $ruleUserIds);
+
+            $finalEligibleUserIds = array_intersect($availableUserIds, $ruleUserIds);
 
             info('Rule found and users against rule are: '.json_encode($finalEligibleUserIds));
         } else {
             $ruleUsers = $this->getRuleUsers();
+
             info('No rule found against this lead: '.$lead->uuid.' so filtering rule users: '.json_encode($ruleUsers));
-            $finalEligibleUserIds = [];
-            info('eligibleUsers are : '.json_encode(collect($eligibleUsers)->pluck('user_id')));
-            $finalEligibleUserIds = array_diff(collect($eligibleUsers)->toArray(), $ruleUsers);
-            $finalEligibleUserIds = collect($finalEligibleUserIds)->pluck('user_id')->unique()->toArray();
+
+            $finalEligibleUserIds = array_diff($availableUserIds, $ruleUsers);
+
             info('Final login and available users after rule exclusion are: '.json_encode($finalEligibleUserIds));
         }
 
