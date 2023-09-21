@@ -1,4 +1,6 @@
 <script setup>
+import { watch } from 'vue';
+
 const props = defineProps({
   plan: Object,
   genders: Object,
@@ -137,7 +139,6 @@ const onCoPaySelect = copayId => {
     });
 
     emit('copayUpdate', selectedCopay);
-    console.log(selectedCopay);
 };
 
 const onTogglePlans = () => {
@@ -190,6 +191,15 @@ const getDefaultVaues = () => {
     }
 };
 
+const loadingPriceVal = ref('');
+
+const handleLoadingPrice = (event, item) => {
+    // console.log("hayya hayya");
+    console.log(event.target.value);
+    console.log(item);
+    // console.log(loadingPriceVal);
+};
+
 
 onMounted( () => {
     getDefaultVaues();
@@ -226,13 +236,14 @@ onMounted( () => {
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="md:col-span-2 text-right select-none border-b pb-2">
-                <!-- <x-toggle
+                <x-toggle
+                class="m-2"
                 v-model="isManual"
                 color="success"
                 label="Manual"
                 @change="onToggleManual"
                 :loading="toggleLoader"
-              /> -->
+              />
                 <x-toggle
                 v-model="hidePlan"
                 color="error"
@@ -388,7 +399,9 @@ onMounted( () => {
                 { text: 'Relationship', value: 'memberCategoryText' },
                 { text: 'DOB', value: 'dob' },
                 { text: 'Gender', value: 'gender' },
-                { text: 'Premium', value: 'premium' },
+                { text: 'Base Price', value: 'premium' },
+                { text: 'Loading Price', value: 'loadingPrice' },
+                { text: 'Final Price', value: 'finalPrice' },
               ]"
               :items="props.plan.memberPremiumBreakdown || []"
             >
@@ -403,7 +416,7 @@ onMounted( () => {
                     <x-input
                     v-if="data.healthPlanCoPaymentId == selectedCopay.id"
                     :value="data.premium"
-                    :disabled="data.premium != 0 && !isManual"
+                    :disabled="data.premium != 0"
                     size="sm"
                     @update:modelValue="onMemberPremiumUpdate(item, $event)"
                     />
@@ -411,7 +424,7 @@ onMounted( () => {
                     v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId"
                     :value="data.premium"
-                    :disabled="data.premium != 0 && !isManual"
+                    :disabled="data.premium != 0"
                     size="sm"
                     @update:modelValue="onMemberPremiumUpdate(item, $event)"
                     />
@@ -427,6 +440,21 @@ onMounted( () => {
                     Update
                     </x-button>
               </section>
+              </template>
+
+              <template #item-loadingPrice="{ item }">
+                <x-input
+                    :disabled="!isManual"
+                    size="sm"
+                    @keyup="handleLoadingPrice($event, item)"
+                />
+              </template>
+
+              <template #item-finalPrice="{ item }">
+                <x-input
+                    :disabled="true"
+                    size="sm"
+                />
               </template>
 
               <!-- <template #item-premium="{ item }">
