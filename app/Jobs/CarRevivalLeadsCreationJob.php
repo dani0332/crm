@@ -37,7 +37,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public function __construct($lead)
     {
         $this->lead = $lead;
-
     }
 
     /**
@@ -74,19 +73,19 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'trim' => $this->lead->trim,
             'premium' => $this->lead->premium,
             'carMakeId' => $this->lead->car_make_id,
-            'carModelId' => $this->lead->car_model_id, 
+            'carModelId' => $this->lead->car_model_id,
             'currentlyInsuredWith' => $this->lead->currently_insured_with,
             'source' => LeadSourceEnum::REVIVAL,
             'isEmailSkip' => true,
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
-        info('CarRevivalLeadsCreationJob - Parent Lead Id  '.$this->lead->id);
+        info('CarRevivalLeadsCreationJob - Parent Lead Id  ' . $this->lead->id);
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-            info('CarRevivalLeadsCreationJob - Lead Created -'.$capiResponse->quoteUID.' - CAPI Response:');
+        if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
+            info('CarRevivalLeadsCreationJob - Lead Created -' . $capiResponse->quoteUID . ' - CAPI Response:');
             // $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
             $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
             // Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
@@ -96,24 +95,24 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                 'quoteId' => $carQuote->id,
                 'templateId' => 296,
                 'quoteCdbId' => $carQuote->code,
-                'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+                'customerName' => $carQuote->first_name . ' ' . $carQuote->last_name,
                 'customerEmail' => $carQuote->email,
-                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
             ];
             $this->sendEmailCustomerService->sendDttEmail($emailData, 'send-digital-transformation-email');
-            info('CarRevivalLeadsCreationJob - UUID - '.$emailData->customerEmail.' - Email Sent');
-            DttRevival::insert([
+            info('CarRevivalLeadsCreationJob - UUID - ' . $emailData->customerEmail . ' - Email Sent');
+            DttRevival::create([
                 'quote_type_id' => QuoteTypes::CAR->id(),
                 'quote_id' => $carQuote->id,
                 'uuid' => $capiResponse->quoteUID,
                 'email_sent' => true,
             ]);
-            info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
+            info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -' . $capiResponse->quoteUID);
             CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-            info('CarRevivalLeadsCreationJob- is_revived updated -'.$this->lead->id);
+            info('CarRevivalLeadsCreationJob- is_revived updated -' . $this->lead->id);
         } else {
 
-            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));
+            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response' . json_encode($capiResponse));
         }
     }
 
@@ -132,6 +131,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
     public function failed(Throwable $exception)
     {
-        info('CarRevivalLeadsCreationJob -: '.$this->lead->id.' Error: '.$exception->getMessage());
+        info('CarRevivalLeadsCreationJob -: ' . $this->lead->id . ' Error: ' . $exception->getMessage());
     }
 }
