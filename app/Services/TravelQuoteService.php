@@ -24,8 +24,8 @@ class TravelQuoteService extends BaseService
 {
     protected $query;
 
-    use RolePermissionConditions;
     use AddPremiumAllLobs;
+    use RolePermissionConditions;
 
     public function __construct(LeadAllocationService $leadAllocationService)
     {
@@ -220,10 +220,10 @@ class TravelQuoteService extends BaseService
             $this->query->where(function ($q) use ($request) {
                 $q->where('tqr.coverage_code', $request->coverage_code)
                     ->orWhere(function ($qInner) use ($request) {
-                        if (TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP == $request->coverage_code) {
+                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_SINGLE_TRIP) {
                             $qInner->where('days_cover_for', '<', 93);
                         }
-                        if (TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP == $request->coverage_code || TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP == $request->coverage_code) {
+                        if ($request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_ANNUAL_TRIP || $request->coverage_code == TravelQuoteEnum::COVERAGE_CODE_MULTI_TRIP) {
                             $qInner->where('days_cover_for', '>', 92);
                         }
 
