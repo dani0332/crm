@@ -6,7 +6,6 @@ use App\Enums\RolesEnum;
 use App\Enums\TeamTypeEnum;
 use App\Models\Team;
 use App\Models\User;
-use App\Models\UserTeams;
 use Illuminate\Support\Facades\DB;
 
 trait TeamHierarchyTrait
@@ -205,6 +204,7 @@ trait TeamHierarchyTrait
     public function userHaveProduct($userId, $productId)
     {
         $user = User::with('products')->where('id', $userId)->first();
+
         return $user && $user->products->contains('product_id', $productId);
     }
 }
