@@ -26,6 +26,7 @@ class CarQuote extends BaseModel
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
+        'quote_batch_id' => FilterTypes::IN
     ];
     protected $guarded = [];
 

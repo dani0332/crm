@@ -7,7 +7,9 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
+use App\Http\Requests\ScheduleFollowupRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
+use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
@@ -56,10 +58,12 @@ class CarQuoteController extends Controller
         }
 
         $advisors = CarQuoteRepository::getAdvisors();
+        $quoteBatches = QuoteBatches::get();
 
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
             'advisors' => $advisors,
+            'quoteBatches' => $quoteBatches
         ]);
     }
 

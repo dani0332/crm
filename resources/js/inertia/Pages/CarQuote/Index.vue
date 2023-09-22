@@ -6,6 +6,7 @@ const notification = useToast();
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
+  quoteBatches: Object,
   advisors: Array,
 });
 
@@ -35,6 +36,7 @@ let availableFilters = {
   email: '',
   previous_quote_policy_number: '',
   renewal_batch: '',
+  quote_batch_id: '',
   page: 1,
 };
 
@@ -195,11 +197,30 @@ const manualAssignmentError = () => {
           class="w-full"
           placeholder="Search by Renewal Batch"
         />
+
+        <x-field label="Quote Batch">
+          <ComboBox
+            v-model="filters.quote_batch_id"
+            placeholder="Search by Quote Batch"
+            :options="
+              quoteBatches.map(quoteBatch => ({
+                value: quoteBatch.id,
+                label: quoteBatch.name,
+              }))
+            "
+          />
+        </x-field>
       </div>
-      <div class="flex justify-end gap-3 mb-4">
+      <div class="flex justify-end gap-3 mb-5">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
         <x-button size="sm" color="primary" @click.prevent="onReset">
           Reset
+        </x-button>
+      </div>
+
+      <div class="flex justify-end gap-3 mb-4 mt-4">
+        <x-button size="sm" color="#ff5e00" type="button" @click.prevent=""
+          >Send Followup Emails
         </x-button>
       </div>
     </x-form>
