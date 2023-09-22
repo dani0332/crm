@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 class TravelQuoteService extends BaseService
 {
     protected $query;
+    protected $leadAllocationService;
 
     use AddPremiumAllLobs;
     use RolePermissionConditions;

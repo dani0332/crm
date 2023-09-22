@@ -12,7 +12,9 @@ class QuoteDocument extends Model
 
     protected $table = 'quote_documents';
     protected $guarded = [];
-    protected $dates = ['deleted_at'];
+    protected $casts = [
+        'deleted_at' => 'datetime',
+    ];
     protected $fillable = ['doc_name', 'doc_url', 'doc_mime_type', 'document_type_code', 'document_type_text', 'doc_uuid', 'created_by_id', 'original_name', 'member_detail_id'];
     protected $hidden = [''];
 
