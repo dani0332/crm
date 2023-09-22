@@ -442,16 +442,18 @@ class CarAllocationService extends AllocationService
     public function fetchLeadsForReAssignment($advisorId)
     {
         $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('leads will be picked up in reassignment from : '.$from);
+        info('leads will be picked up in reassignment from : '.$from. ' until : '. now()->toDateTimeString());
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('quote_status_id', QuoteStatusEnum::NewLead);
         if ($advisorId != 0) {
+            info('inside reassignment single run and advisor selected is : '. $advisorId);
             $leads->where('advisor_id', $advisorId);
         } else {
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
+                info('inside reassignment general run and advisors selected are : '. json_encode($advisorIds));
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
@@ -469,7 +471,7 @@ class CarAllocationService extends AllocationService
                 $query->whereRaw('allocation_count < max_capacity')
                     ->orWhere('max_capacity', -1);
             })
-            ->orderByDesc('last_allocated');
+            ->orderBy('last_allocated');
 
         return $query->get();
     }
@@ -534,6 +536,7 @@ class CarAllocationService extends AllocationService
             'carQuoteId' => $carQuote->code,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
             'planName' => $plan->plan_name,
+            'benefits' => $this->getPlanBenefits($plan),
         ];
 
         return $emailData;
@@ -545,7 +548,6 @@ class CarAllocationService extends AllocationService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
 
         $insurerPlans = [];
-        $planAddons = [];
         foreach ($plans as $plan) {
             $insurerPlans[] = [
                 'carValue' => $carQuote->car_value,
@@ -554,14 +556,8 @@ class CarAllocationService extends AllocationService
                 'discountPremium' => $plan->discount_premium,
                 'planName' => $plan->plan_name,
                 'providerCode' => strtolower($plan->provider_code),
+                'benefits' => $this->getPlanBenefits($plan),
             ];
-            $planAddonsArray = json_decode($plan->addons);
-
-            foreach ($planAddonsArray as $addon) {
-                $planAddons[] = [
-                    'value' => $addon->text,
-                ];
-            }
         }
 
         $emailData = (object) [
@@ -577,11 +573,23 @@ class CarAllocationService extends AllocationService
             'currentInsurer' => $carQuote->currently_insured_with,
             'carQuoteId' => $carQuote->code,
             'plans' => $insurerPlans,
-            'benefits' => $planAddons,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
         return $emailData;
+    }
+
+    public function getPlanBenefits($plan)
+    {
+        $planAddonsArray = json_decode($plan->addons);
+        $planAddons = [];
+        foreach ($planAddonsArray as $addon) {
+            $planAddons[] = [
+                'value' => $addon->text,
+            ];
+        }
+
+        return $planAddons;
     }
 
     public function getVehicleName($lead)
