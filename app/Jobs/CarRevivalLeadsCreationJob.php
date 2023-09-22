@@ -15,6 +15,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use PDO;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
@@ -91,25 +92,36 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             // Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
             // dispatch(new SendOCBEmailJob($capiResponse->quoteUID, 1));
 
+            $customerName = $carQuote->first_name . ' ' . $carQuote->last_name;
             $emailData = (object) [
                 'quoteId' => $carQuote->id,
                 'templateId' => 296,
-                'quoteCdbId' => $carQuote->code,
-                'customerName' => $carQuote->first_name . ' ' . $carQuote->last_name,
+                'customerName' => $customerName,
                 'customerEmail' => $carQuote->email,
                 'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
+                'subject' => $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code
             ];
-            $this->sendEmailCustomerService->sendDttEmail($emailData, 'send-digital-transformation-email');
-            info('CarRevivalLeadsCreationJob - UUID - ' . $emailData->customerEmail . ' - Email Sent');
-            DttRevival::create([
-                'quote_type_id' => QuoteTypes::CAR->id(),
-                'quote_id' => $carQuote->id,
-                'uuid' => $capiResponse->quoteUID,
-                'email_sent' => true,
-            ]);
-            info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -' . $capiResponse->quoteUID);
-            CarQuote::find($this->lead->id)->update(['is_revived' => true]);
-            info('CarRevivalLeadsCreationJob- is_revived updated -' . $this->lead->id);
+            $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'send-digital-transformation-email');
+
+            if ($response == 201) {
+
+                info('CarRevivalLeadsCreationJob - UUID - ' . $emailData->customerEmail . ' - Email Sent');
+
+                DttRevival::create([
+                    'quote_type_id' => QuoteTypes::CAR->id(),
+                    'quote_id' => $carQuote->id,
+                    'uuid' => $capiResponse->quoteUID,
+                    'email_sent' => true,
+                ]);
+
+                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -' . $capiResponse->quoteUID);
+
+                CarQuote::find($this->lead->id)->update(['is_revived' => true]);
+
+                info('CarRevivalLeadsCreationJob- is_revived updated -' . $this->lead->id);
+            } else {
+                info('CarRevivalLeadsCreationJob- email is not sent -' . $customerName);
+            }
         } else {
 
             info('CarRevivalLeadsCreationJob - Lead Not generated - capi response' . json_encode($capiResponse));

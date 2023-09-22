@@ -30,7 +30,8 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('Dtt')->timezone('Asia/Dubai')->dailyAt('10:00')->onOneServer()->withoutOverlapping(1);
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1);
 
         //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
         $schedule->job(new UnconSubmissionReminder)
