@@ -34,6 +34,7 @@ class FormController extends ApiController
             $Model = '\\App\\Models\\'.$parentFormModel;
             $modelInstance = new $Model;
             $modelInstance->APIController = $this;
+
             // $updatePermission = $modelInstance->access["update"];
             // $collection = collect($updatePermission);
             // if(!$collection->contains($role))

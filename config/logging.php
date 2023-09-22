@@ -45,7 +45,7 @@ return [
             'channels' => ['single', 'papertrail'],
             'ignore_exceptions' => false,
         ],
-        
+
         'deprecations' => [
             'driver' => 'single',
             'path' => storage_path('logs/php-deprecation-warnings.log'),

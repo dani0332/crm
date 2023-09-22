@@ -22,9 +22,9 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 
-class UploadAndUpdateImport implements ToModel, WithBatchInserts, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
+class UploadAndUpdateImport implements SkipsOnFailure, ToModel, WithBatchInserts, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, SkipsFailures, RegistersEventListeners, RenewalsImportTrait;
+    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
     private $validCount = 0;
     private $failedCount = 0;
