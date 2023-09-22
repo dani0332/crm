@@ -169,8 +169,7 @@ class CarAllocationService extends AllocationService
     {
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
-                $query->where('last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
-                    ->where('status', $status);
+                $query->where('status', $status);
             })
             ->where(function ($query) {
                 $query->whereRaw('allocation_count < max_capacity')

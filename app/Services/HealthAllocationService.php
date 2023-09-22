@@ -25,7 +25,7 @@ class HealthAllocationService extends AllocationService
     public function fetchLead($quoteId)
     {
         return HealthQuote::where('uuid', $quoteId)
-            ->where('quote_status_id', QuoteStatusEnum::Qualified)
+            ->where('quote_status_id', QuoteStatusEnum::Quoted)
             ->whereNotNull('health_quote_request.price_starting_from')
             ->where('health_quote_request.is_error_email_sent', false)
             ->whereNull('health_quote_request.advisor_id')
@@ -98,7 +98,6 @@ class HealthAllocationService extends AllocationService
 
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
             ->join('teams as t', 't.id', '=', 'users.sub_team_id')
-            ->where('users.last_login', '>', DB::raw('DATE_ADD(CURDATE(), INTERVAL 1 SECOND)'))
             ->where('users.status', $status)
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')
