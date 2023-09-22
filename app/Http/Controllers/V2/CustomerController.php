@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Http\Requests\CustomerRequest;
@@ -19,9 +20,12 @@ class CustomerController extends Controller
     public function index()
     {
         $customers = CustomerRepository::getData();
+        $quoteTypes = QuoteTypeId::getOptions();
 
         return inertia('Customer/Index', [
             'customers' => $customers,
+            'userId' => auth()->id(),
+            'quoteTypes' => $quoteTypes
         ]);
     }
 

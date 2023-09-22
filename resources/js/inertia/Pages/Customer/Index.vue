@@ -1,7 +1,9 @@
 <script setup>
 
-defineProps({
-    customers : Object
+const props = defineProps({
+    customers : Object,
+    userId: Number,
+    quoteTypes: Object
 });
 
 let availableFilters = {
@@ -16,17 +18,22 @@ const loader = reactive({
     export: false,
 });
 
+const getQuoteType = quoteTypeKey => {
+    return props.quoteTypes[quoteTypeKey];
+};
+
 const tableHeader = [
     { text: 'CUSTOMER ID', value: 'uuid' },
+    { text: 'REF-ID', value: 'code'},
     { text: 'NAME', value: 'first_name' },
     { text: 'INSURED NAME', value: 'insured_first_name' },
     { text: 'CREATED AT', value: 'created_at' },
     { text: 'UPDATED AT', value: 'updated_at' },
-    { text: 'POLICY NUMBER', value: 'mobile_no' },
-    { text: 'POLICY START DATE', value: 'gender' },
-    { text: 'POLICY END DATE', value: 'has_alfred_access' },
-    { text: 'TYPE OF POLICY', value: 'dob' },
-    { text: 'ADVISOR', value: 'dob' },
+    { text: 'POLICY NUMBER', value: 'policy_number' },
+    { text: 'POLICY START DATE', value: 'policy_start_date' },
+    { text: 'POLICY END DATE', value: 'renewal_expiry_date' },
+    { text: 'TYPE OF POLICY', value: 'quote_type_id' },
+    { text: 'ADVISOR', value: 'advisor' },
 ];
 
 function onSubmit(isValid){
@@ -114,21 +121,50 @@ function onReset(){
             hide-footer
             fixed-checkbox>
 
-            <template #item-id="{id, uuid}">
-                <Link :href="`/customer/${uuid}`" class="text-primary-500 hover:underline">
-                    {{ id }}
+            <template #item-uuid="{customer}">
+                <Link :href="`/customer/${customer.uuid}`" class="text-primary-500 hover:underline">
+                    {{ customer.id }}
                 </Link>
             </template>
 
-            <template #item-has_alfred_access="{has_alfred_access}">
-                <div class="text-center">
-                    <x-tag size="sm" :color="has_alfred_access ? 'success' : 'error'">
-                        {{ has_alfred_access ? 'Yes' : 'No' }}
-                    </x-tag>
-                </div>
+            <template #item-code="{ code, uuid, advisor_id, quote_type_id }">
+                <Link
+                    v-if="userId === advisor_id"
+                    :href="useGetShowPageRoute(uuid, quote_type_id)"
+                    target="_blank"
+                    class="text-primary-500 hover:underline"
+                >
+                    {{ code }}
+                </Link>
+                <span v-else>{{ code }}</span>
+            </template>
+
+            <template #item-first_name="{customer}">
+                {{ customer?.first_name }}
+            </template>
+
+            <template #item-quote_type_id="{quote_type_id}">
+                {{ getQuoteType(quote_type_id) }}
+            </template>
+
+            <template #item-insured_first_name="{customer}">
+                {{ customer?.insured_first_name }}
+            </template>
+
+            <template #item-created_at="{customer}">
+                {{ customer?.created_at }}
+            </template>
+
+            <template #item-updated_at="{customer}">
+                {{ customer?.updated_at }}
+            </template>
+
+            <template #item-advisor="{advisor}">
+                {{ advisor?.name }}
             </template>
 
         </DataTable>
+
         <Pagination
             :links="{
                 next: customers.next_page_url,

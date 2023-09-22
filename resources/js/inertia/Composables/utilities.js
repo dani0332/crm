@@ -32,3 +32,21 @@ export const useObjToUrl = obj => {
     })
     .join('&');
 };
+
+export const useGetShowPageRoute = (uuid, quoteTypeId) => {
+
+    const routesObj = {
+        1: route('car.show', uuid),
+        2: route('home.show', uuid),
+        3: route('health.show', uuid),
+        4: route('life-quotes-show', uuid),
+        5: route('business.show', uuid),
+        6: route('bike-quotes-show', uuid),
+        7: route('yacht-quotes-show', uuid),
+        8: route('travel.show', uuid),
+        9: route('pet-quotes-show', uuid),
+        10: route('cycle-quotes-show', uuid),
+    };
+
+    return routesObj[quoteTypeId];
+};

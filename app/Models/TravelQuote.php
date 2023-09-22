@@ -93,6 +93,11 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(PaymentStatus::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function getPreviousPolicyExpiryDateAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
