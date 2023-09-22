@@ -28,6 +28,14 @@ class AuditableController extends Controller
         return view('auditable', compact('auditableId', 'auditableType'));
     }
 
+    public function apiLogsComponent(Request $request)
+    {
+        $auditableType = $request->auditableType;
+        $auditableId = $request->auditableId;
+
+        return view('apilogs', compact('auditableId', 'auditableType'));
+    }
+
     public function loadAuditLogs(Request $request)
     {
         return DB::table('audits')

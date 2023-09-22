@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class CarPlanAddonBridge extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'car_plan_addon';
     protected $fillable = ['plan_id', 'addon_id', 'created_at', 'updated_at', 'is_active'];

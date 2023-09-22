@@ -25,7 +25,7 @@ use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 
-class TMLeadsImport implements ToModel, WithValidation, SkipsOnFailure, WithStartRow, WithChunkReading
+class TMLeadsImport implements SkipsOnFailure, ToModel, WithChunkReading, WithStartRow, WithValidation
 {
     use Importable, SkipsFailures;
 

@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class InsurerRequestResponse extends Model
 {
     use HasFactory;
+
     protected $table = 'insurer_request_response';
+    protected $primaryKey = 'id';
+
     public function carQuotePlanDetails()
     {
         return $this->belongsTo(CarQuotePlanDetail::class, 'provider_id', 'id');
