@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PersonalPlan extends Model
 {
-    use HasFactory, FilterCriteria;
+    use FilterCriteria, HasFactory;
 
     public $filterables = [
         'insurance_provider_id' => FilterTypes::EXACT,

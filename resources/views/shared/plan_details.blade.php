@@ -56,6 +56,17 @@ if (!isset($modelName)) {
 		$totalPremium = $discountPremium + $vat + $totalSelectedAddonsPriceWithVat;
 		$insurerAvailableTrims = isset($listQuotePlan->insurerAvailableTrims) ? $listQuotePlan->insurerAvailableTrims : [];
 		$insurerSelectedTrim = isset($listQuotePlan->insurerTrimId) ? $listQuotePlan->insurerTrimId : null;
+
+		$createdAt = '';
+		if(isset($listQuotePlan->createdAt)){
+			$createdAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->createdAt));
+		}
+
+		//if($listQuotePlan->isManualPlan)
+		$updatedAt = '';
+		if(isset($listQuotePlan->updatedAt)){
+			$updatedAt = date('d/m/Y H:i:s',strtotime($listQuotePlan->updatedAt));
+		}
 	}
 }
 $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "pointer-events: none;background-color: #f6f6f6;" : "";
@@ -991,7 +1002,19 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td colspan="4"><span class="car-quote-plan-total-premium"></span></td>
 							</tr>
+							<tr>
+								<td colspan="3"></td>
+								<td> </td>
+							</tr>
 						</table>
+						@if($createdAt!='')
+							<p>
+								<span style="float: right;"><strong>Created Date:</strong> {{ $createdAt }}</span><br>
+								@if($updatedAt!='')
+								<span style="float: right;"><strong>Updated At:</strong> {{ $updatedAt }}</span>							
+								@endif
+							</p>
+						@endif
 						</p>
 					</div>
 					<div class="tab-pane fade" id="addons" role="tabpanel" aria-labelledby="addons-tab">
@@ -1075,14 +1098,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsExclusions as $key =>
-										$listQuotePlanBenefitsExclusion)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text)
-												}}</td>
-											<td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsExclusions))
+											@foreach ($listQuotePlanBenefitsExclusions as $key => $listQuotePlanBenefitsExclusion)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsExclusion->text)
+													}}</td>
+												<td>{{ ucwords($listQuotePlanBenefitsExclusion->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1093,13 +1117,15 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 							<tr>
 								<td>
 									<table cellpadding="3" cellspacing="3">
-										@foreach ($listQuotePlanBenefitsRsas as $key => $listQuotePlanBenefitsRsa)
-										<tr>
-											<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsRsa->text) }}
-											</td>
-											<td>{{ ucwords($listQuotePlanBenefitsRsa->value) }}</td>
-										</tr>
-										@endforeach
+										@if(isset($listQuotePlanBenefitsRsas))
+											@foreach ($listQuotePlanBenefitsRsas as $key => $listQuotePlanBenefitsRsa)
+											<tr>
+												<td style="width: 300px;">{{ ucwords($listQuotePlanBenefitsRsa->text) }}
+												</td>
+												<td>{{ ucwords($listQuotePlanBenefitsRsa->value) }}</td>
+											</tr>
+											@endforeach
+										@endif
 									</table>
 								</td>
 							</tr>
@@ -1107,15 +1133,17 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 					</div>
 					<div class="tab-pane fade" id="policy-detail" role="tabpanel" aria-labelledby="policy-detail-tab">
 						<table cellpadding="3" cellspacing="3">
-							@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
-							<tr>
-								<td>
-									<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
-										📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
-									</a>
-								</td>
-							</tr>
-							@endforeach
+							@if(isset($listQuotePlanBenefitsPolicyDetails))
+								@foreach ($listQuotePlanBenefitsPolicyDetails as $listQuotePlanBenefitsPolicyDetail)
+								<tr>
+									<td>
+										<a href="{{ $listQuotePlanBenefitsPolicyDetail->link }}" target="_blank" title="click to open">
+											📃 {{ $listQuotePlanBenefitsPolicyDetail->text }}
+										</a>
+									</td>
+								</tr>
+								@endforeach
+							@endif
 						</table>
 					</div>
 				</div>

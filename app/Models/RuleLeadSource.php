@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class RuleLeadSource extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'rule_lead_sources';
     protected $fillable = ['lead_source_id', 'rule_id', 'user_id', 'created_at', 'updated_at'];
