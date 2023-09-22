@@ -13,7 +13,7 @@ use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'car_quote_request';
     protected $casts = [
