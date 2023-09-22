@@ -267,6 +267,7 @@
                 customer_data_table_route: "{{ route('customers-list') }}",
                 discount_base_data_table_route: "{{ route('base.index') }}",
                 load_auditable: "{{ url('auditable') }}",
+                load_apilogs: "{{ url('insurer-logs') }}",
                 load_dashboard_stats: "{{ url('dashboard-stats') }}",
                 insurancecompany_datatable_route: "{{ route('insurancecompany.index') }}",
                 handler_datatable_route: "{{ route('handler.index') }}",

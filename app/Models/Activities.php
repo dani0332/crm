@@ -12,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Activities extends Model implements AuditableContract
 {
-    use HasFactory, Auditable, FilterCriteria;
+    use Auditable, FilterCriteria, HasFactory;
 
     protected $guarded = [];
     protected $table = 'activities';

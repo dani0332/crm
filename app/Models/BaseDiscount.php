@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class BaseDiscount extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'discount_engine_base';
     protected $fillable = ['value_start', 'value_end', 'vehicle_type_id', 'comprehensive_discount', 'agency_discount'];

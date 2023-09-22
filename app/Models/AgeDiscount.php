@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class AgeDiscount extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'discount_engine_age_discount';
     protected $fillable = ['age_start', 'age_end', 'discount'];
