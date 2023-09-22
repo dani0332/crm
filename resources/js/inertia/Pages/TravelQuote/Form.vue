@@ -118,7 +118,11 @@ const outboundRegions = [
 ];
 
 function addTravler() {
-  quoteForm.members.push({ dob: '', gender: '' });
+    if(quoteForm.members.length == 0){
+        quoteForm.members.push({dob: '', gender: '', primary:true});
+    }else {
+        quoteForm.members.push({dob: '', gender: ''});
+    }
 }
 function removeMember(index) {
   quoteForm.members.splice(index, 1);
