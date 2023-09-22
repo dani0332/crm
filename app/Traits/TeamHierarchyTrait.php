@@ -204,8 +204,7 @@ trait TeamHierarchyTrait
 
     public function userHaveProduct($userId, $productId)
     {
-        $userTeam = UserTeams::where('user_id', $userId)->where('team_id', $productId)->get();
-
-        return count($userTeam) > 0 ? true : false;
+        $user = User::with('products')->where('id', $userId)->first();
+        return $user && $user->products->contains('product_id', $productId);
     }
 }

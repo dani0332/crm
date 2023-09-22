@@ -321,4 +321,10 @@ class User extends Authenticatable implements AuditableContract
         return $this->hasMany(Sessions::class);
 
     }
+
+    public function products()
+    {
+        return $this->hasMany(UserProducts::class);
+
+    }
 }
