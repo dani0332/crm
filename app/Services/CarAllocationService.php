@@ -442,18 +442,18 @@ class CarAllocationService extends AllocationService
     public function fetchLeadsForReAssignment($advisorId)
     {
         $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('leads will be picked up in reassignment from : '.$from. ' until : '. now()->toDateTimeString());
+        info('leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('quote_status_id', QuoteStatusEnum::NewLead);
         if ($advisorId != 0) {
-            info('inside reassignment single run and advisor selected is : '. $advisorId);
+            info('inside reassignment single run and advisor selected is : '.$advisorId);
             $leads->where('advisor_id', $advisorId);
         } else {
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('inside reassignment general run and advisors selected are : '. json_encode($advisorIds));
+                info('inside reassignment general run and advisors selected are : '.json_encode($advisorIds));
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
