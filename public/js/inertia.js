@@ -7557,6 +7557,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
 /* unplugin-vue-components disabled */function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _readOnlyError(name) { throw new TypeError("\"" + name + "\" is read-only"); }
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
 function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
 function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -7606,7 +7607,7 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       memberFormLoader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false),
       newPremiums = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
     var toggleLoader = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(false);
-    var coPay = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(props.plan.coPayments);
+    var coPay = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)('');
     var canUpdate = (0,vue__WEBPACK_IMPORTED_MODULE_0__.computed)(function () {
       return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
     });
@@ -7736,7 +7737,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     var getDefaultVaues = function getDefaultVaues() {
       var smallestCopayValue = 0;
       if (selectedCopay === undefined || selectedCopay.length == 0) {
-        props.plan.ratesPerCopay.forEach(function callback(element, index) {
+        var _props$plan$ratesPerC;
+        (_props$plan$ratesPerC = props.plan.ratesPerCopay) === null || _props$plan$ratesPerC === void 0 || _props$plan$ratesPerC.forEach(function callback(element, index) {
           if (index == 0) {
             smallestCopayValue = element.premium;
             defaultCopayId = element.healthPlanCoPaymentId;
@@ -7748,16 +7750,45 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         props.plan.actualPremium = smallestCopayValue;
       }
     };
-    var loadingPriceVal = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)('');
-    var handleLoadingPrice = function handleLoadingPrice(event, item) {
-      // console.log("hayya hayya");
-      console.log(event.target.value);
-      console.log(item);
-      // console.log(loadingPriceVal);
+    var loadingPrices = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)([]);
+    var finalPrice = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(0);
+    var totalLoadingPrice = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(0);
+    var vatAmount = (0,vue__WEBPACK_IMPORTED_MODULE_0__.ref)(0);
+    var handleLoadingPrice = function handleLoadingPrice(event, memberId) {
+      var index = loadingPrices.value.findIndex(function (m) {
+        return m.memberId == memberId;
+      });
+      console.log(index);
+      if (index > -1) {
+        loadingPrices.value[index].price = event.target.value;
+      } else {
+        loadingPrices.value.push({
+          memberId: memberId,
+          price: event.target.value
+        });
+      }
     };
-
+    var memberIndexPerId = function memberIndexPerId(id) {
+      return props.plan.memberPremiumBreakdown.findIndex(function (m) {
+        return m.memberId == id;
+      });
+    };
     (0,vue__WEBPACK_IMPORTED_MODULE_0__.onMounted)(function () {
       getDefaultVaues();
+      coPay.value = defaultCopayId; // get the default selected value for coPay
+    });
+
+    (0,vue__WEBPACK_IMPORTED_MODULE_0__.watch)(function () {
+      return loadingPrices;
+    }, function () {
+      if (loadingPrices.length > 0) {
+        loadingPrices.forEach(function (loadingPrice) {
+          totalLoadingPrice + loadingPrice.price, _readOnlyError("totalLoadingPrice");
+        });
+      }
+    }, {
+      deep: true,
+      immediate: true
     });
     var __returned__ = {
       props: props,
@@ -7792,8 +7823,12 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       onCoPaySelect: onCoPaySelect,
       onTogglePlans: onTogglePlans,
       getDefaultVaues: getDefaultVaues,
-      loadingPriceVal: loadingPriceVal,
+      loadingPrices: loadingPrices,
+      finalPrice: finalPrice,
+      totalLoadingPrice: totalLoadingPrice,
+      vatAmount: vatAmount,
       handleLoadingPrice: handleLoadingPrice,
+      memberIndexPerId: memberIndexPerId,
       watch: vue__WEBPACK_IMPORTED_MODULE_0__.watch
     };
     Object.defineProperty(__returned__, '__isScriptSetup', {
@@ -8751,7 +8786,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       var smallestCopayValue = 0;
       var defaultCopayId = 0;
       plansData.value.forEach(function (element) {
-        element.ratesPerCopay.forEach(function callback(value, index) {
+        var _element$ratesPerCopa;
+        (_element$ratesPerCopa = element.ratesPerCopay) === null || _element$ratesPerCopa === void 0 || _element$ratesPerCopa.forEach(function callback(value, index) {
           if (index == 0) {
             smallestCopayValue = value.premium;
             defaultCopayId = value.healthPlanCoPaymentId;
@@ -30171,51 +30207,51 @@ var _hoisted_12 = {
 };
 var _hoisted_13 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Basmah", -1 /* HOISTED */);
+}, "Total Price(exclusive of VAT)", -1 /* HOISTED */);
 var _hoisted_14 = {
-  "class": "grid sm:grid-cols-2"
+  key: 0
 };
-var _hoisted_15 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
-  "class": "font-medium"
-}, "Policy Fee", -1 /* HOISTED */);
+var _hoisted_15 = {
+  key: 1
+};
 var _hoisted_16 = {
   "class": "grid sm:grid-cols-2"
 };
 var _hoisted_17 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
   "class": "font-medium"
-}, "Total (exclusive of VAT)", -1 /* HOISTED */);
+}, "Loading Price", -1 /* HOISTED */);
 var _hoisted_18 = {
-  key: 0
+  "class": "grid sm:grid-cols-2"
 };
-var _hoisted_19 = {
-  key: 1
-};
+var _hoisted_19 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Total VAT amount", -1 /* HOISTED */);
 var _hoisted_20 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_21 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Basmah", -1 /* HOISTED */);
+var _hoisted_22 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_23 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Total Price with VAT", -1 /* HOISTED */);
+var _hoisted_24 = {
+  "class": "grid sm:grid-cols-2"
+};
+var _hoisted_25 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", {
+  "class": "font-medium"
+}, "Policy Fee", -1 /* HOISTED */);
+var _hoisted_26 = {
   "class": "p-4"
 };
-var _hoisted_21 = {
-  "class": "grid md:grid-cols-2 gap-5 p-4"
-};
-var _hoisted_22 = {
-  "class": "font-medium mb-1"
-};
-var _hoisted_23 = {
-  "class": "grid md:grid-cols-2 gap-5 p-4"
-};
-var _hoisted_24 = {
-  "class": "font-medium mb-1"
-};
-var _hoisted_25 = {
-  "class": "grid md:grid-cols-2 gap-5 p-4"
-};
-var _hoisted_26 = {
-  "class": "font-medium mb-1"
-};
 var _hoisted_27 = {
-  "class": "font-medium mb-1"
+  "class": "grid md:grid-cols-2 gap-5 p-4"
 };
 var _hoisted_28 = {
-  "class": "grid md:grid-cols-1 gap-5 p-4 copay-select"
+  "class": "font-medium mb-1"
 };
 var _hoisted_29 = {
   "class": "grid md:grid-cols-2 gap-5 p-4"
@@ -30227,6 +30263,24 @@ var _hoisted_31 = {
   "class": "grid md:grid-cols-2 gap-5 p-4"
 };
 var _hoisted_32 = {
+  "class": "font-medium mb-1"
+};
+var _hoisted_33 = {
+  "class": "font-medium mb-1"
+};
+var _hoisted_34 = {
+  "class": "grid md:grid-cols-1 gap-5 p-4 copay-select"
+};
+var _hoisted_35 = {
+  "class": "grid md:grid-cols-2 gap-5 p-4"
+};
+var _hoisted_36 = {
+  "class": "font-medium mb-1"
+};
+var _hoisted_37 = {
+  "class": "grid md:grid-cols-2 gap-5 p-4"
+};
+var _hoisted_38 = {
   "class": "font-medium mb-1"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
@@ -30291,12 +30345,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                 label: "Hide Plan",
                 onChange: $setup.onTogglePlans,
                 loading: $setup.toggleLoader
-              }, null, 8 /* PROPS */, ["modelValue", "loading"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <div class=\"grid sm:grid-cols-2\">\n              <dt class=\"font-medium\">Provider Code</dt>\n              <dd>{{ props.plan.providerCode }}</dd>\n            </div> "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_4, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.providerName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_6, [_hoisted_7, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.eligibilityName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_8, [_hoisted_9, $setup.selectedCopay === undefined || $setup.selectedCopay.length == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.actualPremium), 1 /* TEXT */)) : ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.selectedCopay.premium), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_12, [_hoisted_13, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.basmah), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_14, [_hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.policyFee), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_16, [_hoisted_17, $setup.selectedCopay === undefined || $setup.selectedCopay.length == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_18, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.actualPremium + ($setup.props.plan.basmah || 0) + ($setup.props.plan.policyFee || 0)), 1 /* TEXT */)) : ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.selectedCopay.premium + ($setup.props.plan.basmah || 0) + ($setup.props.plan.policyFee || 0)), 1 /* TEXT */)), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <dd>\n                {{\n                  props.plan.actualPremium +\n                  (props.plan.basmah || 0) +\n                  (props.plan.policyFee || 0)\n                }}\n              </dd> ")])])];
+              }, null, 8 /* PROPS */, ["modelValue", "loading"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <div class=\"grid sm:grid-cols-2\">\n              <dt class=\"font-medium\">Provider Code</dt>\n              <dd>{{ props.plan.providerCode }}</dd>\n            </div> "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_4, [_hoisted_5, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.providerName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_6, [_hoisted_7, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.eligibilityName), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_8, [_hoisted_9, $setup.selectedCopay === undefined || $setup.selectedCopay.length == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_10, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.actualPremium), 1 /* TEXT */)) : ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_11, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.selectedCopay.premium), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_12, [_hoisted_13, $setup.selectedCopay === undefined || $setup.selectedCopay.length == 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_14, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.finalPrice = $setup.props.plan.actualPremium + ($setup.props.plan.basmah || 0) + ($setup.props.plan.policyFee || 0) + $setup.totalLoadingPrice), 1 /* TEXT */)) : ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("dd", _hoisted_15, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.finalPrice = $setup.selectedCopay.premium + ($setup.props.plan.basmah || 0) + ($setup.props.plan.policyFee || 0) + $setup.totalLoadingPrice), 1 /* TEXT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_16, [_hoisted_17, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.totalLoadingPrice), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_18, [_hoisted_19, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.vatAmount = $setup.totalLoadingPrice * 0.05), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_20, [_hoisted_21, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.basmah), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_22, [_hoisted_23, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.finalPrice + $setup.vatAmount), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_24, [_hoisted_25, (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)($setup.props.plan.policyFee), 1 /* TEXT */)]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <div class=\"grid sm:grid-cols-2\">\n              <dt class=\"font-medium\">Total (exclusive of VAT)</dt>\n              <dd v-if=\"selectedCopay === undefined || selectedCopay.length == 0\">\n                    {{\n                    props.plan.actualPremium +\n                    (props.plan.basmah || 0) +\n                    (props.plan.policyFee || 0)\n                    }}\n                </dd>\n                <dd v-else>\n                    {{\n                    selectedCopay.premium +\n                    (props.plan.basmah || 0) +\n                    (props.plan.policyFee || 0)\n                    }}\n                </dd>\n            </div> ")])];
             }),
             _: 1 /* STABLE */
           }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <TabPanel>\n          <div class=\"grid md:grid-cols-2 gap-x-6 gap-y-4 p-4\">\n            <div class=\"md:col-span-2 text-right select-none border-b pb-2\">\n              <x-toggle\n                v-model=\"isManual\"\n                color=\"success\"\n                label=\"Manual\"\n                :disabled=\"!canUpdate\"\n              />\n            </div>\n            <x-select\n              v-model=\"ipmiBenefits.region\"\n              label=\"Region Coverage\"\n              placeholder=\"Select Option\"\n              :disabled=\"!isManual\"\n              :options=\"[\n                { value: '0', label: 'Regional Middle East' },\n                { value: '1', label: 'Worldwide excluding US' },\n                { value: '2', label: 'Worldwide' },\n              ]\"\n              class=\"w-full\"\n            />\n            <x-select\n              v-model=\"ipmiBenefits.insurance\"\n              label=\"OP Co-insurance\"\n              placeholder=\"Select Option\"\n              :disabled=\"!isManual\"\n              :options=\"[\n                { value: '0', label: '0%' },\n                { value: '1', label: '20%' },\n                { value: '2', label: '10% up to AED 50/OP visit' },\n                { value: '3', label: '20% up to AED 100/OP visit' },\n              ]\"\n              class=\"w-full\"\n            />\n            <x-select\n              v-model=\"ipmiBenefits.payment\"\n              label=\"Payment Terms\"\n              placeholder=\"Select Option\"\n              :disabled=\"!isManual\"\n              :options=\"[\n                { value: '0', label: 'Annual' },\n                { value: '1', label: 'Quarterly' },\n                { value: '2', label: 'Monthly' },\n              ]\"\n              class=\"w-full\"\n            />\n            <x-select\n              v-model=\"ipmiBenefits.network\"\n              label=\"Network\"\n              placeholder=\"Select Option\"\n              :disabled=\"!isManual\"\n              :options=\"[\n                { value: '0', label: 'General' },\n                { value: '1', label: 'General Plus' },\n                { value: '2', label: 'Comprehensive Excluding AH' },\n                { value: '3', label: 'Comprehensive' },\n              ]\"\n              class=\"w-full\"\n            />\n            <x-checkbox\n              v-model=\"ipmiBenefits.healthCare\"\n              label=\"Healthy Connect\"\n              :disabled=\"!isManual\"\n            />\n            <x-checkbox\n              v-model=\"ipmiBenefits.motherBaby\"\n              label=\"Mother and Baby Care\"\n              :disabled=\"!isManual\"\n            />\n            <div v-if=\"isManual\">\n              <x-button color=\"emerald\">Update</x-button>\n            </div>\n            <div class=\"md:col-span-2 text-right border-t pt-3 font-bold\">\n              Total Indicative Premium (with VAT):\n              {{\n                props.plan.actualPremium +\n                (props.plan.vat || 0) +\n                (props.plan.basmah || 0)\n              }}\n            </div>\n          </div>\n        </TabPanel> "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_20, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_table, {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_26, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_table, {
                 headers: [{
                   text: 'Relationship',
                   value: 'memberCategoryText'
@@ -30372,58 +30426,69 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                     disabled: !$setup.isManual,
                     size: "sm",
                     onKeyup: function onKeyup($event) {
-                      return $setup.handleLoadingPrice($event, item);
+                      return $setup.handleLoadingPrice($event, item.memberId);
                     }
                   }, null, 8 /* PROPS */, ["disabled", "onKeyup"])];
                 }),
                 "item-finalPrice": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function (_ref7) {
                   var item = _ref7.item;
-                  return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_x_input, {
-                    disabled: true,
-                    size: "sm"
-                  })];
+                  return [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)(item.ratesPerCopay, function (data) {
+                    var _$setup$loadingPrices, _$setup$loadingPrices2;
+                    return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("section", null, [data.healthPlanCoPaymentId == $setup.selectedCopay.id ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)(_component_x_input, {
+                      key: 0,
+                      disabled: true,
+                      size: "sm",
+                      value: Number(((_$setup$loadingPrices = $setup.loadingPrices[$setup.memberIndexPerId(item.memberId)]) === null || _$setup$loadingPrices === void 0 ? void 0 : _$setup$loadingPrices.price) || 0) + Number(data.premium)
+                    }, null, 8 /* PROPS */, ["value"])) : ($setup.selectedCopay === undefined || $setup.selectedCopay.length == 0) && data.healthPlanCoPaymentId == $setup.defaultCopayId ? ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createBlock)(_component_x_input, {
+                      key: 1,
+                      disabled: true,
+                      size: "sm",
+                      value: Number(((_$setup$loadingPrices2 = $setup.loadingPrices[$setup.memberIndexPerId(item.memberId)]) === null || _$setup$loadingPrices2 === void 0 ? void 0 : _$setup$loadingPrices2.price) || 0) + Number(data.premium)
+                    }, null, 8 /* PROPS */, ["value"])) : (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)("v-if", true)]);
+                  }), 256 /* UNKEYED_FRAGMENT */))];
                 }),
+
                 _: 1 /* STABLE */
               }, 8 /* PROPS */, ["items"])])];
             }),
             _: 1 /* STABLE */
           }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_21, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.inpatient || [], function (data) {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_27, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.inpatient || [], function (data) {
                 return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", {
                   key: data.code
-                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_22, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
+                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_28, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
               }), 128 /* KEYED_FRAGMENT */))])];
             }),
 
             _: 1 /* STABLE */
           }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_23, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.outpatient || [], function (data) {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_29, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.outpatient || [], function (data) {
                 return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", {
                   key: data.code
-                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_24, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
+                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
               }), 128 /* KEYED_FRAGMENT */))])];
             }),
 
             _: 1 /* STABLE */
           }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_25, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.regionCover || [], function (data) {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_31, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.regionCover || [], function (data) {
                 return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", {
                   key: data.code
-                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_26, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
+                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
               }), 128 /* KEYED_FRAGMENT */)), ((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.networkList || [], function (data) {
                 return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", {
                   key: data.code
-                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_27, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
+                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_33, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
               }), 128 /* KEYED_FRAGMENT */))])];
             }),
 
             _: 1 /* STABLE */
           }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" I will work here "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_28, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_ComboBox, {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("div", _hoisted_34, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_ComboBox, {
                 "class": "w-full",
                 modelValue: $setup.coPay,
                 "onUpdate:modelValue": [_cache[2] || (_cache[2] = function ($event) {
@@ -30431,22 +30496,21 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
                 }), $setup.onCoPaySelect],
                 options: $setup.coPayOptions,
                 single: true,
-                selected: $setup.defaultCopayId,
                 label: "Co-Pay",
                 placeholder: "Select a Co-Pay option"
-              }, null, 8 /* PROPS */, ["modelValue", "options", "selected"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_29, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.coInsurance || [], function (data) {
+              }, null, 8 /* PROPS */, ["modelValue", "options"])]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_35, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.coInsurance || [], function (data) {
                 return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", {
                   key: data.code
-                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_30, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
+                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_36, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
               }), 128 /* KEYED_FRAGMENT */))]), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" <div class=\"grid md:grid-cols-1 gap-5 p-4 float-right\">\n            <x-button\n              color=\"primary\"\n              size=\"sm\"\n            >\n              Update & Save\n            </x-button>\n          </div> ")];
             }),
             _: 1 /* STABLE */
           }), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createCommentVNode)(" between here "), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createVNode)(_component_TabPanel, null, {
             "default": (0,vue__WEBPACK_IMPORTED_MODULE_1__.withCtx)(function () {
-              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_31, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.maternityCover || [], function (data) {
+              return [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dl", _hoisted_37, [((0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_1__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.renderList)($setup.props.plan.benefits.maternityCover || [], function (data) {
                 return (0,vue__WEBPACK_IMPORTED_MODULE_1__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementBlock)("div", {
                   key: data.code
-                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_32, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
+                }, [(0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dt", _hoisted_38, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.text), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_1__.createElementVNode)("dd", null, (0,vue__WEBPACK_IMPORTED_MODULE_1__.toDisplayString)(data.value), 1 /* TEXT */)]);
               }), 128 /* KEYED_FRAGMENT */))])];
             }),
 

@@ -39,7 +39,7 @@ const hidePlan = ref(props.plan.isHidden),
 
 const toggleLoader = ref(false);
 
-const coPay = ref(props.plan.coPayments);
+const coPay = ref('');
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -176,7 +176,7 @@ const getDefaultVaues = () => {
 
     let smallestCopayValue = 0;
     if (selectedCopay === undefined || selectedCopay.length == 0) {
-        props.plan.ratesPerCopay.forEach(function callback(element, index) {
+        props.plan.ratesPerCopay?.forEach(function callback(element, index) {
             if (index == 0) {
                 smallestCopayValue = element.premium
                 defaultCopayId = element.healthPlanCoPaymentId
@@ -191,19 +191,49 @@ const getDefaultVaues = () => {
     }
 };
 
-const loadingPriceVal = ref('');
+const loadingPrices = ref([]);
+const finalPrice = ref(0);
+const totalLoadingPrice = ref(0);
+const vatAmount = ref(0);
 
-const handleLoadingPrice = (event, item) => {
-    // console.log("hayya hayya");
-    console.log(event.target.value);
-    console.log(item);
-    // console.log(loadingPriceVal);
+const handleLoadingPrice = (event, memberId) => {
+  const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
+
+  console.log(index);
+
+  if (index > -1) {
+    loadingPrices.value[index].price = event.target.value;
+  } else {
+    loadingPrices.value.push({
+      memberId: memberId,
+      price: event.target.value,
+    });
+  }
+
+};
+
+const memberIndexPerId = id => {
+  return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id);
 };
 
 
 onMounted( () => {
     getDefaultVaues();
+    coPay.value = defaultCopayId; // get the default selected value for coPay
 });
+
+watch(
+  () => loadingPrices,
+  () => {
+    if (loadingPrices.length > 0) {
+      loadingPrices.forEach(loadingPrice => {
+          totalLoadingPrice += loadingPrice.price
+      });
+    }
+  },
+  { deep: true, immediate: true },
+);
+
 </script>
 
 <template>
@@ -274,14 +304,57 @@ onMounted( () => {
                 </dd>
             </div>
             <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Total Price(exclusive of VAT)</dt>
+              <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
+                    {{ finalPrice =
+                    props.plan.actualPremium +
+                    (props.plan.basmah || 0) +
+                    (props.plan.policyFee || 0) +
+                    totalLoadingPrice
+                    }}
+                </dd>
+                <dd v-else>
+                    {{ finalPrice =
+                    selectedCopay.premium +
+                    (props.plan.basmah || 0) +
+                    (props.plan.policyFee || 0) +
+                    totalLoadingPrice
+                    }}
+                </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Loading Price</dt>
+                <dd>
+                    {{
+                      totalLoadingPrice
+                    }}
+                </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Total VAT amount</dt>
+                <dd>
+                    {{
+                      vatAmount = (totalLoadingPrice * 0.05)
+                    }}
+                </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Basmah</dt>
               <dd>{{ props.plan.basmah }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Total Price with VAT</dt>
+                <dd>
+                    {{
+                      finalPrice + vatAmount
+                    }}
+                </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Policy Fee</dt>
               <dd>{{ props.plan.policyFee }}</dd>
             </div>
-            <div class="grid sm:grid-cols-2">
+            <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
               <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
                     {{
@@ -297,14 +370,7 @@ onMounted( () => {
                     (props.plan.policyFee || 0)
                     }}
                 </dd>
-              <!-- <dd>
-                {{
-                  props.plan.actualPremium +
-                  (props.plan.basmah || 0) +
-                  (props.plan.policyFee || 0)
-                }}
-              </dd> -->
-            </div>
+            </div> -->
           </dl>
         </TabPanel>
 
@@ -444,17 +510,34 @@ onMounted( () => {
 
               <template #item-loadingPrice="{ item }">
                 <x-input
-                    :disabled="!isManual"
-                    size="sm"
-                    @keyup="handleLoadingPrice($event, item)"
+                  :disabled="!isManual"
+                  size="sm"
+                  @keyup="handleLoadingPrice($event, item.memberId)"
                 />
               </template>
 
               <template #item-finalPrice="{ item }">
-                <x-input
-                    :disabled="true"
-                    size="sm"
-                />
+                    <section v-for="data in item.ratesPerCopay">
+                        <x-input  v-if="data.healthPlanCoPaymentId == selectedCopay.id"
+                            :disabled="true"
+                            size="sm"
+                            :value="Number(
+                            loadingPrices[memberIndexPerId(item.memberId)]?.price ||
+                            0,
+                            ) + Number(data.premium)
+                            "
+                        />
+                        <x-input  v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
+                            data.healthPlanCoPaymentId == defaultCopayId"
+                            :disabled="true"
+                            size="sm"
+                            :value="Number(
+                            loadingPrices[memberIndexPerId(item.memberId)]?.price ||
+                            0,
+                            ) + Number(data.premium)
+                            "
+                        />
+                    </section>
               </template>
 
               <!-- <template #item-premium="{ item }">
@@ -530,7 +613,6 @@ onMounted( () => {
             v-model="coPay"
             :options="coPayOptions"
             :single="true"
-            :selected="defaultCopayId"
             label="Co-Pay"
             placeholder="Select a Co-Pay option"
             @update:model-value="onCoPaySelect"

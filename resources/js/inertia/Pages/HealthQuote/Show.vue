@@ -715,7 +715,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   plansData.value.forEach(element => {
-    element.ratesPerCopay.forEach(function callback(value, index) {
+    element.ratesPerCopay?.forEach(function callback(value, index) {
       if (index == 0) {
         smallestCopayValue = value.premium;
         defaultCopayId = value.healthPlanCoPaymentId;
