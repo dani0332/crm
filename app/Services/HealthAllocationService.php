@@ -17,7 +17,6 @@ use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class HealthAllocationService extends AllocationService
