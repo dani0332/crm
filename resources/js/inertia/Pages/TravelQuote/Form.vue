@@ -203,7 +203,6 @@ onMounted(() => {
             v-model="quoteForm.has_arrived_uae"
             :options="alreadylived"
             class="w-full"
-            :disabled="editMode"
             :rules="[isRequired]"
           />
         </x-field>
@@ -216,7 +215,6 @@ onMounted(() => {
             v-model="quoteForm.has_arrived_destination"
             :options="alreadylived"
             class="w-full"
-            :disabled="editMode"
             :rules="[isRequired]"
           />
         </x-field>
