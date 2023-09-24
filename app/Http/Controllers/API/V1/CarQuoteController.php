@@ -29,6 +29,21 @@ class CarQuoteController extends Controller
         return response()->json($quotes);
     }
 
+    public function getFollowupLeads()
+    {
+        $quotes = CarQuoteRepository::select(['id', 'code', 'uuid', 'advisor_id', 'renewal_batch', 'quote_batch_id'])
+            ->whereHas('carQuoteRequestDetail', function($q){
+                $q->whereNotNull('ocb_sent_date');
+            })
+            ->with(['carQuoteRequestDetail' => function($q){
+            $q->whereNotNull('ocb_sent_date');
+        }])->filter()
+        ->simplePaginate();
+
+        //return CarQuoteResource::collection($quotes);
+        return response()->json($quotes);
+    }
+
     public function show($uuid)
     {
         $quote = CarQuote::where('uuid', $uuid)

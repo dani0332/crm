@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/car/followup-started', [CarQuoteController::class, 'followupStarted']);
     Route::post('quotes/car/update-quote-status', [CarQuoteController::class, 'updateQuoteStatus']);
 
+    Route::get('quotes/car/followup-leads', [CarQuoteController::class, 'getFollowupLeads']);
     Route::get('quotes/car', [CarQuoteController::class, 'index']);
     Route::post('quotes/car/{uuid}/update-lead-status', [CarQuoteController::class, 'updateLeadStatus']);
     Route::get('quotes/car/{uuid}/ocb-details', [CarQuoteController::class, 'getOcbDetails']);
