@@ -993,7 +993,8 @@ class CarQuoteService extends BaseService
     public function getOcbDetails($uuid)
     {
         $carQuote = CarQuote::select(
-            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'car_model_id', 'currently_insured_with']
+            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id',
+                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id']
         )->with(['advisor', 'carMake', 'carModel'])
             ->where('uuid', $uuid)->first();
 
@@ -1003,7 +1004,7 @@ class CarQuoteService extends BaseService
 
         $carQuote->quote_type_id = QuoteTypeId::Car;
 
-        if ($totalPlans > 0) {
+        /*if ($totalPlans > 0) {
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $carQuote->uuid,
@@ -1018,7 +1019,7 @@ class CarQuoteService extends BaseService
                     'file_name' => $pdf['name']
                 ];
             }
-        }
+        }*/
 
         $carQuote->plans = $plans;
 

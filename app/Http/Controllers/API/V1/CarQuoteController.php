@@ -21,7 +21,7 @@ class CarQuoteController extends Controller
     public function index()
     {
         $quotes = CarQuoteRepository::select(
-            ['id', 'code', 'uuid', 'advisor_id']
+            ['id', 'code', 'uuid', 'advisor_id', 'renewal_batch', 'quote_batch_id']
         )->filter()
         ->simplePaginate();
 
