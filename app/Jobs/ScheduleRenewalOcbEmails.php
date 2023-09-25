@@ -22,7 +22,6 @@ class ScheduleRenewalOcbEmails implements ShouldQueue
     public $timeout = 80;
     public $backoff = 360;
 
-
     /**
      * Create a new job instance.
      *
