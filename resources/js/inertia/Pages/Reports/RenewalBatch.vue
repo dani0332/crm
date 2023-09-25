@@ -286,8 +286,8 @@ function calculateValuesAndHighlight() {
         advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
 
         let imRetention = 0.00;
-        if (hasRole(rolesEnum.CarAdvisor) == true &&
-            hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts]) != true) {
+        if (hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarDeputyManager]) == true &&
+            hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts]) != true) {
             imRetention = (
                 (
                     parseInt(item.renewed_by_all_advisors) /
@@ -685,18 +685,18 @@ watch(
                                 {{ item.advisorRetention }} %
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.valueSegmentConversion }} %
+                                {{ item.valueSegmentConversion == '0.00' ? 'N/A' : item.valueSegmentConversion+'%'}}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
-                                {{ item.volumeSegmentConversion }} %
+                                {{ item.volumeSegmentConversion == '0.00' ? 'N/A' : item.volumeSegmentConversion+'%'}}
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 <p>{{ parseFloat(item.valueSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
-                                    parseFloat(item.valueSegmentConversion)).toFixed(2) : '0.00'}} %</p>
+                                    parseFloat(item.valueSegmentConversion)).toFixed(2) + '%' : 'N/A'}}</p>
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 <p>{{ parseFloat(item.volumeSegmentConversion) > 0 ? (parseFloat(item.advisorRetention) -
-                                    parseFloat(item.volumeSegmentConversion)).toFixed(2) : '0.00' }} %</p>
+                                    parseFloat(item.volumeSegmentConversion)).toFixed(2) + '%' : 'N/A' }}</p>
                             </td>
                             <td class="x-table-cell px-3 py-4 align-middle">
                                 {{ item.imRetention }} %
