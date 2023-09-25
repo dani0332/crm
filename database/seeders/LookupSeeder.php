@@ -3,11 +3,12 @@
 namespace Database\Seeders;
 
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class JetskiLookupsSeeder extends Seeder
+class LookupSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -51,6 +52,27 @@ class JetskiLookupsSeeder extends Seeder
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => '8yearOld', 'text' => '8 year old', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => '9yearOld', 'text' => '9 year old', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => '10yearOld', 'text' => '10 year old', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->first()) {
+            DB::table('lookups')->insert([
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectInvalidProof', 'text' => 'Incorrect proof attached', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectMissingContact', 'text' => 'Proof attached does not show the contact information', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectNoFollowup', 'text' => 'No follow-up call or email has been made by the advisor', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectReachable', 'text' => 'Client is reachable', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectResponded', 'text' => 'Client responded on email', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::CAR_LOST_APPROVE_REASONS)->first()) {
+            DB::table('lookups')->insert([
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'confirmedSold', 'text' => 'Confirmed Sold', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveUnreachable', 'text' => 'Client is unreachable on call and email', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveInvalidNumber', 'text' => 'Invalid number', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveIncorrectNumber', 'text' => 'Incorrect number - number belongs to a different person', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveInvalidEmail', 'text' => 'Invalid email ID', 'created_at' => now(), 'updated_at' => now()],
+                ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveIncorrectEmail', 'text' => 'Incorrect email ID - email ID belongs to a different person', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
     }

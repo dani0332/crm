@@ -14,7 +14,7 @@ use Illuminate\Queue\SerializesModels;
 
 class GetQuotePlansJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
     public $timeout = 30;

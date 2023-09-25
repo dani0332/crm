@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class TmInsuranceType extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'tm_insurance_types';
 

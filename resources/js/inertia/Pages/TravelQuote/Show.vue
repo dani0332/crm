@@ -1008,12 +1008,12 @@ onMounted(() => {
                 <template #tooltip> Traveling Where</template>
               </x-tooltip>
             </dt>
-            <dt class="font-medium uppercase">{{ quote.direction_code }}</dt>
+            <dt class="font-medium uppercase">{{ (quote.direction_code!=null?quote.direction_code:((quote?.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_UAE_TEXT && quote?.region_cover_for_id != enums.travelQuoteEnum.REGION_COVER_ID_UAE)?enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND:(quote?.destination_id_text==enums.travelQuoteEnum.LOCATION_UNITED_ARAB_EMIRATES_TEXT || quote?.region_cover_for_id == enums.travelQuoteEnum.REGION_COVER_ID_UAE ?enums.travelQuoteEnum.TRAVEL_UAE_INBOUND:'')))}}</dt>
           </div>
 
           <div
             v-if="
-              enums.travelQuoteEnum.TravelUaeInbound == quote.direction_code
+         (enums.travelQuoteEnum.TRAVEL_UAE_INBOUND == quote.direction_code) || (quote?.region_cover_for_id == 3)
             "
             class="grid sm:grid-cols-2"
           >
@@ -1025,13 +1025,10 @@ onMounted(() => {
               </label>
             </dt>
             <dt class="font-medium">
-              {{ quote.has_arrived_uae == 1 ? 'Yes' : 'No' }}
+              {{ quote.has_arrived_uae == 1 || quote.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_UAE_TEXT ? 'Yes' : 'No' }}
             </dt>
           </div>
-          <div
-            v-if="
-              enums.travelQuoteEnum.TravelUaeOutbound == quote.direction_code
-            "
+          <div v-else
             class="grid sm:grid-cols-2"
           >
             <dt>
@@ -1042,7 +1039,7 @@ onMounted(() => {
               </label>
             </dt>
             <dt class="font-medium">
-              {{ quote.has_arrived_destination == 1 ? 'Yes' : 'No' }}
+              {{ quote.has_arrived_destination == 1 || quote.currently_located_in_id_text==enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE? 'Yes' : 'No' }}
             </dt>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1099,7 +1096,7 @@ onMounted(() => {
                 <template #tooltip> Travel Coverage</template>
               </x-tooltip>
             </dt>
-            <dt class="font-medium">{{ quote.coverage_code }}</dt>
+            <dt class="font-medium"> {{quote.coverage_code!=null?quote.coverage_code:(quote.days_cover_for <= 92?enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP:enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP+'/'+enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP)}}</dt>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt>
