@@ -12,6 +12,7 @@ defineProps({
 });
 
 const quoteType = 'car';
+const isLoading = ref(false);
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -26,6 +27,7 @@ const dateFormat = date => {
 
 const page = usePage();
 const showFollowUpModal = ref(false);
+const disableFollowUp = computed(() => page.props.quotes.length == 0 ?? false);
 const loader = reactive({
   table: false,
   export: false,
@@ -137,6 +139,7 @@ const manualAssignmentError = () => {
 };
 
 const sendtemplateForm = data => {
+  isLoading.value = true;
   data.renewal_batch = filters.renewal_batch;
   data.quote_batch_id = filters.quote_batch_id;
   axios
@@ -153,6 +156,9 @@ const sendtemplateForm = data => {
         title: 'Error! Sending Follow up emails',
         position: 'top',
       });
+    })
+    .finally(() => {
+      isLoading.value = false;
     });
 };
 
@@ -256,7 +262,7 @@ const openFollowUpModal = () => {
           size="sm"
           color="#ff5e00"
           type="button"
-          :disabled="!quotes.data"
+          :disabled="disableFollowUp"
           @click.prevent="openFollowUpModal"
           >Send Followup Emails
         </x-button>
@@ -265,6 +271,7 @@ const openFollowUpModal = () => {
         :modelValue="showFollowUpModal"
         @update:modelValue="showFollowUpModal = false"
         @sendTemplateForm="form => sendtemplateForm(form)"
+        :isLoading="isLoading"
       />
     </x-form>
 

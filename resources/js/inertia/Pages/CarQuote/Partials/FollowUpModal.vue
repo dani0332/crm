@@ -1,6 +1,7 @@
 <script setup>
 const props = defineProps({
   modelValue: Boolean,
+  isLoading: Boolean,
 });
 const emit = defineEmits(['update:modelValue', 'sendSelectedTemplate']);
 
@@ -9,7 +10,7 @@ const followUpForm = ref({
   type: 'HOLIDAY',
   renewal_batch: '',
   quote_batch_id: '',
-  template_id: 508,
+  template_id: 1,
 });
 </script>
 
@@ -51,6 +52,7 @@ const followUpForm = ref({
           size="sm"
           color="#ff5e00"
           type="button"
+          :loading="isLoading"
           @click="emit('sendTemplateForm', followUpForm)"
           >Send
         </x-button>
