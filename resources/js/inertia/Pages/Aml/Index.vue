@@ -109,7 +109,7 @@ onMounted(() => {
 const tableHeader = [
   { text: 'AML Id', value: 'id' },
   { text: 'Quote Type', value: 'quote_type_text' },
-  { text: 'CDB Id', value: 'cdb_id' },
+  { text: 'Ref-ID', value: 'cdb_id' },
   { text: 'Input', value: 'input' },
   { text: 'Screenshot', value: 'screenshot' },
   { text: 'Created At', value: 'created_at' },

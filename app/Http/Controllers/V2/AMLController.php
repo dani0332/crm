@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -14,6 +15,8 @@ use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
 use App\Models\UAEAMLListUploads;
+use App\Repositories\LookupRepository;
+use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\CheckAmlService;
@@ -171,7 +174,9 @@ class AMLController extends Controller
         $getAMLNumRows = AML::where('quote_type_id', '=', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->count();
 
         $nationalityList = $this->sanctionListService->fetchNationality();
+        $nationalities =  NationalityRepository::withActive()->get();
         $yearsList = $this->sanctionListService->years();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
 
         $data = [
             'quoteTypeCode' => $quoteTypeCode,
@@ -187,8 +192,10 @@ class AMLController extends Controller
             'quoteTypeId' => $quoteTypeId,
             'getAMLNumRows' => $getAMLNumRows,
             'nationalityList' => $nationalityList,
+            'nationalities' => $nationalities,
             'yearsList' => $yearsList,
             'isCompanySearchEnabled' => $isCompanySearchEnabled,
+            'memberRelations' => $memberRelations
         ];
 
         if ($quoteTypeCode == quoteTypeCode::Business) {
