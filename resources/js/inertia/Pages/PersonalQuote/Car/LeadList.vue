@@ -2,15 +2,22 @@
 defineProps({
   quotes: Object,
   advisors: Array,
-  dropdownSource: Object
+  dropdownSource: Object,
+  todayAssignmentCount: Number,
+  userMaxCap: Number
 });
 
 const page = usePage();
 const notification = useToast();
 const params = useUrlSearchParams('history');
-
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const createLead = reactive({
+    modal: false,
+    type: ''    
+});
 
 const tableHeader = [
   { text: 'REF-ID', value: 'code' },
@@ -268,6 +275,13 @@ function setQueryStringFilters() {
   }
 }
 
+const onConfirmCreateLead = () => {
+    if (createLead.type === 'referral') {
+        router.get(route('car.create'));
+    }
+    createLead.modal = false;
+}
+
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -279,14 +293,17 @@ onMounted(() => {
         <Head title="View Car" />
         <div class="flex justify-between items-center">
             <h2 class="text-xl font-semibold">Lead List</h2>
+            <div v-if="hasRole(rolesEnum.CarAdvisor)">
+                Auto / Manual Assigned Leads ({{ todayAssignmentCount }}) , Max Cap ({{ userMaxCap }})
+            </div>
             <div class="space-x-3">
                 <!-- <Link :href="route('health.cards')">
                     <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
                 </Link> -->
 
-                <Link :href="route('car.create')">
-                    <x-button size="sm" color="#ff5e00" tag="div"> Create Lead </x-button>
-                </Link>
+                <!-- <Link :href="route('car.create')"> -->
+                    <x-button size="sm" color="#ff5e00" tag="div" @click="createLead.modal = true"> Create Lead </x-button>
+                <!-- </Link> -->
             </div>
         </div>
         <x-divider class="my-4" />
@@ -441,7 +458,7 @@ onMounted(() => {
                     class="w-full"
                     placeholder="Search by Previous Policy Number"
                 />
-                <ComboBox
+                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)"
                     v-model="filters.advisor_id"
                     label="Advisor"
                     name="advisor_id"
@@ -478,7 +495,7 @@ onMounted(() => {
                 </div>
             </div>
         </x-form>
-        <Transition name="fade">
+        <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
             <div v-if="quotesSelected.length > 0" class="mb-4">
                 <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
                     <div class="row">
@@ -487,7 +504,8 @@ onMounted(() => {
                     <x-form @submit="onAssignLead" :auto-focus="false">
                         <div class="w-full flex flex-col md:flex-row gap-4">
                         
-                        <x-select
+                        <ComboBox
+                            :single="true"
                             v-model="assignForm.assigned_to_id_new"
                             label="Assign Advisor"
                             :options="advisorOptions"
@@ -577,5 +595,49 @@ onMounted(() => {
                 to: quotes.to,
             }"
         />
+
+        <x-modal v-model="createLead.modal" size="lg" show-close backdrop>
+            <template #header>
+                <span class="text-primary-800 font-semibold">
+                    Create Lead
+                </span>
+            </template>
+            <x-form :auto-focus="false">
+                <div class="w-full grid md:grid-cols-2 gap-5">
+                    <p class="text-md font-bold text-gray-500">
+                        Select reason to create manual lead <span class="error">*</span>
+                    </p>
+                </div>
+                <div class="flex w-full flex-col gap-5 mt-4 mb-4">
+                    <x-radio
+                        v-model="createLead.type"
+                        value="referral"
+                        label="Referral"
+                    />
+                    <x-radio
+                        v-model="createLead.type"
+                        value="early_renewal"
+                        label="Early Renewal"
+                    />
+                    <x-radio
+                        v-model="createLead.type"
+                        value="payment_status"
+                        label="Payment Status"
+                    />
+
+                </div>
+                <x-divider class="my-4" />
+                <div class="flex justify-end gap-3 mb-4">
+                    <x-button
+                        size="md"
+                        color="emerald"
+                        type="button"
+                        @click.prevent="onConfirmCreateLead"
+                    >
+                    Confirm
+                    </x-button>
+                </div>
+            </x-form>
+        </x-modal>
     </div>
 </template>

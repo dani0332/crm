@@ -101,12 +101,10 @@ const getModelDetails = (onchange) => {
 			})
 			trimOptions.value = trimDropdown;
 			if (item) {
-				if(onchange) {
-					notification.success({
-						title: 'Assumptions found',
-						position: 'top',
-					});
-				}
+				notification.success({
+					title: 'Assumptions found',
+					position: 'top',
+				});
 				quoteForm.cylinder = item.cylinder;
 				quoteForm.seat_capacity = item.seat_capacity;
 				quoteForm.vehicle_type_id = item.vehicle_type_id;
@@ -234,8 +232,8 @@ const setCarMake = (id) => {
 						:hasError="isEmptyField" />
 				</x-field>
 
-				<x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR" required>
-					<x-select v-model="quoteForm.back_home_license_held_for_id" :rules="[isRequired]" :options="dropdownSource.back_home_license_held_for_id.map(item => ({
+				<x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
+					<x-select v-model="quoteForm.back_home_license_held_for_id" :options="dropdownSource.back_home_license_held_for_id.map(item => ({
 						value: item.id,
 						label: item.text,
 					}))
@@ -338,9 +336,9 @@ const setCarMake = (id) => {
 				</x-field>
 			</div>
 			<div class="grid sm:grid-cols-2 gap-4">
-				<x-field label="ADDITIONAL NOTES" required>
+				<x-field label="ADDITIONAL NOTES">
 					<x-textarea v-model="quoteForm.additional_notes" type="textarea" rows="5" class="w-full"
-						:adjust-to-text="false" :rules="[isRequired]"/>
+						:adjust-to-text="false" />
 				</x-field>
 			</div>
 			<x-divider class="my-4" />

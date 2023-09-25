@@ -9,7 +9,8 @@ const props = defineProps({
   hidden: Boolean,
   notAdvisorAndManagerAndPA: Boolean,
   isPlanUpdateActive: Boolean,
-  totalSelectedAddonsPriceWithVat: Number
+  totalSelectedAddonsPriceWithVat: Number,
+  genericRequestEnum: Object
 });
 
 const notification = useToast();
@@ -46,9 +47,9 @@ const insurerAvailableTrimsOptions = computed(() => {
     return { value: ins.admeId, label: ins.description }
   })
 })
-
-const hidePlan = ref(props.plan.isHidden),
-  isManual = ref(false),
+console.log('props.plan.isManualUpdate', props.plan);
+const hidePlan = ref(props.plan.isDisabled && props.plan.isDisabled == props.genericRequestEnum.FALSE),
+  isManual = ref(props.plan.isManualUpdate),
   memberFormLoader = ref(false),
   newPremiums = ref([]);
 
@@ -206,7 +207,7 @@ const onUpdatePlan = () => {
                 v-model="isManual"
                 color="success"
                 label="Manual"
-                :disabled="plan.isManualUpdate"
+                :disabled="false && plan.isManualUpdate"
                 @change = "onToggleManual" 
                 :loading="toggleManualLoader"
               />
@@ -230,7 +231,7 @@ const onUpdatePlan = () => {
               <!-- <dd>{{ props.plan.insurerQuoteNo }}</dd> -->
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="mt-2">Actual Premium:</dt>
+              <dt class="mt-2">Actual Price:</dt>
               <x-input
                 :value="actualPremiumValue"
                 v-model = "actualPremiumValue"
@@ -241,7 +242,7 @@ const onUpdatePlan = () => {
               <!-- <dd>{{ props.plan.actualPremium }}</dd> -->
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="mt-2">Discounted Premium:	</dt>
+              <dt class="mt-2">Discounted Price:	</dt>
               <x-input
                 :value="discountPremium"
                 v-model = "discountPremium"
@@ -304,7 +305,7 @@ const onUpdatePlan = () => {
           </dl>
           <dl class="grid md:grid-cols-2 gap-x-6 border-top pl-4">
             <div class="grid sm:grid-cols-2">
-              <dt class="font-bold">Total Premium with VAT:</dt>
+              <dt class="font-bold">Total Price with VAT:</dt>
               <dd >AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
             </div>
             <div class="flex justify-end">

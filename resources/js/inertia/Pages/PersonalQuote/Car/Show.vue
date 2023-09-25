@@ -60,13 +60,13 @@ defineProps({
 	carMakeText:String,
 	carModelText:String,
 	embeddedProducts: Array,
+	genericRequestEnum: Object
 });
 const page = usePage();
 const notification = useNotifications('toast');
 
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
-const leadSourceEnum = page.props.leadSourceEnum;
 
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
@@ -306,9 +306,9 @@ const leadStatusOptions = computed(() => {
   const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD; 	
   
   const filteredLeadStatuses = page.props.leadStatuses.filter(status => {
-    if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
-      return false;
-    }
+    // if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
+    //   return false;
+    // }
     return true;
   });
 
@@ -317,6 +317,15 @@ const leadStatusOptions = computed(() => {
     label: status.text,
   }));
 });
+console.log('leadStatusOptions', leadStatusOptions.value);
+const leadStatusDisabled = computed(() => {
+	return (
+		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
+		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || 
+		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake && 
+		(!hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])))
+	);
+})
 
 const assumptionState = reactive({
 	isEditing: false
@@ -522,6 +531,14 @@ const additionalContactPrimaryConfirmed = () => {
     },
   );
 };
+
+const customerAdditionInfoList = computed(() => {
+	return page.props.customerAdditionalContacts.filter(item => {
+		if (!(item.value == page.props.record.email || item.value == page.props.record.mobile_no)) {
+			return true;
+		}
+	})
+})
 
 const additionalContactDeleteConfirmed = () => {
   router.post(
@@ -1036,8 +1053,8 @@ const confirmSendEmail = () => {
 									<td style="width: 20%;">{{ addon.car_addon_option_value }}</td>
 									<td style="width: 20%;">{{ addon.car_quote_request_addon_price == 0 ? 'Free' : addon.car_quote_request_addon_price }}</td>
 									<td>
-										<input v-if="addon.car_quote_request_addon_price" type="checkbox" disabled checked class="car-quote-ecom-non-free-plan-check">
-										<input v-else type="checkbox" checked class="car-quote-ecom-free-plan-check" disabled>
+										<input v-if="addon.car_quote_request_addon_price" type="checkbox" checked disabled class="car-quote-ecom-non-free-plan-check">
+										<input v-else type="checkbox" checked disabled class="car-quote-ecom-free-plan-check">
 									</td>
 								</tr>
 							</tbody>
@@ -1051,9 +1068,11 @@ const confirmSendEmail = () => {
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
 				<div>
-					<x-button class="mr-2" size="sm" color="#ff5e00" @click.prevent="openDuplicate">
-						Duplicate Lead
-					</x-button>
+					<template v-if="!can(permissionEnum.ApprovePayments) && allowedDuplicateLOB.length > 0">
+						<x-button v-if="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarDeputyManager, rolesEnum.CarManager])" class="mr-2" size="sm" color="#ff5e00" @click.prevent="openDuplicate">
+							Duplicate Lead
+						</x-button>
+					</template>
 
 					<!-- <Link :href="route('health.index')" preserve-scroll>
               <x-button size="sm" color="primary" tag="div"> Health List </x-button>
@@ -1341,20 +1360,21 @@ const confirmSendEmail = () => {
 							v-model="leadStatusForm.leadStatus"
 							label="Status"
 							:options="leadStatusOptions"
-							:disabled="record.quote_status_id == 15"
+							:disabled="leadStatusDisabled"
 							placeholder="Lead Status"
 							class="w-full"
 						/>
 						
-						<x-input
-							v-if="leadStatusForm.leadStatus == 15"
-							v-model="leadStatusForm.trans_code"
-							label="TransApp Code"
-							placeholder="TransApp Code is required"
-							class="w-full"
-							:error="leadStatusForm.errors.trans_code"
-						/>
-						
+						<x-field label="TransApp Code" required>
+							<x-input
+								v-if="leadStatusForm.leadStatus == 15"
+								v-model="leadStatusForm.trans_code"								
+								placeholder="TransApp Code is required"
+								class="w-full"
+								:error="leadStatusForm.errors.trans_code"
+							/>
+						</x-field>
+												
 						<x-select
 							v-if="leadStatusForm.leadStatus == 17"
 							v-model="leadStatusForm.lostReason"
@@ -1431,171 +1451,124 @@ const confirmSendEmail = () => {
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
 		/>
-		<!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="hasRole(rolesEnum.BetaUser)">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">
-					Payments
-					<x-tag size="sm">{{ payments.length || 0 }}</x-tag>
-				</h3>
-				<x-button v-if="! hasRole(rolesEnum.PA) && $page.props.plan && (!can(permissionEnum.ApprovePayments) && can(permissionEnum.PaymentsCreate))" @click.prevent="onAddPayment" size="sm" color="emerald">
-					Add Payment
-				</x-button>
-			</div>
-			<DataTable
-				table-class-name="tablefixed compact"
-				:headers="paymentDetailsTable.columns"
-				:items="paymentItems || []"
-				show-index
-				border-cell
-				hide-rows-per-page
-				hide-footer
-			>
-				<template #item-action="item">
-					<div class="flex gap-2">
-						<template v-if="!can(permissionEnum.ApprovePayments)">
-							<x-button v-if="item.payment_method_code == 'CC' && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
-								size="xs" 
-								color="primary" 
-								outlined 
-								@click.prevent="onCopyPyamentLink(item.code)"
-							>
-								Copy Link
-							</x-button>
-							<x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click.prevent="onEdit">
-								Edit
-							</x-button>
-						</template>
-						<template v-if="can(permissionEnum.ApprovePayments)">
-							<x-button v-if="item.payment_method_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
-								size="xs" 
-								color="primary" 
-								outlined 
-								@click.prevent="onEditMember(item)"
-							>
-								Approve
-							</x-button>
-						</template>
-						<template v-if="item.payment_status_id == paymentStatusEnum.PAID">
-							<x-button size="xs" color="primary" outlined disabled>
-								Approve
-							</x-button>
-						</template>
-					</div>
-				</template>
-			</DataTable>
-		</div>  -->
-
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
 				<h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
 				<x-divider class="mb-4 mt-1" />
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-				<div class="w-full md:w-1/2">
-					<x-textarea
-						v-model="assumptionsForm.cylinder"
-						required
-						type="text"
-						label="Cylinder"
-						placeholder="cylinder"
-						class="w-full"
-						:disabled="!assumptionState.isEditing"
-
-					/>
+				<div class="w-full md:w-1/2">					
+					<x-field label="Cylinder" required>
+						<x-input
+							v-model="assumptionsForm.cylinder"
+							type="number"
+							placeholder="cylinder"
+							class="w-full"
+							:rules="[isRequired]"
+							:disabled="!assumptionState.isEditing"
+						/>
+					</x-field>
 				</div>
 				<div class="w-full md:w-1/2">
-					<x-textarea
-						v-model="assumptionsForm.seat_capacity"
-						type="text"
-						required
-						label="Seat Capacity"
-						placeholder="Seat Capacity"
-						class="w-full"
-						:disabled="!assumptionState.isEditing"
-					/>
+					<x-field label="Seat Capacity" required>
+						<x-input
+							v-model="assumptionsForm.seat_capacity"
+							type="number"
+							placeholder="Seat Capacity"
+							class="w-full"
+							:rules="[isRequired]"
+							:disabled="!assumptionState.isEditing"
+						/>
+					</x-field>
 				</div>
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.vehicle_type_id"
-							label="Vehicle Body Type"
-							:options="vehicleTypeOptions"
-							placeholder="Vehicle Body Type"
-							class="w-full"
-							required
-							:disabled="!assumptionState.isEditing"
-						/>
+						<x-field label="Vehicle Body Type" required>
+							<x-select
+								v-model="assumptionsForm.vehicle_type_id"
+								:options="vehicleTypeOptions"
+								placeholder="Vehicle Body Type"
+								class="w-full"
+								:rules="[isRequired]"
+								:disabled="!assumptionState.isEditing"
+							/>
+						</x-field>
 					</div>
 				</div>
 				<div class="w-full md:w-1/2">
 					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.is_modified"
-							label="Is Vehicle modified?"
-							:options="isOptions"
-							placeholder="Is Modified"
-							class="w-full"
-							required
-							:disabled="!assumptionState.isEditing"
-						/>
-					</div>
-				</div>
-			</div>
-			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-				<div class="w-full md:w-1/2">
-					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.is_bank_financed"
-							label="Is Bank Financed"
-							:options="isOptions"
-							placeholder="Is Bank Financed"
-							class="w-full"
-							required
-							:disabled="!assumptionState.isEditing"
-						/>
-					</div>
-				</div>
-				<div class="w-full md:w-1/2">
-					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.is_gcc_standard"
-							label="Is GCC Standard?"
-							:options="isOptions"
-							placeholder="Is GCC Standard"
-							class="w-full"
-							required
-							:disabled="!assumptionState.isEditing"
-						/>
+						<x-field label="Is Vehicle modified?" required>
+							<x-select
+								v-model="assumptionsForm.is_modified"
+								:options="isOptions"
+								placeholder="Is Modified"
+								class="w-full"
+								:rules="[isRequired]"
+								:disabled="!assumptionState.isEditing"
+							/>
+						</x-field>
 					</div>
 				</div>
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
 					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.current_insurance_status"
-							label="Current Insurance"
-							:options="currentInsuranceOptions"
-							placeholder="Current Insurance"
-							class="w-full"
-							required
-							:disabled="!assumptionState.isEditing"
-						/>
+						<x-field label="Is Bank Financed" required>
+							<x-select
+								v-model="assumptionsForm.is_bank_financed"
+								:options="isOptions"
+								placeholder="Is Bank Financed"
+								class="w-full"
+								:rules="[isRequired]"
+								:disabled="!assumptionState.isEditing"
+							/>
+						</x-field>
 					</div>
 				</div>
 				<div class="w-full md:w-1/2">
 					<div class="flex flex-col gap-4">
-						<x-select
-							v-model="assumptionsForm.year_of_first_registration"
-							label="Year Of First Registration"
-							:options="$page.props.yearsOfManufacture.map(year => { return { value: year.id.toString(), label: year.text }})"
-							placeholder="Year Of First Registration"
-							class="w-full"
-							required
-							:disabled="!assumptionState.isEditing"
-						/>
+						<x-field label="Is GCC Standard?" required>
+							<x-select
+								v-model="assumptionsForm.is_gcc_standard"
+								:options="isOptions"
+								placeholder="Is GCC Standard"
+								class="w-full"
+								:rules="[isRequired]"
+								:disabled="!assumptionState.isEditing"
+							/>
+						</x-field>
+					</div>
+				</div>
+			</div>
+			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-field label="Current Insurance" required>
+							<x-select
+								v-model="assumptionsForm.current_insurance_status"								
+								:options="currentInsuranceOptions"
+								placeholder="Current Insurance"
+								class="w-full"
+								:rules="[isRequired]"
+								:disabled="!assumptionState.isEditing"
+							/>
+						</x-field>
+					</div>
+				</div>
+				<div class="w-full md:w-1/2">
+					<div class="flex flex-col gap-4">
+						<x-field label="Year Of First Registration" required>
+							<x-select
+								v-model="assumptionsForm.year_of_first_registration"
+								:options="$page.props.yearsOfManufacture.map(year => { return { value: year.id.toString(), label: year.text }})"
+								placeholder="Year Of First Registration"
+								class="w-full"
+								:rules="[isRequired]"
+								:disabled="!assumptionState.isEditing"
+							/>
+						</x-field>
 					</div>
 				</div>
 			</div>
@@ -1607,7 +1580,7 @@ const confirmSendEmail = () => {
 					<x-button v-if="assumptionState.isEditing" class="mt-4" color="primary" size="sm" :loading="assumptionsForm.processing" @click.prevent="onUpdateAssumption">
 						Update
 					</x-button>
-					<x-button v-if="access.carManagerCanEdit || access.carAdvisorCanEdit || (!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager])) && !assumptionState.isEditing" class="mt-4" color="emerald" size="sm" @click.prevent="assumptionState.isEditing = true">
+					<x-button v-if="!assumptionState.isEditing && (access.carManagerCanEdit || access.carAdvisorCanEdit || (!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager])))" class="mt-4" color="emerald" size="sm" @click.prevent="assumptionState.isEditing = true">
 						Edit Assumptions
 					</x-button>
 				</template>
@@ -1645,9 +1618,9 @@ const confirmSendEmail = () => {
 					>
 						Download PDF
 					</x-button>
-					<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
+					<!-- <x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
 						Send OCB Email to Customer
-					</x-button>
+					</x-button> -->
 					
 					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
@@ -1670,10 +1643,10 @@ const confirmSendEmail = () => {
 				:rows-per-page="15"
         		:hide-footer="availablePlansItems.length < 15"
 			>
-				<template #item-providerName="{ providerName, isManualPlan, isRenewal, isDisabled }">
+				<template #item-providerName="{ providerName, isManualUpdate, isRenewal, isDisabled }">
 					<p>{{ providerName }}</p>
 					<div class="flex gap-1">
-						<x-tag v-if="isManualPlan" size="xs" color="primary" class="mt-0.5 text-[10px]">
+						<x-tag v-if="isManualUpdate" size="xs" color="primary" class="mt-0.5 text-[10px]">
 							Manual
 						</x-tag>
 						<x-tag v-if="isRenewal" size="xs" color="success" class="mt-0.5 text-[10px]">
@@ -1766,6 +1739,7 @@ const confirmSendEmail = () => {
 					:genders="genderOptions" 
 					:record="record"
 					:access="access"
+					:genericRequestEnum="genericRequestEnum"
 					:notAdvisorAndManagerAndPA="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
 					:isPlanUpdateActive="isPlanUpdateActive"
 					:hidden="!hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarManager, rolesEnum.PA])"
@@ -1825,9 +1799,9 @@ const confirmSendEmail = () => {
 					/>
 				</div>
 				<div class="w-full md:w-1/2">
-					<x-textarea
+					<DatePicker
 						v-model="policyDetailsForm.quote_policy_issuance_date"
-						type="text"
+						name="quote_policy_issuance_date"
 						label="Issuance Date"
 						placeholder="Issuance Date"
 						class="w-full"
@@ -1837,7 +1811,7 @@ const confirmSendEmail = () => {
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
 				<div class="w-full md:w-1/2">
-					<x-textarea
+					<DatePicker
 						v-model="policyDetailsForm.quote_policy_start_date"
 						type="text"
 						label="Policy Start Date"
@@ -1847,7 +1821,7 @@ const confirmSendEmail = () => {
 					/>
 				</div>
 				<div class="w-full md:w-1/2">
-					<x-textarea
+					<DatePicker
 						v-model="policyDetailsForm.quote_policy_expiry_date"
 						type="text"
 						label="Expiry Date"
@@ -1859,11 +1833,11 @@ const confirmSendEmail = () => {
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 				<div class="w-full md:w-1/2">
-					<x-textarea
+					<x-input
 						v-model="policyDetailsForm.quote_premium"
-						type="text"
-						label="Premium"
-						placeholder="Premium"
+						type="number"
+						label="Price"
+						placeholder="Price"
 						class="w-full"
 						:disabled="!policyDetailsState.isEditing"
 					/>
@@ -2056,7 +2030,7 @@ const confirmSendEmail = () => {
 			</DataTable>
 		</div> 
 
-		<div class="p-4 rounded shadow mb-6 bg-white">
+		<!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Notes for Customer
@@ -2080,26 +2054,6 @@ const confirmSendEmail = () => {
 				hide-rows-per-page
 				hide-footer
 			>
-				<!-- <template #item-action="item">
-					<div class="flex gap-2">
-						<x-button
-							size="xs"
-							color="primary"
-							outlined
-							@click.prevent="onEditMember(item)"
-						>
-							Edit
-						</x-button>
-						<x-button
-							size="xs"
-							color="error"
-							outlined
-							@click.prevent="memberDelete(item.id)"
-						>
-							Delete
-						</x-button>
-					</div>
-				</template> -->
 			</DataTable>
 			<x-modal v-model="modals.notes" size="lg" show-close backdrop>
         		<template #header> New Note for Customer </template>
@@ -2139,7 +2093,7 @@ const confirmSendEmail = () => {
 				</div>
 				</x-form>
           </x-modal>		
-		</div> 
+		</div>  -->
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2152,7 +2106,7 @@ const confirmSendEmail = () => {
 						<x-button @click.prevent="addActivity" size="sm" color="orange" class="mr-2">
 							Add Activity
 						</x-button>
-					</template>					
+					</template>
 				</div>
 			</div>
 			<DataTable
@@ -2283,10 +2237,10 @@ const confirmSendEmail = () => {
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Customer Additional Contacts
-					<x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+					<x-tag size="sm">{{ customerAdditionInfoList.length || 0 }}</x-tag>
 				</h3>
 				<div>
-					<template v-if="! can(permissionEnum.ApprovePayments) && ! hasRole(rolesEnum.PA)">
+					<template v-if="! hasRole(rolesEnum.PA)">
 						<x-button
 						size="sm"
 						color="orange"
@@ -2297,21 +2251,13 @@ const confirmSendEmail = () => {
 						>
 						Add Additional Contacts
 						</x-button>
-						<template v-if="displaySendPolicyButton">
-							<!-- <a class="btn btn-sm btn-primary" style="float:right;" data-quote-type="{{ $quoteType }}"
-                            data-quote-uuid="{{ $record->uuid }}" onclick="sendQuoteDocumentsToCustomer(this)">Send Policy</a> -->
-						</template>
-
 					</template>
-					<x-button v-if="record.payment_status_id === permissionEnum.AUTHORISED && ! hasRole(rolesEnum.PA)" @click.prevent="onAddPaymentModal" size="sm" color="orange" class="mr-2">
-						Copy upload Link
-					</x-button>
 				</div>
 			</div>
 			<DataTable
 				table-class-name="tablefixed compact"
 				:headers="customerAdditionalContactsTable.columns"
-				:items="customerAdditionalContacts || []"
+				:items="customerAdditionInfoList || []"
 				show-index
 				border-cell
 				fixed-checkbox
@@ -2332,6 +2278,7 @@ const confirmSendEmail = () => {
 							Make Primary
 						</x-button>
 						<x-button
+							v-if="item.id && !(record.quote_status_id == quoteStatusEnum.CarSold || record.quote_status_id == quoteStatusEnum.Uncontactable)"
 							size="xs"
 							color="error"
 							outlined

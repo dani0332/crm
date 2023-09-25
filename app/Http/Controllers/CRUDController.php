@@ -63,6 +63,7 @@ use App\Services\PetQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Services\SendEmailCustomerService;
 use App\Services\TeamService;
+use App\Services\TierService;
 use App\Services\TravelQuoteService;
 use App\Services\UserService;
 use App\Traits\GenericQueriesAllLobs;
@@ -576,7 +577,7 @@ class CRUDController extends Controller
 
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
-            //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses',
+            //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
             //     'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits',
             //     'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses',
             //     'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled',
@@ -591,6 +592,7 @@ class CRUDController extends Controller
             $quoteStatusEnum = QuoteStatusEnum::asArray();
             $leadSourceEnum = LeadSourceEnum::asArray();
             $paymentStatusEnum = PaymentStatusEnum::asArray();
+            $genericRequestEnum = GenericRequestEnum::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
             $quoteDocuments = array_values($quoteDocuments->toArray());
@@ -599,12 +601,16 @@ class CRUDController extends Controller
             $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
             $isPlanUpdateActive = $isPlanUpdateActive == ApplicationStorageEnums::INACTIVE;
             $insuranceProviders = $this->lookupService->getAllInsuranceProviders();
+            $tierService = new TierService;
+            $tiersExceptTierR = $tierService->getTiersExceptTierR();
+            $isTierRAssigned = $tierService->isTierRAssigned($record->tier_id);
+
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders',
-                'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum',
-                'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts',
+                'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
+                'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl'
             ]));
