@@ -133,10 +133,10 @@ class CarAllocationService extends AllocationService
 
         $tierUserIds = $tierUserQuery->pluck('user_id');
 
-        $statusOrder =[
+        $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
-            UserStatusEnum::UNAVAILABLE
+            UserStatusEnum::UNAVAILABLE,
         ];
 
         foreach ($statusOrder as $status) {
@@ -344,7 +344,6 @@ class CarAllocationService extends AllocationService
         return $lead;
     }
 
-
     public function adjustAllocationCounts($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate)
     {
         info('lead current advisor_id is : '.json_encode($previousAdvisorId).' and lead created date is : '.$lead->created_at);
@@ -412,6 +411,7 @@ class CarAllocationService extends AllocationService
         } else {
             $this->createNewCarQuoteDetail($leadId);
         }
+
         return $oldAdvisorAssignedDate;
     }
 
