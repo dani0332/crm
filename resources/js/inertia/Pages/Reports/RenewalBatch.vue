@@ -285,30 +285,43 @@ function calculateValuesAndHighlight() {
             ).toFixed(2);
         advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
 
-        let imRetention = (
-            (
-                parseInt(item.renewed) /
+        let imRetention = 0.00;
+        if (hasRole(rolesEnum.CarAdvisor) == true &&
+            hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts]) != true) {
+            imRetention = (
                 (
-                    parseInt(item.total_allocated_leads) -
-                    parseInt(item.car_sold) - parseInt(item.uncontactable)
-                )) * 100
+                    parseInt(item.renewed_by_all_advisors) /
+                    (
+                        parseInt(item.total_allocated_leads_by_all_advisors) -
+                        parseInt(item.car_sold) - parseInt(item.uncontactable)
+                    )) * 100
 
-        ).toFixed(2);
+            ).toFixed(2);
+        }
+        else {
+            imRetention = (
+                (
+                    parseInt(item.renewed) /
+                    (
+                        parseInt(item.total_allocated_leads) -
+                        parseInt(item.car_sold) - parseInt(item.uncontactable)
+                    )) * 100
+
+            ).toFixed(2);
+        }
         imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
-
         console.log("hayya hayya");
-        console.log(item.total_by_value_segment_advisors);
-        console.log(item.renewed_by_value_segment_advisors);
-        console.log(item.car_sold);
-        console.log(item.uncontactable);
+        console.log(item.total_by_volume_segment_advisors);
+        console.log(item.renewed_by_volume_segment_advisors);
+        console.log(item.car_sold_by_volume_segment);
+        console.log(item.uncontactable_by_volume_segment);
         console.log("end");
-
         let valueSegmentConversion = (
             (
                 parseInt(item.renewed_by_value_segment_advisors) /
                 (
                     parseInt(item.total_by_value_segment_advisors) -
-                    parseInt(item.car_sold) - parseInt(item.uncontactable)
+                    parseInt(item.car_sold_by_value_segment) - parseInt(item.uncontactable_by_value_segment)
                 )) * 100
         ).toFixed(2);
         valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
@@ -318,7 +331,7 @@ function calculateValuesAndHighlight() {
                 parseInt(item.renewed_by_volume_segment_advisors) /
                 (
                     parseInt(item.total_by_volume_segment_advisors) -
-                    parseInt(item.car_sold) - parseInt(item.uncontactable)
+                    parseInt(item.car_sold_by_volume_segment) - parseInt(item.uncontactable_by_volume_segment)
                 )) * 100
         ).toFixed(2);
         volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
@@ -703,7 +716,8 @@ watch(
                     </tbody>
                 </table>
                 <hr />
-                <table class="x-table relative w-50 mt-10">
+                <table class="x-table relative w-50 mt-10"
+                    v-if="hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts])">
                     <thead class="align-bottom bg-primary-700">
                         <tr class="text-sm text-gray-600 border-b">
                             <th class="py-2 font-semibold tracking-widest uppercase text-xs px-3 sticky top-0 text-left">

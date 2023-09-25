@@ -16043,17 +16043,22 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
       page.props.reportData.data.forEach(function (item, index) {
         var advisorRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
         advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
-        var imRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        var imRetention = 0.00;
+        if (hasRole(rolesEnum.CarAdvisor) == true && hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.CarDeputyManager, rolesEnum.SeniorManagement, rolesEnum.Accounts]) != true) {
+          imRetention = (parseInt(item.renewed_by_all_advisors) / (parseInt(item.total_allocated_leads_by_all_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        } else {
+          imRetention = (parseInt(item.renewed) / (parseInt(item.total_allocated_leads) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        }
         imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
         console.log("hayya hayya");
-        console.log(item.total_by_value_segment_advisors);
-        console.log(item.renewed_by_value_segment_advisors);
-        console.log(item.car_sold);
-        console.log(item.uncontactable);
+        console.log(item.total_by_volume_segment_advisors);
+        console.log(item.renewed_by_volume_segment_advisors);
+        console.log(item.car_sold_by_volume_segment);
+        console.log(item.uncontactable_by_volume_segment);
         console.log("end");
-        var valueSegmentConversion = (parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        var valueSegmentConversion = (parseInt(item.renewed_by_value_segment_advisors) / (parseInt(item.total_by_value_segment_advisors) - parseInt(item.car_sold_by_value_segment) - parseInt(item.uncontactable_by_value_segment)) * 100).toFixed(2);
         valueSegmentConversion = valueSegmentConversion == 'NaN' ? '0.00' : valueSegmentConversion;
-        var volumeSegmentConversion = (parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - parseInt(item.car_sold) - parseInt(item.uncontactable)) * 100).toFixed(2);
+        var volumeSegmentConversion = (parseInt(item.renewed_by_volume_segment_advisors) / (parseInt(item.total_by_volume_segment_advisors) - parseInt(item.car_sold_by_volume_segment) - parseInt(item.uncontactable_by_volume_segment)) * 100).toFixed(2);
         volumeSegmentConversion = volumeSegmentConversion == 'NaN' ? '0.00' : volumeSegmentConversion;
         var ratioCarSoldUncontactable = ((parseInt(item.car_sold) + parseInt(item.uncontactable)) / parseInt(item.total_allocated_leads) * 100).toFixed(2);
         ratioCarSoldUncontactable = ratioCarSoldUncontactable == 'NaN' ? '0.00' : ratioCarSoldUncontactable;
@@ -43186,6 +43191,7 @@ var _hoisted_47 = /*#__PURE__*/_withScopeId(function () {
   return /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("hr", null, null, -1 /* HOISTED */);
 });
 var _hoisted_48 = {
+  key: 0,
   "class": "x-table relative w-50 mt-10"
 };
 var _hoisted_49 = /*#__PURE__*/_withScopeId(function () {
@@ -43342,12 +43348,12 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       "class": "x-table-cell px-3 py-4 align-middle text-center",
       rowspan: item.rowSpan
     }, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("b", null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(item.monthlySum) + " %", 1 /* TEXT */)], 8 /* PROPS */, _hoisted_46)) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)], 2 /* CLASS */);
-  }), 128 /* KEYED_FRAGMENT */))])]), _hoisted_47, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("table", _hoisted_48, [_hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("tbody", null, [((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_4__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.renderList)($setup.monthlyIMAverages, function (value, index) {
+  }), 128 /* KEYED_FRAGMENT */))])]), _hoisted_47, $setup.hasAnyRole([$setup.rolesEnum.CarManager, $setup.rolesEnum.RenewalsManager, $setup.rolesEnum.SeniorManagement, $setup.rolesEnum.Accounts]) ? ((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("table", _hoisted_48, [_hoisted_49, (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("tbody", null, [((0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(true), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)(vue__WEBPACK_IMPORTED_MODULE_4__.Fragment, null, (0,vue__WEBPACK_IMPORTED_MODULE_4__.renderList)($setup.monthlyIMAverages, function (value, index) {
     return (0,vue__WEBPACK_IMPORTED_MODULE_4__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementBlock)("tr", {
       key: index,
       "class": "border-b border-gray-200 align-top"
     }, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_50, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)(index), 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_51, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.monthlyIMAverages[index] ? $setup.monthlyIMAverages[index].toFixed(2) : 0) + " % ", 1 /* TEXT */), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("td", _hoisted_52, (0,vue__WEBPACK_IMPORTED_MODULE_4__.toDisplayString)($setup.monthlyRawAverages[index] ? $setup.monthlyRawAverages[index].toFixed(2) : 0) + " % ", 1 /* TEXT */)]);
-  }), 128 /* KEYED_FRAGMENT */))])])])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" ============================================================= "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Pagination, {
+  }), 128 /* KEYED_FRAGMENT */))])])) : (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)("v-if", true)])]), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createCommentVNode)(" ============================================================= "), (0,vue__WEBPACK_IMPORTED_MODULE_4__.createElementVNode)("div", null, [(0,vue__WEBPACK_IMPORTED_MODULE_4__.createVNode)(_component_Pagination, {
     links: {
       next: $setup.page.props.reportData.next_page_url,
       prev: $setup.page.props.reportData.prev_page_url,
