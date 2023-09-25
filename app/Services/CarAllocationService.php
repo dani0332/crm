@@ -177,7 +177,8 @@ class CarAllocationService extends AllocationService
             })
             ->whereIn('user_id', $tierUserIds)
             ->orderBy('last_allocated');
-            info(' query for getting advisor is : '. getQueryForLogWithBindings($query));
+        info(' query for getting advisor is : '.getQueryForLogWithBindings($query));
+
         return $query->get();
     }
 
