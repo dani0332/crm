@@ -1,10 +1,36 @@
 <script setup>
 defineProps({
   policy: Object,
+  awsBasePath: String,
 });
 
 const moveToImcrmModal = ref(false);
 const itemCount = ref(false);
+
+const getS3TempUrl = async file => {
+  try {
+    const response = await axios.post('/legacy-policy/get-s3-temp-url', {
+      fileName: file,
+    });
+    
+    // Check if the request was successful and the response contains the URL
+    if (response.status === 200 && response.data.url) {
+      // Open the URL in a new tab
+      window.open(response.data.url, '_blank');
+    } else {
+      notification.error({
+        title: response.data.error,
+        position: 'top',
+      });      
+    }
+  } catch (error) {
+    notification.error({
+        title: error,
+        position: 'top',
+      });
+    console.error('An error occurred:', error);
+  }    
+};
 
 const notification = useNotifications('toast');
 const single = ref(true);
@@ -66,7 +92,7 @@ const moveToImcrm = async policyNumber => {
 
       <div class="flex gap-2">
         <x-button
-          v-show="false"
+          v-show="true"
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"
@@ -177,6 +203,52 @@ const moveToImcrm = async policyNumber => {
       <div class="mt-6">
         <h3 class="font-semibold text-primary-800">Documents</h3>
         <x-divider class="mb-4 mt-1" />
+        Quotes Documents
+        <ul>
+          <li v-for="quoteDocument in policy?.documents?.quote">
+            <x-button
+            size="xs"
+            color="blue"
+            class="mb-1"
+            outlined
+            @click.prevent="getS3TempUrl(quoteDocument.document_path)"
+          >
+          {{ quoteDocument.document_name }}
+          </x-button>           
+          </li>
+        </ul>
+        
+        <x-divider class="mb-4 mt-1" />
+        Policy Documents
+        <ul>
+          <li v-for="quoteDocument in policy?.documents?.policy">
+          <x-button
+            size="xs"
+            color="blue"
+            class="mb-1"
+            outlined
+            @click.prevent="getS3TempUrl(quoteDocument.document_path)"
+          >
+          {{ quoteDocument.document_name }}
+          </x-button>
+          </li>
+        </ul>
+        <x-divider class="mb-4 mt-1" />
+        Customer Documents
+        <ul>
+          <li v-for="quoteDocument in policy?.documents?.customer">
+            <x-button
+              size="xs"
+              color="blue"
+              class="mb-1"
+              outlined
+              @click.prevent="getS3TempUrl(quoteDocument.document_path)"
+            >
+            {{ quoteDocument.document_name }}
+            </x-button>          
+          </li>
+        </ul>
+        
       </div>
       <div class="text-sm"></div>
     </div>

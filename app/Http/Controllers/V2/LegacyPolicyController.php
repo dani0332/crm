@@ -34,11 +34,11 @@ class LegacyPolicyController extends Controller
     public function show($mongoId)
     {
 
-        $expiryDate = now()->addDay(); //The link will be expire after 1
-        $url = 'afia/2020_09/21/10037772/31948184.png';
-        //   $temporaryUrl = Storage::disk('s3')->temporaryUrl($url, $expiryDate);
+        //$expiryDate = now()->addDay(); //The link will be expire after 1
+        //$url = 'afia/2020_09/21/10037772/31948184.png';
+        //$temporaryUrl = Storage::disk('s3')->temporaryUrl($url, $expiryDate);
 
-        // dd($temporaryUrl);
+         //dd($temporaryUrl);
 
         // $disk = Storage::disk('s3');
 
@@ -104,4 +104,21 @@ class LegacyPolicyController extends Controller
 
         return $policy;
     }
+
+    public function getS3TempUrl(Request $request)
+    {
+        $expiryDate = now()->addMinutes(40);
+        $fileName = $request->fileName;
+        //$fileName = 'afia/2020_09/21/10037772/31948184.png';
+        $temporaryUrl = null;    
+        if (Storage::disk('s3')->has($fileName)) {
+            $temporaryUrl = Storage::disk('s3')->temporaryUrl($fileName, $expiryDate);
+        }    
+        // Check if a temporary URL was generated
+        if ($temporaryUrl) {
+            return response()->json(['url' => $temporaryUrl]);
+        } else {
+            return response()->json(['error' => 'Failed to retrieve URL from the AWS server']);
+        }
+    }    
 }
