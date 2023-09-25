@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class CustomerAdditionalContact extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'customer_additional_contact';
     protected $fillable = ['key', 'value', 'customer_id'];
