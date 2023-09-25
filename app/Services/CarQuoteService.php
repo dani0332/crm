@@ -1582,7 +1582,7 @@ class CarQuoteService extends BaseService
             'emirate_of_registration_id' => 'required',
             'car_type_insurance_id' => 'required',
             'claim_history_id' => 'required',
-            'additional_notes' => 'string',
+            'additional_notes' => 'nullable',
             'car_value_tier' => 'required',
             'seat_capacity' => 'required',
             'cylinder' => 'required|string',

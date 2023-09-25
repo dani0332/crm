@@ -1365,30 +1365,27 @@ const confirmSendEmail = () => {
 							class="w-full"
 						/>
 						
-						<x-field label="TransApp Code" required>
-							<x-input
-								v-if="leadStatusForm.leadStatus == 15"
+						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == 15">
+							<x-input								
 								v-model="leadStatusForm.trans_code"								
 								placeholder="TransApp Code is required"
 								class="w-full"
 								:error="leadStatusForm.errors.trans_code"
 							/>
 						</x-field>
-												
-						<x-select
-							v-if="leadStatusForm.leadStatus == 17"
-							v-model="leadStatusForm.lostReason"
-							label="Lost Reason"
-							:options="
-								lostReasons?.map(item => ({
-								value: item.id,
-								label: item.text,
-								}))
-							"
-							placeholder="Lost Reason is required"
-							class="w-full"
-							:error="leadStatusForm.errors.lostReason"
+						<x-field label="Lost Reason" required v-if="leadStatusForm.leadStatus == 17">
+							<x-select							
+								v-model="leadStatusForm.lostReason"
+								label="Lost Reason"
+								:options="lostReasons?.map(item => ({
+									value: item.id,
+									label: item.text,
+								}))"
+								placeholder="Lost Reason is required"
+								class="w-full"
+								:error="leadStatusForm.errors.lostReason"
 							/>
+						</x-field>
 
 						<x-input
 							v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer"
@@ -1445,7 +1442,7 @@ const confirmSendEmail = () => {
     	</div>
     
 		<PaymentTable 
-			v-if="hasRole(rolesEnum.BetaUser)"
+			v-if="true || hasRole(rolesEnum.BetaUser)"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -2277,7 +2274,7 @@ const confirmSendEmail = () => {
 						>
 							Make Primary
 						</x-button>
-						<x-button
+						<!-- <x-button
 							v-if="item.id && !(record.quote_status_id == quoteStatusEnum.CarSold || record.quote_status_id == quoteStatusEnum.Uncontactable)"
 							size="xs"
 							color="error"
@@ -2285,7 +2282,7 @@ const confirmSendEmail = () => {
 							@click.prevent="additionalContactDelete(item.id)"
 						>
 							Delete
-						</x-button>
+						</x-button> -->
 					</div>
 				</template>
 			</DataTable>

@@ -39,6 +39,7 @@ const rules = {
 const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
   { text: 'Payment Status', value: 'payment_status.code' },
+  { text: 'Provider Name', value: 'insurance_provider.text' },
   { text: 'Plan Name', value: 'health_plan.text' },
   { text: 'Captured Amount', value: 'captured_amount', sortable: true },
   { text: 'Status Change Date', value: 'payment_status_log.created_at' },
@@ -46,6 +47,7 @@ const paymentTableHeaders = [
   { text: 'Authorized At', value: 'authorized_at' },
   { text: 'Payment method', value: 'payment_method.name' },
   { text: 'Reference', value: 'reference' },
+  { text: 'Status Details', value: 'payment_status_message' },
   { text: 'Actions', value: 'actions', sortable: false },
 ];
 

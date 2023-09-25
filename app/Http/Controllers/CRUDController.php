@@ -538,6 +538,7 @@ class CRUDController extends Controller
                 $payment->payment_status_text = $payment->paymentStatus->text;
                 $payment->last_payment_status_created_at = $payment->paymentStatusLogs->last() != null ? $payment->paymentStatusLogs->last()->created_at : '';
                 $payment->payment_method_name = $payment->paymentMethod->name;
+                $payment->insurance_provider_id_text = $payment->insuranceProvider->text;
             }
 
             $lostRejectReasons = LookupRepository::where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->get();

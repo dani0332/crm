@@ -120,6 +120,7 @@ const getModelDetails = (onchange) => {
 }
 
 function onSubmit(isValid) {
+	let modelId = quoteForm.car_model_id;
 	if (quoteForm.nationality_id == null) {
 		isEmptyField.value = true;
 	} else {
@@ -137,6 +138,7 @@ function onSubmit(isValid) {
 
 	const options = {
 		onError: errors => {
+			quoteForm.car_model_id = modelId
 			quoteForm.setError(errors);
 		},
 	};

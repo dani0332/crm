@@ -12486,6 +12486,7 @@ __webpack_require__.r(__webpack_exports__);
       });
     };
     function onSubmit(isValid) {
+      var modelId = quoteForm.car_model_id;
       if (quoteForm.nationality_id == null) {
         isEmptyField.value = true;
       } else {
@@ -12497,6 +12498,7 @@ __webpack_require__.r(__webpack_exports__);
       var url = isEdit.value ? route('car.update', props.quote.uuid) : route('car.store');
       var options = {
         onError: function onError(errors) {
+          quoteForm.car_model_id = modelId;
           quoteForm.setError(errors);
         }
       };
@@ -13378,6 +13380,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       text: 'Payment Status',
       value: 'payment_status.code'
     }, {
+      text: 'Provider Name',
+      value: 'insurance_provider.text'
+    }, {
       text: 'Plan Name',
       value: 'health_plan.text'
     }, {
@@ -13399,6 +13404,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     }, {
       text: 'Reference',
       value: 'reference'
+    }, {
+      text: 'Status Details',
+      value: 'payment_status_message'
     }, {
       text: 'Actions',
       value: 'actions',
@@ -43709,7 +43717,7 @@ var _hoisted_237 = {
   "class": "text-center py-3"
 };
 function render(_ctx, _cache, $props, $setup, $data, $options) {
-  var _$props$record$premiu, _$props$record$paid_a, _$props$record$paymen, _$props$record$car_pl, _$props$record$quote_, _$props$record$order_, _$props$record$paymen2, _$props$record$back_h, _$props$record$calcul, _$props$record$parent, _$props$record$previo, _$props$record$previo2, _$props$record$previo3, _$props$lostReasons, _$props$tiers;
+  var _$props$record$premiu, _$props$record$paid_a, _$props$record$paymen, _$props$record$car_pl, _$props$record$quote_, _$props$record$order_, _$props$record$paymen2, _$props$record$back_h, _$props$record$calcul, _$props$record$parent, _$props$record$previo, _$props$record$previo2, _$props$record$previo3, _$props$tiers;
   var _component_Head = _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_6__.Head;
   var _component_x_divider = (0,vue__WEBPACK_IMPORTED_MODULE_7__.resolveComponent)("x-divider");
   var _component_x_button = (0,vue__WEBPACK_IMPORTED_MODULE_7__.resolveComponent)("x-button");
@@ -43885,13 +43893,13 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     disabled: $setup.leadStatusDisabled,
     placeholder: "Lead Status",
     "class": "w-full"
-  }, null, 8 /* PROPS */, ["modelValue", "options", "disabled"]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_field, {
+  }, null, 8 /* PROPS */, ["modelValue", "options", "disabled"]), $setup.leadStatusForm.leadStatus == 15 ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_field, {
+    key: 0,
     label: "TransApp Code",
     required: ""
   }, {
     "default": (0,vue__WEBPACK_IMPORTED_MODULE_7__.withCtx)(function () {
-      return [$setup.leadStatusForm.leadStatus == 15 ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_input, {
-        key: 0,
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_input, {
         modelValue: $setup.leadStatusForm.trans_code,
         "onUpdate:modelValue": _cache[4] || (_cache[4] = function ($event) {
           return $setup.leadStatusForm.trans_code = $event;
@@ -43899,27 +43907,36 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         placeholder: "TransApp Code is required",
         "class": "w-full",
         error: $setup.leadStatusForm.errors.trans_code
-      }, null, 8 /* PROPS */, ["modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true)];
+      }, null, 8 /* PROPS */, ["modelValue", "error"])];
     }),
     _: 1 /* STABLE */
-  }), $setup.leadStatusForm.leadStatus == 17 ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_select, {
-    key: 0,
-    modelValue: $setup.leadStatusForm.lostReason,
-    "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
-      return $setup.leadStatusForm.lostReason = $event;
-    }),
-    label: "Lost Reason",
-    options: (_$props$lostReasons = $props.lostReasons) === null || _$props$lostReasons === void 0 ? void 0 : _$props$lostReasons.map(function (item) {
-      return {
-        value: item.id,
-        label: item.text
-      };
-    }),
-    placeholder: "Lost Reason is required",
-    "class": "w-full",
-    error: $setup.leadStatusForm.errors.lostReason
-  }, null, 8 /* PROPS */, ["modelValue", "options", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.FollowupCall || $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.Interested || $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.NoAnswer ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_input, {
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == 17 ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_field, {
     key: 1,
+    label: "Lost Reason",
+    required: ""
+  }, {
+    "default": (0,vue__WEBPACK_IMPORTED_MODULE_7__.withCtx)(function () {
+      var _$props$lostReasons;
+      return [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_select, {
+        modelValue: $setup.leadStatusForm.lostReason,
+        "onUpdate:modelValue": _cache[5] || (_cache[5] = function ($event) {
+          return $setup.leadStatusForm.lostReason = $event;
+        }),
+        label: "Lost Reason",
+        options: (_$props$lostReasons = $props.lostReasons) === null || _$props$lostReasons === void 0 ? void 0 : _$props$lostReasons.map(function (item) {
+          return {
+            value: item.id,
+            label: item.text
+          };
+        }),
+        placeholder: "Lost Reason is required",
+        "class": "w-full",
+        error: $setup.leadStatusForm.errors.lostReason
+      }, null, 8 /* PROPS */, ["modelValue", "options", "error"])];
+    }),
+    _: 1 /* STABLE */
+  })) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.FollowupCall || $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.Interested || $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.NoAnswer ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_input, {
+    key: 2,
     modelValue: $setup.leadStatusForm.next_followup_date,
     "onUpdate:modelValue": _cache[6] || (_cache[6] = function ($event) {
       return $setup.leadStatusForm.next_followup_date = $event;
@@ -43930,7 +43947,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "class": "w-full",
     error: $setup.leadStatusForm.errors.next_followup_date
   }, null, 8 /* PROPS */, ["modelValue", "error"])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.leadStatusForm.leadStatus == $props.quoteStatusEnum.IMRenewal ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_select, {
-    key: 2,
+    key: 3,
     modelValue: $setup.leadStatusForm.tier_id,
     "onUpdate:modelValue": _cache[7] || (_cache[7] = function ($event) {
       return $setup.leadStatusForm.tier_id = $event;
@@ -43969,7 +43986,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       return [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createTextVNode)(" Change Status ")];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["loading", "onClick"])])])])]), $setup.hasRole($setup.rolesEnum.BetaUser) ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)($setup["PaymentTable"], {
+  }, 8 /* PROPS */, ["loading", "onClick"])])])])]),  true ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)($setup["PaymentTable"], {
     key: 0,
     payments: $props.payments,
     quoteRequest: $props.paymentEntityModel,
@@ -43980,7 +43997,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         label: pm.name
       };
     })
-  }, null, 8 /* PROPS */, ["payments", "quoteRequest", "paymentStatusEnum", "paymentMethods"])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", _hoisted_150, [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", null, [_hoisted_151, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_divider, {
+  }, null, 8 /* PROPS */, ["payments", "quoteRequest", "paymentStatusEnum", "paymentMethods"])) : 0, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", _hoisted_150, [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", null, [_hoisted_151, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_divider, {
     "class": "mb-4 mt-1"
   })]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", _hoisted_152, [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", _hoisted_153, [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_field, {
     label: "Cylinder",
@@ -45093,20 +45110,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
           return [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createTextVNode)(" Make Primary ")];
         }),
         _: 2 /* DYNAMIC */
-      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"]), item.id && !($props.record.quote_status_id == $props.quoteStatusEnum.CarSold || $props.record.quote_status_id == $props.quoteStatusEnum.Uncontactable) ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_button, {
-        key: 0,
-        size: "xs",
-        color: "error",
-        outlined: "",
-        onClick: (0,vue__WEBPACK_IMPORTED_MODULE_7__.withModifiers)(function ($event) {
-          return $setup.additionalContactDelete(item.id);
-        }, ["prevent"])
-      }, {
-        "default": (0,vue__WEBPACK_IMPORTED_MODULE_7__.withCtx)(function () {
-          return [(0,vue__WEBPACK_IMPORTED_MODULE_7__.createTextVNode)(" Delete ")];
-        }),
-        _: 2 /* DYNAMIC */
-      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true)])];
+      }, 1032 /* PROPS, DYNAMIC_SLOTS */, ["onClick"]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)(" <x-button\n\t\t\t\t\t\t\tv-if=\"item.id && !(record.quote_status_id == quoteStatusEnum.CarSold || record.quote_status_id == quoteStatusEnum.Uncontactable)\"\n\t\t\t\t\t\t\tsize=\"xs\"\n\t\t\t\t\t\t\tcolor=\"error\"\n\t\t\t\t\t\t\toutlined\n\t\t\t\t\t\t\t@click.prevent=\"additionalContactDelete(item.id)\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\tDelete\n\t\t\t\t\t\t</x-button> ")])];
     }),
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["headers", "items"]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_x_modal, {
