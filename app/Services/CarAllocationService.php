@@ -143,7 +143,7 @@ class CarAllocationService extends AllocationService
         ];
 
         foreach ($statusOrder as $status) {
-            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds);
+            $eligibleUsers = $this->getAdvisorsByStatus($status, $tierUserIds, $advisorId);
 
             if ($eligibleUsers && count($eligibleUsers) > 0) {
                 info('result of available users are : '.json_encode(collect($eligibleUsers)->pluck('user_id')));
@@ -155,7 +155,7 @@ class CarAllocationService extends AllocationService
         return [];
     }
 
-    public function getAdvisorsByStatus($status, $tierUserIds)
+    public function getAdvisorsByStatus($status, $tierUserIds, $advisorId)
     {
         $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
 
@@ -174,6 +174,10 @@ class CarAllocationService extends AllocationService
             ->whereIn('user_id', $tierUserIds)
             ->whereNotIn('user_id', $excludedUserIds)
             ->orderBy('last_allocated');
+
+        if (! empty($advisorId)) {
+            $query->where('user_id', '!=', $advisorId);
+        }
 
         return $query->get();
     }
