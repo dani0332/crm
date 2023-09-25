@@ -6,6 +6,7 @@ use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
 if (! function_exists('generate_code')) {
@@ -491,5 +492,13 @@ if (! function_exists('checkPersonalQuotes')) {
             QuoteTypes::PET->value,
             QuoteTypes::YACHT->value,
         ]);
+    }
+}
+
+if (! function_exists('getQueries')) {
+    function getQueries(Builder $builder)
+    {
+        $addSlashes = str_replace('?', "'?'", $builder->toSql());
+        return vsprintf(str_replace('?', '%s', $addSlashes), $builder->getBindings());
     }
 }

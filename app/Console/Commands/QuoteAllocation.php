@@ -101,7 +101,7 @@ class QuoteAllocation extends Command
             ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {
                     info('------ Lead allocation started for '.QuoteTypeId::getDescription($quoteType)." lead: $lead->uuid ------");
-                    $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->id);
+                    $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
                     $allocationStrategy->executeSteps();
                     $processedRecords++;
                 }
