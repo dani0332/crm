@@ -9,6 +9,7 @@ use App\Enums\InsuranceProvidersEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
 use App\Enums\TiersEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\CarMake;
@@ -24,9 +25,11 @@ use App\Models\LeadSource;
 use App\Models\QuoteBatches;
 use App\Models\Rule;
 use App\Models\RuleLeadSource;
+use App\Models\Team;
 use App\Models\Tier;
 use App\Models\TierUser;
 use App\Models\User;
+use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -154,6 +157,12 @@ class CarAllocationService extends AllocationService
 
     public function getAdvisorsByStatus($status, $tierUserIds)
     {
+        $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
+
+        $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
+
+        $excludedUserIds = UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
+
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
                 $query->where('status', $status);
@@ -163,8 +172,8 @@ class CarAllocationService extends AllocationService
                     ->orWhere('max_capacity', -1);
             })
             ->whereIn('user_id', $tierUserIds)
+            ->whereNotIn('user_id', $excludedUserIds)
             ->orderBy('last_allocated');
-        info(' query for getting advisor is : '.getQueryForLogWithBindings($query));
 
         return $query->get();
     }
