@@ -56,7 +56,7 @@ class UpdateUserStatus extends Command
      */
     public function handle()
     {
-        info('UpdateHealthStatus Command Started');
+        info('----------- UpdateHealthStatus Command Started -----------');
         [$userInactiveThreshold, $inactiveThreshold] = $this->getInactiveThreshold();
 
         info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
@@ -64,20 +64,21 @@ class UpdateUserStatus extends Command
         $sessions = $this->getSessions();
 
         foreach ($sessions as $session) {
+
+            info('----------- Activity Check Started for User : '. $session->user->name .' -----------');
             [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
 
             if ($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
-                info('going to skip user : '.$session->user->name.' due to current status');
+                info('User : '.$session->user->name.' will be skipped due to current status');
 
                 continue;
             }
 
             if ($lastActivity < $inactiveThreshold) {
 
-                info('Inside activity check for user : '.$session->user->name);
-                $unAvailableTime = now()->subHours(2);
-                info('unavailable time is : '.$unAvailableTime);
-                $offlineTime = now()->subMinutes(5);
+                $unAvailableTime = now()->subMinutes(2);
+
+                $offlineTime = now()->subSeconds(30);
 
                 $newStatus = $currentUserStatus;
 
@@ -88,28 +89,31 @@ class UpdateUserStatus extends Command
                 }
 
                 if ($newStatus != $currentUserStatus) {
-                    info('updating user as '.$newStatus.' as the last activity was : '.$lastActivity);
+                    info('System will now change status from : '. $currentUserStatus . ' to : '.$newStatus);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus));
+                    info('System pushed event notification');
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
                         $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
                         if ($this->userHaveProduct($userId, $carId)) {
+                            info('System triggered car reassignment job for user : '. $session->user->name);
                             ReAssignCarLeadsJob::dispatch(new CarAllocationService(), $userId);
                         }
                         if ($this->userHaveProduct($userId, $healthId)) {
+                            info('System triggered health reassignment job for user : '. $session->user->name);
                             ReAssignHealthLeadsJob::dispatch(new HealthAllocationService(), $userId);
                         }
-
                     }
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {
-                info('going to send active notification for user : '.$session->user->name);
+                info('System will now change the status to Active from status : '. $currentUserStatus .' for user : '.$session->user->name);
                 event(new UserStatusChanged($userId, UserStatusEnum::ONLINE));
+                info('System pushed event notification');
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
         }
-        info('UpdateHealthStatus Command Completed');
+        info('----------- Activity Check Ended for User : '. $session->user->name .' -----------');
 
         return 0;
     }
@@ -133,7 +137,7 @@ class UpdateUserStatus extends Command
             $userInactiveThreshold = (int) $userInactiveThreshold->value;
         } else {
             // default is 30 seconds if app storage doesn't exist
-            $userInactiveThreshold = 300;
+            $userInactiveThreshold = 30;
         }
         $inactiveThreshold = now()->subSeconds($userInactiveThreshold);
 
@@ -143,16 +147,12 @@ class UpdateUserStatus extends Command
     public function extractUserInformation(mixed $session): array
     {
         $userId = $session->user_id;
-        $userName = $session->user->name;
 
-        info('Running status job for user : '.$userName);
         $lastActivity = Carbon::createFromTimestamp($session->last_activity);
 
-        info('Last activity for user : '.$session->user->name.' was at : '.$lastActivity);
-        info('user table status right now is : '.$session->user->status);
+        info('Last activity for user : '.$session->user->name.' was at : '.$lastActivity. ' and current status is : '.$session->user->status);
 
         $currentUserStatus = $session->user->status ?? UserStatusEnum::UNAVAILABLE;
-        info('Current Status for user : '.$session->user->name.' is : '.$currentUserStatus);
 
         return [$userId, $lastActivity, $currentUserStatus];
     }

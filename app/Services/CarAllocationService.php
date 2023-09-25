@@ -453,7 +453,7 @@ class CarAllocationService extends AllocationService
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('inside reassignment general run and advisors selected are : '.json_encode($advisorIds));
+                info('inside reassignment general run');
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
@@ -507,6 +507,7 @@ class CarAllocationService extends AllocationService
             'documentUrl' => [$documentUrl],
             'customerEmail' => $carQuote->email,
             'carQuoteId' => $carQuote->code,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
 
@@ -535,8 +536,10 @@ class CarAllocationService extends AllocationService
             'discountPremium' => $plan->discount_premium ? $plan->discount_premium : '',
             'carQuoteId' => $carQuote->code,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'planName' => $plan->plan_name,
             'benefits' => $this->getPlanBenefits($plan),
+            'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
         ];
 
         return $emailData;
@@ -557,6 +560,7 @@ class CarAllocationService extends AllocationService
                 'planName' => $plan->plan_name,
                 'providerCode' => strtolower($plan->provider_code),
                 'benefits' => $this->getPlanBenefits($plan),
+                'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
             ];
         }
 
@@ -572,6 +576,7 @@ class CarAllocationService extends AllocationService
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'carQuoteId' => $carQuote->code,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'plans' => $insurerPlans,
             'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
         ];
@@ -590,6 +595,13 @@ class CarAllocationService extends AllocationService
         }
 
         return $planAddons;
+    }
+
+    public function getPlanBuyNowLink($plan, $uuid, )
+    {
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $uuid . '/payment/providerCode='. $plan->providerCode. '%planId='. $plan->id;
+
+        return $buyNowLink;
     }
 
     public function getVehicleName($lead)
