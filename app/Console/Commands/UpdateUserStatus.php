@@ -66,8 +66,9 @@ class UpdateUserStatus extends Command
         foreach ($sessions as $session) {
             [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
 
-            if($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
-                info('going to skip user : '. $session->user->name . ' due to current status');
+            if ($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
+                info('going to skip user : '.$session->user->name.' due to current status');
+
                 continue;
             }
 
