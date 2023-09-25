@@ -67,7 +67,7 @@ class UpdateUserStatus extends Command
             [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
 
             if ($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
-                info('Skipping activity check for user : '.$session->user->name.' due to being on : '.UserStatusEnum::getDescription($currentUserStatus));
+                info('Skipping activity check for user : '.$session->user->name.' due to being on status : '. $currentUserStatus);
 
                 continue;
             }
@@ -160,10 +160,10 @@ class UpdateUserStatus extends Command
 
         info('Last activity for user : '.$session->user->name.' was at : '.$lastActivity);
 
-        info('user table status right now is : '.UserStatusEnum::getDescription($session->user->status));
+        info('user table status right now is : '.$session->user->status);
 
         $currentUserStatus = $session->user->status ?? UserStatusEnum::UNAVAILABLE;
-        info('Current Status for user : '.$session->user->name.' is : '.UserStatusEnum::getDescription($currentUserStatus));
+        info('Current Status for user : '.$session->user->name.' is : '. $currentUserStatus);
 
         return [$userId, $lastActivity, $currentUserStatus];
     }
