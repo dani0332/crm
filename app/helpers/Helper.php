@@ -499,6 +499,7 @@ if (! function_exists('getQueries')) {
     function getQueries(Builder $builder)
     {
         $addSlashes = str_replace('?', "'?'", $builder->toSql());
+
         return vsprintf(str_replace('?', '%s', $addSlashes), $builder->getBindings());
     }
 }
