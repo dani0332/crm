@@ -8,7 +8,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
@@ -249,14 +251,9 @@ class CRUDService extends BaseService
                 $entity->tier_id = $request->tier_id;
             }
             $entity->save();
-            //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
-                SyncSIBContactJob::dispatch($entity);
-            }
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
-
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
@@ -316,24 +313,24 @@ class CRUDService extends BaseService
                 }
             }
 
-            //Disabling - Enable for RM Deployment
-            // if (
-            //     strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-            //     && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-            // ) {
-            //     if ($request->leadStatus == QuoteStatusEnum::Quoted) {
-            //         CammyJob::dispatch($entity, 'intro');
-            //     } else {
-            //         SyncSIBContactJob::dispatch($entity);
-            //     }
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+                && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+            ) {
+                if ($request->leadStatus == QuoteStatusEnum::Quoted) {
+                    // CammyJob::dispatch($entity, 'intro');
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email');
+                } else {
+                    SyncSIBContactJob::dispatch($entity);
+                }
 
-            //     if (
-            //         $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-            //         || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-            //     ) {
-            //         CammyJob::dispatch($entity, 'unsub');
-            //     }
-            // }
+                if (
+                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                ) {
+                    CammyJob::dispatch($entity, 'unsub');
+                }
+            }
 
             QuoteStatusLog::create([
                 'quote_type_id' => QuoteTypeId::Car,

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
+use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
@@ -428,5 +429,21 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $responseCode;
+    }
+
+    public function sendRMIntroEmail($quoteUuid)
+    {
+        $dataArr = [
+            'quoteUID' => $quoteUuid,
+            'resend' => false,
+        ];
+        $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
+        if ($response && $response->status) {
+            $msg = '';
+            if (isset($response->msg)) {
+                $msg = $response->msg;
+            }
+            info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
+        }
     }
 }
