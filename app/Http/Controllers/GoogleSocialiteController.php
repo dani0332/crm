@@ -43,7 +43,7 @@ class GoogleSocialiteController extends Controller
         $today = Carbon::now();
         $lastSync = $lastUpdatedDate->diffInDays($today);
 
-        if(isset($socialUser->user['picture']) && ($lastSync > 30  || $requestingUser->google_photo_last_updated == null) ){
+        if(isset($socialUser->user['picture']) && ($lastSync > 6  || $requestingUser->google_photo_last_updated == null) ){
             $requestingUser->google_photo_last_updated = now();
             $requestingUser->profile_photo_path = $socialUser->user['picture'];
         }
