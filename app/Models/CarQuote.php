@@ -13,7 +13,7 @@ use OwenIt\Auditing\Auditable;
 
 class CarQuote extends BaseModel
 {
-    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'car_quote_request';
     protected $casts = [
@@ -27,8 +27,14 @@ class CarQuote extends BaseModel
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'renewal_batch' => FilterTypes::EXACT,
     ];
     protected $guarded = [];
+
+    public function getFullNameAttribute()
+    {
+        return $this->first_name.' '.$this->last_name;
+    }
 
     public function fullName()
     {
@@ -414,5 +420,18 @@ class CarQuote extends BaseModel
     public function documents()
     {
         return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function carLostQuoteLogs()
+    {
+        return $this->hasMany(CarLostQuoteLog::class, 'car_quote_request_id');
+    }
+
+    public function carLostQuoteLog()
+    {
+        return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->latestOfMany();
     }
 }

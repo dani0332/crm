@@ -1,4 +1,6 @@
-<link href="{{ asset('build/css/car_quote_ecom.css') }}" rel="stylesheet">
+@php
+    use App\Enums\PaymentStatusEnum;
+@endphp
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
@@ -22,11 +24,17 @@
                     </div>
                 </div>
                 <div class="item form-group">
-                    <div class="col">
+                    <div class="col" >
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT STATUS"><b>PAYMENT STATUS</b></label>
-                        <div class="col-md-6 col-sm-6">
+                        <div class="col-md-3 col-sm-3">
                         <p class="label-align-center">{{ $record->payment_status_id_text ? $record->payment_status_id_text: '' }}</p>
                         </div>
+                        @if($record->payment_status_id == PaymentStatusEnum::DECLINED)
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT STATUS"><b>Reason</b></label>
+                            <div class="col-md-3 col-sm-3">
+                                <p class="label-align-center">{{ !empty($mainPayment->payment_status_message) ? $mainPayment->payment_status_message : "" }}</p>
+                            </div>
+                        @endif
                     </div>
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PROVIDER NAME"><b>PROVIDER NAME</b></label>
@@ -35,6 +43,7 @@
                         </div>
                     </div>
                 </div>
+
                 <div class="item form-group">
                     <div class="col">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="PAYMENT METHOD"><b>PAYMENT METHOD</b></label>

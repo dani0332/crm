@@ -9,7 +9,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class TravelQuoteExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize
+class TravelQuoteExport implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping
 {
     use Exportable;
 

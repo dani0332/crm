@@ -12,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class HomeQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'home_quote_request';
     protected $guarded = [];
@@ -63,5 +63,10 @@ class HomeQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+    }
+
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
     }
 }

@@ -93,7 +93,14 @@ use App\Enums\GenericRequestEnum;
                         @endif
                     </div>
                     <div class="col">
-                        <span class="col-form-label col-md-6 col-sm-6">Is Active
+                        <span class="col-form-label col-md-3 col-sm-3">Slabs Count <span class="required">*</span></span>
+                        <input type="number" id="slabs_count" placeholder="Allowed slabs count" name="slabs_count" value="{{$team->slabs_count ?: 0}}" class="form-control">
+                        @if ($errors->has('allowed_slabs'))
+                            <span class="text-danger">{{ $errors->first('allowed_slabs') }}</span>
+                        @endif
+                    </div>
+                    <div class="col">
+                        <span class="col-form-label col-md-3 col-sm-3">Is Active
                         <br>
                         @if ($team->is_active === GenericRequestEnum::TRUE)
                         <input type="checkbox" name="is_active" checked="">

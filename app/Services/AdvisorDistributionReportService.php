@@ -45,6 +45,8 @@ class AdvisorDistributionReportService extends BaseService
             ->join('teams', 'teams.id', 'user_team.team_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
             ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
@@ -140,6 +142,11 @@ class AdvisorDistributionReportService extends BaseService
                     ->join('teams', 'teams.id', 'user_team.team_id')
                     ->whereIn('teams.id', $value);
             });
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         return $query;

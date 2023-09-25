@@ -169,6 +169,7 @@
                 customer_data_table_route: "{{ route('customers-list') }}",
                 discount_base_data_table_route: "{{ route('base.index') }}",
                 load_auditable: "{{ url('auditable') }}",
+                load_apilogs: "{{ url('insurer-logs') }}",
                 load_dashboard_stats: "{{ url('dashboard-stats') }}",
                 insurancecompany_datatable_route: "{{ route('insurancecompany.index') }}",
                 handler_datatable_route: "{{ route('handler.index') }}",
@@ -199,6 +200,9 @@
                 car_lead_allocation_index_route: "{{ route('car-lead-allocation.index') }}",
                 advisor_conversion_report_route: "{{ url('reports/advisor-conversion')  }}",
                 teams_datatable_route: "{{ route('team.index') }}",
+                commercial_keywords_datatable_route: "{{ route('admin.commercial.keywords') }}",
+                commercial_vehicles_datatable_route: "{{ route('admin.configure.commerical.vehicles') }}",
+                renewal_batched_datatable_route: "{{ route('renewal-batches-list') }}",
             },
             _token: "{{ csrf_token() }}"
         };

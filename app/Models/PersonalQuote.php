@@ -13,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PersonalQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $appends = ['dob_formatted'];
     protected $guarded = [];

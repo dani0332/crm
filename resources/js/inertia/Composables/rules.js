@@ -1,10 +1,13 @@
-export const useRules = () => {
+export const useRules = () =>
+{
   const isEmail = v =>
     /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
     'E-mail must be valid';
 
-  const isMobile = v => {
-    if (v) {
+  const isMobile = v =>
+  {
+    if (v)
+    {
       return v.length <= 10 || 'Mobile Number should be 10 digits long';
     }
 
@@ -17,8 +20,10 @@ export const useRules = () => {
 
   const isNumber = v => /^\d+$/.test(v) || 'This field must be a number';
 
-  const policy_number = v => {
-    if (v) {
+  const policy_number = v =>
+  {
+    if (v)
+    {
       return (
         v.length <= 50 || 'Policy Number should be less than 50 characters'
       );
@@ -26,20 +31,26 @@ export const useRules = () => {
     return true;
   };
 
-  const policy_start_date = v => {
-    if (v) {
+  const policy_start_date = v =>
+  {
+    if (v)
+    {
       const date = new Date(v);
       return !isNaN(date.getTime());
     }
     return true;
   };
 
-  const renewal_expiry_date = v => {
-    if (v) {
+  const renewal_expiry_date = v =>
+  {
+    if (v)
+    {
       const date = new Date(v);
-      if (policyDetails.policy_start_date) {
+      if (policyDetails.policy_start_date)
+      {
         const startDate = new Date(policyDetails.policy_start_date);
-        if (startDate >= date) {
+        if (startDate >= date)
+        {
           return 'Expiry date should be greater than Start Date';
         }
       }
@@ -48,10 +59,13 @@ export const useRules = () => {
     return true;
   };
 
-  const premium = v => {
-    if (v) {
+  const premium = v =>
+  {
+    if (v)
+    {
       const premium = parseFloat(v);
-      if (premium < 0 || isNaN(premium)) {
+      if (premium < 0 || isNaN(premium))
+      {
         return 'Premium should be greater than 0';
       }
     }
@@ -62,8 +76,17 @@ export const useRules = () => {
   const emptyOrDecimal = v =>
     !v || /^\d+(\.\d{1,2})?$/.test(v) || 'Must be a decimal';
 
-  const isMobileNo = v => {
-    const regex = /^(\+?\d{1,3})?\d{10}$/;
+  const isMobileNo = v =>
+  {
+    const regex = /^[0-9+\-\s]+$/;
+    if (v.length < 10)
+    {
+      return 'Mobile Number should be 10 digits long';
+    }
+    if (v.length > 20)
+    {
+      return 'Mobile Number should be less than 20 digits long';
+    }
     return regex.test(v) || 'Invalid mobile number';
   };
 

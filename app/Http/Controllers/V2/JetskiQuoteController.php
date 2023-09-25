@@ -94,7 +94,7 @@ class JetskiQuoteController extends Controller
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::JETSKI->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
 
-        $insuranceProviders = InsuranceProviderRepository::getList();
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::JETSKI->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::JETSKI->value);
 

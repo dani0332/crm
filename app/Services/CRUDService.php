@@ -8,8 +8,9 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
-use App\Jobs\CammyJob;
+use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
 use App\Models\QuoteStatusLog;
 use App\Models\User;
@@ -206,83 +207,147 @@ class CRUDService extends BaseService
 
     public function updateQuoteStatus(Request $request)
     {
-        $quoteDetailEntity = $this->{strtolower($request->modelType).'QuoteService'}->getDetailEntity($request->leadId);
+        return DB::transaction(function () use ($request) {
+            $quoteDetailEntity = $this->{strtolower($request->modelType).'QuoteService'}->getDetailEntity($request->leadId);
 
-        if (isset($request->lostReason) && $request->lostReason != '') {
-            $quoteDetailEntity->lost_reason_id = $request->lostReason;
-        }
-        if (isset($request->trans_code) && $request->trans_code != '') {
-            $quoteDetailEntity->transapp_code = $request->trans_code;
-        }
-        if (isset($request->notes) && $request->notes != '') {
-            $quoteDetailEntity->notes = $request->notes;
-        }
-        if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
-            $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->nextFollowUpDate));
-        }
-        if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-            $quoteDetailEntity->lost_approval_status = $request->lost_approval_status;
-        }
-        if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-            $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
-        }
-        if (isset($request->next_followup_date) && $request->next_followup_date != '' && ($request->leadStatus == QuoteStatusEnum::FollowupCall || $request->leadStatus == QuoteStatusEnum::Interested || $request->leadStatus == QuoteStatusEnum::NoAnswer)) {
-            $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->next_followup_date));
-        }
+            if (isset($request->lostReason) && $request->lostReason != '') {
+                $quoteDetailEntity->lost_reason_id = $request->lostReason;
+            }
+            if (isset($request->trans_code) && $request->trans_code != '') {
+                $quoteDetailEntity->transapp_code = $request->trans_code;
+            }
+            if (isset($request->notes) && $request->notes != '') {
+                $quoteDetailEntity->notes = $request->notes;
+            }
+            if (isset($request->nextFollowUpDate) && $request->nextFollowUpDate != '') {
+                $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->nextFollowUpDate));
+            }
+            if (isset($request->lost_approval_status) && $request->lost_approval_status != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                $quoteDetailEntity->lost_approval_status = $request->lost_approval_status;
+            }
+            if (isset($request->lost_approval_reason) && $request->lost_approval_reason != '' && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                $quoteDetailEntity->lost_approval_reason = $request->lost_approval_reason;
+            }
+            if (isset($request->next_followup_date) && $request->next_followup_date != '' && ($request->leadStatus == QuoteStatusEnum::FollowupCall || $request->leadStatus == QuoteStatusEnum::Interested || $request->leadStatus == QuoteStatusEnum::NoAnswer)) {
+                $quoteDetailEntity->next_followup_date = date('Y-m-d H:i:s', strtotime($request->next_followup_date));
+            }
 
-        $quoteDetailEntity->save();
+            $quoteDetailEntity->save();
 
-        $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
-        $previousQuoteStatus = $entity->quote_status_id;
-        //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
-            $entity->quote_status_id = QuoteStatusEnum::Quoted;
-        } else {
-            $entity->quote_status_id = $request->leadStatus;
-        }
-        if ($request->leadStatus == QuoteStatusEnum::Qualified && auth()->user()->isHealthWcuAdvisor()) {
-            $entity->wcu_id = null;
-        }
-        if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
-            $entity->tier_id = $request->tier_id;
-        }
-        $entity->save();
-        //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
-        if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
-            SyncSIBContactJob::dispatch($entity);
-        }
+            $entity = $this->{strtolower($request->modelType).'QuoteService'}->getEntityPlain($request->leadId);
+            $previousQuoteStatus = $entity->quote_status_id;
+            //if model is health ,team is ebp ,previous status is quoted and wants to update qualified then restrict advisor
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP && $previousQuoteStatus == QuoteStatusEnum::Quoted && $request->leadStatus == QuoteStatusEnum::Qualified) {
+                $entity->quote_status_id = QuoteStatusEnum::Quoted;
+            } else {
+                $entity->quote_status_id = $request->leadStatus;
+            }
+            if ($request->leadStatus == QuoteStatusEnum::Qualified && auth()->user()->isHealthWcuAdvisor()) {
+                $entity->wcu_id = null;
+            }
+            if (isset($request->tier_id) && $request->tier_id != '' && strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
+                $entity->tier_id = $request->tier_id;
+            }
+            $entity->save();
+            //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && $entity->health_team_type == HealthTeamType::EBP) {
+                SyncSIBContactJob::dispatch($entity);
+            }
 
-        //Disabling - Enable for RM Deployment
-        // if (
-        //     strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-        //     && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-        // ) {
-        //     if ($request->leadStatus == QuoteStatusEnum::Quoted) {
-        //         CammyJob::dispatch($entity, 'intro');
-        //     } else {
-        //         SyncSIBContactJob::dispatch($entity);
-        //     }
+            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+                && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
 
-        //     if (
-        //         $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-        //         || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-        //     ) {
-        //         CammyJob::dispatch($entity, 'unsub');
-        //     }
-        // }
+                if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                    //perform approval or rejection
+                    $carLostQuoteLog = CarLostQuoteLog::where([
+                        'car_quote_request_id' => $entity->id,
+                        'id' => $request->car_lost_quote_log_id,
+                    ])->firstOrFail();
 
-        QuoteStatusLog::create([
-            'quote_type_id' => QuoteTypeId::Car,
-            'quote_request_id' => $entity->id,
-            'current_quote_status_id' => $request->leadStatus,
-            'previous_quote_status_id' => $previousQuoteStatus,
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
-            'notes' => $request->notes,
-            'created_by' => Auth::user()->id,
-        ]);
+                    $lostQuoteLogData = [
+                        'status' => $request->lost_approval_status,
+                        'quote_status_id' => $request->leadStatus,
+                        'reason_id' => ($request->lost_approval_status == GenericRequestEnum::APPROVED) ? $request->approve_reason_id : $request->reject_reason_id,
+                        'notes' => $request->lost_notes,
+                        'action_by_id' => auth()->user()->id,
+                    ];
 
-        return $entity;
+                    $carLostQuoteLog->update($lostQuoteLogData);
+
+                    if ($request->hasFile('mo_proof_document')) {
+                        $fileName = $request->mo_proof_document->getClientOriginalName();
+
+                        $azureFileName = get_guid().'_'.$fileName;
+                        $azureFilePath = $request->file('mo_proof_document')
+                            ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+
+                        $carLostQuoteLog->documents()->create([
+                            'name' => $fileName,
+                            'path' => $azureFilePath,
+                            'mime_type' => $request->mo_proof_document->getClientMimeType(),
+                            'created_by_id' => auth()->user()->id,
+                        ]);
+                    }
+
+                    if ($request->lost_approval_status == GenericRequestEnum::REJECTED) {
+                        //send rejection email
+                        CarLostStatusRejected::dispatch($entity, $carLostQuoteLog);
+                    }
+                } elseif (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+                    //store request of car sold/uncontactable with proof
+                    $carLostQuoteLog = $entity->carLostQuoteLogs()->create([
+                        'advisor_id' => auth()->user()->id,
+                        'quote_status_id' => $request->leadStatus,
+                        'status' => GenericRequestEnum::PENDING,
+                    ]);
+
+                    $fileName = $request->proof_document->getClientOriginalName();
+
+                    $azureFileName = get_guid().'_'.$fileName;
+                    $azureFilePath = $request->file('proof_document')
+                        ->storeAs('car_proof_docs', $azureFileName, 'azureIM');
+
+                    $carLostQuoteLog->documents()->create([
+                        'name' => $fileName,
+                        'path' => $azureFilePath,
+                        'mime_type' => $request->proof_document->getClientMimeType(),
+                        'created_by_id' => auth()->user()->id,
+                    ]);
+                }
+            }
+
+            //Disabling - Enable for RM Deployment
+            // if (
+            //     strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+            //     && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+            // ) {
+            //     if ($request->leadStatus == QuoteStatusEnum::Quoted) {
+            //         CammyJob::dispatch($entity, 'intro');
+            //     } else {
+            //         SyncSIBContactJob::dispatch($entity);
+            //     }
+
+            //     if (
+            //         $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+            //         || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+            //     ) {
+            //         CammyJob::dispatch($entity, 'unsub');
+            //     }
+            // }
+
+            QuoteStatusLog::create([
+                'quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $entity->id,
+                'current_quote_status_id' => $request->leadStatus,
+                'previous_quote_status_id' => $previousQuoteStatus,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+                'notes' => $request->notes,
+                'created_by' => Auth::user()->id,
+            ]);
+
+            return $entity;
+        });
     }
 
     public function getAdvisorsByModelType($modelType)

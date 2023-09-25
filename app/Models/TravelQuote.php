@@ -13,7 +13,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class TravelQuote extends Model implements AuditableContract
 {
-    use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
+    use Auditable, FilterCriteria, HasFactory, QuoteModelTrait;
 
     protected $table = 'travel_quote_request';
     protected $guarded = [];

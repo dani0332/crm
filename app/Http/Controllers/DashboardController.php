@@ -129,12 +129,8 @@ class DashboardController extends Controller
             return in_array($item->id, $commonTeams);
         });
         $tiers = $this->tierService->getTPLTiers();
-        $commonTeam = 0;
-        if (count($commonTeams) > 0) {
-            $commonTeam = $commonTeams[0];
-        }
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'tiers'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -163,6 +159,8 @@ class DashboardController extends Controller
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -196,6 +194,11 @@ class DashboardController extends Controller
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
+        }
+
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];
@@ -281,6 +284,8 @@ class DashboardController extends Controller
             ->join('users', 'users.id', 'car_quote_request.advisor_id')
             ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
             ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
+            ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
             ->where('users.is_active', true)
             ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
@@ -319,6 +324,11 @@ class DashboardController extends Controller
 
         if (isset($request->userFilter) && $request->userFilter != 'null') {
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
+        }
+
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];

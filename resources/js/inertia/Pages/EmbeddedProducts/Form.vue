@@ -291,6 +291,7 @@ function onSubmit(isValid) {
                 <div
                   v-if="isEdit && form.company_documents[index].path"
                   class="flex gap-2 my-3"
+                  :key="index"
                 >
                   <x-button
                     size="sm"
@@ -324,11 +325,15 @@ function onSubmit(isValid) {
                 />
               </template>
               <template v-else>
-                <x-divider class="my-4" />
+                <x-divider
+                  class="my-4"
+                  :key="form.company_documents[index].title"
+                />
                 <x-input
                   v-model="form.company_documents[index].title"
                   class="w-full"
                   placeholder="Document Type"
+                  :key="form.company_documents[index].title"
                 />
                 <FileUploader
                   v-model="form.company_documents[index].path"
@@ -343,6 +348,7 @@ function onSubmit(isValid) {
                   color="error"
                   class="mb-4"
                   @click="removeDoc(index)"
+                  :key="form.company_documents[index].title"
                 >
                   Remove Attachment
                 </x-button>

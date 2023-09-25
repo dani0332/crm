@@ -124,17 +124,25 @@ class CycleQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::CYCLE->id())
             ->where($column, $value)
             ->with([
+                'cycleQuote',
                 'cycleQuote.yearOfManufacture',
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
                 'payments' => function ($q) {
-                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
-                }, 'createdBy', 'updatedBy', 'documents' => function ($q) {
+                    $q->with(['paymentStatus', 'personalPlan', 'paymentMethod', 'paymentStatusLogs', 'insuranceProvider']);
+                },
+                'createdBy',
+                'updatedBy',
+                'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
-                }])->firstOrFail();
+                },
+            ])->firstOrFail();
+        $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
+
+        return $quote;
     }
 }
