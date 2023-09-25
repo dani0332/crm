@@ -95,6 +95,7 @@ class AMLController extends Controller
             }
             $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
+
         // return view('aml.view', compact('quoteTypes', 'quoteStatuses'));
         return inertia('Aml/Index', [
             'quoteTypes' => $quoteTypes,

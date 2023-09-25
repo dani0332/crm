@@ -10,7 +10,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class BikeQuoteRequestDetail extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'bike_quote_request_detail';
     protected $guarded = [];

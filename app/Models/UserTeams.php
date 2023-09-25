@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class UserTeams extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'user_team';
     protected $fillable = ['user_id', 'team_id', 'manager_id'];

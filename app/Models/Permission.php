@@ -9,5 +9,5 @@ use Spatie\Permission\Models\Permission as BasePermission;
 
 class Permission extends BasePermission implements AuditableContract
 {
-    use HasFactory , Auditable;
+    use Auditable , HasFactory;
 }

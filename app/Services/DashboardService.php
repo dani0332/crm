@@ -14,8 +14,8 @@ use DB;
 
 class DashboardService extends BaseService
 {
-    use TeamHierarchyTrait;
     use GetUserTreeTrait;
+    use TeamHierarchyTrait;
 
     public function getDashboardStatsByDate($start, $end, $type)
     {
