@@ -994,7 +994,7 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::select(
             ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id',
-                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id']
+                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date']
         )->with(['advisor', 'carMake', 'carModel'])
             ->where('uuid', $uuid)->first();
 
