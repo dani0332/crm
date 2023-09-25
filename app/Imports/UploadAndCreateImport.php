@@ -20,9 +20,9 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Events\AfterImport;
 use Maatwebsite\Excel\Row;
 
-class UploadAndCreateImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading, WithEvents
+class UploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithEvents, WithStartRow, WithValidation
 {
-    use Importable, SkipsFailures, RegistersEventListeners, RenewalsImportTrait;
+    use Importable, RegistersEventListeners, RenewalsImportTrait, SkipsFailures;
 
     private $validCount = 0;
     private $failedCount = 0;
