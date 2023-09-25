@@ -24,7 +24,7 @@ class DttFollowUp extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'This cron will send follow-up email to customer when revival email is not replied OR lead is not assigned';
 
     /**
      * Create a new command instance.
@@ -64,12 +64,13 @@ class DttFollowUp extends Command
                     $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
 
                     $data = [];
+                    $data['id'] = $item->id;
                     $data['quoteId'] = $lead->id;
                     $data['quoteCdbId'] = $lead->code;
                     $data['customerName'] = $lead->first_name . ' ' . $lead->last_name;
                     $data['buttonUrl'] = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $lead->uuid;
-                    // $data['customerEmail'] = $lead->email;
-                    $data['customerEmail'] = 'nouman.hussain@insurancemarket.ae';
+                    $data['customerEmail'] = $lead->email;
+                    // $data['customerEmail'] = 'nouman.hussain@insurancemarket.ae';
 
                     if ($today->eq($afterTwoDays)) {
                         $data['templateId'] = 296;

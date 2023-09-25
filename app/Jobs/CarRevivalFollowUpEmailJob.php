@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\DttRevival;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -36,6 +37,7 @@ class CarRevivalFollowUpEmailJob implements ShouldQueue, StackableJob
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $response =   $this->sendEmailCustomerService->sendDttEmail($this->data);
         if ($response == 201) {
+            DttRevival::where('id', $this->data->id)->increment('follow_up_email_count');
             info('carRevivalFollowUp email is sent  -' . $this->data->customerEmail);
         } else {
             info('carRevivalFollowUp email is not sent -' . $this->data->customerEmail);
