@@ -1,5 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import FollowUpModal from './Partials/FollowUpModal.vue';
 
 const notification = useToast();
 
@@ -24,6 +25,7 @@ const dateFormat = date => {
 };
 
 const page = usePage();
+const showFollowUpModal = ref(false);
 const loader = reactive({
   table: false,
   export: false,
@@ -133,6 +135,37 @@ const manualAssignmentError = () => {
     position: 'top',
   });
 };
+
+const sendtemplateForm = data => {
+  data.renewal_batch = filters.renewal_batch;
+  data.quote_batch_id = filters.quote_batch_id;
+  axios
+    .post('https://kyo.alfred.ae/kyostg/api/v1/workflows', data)
+    .then(response => {
+      showFollowUpModal.value = false;
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error! Sending Follow up emails',
+        position: 'top',
+      });
+    });
+};
+
+const openFollowUpModal = () => {
+  let title =
+    !filters.renewal_batch && !filters.quote_batch_id
+      ? 'Please select quote batch or renewl batch'
+      : filters.renewal_batch && filters.quote_batch_id
+      ? 'Please select either quote batch or renewl batch'
+      : '';
+  if (title) notification.error({ title: title, position: 'top' });
+  else showFollowUpModal.value = true;
+};
 </script>
 
 <template>
@@ -219,10 +252,20 @@ const manualAssignmentError = () => {
       </div>
 
       <div class="flex justify-end gap-3 mb-4 mt-4">
-        <x-button size="sm" color="#ff5e00" type="button" @click.prevent=""
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="button"
+          :disabled="!quotes.data"
+          @click.prevent="openFollowUpModal"
           >Send Followup Emails
         </x-button>
       </div>
+      <FollowUpModal
+        :modelValue="showFollowUpModal"
+        @update:modelValue="showFollowUpModal = false"
+        @sendTemplateForm="form => sendtemplateForm(form)"
+      />
     </x-form>
 
     <Transition name="fade">
