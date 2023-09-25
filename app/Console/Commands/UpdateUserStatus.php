@@ -66,8 +66,9 @@ class UpdateUserStatus extends Command
         foreach ($sessions as $session) {
             [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
 
-            if($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
-                info('Skipping activity check for user : '. $session->user->name . ' due to being on : '. UserStatusEnum::getDescription($currentUserStatus));
+            if ($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
+                info('Skipping activity check for user : '.$session->user->name.' due to being on : '.UserStatusEnum::getDescription($currentUserStatus));
+
                 continue;
             }
 
@@ -87,7 +88,7 @@ class UpdateUserStatus extends Command
                 }
 
                 if ($newStatus != $currentUserStatus) {
-                    info('updating user as ' . UserStatusEnum::getDescription($session->user->status) . ' as the last activity was : '.$lastActivity);
+                    info('updating user as '.UserStatusEnum::getDescription($session->user->status).' as the last activity was : '.$lastActivity);
 
                     User::where('id', $userId)->update(['status' => $newStatus]);
 
@@ -159,10 +160,10 @@ class UpdateUserStatus extends Command
 
         info('Last activity for user : '.$session->user->name.' was at : '.$lastActivity);
 
-        info('user table status right now is : '. UserStatusEnum::getDescription($session->user->status));
+        info('user table status right now is : '.UserStatusEnum::getDescription($session->user->status));
 
         $currentUserStatus = $session->user->status ?? UserStatusEnum::UNAVAILABLE;
-        info('Current Status for user : '.$session->user->name.' is : '. UserStatusEnum::getDescription($currentUserStatus));
+        info('Current Status for user : '.$session->user->name.' is : '.UserStatusEnum::getDescription($currentUserStatus));
 
         return [$userId, $lastActivity, $currentUserStatus];
     }
