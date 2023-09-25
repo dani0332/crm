@@ -438,12 +438,14 @@ class SendEmailCustomerService extends BaseService
             'resend' => false,
         ];
         $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
-        if ($response && $response->status) {
+        if ($response && isset($response->status)) {
             $msg = '';
             if (isset($response->msg)) {
                 $msg = $response->msg;
             }
-            info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
+            info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
+        } elseif ($response && isset($response->message)) {
+            info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
         }
     }
 }
