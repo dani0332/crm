@@ -72,7 +72,7 @@ class RenewalsUploadController extends Controller
      */
     public function fetchPlans($batch)
     {
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (!auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
 
@@ -94,7 +94,7 @@ class RenewalsUploadController extends Controller
 
             FetchRenewalsPlansJob::dispatch($renewalStatusProcess, $batch);
 
-            return redirect()->route('batch-plans-processes', $batch)->with('success', 'Fetch plans is started for batch '.$batch);
+            return redirect()->route('batch-plans-processes', $batch)->with('success', 'Fetch plans is started for batch ' . $batch);
         }
 
         return redirect()->route('batch-plans-processes', $batch)->with('error', 'No pending leads available to fetch plans');
@@ -133,14 +133,14 @@ class RenewalsUploadController extends Controller
                 $carQuoteRequest = CarQuote::where('renewal_import_code', '=', $request->renewal_import_code)->get();
                 $carQuoteRequestCount = $carQuoteRequest->count();
                 if ($carQuoteRequestCount == 0) {
-                    return back()->withInput()->with('message', 'No leads found for renewal import code: '.$request->renewal_import_code);
+                    return back()->withInput()->with('message', 'No leads found for renewal import code: ' . $request->renewal_import_code);
                 }
             }
 
             // Getting file name only
             $fileNameOriginal = $request->file_name->getClientOriginalName();
             // Generating name for file for azure usage
-            $fileNameAzure = get_guid().'_'.$fileNameOriginal;
+            $fileNameAzure = get_guid() . '_' . $fileNameOriginal;
 
             // Uploading file to Azure
             $filePathAzure = $request->file('file_name')->storeAs('renewals', $fileNameAzure, 'azureIM');
@@ -195,7 +195,7 @@ class RenewalsUploadController extends Controller
 
         $renewalsUploadLead = new RenewalsUploadLeads();
         $renewalsUploadLead->file_name = $fileName;
-        $renewalsUploadLead->file_path = $azureStorageUrl.$azureStorageContainer.'/'.$filePathAzure;
+        $renewalsUploadLead->file_path = $azureStorageUrl . $azureStorageContainer . '/' . $filePathAzure;
         $renewalsUploadLead->status = ProcessStatusCode::IN_PROGRESS;
         $renewalsUploadLead->good = 0;
         $renewalsUploadLead->created_by_id = auth()->id();
@@ -211,7 +211,6 @@ class RenewalsUploadController extends Controller
             'azureStorageUrl' => $azureStorageUrl,
             'azureStorageContainer' => $azureStorageContainer,
         ]);
-
     }
 
     /**
@@ -246,7 +245,6 @@ class RenewalsUploadController extends Controller
             'EnumGenericYes' => GenericRequestEnum::Yes,
             'EnumSkipPlansNonGCC' => SkipPlansEnum::NON_GCC,
         ]);
-
     }
 
     public function updateRenewals()
@@ -265,7 +263,7 @@ class RenewalsUploadController extends Controller
 
     public function listRenewalBatches(Request $request, Datatables $datatables)
     {
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (!auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
 
@@ -276,7 +274,7 @@ class RenewalsUploadController extends Controller
                 'type' => RenewalsUploadType::UPDATE_LEADS,
             ]);
 
-        if (! empty($request->batch)) {
+        if (!empty($request->batch)) {
             $query->where('batch', $request->batch);
         }
 
@@ -295,7 +293,7 @@ class RenewalsUploadController extends Controller
      */
     public function plansProcesses($batch)
     {
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (!auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
         $process = RenewalStatusProcess::query()
@@ -308,12 +306,11 @@ class RenewalsUploadController extends Controller
             'process' => $process,
             'batch' => $batch,
         ]);
-
     }
 
     public function batchDetail($batch)
     {
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
+        if (!auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
 
@@ -353,7 +350,7 @@ class RenewalsUploadController extends Controller
 
         ScheduleRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);
 
-        return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
+        return redirect('renewals/batches/' . $batch)->with('success', 'Batch has been created and emails are being sent');
     }
 
     public function validationFailed($id)
@@ -369,7 +366,7 @@ class RenewalsUploadController extends Controller
     {
         $renewaUploadLead = RenewalsUploadLeads::findOrFail($id);
 
-        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_'.$renewaUploadLead->file_name);
+        return Excel::download(new RenewalFailedValidationExport($renewaUploadLead), 'failed_' . $renewaUploadLead->file_name);
     }
 
     public function validationPassed($id)
@@ -387,18 +384,18 @@ class RenewalsUploadController extends Controller
     public function viewQuoteRedirect($renewalProcessId, $leadId)
     {
         $renewalLead = RenewalQuoteProcess::where('id', $leadId)->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])->first();
-        if (! $renewalLead) {
+        if (!$renewalLead) {
             return abort(404);
         }
 
         switch ($renewalLead->quote_type) {
             case QuoteTypeShortCode::CAR:
                 $carQuote = CarQuote::where('previous_quote_policy_number', $renewalLead->policy_number)->orderBy('created_at', 'DESC')->first();
-                if (! $carQuote) {
+                if (!$carQuote) {
                     return abort(404);
                 }
 
-                return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid);
+                return redirect(config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid);
                 break;
             default:
                 return abort(404);
@@ -433,20 +430,20 @@ class RenewalsUploadController extends Controller
                 }
             });
 
-        info($logPrefix.' totalJobs: '.count($jobs));
+        info($logPrefix . ' totalJobs: ' . count($jobs));
 
         if ($jobs != null && count($jobs)) {
             Haystack::build()
                 ->onQueue('renewals')
                 ->addJobs($jobs)
                 ->then(function () use ($logPrefix) {
-                    info($logPrefix.' all jobs completed successfully');
+                    info($logPrefix . ' all jobs completed successfully');
                 })
                 ->catch(function () use ($logPrefix) {
-                    info($logPrefix.' one of batch is failed. ');
+                    info($logPrefix . ' one of batch is failed. ');
                 })
                 ->finally(function () use ($logPrefix) {
-                    info($logPrefix.' everything done');
+                    info($logPrefix . ' everything done');
                 })
                 ->allowFailures()
                 ->withDelay(2)
@@ -455,5 +452,4 @@ class RenewalsUploadController extends Controller
 
         return redirect('/');
     }
-
 }
