@@ -256,7 +256,6 @@ class CRUDService extends BaseService
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
-
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
@@ -317,23 +316,23 @@ class CRUDService extends BaseService
             }
 
             //Disabling - Enable for RM Deployment
-            // if (
-            //     strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
-            //     && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-            // ) {
-            //     if ($request->leadStatus == QuoteStatusEnum::Quoted) {
-            //         CammyJob::dispatch($entity, 'intro');
-            //     } else {
-            //         SyncSIBContactJob::dispatch($entity);
-            //     }
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+                && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+            ) {
+                if ($request->leadStatus == QuoteStatusEnum::Quoted) {
+                    CammyJob::dispatch($entity, 'intro');
+                } else {
+                    SyncSIBContactJob::dispatch($entity);
+                }
 
-            //     if (
-            //         $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-            //         || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-            //     ) {
-            //         CammyJob::dispatch($entity, 'unsub');
-            //     }
-            // }
+                if (
+                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                ) {
+                    CammyJob::dispatch($entity, 'unsub');
+                }
+            }
 
             QuoteStatusLog::create([
                 'quote_type_id' => QuoteTypeId::Car,
