@@ -495,8 +495,8 @@ if (! function_exists('checkPersonalQuotes')) {
     }
 }
 
-if (! function_exists('getQueryForLog')) {
-    function getQueryForLog(Builder $builder)
+if (! function_exists('getQueryForLogWithBindings')) {
+    function getQueryForLogWithBindings(Builder $builder)
     {
         $addSlashes = str_replace('?', "'?'", $builder->toSql());
 
