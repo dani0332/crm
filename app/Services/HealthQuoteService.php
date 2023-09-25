@@ -8,6 +8,7 @@ use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -1056,6 +1057,10 @@ class HealthQuoteService extends BaseService
                 $lead->advisor_id = $userId;
                 $lead->save();
 
+                if ($lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
+                }
+
                 continue;
             }
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
@@ -1090,6 +1095,10 @@ class HealthQuoteService extends BaseService
             } else {
                 $lead->advisor_id = $userId;
                 $lead->save();
+
+                if ($lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
+                }
             }
         }
 
