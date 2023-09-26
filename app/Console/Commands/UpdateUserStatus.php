@@ -76,9 +76,9 @@ class UpdateUserStatus extends Command
 
             if ($lastActivity < $inactiveThreshold) {
 
-                $unAvailableTime = now()->subMinutes(2);
+                $unAvailableTime = now()->subHours(2);
 
-                $offlineTime = now()->subSeconds(30);
+                $offlineTime = now()->subMinutes(5);
 
                 $newStatus = $currentUserStatus;
 
