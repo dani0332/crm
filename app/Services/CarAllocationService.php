@@ -164,16 +164,11 @@ class CarAllocationService extends AllocationService
 
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId)
     {
-        $carTeamIds = Team::where('name', TeamNameEnum::CAR)
-            ->select('id')
-            ->with(['children' => function ($query) {
-                $query->whereNotIn('name', [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS]);
-            }])
-            ->first();
+        $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
 
-        $carUserIds = UserTeams::whereIn('team_id', $carTeamIds)->select('user_id')->get()->toArray();
+        $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
 
-        $finalUsersToLook = array_unique(array_merge($tierUserIds->toArray(), $carUserIds));
+        $excludedUserIds = UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
 
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
@@ -183,7 +178,8 @@ class CarAllocationService extends AllocationService
                 $query->whereRaw('allocation_count < max_capacity')
                     ->orWhere('max_capacity', -1);
             })
-            ->whereIn('user_id', $finalUsersToLook)
+            ->whereIn('user_id', $tierUserIds)
+            ->whereNotIn('user_id', $excludedUserIds)
             ->orderBy('last_allocated');
 
         if (! empty($advisorId)) {
