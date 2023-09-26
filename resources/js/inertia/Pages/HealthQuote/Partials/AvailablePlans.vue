@@ -1,5 +1,5 @@
 <script setup>
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   plan: Object,
@@ -216,23 +216,24 @@ const memberIndexPerId = id => {
   return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id);
 };
 
+const updateGeneralInfo = () => {
+  if(confirm('Do you want to update this values?')) {
+    totalLoadingPrice.value = 0
+    if (loadingPrices.value.length > 0) {
+      loadingPrices.value.forEach(loadingPrice => {
+          totalLoadingPrice.value = Number(totalLoadingPrice.value) + Number(loadingPrice.price)
+      });
+    }
+    loadingPrices.value = [];
+  }
+  console.log(totalLoadingPrice);
+}
 
 onMounted( () => {
     getDefaultVaues();
     coPay.value = defaultCopayId; // get the default selected value for coPay
 });
 
-watch(
-  () => loadingPrices,
-  () => {
-    if (loadingPrices.length > 0) {
-      loadingPrices.forEach(loadingPrice => {
-          totalLoadingPrice += loadingPrice.price
-      });
-    }
-  },
-  { deep: true, immediate: true },
-);
 
 </script>
 
@@ -297,28 +298,28 @@ watch(
             <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Base Price</dt>
                 <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
-                    {{ props.plan.actualPremium }}
+                    {{ props.plan.actualPremium.toLocaleString() }}
                 </dd>
                 <dd v-else>
-                    {{ selectedCopay.premium }}
+                    {{ selectedCopay.premium.toLocaleString() }}
                 </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total Price(exclusive of VAT)</dt>
               <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
-                    {{ finalPrice =
+                    {{ (finalPrice =
                     props.plan.actualPremium +
                     (props.plan.basmah || 0) +
                     (props.plan.policyFee || 0) +
-                    totalLoadingPrice
+                    totalLoadingPrice).toLocaleString()
                     }}
                 </dd>
                 <dd v-else>
-                    {{ finalPrice =
+                    {{ (finalPrice =
                     selectedCopay.premium +
                     (props.plan.basmah || 0) +
                     (props.plan.policyFee || 0) +
-                    totalLoadingPrice
+                    totalLoadingPrice).toLocaleString()
                     }}
                 </dd>
             </div>
@@ -326,7 +327,7 @@ watch(
               <dt class="font-medium">Loading Price</dt>
                 <dd>
                     {{
-                      totalLoadingPrice
+                      totalLoadingPrice.toLocaleString()
                     }}
                 </dd>
             </div>
@@ -334,25 +335,25 @@ watch(
               <dt class="font-medium">Total VAT amount</dt>
                 <dd>
                     {{
-                      vatAmount = (totalLoadingPrice * 0.05)
+                      (vatAmount = (totalLoadingPrice * 0.05)).toLocaleString()
                     }}
                 </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Basmah</dt>
-              <dd>{{ props.plan.basmah }}</dd>
+              <dd>{{ props.plan.basmah.toLocaleString() }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total Price with VAT</dt>
                 <dd>
                     {{
-                      finalPrice + vatAmount
+                      (finalPrice + vatAmount).toLocaleString()
                     }}
                 </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Policy Fee</dt>
-              <dd>{{ props.plan.policyFee }}</dd>
+              <dd>{{ props.plan.policyFee.toLocaleString() }}</dd>
             </div>
             <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
@@ -481,7 +482,7 @@ watch(
               <section  v-for="data in item.ratesPerCopay">
                     <x-input
                     v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                    :value="data.premium"
+                    :value="data.premium.toLocaleString()"
                     :disabled="data.premium != 0"
                     size="sm"
                     @update:modelValue="onMemberPremiumUpdate(item, $event)"
@@ -489,7 +490,7 @@ watch(
                     <x-input
                     v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
                         data.healthPlanCoPaymentId == defaultCopayId"
-                    :value="data.premium"
+                    :value="data.premium.toLocaleString()"
                     :disabled="data.premium != 0"
                     size="sm"
                     @update:modelValue="onMemberPremiumUpdate(item, $event)"
@@ -521,20 +522,20 @@ watch(
                         <x-input  v-if="data.healthPlanCoPaymentId == selectedCopay.id"
                             :disabled="true"
                             size="sm"
-                            :value="Number(
+                            :value="(Number(
                             loadingPrices[memberIndexPerId(item.memberId)]?.price ||
                             0,
-                            ) + Number(data.premium)
+                            ) + Number(data.premium)).toLocaleString()
                             "
                         />
                         <x-input  v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
                             data.healthPlanCoPaymentId == defaultCopayId"
                             :disabled="true"
                             size="sm"
-                            :value="Number(
+                            :value="(Number(
                             loadingPrices[memberIndexPerId(item.memberId)]?.price ||
                             0,
-                            ) + Number(data.premium)
+                            ) + Number(data.premium)).toLocaleString()
                             "
                         />
                     </section>
@@ -560,6 +561,16 @@ watch(
                 </x-button>
               </template> -->
             </x-table>
+            <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
+                <x-button
+                  :disabled="!isManual"
+                  color="primary"
+                  size="sm"
+                  @click="updateGeneralInfo()"
+                >
+                  Update & Save
+                </x-button>
+              </div>
           </div>
         </TabPanel>
 
