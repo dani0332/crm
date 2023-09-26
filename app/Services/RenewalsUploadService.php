@@ -20,6 +20,7 @@ use App\Enums\TiersEnum;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
+use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
@@ -1671,6 +1672,7 @@ class RenewalsUploadService
                     ->then(function () use ($logPrefix, $renewalsBatchEmail) {
                         info($logPrefix . ' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
+                        CreateRenewalsWorkflowJob::dispatch($renewalsBatchEmail);
                     })
                     ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
                         info($logPrefix . ' one of batch is failed. ');

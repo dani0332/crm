@@ -246,6 +246,7 @@ return [
         'LookUpModel' => App\helpers\LookUpModelHelper::class,
         'KenService' => \App\Services\KenService::class,
         'CapiService' => \App\Services\CapiService::class,
+        'KyoService' => \App\Services\KyoService::class,
     ],
 
 ];
