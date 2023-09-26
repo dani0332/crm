@@ -68,7 +68,7 @@ class CammyService
         switch ($trigger) {
             case self::INTRO:
                 $apiEndPoint .= '/api/v1/quotation';
-                $responseMessage = 'Introduction Email trigerred successfully';
+                $responseMessage = 'Quotation Email trigerred successfully';
                 $data = [
                     'cdbid' => $lead->code,
                     'type' => $trigger,
