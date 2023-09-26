@@ -19,7 +19,7 @@ use Throwable;
 //Scheduled to delete, job moved to console command
 class LeadAllocationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
+    use Dispatchable, GetUserTreeTrait, InteractsWithQueue, Queueable;
 
     public $tries = 2;
     public $timeout = 55;

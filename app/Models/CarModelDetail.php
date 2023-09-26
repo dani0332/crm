@@ -10,8 +10,8 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class CarModelDetail extends Model implements AuditableContract
 {
-    use HasFactory;
     use Auditable;
+    use HasFactory;
 
     protected $table = 'car_model_detail';
 
