@@ -44,7 +44,7 @@ class CarAllocationService extends AllocationService
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
 
-        if(!empty($tierRId)){
+        if (! empty($tierRId)) {
             $query->where('tier_id', '!=', $tierR->id);
         }
 
@@ -489,7 +489,7 @@ class CarAllocationService extends AllocationService
             }
         }
 
-        if(!empty($tierRId)){
+        if (! empty($tierRId)) {
             $leads->where('tier_id', '!=', $tierR->id);
         }
 
