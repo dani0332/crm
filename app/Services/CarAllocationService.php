@@ -331,9 +331,20 @@ class CarAllocationService extends AllocationService
 
         info('updating user record in lead allocation table with count increment userId: '.$userId);
 
-        $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate);
+        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) :  $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate);
 
         info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
+    }
+
+    public function addAllocationCounts($userId)
+    {
+        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId);
+        $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
+        $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
+        $allocationRecord->updated_at = now();
+        $allocationRecord->last_allocated = now()->timestamp;
+        $allocationRecord->save();
+
     }
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
@@ -374,6 +385,7 @@ class CarAllocationService extends AllocationService
             info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
             $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
             $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
+            $newAdvisorAllocationRecord->last_allocated = now()->timestamp;
             $newAdvisorAllocationRecord->updated_at = now();
             $newAdvisorAllocationRecord->save();
         }
@@ -394,6 +406,7 @@ class CarAllocationService extends AllocationService
                 info('previous advisor ('.$userId.')  allocation_count count before update is : '.$previousAdvisorAllocationRecord->allocation_count);
                 $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
                 $previousAdvisorAllocationRecord->updated_at = now();
+                $previousAdvisorAllocationRecord->last_allocated = now()->timestamp;
                 $previousAdvisorAllocationRecord->save();
                 info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
             }
