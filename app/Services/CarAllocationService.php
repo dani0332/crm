@@ -44,7 +44,7 @@ class CarAllocationService extends AllocationService
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
 
-        if (! empty($tierRId)) {
+        if (! empty($tierR)) {
             $query->where('tier_id', '!=', $tierR->id);
         }
 
@@ -227,11 +227,7 @@ class CarAllocationService extends AllocationService
                 ||
                 ($commercialCarMake && $commercialCarModel)
             ) {
-                $records = $this->getCommercialRule();
-
-                info('commercial records: '.json_encode($records->get()));
-
-                return $records->get();
+                return $this->getCommercialRule();
 
             }
         }
@@ -267,7 +263,7 @@ class CarAllocationService extends AllocationService
             ->groupBy('rule_details.rule_id')
             ->select(
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
-            );
+            )->get();
     }
 
     public function determineFinalUserId($lead, $eligibleUsers, $rules): mixed
@@ -336,17 +332,6 @@ class CarAllocationService extends AllocationService
         info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
     }
 
-    public function addAllocationCounts($userId)
-    {
-        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId);
-        $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
-        $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
-        $allocationRecord->updated_at = now();
-        $allocationRecord->last_allocated = now()->timestamp;
-        $allocationRecord->save();
-
-    }
-
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
     {
         if (! empty($lead->advisor_id)) {
@@ -367,63 +352,6 @@ class CarAllocationService extends AllocationService
         $lead->save();
 
         return $lead;
-    }
-
-    public function adjustAllocationCounts($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate)
-    {
-        info('lead current advisor_id is : '.json_encode($previousAdvisorId).' and lead created date is : '.$lead->created_at);
-        $shouldUpdateAllocationRecord = $userId != $previousAdvisorId;
-        $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($userId);
-        $previousAdvisorAllocationRecord = null;
-        if ($previousAdvisorId != null) {
-            $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId);
-        }
-        if ($shouldUpdateAllocationRecord) {
-            info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
-            $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
-            $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
-            $newAdvisorAllocationRecord->last_allocated = now()->timestamp;
-            $newAdvisorAllocationRecord->updated_at = now();
-            $newAdvisorAllocationRecord->save();
-        }
-        info('new advisor after update is : '.json_encode($newAdvisorAllocationRecord));
-        if ($previousAdvisorId != null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
-            if ($lead->assignment_type == AssignmentTypeEnum::SYSTEM_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::SYSTEM_REASSIGNED) {
-                if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('previous advisor ('.$userId.')  auto assignment count is : '.$previousAdvisorAllocationRecord->auto_assignment_count);
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                }
-            } else {
-                if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('previous advisor ('.$userId.')  manual count before update is : '.$previousAdvisorAllocationRecord->manual_assignment_count);
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-            }
-            if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
-                info('previous advisor ('.$userId.')  allocation_count count before update is : '.$previousAdvisorAllocationRecord->allocation_count);
-                $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                $previousAdvisorAllocationRecord->updated_at = now();
-                $previousAdvisorAllocationRecord->last_allocated = now()->timestamp;
-                $previousAdvisorAllocationRecord->save();
-                info('previous advisor after update is : '.json_encode($previousAdvisorAllocationRecord));
-            }
-        }
-        info('new advisor alloc. count :'.$newAdvisorAllocationRecord->allocation_count.', manual count :'.$newAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$newAdvisorAllocationRecord->auto_assignment_count);
-        if ($previousAdvisorAllocationRecord != null) {
-            info('previous advisor alloc. count :'.$previousAdvisorAllocationRecord->allocation_count.', manual count :'.$previousAdvisorAllocationRecord->manual_assignment_count.', auto count :'.$previousAdvisorAllocationRecord->auto_assignment_count);
-        }
-        info('assignment count update for userId : '.$userId.', and lead code :  '.$lead->code);
-    }
-
-    public function getLeadAllocationRecordByUserId($userId)
-    {
-        try {
-            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-
-            return $leadAllocation;
-        } catch (\Exception $e) {
-            Log::error($e->getMessage());
-        }
     }
 
     public function updateCarLeadDetailRecord($leadId)
@@ -477,26 +405,34 @@ class CarAllocationService extends AllocationService
 
     public function fetchLeadsForReAssignment($advisorId)
     {
+        // Calculate the start date for lead retrieval
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        info('Leads will be picked up in reassignment from : ' . $from . ' until : ' . now()->toDateTimeString());
+
+        // Get the Tier R
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
+        // Query to fetch leads
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('quote_status_id', QuoteStatusEnum::NewLead);
+
+        // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
-            info('inside reassignment single run and advisor selected is : '.$advisorId);
+            info('Inside reassignment single run and advisor selected is : ' . $advisorId);
             $leads->where('advisor_id', $advisorId);
         } else {
+            // If advisor ID is not provided, get unavailable advisors and filter leads by them
             $advisors = $this->getUnavailableAdvisor();
             if (count($advisors) > 0) {
                 $advisorIds = $advisors->pluck('user_id');
-                info('inside reassignment general run');
+                info('Inside reassignment general run');
                 $leads->whereIn('advisor_id', $advisorIds);
             }
         }
 
-        if (! empty($tierRId)) {
+        // Filter leads by tier (if applicable)
+        if (!empty($tierR)) {
             $leads->where('tier_id', '!=', $tierR->id);
         }
 
@@ -505,11 +441,13 @@ class CarAllocationService extends AllocationService
 
     public function getUnavailableAdvisor()
     {
+        // Query to fetch unavailable advisors
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) {
                 $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
             })
             ->where(function ($query) {
+                // Filter by allocation count and max capacity
                 $query->whereRaw('allocation_count < max_capacity')
                     ->orWhere('max_capacity', -1);
             })

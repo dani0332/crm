@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
@@ -16,6 +17,7 @@ use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class HealthAllocationService extends AllocationService
@@ -107,16 +109,20 @@ class HealthAllocationService extends AllocationService
 
     public function assignLead($lead, $advisor, $assignmentType)
     {
+        $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
         $lead->save();
         info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name);
+
+        $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
+
         if ($lead->source != LeadSourceEnum::REFERRAL) {
             info('lead source is not referral so about to update allocation record');
-            $this->updateLeadAllocationRecord($advisor->id, false);
+            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate);
         }
 
-        $this->updateLeadDetailRecord($lead->id, $lead->uuid);
+
         $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
         $leadCreated = Carbon::parse($lead->created_at)->timestamp;
 
@@ -128,32 +134,24 @@ class HealthAllocationService extends AllocationService
         GetQuotePlansJob::dispatch($lead);
     }
 
-    public function updateLeadAllocationRecord($userId, $isManualAssignment)
-    {
-        info('updateLeadAllocationRecord -- started');
-        $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
-        info('Max capacity for user '.$userId.' is '.$leadAllocation->max_capacity.' and allocation count is '.$leadAllocation->allocation_count);
-        $leadAllocation->allocation_count += 1;
-        if ($isManualAssignment) {
-            $leadAllocation->manual_assignment_count = $leadAllocation->manual_assignment_count + 1;
-        } else {
-            $leadAllocation->auto_assignment_count = $leadAllocation->auto_assignment_count + 1;
-        }
-        $leadAllocation->last_allocated = now()->timestamp;
-        $leadAllocation->save();
-        info('Lead allocation record for user '.$userId.' updated. Current allocation count is '.$leadAllocation->allocation_count);
-    }
 
-    public function updateLeadDetailRecord($leadId, $leadUId)
+    public function updateQuoteDetail($leadId)
     {
-        info('updateLeadDetailRecord -- started for lead UUID: '.$leadUId);
-        $leadDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
-        if ($leadDetail) {
-            $leadDetail->advisor_assigned_date = now();
-            $leadDetail->advisor_assigned_by_id = auth()->id();
-            $leadDetail->save();
+        info('about to update car quote detail record for : '.$leadId);
+
+        $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
+        $oldAdvisorAssignedDate = '';
+
+        if ($quoteDetail) {
+
+            $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date;
+            $this->updateExistingQuoteDetail($quoteDetail, $leadId);
+
+        } else {
+            $this->createNewQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
         }
-        info('updateLeadDetailRecord -- completed for lead uuid: '.$leadUId);
+
+        return $oldAdvisorAssignedDate;
     }
 
     public function shouldProceed(): bool
