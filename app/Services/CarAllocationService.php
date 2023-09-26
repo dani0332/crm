@@ -331,7 +331,7 @@ class CarAllocationService extends AllocationService
 
         info('updating user record in lead allocation table with count increment userId: '.$userId);
 
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) :  $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate);
+        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate);
 
         info('Completed assignment of lead and lead count update is done for quote: '.$carQuote->code);
     }
