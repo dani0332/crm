@@ -318,7 +318,7 @@ class CRUDService extends BaseService
                 && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
             ) {
                 if ($request->leadStatus == QuoteStatusEnum::Quoted && $entity->advisor_id) {
-                    // CammyJob::dispatch($entity, 'intro');
+                    CammyJob::dispatch($entity, 'intro');
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email');
                 } else {
                     SyncSIBContactJob::dispatch($entity);
