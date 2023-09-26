@@ -181,7 +181,7 @@ use App\Enums\PermissionsEnum;
                             </ul>
                     </ul>
                 @endcanany
-               
+
                 @canany([PermissionsEnum::VehicleDepreciationList, PermissionsEnum::VehicleValuationList])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
@@ -274,9 +274,7 @@ use App\Enums\PermissionsEnum;
                             @can(PermissionsEnum::RenewalsBatches)
                             <li><a href="{{ route('renewals-batches') }}">Batches</a></li>
                             @endcan
-                                @can(PermissionsEnum::RenewalsBatches)
-                                    <li><a href="{{ route('renewals-batches-search') }}">Search</a></li>
-                                @endcan
+                              <li><a href="{{ route('renewals-batches-search') }}">Search</a></li>
                         </ul>
                     </li>
                 </ul>

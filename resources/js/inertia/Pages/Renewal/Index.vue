@@ -97,7 +97,10 @@ function setQueryStringFilters() {
 
 function setExportStrings(){
     let queryParams = window.location.search;
-    document.getElementById('export_link').href = '/renewals/search/export'+queryParams;
+    let  exportLink = document.getElementById('export_link');
+    if(exportLink != null){
+      exportLink.href = '/renewals/search/export'+queryParams;
+    }
 }
 onMounted(() => {
     setQueryStringFilters();
@@ -165,13 +168,14 @@ const permissionsEnum = page.props.permissionsEnum;
                     name="renewal_expiry_date_end"
                     label="Renewal Expiry End Date"
                 />
+
                 <x-select
                     v-model="filters.product"
                     label="Products"
                     name="product"
                     :options="
             products.map(item => ({
-              value: item.id,
+              value: item.id.toString(),
               label: item.text,
             }))
           " placeholder="Select Product"
@@ -235,7 +239,7 @@ const permissionsEnum = page.props.permissionsEnum;
         <DataTable
             table-class-name="tablefixed"
             :loading="loader.table"
-            :headers="filters.product == 8?tableHeader2:tableHeader"
+            :headers="filters.product == 1?tableHeader2:tableHeader"
             :items=" quotes.data || []"
             border-cell
             hide-rows-per-page
