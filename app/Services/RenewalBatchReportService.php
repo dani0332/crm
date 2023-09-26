@@ -130,8 +130,8 @@ class RenewalBatchReportService extends BaseService
         $batches = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id');
 
-        if (! $authUserIsAdvisor) {
-        } elseif ($authUserIsAdvisor) {
+        if ($$authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
+            && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
             $batches = $batches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
                 $qry->where('advisor_id', $authUserId);
             });
@@ -194,8 +194,8 @@ class RenewalBatchReportService extends BaseService
          * get batches
          */
         $renewalBatches = RenewalBatch::select('name');
-        if (! $authUserIsAdvisor) {
-        } elseif ($authUserIsAdvisor) {
+        if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
+            && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
             $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
                 $qry->where('advisor_id', $authUserId);
             });
