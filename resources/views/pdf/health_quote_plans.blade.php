@@ -474,7 +474,7 @@
             <tbody>
                 @foreach($features as $feature)
 
-                @if($feature['code'] == 'coPayment' && !isset($addons[$planId]['coPayment']))
+                @if($feature['code'] == 'coPayment' && !isset($addons->{$planId}->{'coPayment'}))
                     @php continue; @endphp
                 @endif
 
@@ -526,7 +526,7 @@
                                 {!! ($value)  !!}
                             @else
                                 @if($feature['code'] == 'coPayment')
-                                    {{ $addons[$planId]['coPayment']['text'] ?? '' }}
+                                    {{ $addons->{$planId}->{'coPayment'}->{'text'} ?? '' }}
                                 @else
                                     {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
                                 @endif
