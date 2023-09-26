@@ -46,7 +46,7 @@ defineProps({
 	record: Object,
 	quoteType: String,
   	paymentEntityModel: Object,
-	displaySendPolicyButton: Number,
+	displaySendPolicyButton: Boolean,
 	isRenewalUser: Boolean,
 	emailStatuses: Array,
 	carQuotePlanAddons: Array,
@@ -317,7 +317,6 @@ const leadStatusOptions = computed(() => {
     label: status.text,
   }));
 });
-console.log('leadStatusOptions', leadStatusOptions.value);
 const leadStatusDisabled = computed(() => {
 	return (
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
@@ -1365,7 +1364,7 @@ const confirmSendEmail = () => {
 							class="w-full"
 						/>
 						
-						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == 15">
+						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved">
 							<x-input								
 								v-model="leadStatusForm.trans_code"								
 								placeholder="TransApp Code is required"
@@ -1373,10 +1372,9 @@ const confirmSendEmail = () => {
 								:error="leadStatusForm.errors.trans_code"
 							/>
 						</x-field>
-						<x-field label="Lost Reason" required v-if="leadStatusForm.leadStatus == 17">
+						<x-field label="Lost Reason" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost">
 							<x-select							
 								v-model="leadStatusForm.lostReason"
-								label="Lost Reason"
 								:options="lostReasons?.map(item => ({
 									value: item.id,
 									label: item.text,
