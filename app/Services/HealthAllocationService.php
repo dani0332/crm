@@ -9,7 +9,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
-use App\Jobs\SyncSIBContactJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
