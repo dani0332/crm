@@ -55,7 +55,7 @@ class Kernel extends ConsoleKernel
             ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
 
         $schedule
-            ->command('QuoteAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+            ->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
         $schedule
             ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
