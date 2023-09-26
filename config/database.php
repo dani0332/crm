@@ -63,6 +63,10 @@ return [
                 PDO::ATTR_PERSISTENT => env('MYSQL_ATTR_PERSISTENT', true),
             ]) : [],
         ],
+        'mongodb' => [
+            'driver' => 'mongodb',
+            'dsn' => env('MONGO_DSN'),
+        ],
 
         'pgsql' => [
             'driver' => 'pgsql',
@@ -75,7 +79,7 @@ return [
             'charset' => 'utf8',
             'prefix' => '',
             'prefix_indexes' => true,
-            'schema' => 'public',
+            'search_path' => 'public',
             'sslmode' => 'prefer',
         ],
 

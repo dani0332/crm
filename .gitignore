@@ -20,3 +20,5 @@ storage/framework/laravel-excel/*.tmp
 # extras
 notes.txt
 .eslintcache
+
+dump.rdb

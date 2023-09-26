@@ -2,7 +2,6 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import axios from 'axios';
 
 defineProps({
   quote: Object,
@@ -1870,7 +1869,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}_${item.planCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
                 )
               "
             >

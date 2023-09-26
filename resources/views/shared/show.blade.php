@@ -406,7 +406,9 @@ use App\Enums\GenericRequestEnum;
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled"
-            :quoteTypeId="$quoteTypeId" :tiers="$tiers" />
+            :quoteTypeId="$quoteTypeId" :tiers="$tiers" :paymentEntityModel="@$paymentEntityModel" :lostRejectReasons="@$lostRejectReasons" :lostApproveReasons="@$lostApproveReasons"
+            :carLostChangeStatus="@$carLostChangeStatus" :allowQuoteLogAction="@$allowQuoteLogAction"
+        />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
@@ -610,6 +612,16 @@ use App\Enums\GenericRequestEnum;
             </button>
         </div>
     @endcan
+    @if ($model->modelType == quoteTypeCode::Car)
+    @can('api-logs-view')
+        <div id="apilogsdiv">
+            <button id='apilogsbtn' class="btn btn-warning btn-sm apilogsbtn" data-id="{{ $record->id }}"
+                data-model="App\Models\{{ $model_name }}">
+                View API Logs
+            </button>
+        </div>
+    @endcan
+    @endif
     <script>
         function toggleSubDropDown(el){
             var selectedLobs = $("#lob_team").val();
