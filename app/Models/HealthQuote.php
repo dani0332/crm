@@ -14,6 +14,7 @@ class HealthQuote extends Model implements AuditableContract
 {
     use HasFactory, FilterCriteria, Auditable, QuoteModelTrait;
 
+
     protected $table = 'health_quote_request';
     public $filterables = [
         'first_name' => FilterTypes::FREE,
@@ -23,6 +24,7 @@ class HealthQuote extends Model implements AuditableContract
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'mobile_no' => FilterTypes::EXACT,
     ];
     protected $guarded = [];
 

@@ -2,6 +2,9 @@
 
 namespace App\Exports;
 
+use App\Enums\quoteStatusCode;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -36,11 +39,13 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
             'Policy expiry date',
             'Gross premium',
             'Previous advisor',
+            $this->exportType=='BUSINESS'?'Business Type':'',
         ];
     }
 
     public function map($quote): array
     {
+
         return [
             $quote->code,
             $quote->insuranceProvider != null ? $quote->insuranceProvider->text : '',
@@ -49,6 +54,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
             $quote->previous_policy_expiry_date,
             $quote->premium,
             $quote->previousAdvisor != null ? $quote->previousAdvisor->name : '',
+            $this->exportType=='BUSINESS'?($quote->business_type_of_insurance_id == quoteStatusCode::GROUP_MEDICAL_ID?quoteStatusCode::GROUP_MEDICAL:quoteTypeCode::CORPLINE):''
 
         ];
     }

@@ -23,6 +23,7 @@ class PetQuote extends Model implements AuditableContract
         'email' => FilterTypes::EXACT,
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
+        'mobile_no' => FilterTypes::EXACT,
     ];
 
     public function quoteStatus()

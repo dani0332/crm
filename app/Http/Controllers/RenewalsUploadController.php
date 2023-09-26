@@ -488,7 +488,6 @@ class RenewalsUploadController extends Controller
         if ($request->page) {
             $personalQuotes = $this->renewalsUploadFileService->getSearch($request);
         }
-
         $advisors = CarQuoteRepository::getAdvisors();
 
         return inertia('Renewal/Index', [

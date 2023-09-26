@@ -36,11 +36,12 @@ let availableFilters = {
     email: '',
     previous_quote_policy_number: '',
     source:'Renewal_upload',
+    product:'',
     expiry_date:'',
     page: 1,
-    product:3,
     renewal_expiry_date_start:'',
-    renewal_expiry_date_end:''
+    renewal_expiry_date_end:'',
+    mobile_no:'',
 };
 
 const filters = reactive(availableFilters);
@@ -85,7 +86,6 @@ function onReset() {
 
 function setQueryStringFilters() {
     let queryString = window.location.search;
-    console.log('querystring',queryString);
     let urlParams = new URLSearchParams(queryString);
 
     for (const [key] of Object.entries(availableFilters)) {
@@ -107,13 +107,10 @@ const source_type_list = [
     { text: 'All', value: '' },
     { text: 'Renewal', value: 'Renewal_upload' },
 ];
-console.log('filters',filters.product);
 const tableHeader = [
     { text: 'CDB ID', value: 'code' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
-    { text: 'SOURCE', value: 'source' },
-    { text: 'NATIONALITY', value: 'nationality' },
     { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
     { text: 'POLICY START DATE', value: 'policy_start_date' },
     { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
@@ -151,7 +148,7 @@ const permissionsEnum = page.props.permissionsEnum;
         <Head title="Search" />
 
         <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Search {{filters.product}}</h2>
+            <h2 class="text-xl font-semibold">Search </h2>
         </div>
         <x-divider class="my-4" />
 
@@ -200,6 +197,14 @@ const permissionsEnum = page.props.permissionsEnum;
                     placeholder="Search by Email"
                 />
                 <x-input
+                        v-model="filters.mobile_no"
+                        type="search"
+                        name="mobile_no"
+                        label="Phone Number"
+                        class="w-full"
+                        placeholder="Search by Phone Number"
+                />
+                <x-input
                     v-model="filters.previous_quote_policy_number"
                     type="search"
                     name="previous_quote_policy_number"
@@ -217,7 +222,7 @@ const permissionsEnum = page.props.permissionsEnum;
                 </x-button>
             </div>
         </x-form>
-        <div class="flex justify-end gap-3 mb-4 mt-4" v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)">
+        <div class="flex justify-end gap-3 mb-4 mt-4" v-if="can(permissionsEnum.EXPORT_NO_CONTACTINFO)" >
             <a id="export_link" target="_blank" class="border appearance-none rounded-md shadow-sm py-2 text-sm px-4 cursor-pointer"  href="" size="sm" color="emerald">
                 Export
             </a>

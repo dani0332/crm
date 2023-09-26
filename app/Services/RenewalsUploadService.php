@@ -1663,7 +1663,7 @@ class RenewalsUploadService
                 $quotes = LifeQuoteRepository::getData()->withQueryString();
                 break;
             case QuoteTypeId::Business:
-                $quotes = BusinessQuoteRepository::getData()->withQueryString();
+                $quotes = BusinessQuoteRepository::getDataOfBusiness()->withQueryString();
                 break;
             case QuoteTypeId::Bike:  // can
                 $quotes = BikeQuoteRepository::getData()->withQueryString();

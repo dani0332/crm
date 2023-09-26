@@ -28,6 +28,7 @@ class CarQuote extends BaseModel
         'source' => FilterTypes::EXACT,
         'renewal_expiry_date' => FilterTypes::DATE_BETWEEN,
         'renewal_batch' => FilterTypes::EXACT,
+        'mobile_no' => FilterTypes::EXACT,
     ];
     protected $guarded = [];
 
