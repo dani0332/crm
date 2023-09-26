@@ -470,7 +470,7 @@ class CarAllocationService extends AllocationService
 
     public function fetchLeadsForReAssignment($advisorId)
     {
-        $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         info('leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 

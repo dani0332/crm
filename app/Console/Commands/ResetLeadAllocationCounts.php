@@ -43,6 +43,7 @@ class ResetLeadAllocationCounts extends Command
             'allocation_count' => 0,
             'auto_assignment_count' => 0,
             'manual_assignment_count' => 0,
+            'max_capacity' => 50,
         ]);
         info('---------- Scheduler is done with reset count of every user ----------');
 
