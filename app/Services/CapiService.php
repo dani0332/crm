@@ -35,7 +35,7 @@ class CapiService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl.$path;
-        info('RM Intro Email URL: ', $url);
+        info('RM Intro Email URL: '.$url);
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url);
 
         return (object) $response->json();
