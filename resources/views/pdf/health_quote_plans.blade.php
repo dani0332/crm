@@ -384,9 +384,7 @@
     <footer>
         <table class="tbl-footer">
             <div style="float: left;">
-                @if($quote->advisor?->profile_photo_path)
-                    <img style="height: 110px; border-radius: 50%;" src="{{ config('constants.AZURE_IM_STORAGE_URL') . $quote->advisor?->profile_photo_path }}">
-                @endif
+                    <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:'/image/alfred-theme.png'}}">
             </div>
             <div style="float: left; margin-left: 10px; margin-top: 20px">
                 @if(isset($quote->advisor->name) && !empty($quote->advisor->name))
