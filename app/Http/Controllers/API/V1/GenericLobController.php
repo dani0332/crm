@@ -47,8 +47,6 @@ class GenericLobController extends Controller
     {
         dispatch(new SendOCBEmailJob($OCBEmailRequest->quoteUuId));
 
-        $this->dispatchCarRenewalEmail($OCBEmailRequest->quoteUuId);
-
         return response()->json(['message' => 'OCB Email Job dispatched against UUID: '.$OCBEmailRequest->quoteUuId]);
     }
 
