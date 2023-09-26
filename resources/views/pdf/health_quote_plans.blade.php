@@ -276,8 +276,7 @@
                 }
             }
 
-            $payloadAddons = json_decode($addons);
-            $quotePlan->addons = (isset($payloadAddons->{$quotePlan->id})) ? $payloadAddons->{$quotePlan->id} : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = (isset($addons->{$quotePlan->id})) ? $addons->{$quotePlan->id} : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             // Discount Premium and VAT new Implementation
             if(isset($quotePlan->addons->{'coPayment'})) {
