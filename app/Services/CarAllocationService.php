@@ -359,13 +359,10 @@ class CarAllocationService extends AllocationService
         $lead->auto_assigned = true;
         $lead->assignment_type = $assignmentType;
 
-        if ($lead->quote_batch_id === null) {
-            $quoteBatch = QuoteBatches::latest()->first();
-            info('About to assign quote batch with id: '.$quoteBatch->id.' and name: '.$quoteBatch->name.' to quote: '.$lead->uuid);
-            $updatedData['quote_batch_id'] = $quoteBatch->id;
-        } else {
-            info('Quote batch currently attached to quote: '.$lead->uuid.' and quote id is: '.$lead->quote_batch_id);
-        }
+        $quoteBatch = QuoteBatches::latest()->first();
+        $lead->quote_batch_id = $quoteBatch->id;
+
+        info('About to assign quote batch with id: '.$quoteBatch->id.' and name: '.$quoteBatch->name.' to quote: '.$lead->uuid);
 
         $lead->save();
 
