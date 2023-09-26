@@ -10,7 +10,7 @@ class CapiService
     private $baseUrl = null;
 
     /**
-     * setup http client with credentials
+     * setup http client with credentials.
      */
     public function __construct()
     {
@@ -26,7 +26,7 @@ class CapiService
     }
 
     /**
-     * send request to ken
+     * send request to ken.
      *
      * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response
      *
@@ -35,6 +35,7 @@ class CapiService
     public function request($path, $method = 'post', $data = [])
     {
         $url = $this->baseUrl.$path;
+        info('RM Intro Email URL: ', $url);
         $response = $this->client->withBody(json_encode($data), 'application/json')->send($method, $url);
 
         return (object) $response->json();
