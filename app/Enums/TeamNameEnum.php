@@ -8,4 +8,5 @@ final class TeamNameEnum extends Enum
 {
     public const RENEWALS = 'Renewals';
     public const AFFINITY = 'Affinity';
+    public const CAR = 'Car';
 }

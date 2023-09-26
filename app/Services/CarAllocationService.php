@@ -164,11 +164,16 @@ class CarAllocationService extends AllocationService
 
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId)
     {
-        $excludedTeams = [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS];
+        $carTeamIds = Team::where('name', TeamNameEnum::CAR)
+                    ->select('id')
+                    ->with(['children' => function ($query) {
+                        $query->whereNotIn('name', [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS]);
+                    }])
+                    ->first();
 
-        $excludedTeamIds = Team::whereIn('name', $excludedTeams)->select('id')->get();
+        $carUserIds = UserTeams::whereIn('team_id', $carTeamIds)->select('user_id')->get()->toArray();
 
-        $excludedUserIds = UserTeams::whereIn('team_id', $excludedTeamIds)->select('user_id')->get();
+        $finalUsersToLook = array_unique(array_merge($tierUserIds->toArray(), $carUserIds));
 
         $query = LeadAllocation::with('leadAllocationUser')
             ->whereHas('leadAllocationUser', function ($query) use ($status) {
@@ -178,8 +183,7 @@ class CarAllocationService extends AllocationService
                 $query->whereRaw('allocation_count < max_capacity')
                     ->orWhere('max_capacity', -1);
             })
-            ->whereIn('user_id', $tierUserIds)
-            ->whereNotIn('user_id', $excludedUserIds)
+            ->whereIn('user_id', $finalUsersToLook)
             ->orderBy('last_allocated');
 
         if (! empty($advisorId)) {
@@ -342,13 +346,11 @@ class CarAllocationService extends AllocationService
             info('lead with uuid : '.$lead->uuid.' was previously assigned to user id : '.$lead->advisor_id.' and now getting assigned to user id : '.$userId);
         }
 
-        $updatedData = [
-            'tier_id' => $tier->id,
-            'advisor_id' => $userId,
-            'cost_per_lead' => $tier->cost_per_lead,
-            'auto_assigned' => true,
-            'assignment_type' => $assignmentType,
-        ];
+        $lead->tier_id = $tier->id;
+        $lead->advisor_id = $userId;
+        $lead->cost_per_lead = $tier->cost_per_lead;
+        $lead->auto_assigned = true;
+        $lead->assignment_type = $assignmentType;
 
         if ($lead->quote_batch_id === null) {
             $quoteBatch = QuoteBatches::latest()->first();
@@ -358,7 +360,6 @@ class CarAllocationService extends AllocationService
             info('Quote batch currently attached to quote: '.$lead->uuid.' and quote id is: '.$lead->quote_batch_id);
         }
 
-        $lead->fill($updatedData);
         $lead->save();
 
         return $lead;
