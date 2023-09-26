@@ -9,6 +9,7 @@ chmod -R 775 bootstrap/cache
 
 # yes | doppler run -- php artisan horizon:terminate #terminates so its restarted by supervisor
 # php artisan migrate:fresh --seed
+php artisan config:clear
 php artisan route:clear
 php artisan view:clear
 php artisan view:cache
