@@ -33,6 +33,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
     {
         return [
             'Ref-ID',
+            'Cusotmer Name',
             'Insurance provider',
             'Product',
             'Policy start date',
@@ -48,6 +49,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
 
         return [
             $quote->code,
+            $quote->first_name.' '.$quote->last_name,
             $quote->insuranceProvider != null ? $quote->insuranceProvider->text : '',
             $this->exportType,
             $quote->policy_start_date,

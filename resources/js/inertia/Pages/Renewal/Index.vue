@@ -114,7 +114,7 @@ const tableHeader = [
     { text: 'CDB ID', value: 'code' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
-    { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
+    { text: 'Insurance provider', value: 'insurance_provider' },
     { text: 'POLICY START DATE', value: 'policy_start_date' },
     { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
     { text: 'GROSS PREMIUM', value: 'premium' },
