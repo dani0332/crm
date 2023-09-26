@@ -1020,12 +1020,12 @@ const actionsHeaders = ref([
 const getFollowUpsByQuote = () => {
   axios
     .get(
-      `https://kyo.alfred.ae/kyostg/api/v1/followups/car/${page.props.record.uuid}`,
+      `${process.env.MIX_KYO_END_POINT}/followups/car/${page.props.record.uuid}`,
     )
     .then(response => {
       let { status, emails, actions } = response.data.data;
       if (status == 'PENDING' || status == 'IN_PROGRESS')
-        disableFollowUp.value = true;
+        disableFollowUp.value = false;
       followUpstatus.value = status;
       followUpEmails.value = emails;
       followUpActions.value = actions;
@@ -2463,7 +2463,7 @@ onMounted(() => getFollowUpsByQuote());
 					</x-button>
 				</div>
 				</x-form>
-          </x-modal>		
+          </x-modal>
 		</div>  -->
 
     <div class="p-4 rounded shadow mb-6 bg-white">

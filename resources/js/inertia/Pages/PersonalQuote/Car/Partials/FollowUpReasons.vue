@@ -37,7 +37,7 @@ watch(
 
 const getPauseReaons = () => {
   axios
-    .get('https://kyo.alfred.ae/kyostg/api/v1/lookups/pause-followup-reasons')
+    .get(`${process.env.MIX_KYO_END_POINT}/lookups/pause-followup-reasons`)
     .then(response => {
       reasons.value = response.data.data;
     })
@@ -68,7 +68,7 @@ function onSubmit() {
   if (valid) {
     isloading.value = true;
     axios
-      .post('https://kyo.alfred.ae/kyostg/api/v1/followups/1/pause', {
+      .post(`${process.env.MIX_KYO_END_POINT}/followups/1/pause`, {
         reason_id: getReasonId.value[0].id,
         action_by_id: props.uuid,
         resume_date: date.value.split('T')[0],
