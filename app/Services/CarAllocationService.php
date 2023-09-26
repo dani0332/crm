@@ -38,10 +38,17 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-        return CarQuote::where('uuid', $quoteId)
+        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+        $query = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('is_renewal_tier_email_sent', 0)->first();
+            ->where('is_renewal_tier_email_sent', 0);
+
+        if(!empty($tierRId)){
+            $query->where('tier_id', '!=', $tierR->id);
+        }
+
+        return $query->first();
     }
 
     public function getTier($tierId)
@@ -465,6 +472,8 @@ class CarAllocationService extends AllocationService
     {
         $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         info('leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
+        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('quote_status_id', QuoteStatusEnum::NewLead);
@@ -478,6 +487,10 @@ class CarAllocationService extends AllocationService
                 info('inside reassignment general run');
                 $leads->whereIn('advisor_id', $advisorIds);
             }
+        }
+
+        if(!empty($tierRId)){
+            $leads->where('tier_id', '!=', $tierR->id);
         }
 
         return $leads->get();
