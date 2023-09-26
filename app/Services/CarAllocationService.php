@@ -32,7 +32,6 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class CarAllocationService extends AllocationService
 {
@@ -407,7 +406,7 @@ class CarAllocationService extends AllocationService
     {
         // Calculate the start date for lead retrieval
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
-        info('Leads will be picked up in reassignment from : ' . $from . ' until : ' . now()->toDateTimeString());
+        info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
 
         // Get the Tier R
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
@@ -419,7 +418,7 @@ class CarAllocationService extends AllocationService
 
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
-            info('Inside reassignment single run and advisor selected is : ' . $advisorId);
+            info('Inside reassignment single run and advisor selected is : '.$advisorId);
             $leads->where('advisor_id', $advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
@@ -432,7 +431,7 @@ class CarAllocationService extends AllocationService
         }
 
         // Filter leads by tier (if applicable)
-        if (!empty($tierR)) {
+        if (! empty($tierR)) {
             $leads->where('tier_id', '!=', $tierR->id);
         }
 

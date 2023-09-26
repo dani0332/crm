@@ -6,7 +6,6 @@ use App\Models\Tier;
 
 trait TierTrait
 {
-
     public function getTiers($condition = [])
     {
         return $this->resolveQuery(Tier::where('is_active', true)->where($condition));

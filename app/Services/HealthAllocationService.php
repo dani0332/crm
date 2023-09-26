@@ -13,11 +13,9 @@ use App\Jobs\GetQuotePlansJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
-use App\Models\LeadAllocation;
 use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class HealthAllocationService extends AllocationService
@@ -122,7 +120,6 @@ class HealthAllocationService extends AllocationService
             $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate);
         }
 
-
         $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
         $leadCreated = Carbon::parse($lead->created_at)->timestamp;
 
@@ -133,7 +130,6 @@ class HealthAllocationService extends AllocationService
 
         GetQuotePlansJob::dispatch($lead);
     }
-
 
     public function updateQuoteDetail($leadId)
     {

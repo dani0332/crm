@@ -145,14 +145,13 @@ class AllocationService
         info('assignment count update for userId : '.$userId.', and lead code :  '.$lead->code);
     }
 
-
     public function updateExistingQuoteDetail($quoteDetail, $uuid): void
     {
         $quoteDetail->advisor_assigned_date = now();
         $quoteDetail->advisor_assigned_by_id = auth()->id();
         $quoteDetail->save();
 
-        info('Quote detail update for lead : '. $uuid);
+        info('Quote detail update for lead : '.$uuid);
     }
 
     public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
