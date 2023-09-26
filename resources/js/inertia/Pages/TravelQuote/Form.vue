@@ -396,11 +396,6 @@ onMounted(() => {
           size="md"
           color="emerald"
           type="submit"
-          :disabled="
-            editMode &&
-            (quoteForm.has_arrived_destination == '1' ||
-              quoteForm.has_arrived_uae == '1')
-          "
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}
