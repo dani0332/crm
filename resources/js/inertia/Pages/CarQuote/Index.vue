@@ -143,7 +143,7 @@ const sendtemplateForm = data => {
   data.renewal_batch = filters.renewal_batch;
   data.quote_batch_id = filters.quote_batch_id;
   axios
-    .post('https://kyo.alfred.ae/kyostg/api/v1/workflows', data)
+    .post(`${process.env.MIX_KYO_END_POINT}/workflows`, data)
     .then(response => {
       showFollowUpModal.value = false;
       notification.success({
