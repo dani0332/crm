@@ -40,8 +40,7 @@ class GoogleSocialiteController extends Controller
         $remember = in_array($requestingUser->email, getAutomationUser()) ? true : false;
         auth()->login($requestingUser, $remember);
         $lastUpdatedDate = Carbon::parse($requestingUser->google_photo_last_updated);
-        $today = Carbon::now();
-        $lastSync = $lastUpdatedDate->diffInDays($today);
+        $lastSync = $lastUpdatedDate->diffInDays(Carbon::now());
 
         if (isset($socialUser->user['picture']) && ($lastSync > 6 || $requestingUser->google_photo_last_updated == null)) {
             $requestingUser->google_photo_last_updated = now();
