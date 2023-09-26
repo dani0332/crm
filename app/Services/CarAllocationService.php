@@ -165,11 +165,11 @@ class CarAllocationService extends AllocationService
     public function getAdvisorsByStatus($status, $tierUserIds, $advisorId)
     {
         $carTeamIds = Team::where('name', TeamNameEnum::CAR)
-                    ->select('id')
-                    ->with(['children' => function ($query) {
-                        $query->whereNotIn('name', [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS]);
-                    }])
-                    ->first();
+            ->select('id')
+            ->with(['children' => function ($query) {
+                $query->whereNotIn('name', [TeamNameEnum::AFFINITY, TeamNameEnum::RENEWALS]);
+            }])
+            ->first();
 
         $carUserIds = UserTeams::whereIn('team_id', $carTeamIds)->select('user_id')->get()->toArray();
 
