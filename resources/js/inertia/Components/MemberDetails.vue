@@ -15,6 +15,10 @@ const props = defineProps({
     quote_type: {
         required: true,
         type: String,
+    },
+    forAml: {
+        type: Boolean,
+        default: false
     }
 });
 
@@ -192,6 +196,7 @@ const memberDeleteConfirmed = () => {
                         Edit
                     </x-button>
                     <x-button
+                        v-if="!forAml"
                         size="xs"
                         color="error"
                         outlined
