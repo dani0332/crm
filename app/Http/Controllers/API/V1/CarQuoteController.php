@@ -38,7 +38,7 @@ class CarQuoteController extends Controller
             ->with(['carQuoteRequestDetail' => function($q){
             $q->whereNotNull('ocb_sent_date');
         }])->filter()
-        ->simplePaginate();
+        ->simplePaginate((request()->limit ?? 100));
 
         //return CarQuoteResource::collection($quotes);
         return response()->json($quotes);
