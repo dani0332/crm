@@ -31,27 +31,27 @@ const followUpForm = ref({
         <x-radio
           class="my-2"
           v-model="followUpForm.template_id"
-          :value="1"
+          :value="521"
           label="Holiday Template"
         />
         <div class="mb-2">
           <x-radio
             v-model="followUpForm.template_id"
-            :value="2"
+            :value="511"
             label="Follow up 1: Preview Text: Time Sensitive: Secure Your Motor Insurance Today!"
           />
         </div>
         <div class="mb-2">
           <x-radio
             v-model="followUpForm.template_id"
-            :value="3"
+            :value="512"
             label="Follow up 2: Preview Text: Secure Your Motor Insurance Today!"
           />
         </div>
         <div class="mb-2">
           <x-radio
             v-model="followUpForm.template_id"
-            :value="4"
+            :value="513"
             label="Follow up 3: Making Sure You Don't Miss Out on Motor Insurance Coverage"
           />
         </div>

@@ -42,10 +42,13 @@ class CreateRenewalsWorkflowJob implements ShouldQueue
     {
         info('*** CL: CreateRenewalsWorkflowJob create workflow for renewals batch:' . $this->renewalsBatchEmail->batch . ' started ***');
 
+        $this->renewalsBatchEmail->load('createdby');
+
         $response = Kyo::post('/workflows', [
             'quote_type' => quoteTypeCode::Car,
             'type' => WorkflowTypeEnum::RENEWALS,
-            'renewal_batch' => $this->renewalsBatchEmail->batch
+            'renewal_batch' => $this->renewalsBatchEmail->batch,
+            'created_by_email' => $this->renewalsBatchEmail->createdby->email ?? null
         ]);
 
         if(isset($response['success']) && $response['success']) {
