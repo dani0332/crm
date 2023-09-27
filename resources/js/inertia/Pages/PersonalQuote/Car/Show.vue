@@ -1009,6 +1009,8 @@ const hideFollowUp = ref(true);
 
 const emailsHeaders = ref([
   { text: 'Email Subject', value: 'customer_email' },
+  { text: 'Schedule Date', value: 'schedule_date' },
+  { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
 ]);
@@ -1017,6 +1019,7 @@ const actionsHeaders = ref([
   { text: 'Type', value: 'type' },
   { text: 'Reason', value: 'reason.text' },
   { text: 'Notes', value: 'notes' },
+  { text: 'Created By', value: 'action_by_email' },
   { text: 'Created At', value: 'created_at' },
 ]);
 

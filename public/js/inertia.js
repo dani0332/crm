@@ -13377,8 +13377,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Composables_rules_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./resources/js/inertia/Composables/rules.js */ "./resources/js/inertia/Composables/rules.js");
 /* harmony import */ var _Users_faisalabbas_Sites_blanka_dev_resources_js_inertia_Composables_toast_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./resources/js/inertia/Composables/toast.js */ "./resources/js/inertia/Composables/toast.js");
 /* harmony import */ var vue__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! vue */ "./node_modules/vue/dist/vue.esm-bundler.js");
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var _inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @inertiajs/vue3 */ "./node_modules/@inertiajs/vue3/dist/index.esm.js");
 /* unplugin-vue-components disabled */
+
 
 
 
@@ -13423,7 +13425,7 @@ __webpack_require__.r(__webpack_exports__);
       if (selectedReason.value == 'lostCase') date.value = '';
     });
     var getPauseReaons = function getPauseReaons() {
-      axios__WEBPACK_IMPORTED_MODULE_3__["default"].get("".concat("http://kyo.test/api/v1", "/lookups/pause-followup-reasons")).then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_4__["default"].get("".concat("http://127.0.0.1:8001/api/v1", "/lookups/pause-followup-reasons")).then(function (response) {
         reasons.value = response.data.data;
       })["catch"](function (error) {
         console.log(error);
@@ -13450,9 +13452,9 @@ __webpack_require__.r(__webpack_exports__);
       var valid = isValid();
       if (valid) {
         isloading.value = true;
-        axios__WEBPACK_IMPORTED_MODULE_3__["default"].post("".concat("http://kyo.test/api/v1", "/followups/").concat(props.followUpId, "/pause"), {
+        axios__WEBPACK_IMPORTED_MODULE_4__["default"].post("".concat("http://127.0.0.1:8001/api/v1", "/followups/").concat(props.followUpId, "/pause"), {
           reason_id: getReasonId.value[0].id,
-          action_by_id: props.uuid,
+          action_by_email: (0,_inertiajs_vue3__WEBPACK_IMPORTED_MODULE_3__.usePage)().props.auth.user.email,
           resume_date: date.value.split('T')[0],
           notes: notes.value
         }).then(function (response) {
@@ -14878,6 +14880,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       text: 'Email Subject',
       value: 'customer_email'
     }, {
+      text: 'Schedule Date',
+      value: 'schedule_date'
+    }, {
+      text: 'Sent date',
+      value: 'sent_date'
+    }, {
       text: 'Status',
       value: 'status'
     }, {
@@ -14895,11 +14903,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       text: 'Notes',
       value: 'notes'
     }, {
+      text: 'Created By',
+      value: 'action_by_email'
+    }, {
       text: 'Created At',
       value: 'created_at'
     }]);
     var getFollowUpsByQuote = function getFollowUpsByQuote() {
-      axios__WEBPACK_IMPORTED_MODULE_11__["default"].get("".concat("http://kyo.test/api/v1", "/followups/car/").concat(page.props.record.uuid)).then(function (response) {
+      axios__WEBPACK_IMPORTED_MODULE_11__["default"].get("".concat("http://127.0.0.1:8001/api/v1", "/followups/car/").concat(page.props.record.uuid)).then(function (response) {
         var _response$data$data = response.data.data,
           status = _response$data$data.status,
           emails = _response$data$data.emails,
