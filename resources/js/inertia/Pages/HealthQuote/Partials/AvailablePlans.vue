@@ -182,7 +182,7 @@ const newActualPremium = ref(0);
 const getDefaultVaues = () => {
   let smallestCopayValue = 0;
   if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
-    props.plan.ratesPerCopay?.forEach(function callback(element, index) {
+    props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
       if (index == 0) {
         smallestCopayValue = element.premium;
         defaultCopayId.value = element.healthPlanCoPaymentId;

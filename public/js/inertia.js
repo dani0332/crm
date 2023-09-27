@@ -7762,8 +7762,8 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
     var getDefaultVaues = function getDefaultVaues() {
       var smallestCopayValue = 0;
       if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
-        var _props$plan$ratesPerC2;
-        (_props$plan$ratesPerC2 = props.plan.ratesPerCopay) === null || _props$plan$ratesPerC2 === void 0 || _props$plan$ratesPerC2.forEach(function callback(element, index) {
+        var _props$plan2;
+        (_props$plan2 = props.plan) === null || _props$plan2 === void 0 || (_props$plan2 = _props$plan2.ratesPerCopay) === null || _props$plan2 === void 0 || _props$plan2.forEach(function callback(element, index) {
           if (index == 0) {
             smallestCopayValue = element.premium;
             defaultCopayId.value = element.healthPlanCoPaymentId;
