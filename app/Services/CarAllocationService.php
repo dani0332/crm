@@ -663,4 +663,16 @@ class CarAllocationService extends AllocationService
 
         return $vehicleName;
     }
+
+    public function updateLeadTier($lead, $tier): void
+    {
+        info('login users not found for selected lead so will try to assign only tier for lead : '.$lead->uuid);
+
+        CarQuote::where('id', $lead->id)->update([
+            'tier_id' => $tier->id,
+        ]);
+
+        info('Tier with name : '.$tier->name.' is assigned to car lead with uuid : '.$lead->uuid);
+    }
+
 }
