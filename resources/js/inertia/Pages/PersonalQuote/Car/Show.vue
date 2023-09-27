@@ -1015,7 +1015,7 @@ const emailsHeaders = ref([
 const followUpActions = ref([]);
 const actionsHeaders = ref([
   { text: 'Type', value: 'type' },
-  { text: 'Reason Id', value: 'reason_id' },
+  { text: 'Reason', value: 'reason.text' },
   { text: 'Notes', value: 'notes' },
   { text: 'Created At', value: 'created_at' },
 ]);

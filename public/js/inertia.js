@@ -14889,8 +14889,8 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       text: 'Type',
       value: 'type'
     }, {
-      text: 'Reason Id',
-      value: 'reason_id'
+      text: 'Reason',
+      value: 'reason.text'
     }, {
       text: 'Notes',
       value: 'notes'
