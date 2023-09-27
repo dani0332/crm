@@ -7,6 +7,7 @@ use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -46,9 +47,10 @@ class HandleInertiaRequests extends Middleware
             $roles = auth()->user()->getRoleNames()->toArray();
         }
 
-        return array_merge(parent::share($request), [
+        return [
+            ...parent::share($request),
             'auth.user' => fn () => $request->user()
-                ? $request->user()->only('id', 'name', 'email')
+                ? $request->user()->only('id', 'name', 'email', 'profile_photo_path')
                 : null,
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
@@ -57,11 +59,12 @@ class HandleInertiaRequests extends Middleware
             'rolesEnum' => RolesEnum::asArray(),
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
-        ]);
+        ];
     }
 
     protected function shareFlashData(Request $request)
@@ -254,7 +257,6 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::CAR_SOLD_LIST,
             PermissionsEnum::CAR_UNCONTACTABLE_LIST,
         ])) {
-
             $nav = $nav->add('Car Sold / Uncon', '', function (Section $section) {
                 $section
                     ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_SOLD_LIST), 'Car Sold', '/quotes/car-sold', fn ($s) => $s->attributes(['icon' => 'car']))

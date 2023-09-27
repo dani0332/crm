@@ -418,9 +418,12 @@ $(document).ready(function () {
     },
       drawCallback: function () {
          let tableData = this.api().data();
-          if(tableData[0]){
-              $('#total_premium_value').html(tableData[0].premium_total);
-          }
+        if(tableData[0]){
+          let totalPremium = tableData[0].premium_total.toFixed(2);
+          $('#total_premium_value').html(totalPremium);
+        }else{
+          $('#total_premium_value').html('0');
+        }
       },
     columns: [
       { data: 'approval_code', name: 'approval_code' },
@@ -1812,6 +1815,23 @@ $(document).ready(function () {
       },
     });
   });
+
+  $('.apilogsbtn').click(function () {
+    var auditableId = $(this).attr('data-id');
+    var auditableType = $(this).attr('data-model');
+    $(this).attr('disabled', true);
+
+    $.ajax({
+      url: config.routes.load_apilogs,
+      method: 'POST',
+      data: { auditableId, auditableType, _token: config._token },
+      success: function (data) {
+        $('#apilogsdiv').html(data);
+        $('.apilogsbtn').hide();
+      },
+    });
+  });
+
   // dateRangePickerChange("", "");
   // $(".x_panel transparent > .applyBtn, .ranges li").click(function () {
   //     setTimeout(() => {

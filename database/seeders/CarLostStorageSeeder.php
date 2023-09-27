@@ -20,9 +20,9 @@ class CarLostStorageSeeder extends Seeder
             ['key_name' => ApplicationStorageEnums::UNCONTACTABLE_STATUS_REJECTION_TEMPLATE, 'value' => 473],
             ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TEMPLATE, 'value' => 474],
             ['key_name' => ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE, 'value' => 478],
-            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TO, 'value' => 'faisal.abbas@insurancemarket.ae'], //todo: change this later renewalsapprovals@insurancemarket.ae
-            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_CC, 'value' => 'faisal.abbas@insurancemarket.ae'], //todo: change this later  marketing.operations@insurancemarket.ae
-            ['key_name' => ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC, 'value' => 'renewalsapprovals@insurancemarket.ae'], //todo: change this later  marketing.operations@insurancemarket.ae
+            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_TO, 'value' => 'renewalsapprovals@insurancemarket.ae'],
+            ['key_name' => ApplicationStorageEnums::CAR_SOLD_RESUBMISSIONS_CC, 'value' => 'marketing.operations@insurancemarket.ae'],
+            ['key_name' => ApplicationStorageEnums::CAR_LOST_REJECTION_EMAIL_CC, 'value' => 'renewalsapprovals@insurancemarket.ae'],
         ];
 
         foreach ($items as $storage) {

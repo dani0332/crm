@@ -1,5 +1,6 @@
 FROM php:8.1-fpm
 ARG IMCRM_TOKEN
+ARG NODE_MAJOR=20
 #ARG NGINX_FILE
 #ARG NEW_RELIC_LICENSE_KEY
 #ARG NEW_RELIC_APP_NAME
@@ -21,7 +22,7 @@ RUN pecl install redis \
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    build-essential libssl-dev pkg-config \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
@@ -37,10 +38,13 @@ RUN apt-get update && apt-get install -y \
     wget \
     gnupg
 RUN docker-php-ext-install gd
-# Install node 16
+RUN pecl install mongodb && docker-php-ext-enable mongodb
+# Install node 20
 RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
 RUN bash /tmp/nodesource_setup.sh
-RUN apt install nodejs -y
+#RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+#    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+RUN apt update && apt install nodejs -y
 
 # Install yarn
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -109,7 +113,7 @@ RUN chmod -R ugo+w /var/www/storage
 # Copy nginx/php/supervisor configs
 RUN cp docker/supervisor.conf /etc/supervisord.conf
 RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
-RUN cp docker/info.php /var/www/public/
+# RUN cp docker/info.php /var/www/public/
 RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
 RUN cp -r docker/*.pem /etc/nginx/conf.d/
 RUN cp docker/log_files.yml /etc/
