@@ -533,6 +533,7 @@ class CarAllocationService extends AllocationService
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'mobilePhone' => $user->mobile_no,
             'advisorEmail' => $user->email,
+            'landLine' => $user->landline_no,
             'advisorName' => $user->name,
             'documentUrl' => [$documentUrl],
             'customerEmail' => $carQuote->email,
