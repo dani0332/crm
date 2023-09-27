@@ -1004,6 +1004,7 @@ const confirmSendEmail = () => {
 const disableFollowUp = ref(false);
 const followUpstatus = ref('');
 const followUpEmails = ref([]);
+const followUpId = ref('');
 const emailsHeaders = ref([
   { text: 'Email Subject', value: 'customer_email' },
   { text: 'Status', value: 'status' },
@@ -1023,18 +1024,24 @@ const getFollowUpsByQuote = () => {
       `${process.env.MIX_KYO_END_POINT}/followups/car/${page.props.record.uuid}`,
     )
     .then(response => {
-      let { status, emails, actions } = response.data.data;
+      let { status, emails, actions, id } = response.data.data;
       if (status == 'PENDING' || status == 'IN_PROGRESS')
         disableFollowUp.value = false;
+      else disableFollowUp.value = true;
       followUpstatus.value = status;
       followUpEmails.value = emails;
       followUpActions.value = actions;
+      followUpId.value = id;
     })
     .catch(error => {
       console.log(error);
     });
 };
 
+const closeModal = v => {
+  if (v) disableFollowUp.value = v;
+  showfollowup.value = false;
+};
 onMounted(() => getFollowUpsByQuote());
 </script>
 
@@ -1998,9 +2005,10 @@ onMounted(() => getFollowUpsByQuote());
 
       <FollowUpReasons
         :modelValue="showfollowup"
-        @update:modelValue="showfollowup = false"
+        @update:modelValue="value => closeModal(value)"
         :uuid="page.props.record.id"
         :source="page.props.record.source"
+        :followUpId="followUpId"
       />
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>

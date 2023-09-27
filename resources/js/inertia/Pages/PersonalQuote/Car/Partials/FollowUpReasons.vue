@@ -3,6 +3,7 @@ const props = defineProps({
   modelValue: Boolean,
   uuid: String,
   source: String,
+  followUpId: String,
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -63,17 +64,21 @@ const isValid = () => {
   }
   return isValid;
 };
+
 function onSubmit() {
   let valid = isValid();
   if (valid) {
     isloading.value = true;
     axios
-      .post(`${process.env.MIX_KYO_END_POINT}/followups/1/pause`, {
-        reason_id: getReasonId.value[0].id,
-        action_by_id: props.uuid,
-        resume_date: date.value.split('T')[0],
-        notes: notes.value,
-      })
+      .post(
+        `${process.env.MIX_KYO_END_POINT}/followups/${props.followUpId}/pause`,
+        {
+          reason_id: getReasonId.value[0].id,
+          action_by_id: props.uuid,
+          resume_date: date.value.split('T')[0],
+          notes: notes.value,
+        },
+      )
       .then(response => {
         if (response.data.success);
         notification.success({
@@ -89,7 +94,7 @@ function onSubmit() {
       })
       .finally(() => {
         isloading.value = false;
-        emit('update:modelValue');
+        emit('update:modelValue', response.data.success);
       });
   }
 }
