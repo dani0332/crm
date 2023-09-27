@@ -180,7 +180,7 @@ const onTogglePlans = () => {
 const getDefaultVaues = () => {
   let smallestCopayValue = 0;
   if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
-    props.plan.ratesPerCopay?.forEach(function callback(element, index) {
+    props.plan?.ratesPerCopay?.forEach(function callback(element, index) {
       if (index == 0) {
         smallestCopayValue = element.premium;
         defaultCopayId.value = element.healthPlanCoPaymentId;
@@ -190,7 +190,7 @@ const getDefaultVaues = () => {
       }
     });
 
-    props.plan.actualPremium = smallestCopayValue;
+    smallestCopayValue = props.plan?.actualPremium;
   }
 };
 
