@@ -529,7 +529,7 @@
                                 {!! ($value)  !!}
                             @else
                                 @if($feature['code'] == 'coPayment')
-                                    {{ $addons->{$planId}->{'coPayment'}->{'text'} ?? 'N/A' }}
+                                    {{ $addons[$planId]->{'coPayment'}->{'text'} ?? 'N/A' }}
                                 @else
                                     {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
                                 @endif
