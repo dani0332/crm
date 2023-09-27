@@ -183,7 +183,7 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId = null)
+    public function getEligibleUserForAllocation($tierId, $advisorId = null, $isReassignmentJob = false)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
 
@@ -191,8 +191,11 @@ class CarAllocationService extends AllocationService
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
-            UserStatusEnum::UNAVAILABLE,
         ];
+
+        if (!$isReassignmentJob) {
+            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
 
         // Iterate through user statuses in the specified order.
         foreach ($statusOrder as $status) {
