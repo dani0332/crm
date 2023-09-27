@@ -155,7 +155,7 @@ class LeadAllocationController extends Controller
             if ($user) {
                 $user->status = $request->reason;
                 info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
-                event(new UserStatusChanged($user->id, $user->status));
+                event(new UserStatusChanged($user->id, $user->status, $user->name));
                 $user->save();
             }
         }

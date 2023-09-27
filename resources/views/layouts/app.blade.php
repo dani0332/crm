@@ -217,7 +217,7 @@
 
         var channel = pusher.subscribe('public.'+appName + '.activity.user');
         channel.bind('user.status.changed', function(data) {
-            debugger;
+            console.log(data.message);
             if ($('.car_lead_allocation_table').length > 0) {
                 $('.car_lead_allocation_table').find("tr")
                     .find("td:first")

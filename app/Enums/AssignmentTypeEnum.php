@@ -16,4 +16,27 @@ final class AssignmentTypeEnum extends Enum
         self::MANUAL_ASSIGNED,
         self::MANUAL_REASSIGNED,
     ];
+
+    public static function getAssignmentTypeText($assignmentType)
+    {
+        $assignmentText = '';
+        switch ($assignmentType) {
+            case 1:
+                $assignmentText = 'System Assigned';
+                break;
+            case 2:
+                $assignmentText = 'System ReAssigned';
+                break;
+            case 3:
+                $assignmentText = 'Manual Assigned';
+                break;
+            case 4:
+                $assignmentText = 'Manual ReAssigned';
+                break;
+            default:
+                break;
+        }
+
+        return $assignmentText;
+    }
 }

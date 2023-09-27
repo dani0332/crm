@@ -2,14 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class UserStatusAuditLog extends Model implements AuditableContract
+class UserStatusAuditLog extends Model
 {
-    use Auditable, HasFactory;
-
     protected $table = 'user_status_audit_log';
+    protected $fillable = ['user_id', 'status', 'status_changed_at', 'created_by', 'updated_by'];
+    public $timestamps = false;
 }

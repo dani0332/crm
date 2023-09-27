@@ -91,7 +91,7 @@ class UpdateUserStatus extends Command
                 if ($newStatus != $currentUserStatus) {
                     info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus);
                     User::where('id', $userId)->update(['status' => $newStatus]);
-                    event(new UserStatusChanged($userId, $newStatus));
+                    event(new UserStatusChanged($userId, $newStatus, $session->user->name));
                     info('System pushed event notification');
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
@@ -108,7 +108,7 @@ class UpdateUserStatus extends Command
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {
                 info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
-                event(new UserStatusChanged($userId, UserStatusEnum::ONLINE));
+                event(new UserStatusChanged($userId, UserStatusEnum::ONLINE,$session->user->name));
                 info('System pushed event notification');
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
