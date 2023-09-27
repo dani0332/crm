@@ -278,7 +278,7 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
-            $quotePlan->addons = isset($addons) ? json_decode($addons)->{$quotePlan->id} : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            $quotePlan->addons = isset($addons) ? $addons->{$quotePlan->id} : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             // Discount Premium and VAT new Implementation
             if(isset($quotePlan->addons->{'coPayment'})) {
@@ -528,7 +528,7 @@
                                 {!! ($value)  !!}
                             @else
                                 @if($feature['code'] == 'coPayment')
-                                    {{ json_decode($addons)->{$planId}->{'coPayment'}->{'text'} ?? 'N/A' }}
+                                    {{ $addons->{$planId}->{'coPayment'}->{'text'} ?? 'N/A' }}
                                 @else
                                     {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
                                 @endif
