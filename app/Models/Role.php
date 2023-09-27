@@ -9,7 +9,7 @@ use Spatie\Permission\Models\Role as BaseRole;
 
 class Role extends BaseRole implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'roles';
 

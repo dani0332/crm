@@ -16,11 +16,12 @@ class LegacyPolicyController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
-    {       
+    {
         $policies = [];
-        if(!empty($request->all())){
-            $policies = InslyDetailRepository::getData();            
+        if (! empty($request->all())) {
+            $policies = InslyDetailRepository::getData();
         }
+
         return inertia('LegacyPolicy/Index', ['policies' => $policies]);
     }
 
