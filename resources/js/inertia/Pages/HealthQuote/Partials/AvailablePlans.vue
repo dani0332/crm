@@ -119,11 +119,11 @@ const onMemberUpdate = member => {
     });
 };
 
-const onToggleManual = () => {
-  // toggleLoader.value = true;
-  console.log('manual toggle action');
-  console.log(props.plan);
-};
+// const onToggleManual = () => {
+//   // toggleLoader.value = true;
+// //   console.log('manual toggle action');
+// //   console.log(props.plan);
+// };
 
 const selectedCopay = ref([]);
 const defaultCopayId = ref(null);
@@ -177,6 +177,8 @@ const onTogglePlans = () => {
     });
 };
 
+const newActualPremium = ref(0);
+
 const getDefaultVaues = () => {
   let smallestCopayValue = 0;
   if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
@@ -190,7 +192,8 @@ const getDefaultVaues = () => {
       }
     });
 
-    props.plan.actualPremium = smallestCopayValue;
+    newActualPremium.value = smallestCopayValue;
+
   }
 };
 
@@ -203,7 +206,7 @@ const vatAmount = ref(0);
 const handleLoadingPrice = (event, memberId) => {
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
 
-  console.log(index);
+//   console.log(index);
 
   if (index > -1) {
     loadingPrices.value[index].price = event.target.value;
@@ -230,10 +233,10 @@ const updateGeneralInfo = () => {
     }
     loadingPrices.value = [];
   }
-  console.log(totalLoadingPrice);
+//   console.log(totalLoadingPrice);
 };
 
-onMounted(() => {
+onUpdated(() => {
   getDefaultVaues();
   coPay.value = defaultCopayId.value; // get the default selected value for coPay
 });
@@ -309,7 +312,7 @@ onMounted(() => {
                     selectedCopay === undefined || selectedCopay.length == 0
                   "
                 >
-                  {{ props.plan.actualPremium.toLocaleString() }}
+                  {{ newActualPremium.toLocaleString() }}
                 </dd>
                 <dd v-else>
                   {{ selectedCopay.premium.toLocaleString() }}
@@ -324,7 +327,7 @@ onMounted(() => {
                 >
                   {{
                     (finalPrice =
-                      props.plan.actualPremium +
+                        newActualPremium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       totalLoadingPrice).toLocaleString()
