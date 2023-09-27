@@ -39,45 +39,53 @@ class InslyDetailRepository extends BaseRepository
     public function fetchGetBy($column, $value)
     {
         $policy = $this->where($column, $value)->firstOrFail();
-
-        $data = $policy->toArray();
+        $data = $policy->toArray();        
+        $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
+        
         if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
         }
-
         return $policy;
+    }
+
+    private function getQuoteType($coverage){
+        $coverage = $coverage ?? null;
+        $inslyCoverageArray = $this->inslyInsurances();
+        $quoteType = null;
+        foreach ($inslyCoverageArray as $key => $item) {
+            if (in_array(ucfirst($coverage), $item)) {
+                $quoteType = $key;
+            }
+        }
+        return $quoteType;
     }
 
     public function fetchSaveToImcrm($data)
     {
-        $policyNumber = $data['policyNumber'];
+        $policyNumber   = $data['policyNumber'];
+        $validateAll    = $data['validateAll'];
         $policy = $this->where('policy_no', $policyNumber)->first();
         $email = $policy['customer']['email'] ?? null;
-
-        // $inslyPolicyIssueDate = $policy['policy']['issue_date'] ?? null;
-        // $inslyPolicyIssueDate = Carbon::parse($inslyPolicyIssueDate)->format('Y-m-d');
-
-        $inslyPolicyIssueDate = '2020-09-21';
-
-        // dd($inslyPolicyIssueDate);
+        
+        $phpDateTime = $policy['policy']['issue_date']->toDateTime();
+        $inslyPolicyIssueDate = $phpDateTime->format('Y-m-d');
+        //dd($inslyPolicyIssueDate);
+        //$inslyPolicyIssueDate = '2020-09-21';
+       
         $appUrl = env('APP_URL');
-        $inslyCoverageArray = $this->inslyInsurances();
+               
         if (! empty($policy)) {
-            $coverage = $policy['policy']['coverage'] ?? null;
             // $coverage = 'Casco';
-            $quoteType = null;
-            foreach ($inslyCoverageArray as $key => $item) {
-                if (in_array(ucfirst($coverage), $item)) {
-                    $quoteType = $key;
-                }
-            }
+            $quoteType =$this->getQuoteType($policy['policy']['coverage']);           
 
             $data = [];
             $model = $this->getModelObject($quoteType);
+            
             if ($model) {
 
                 $quote = $model::where('policy_number', $policyNumber)->first();
-                if (! empty($quote)) {
+                
+                if (! empty($quote) && $validateAll ) {
                     $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
@@ -96,6 +104,7 @@ class InslyDetailRepository extends BaseRepository
                 $quote = $model::whereHas('payments', function ($query) use ($dateFrom, $dateTo) {
                     return $query->whereBetween('captured_at', [$dateFrom, $dateTo]);
                 })->where('email', $email)->get();
+                
                 switch (ucfirst($quoteType)) {
 
                     case QuoteTypes::BUSINESS->value:
@@ -128,7 +137,7 @@ class InslyDetailRepository extends BaseRepository
                         $route = '';
                 }
 
-                if (! $quote->isEmpty()) {
+                if (! $quote->isEmpty() && $validateAll) { 
                     foreach ($quote as $item) {
                         $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
                         $item->modelType = $quoteType;
@@ -142,7 +151,7 @@ class InslyDetailRepository extends BaseRepository
                         'data' => $data,
                     ];
                 }
-
+                                
                 $dataArr = [];
                 $dataArr['previousPolicyNo'] = $policy['policy_no'] ?? null;
                 $insurer = $policy['policy']['insurer'] ?? null;
@@ -160,7 +169,7 @@ class InslyDetailRepository extends BaseRepository
                 $arr = explode(' ', trim($customerName));
                 $dataArr['firstName'] = $arr[0];
                 array_shift($arr);
-
+                
                 $dataArr['lastName'] = implode(' ', $arr);
                 $dataArr['email'] = $email;
                 $dataArr['mobileNo'] = $policy['customer']['mobile_phone'] ?? '0552244556';
@@ -175,16 +184,18 @@ class InslyDetailRepository extends BaseRepository
                 $dataArr['premium'] = $premium;
                 $dataArr['source'] = LeadSourceEnum::INSLY;
 
-                dd($dataArr);
+                //dd($dataArr);
 
                 info('------Insly route ------'.$route);
                 info('------Insly data ------'.json_encode($dataArr));
-
+                //die("hafeez");
                 $response = CapiRequestService::sendCAPIRequest($route, $dataArr);
 
                 if (! empty($response->quoteUID)) {
                     $policy->moved_to_imcrm = true;
                     $policy->imcrm_link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$response->quoteUID;
+                    $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
+                    $policy->moved_to_imcrm_by = auth()->user()->name;
                     $policy->save();
                 }
                 $data[] = $this->where('policy_no', $policyNumber)->first()->toArray();
