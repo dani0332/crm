@@ -112,8 +112,7 @@ class AllocationService
             info('new advisor ('.$userId.')  manual count before update is : '.$newAdvisorAllocationRecord->manual_assignment_count.' and auto assignment count is : '.$newAdvisorAllocationRecord->auto_assignment_count);
             if ($lead->assignment_type == AssignmentTypeEnum::SYSTEM_ASSIGNED || $lead->assignment_type == AssignmentTypeEnum::SYSTEM_REASSIGNED) {
                 $newAdvisorAllocationRecord->auto_assignment_count = $newAdvisorAllocationRecord->auto_assignment_count + 1;
-            }
-            else {
+            } else {
                 $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
             }
             $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
