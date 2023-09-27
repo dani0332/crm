@@ -80,11 +80,13 @@ function onSubmit() {
         },
       )
       .then(response => {
-        if (response.data.success);
-        notification.success({
-          title: response.data.message,
-          position: 'top',
-        });
+        if (response.data.success) {
+          notification.success({
+            title: response.data.message,
+            position: 'top',
+          });
+          emit('update:modelValue', response.data.success);
+        }
       })
       .catch(error => {
         notification.error({
@@ -92,9 +94,8 @@ function onSubmit() {
           position: 'top',
         });
       })
-      .finally(() => {
+      .finally(response => {
         isloading.value = false;
-        emit('update:modelValue', response.data.success);
       });
   }
 }
@@ -138,7 +139,9 @@ onMounted(() => getPauseReaons());
         />
       </x-field>
       <div class="flex justify-end gap-3 mt-5">
-        <x-button type="submit" size="sm" color="primary"> Send </x-button>
+        <x-button type="submit" size="sm" color="primary" :loading="isloading">
+          Send
+        </x-button>
         <x-button
           size="sm"
           color="rose"

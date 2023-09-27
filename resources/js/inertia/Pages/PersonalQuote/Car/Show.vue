@@ -1005,6 +1005,8 @@ const disableFollowUp = ref(false);
 const followUpstatus = ref('');
 const followUpEmails = ref([]);
 const followUpId = ref('');
+const hideFollowUp = ref(true);
+
 const emailsHeaders = ref([
   { text: 'Email Subject', value: 'customer_email' },
   { text: 'Status', value: 'status' },
@@ -1034,7 +1036,7 @@ const getFollowUpsByQuote = () => {
       followUpId.value = id;
     })
     .catch(error => {
-      console.log(error);
+      hideFollowUp.value = false;
     });
 };
 
@@ -1732,7 +1734,7 @@ onMounted(() => getFollowUpsByQuote());
           <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
         </h3>
         <div v-if="!hasRole(rolesEnum.PA)">
-          <x-tooltip>
+          <x-tooltip v-if="hideFollowUp">
             <x-button
               class="ml-2 mr-2"
               :disabled="disableFollowUp"
