@@ -174,8 +174,7 @@ class AllocationService
     public function getAssignmentTypeText($assignmentType)
     {
         $assignmentText = '';
-        switch($assignmentType)
-        {
+        switch ($assignmentType) {
             case 1:
                 $assignmentText = 'System Assigned';
                 break;
@@ -191,6 +190,7 @@ class AllocationService
             default:
                 break;
         }
+
         return $assignmentText;
     }
 }
