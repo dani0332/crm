@@ -279,6 +279,12 @@
                 }
             }
             $quotePlan->addons = isset($addons) ? $addons->{$quotePlan->id} : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            echo "<pre>";
+            echo isset($addons);
+            print_r($addons->{$quotePlan->id});
+            print_r($quotePlan->addons);
+            exit;
+
 
             // Discount Premium and VAT new Implementation
             if(isset($quotePlan->addons->{'coPayment'})) {
