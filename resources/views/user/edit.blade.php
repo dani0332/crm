@@ -175,6 +175,7 @@
                 </ul>
                 <div class="clearfix"></div>
             </div>
+            <div class="col-md-12 col-sm-12">
             <div class="x_content">
                 <br />
                 @if (session()->has('success'))
@@ -183,6 +184,16 @@
                 <form id="demo-form2" method="post" action="{{ route('users.update', ['user' => $user->id]) }}" enctype="multipart/form-data" data-parsley-validate class="form-horizontal form-label-left" autocomplete="off">
                     {{ csrf_field() }}
                     @method('PUT')
+                    <div class="item form-group">
+
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Avatar </label>
+                            <div class="col-md-6 col-sm-6 d-flex justify-content-center">
+                                <div class="nav-avatar nav-user-avatar">
+                                    <img src="{{$user->profile_photo_path != null?substr($user->profile_photo_path, 0, -6):'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
+                                </div>
+                        </div>
+
+                    </div>
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
@@ -407,6 +418,7 @@
                         </div>
                     </div>
                 </form>
+            </div>
             </div>
         </div>
     </div>
