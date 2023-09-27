@@ -282,8 +282,8 @@
             $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
             // Discount Premium and VAT new Implementation
-            if(isset($quotePlan->addons->{'coPayment'})) {
-                $coPayId = $quotePlan->addons->{'coPayment'}->{'id'};
+            if(isset($quotePlan->addons['coPayment'])) {
+                $coPayId = $quotePlan->addons['coPayment']['id'];
                 foreach ($quotePlan->ratesPerCopay as $coPayKey => $coPayVal) {
                     if( $coPayVal->healthPlanCoPaymentId == $coPayId) {
                         $quotePlan->discountPremium = $coPayVal->discountPremium;
@@ -529,7 +529,7 @@
                                 {!! ($value)  !!}
                             @else
                                 @if($feature['code'] == 'coPayment')
-                                    {{ $addons[$planId]->{'coPayment'}->{'text'} ?? 'N/A' }}
+                                    {{ $addons[$planId]['coPayment']['text'] ?? 'N/A' }}
                                 @else
                                     {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
                                 @endif
