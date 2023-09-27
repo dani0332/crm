@@ -573,7 +573,7 @@ class CRUDController extends Controller
             ])->first())) {
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
-            $paymentEntityModel->load(['plan.insuranceProvider']);
+            $paymentEntityModel->load(['plan.insuranceProvider', 'carLostQuoteLog', 'carLostQuoteLogs']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
             // return view('shared.show', compact([
@@ -605,11 +605,12 @@ class CRUDController extends Controller
             $tierService = new TierService;
             $tiersExceptTierR = $tierService->getTiersExceptTierR();
             $isTierRAssigned = $tierService->isTierRAssigned($record->tier_id);
+            $leadDocsStoragePath = createCdnUrl('');
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
-                'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders',
+                'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',

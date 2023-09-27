@@ -13,6 +13,7 @@ const props = defineProps({
 
 const { isRequired, isEmail } = useRules();
 const isEmptyField = ref(false);
+const isError = ref(false);
 
 const isEdit = computed(() => {
 	return route().current().includes('edit');
@@ -70,12 +71,13 @@ const quoteForm = useForm({
 
 const trimOptions = ref([]);
 
-const getCarModel = () => {
-	
-	quoteForm.cylinder = null;
-	quoteForm.seat_capacity = null;
-	quoteForm.vehicle_type_id = null;
-	quoteForm.trim = null;
+const getCarModel = (reset) => {
+	if (reset) {
+		quoteForm.cylinder = null;
+		quoteForm.seat_capacity = null;
+		quoteForm.vehicle_type_id = null;
+		quoteForm.trim = null;
+	}
 	axios
 		.get(`/car-model-by-id?id=${quoteForm.car_make_id}`)
 		.then(({ data }) => {
@@ -83,6 +85,7 @@ const getCarModel = () => {
 			if (quoteForm.car_model_id !== null) {
 				quoteForm.car_model_id = null
 			}
+
 		});
 }
 
@@ -100,6 +103,12 @@ const getModelDetails = (onchange) => {
 				});
 			})
 			trimOptions.value = trimDropdown;
+
+			if (isError.value) {
+				isError.value = false;
+				return;
+			}
+			
 			if (item) {
 				notification.success({
 					title: 'Assumptions found',
@@ -120,7 +129,6 @@ const getModelDetails = (onchange) => {
 }
 
 function onSubmit(isValid) {
-	let modelId = quoteForm.car_model_id;
 	if (quoteForm.nationality_id == null) {
 		isEmptyField.value = true;
 	} else {
@@ -138,7 +146,8 @@ function onSubmit(isValid) {
 
 	const options = {
 		onError: errors => {
-			quoteForm.car_model_id = modelId
+			isError.value = true;
+			setCarMakeAndModalValues()
 			quoteForm.setError(errors);
 		},
 	};
@@ -147,6 +156,10 @@ function onSubmit(isValid) {
 }
 
 onMounted(() => {
+	setCarMakeAndModalValues()
+})
+
+const setCarMakeAndModalValues = () => {
 	if (quoteForm.car_make_id !== null) {	
 		setCarMake(quoteForm.car_make_id);
 		axios
@@ -156,7 +169,7 @@ onMounted(() => {
 				getModelDetails(false);
 			});
 	}
-})
+}
 
 const setCarMake = (id) => {
 	axios
@@ -247,7 +260,7 @@ const setCarMake = (id) => {
 						v-model="quoteForm.car_make_id" 
 						:single="true"
 						:options="carMakeOptions"
-						@update:modelValue="getCarModel"
+						@update:modelValue="getCarModel(true)"
 						class="w-full" 
 						:hasError="isEmptyField"
 					/>
@@ -255,9 +268,8 @@ const setCarMake = (id) => {
 
 				<x-field label="CAR MODEL" required>
 					<ComboBox v-model="quoteForm.car_model_id" 
-					:single="true" 
-					:options="carModelOptions"
-					
+						:single="true" 
+						:options="carModelOptions"					
 						@update:modelValue="getModelDetails(true)"
 						class="w-full"
 						:hasError="isEmptyField" />

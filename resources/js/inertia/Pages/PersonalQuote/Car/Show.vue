@@ -61,7 +61,11 @@ defineProps({
 	carMakeText:String,
 	carModelText:String,
 	embeddedProducts: Array,
-	genericRequestEnum: Object
+	genericRequestEnum: Object,
+	allowQuoteLogAction: Boolean,
+	lostApproveReasons: Array,
+	lostRejectReasons: Array,
+	leadDocsStoragePath: String
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -79,17 +83,48 @@ const isCarLostStatus = (statusId) => {
 }
 
 const leadStatusForm = useForm({
-  modelType: 'Car',
-  leadId: page.props.record.id,
-  quote_uuid: page.props.record.uuid,
-  assigned_to_user_id: page.props.record.advisor_id,
-  leadStatus: page.props.record.quote_status_id || null,
-  notes: page.props.record.notes || null,
-  trans_code: page.props.record.transapp_code || null,
-  lostReason: page.props.record.lost_reason_id || null,
-  next_followup_date: page.props.record.next_followup_date || null,
-  tier_id : page.props.record.tier_id || null,
+	modelType: 'Car',
+	leadId: page.props.record.id,
+	quote_uuid: page.props.record.uuid,
+	assigned_to_user_id: page.props.record.advisor_id,
+	leadStatus: page.props.record.quote_status_id || null,
+	notes: page.props.record.notes || null,
+	trans_code: page.props.record.transapp_code || null,
+	lostReason: page.props.record.lost_reason_id || null,
+	next_followup_date: page.props.record.next_followup_date || null,
+	tier_id : page.props.record.tier_id || null,
+	lost_approval_status: '',
+	approve_reason_id: '',
+	reject_reason_id: '',
+	lost_notes: page.props.paymentEntityModel.car_lost_quote_log?.notes || '',
+	mo_proof_document: null,
+	proof_document: null,
+	car_lost_quote_log_id: page.props.paymentEntityModel.car_lost_quote_log?.id || 0
 });
+
+const leadApprovalStatusOptions = computed(() => {
+	let arr = [];
+	if (!page.props.allowQuoteLogAction) {
+		arr.push({ value: page.props.genericRequestEnum.PENDING, label: page.props.genericRequestEnum.PENDING })
+	}
+
+	arr.push({ value: page.props.genericRequestEnum.APPROVED, label: page.props.genericRequestEnum.APPROVED })
+	arr.push({ value: page.props.genericRequestEnum.REJECTED, label: page.props.genericRequestEnum.REJECTED })
+
+	return arr;
+});
+
+const carLostQuoteLogsTable = reactive({
+	columns: [
+		{ text: 'Modified At', value: 'created_at' },
+		{ text: 'Modified By', value: 'modified_by' },
+		{ text: 'Notes', value: 'notes' },
+		{ text: 'Lead Status', value: 'quote_status.text' },
+		{ text: 'Approval Status', value: 'status' },
+		{ text: 'Documents', value: 'documents' },		
+	]
+})
+
 const { copy, copied } = useClipboard();
 const paymentDetailsTable = reactive({
   isLoading: false,
@@ -1362,7 +1397,7 @@ const confirmSendEmail = () => {
 				<x-divider class="mb-4 mt-1" />
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-				<div class="w-full md:w-1/3">
+				<div class="w-full md:w-50">
 					<div class="flex flex-col gap-4">
 						<x-select
 							v-model="leadStatusForm.leadStatus"
@@ -1421,9 +1456,8 @@ const confirmSendEmail = () => {
 							:error="leadStatusForm.errors.tier_id"
 							/>
 					</div>
-					
 				</div>
-				<div class="w-full md:w-2/3">
+				<div class="w-full md:w-50">
 					<x-textarea
 						v-model="leadStatusForm.notes"
 						type="text"
@@ -1432,20 +1466,123 @@ const confirmSendEmail = () => {
 						class="w-full"
 						:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
 					/>
-
-					<div class="flex justify-end">
-						<x-button
-							class="mt-4"
-							color="emerald"
-							size="sm"
-							:loading="leadStatusForm.processing"
-							@click.prevent="onLeadStatus"
-						>
-							Change Status
-						</x-button>
-					</div>
 				</div>
 			</div>
+			<template v-if="isCarLostStatus(record.quote_status_id)">
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
+					<div class="w-full md:w-50">
+						<x-field required label="Approval Status">
+							<x-select
+								v-model="leadStatusForm.lost_approval_status"
+								:options="leadApprovalStatusOptions"
+								:disabled="!allowQuoteLogAction"
+								placeholder="Approval Status"
+								class="w-full"
+								:rules="[isRequired]"
+							/>
+						</x-field>
+					</div>
+					<div class="w-full md:w-50">
+						<x-field required label="Approval Reasons" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.APPROVED">
+							<x-select
+								v-model="leadStatusForm.approve_reason_id"
+								:options="lostApproveReasons.map(item => ({
+									value: item.id,
+									label: item.text,
+								}))"
+								:disabled="!allowQuoteLogAction || !hasRole(rolesEnum.MarketingOperations)"
+								placeholder="Approval Reasons"
+								class="w-full"
+								:rules="[isRequired]"
+							/>
+						</x-field>
+						<x-field required label="Rejection Reasons" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.REJECTED">
+							<x-select
+								v-model="leadStatusForm.reject_reason_id"
+								:options="lostRejectReasons.map(item => ({
+									value: item.id,
+									label: item.text,
+								}))"
+								:disabled="!allowQuoteLogAction || !hasRole(rolesEnum.MarketingOperations)"
+								placeholder="Rejection Reasons"
+								class="w-full"
+								:rules="[isRequired]"
+							/>
+						</x-field>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
+					<div class="w-full md:w-50">
+						<x-field required label="Notes">
+							<x-textarea
+								v-model="leadStatusForm.lost_notes"
+								:disabled="!allowQuoteLogAction"
+								placeholder="Notes"
+								class="w-full"
+								:rules="[isRequired]"
+							/>
+						</x-field>
+					</div>
+					<div class="w-full md:w-50">
+						<x-field required label="Car Sold / Uncontactable Proof" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.APPROVED">
+							<x-input
+								v-model="leadStatusForm.mo_proof_document"
+								type="file"
+								:disabled="!allowQuoteLogAction"
+								placeholder="Car Sold / Uncontactable Proof"
+								class="w-full"
+								:rules="[isRequired]"
+							/>
+						</x-field>
+					</div>
+				</div>
+				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4" v-if="leadStatusForm.leadStatus == quoteStatusEnum.CarSold || leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable">
+					<div class="w-full md:w-50">
+						<x-field label="Car Sold / Uncontactable Proof">
+							<x-input
+								v-model="leadStatusForm.proof_document"
+								type="file"
+								:disabled="isCarLostStatus(record.quote_status_id) && !carLostChangeStatus"
+								placeholder="Car Sold / Uncontactable Proof"
+								class="w-full"
+							/>
+						</x-field>
+					</div>
+				</div>
+			</template>
+			<x-divider class="mb-1 mt-10" />
+			<div class="flex justify-end">
+				<x-button
+					v-if="!can(permissionEnum.ApprovePayments)"
+					class="mt-4"
+					color="emerald"
+					size="sm"
+					:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || ((!carLostChangeStatus && !allowQuoteLogAction))"
+					:loading="leadStatusForm.processing"
+					@click.prevent="onLeadStatus"
+				>
+					Change Status
+				</x-button>
+			</div>
+
+			<Datatable 
+				table-class-name="tablefixed compact"
+				:headers="carLostQuoteLogsTable.columns"
+				:items="paymentEntityModel.car_lost_quote_logs || []"
+				border-cell
+				hide-rows-per-page
+				:rows-per-page="15"
+        		:hide-footer="availablePlansItems.length < 15"
+			>
+				<template #item-modified_by="item">
+					{{ item.action_by_id ? item.advisor.email : 'Management' }}
+				</template>
+				<template #item-documents="item">
+					<template v-for="doc in item.documents">
+						<p><Link target="_blank" :href="leadDocsStoragePath + doc.path">Document</Link></p>
+					</template>
+				</template>
+			</Datatable>
     	</div>
 		<!-- <QuoteStatus
 			:quoteStatuses="leadStatuses"
@@ -1456,7 +1593,7 @@ const confirmSendEmail = () => {
 		/> -->
     
 		<PaymentTable 
-			v-if="true || hasRole(rolesEnum.BetaUser)"
+			v-if="hasRole(rolesEnum.BetaUser)"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
