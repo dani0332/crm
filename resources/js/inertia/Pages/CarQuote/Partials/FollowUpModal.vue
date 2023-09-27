@@ -3,7 +3,16 @@ const props = defineProps({
   modelValue: Boolean,
   isLoading: Boolean,
 });
-const emit = defineEmits(['update:modelValue', 'sendSelectedTemplate']);
+const emit = defineEmits(['update:modelValue', 'sendTemplateForm']);
+
+const value = computed({
+  get() {
+    return props.modelValue;
+  },
+  set(value) {
+    emit('update:modelValue', value);
+  },
+});
 
 const followUpForm = ref({
   quote_type: 'Car',
@@ -15,7 +24,7 @@ const followUpForm = ref({
 </script>
 
 <template>
-  <x-modal v-model="props.modelValue" backdrop size="lg">
+  <x-modal v-model="value" backdrop size="lg">
     <div class="m-4">
       <p>Please Select one of the templates provided below to use:</p>
       <div class="px-3 py-2">
@@ -53,14 +62,14 @@ const followUpForm = ref({
           color="#ff5e00"
           type="button"
           :loading="isLoading"
-          @click="emit('sendTemplateForm', followUpForm)"
+          @click.prevent="emit('sendTemplateForm', followUpForm)"
           >Send
         </x-button>
         <x-button
           size="sm"
           color="error"
           type="button"
-          @click="emit('update:modelValue')"
+          @click.prevent="emit('update:modelValue', false)"
           >Cancel
         </x-button>
       </div>

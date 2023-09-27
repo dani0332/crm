@@ -270,13 +270,12 @@ const openFollowUpModal = () => {
           >Send Followup Emails
         </x-button>
       </div>
-      <FollowUpModal
-        :modelValue="showFollowUpModal"
-        @update:modelValue="showFollowUpModal = false"
-        @sendTemplateForm="form => sendtemplateForm(form)"
-        :isLoading="isLoading"
-      />
     </x-form>
+    <FollowUpModal
+      v-model:modelValue="showFollowUpModal"
+      :isLoading="isLoading"
+      @sendTemplateForm="form => sendtemplateForm(form)"
+    />
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
