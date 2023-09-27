@@ -1221,6 +1221,7 @@ class HealthQuoteService extends BaseService
      */
     public function exportPlansPdf($quoteType, $data)
     {
+        dd($data);
         $planIds = $data['plan_ids'];
         $addons = (isset($data['addons'])) ? $data['addons'] : null;
 
