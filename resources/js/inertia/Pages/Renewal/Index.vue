@@ -114,26 +114,20 @@ const tableHeader = [
     { text: 'CDB ID', value: 'code' },
     { text: 'FIRST NAME', value: 'first_name' },
     { text: 'LAST NAME', value: 'last_name' },
-    { text: 'Insurance provider', value: 'insurance_provider' },
+    { text: 'Insurance provider', value: 'currently_insured_with' },
     { text: 'POLICY START DATE', value: 'policy_start_date' },
     { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
     { text: 'GROSS PREMIUM', value: 'premium' },
-    { text: 'CREATED DATE', value: 'created_at' },  {
-        text: 'ADVISOR ASSIGNED DATE',
-        value: 'advisor_assigned_date',
-    },
+    { text: 'CREATED DATE', value: 'created_at' },
     { text: 'ADVISOR', value: 'advisor' },
 ];
 const tableHeader2 = [
   { text: 'CDB ID', value: 'code' },
-  { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
+  { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with' },
   { text: 'POLICY START DATE', value: 'policy_start_date' },
   { text: 'POLICY EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'GROSS PREMIUM', value: 'premium' },
-  { text: 'CREATED DATE', value: 'created_at' },  {
-    text: 'ADVISOR ASSIGNED DATE',
-    value: 'advisor_assigned_date',
-  },
+  { text: 'CREATED DATE', value: 'created_at' },
   { text: 'ADVISOR', value: 'advisor' },
 ];
 
@@ -233,9 +227,6 @@ const permissionsEnum = page.props.permissionsEnum;
         </div>
 
 
-
-        <div class="mb-4 font-bold">Total Records : {{ quotes.total || 0 }}</div>
-
         <DataTable
             table-class-name="tablefixed"
             :loading="loader.table"
@@ -264,10 +255,10 @@ const permissionsEnum = page.props.permissionsEnum;
             <template #item-nationality="{ nationality }">
                 {{ nationality?.text }}
             </template>
-
-            <template #item-advisor_assigned_date="item">
-                {{ item?.car_quote_request_detail?.advisor_assigned_date }}
+            <template #item-currently_insured_with="{ currently_insured_with }">
+                {{ (currently_insured_with?.text)?currently_insured_with.text:currently_insured_with }}
             </template>
+
 
         </DataTable>
 

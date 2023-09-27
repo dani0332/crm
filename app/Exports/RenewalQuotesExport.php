@@ -50,7 +50,7 @@ class RenewalQuotesExport implements FromQuery, WithHeadings, WithMapping, Shoul
         return [
             $quote->code,
             $quote->first_name.' '.$quote->last_name,
-            $quote->insuranceProvider != null ? $quote->insuranceProvider->text : '',
+            $quote->currentlyInsuredWith != null ? ($quote->currentlyInsuredWith->text?$quote->currentlyInsuredWith->text:$quote->currentlyInsuredWith):($quote->currently_insured_with!=null?$quote->currently_insured_with:''),
             $this->exportType,
             $quote->policy_start_date,
             $quote->previous_policy_expiry_date,
