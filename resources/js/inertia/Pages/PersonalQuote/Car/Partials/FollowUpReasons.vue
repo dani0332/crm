@@ -74,7 +74,7 @@ function onSubmit() {
         `${process.env.MIX_KYO_END_POINT}/followups/${props.followUpId}/pause`,
         {
           reason_id: getReasonId.value[0].id,
-          action_by_id: props.uuid,
+          action_by_email: usePage().props.auth.user.email,
           resume_date: date.value.split('T')[0],
           notes: notes.value,
         },
