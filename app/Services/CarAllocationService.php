@@ -51,6 +51,8 @@ class CarAllocationService extends AllocationService
             $query->where('tier_id', '!=', $tierR->id);
         }
 
+        getQueryForLogWithBindings($query); // calling generic function to print query with bindings
+
         // Retrieve the first matching car lead from the query or return null if none is found.
         return $query->first();
     }
@@ -576,7 +578,7 @@ class CarAllocationService extends AllocationService
         return $emailData;
     }
 
-    public function buildMultiplePlansEmailData($carQuote, $plans)
+    public function buildPlansEmailData($carQuote, $plans)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);

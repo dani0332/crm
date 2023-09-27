@@ -73,11 +73,11 @@ class HandleCarAdvisorUpdated
             $emailTemplateId = $lead->tier_id == $tierR->id ? 492 : 494;
         } elseif (count($plans) == 1) {
             info('Inside single plan for sending email');
-            $emailData = $this->carQuoteService->buildOnePlansEmailData($lead, reset($plans));
+            $emailData = $this->carQuoteService->buildPlansEmailData($lead, $plans);
             $emailTemplateId = $lead->tier_id == $tierR->id ? 497 : 490;
         } else {
             info('Inside multiple plan for sending email');
-            $emailData = $this->carQuoteService->buildMultiplePlansEmailData($lead, reset($plans));
+            $emailData = $this->carQuoteService->buildPlansEmailData($lead, reset($plans));
             $emailTemplateId = $lead->tier_id == $tierR->id ? 491 : 493;
         }
 
