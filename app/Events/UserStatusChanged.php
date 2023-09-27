@@ -2,7 +2,6 @@
 
 namespace App\Events;
 
-use App\Enums\UserStatusEnum;
 use App\Models\UserStatusAuditLog;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
@@ -30,7 +29,7 @@ class UserStatusChanged implements ShouldBroadcastNow
             'status_changed_at' => now()->toDateTimeString(),
         ]);
 
-        $this->message = $userName . "'s Status Changed to ". $this->getStatusText($status);
+        $this->message = $userName."'s Status Changed to ".$this->getStatusText($status);
     }
 
     public function broadcastOn()

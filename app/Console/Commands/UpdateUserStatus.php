@@ -108,7 +108,7 @@ class UpdateUserStatus extends Command
                 }
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {
                 info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
-                event(new UserStatusChanged($userId, UserStatusEnum::ONLINE,$session->user->name));
+                event(new UserStatusChanged($userId, UserStatusEnum::ONLINE, $session->user->name));
                 info('System pushed event notification');
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
