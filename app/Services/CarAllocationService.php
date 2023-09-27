@@ -193,7 +193,7 @@ class CarAllocationService extends AllocationService
             UserStatusEnum::OFFLINE,
         ];
 
-        if (!$isReassignmentJob) {
+        if (! $isReassignmentJob) {
             $statusOrder[] = UserStatusEnum::UNAVAILABLE;
         }
 
