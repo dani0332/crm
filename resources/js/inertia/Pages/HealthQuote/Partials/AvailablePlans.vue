@@ -1,12 +1,16 @@
 <script setup>
-import { ref, watch } from 'vue';
-
 const props = defineProps({
+  modelValue: Boolean,
   plan: Object,
   genders: Object,
 });
 
-const emit = defineEmits(['copayUpdate']);
+const emit = defineEmits(['copayUpdate', 'update:modelValue']);
+
+const showModal = computed({
+  get: () => props.modelValue,
+  set: val => emit('update:modelValue', val),
+});
 
 const notification = useToast();
 
@@ -15,11 +19,11 @@ const genderText = v => {
 };
 
 const coPayOptions = computed(() => {
-  return Object.keys(props.plan.coPayments).map(
-    index => ({
+  return (
+    Object.keys(props.plan.coPayments).map(index => ({
       value: props.plan.coPayments[index].id,
       label: props.plan.coPayments[index].text,
-    }),
+    })) || []
   );
 });
 
@@ -32,7 +36,7 @@ const ipmiBenefits = reactive({
   motherBaby: false,
 });
 
-const hidePlan = ref(props.plan.isHidden),
+const hidePlan = ref(props.plan?.isHidden),
   isManual = ref(false),
   memberFormLoader = ref(false),
   newPremiums = ref([]);
@@ -42,7 +46,11 @@ const toggleLoader = ref(false);
 const coPay = ref('');
 
 const canUpdate = computed(() => {
-  return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
+  return (
+    props.plan.providerCode == 'CIG' ||
+    props.plan.providerCode == 'BUP' ||
+    false
+  );
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
@@ -111,34 +119,31 @@ const onMemberUpdate = member => {
     });
 };
 
-// const onToggleManual = () => {
-//     // toggleLoader.value = true;
-//     console.log('manual toggle action');
-//     console.log(props.plan);
-// }
+const onToggleManual = () => {
+  // toggleLoader.value = true;
+  console.log('manual toggle action');
+  console.log(props.plan);
+};
 
-let selectedCopay = [];
-let defaultCopayId = null;
+const selectedCopay = ref([]);
+const defaultCopayId = ref(null);
 
 const onCoPaySelect = copayId => {
+  props.plan.ratesPerCopay?.forEach(element => {
+    if (element.healthPlanCoPaymentId == copayId) {
+      let copayDetails = {
+        id: element.healthPlanCoPaymentId,
+        premium: element.premium,
+        discounted_premium: element.discountPremium,
+        vat: element.vat,
+        planId: props.plan.id,
+      };
 
-    props.plan.ratesPerCopay.forEach(element => {
+      selectedCopay.value = copayDetails;
+    }
+  });
 
-        if (element.healthPlanCoPaymentId == copayId)
-        {
-            let copayDetails = {
-                'id' : element.healthPlanCoPaymentId,
-                'premium' : element.premium,
-                'discounted_premium' : element.discountPremium,
-                'vat' : element.vat,
-                'planId': props.plan.id,
-            }
-
-            selectedCopay = copayDetails
-        }
-    });
-
-    emit('copayUpdate', selectedCopay);
+  emit('copayUpdate', selectedCopay.value);
 };
 
 const onTogglePlans = () => {
@@ -173,25 +178,24 @@ const onTogglePlans = () => {
 };
 
 const getDefaultVaues = () => {
+  let smallestCopayValue = 0;
+  if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
+    props.plan.ratesPerCopay?.forEach(function callback(element, index) {
+      if (index == 0) {
+        smallestCopayValue = element.premium;
+        defaultCopayId.value = element.healthPlanCoPaymentId;
+      } else if (element.premium < smallestCopayValue) {
+        smallestCopayValue = element.premium;
+        defaultCopayId.value = element.healthPlanCoPaymentId;
+      }
+    });
 
-    let smallestCopayValue = 0;
-    if (selectedCopay === undefined || selectedCopay.length == 0) {
-        props.plan.ratesPerCopay?.forEach(function callback(element, index) {
-            if (index == 0) {
-                smallestCopayValue = element.premium
-                defaultCopayId = element.healthPlanCoPaymentId
-            }
-            else if (element.premium < smallestCopayValue ) {
-                smallestCopayValue = element.premium
-                defaultCopayId = element.healthPlanCoPaymentId
-            }
-        });
-
-        props.plan.actualPremium = smallestCopayValue
-    }
+    props.plan.actualPremium = smallestCopayValue;
+  }
 };
 
 const loadingPrices = ref([]);
+const membersLoadingPrices = ref([]);
 const finalPrice = ref(0);
 const totalLoadingPrice = ref(0);
 const vatAmount = ref(0);
@@ -209,7 +213,6 @@ const handleLoadingPrice = (event, memberId) => {
       price: event.target.value,
     });
   }
-
 };
 
 const memberIndexPerId = id => {
@@ -217,145 +220,153 @@ const memberIndexPerId = id => {
 };
 
 const updateGeneralInfo = () => {
-  if(confirm('Do you want to update this values?')) {
-    totalLoadingPrice.value = 0
+  if (confirm('Do you want to update this values?')) {
+    totalLoadingPrice.value = 0;
     if (loadingPrices.value.length > 0) {
       loadingPrices.value.forEach(loadingPrice => {
-          totalLoadingPrice.value = Number(totalLoadingPrice.value) + Number(loadingPrice.price)
+        totalLoadingPrice.value =
+          Number(totalLoadingPrice.value) + Number(loadingPrice.price);
       });
     }
     loadingPrices.value = [];
   }
   console.log(totalLoadingPrice);
-}
+};
 
-onMounted( () => {
-    getDefaultVaues();
-    coPay.value = defaultCopayId; // get the default selected value for coPay
+onMounted(() => {
+  getDefaultVaues();
+  coPay.value = defaultCopayId.value; // get the default selected value for coPay
 });
-
-
 </script>
 
 <template>
-  <div class="w-full">
-    <TabGroup>
-      <TabList
-        class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
-      >
-        <Tab
-          v-for="{ index, label } in tabs"
-          as="template"
-          :key="index"
-          v-slot="{ selected }"
+  <x-modal v-model="showModal" size="xl" show-close backdrop>
+    <template #header>
+      <div class="flex justify-between items-center">
+        <h3>{{ plan.providerName }} - {{ plan.name }}</h3>
+        <div class="flex gap-3 pr-8">
+          <x-toggle
+            v-model="isManual"
+            color="success"
+            label="Manual"
+            @change="onToggleManual"
+            :loading="toggleLoader"
+          />
+          <x-toggle
+            v-model="hidePlan"
+            color="error"
+            label="Hide Plan"
+            @change="onTogglePlans"
+            :loading="toggleLoader"
+          />
+        </div>
+      </div>
+    </template>
+    <div class="w-full">
+      <TabGroup>
+        <TabList
+          class="flex flex-row flex-wrap gap-2 rounded-xl bg-slate-100 p-1.5 w-full"
         >
-          <button
-            :class="[
-              'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
-              'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
-              selected
-                ? 'bg-white shadow text-primary-600'
-                : 'hover:bg-white/50',
-            ]"
+          <Tab
+            v-for="{ index, label } in tabs"
+            as="template"
+            :key="index"
+            v-slot="{ selected }"
           >
-            {{ label }}
-          </button>
-        </Tab>
-      </TabList>
+            <button
+              :class="[
+                'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+                'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
+                selected
+                  ? 'bg-white shadow text-primary-600'
+                  : 'hover:bg-white/50',
+              ]"
+            >
+              {{ label }}
+            </button>
+          </Tab>
+        </TabList>
 
-      <TabPanels class="mt-2 text-sm min-h-[70vh]">
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
-            <div class="md:col-span-2 text-right select-none border-b pb-2">
-                <x-toggle
-                class="m-2"
-                v-model="isManual"
-                color="success"
-                label="Manual"
-                @change="onToggleManual"
-                :loading="toggleLoader"
-              />
-                <x-toggle
-                v-model="hidePlan"
-                color="error"
-                label="Hide Plan"
-                @change="onTogglePlans"
-                :loading="toggleLoader"
-              />
-            </div>
-            <!-- <div class="grid sm:grid-cols-2">
+        <TabPanels class="mt-2 text-sm min-h-[70vh]">
+          <TabPanel>
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
+              <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Provider Code</dt>
               <dd>{{ props.plan.providerCode }}</dd>
             </div> -->
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Provider Name</dt>
-              <dd>{{ props.plan.providerName }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Network Provider</dt>
-              <dd>{{ props.plan.eligibilityName }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Provider Name</dt>
+                <dd>{{ props.plan.providerName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Network Provider</dt>
+                <dd>{{ props.plan.eligibilityName }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Base Price</dt>
-                <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
-                    {{ props.plan.actualPremium.toLocaleString() }}
+                <dd
+                  v-if="
+                    selectedCopay === undefined || selectedCopay.length == 0
+                  "
+                >
+                  {{ props.plan.actualPremium.toLocaleString() }}
                 </dd>
                 <dd v-else>
-                    {{ selectedCopay.premium.toLocaleString() }}
+                  {{ selectedCopay.premium.toLocaleString() }}
                 </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Total Price(exclusive of VAT)</dt>
-              <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
-                    {{ (finalPrice =
-                    props.plan.actualPremium +
-                    (props.plan.basmah || 0) +
-                    (props.plan.policyFee || 0) +
-                    totalLoadingPrice).toLocaleString()
-                    }}
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Total Price(exclusive of VAT)</dt>
+                <dd
+                  v-if="
+                    selectedCopay === undefined || selectedCopay.length == 0
+                  "
+                >
+                  {{
+                    (finalPrice =
+                      props.plan.actualPremium +
+                      (props.plan.basmah || 0) +
+                      (props.plan.policyFee || 0) +
+                      totalLoadingPrice).toLocaleString()
+                  }}
                 </dd>
                 <dd v-else>
-                    {{ (finalPrice =
-                    selectedCopay.premium +
-                    (props.plan.basmah || 0) +
-                    (props.plan.policyFee || 0) +
-                    totalLoadingPrice).toLocaleString()
-                    }}
+                  {{
+                    (finalPrice =
+                      selectedCopay.premium +
+                      (props.plan.basmah || 0) +
+                      (props.plan.policyFee || 0) +
+                      totalLoadingPrice).toLocaleString()
+                  }}
                 </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Loading Price</dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Loading Price</dt>
                 <dd>
-                    {{
-                      totalLoadingPrice.toLocaleString()
-                    }}
+                  {{ totalLoadingPrice.toLocaleString() }}
                 </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Total VAT amount</dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Total VAT amount</dt>
                 <dd>
-                    {{
-                      (vatAmount = (totalLoadingPrice * 0.05)).toLocaleString()
-                    }}
+                  {{ (vatAmount = totalLoadingPrice * 0.05).toLocaleString() }}
                 </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Basmah</dt>
-              <dd>{{ props.plan.basmah.toLocaleString() }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Total Price with VAT</dt>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Basmah</dt>
+                <dd>{{ props.plan.basmah.toLocaleString() }}</dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Total Price with VAT</dt>
                 <dd>
-                    {{
-                      (finalPrice + vatAmount).toLocaleString()
-                    }}
+                  {{ (finalPrice + vatAmount).toLocaleString() }}
                 </dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Policy Fee</dt>
-              <dd>{{ props.plan.policyFee.toLocaleString() }}</dd>
-            </div>
-            <!-- <div class="grid sm:grid-cols-2">
+              </div>
+              <div class="grid sm:grid-cols-2">
+                <dt class="font-medium">Policy Fee</dt>
+                <dd>{{ props.plan.policyFee.toLocaleString() }}</dd>
+              </div>
+              <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
               <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
                     {{
@@ -372,10 +383,10 @@ onMounted( () => {
                     }}
                 </dd>
             </div> -->
-          </dl>
-        </TabPanel>
+            </dl>
+          </TabPanel>
 
-        <!-- <TabPanel>
+          <!-- <TabPanel>
           <div class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="md:col-span-2 text-right select-none border-b pb-2">
               <x-toggle
@@ -459,89 +470,106 @@ onMounted( () => {
           </div>
         </TabPanel> -->
 
-        <TabPanel>
-          <div class="p-4">
-            <x-table
-              :headers="[
-                { text: 'Relationship', value: 'memberCategoryText' },
-                { text: 'DOB', value: 'dob' },
-                { text: 'Gender', value: 'gender' },
-                { text: 'Base Price', value: 'premium' },
-                { text: 'Loading Price', value: 'loadingPrice' },
-                { text: 'Final Price', value: 'finalPrice' },
-              ]"
-              :items="props.plan.memberPremiumBreakdown || []"
-            >
-              <template #item-dob="{ item }">
-                {{ dateFormat(item.dob) }}
-              </template>
-              <template #item-gender="{ item }">
-                {{ genderText(item.gender) }}
-              </template>
-              <template #item-premium="{ item }">
-              <section  v-for="data in item.ratesPerCopay">
+          <TabPanel>
+            <div class="p-4">
+              <x-table
+                :headers="[
+                  { text: 'Relationship', value: 'memberCategoryText' },
+                  { text: 'DOB', value: 'dob' },
+                  { text: 'Gender', value: 'gender' },
+                  { text: 'Base Price', value: 'premium' },
+                  { text: 'Loading Price', value: 'loadingPrice' },
+                  { text: 'Final Price', value: 'finalPrice' },
+                ]"
+                :items="props.plan.memberPremiumBreakdown || []"
+              >
+                <template #item-dob="{ item }">
+                  {{ dateFormat(item.dob) }}
+                </template>
+                <template #item-gender="{ item }">
+                  {{ genderText(item.gender) }}
+                </template>
+                <template #item-premium="{ item }">
+                  <section v-for="data in item.ratesPerCopay">
                     <x-input
-                    v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                    :value="data.premium.toLocaleString()"
-                    :disabled="data.premium != 0"
-                    size="sm"
-                    @update:modelValue="onMemberPremiumUpdate(item, $event)"
+                      v-if="data.healthPlanCoPaymentId == selectedCopay.id"
+                      :value="data.premium.toLocaleString()"
+                      :disabled="data.premium != 0"
+                      size="sm"
+                      @update:modelValue="onMemberPremiumUpdate(item, $event)"
                     />
                     <x-input
-                    v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
-                        data.healthPlanCoPaymentId == defaultCopayId"
-                    :value="data.premium.toLocaleString()"
-                    :disabled="data.premium != 0"
-                    size="sm"
-                    @update:modelValue="onMemberPremiumUpdate(item, $event)"
+                      v-else-if="
+                        (selectedCopay === undefined ||
+                          selectedCopay.length == 0) &&
+                        data.healthPlanCoPaymentId == defaultCopayId
+                      "
+                      :value="data.premium.toLocaleString()"
+                      :disabled="data.premium != 0"
+                      size="sm"
+                      @update:modelValue="onMemberPremiumUpdate(item, $event)"
                     />
                     <x-button
-                    v-if="$page.props.permissions.pa"
-                    color="primary"
-                    class="ml-2"
-                    size="sm"
-                    outlined
-                    :loading="memberFormLoader"
-                    @click.prevent="onMemberUpdate(item)"
+                      v-if="$page.props.permissions.pa"
+                      color="primary"
+                      class="ml-2"
+                      size="sm"
+                      outlined
+                      :loading="memberFormLoader"
+                      @click.prevent="onMemberUpdate(item)"
                     >
-                    Update
+                      Update
                     </x-button>
-              </section>
-              </template>
+                  </section>
+                </template>
 
-              <template #item-loadingPrice="{ item }">
-                <x-input
-                  :disabled="!isManual"
-                  size="sm"
-                  @keyup="handleLoadingPrice($event, item.memberId)"
-                />
-              </template>
+                <template #item-loadingPrice="{ item }">
+                  <x-input
+                    v-model="
+                      membersLoadingPrices[memberIndexPerId(item.memberId)]
+                    "
+                    :disabled="!isManual"
+                    size="sm"
+                    @keyup="handleLoadingPrice($event, item.memberId)"
+                  />
+                </template>
 
-              <template #item-finalPrice="{ item }">
-                    <section v-for="data in item.ratesPerCopay">
-                        <x-input  v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                            :disabled="true"
-                            size="sm"
-                            :value="(Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]?.price ||
-                            0,
-                            ) + Number(data.premium)).toLocaleString()
-                            "
-                        />
-                        <x-input  v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
-                            data.healthPlanCoPaymentId == defaultCopayId"
-                            :disabled="true"
-                            size="sm"
-                            :value="(Number(
-                            loadingPrices[memberIndexPerId(item.memberId)]?.price ||
-                            0,
-                            ) + Number(data.premium)).toLocaleString()
-                            "
-                        />
-                    </section>
-              </template>
+                <template #item-finalPrice="{ item }">
+                  <section v-for="data in item.ratesPerCopay">
+                    <x-input
+                      v-if="data.healthPlanCoPaymentId == selectedCopay.id"
+                      :disabled="true"
+                      size="sm"
+                      :value="
+                        (
+                          Number(
+                            loadingPrices[memberIndexPerId(item.memberId)]
+                              ?.price || 0,
+                          ) + Number(data.premium)
+                        ).toLocaleString()
+                      "
+                    />
+                    <x-input
+                      v-else-if="
+                        (selectedCopay === undefined ||
+                          selectedCopay.length == 0) &&
+                        data.healthPlanCoPaymentId == defaultCopayId
+                      "
+                      :disabled="true"
+                      size="sm"
+                      :value="
+                        (
+                          Number(
+                            loadingPrices[memberIndexPerId(item.memberId)]
+                              ?.price || 0,
+                          ) + Number(data.premium)
+                        ).toLocaleString()
+                      "
+                    />
+                  </section>
+                </template>
 
-              <!-- <template #item-premium="{ item }">
+                <!-- <template #item-premium="{ item }">
                 <x-input
                   :value="item.premium"
                   :disabled="item.premium != 0 && !isManual"
@@ -560,8 +588,8 @@ onMounted( () => {
                   Update
                 </x-button>
               </template> -->
-            </x-table>
-            <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
+              </x-table>
+              <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
                 <x-button
                   :disabled="!isManual"
                   color="primary"
@@ -571,75 +599,75 @@ onMounted( () => {
                   Update & Save
                 </x-button>
               </div>
-          </div>
-        </TabPanel>
+            </div>
+          </TabPanel>
 
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div
-              v-for="data in props.plan.benefits.inpatient || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-        </TabPanel>
+          <TabPanel>
+            <dl class="grid md:grid-cols-2 gap-5 p-4">
+              <div
+                v-for="data in props.plan.benefits.inpatient || []"
+                :key="data.code"
+              >
+                <dt class="font-medium mb-1">{{ data.text }}</dt>
+                <dd>{{ data.value }}</dd>
+              </div>
+            </dl>
+          </TabPanel>
 
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div
-              v-for="data in props.plan.benefits.outpatient || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-        </TabPanel>
+          <TabPanel>
+            <dl class="grid md:grid-cols-2 gap-5 p-4">
+              <div
+                v-for="data in props.plan.benefits.outpatient || []"
+                :key="data.code"
+              >
+                <dt class="font-medium mb-1">{{ data.text }}</dt>
+                <dd>{{ data.value }}</dd>
+              </div>
+            </dl>
+          </TabPanel>
 
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div
-              v-for="data in props.plan.benefits.regionCover || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
+          <TabPanel>
+            <dl class="grid md:grid-cols-2 gap-5 p-4">
+              <div
+                v-for="data in props.plan.benefits.regionCover || []"
+                :key="data.code"
+              >
+                <dt class="font-medium mb-1">{{ data.text }}</dt>
+                <dd>{{ data.value }}</dd>
+              </div>
+              <div
+                v-for="data in props.plan.benefits.networkList || []"
+                :key="data.code"
+              >
+                <dt class="font-medium mb-1">{{ data.text }}</dt>
+                <dd>{{ data.value }}</dd>
+              </div>
+            </dl>
+          </TabPanel>
+          <!-- I will work here -->
+          <TabPanel>
+            <div class="grid md:grid-cols-1 gap-5 p-4 copay-select">
+              <ComboBox
+                class="w-full"
+                v-model="coPay"
+                :options="coPayOptions"
+                :single="true"
+                label="Co-Pay"
+                placeholder="Select a Co-Pay option"
+                @update:model-value="onCoPaySelect"
+              >
+              </ComboBox>
             </div>
-            <div
-              v-for="data in props.plan.benefits.networkList || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-        </TabPanel>
-        <!-- I will work here -->
-        <TabPanel>
-          <div class="grid md:grid-cols-1 gap-5 p-4 copay-select">
-            <ComboBox
-            class="w-full"
-            v-model="coPay"
-            :options="coPayOptions"
-            :single="true"
-            label="Co-Pay"
-            placeholder="Select a Co-Pay option"
-            @update:model-value="onCoPaySelect"
-            >
-            </ComboBox>
-          </div>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div
-              v-for="data in props.plan.benefits.coInsurance || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-          <!-- <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
+            <dl class="grid md:grid-cols-2 gap-5 p-4">
+              <div
+                v-for="data in props.plan.benefits.coInsurance || []"
+                :key="data.code"
+              >
+                <dt class="font-medium mb-1">{{ data.text }}</dt>
+                <dd>{{ data.value }}</dd>
+              </div>
+            </dl>
+            <!-- <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
             <x-button
               color="primary"
               size="sm"
@@ -647,21 +675,21 @@ onMounted( () => {
               Update & Save
             </x-button>
           </div> -->
-        </TabPanel>
-        <!-- between here -->
-        <TabPanel>
-          <dl class="grid md:grid-cols-2 gap-5 p-4">
-            <div
-              v-for="data in props.plan.benefits.maternityCover || []"
-              :key="data.code"
-            >
-              <dt class="font-medium mb-1">{{ data.text }}</dt>
-              <dd>{{ data.value }}</dd>
-            </div>
-          </dl>
-        </TabPanel>
+          </TabPanel>
+          <!-- between here -->
+          <TabPanel>
+            <dl class="grid md:grid-cols-2 gap-5 p-4">
+              <div
+                v-for="data in props.plan.benefits.maternityCover || []"
+                :key="data.code"
+              >
+                <dt class="font-medium mb-1">{{ data.text }}</dt>
+                <dd>{{ data.value }}</dd>
+              </div>
+            </dl>
+          </TabPanel>
 
-        <!-- <TabPanel>
+          <!-- <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
               v-for="data in props.plan.benefits.exclusion || []"
@@ -686,7 +714,8 @@ onMounted( () => {
             </x-link>
           </dl>
         </TabPanel> -->
-      </TabPanels>
-    </TabGroup>
-  </div>
+        </TabPanels>
+      </TabGroup>
+    </div>
+  </x-modal>
 </template>

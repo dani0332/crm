@@ -1098,7 +1098,7 @@ const sendPolicyToClient = () => {
 onMounted(() => {
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
-  );
+  ) || { id: null };
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   getSmallestCopayRateAsDefaultValue();
   isMounted.value = true;
@@ -1924,16 +1924,12 @@ onMounted(() => {
         </template>
       </DataTable>
 
-      <x-modal v-model="modals.plan" size="xl" show-close backdrop>
-        <template #header>
-          {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
-        </template>
-        <LazyAvailablePlan
-          :plan="selectedPlan"
-          :genders="genderOptions"
-          @copay-update="onSelectedCopay"
-        />
-      </x-modal>
+      <LazyAvailablePlan
+        v-model="modals.plan"
+        :plan="selectedPlan"
+        :genders="genderOptions"
+        @copay-update="onSelectedCopay"
+      />
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
         <template #header> Create Heath Quote </template>
