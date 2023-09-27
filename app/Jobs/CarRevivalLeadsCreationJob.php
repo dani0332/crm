@@ -120,7 +120,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
                 info('CarRevivalLeadsCreationJob- is_revived updated -' . $this->lead->id);
             } else {
-                info('CarRevivalLeadsCreationJob- email is not sent -' . $customerName);
+                info('CarRevivalLeadsCreationJob- email is not sent -' . $emailData->customerEmail);
             }
         } else {
 
