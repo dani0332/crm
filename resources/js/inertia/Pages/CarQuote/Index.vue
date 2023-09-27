@@ -27,9 +27,10 @@ const dateFormat = date => {
 
 const page = usePage();
 const showFollowUpModal = ref(false);
-const disableFollowUp = computed(
-  () => page.props.quotes?.data?.length == 0 ?? false,
-);
+const disableFollowUp = computed(() => {
+  if (!page.props.quotes.data) return true;
+  else return page.props.quotes?.data?.length == 0 ?? false;
+});
 const loader = reactive({
   table: false,
   export: false,
