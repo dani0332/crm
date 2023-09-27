@@ -538,7 +538,7 @@ class CarAllocationService extends AllocationService
             'customerEmail' => $carQuote->email,
             'carQuoteId' => $carQuote->code,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-            'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
+            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
         ];
 
         return $emailData;
@@ -565,7 +565,7 @@ class CarAllocationService extends AllocationService
             'repairType' => $plan->repair_type ? $plan->repair_type : '',
             'discountPremium' => $plan->discount_premium ? $plan->discount_premium : '',
             'carQuoteId' => $carQuote->code,
-            'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
+            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'planName' => $plan->plan_name,
             'benefits' => $this->getPlanBenefits($plan),
@@ -608,7 +608,7 @@ class CarAllocationService extends AllocationService
             'carQuoteId' => $carQuote->code,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'plans' => $insurerPlans,
-            'assignmentType' => AssignmentTypeEnum::getDescription($carQuote->assignment_type),
+            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
         ];
 
         return $emailData;
