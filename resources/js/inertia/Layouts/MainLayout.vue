@@ -65,7 +65,8 @@ const onLogout = () => {
             <x-collapse
               show-icon
               :expanded="
-                link.children.some(child => $page.url.startsWith(child.url)) || link.active ||
+                link.children.some(child => $page.url.startsWith(child.url)) ||
+                link.active ||
                 link.children.some(child =>
                   child.children.some(grandchild =>
                     $page.url.startsWith(grandchild.url),
@@ -126,7 +127,7 @@ const onLogout = () => {
 
                       <template #content>
                         <template v-for="grandchild in child.children">
-                          <a
+                          <Link
                             :href="grandchild.url"
                             class="pl-10 py-2 flex gap-2 items-center hover:bg-black/10"
                             :class="{
@@ -137,17 +138,18 @@ const onLogout = () => {
                           >
                             <span class="text-primary-100"> ◉ </span>
                             <span>{{ grandchild.title }}</span>
-                          </a>
+                          </Link>
                         </template>
                       </template>
                     </x-collapse>
                   </template>
                   <template v-else>
-                    <a
+                    <Link
                       :href="child.url"
                       class="pl-4 py-2 flex gap-2 items-center hover:bg-black/10"
                       :class="{
-                        '!bg-primary-800': $page.url.startsWith(child.url) || child.active,
+                        '!bg-primary-800':
+                          $page.url.startsWith(child.url) || child.active,
                       }"
                     >
                       <x-icon
@@ -156,14 +158,14 @@ const onLogout = () => {
                         "
                       />
                       <span class="pt-1">{{ child.title }}</span>
-                    </a>
+                    </Link>
                   </template>
                 </template>
               </template>
             </x-collapse>
           </template>
           <template v-else>
-            <a
+            <Link
               :href="link.url"
               class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
@@ -175,7 +177,7 @@ const onLogout = () => {
                 :icon="link.attributes.icon"
               />
               {{ link.title }}
-            </a>
+            </Link>
           </template>
         </template>
       </nav>
@@ -194,9 +196,7 @@ const onLogout = () => {
       >
         <div
           class="flex items-center justify-end w-full px-2 sm:px-4 md:px-6 lg:px-8"
-        ><div class="nav-avatar h-[45px] w-[45px] rounded-full border-[1px] mr-3">
-            <img :src="user.profile_photo_path!=null?user.profile_photo_path:'/image/alfred-theme.png'" alt="IMCRM" class="w-full h-full rounded-full" />
-        </div>
+        >
           <div>
             <button
               type="button"
@@ -222,17 +222,43 @@ const onLogout = () => {
           </div>
           <div>
             <x-popover align="right" block>
-              <x-button>{{ user.name }}</x-button>
+              <x-button size="sm">
+                <div class="flex gap-2 items-center">
+                  <x-avatar
+                    size="xs"
+                    rounded
+                    :alt="user.name"
+                    :image="
+                      user.profile_photo_path != null
+                        ? user.profile_photo_path
+                        : '/image/alfred-theme.png'
+                    "
+                  />
+                  <span>{{ user.name }}</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    fill="none"
+                    role="presentation"
+                    class="stroke-2 w-3 h-3"
+                  >
+                    <path d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </x-button>
               <template #content>
                 <x-popover-container class="p-2">
-                  <button class="flex gap-2 items-center" @click="onLogout">
+                  <button
+                    class="flex gap-2 items-center px-2 group w-full"
+                    @click="onLogout"
+                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke-width="2"
                       stroke="currentColor"
-                      class="w-6 h-6 text-red-600"
+                      class="w-6 h-6 text-error-600"
                     >
                       <path
                         stroke-linecap="round"
@@ -240,7 +266,11 @@ const onLogout = () => {
                         d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
                       />
                     </svg>
-                    <span class="text-sm font-semibold">Logout</span>
+                    <span
+                      class="text-sm font-semibold group-hover:text-error-600"
+                    >
+                      Logout
+                    </span>
                   </button>
                 </x-popover-container>
               </template>
