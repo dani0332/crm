@@ -3,6 +3,7 @@ import { computed } from "vue";
 import PaymentTable from './Partials/PaymentTable.vue'
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import QuoteStatus from './../Partials/QuoteStatus.vue';
 defineProps({
 	quote: Object,
 	leadStatuses: Array, //
@@ -72,6 +73,10 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const { isRequired, isEmail, isNumber, isMobile } = useRules();
+
+const isCarLostStatus = (statusId) => {
+	return statusId == page.props.quoteStatusEnum.CarSold || statusId == page.props.quoteStatusEnum.Uncontactable
+}
 
 const leadStatusForm = useForm({
   modelType: 'Car',
@@ -306,9 +311,12 @@ const leadStatusOptions = computed(() => {
   const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD; 	
   
   const filteredLeadStatuses = page.props.leadStatuses.filter(status => {
-    // if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
-    //   return false;
-    // }
+	  
+	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
+		return false;
+	}
+	// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
+	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
     return true;
   });
 
@@ -322,7 +330,8 @@ const leadStatusDisabled = computed(() => {
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
 		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || 
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake && 
-		(!hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])))
+		(!hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]))) ||
+		(!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
 	);
 })
 
@@ -1421,7 +1430,7 @@ const confirmSendEmail = () => {
 						label="Notes"
 						placeholder="Lead Notes"
 						class="w-full"
-						:disabled="record.quote_status_id == 15"
+						:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
 					/>
 
 					<div class="flex justify-end">
@@ -1438,6 +1447,13 @@ const confirmSendEmail = () => {
 				</div>
 			</div>
     	</div>
+		<!-- <QuoteStatus
+			:quoteStatuses="leadStatuses"
+			:lostReasons="lostReasons"
+			:quoteStatusEnum="quoteStatusEnum"
+			:quoteType="quoteType"
+			:quote="record"
+		/> -->
     
 		<PaymentTable 
 			v-if="true || hasRole(rolesEnum.BetaUser)"

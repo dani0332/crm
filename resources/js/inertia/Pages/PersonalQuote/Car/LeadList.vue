@@ -156,7 +156,7 @@ const loader = reactive({
 const assignForm = useForm({
     assign_team: null,
     assigned_to_id_new: null,
-    assignment_type: '',
+    assignment_type: 'With-Email',
     modelType: 'Car',
     selectTmLeadId: '',
     isManagerOrDeputy: 1,
@@ -513,7 +513,7 @@ onMounted(() => {
                             class="flex-1 w-auto"
                             :rules="[rules.isRequired]"
                         />
-                        <x-select
+                        <!-- <x-select
                             v-model="assignForm.assignment_type"
                             label="Assignment Type"
                             :options="[
@@ -523,7 +523,7 @@ onMounted(() => {
                             placeholder="Select Subteam"
                             class="flex-1 w-auto"
                             :rules="[rules.isRequired]"
-                        />
+                        /> -->
                         <div class="mb-3 md:pt-6">
                             <x-button
                             color="orange"
