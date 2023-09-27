@@ -262,10 +262,9 @@
         $vatPercentage = \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         foreach ($quotePlans->quote->plans as &$quotePlan){
-            $addonsPrice = 0;
-            $addonsVat   = 0;
-            $quotePlan->discountPremium = 0;
-            $quotePlan->vat = 0;
+            $addonsPrice = $addonsVat =
+            $quotePlan->discountPremium =
+            $quotePlan->vat =
             $quotePlan->total= 0;
 
             if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
@@ -291,6 +290,7 @@
                     }
                 }
             } else {
+                $discountPremium = $vat = [];
                 foreach ($quotePlan->ratesPerCopay as $coPayKey => $coPayVal) {
                     $discountPremium[] =  $coPayVal->discountPremium;
                     $vat[] = $coPayVal->vat;
