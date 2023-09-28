@@ -67,10 +67,10 @@ class TransAppService extends BaseService
         $customer->myalfred_expiry_date = $expiryDate;
         $customer->save();
 
-        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email);
-
         if ($existingCustomer) { // Existing customer
             if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
+                $responseExtend = $this->berlinService->extendCustomerSubscription($customerId);
+
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
                     dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
                 }
