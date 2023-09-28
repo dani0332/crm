@@ -26,6 +26,10 @@ const dateFormat = date => {
 };
 
 const page = usePage();
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
 const showFollowUpModal = ref(false);
 const disableFollowUp = computed(() => {
   if (!page.props.quotes.data) return true;
@@ -260,7 +264,10 @@ const openFollowUpModal = () => {
         </x-button>
       </div>
 
-      <div class="flex justify-end gap-3 mb-4 mt-4">
+      <div
+        class="flex justify-end gap-3 mb-4 mt-4"
+        v-show="hasRole(rolesEnum.CarManager)"
+      >
         <x-button
           size="sm"
           color="#ff5e00"
