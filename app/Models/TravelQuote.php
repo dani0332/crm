@@ -60,7 +60,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function travelCoverFor()
     {
-        return $this->belongsTo(TravelCoverFor::class);
+        return $this->belongsTo(TravelCoverFor::class, 'travel_cover_for_id');
     }
 
     public function regionCoverFor()
@@ -91,6 +91,11 @@ class TravelQuote extends Model implements AuditableContract
     public function paymentStatus()
     {
         return $this->belongsTo(PaymentStatus::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function getPreviousPolicyExpiryDateAttribute($table)

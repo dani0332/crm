@@ -13,4 +13,6 @@ final class CustomerTypeEnum extends Enum
 {
     const Individual =   'Individual';
     const Entity =   'Entity';
+    const IndividualShort = 'IND';
+    const EntityShort = 'ENT';
 }

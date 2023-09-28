@@ -27,7 +27,6 @@ const props = defineProps({
 
 const notification = useNotifications('toast');
 const page = usePage();
-// const { isRequired } = useRules();
 const loader = reactive({
     table: false,
 });
@@ -37,37 +36,128 @@ const modals = reactive({
     insuredDetailConfirm: false
 });
 
-const tableHeader = [
-    {text: 'AML Id', value: 'id'},
-    {text: 'Input', value: 'input'},
-    {text: 'Search Type', value: 'search_type'},
-    {text: 'Screenshot', value: 'screenshot'},
-    {text: 'Match Found', value: 'results_found'},
-    {text: 'Results Found', value: 'results_found'},
-    {text: 'Created At', value: 'created_at'},
-    {text: 'Updated At', value: 'updated_at'},
-];
+const addMemberTransition = ref(false);
+const editMemberDetails = ref(false);
+const addMemberTransitionClick = () => {
+    addMemberTransition.value = !addMemberTransition.value;
+};
 
-const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
-const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
-
-// const yob = computed(() => {
-//     return page.props.yearsList.map(year => ({
-//         value: year,
-//         label: year,
-//     }));
-// });
-
-const nationalityOptions = computed(() => {
+const nationalitiesOptions = computed(() => {
     return page.props.nationalities.map(nat => ({
         value: nat.id,
         label: nat.text,
     }));
 });
 
-const dateFormat = date => {
+const memberRelationOptions = computed(() => {
+    return page.props.memberRelations.map(relation => ({
+        value: relation.code,
+        label: relation.text,
+    }));
+});
+
+const tableHeader = [
+    {text: 'AML Id', value: 'id'},
+    {text: 'Input', value: 'input'},
+    {text: 'Search Type', value: 'search_type'},
+    {text: 'Screenshot', value: 'screenshot'},
+    {text: 'Match Found', value: 'match_found'},
+    {text: 'Results Found', value: 'results_found'},
+    {text: 'Created At', value: 'created_at'},
+    {text: 'Updated At', value: 'updated_at'},
+];
+const memberDetailsTable = reactive({
+    isLoading: false,
+    columns: [
+        {
+            text: 'Full Name',
+            value: 'first_name',
+        },
+        {
+            text: 'Date of Birth',
+            value: 'dob',
+        },
+        {
+            text: 'Nationality',
+            value: 'nationality',
+        },
+        {
+            text: 'Relation',
+            value: 'relation',
+        },
+        {
+            text: 'Action',
+            value: 'action',
+        },
+    ],
+});
+const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
+const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
+
+const memberForm = reactive({
+    id: null,
+    first_name: '',
+    dob: null,
+    relation_code: null,
+    nationality_id: null,
+    quote_request_id: props.quoteRequest.id,
+    customer_id: props.quoteRequest.customer_id,
+    quote_type: props.quoteType.code
+});
+
+function onEditMember(data) {
+    addMemberTransition.value = true;
+    editMemberDetails.value = true;
+    memberForm.id = data.id;
+    memberForm.first_name = data.first_name;
+    memberForm.dob = data.dob;
+    memberForm.relation_code = data.relation_code;
+    memberForm.nationality_id = data.nationality_id;
+    memberForm.quote_request_id = data.quote_request_id;
+    memberForm.quote_type = props.quoteType.code;
+}
+
+const onMemberSubmit = isValid => {
+    if (!isValid) return;
+    if(editMemberDetails.value) {
+        axios.put(`/members/${memberForm.id}`, memberForm)
+        .then(res => {
+            notification.success({
+                title: 'Member Updated Successfully',
+                position: 'top',
+            });
+            memberForm.reset();
+        })
+        .catch(err => {
+            notification.error({
+                title: 'Something went wrong',
+                position: 'top',
+            });
+        });
+    } else {
+        axios.post(`/members`, memberForm)
+        .then(res => {
+            notification.success({
+                title: 'Member Added Successfully',
+                position: 'top',
+            });
+            memberForm.reset();
+        })
+        .catch(err => {
+            notification.error({
+                title: 'Something went wrong',
+                position: 'top',
+            });
+        });
+    }
+}
+
+const dateAndTimeFormat = date => {
     return date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 };
+
+const dateFormat = date =>
+    date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const dateToYear = date => {
     if (date) {
@@ -98,6 +188,8 @@ const insuredDetailsSubmit = isValid => {
                 });
             },
             onSuccess: () => {
+                // const session = usePage().props.flash;
+                // notification.success(session.success);
                 additionalContact.reset();
                 notification.success({
                     title: 'Additional Contact Added',
@@ -109,25 +201,6 @@ const insuredDetailsSubmit = isValid => {
             },
         });
 };
-
-// const updateCustomer = isValid => {
-//     if (!isValid) {
-//         return;
-//     }
-//     customer
-//         .transform(data => {
-//             return {
-//                 ...data,
-//             };
-//         })
-//         .get(`${page.props.quoteRequest.id}/quoteUpdate`, {
-//             preserveScroll: true,
-//             onSuccess: () => {
-//                 const session = usePage().props.flash;
-//                 notification.success(session.success);
-//             },
-//         });
-// };
 
 </script>
 
@@ -222,37 +295,37 @@ const insuredDetailsSubmit = isValid => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">IS SYNCED</dt>
-                        <dd>{{ quoteRequest.is_synced ? 'No' : 'Yes' }}</dd>
+                        <dd>{{ quoteRequest.is_synced ? 'Yes' : 'No' }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">CUSTOMER NAME</dt>
                         <dd>{{ quoteRequest?.customer.first_name }}</dd>
                     </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">CREATED AT</dt>
-                        <dd>{{ dateFormat(quoteRequest.created_at) }}</dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">UPDATED AT</dt>
-                        <dd>{{ dateFormat(quoteRequest.updated_at) }}</dd>
-                    </div>
 
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Car">
                         <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">CREATED AT</dt>
+                            <dd>{{ quoteRequest.created_at }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">UPDATED AT</dt>
+                            <dd>{{ quoteRequest.updated_at }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">NATIONALITY</dt>
-                            <dd>{{ quoteRequest.nationality_text }}</dd>
+                            <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">UAE LICENCE HELD FOR</dt>
-                            <dd>{{ quoteRequest.uae_license_text }}</dd>
+                            <dd>{{ quoteRequest?.uae_license_held_for?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CAR MAKE</dt>
-                            <dd>{{ quoteRequest.car_make_text }}</dd>
+                            <dd>{{ quoteRequest?.car_make?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CAR MODEL</dt>
-                            <dd>{{ quoteRequest.car_model_text }}</dd>
+                            <dd>{{ quoteRequest?.car_model?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">YEAR OF MANUFACTURE</dt>
@@ -260,7 +333,7 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
-                            <dd>{{ quoteRequest.emirates_text }}</dd>
+                            <dd>{{ quoteRequest?.emirate?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CURRENTLY INSURED WITH</dt>
@@ -272,33 +345,41 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">TYPE OF CAR INSURANCE</dt>
-                            <dd>{{ quoteRequest.car_type_ins_text }}</dd>
+                            <dd>{{ quoteRequest?.car_type_insurance?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CLAIM HISTORY</dt>
-                            <dd>{{ quoteRequest.claim_history_text }}</dd>
+                            <dd>{{ quoteRequest?.claim_history?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">DATE OF BIRTH</dt>
-                            <dd>{{ quoteRequest.dob }}</dd>
+                            <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
                         </div>
                     </template>
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Health">
                         <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">CREATED AT</dt>
+                            <dd>{{ dateAndTimeFormat(quoteRequest.created_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">UPDATED AT</dt>
+                            <dd>{{ dateAndTimeFormat(quoteRequest.updated_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">COVER FOR</dt>
-                            <dd>{{ quoteRequest.health_cover_text }}</dd>
+                            <dd>{{ quoteRequest?.health_cover_for?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">MARITAL STATUS</dt>
-                            <dd>{{ quoteRequest.marital_status_text }}</dd>
+                            <dd>{{ quoteRequest?.marital_status?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">EMIRATE OF VISA</dt>
-                            <dd>{{ quoteRequest.emirates_text }}</dd>
+                            <dd>{{ quoteRequest?.emirate?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">DATE OF BIRTH</dt>
-                            <dd>{{ quoteRequest.dob }}</dd>
+                            <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">GENDER</dt>
@@ -314,25 +395,33 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">OPTIONAL COVERS REQUIRED</dt>
-                            <dd>{{ quoteRequest.mobile_no }}</dd>
+                            <dd>
+                                Dental Cover: {{ quoteRequest.has_dental }} <br>
+                                Worldwide Cover: {{ quoteRequest.has_worldwide_cover }} <br>
+                                Home Country Cover: {{ quoteRequest.has_home }} <br>
+                            </dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">NATIONALITY</dt>
-                            <dd>{{ quoteRequest.nationality_text }}</dd>
+                            <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
                         </div>
                     </template>
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Home">
                         <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">CREATED AT</dt>
+                            <dd>{{ dateAndTimeFormat(quoteRequest.created_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">UPDATED AT</dt>
+                            <dd>{{ dateAndTimeFormat(quoteRequest.updated_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">I AM</dt>
-                            <dd>{{ quoteRequest.home_possession_type_text }}</dd>
+                            <dd>{{ quoteRequest?.possession_type?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">I LIVE IN</dt>
-                            <dd>{{ quoteRequest.home_accommodation_type_text }}</dd>
-                        </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">COVER FOR</dt>
-                            <dd>{{ quoteRequest.mobile_no }}</dd>
+                            <dd>{{ quoteRequest?.accommodation_type?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">ADDRESS</dt>
@@ -346,11 +435,11 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">REGIONS COVER</dt>
-                            <dd>{{ quoteRequest.region_cover_text }}</dd>
+                            <dd>{{ quoteRequest?.regionCoverFor?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">COVER FOR</dt>
-                            <dd>{{ quoteRequest.cover_for_text }}</dd>
+                            <dd>{{ quoteRequest?.travelCoverFor?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">DETAILS</dt>
@@ -358,7 +447,7 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">NATIONALITY</dt>
-                            <dd>{{ quoteRequest.nationality_text }}</dd>
+                            <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">DESTINATION</dt>
@@ -368,35 +457,40 @@ const insuredDetailsSubmit = isValid => {
                     >
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Life">
                         <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">CREATED AT</dt>
+                            <dd>{{ (quoteRequest.created_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">UPDATED AT</dt>
+                            <dd>{{ (quoteRequest.updated_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">PURPOSE OF INSURANCE</dt>
-                            <dd>{{ quoteRequest.purpose_text }}</dd>
+                            <dd>{{ quoteRequest?.purposeOfInsurance?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CHILDREN</dt>
-                            <dd>{{ quoteRequest.children_text }}</dd>
+                            <dd>{{ quoteRequest?.childern?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">MARITAL STATUS</dt>
-                            <dd>{{ quoteRequest.marital_text }}</dd>
+                            <dd>{{ quoteRequest?.maritalStatus?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">TENURE OF INSURANCE</dt>
-                            <dd>{{ quoteRequest.tenure_text }}</dd>
+                            <dd>{{ quoteRequest?.insuranceTenure?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">SMOKER</dt>
-                            <dd>{{ quoteRequest.is_smoker }}</dd>
+                            <dd>{{ quoteRequest.is_smoker ? 'Yes' : 'No'}}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">NO. OF YEARS</dt>
-                            <dd>{{ quoteRequest.number_of_year_text }}</dd>
+                            <dd>{{ quoteRequest?.numberOfYears?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">SUM INSURED</dt>
-                            <!-- quoteRequest.currency_text -->
-                            <dd>
-                                {{ quoteRequest.currency_text }}
-                            </dd>
+                            <dd>{{ quoteRequest?.currency?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">OTHER INFO</dt>
@@ -404,7 +498,7 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">DATE OF BIRTH</dt>
-                            <dd>{{ quoteRequest.dob }}</dd>
+                            <dd>{{ dateFormat(quoteRequest.dob) }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">GENDER</dt>
@@ -412,7 +506,7 @@ const insuredDetailsSubmit = isValid => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">NATIONALITY</dt>
-                            <dd>{{ quoteRequest.nationality_text }}</dd>
+                            <dd>{{ quoteRequest?.nationality?.text ?? '' }}</dd>
                         </div>
                     </template>
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Bike">
@@ -445,6 +539,16 @@ const insuredDetailsSubmit = isValid => {
                             <dd>{{ quoteRequest.currently_insured_with }}</dd>
                         </div>
                     </template>
+                    <template v-if="quoteType.code == quoteTypeCodeEnum.Pet">
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">CREATED AT</dt>
+                            <dd>{{ dateAndTimeFormat(quoteRequest.created_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">UPDATED AT</dt>
+                            <dd>{{ dateAndTimeFormat(quoteRequest.updated_at) }}</dd>
+                        </div>
+                    </template>
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Yacht">
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">BOAT DETAILS</dt>
@@ -473,12 +577,20 @@ const insuredDetailsSubmit = isValid => {
                     </template>
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Business">
                         <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">CREATED AT</dt>
+                            <dd>{{ (quoteRequest.created_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">UPDATED AT</dt>
+                            <dd>{{ (quoteRequest.updated_at) }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">COMPANY NAME</dt>
                             <dd>{{ quoteRequest.company_name }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">TYPE OF BUSINESS INSURANCE</dt>
-                            <dd>{{ quoteRequest.business_type_text }}</dd>
+                            <dd>{{ quoteRequest?.businessTypeOfInsurance?.text ?? '' }}</dd>
                         </div>
                         <template
                             v-if="businessTypeCode && businessTypeCode != quoteBusinessTypeCode.photographers">
@@ -560,17 +672,17 @@ const insuredDetailsSubmit = isValid => {
                         <dt class="font-medium">PREVIOUS QUOTE ID</dt>
                         <dd>{{ quoteRequest.previous_quote_id }}</dd>
                     </div>
-                    <div class="flex justify-end">
-                        <x-button
-                            class="mt-4"
-                            color="#ff5e00"
-                            size="sm"
-                            @click.prevent="modals.insuranceForm = true;"
-                        >
-                            Update & Verify
-                        </x-button>
-                    </div>
                 </dl>
+                <div class="flex justify-end">
+                    <x-button
+                        class="mt-4"
+                        color="#ff5e00"
+                        size="sm"
+                        @click.prevent="modals.insuranceForm = true;"
+                    >
+                        Update & Verify
+                    </x-button>
+                </div>
             </div>
         </div>
 
@@ -606,7 +718,7 @@ const insuredDetailsSubmit = isValid => {
                                 :single="true"
                                 v-model="insuredFormDetails.nationality"
                                 placeholder="Select Nationality"
-                                :options="nationalityOptions"
+                                :options="nationalitiesOptions"
                                 class="w-full"
                             />
                         </dd>
@@ -622,16 +734,120 @@ const insuredDetailsSubmit = isValid => {
                         </dd>
                     </div>
                 </dl>
+
                 <x-divider class="mb-4 mt-1" />
-                <MemberDetails
-                    :quote="quoteRequest"
-                    :membersDetails="membersDetails"
-                    :nationalities="nationalities"
-                    :memberRelations="memberRelations"
-                    :quote_type=quoteType.code
-                    :forAml="true"
-                />
-            <x-divider class="mb-4 mt-1" />
+
+                <Transition name="fade">
+                    <div v-if="addMemberTransition" class="mb-4">
+                        <p class="font-semibold text-center mb-5">Add Member</p>
+                        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                            <div class="grid sm:grid-cols-2">
+                                <dt class="font-medium">Member Name</dt>
+                                <dd>
+                                    <x-input
+                                        v-model="memberForm.first_name"
+                                        placeholder="Member Name"
+                                        class="w-full"
+                                    />
+                                </dd>
+                            </div>
+                            <div class="grid sm:grid-cols-2">
+                                <dt class="font-medium">Nationality</dt>
+                                <dd>
+                                    <ComboBox
+                                        v-model="memberForm.nationality_id"
+                                        :single="true"
+                                        placeholder="Select Nationality"
+                                        :options="nationalitiesOptions"
+                                        class="w-full"
+                                    />
+                                </dd>
+                            </div>
+                            <div class="grid sm:grid-cols-2">
+                                <dt class="font-medium">Date of Birth</dt>
+                                <dd>
+                                    <DatePicker
+                                        v-model="memberForm.dob"
+                                        placeholder="Date of Birth"
+                                        class="w-full"
+                                    />
+                                </dd>
+                            </div>
+                            <div class="grid sm:grid-cols-2">
+                                <dt class="font-medium">Relation</dt>
+                                <dd>
+                                    <x-select
+                                        v-model="memberForm.relation_code"
+                                        placeholder="Select Relation"
+                                        :options="memberRelationOptions"
+                                        class="w-full"
+                                    />
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                </Transition>
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-primary-800 text-lg">
+                        Member Details
+                        <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
+                    </h3>
+                    <x-button
+                        v-if="addMemberTransition"
+                        @click.prevent="onMemberSubmit"
+                        size="sm"
+                        color="success"
+                    >
+                        Submit Member
+                    </x-button>
+                    <x-button
+                        v-if="!addMemberTransition"
+                        @click.prevent="addMemberTransitionClick"
+                        size="sm"
+                        color="orange"
+                    >
+                        Add Member
+                    </x-button>
+                </div>
+
+                <DataTable
+                    table-class-name="tablefixed compact"
+                    :headers="memberDetailsTable.columns"
+                    :items="membersDetails || []"
+                    show-index
+                    border-cell
+                    hide-rows-per-page
+                    hide-footer
+                >
+                    <template #item-index="{ code }">
+                        <div>{{ code }}</div>
+                    </template>
+                    <template #item-dob="{ dob }">
+                        {{ dateFormat(dob) }}
+                    </template>
+                    <template #item-relation="{ relation }">
+                        {{ relation?.text }}
+                    </template>
+                    <template #item-nationality="{ nationality }">
+                        {{ nationality?.text }}
+                    </template>
+                    <template #item-action="item">
+                        <div class="flex gap-2">
+                            <x-button
+                                size="xs"
+                                color="primary"
+                                outlined
+                                @click.prevent="onEditMember(item)"
+                            >
+                                Edit
+                            </x-button>
+                        </div>
+                    </template>
+                </DataTable>
+
+                <x-divider class="mb-4 mt-4" />
+
             <p class="text-center mb-5">Payer Details</p>
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                 <div class="grid sm:grid-cols-2">
@@ -709,9 +925,6 @@ const insuredDetailsSubmit = isValid => {
                 </div>
             </template>
         </x-modal>
-        <x-modal>
-
-        </x-modal>
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
@@ -738,6 +951,9 @@ const insuredDetailsSubmit = isValid => {
 
                 <template #item-screenshot="{ screenshot }">
                     <img :src="screenshot" alt="IMCRM" class="w-6"/>
+                </template>
+                <template #item-match_found="{ match_found }">
+                    <x-tag size="sm">{{ match_found > 0 ? 'True' : 'False' }}</x-tag>
                 </template>
             </DataTable>
         </div>

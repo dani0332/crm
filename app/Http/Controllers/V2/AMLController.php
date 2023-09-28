@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
+use App\Http\Requests\AMLRequest;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
+use App\Models\Entity;
+use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
@@ -20,7 +25,6 @@ use App\Models\UAEAMLListUploads;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
-use App\Repositories\QuoteStatusRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\CheckAmlService;
 use App\Services\AMLService;
@@ -56,59 +60,89 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(AMLRequest $request)
     {
-        $quoteTypes = QuoteTypeRepository::getList();
-        $quoteStatuses = QuoteStatusRepository::getList();
-        $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
+        $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
+        $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
+        $quotes = [];
 
-        $quotes = new AML();
-        if (isset($request->quoteType) && ! empty($request->quoteType)) {
-            $quoteRequestTable = str_replace(' ', '_', strtolower($request->quoteType).'_quote_request');
+        if ($request->ajax()) {
 
-            $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
-                ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
-                ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
-                ->where('kyc_logs.quote_type_id', $quoteTypeId)
-                ->orderBy('kyc_logs.created_at', 'desc');
+            if (isset($request->quoteType) && !empty($request->quoteType)) {
+                $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
+                $quoteRequestTable = strtolower($request->quoteType) . '_quote_request';
 
-            if (
-                isset($request->searchType) && ! empty($request->searchType) &&
-                isset($request->searchField) && ! empty($request->searchField)
-            ) {
-                if ($request->searchType == 'cdbId') {
-                    $dataAml->where($quoteRequestTable.'.code', $request->searchField);
+                if (in_array($quoteTypeId, [
+                    QuoteTypes::BIKE->id(),
+                    QuoteTypes::YACHT->id(),
+                    QuoteTypes::PET->id(),
+                ])) {
+                    if (isset($request->amlCreatedStartDate) && !empty($request->amlCreatedStartDate)) {
+                        $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
+                    } else {
+                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail', 'id'])) {
+                            $searchType = match ($request->searchType) {
+                                'cdbId' => 'code',
+                                'customerEmail' => 'email',
+                                'id' => 'id'
+                            };
+
+                            $createdDate =
+                                $request->searchType == 'id' ? AML::where($searchType, $request->searchField)->firstOrFail()->created_at :
+                                    PersonalQuote::where($searchType, $request->searchField)->firstOrFail()->created_at;
+
+                            $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $createdDate) ? 'personal_quotes' : strtolower($request->quoteType) . '_quote_request';
+                        }
+                    }
                 }
-                if ($request->searchType == 'id') {
-                    $dataAml->where('kyc_logs.id', $request->searchField);
+
+                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
+                    ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
+                    ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
+                    ->where('kyc_logs.quote_type_id', $quoteTypeId)
+                    ->orderBy('kyc_logs.created_at', 'desc');
+
+                if (
+                    isset($request->searchType) && ! empty($request->searchType) &&
+                    isset($request->searchField) && ! empty($request->searchField)
+                ) {
+                    if ($request->searchType == 'cdbId') {
+                        $dataAml->where($quoteRequestTable.'.code', $request->searchField);
+                    }
+                    if ($request->searchType == 'id') {
+                        $dataAml->where('kyc_logs.id', $request->searchField);
+                    }
+                    if ($request->searchType == 'customerEmail') {
+                        $dataAml->where($quoteRequestTable.'.email', $request->searchField);
+                    }
                 }
-                if ($request->searchType == 'customerEmail') {
-                    $dataAml->where($quoteRequestTable.'.email', $request->searchField);
+                if (isset($request->matchFound)) {
+                    if ($request->matchFound == 'False') {
+                        $dataAml->where('kyc_logs.results_found', '=', '0');
+                    }
+                    if ($request->matchFound == 'True') {
+                        $dataAml->where('kyc_logs.results_found', '>', '0');
+                    }
                 }
+                if (
+                    isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
+                    isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
+                ) {
+                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedStartDate));
+                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedEndDate));
+                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$amlCreatedDate.'" AND "'.$amlEndDate.'"');
+                }
+
+                $quotes = $dataAml->simplePaginate(10)->withQueryString();
             }
-            if (isset($request->matchFound)) {
-                if ($request->matchFound == 'False') {
-                    $dataAml->where('kyc_logs.results_found', '=', '0');
-                }
-                if ($request->matchFound == 'True') {
-                    $dataAml->where('kyc_logs.results_found', '>', '0');
-                }
-            }
-            if (
-                isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
-                isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
-            ) {
-                $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
-            }
-            $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
 
-        // return view('aml.view', compact('quoteTypes', 'quoteStatuses'));
         return inertia('Aml/Index', [
             'quoteTypes' => $quoteTypes,
             'quoteStatuses' => $quoteStatuses,
             'aml' => $quotes,
         ]);
+
     }
 
     /**
@@ -142,20 +176,7 @@ class AMLController extends Controller
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 //        dd($quoteRequest->toArray());
 
-//        $quoteRequest = match ($quoteType->code) {
-//            quoteTypeCode::Car => QuoteRequestAmlService::getCarQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Health => QuoteRequestAmlService::getHealthQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Home => QuoteRequestAmlService::getHomeQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Travel => QuoteRequestAmlService::getTravelQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Life => QuoteRequestAmlService::getLifeQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Bike => QuoteRequestAmlService::getBikeQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Yacht => QuoteRequestAmlService::getYachtQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Business => QuoteRequestAmlService::getBusinessQuoteRequest($quoteRequestId),
-//            quoteTypeCode::Pet => QuoteRequestAmlService::getPetQuoteRequest($quoteRequestId),
-//            default => '',
-//        };
 
-        // 8113
         $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $nationalities =  NationalityRepository::withActive()->get();
@@ -237,22 +258,38 @@ class AMLController extends Controller
     {
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $customerDetails = [
-            'insured_first_name' => $AMLCheckRequest->insured_first_name,
-            'insured_last_name' => $AMLCheckRequest->insured_last_name,
-            'nationality_id' => $AMLCheckRequest->nationality,
-            'dob' => $AMLCheckRequest->date_of_birth,
-        ];
 
         if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteRequestId))) {
             $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
         }
 
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
+
+        $customerType = Entity::where('customer_id', $AMLCheckRequest->customer_id)->count() > 0 ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
+        $membersAgainstCustomer = QuoteMemberDetailsRepository::where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+            'customer_id' => $AMLCheckRequest->customer_id
+        ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code', 'customer_id'])->get();
+
+        $membersAgainstCustomer[] = [
+            'first_name' => $AMLCheckRequest->insured_first_name,
+            'last_name' => $AMLCheckRequest->insured_last_name,
+            'nationality_id' => (int) $AMLCheckRequest->nationality,
+            'dob' => $AMLCheckRequest->date_of_birth,
+            'code' => $customerType . '-' . $AMLCheckRequest->customer_id,
+            'customer_id' => $AMLCheckRequest->customer_id
+        ];
+
         if($updateQuote) {
 
             $customer = Customer::where('id', $AMLCheckRequest->customer_id)->get();
-            $customer->update($customerDetails);
+            $customer->update([
+                'insured_first_name' => $AMLCheckRequest->insured_first_name,
+                'insured_last_name' => $AMLCheckRequest->insured_last_name,
+                'nationality_id' => $AMLCheckRequest->nationality,
+                'dob' => $AMLCheckRequest->date_of_birth,
+            ]);
 
             if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
                 if (checkPersonalQuotes($quoteType->code)) {
@@ -264,9 +301,12 @@ class AMLController extends Controller
             }
         }
 
-        // Bridger API call for AML Check
-        Log::info('Bridger API call for AML Check with customer ID '.$AMLCheckRequest->customer_id.' And data pass for Bridger API are : '.json_encode($customerDetails));
-        AMLService::amlCheck($AMLCheckRequest->validated(), $quoteRequestId, $quoteTypeId);
+        // Bridger API call for AML Check on Customer and also associated Members
+        foreach ($membersAgainstCustomer->toArray() as $key => $value):
+            Log::info('Bridger API call for AML Check with customer ID '.$value->code.' And data pass for Bridger API are : '.json_encode($value));
+            AMLService::amlCheck($value, $quoteRequestId, $quoteTypeId);
+            sleep(5);
+        endforeach;
 
         return redirect()->back()->with('success', 'Quote is updated');
     }

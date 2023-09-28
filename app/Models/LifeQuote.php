@@ -37,7 +37,7 @@ class LifeQuote extends Model implements AuditableContract
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class, 'quote_status_id');
     }
 
     public function lifeQuoteRequestDetail()
@@ -67,27 +67,27 @@ class LifeQuote extends Model implements AuditableContract
 
     public function currency()
     {
-        return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id', 'id');
+        return $this->belongsTo(CurrencyType::class, 'sum_insured_currency_id');
     }
 
     public function insuranceTenure()
     {
-        return $this->belongsTo(LifeInsuranceTenure::class, 'tenure_of_insurance_id', 'id');
+        return $this->belongsTo(LifeInsuranceTenure::class, 'tenure_of_insurance_id');
     }
 
     public function numberOfYears()
     {
-        return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
+        return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id');
     }
 
     public function maritalStatus()
     {
-        return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');
+        return $this->belongsTo(MartialStatus::class, 'marital_status_id');
     }
 
     public function paymentStatus()
     {
-        return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
 
     public function payments()

@@ -15,9 +15,12 @@ class CreateQuoteMemberDetailsTable extends Migration
     {
         Schema::create('quote_member_details', function (Blueprint $table) {
             $table->id();
+            $table->string('code');
             $table->integer('quote_type_id');
             $table->foreign('quote_type_id')->references('id')->on('quote_type');
             $table->integer('quote_request_id');
+            $table->bigInteger('customer_id');
+            $table->foreign('customer_id')->references('id')->on('customer');
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
             $table->date('dob')->nullable();

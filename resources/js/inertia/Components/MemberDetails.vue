@@ -15,10 +15,6 @@ const props = defineProps({
     quote_type: {
         required: true,
         type: String,
-    },
-    forAml: {
-        type: Boolean,
-        default: false
     }
 });
 
@@ -77,7 +73,7 @@ const memberForm = useForm({
     dob: null,
     relation_code: null,
     nationality_id: null,
-    quote_request_id: 257,
+    quote_request_id: page.props.quote.id,
     quote_type: props.quote_type
 });
 const addMemberModal = () => {
@@ -196,7 +192,6 @@ const memberDeleteConfirmed = () => {
                         Edit
                     </x-button>
                     <x-button
-                        v-if="!forAml"
                         size="xs"
                         color="error"
                         outlined
