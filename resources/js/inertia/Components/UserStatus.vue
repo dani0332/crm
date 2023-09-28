@@ -5,6 +5,8 @@ const status = computed(() => page.props.auth.user.status);
 
 const currentStatus = ref(status.value || 1);
 
+const notification = useNotifications('toast');
+
 const statusText = id => {
   const statuses = {
     1: 'Available',
@@ -20,7 +22,9 @@ const options = {
 };
 
 const pusher = new Pusher(page.props.pusherKey, options);
-const channel = pusher.subscribe('public.'+page.props.appEnv + '.activity.user');
+const channel = pusher.subscribe(
+  'public.' + page.props.appEnv + '.activity.user',
+);
 
 const listen = () => {
   channel.bind('user.status.changed', function (e) {
@@ -32,11 +36,17 @@ const listen = () => {
 
 onMounted(() => {
   listen();
+
+  //remove this Ahsan
+  notification.success({
+    title: 'User status component mounted',
+    position: 'top',
+  });
 });
 
 onUnmounted(() => {
   channel.unbind('user.status.changed');
-  channel.unsubscribe('public.'+page.props.appEnv + '.activity.user');
+  channel.unsubscribe('public.' + page.props.appEnv + '.activity.user');
 });
 </script>
 
