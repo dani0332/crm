@@ -30,18 +30,30 @@ const listen = () => {
   channel.bind('user.status.changed', function (e) {
     if (e?.userId == page.props.auth.user.id) {
       currentStatus.value = e.status;
+      if(e.status == 1) {
+        notification.success({
+            title: 'Your' + e.message,
+            position: 'top',
+        });
+      }
+      if(e.status == 2) {
+        notification.info({
+            title: 'Your' + e.message,
+            position: 'top',
+        });
+      }
+      if(e.status == 3) {
+        notification.error({
+            title: 'Your' + e.message,
+            position: 'top',
+        });
+      }
     }
   });
 };
 
 onMounted(() => {
   listen();
-
-  //remove this Ahsan
-  notification.success({
-    title: 'User status component mounted',
-    position: 'top',
-  });
 });
 
 onUnmounted(() => {

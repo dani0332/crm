@@ -37,19 +37,11 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-        // Get the Tier R instance if it's active.
-        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
         $query = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
-
-        // Exclude the Tier R if it exists and is not empty.
-        if (! empty($tierR)) {
-            $query->where('tier_id', '!=', $tierR->id)->orWhereNull('tier_id');
-        }
 
         info('Query for getting lead is : '.getQueryForLogWithBindings($query)); // calling generic function to print query with bindings
 

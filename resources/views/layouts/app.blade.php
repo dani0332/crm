@@ -151,6 +151,7 @@
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="{{ asset('build/js/Toaster.js') }}"></script>
 
     @php
     $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
@@ -224,6 +225,9 @@
                     .each(function () {
                         if ($(this).text() == data.userId) {
                            changeAvailiblity(data, this);
+                           $.toast({
+                                content: data.userName + data.message,
+                            });
                         }
                     });
             }
@@ -233,6 +237,9 @@
                     .each(function () {
                         if ($(this).text() == data.userId) {
                            changeAvailiblity(data, this);
+                           $.toast({
+                                content: data.userName + data.message,
+                            });
                         }
                     });
             }
@@ -249,6 +256,9 @@
                 if(data.status != 1 && data.status != 2 ) {
                     $('#unavailable-status-div').show();
                 }
+                $.toast({
+                        content: 'Your' + data.message,
+                    });
             }
         });
 

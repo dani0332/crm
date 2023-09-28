@@ -29,7 +29,7 @@ class UserStatusChanged implements ShouldBroadcastNow
             'status_changed_at' => now()->toDateTimeString(),
         ]);
 
-        $this->message = $userName."'s Status Changed to ".$this->getStatusText($status);
+        $this->message = " Status Changed to ". $this->getStatusText($status);
     }
 
     public function broadcastOn()
@@ -48,15 +48,16 @@ class UserStatusChanged implements ShouldBroadcastNow
             'userId' => $this->userId,
             'status' => $this->status,
             'message' => $this->message,
+            'userName' => $this->userName,
         ];
     }
 
     public function getStatusText($status)
     {
         $statusText = '';
-        switch ($statusText) {
+        switch ($status) {
             case 1:
-                $statusText = 'Online';
+                $statusText = 'Available';
                 break;
             case 2:
                 $statusText = 'Offline';
