@@ -37,7 +37,7 @@ const hidePlan = ref(props.plan.isHidden),
 
 const toggleLoader = ref(false);
 
-const coPay = ref(props.plan.coPayments);
+const coPay = ref('');
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -115,8 +115,8 @@ const onMemberUpdate = member => {
 //     console.log(props.plan);
 // }
 
-let selectedCopay = [];
-let defaultCopayId = null;
+const selectedCopay = ref([]);
+const defaultCopayId = ref(null);
 
 const onCoPaySelect = copayId => {
 
@@ -132,12 +132,12 @@ const onCoPaySelect = copayId => {
                 'planId': props.plan.id,
             }
 
-            selectedCopay = copayDetails
+            selectedCopay.value = copayDetails
         }
     });
 
-    emit('copayUpdate', selectedCopay);
-    console.log(selectedCopay);
+    emit('copayUpdate', selectedCopay.value);
+    console.log(selectedCopay.value);
 };
 
 const onTogglePlans = () => {
@@ -174,15 +174,15 @@ const onTogglePlans = () => {
 const getDefaultVaues = () => {
 
     let smallestCopayValue = 0;
-    if (selectedCopay === undefined || selectedCopay.length == 0) {
+    if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
         props.plan.ratesPerCopay.forEach(function callback(element, index) {
             if (index == 0) {
                 smallestCopayValue = element.premium
-                defaultCopayId = element.healthPlanCoPaymentId
+                defaultCopayId.value = element.healthPlanCoPaymentId
             }
             else if (element.premium < smallestCopayValue ) {
                 smallestCopayValue = element.premium
-                defaultCopayId = element.healthPlanCoPaymentId
+                defaultCopayId.value = element.healthPlanCoPaymentId
             }
         });
 
@@ -193,6 +193,8 @@ const getDefaultVaues = () => {
 
 onMounted( () => {
     getDefaultVaues();
+    coPay.value = defaultCopayId.value; // get the default selected value for coPay
+    console.log(coPay);
 });
 </script>
 
@@ -502,7 +504,6 @@ onMounted( () => {
             v-model="coPay"
             :options="coPayOptions"
             :single="true"
-            :selected="defaultCopayId"
             label="Co-Pay"
             placeholder="Select a Co-Pay option"
             @update:model-value="onCoPaySelect"
