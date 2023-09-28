@@ -29,7 +29,7 @@ class UserStatusChanged implements ShouldBroadcastNow
             'status_changed_at' => now()->toDateTimeString(),
         ]);
 
-        $this->message = " Status Changed to ". $this->getStatusText($status);
+        $this->message = ' Status Changed to '.$this->getStatusText($status);
     }
 
     public function broadcastOn()
