@@ -1054,6 +1054,7 @@ const actionsHeaders = ref([
   { text: 'Type', value: 'type' },
   { text: 'Reason', value: 'reason.text' },
   { text: 'Notes', value: 'notes' },
+  { text: 'Resume Date', value: 'resume_date' },
   { text: 'Created By', value: 'action_by_email' },
   { text: 'Created At', value: 'created_at' },
 ]);
@@ -1821,7 +1822,8 @@ onMounted(() => getFollowUpsByQuote());
               Pause Follow-up to customer
             </x-button>
             <template #tooltip>
-              <span>{{ followUpstatus }}</span>
+              <span>When Activated, The button temporarily suspends the automatic
+  sending of follow-up emails to clients</span>
             </template>
           </x-tooltip>
           <x-button-group v-if="selectedPlans.length > 0" size="sm">
