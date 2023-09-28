@@ -51,7 +51,7 @@ class CarAllocationService extends AllocationService
             $query->where('tier_id', '!=', $tierR->id);
         }
 
-        info('Query for getting lead is : '. getQueryForLogWithBindings($query)); // calling generic function to print query with bindings
+        info('Query for getting lead is : '.getQueryForLogWithBindings($query)); // calling generic function to print query with bindings
 
         // Retrieve the first matching car lead from the query or return null if none is found.
         return $query->first();
