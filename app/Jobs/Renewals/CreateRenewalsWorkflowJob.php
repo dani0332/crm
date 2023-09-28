@@ -51,7 +51,7 @@ class CreateRenewalsWorkflowJob implements ShouldQueue
             'created_by_email' => $this->renewalsBatchEmail->createdby->email ?? null
         ]);
 
-        if(isset($response['success']) && $response['success']) {
+        if(isset($response->success) && $response->success) {
             info('workflow created successfully for batch: ' . $this->renewalsBatchEmail->batch);
         } else
         {
