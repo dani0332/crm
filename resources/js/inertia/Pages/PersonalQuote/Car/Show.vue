@@ -886,7 +886,17 @@ const copyLink = () => {
 }
 
 const onLeadStatus = () => {
-  leadStatusForm.post(
+  leadStatusForm.transform(data => {
+	let date = data.next_followup_date;
+	if (date !== null && date !== '') {
+		let parts = date.split('T');
+		let dateString = parts[0].split('-').reverse().join('-');
+		let timeString = parts[1].split('.')[0] + ':00';
+		date = dateString + ' ' + timeString;
+	}
+	data.next_followup_date = date;
+	return data;
+  }).post(
     `/quotes/Car/${page.props.record.id}/update-lead-status`,
     {
       preserveScroll: true,
@@ -1462,6 +1472,7 @@ onMounted(() => getFollowUpsByQuote());
 								v-model="leadStatusForm.trans_code"								
 								placeholder="TransApp Code is required"
 								class="w-full"
+								:rules="[rules.isRequired]"
 								:error="leadStatusForm.errors.trans_code"
 							/>
 						</x-field>
@@ -1477,17 +1488,23 @@ onMounted(() => getFollowUpsByQuote());
 								:error="leadStatusForm.errors.lostReason"
 							/>
 						</x-field>
-
-						<x-input
-							v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer"
-							v-model="leadStatusForm.next_followup_date"
-							label="Followup Date"
-							type="datetime-local"
-							placeholder="Please select follow-up date & time"
-							class="w-full"
-							:error="leadStatusForm.errors.next_followup_date"
-						/>
-
+						<x-field label="Followup Date" v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
+							<!-- <DatePicker								
+								v-model="leadStatusForm.next_followup_date"
+								withTime
+								:rules="[isRequired]"
+								placeholder="Please select follow-up date & time" 
+								:error="leadStatusForm.errors.next_followup_date"
+								class="w-full" 
+							/> -->
+							<x-input
+								v-model="leadStatusForm.next_followup_date"
+								type="datetime-local"
+								placeholder="Please select follow-up date & time"
+								class="w-full"
+								:error="leadStatusForm.errors.next_followup_date"
+							/>
+						</x-field>
 						<x-select
 							v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
 							v-model="leadStatusForm.tier_id"
@@ -1598,7 +1615,28 @@ onMounted(() => getFollowUpsByQuote());
 						</x-field>
 					</div>
 				</div>
-			</template>
+			</template>			
+
+			<DataTable 
+				v-if="paymentEntityModel.car_lost_quote_logs.length > 0"
+				table-class-name="mt-5 tablefixed compact"
+				:headers="carLostQuoteLogsTable.columns"
+				:items="paymentEntityModel.car_lost_quote_logs || []"
+				border-cell
+				hide-rows-per-page
+				:rows-per-page="15"
+        		:hide-footer="availablePlansItems.length < 15"
+			>
+				<template #item-modified_by="item">
+					{{ item.action_by_id ? item.advisor.email : 'Management' }}
+				</template>
+				<template #item-documents="item">
+					<template v-for="doc in item.documents" :key="doc">
+						<p><Link target="_blank" :href="leadDocsStoragePath + doc.path">Document</Link></p>
+					</template>
+				</template>
+			</DataTable>
+
 			<x-divider class="mb-1 mt-10" />
 			<div class="flex justify-end">
 				<x-button
@@ -1613,25 +1651,6 @@ onMounted(() => getFollowUpsByQuote());
 					Change Status
 				</x-button>
 			</div>
-
-			<Datatable 
-				table-class-name="tablefixed compact"
-				:headers="carLostQuoteLogsTable.columns"
-				:items="paymentEntityModel.car_lost_quote_logs || []"
-				border-cell
-				hide-rows-per-page
-				:rows-per-page="15"
-        		:hide-footer="availablePlansItems.length < 15"
-			>
-				<template #item-modified_by="item">
-					{{ item.action_by_id ? item.advisor.email : 'Management' }}
-				</template>
-				<template #item-documents="item">
-					<template v-for="doc in item.documents">
-						<p><Link target="_blank" :href="leadDocsStoragePath + doc.path">Document</Link></p>
-					</template>
-				</template>
-			</Datatable>
     	</div>
 		<!-- <QuoteStatus
 			:quoteStatuses="leadStatuses"
