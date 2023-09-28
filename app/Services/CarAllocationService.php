@@ -459,7 +459,8 @@ class CarAllocationService extends AllocationService
         // Query to fetch leads
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('quote_status_id', QuoteStatusEnum::NewLead);
+            ->where('quote_status_id', QuoteStatusEnum::NewLead)
+            ->where('is_renewal_tier_email_sent', 0);
 
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
