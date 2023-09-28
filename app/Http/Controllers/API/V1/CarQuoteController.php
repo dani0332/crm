@@ -44,8 +44,7 @@ class CarQuoteController extends Controller
             ->where('quote_status_id', '<>', QuoteStatusEnum::Duplicate)
             ->filter()
         ->simplePaginate((request()->limit ?? 100));
-
-        //return CarQuoteResource::collection($quotes);
+        
         return response()->json($quotes);
     }
 
