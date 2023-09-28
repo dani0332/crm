@@ -10,6 +10,8 @@ const tableData = ref([]);
 const isloading = ref(false);
 const trimloading = ref(false);
 
+const loader = reactive({ table: false });
+
 const tableHeader = ref([
   { text: 'Provider', value: 'provider' },
   { text: 'Car Value', value: 'carValue' },
@@ -26,13 +28,21 @@ const valuationForm = useForm({
 
 function onSubmit(isValid) {
   if (isValid) {
+    axios
+      .get('vehicledepreciation.index')
+      .then(response => {
+        console.log(response);
+      })
+      .catch(error => {
+        console.log(error);
+      });
   }
 }
 
 const getCarModel = e => {
   isloading.value = true;
   axios
-    .get('/valuation/car-models', { make_code: valuationForm.make_code })
+    .get(route('valuation.carmodels', { make_code: valuationForm.make_code }))
     .then(response => {
       carModels.value = response.data;
     })
@@ -43,9 +53,7 @@ const getCarModel = e => {
 function getCarTrim() {
   trimloading.value = true;
   axios
-    .get('/valuation/car-model-detail', {
-      modelId: valuationForm.modelId,
-    })
+    .get(route('valuation.carmodeldetail', { modelId: valuationForm.modelId }))
     .then(response => {
       carTrims.value = response.data;
     })
@@ -68,7 +76,7 @@ const onReset = () => valuationForm.reset();
           :rules="[isRequired]"
           :options="
             props.carMakes.map(item => ({
-              value: item.id,
+              value: item.code,
               label: item.text,
             }))
           "
@@ -125,9 +133,9 @@ const onReset = () => valuationForm.reset();
       </div>
     </div>
   </x-form>
-  <!-- :loading="loader.table" -->
   <DataTable
     table-class-name="tablefixed"
+    :loading="loader.table"
     :headers="tableHeader"
     :items="tableData"
     border-cell
