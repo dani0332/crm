@@ -1,8 +1,8 @@
 <script setup>
 defineProps({
-  carmakes: Object,
-  carmodels: Object,
-  insuranceProviders: Object,
+  carmake: Object,
+  carmodel: Object,
+  insuranceProvider: Object,
   vehicledepreciation: Object,
 });
 </script>
@@ -11,6 +11,12 @@ defineProps({
   <div class="flex justify-between items-center">
     <h2 class="text-xl font-semibold">Vehicle Depreciation Detail</h2>
     <div class="space-x-3">
+      <Link
+        method="delete"
+        :href="route('vehicledepreciation.destroy', vehicledepreciation.id)"
+      >
+        <x-button size="sm" color="rose" tag="div"> Delete </x-button>
+      </Link>
       <Link :href="route('vehicledepreciation.edit', vehicledepreciation.id)">
         <x-button size="sm" color="#ff5e00" tag="div"> Edit </x-button>
       </Link>
@@ -40,15 +46,15 @@ defineProps({
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Car Make</dt>
-          <dd>{{ vehicledepreciation.car_make_id ?? 'N/A' }}</dd>
+          <dd>{{ carmake?.text ?? 'N/A' }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Car Model</dt>
-          <dd>{{ vehicledepreciation.car_model_id ?? 'N/A' }}</dd>
+          <dd>{{ carmodel?.text ?? 'N/A' }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insurance Provider</dt>
-          <dd>{{ vehicledepreciation.insurance_provider_id ?? 'N/A' }}</dd>
+          <dd>{{ insuranceProvider?.text ?? 'N/A' }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">First Year</dt>
@@ -101,4 +107,8 @@ defineProps({
       </dl>
     </div>
   </div>
+  <AuditLogs
+    :type="'App\\Models\\VehicleDepreciation'"
+    :id="vehicledepreciation.id"
+  />
 </template>

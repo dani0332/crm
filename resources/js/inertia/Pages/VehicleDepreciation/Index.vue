@@ -7,9 +7,9 @@ const loader = reactive({ table: false });
 
 const tableHeaders = ref([
   { text: 'Ref ID', value: 'id' },
-  { text: 'Car Make Id', value: 'car_make_id' },
+  { text: 'Car Make Id', value: 'car_make_text' },
   { text: 'Car Model Id', value: 'car_model_id' },
-  { text: 'Insurance Provider', value: 'insurance_provider_id' },
+  { text: 'Insurance Provider', value: 'ip_text' },
   { text: 'First Year', value: 'first_year' },
   { text: 'Second Year', value: 'second_year' },
   { text: 'Third Year', value: 'third_year' },

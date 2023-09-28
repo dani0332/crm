@@ -3,6 +3,8 @@ const props = defineProps({
   carMakes: Array,
 });
 
+const page = usePage();
+
 const { isRequired } = useRules();
 const carModels = ref([]);
 const carTrims = ref([]);
@@ -13,13 +15,13 @@ const trimloading = ref(false);
 const loader = reactive({ table: false });
 
 const tableHeader = ref([
-  { text: 'Provider', value: 'provider' },
+  { text: 'Provider', value: 'providerName' },
   { text: 'Car Value', value: 'carValue' },
   { text: 'Car Value Upper Limit', value: 'carValueUpperLimit' },
   { text: 'Car Value Lower Limit', value: 'carValueLowerLimit' },
 ]);
 
-const valuationForm = useForm({
+const valuationForm = reactive({
   make_code: null,
   modelId: '',
   carTrim: '',
@@ -28,14 +30,20 @@ const valuationForm = useForm({
 
 function onSubmit(isValid) {
   if (isValid) {
+    loader.table = true;
     axios
-      .get('vehicledepreciation.index')
+      .post(`${page.props.kenPath}/get-vehicle-value`, {
+        carModelDetailId: valuationForm.carTrim,
+        yearOfManufacture: valuationForm.yearOfManufacture,
+      })
       .then(response => {
         console.log(response);
+        tableData.value = response.data;
       })
       .catch(error => {
         console.log(error);
-      });
+      })
+      .finally(() => (loader.table = false));
   }
 }
 
@@ -61,7 +69,12 @@ function getCarTrim() {
     .finally(() => (trimloading.value = false));
 }
 
-const onReset = () => valuationForm.reset();
+const onReset = () => {
+  valuationForm.make_code = null;
+  valuationForm.modelId = '';
+  valuationForm.carTrim = '';
+  valuationForm.yearOfManufacture = new Date().getFullYear();
+};
 </script>
 <template>
   <Head title="Car Valuation" />
