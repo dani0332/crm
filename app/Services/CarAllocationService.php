@@ -48,7 +48,7 @@ class CarAllocationService extends AllocationService
 
         // Exclude the Tier R if it exists and is not empty.
         if (! empty($tierR)) {
-            $query->where('tier_id', '!=', $tierR->id);
+            $query->where('tier_id', '!=', $tierR->id)->orWhereNull('tier_id');
         }
 
         info('Query for getting lead is : '.getQueryForLogWithBindings($query)); // calling generic function to print query with bindings
