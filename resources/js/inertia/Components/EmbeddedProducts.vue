@@ -1,4 +1,6 @@
 <script setup>
+import {XButton} from "@indielayer/ui";
+
 const props = defineProps({
   data: {
     type: Array,
@@ -84,7 +86,10 @@ const ppDoc = str => {
 const checkTransactionExist = item => {
   for (let price of item.prices) {
     for (let transaction of price.transactions) {
-      if(transaction.payment_status_id == 6){
+        var timeStart = new Date(transaction.created_at);
+        var timeEnd = new Date();
+        var hourDiff = timeEnd - timeStart;
+      if(transaction.payment_status_id == 6 && hourDiff <= 172800000){
       return false;
       }
     }
@@ -259,8 +264,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           >
             Download Product Wordings
           </x-button>
-          {{item}}
-            <x-button size="xs" color="#ff5e00" :disabled="checkTransactionExist(item)" @click.prevent="cancelPaymentForm(item)">
+            <x-button size="xs" color="#ff5e00" :disabled="checkTransactionExist(item)"  @click.prevent="cancelPaymentForm(item)">
                 Cancel Payments
             </x-button>
         </div>
