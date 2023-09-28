@@ -71,7 +71,7 @@ class TransAppService extends BaseService
 
         if ($existingCustomer) { // Existing customer
             if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-                $responseExtend = $this->berlinService->extendCustomerSubscription($customerId);
+                $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email);
 
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
                     dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
