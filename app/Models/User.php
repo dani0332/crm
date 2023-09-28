@@ -35,6 +35,7 @@ class User extends Authenticatable implements AuditableContract
         'name',
         'email',
         'password',
+        'profile_photo_path'
     ];
 
     /**
@@ -296,6 +297,14 @@ class User extends Authenticatable implements AuditableContract
             'id',
             'teams'
         )->withTimestamps()->withPivot('manager_id');
+    }
+
+    /**
+     * @return mixed
+     */
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
     }
 
     /**

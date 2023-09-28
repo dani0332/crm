@@ -127,7 +127,7 @@ const onLogout = () => {
 
                       <template #content>
                         <template v-for="grandchild in child.children">
-                          <Link
+                          <a
                             :href="grandchild.url"
                             class="pl-10 py-2 flex gap-2 items-center hover:bg-black/10"
                             :class="{
@@ -138,13 +138,13 @@ const onLogout = () => {
                           >
                             <span class="text-primary-100"> ◉ </span>
                             <span>{{ grandchild.title }}</span>
-                          </Link>
+                          </a>
                         </template>
                       </template>
                     </x-collapse>
                   </template>
                   <template v-else>
-                    <Link
+                    <a
                       :href="child.url"
                       class="pl-4 py-2 flex gap-2 items-center hover:bg-black/10"
                       :class="{
@@ -158,14 +158,14 @@ const onLogout = () => {
                         "
                       />
                       <span class="pt-1">{{ child.title }}</span>
-                    </Link>
+                    </a>
                   </template>
                 </template>
               </template>
             </x-collapse>
           </template>
           <template v-else>
-            <Link
+            <a
               :href="link.url"
               class="pl-3 py-2.5 flex gap-2 items-center hover:bg-black/10"
               :class="{
@@ -177,7 +177,7 @@ const onLogout = () => {
                 :icon="link.attributes.icon"
               />
               {{ link.title }}
-            </Link>
+            </a>
           </template>
         </template>
       </nav>
