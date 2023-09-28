@@ -98,9 +98,9 @@ class BerlinService extends BaseService
         return $apiResponse;
     }
 
-    public function extendCustomerSubscription($customerId, $customerEmail)
+    public function extendCustomerSubscription($customerId)
     {
-        $this->berlinEndpoint .= '/internal/extend-subscription';
+        $this->berlinEndpoint .= '/auth/extend-subscription';
 
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
@@ -110,19 +110,10 @@ class BerlinService extends BaseService
             return false;
         }
 
-        $isToken = strlen($customer->code) > 8;
-        $hasToken = ! is_null($customer->code);
-
-        $customerDataArr = [];
-
-        if ($hasToken) {
-            $customerDataArr[$isToken ? 'token' : 'otp'] = $customer->code;
-        } else {
-            $customerDataArr['email'] = $customerEmail;
-        }
-
-        $customerDataJson = json_encode($customerDataArr);
-        info('customerDataArr: ', $customerDataArr);
+        $customerDataArr = json_encode([
+            'token' => $customer->code,
+            'isToken' => $customer->signup_url ? true : false,
+        ]);
 
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
 
@@ -137,7 +128,7 @@ class BerlinService extends BaseService
                         'Accept' => 'application/json',
                         'Authorization' => 'Basic '.$magicUrlGeneratauthBasic,
                     ],
-                    'body' => $customerDataJson,
+                    'body' => $customerDataArr,
                     'timeout' => 10,
                 ]
             );
