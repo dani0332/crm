@@ -123,9 +123,6 @@ class BerlinService extends BaseService
 
         $customerDataJson = json_encode($customerDataArr);
         info('customerDataArr: ', $customerDataArr);
-        info('berlinEndpoint: '.$this->berlinEndpoint);
-        info('berlinUserName: '.$this->berlinUserName);
-        info('berlinAuthPassword: '.$this->berlinAuthPassword);
 
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
 
