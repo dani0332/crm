@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Http\Controllers\Controller;
@@ -39,6 +41,7 @@ class CarQuoteController extends Controller
             ->with(['carQuoteRequestDetail' => function($q){
             $q->whereNotNull('ocb_sent_date');
         }])->whereNotIn('source', [LeadSourceEnum::REVIVAL, LeadSourceEnum::REVIVAL_REPLIED, LeadSourceEnum::REVIVAL_PAID])
+            ->where('quote_status_id', '<>', QuoteStatusEnum::Duplicate)
             ->filter()
         ->simplePaginate((request()->limit ?? 100));
 
