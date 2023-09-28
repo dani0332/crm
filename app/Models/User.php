@@ -299,6 +299,14 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
+     * @param $query
+     * @return mixed
+     */
+    public function scopeWithActive($query) {
+        return $query->where('is_active', 1);
+    }
+
+    /**
      * get user all teams id function
      *
      * @param  int  $userId
