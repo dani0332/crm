@@ -820,7 +820,7 @@ class HealthQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
-        $quoteUuId = HealthQuote::where('uuid', '=', 'BMY7E8MX')->value('uuid');
+        $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -829,7 +829,7 @@ class HealthQuoteService extends BaseService
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         $plansDataArr = [
-            'quoteUID' => 'BMY7E8MX',
+            'quoteUID' => $quoteUuId,
             'lang' => 'en',
         ];
 
