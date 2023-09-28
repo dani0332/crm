@@ -44001,19 +44001,21 @@ var _hoisted_187 = {
   "class": "text-right space-x-4"
 };
 var _hoisted_188 = {
+  key: 1,
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
 var _hoisted_189 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800 text-lg mb-4"
 }, "Emails", -1 /* HOISTED */);
 var _hoisted_190 = {
+  key: 2,
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
 var _hoisted_191 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("h3", {
   "class": "font-semibold text-primary-800 text-lg mb-4"
 }, "Actions", -1 /* HOISTED */);
 var _hoisted_192 = {
-  key: 1,
+  key: 3,
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
 var _hoisted_193 = /*#__PURE__*/(0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("h3", {
@@ -44051,7 +44053,7 @@ var _hoisted_203 = {
   "class": "flex justify-end"
 };
 var _hoisted_204 = {
-  key: 2,
+  key: 4,
   "class": "p-4 rounded shadow mb-6 bg-white"
 };
 var _hoisted_205 = {
@@ -44628,7 +44630,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     }),
 
     _: 1 /* STABLE */
-  })]), !$setup.hasRole($setup.rolesEnum.PA) ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementBlock)("div", _hoisted_174, [$setup.hideFollowUp ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_tooltip, {
+  })]), !$setup.hasRole($setup.rolesEnum.PA) ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementBlock)("div", _hoisted_174, [$setup.hideFollowUp ? (0,vue__WEBPACK_IMPORTED_MODULE_7__.withDirectives)(((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_tooltip, {
     key: 0
   }, {
     tooltip: (0,vue__WEBPACK_IMPORTED_MODULE_7__.withCtx)(function () {
@@ -44652,7 +44654,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, 8 /* PROPS */, ["disabled"])];
     }),
     _: 1 /* STABLE */
-  })) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.selectedPlans.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_button_group, {
+  }, 512 /* NEED_PATCH */)), [[vue__WEBPACK_IMPORTED_MODULE_7__.vShow, $setup.hasRole($setup.rolesEnum.CarAdvisor)]]) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.selectedPlans.length > 0 ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createBlock)(_component_x_button_group, {
     key: 1,
     size: "sm"
   }, {
@@ -44986,7 +44988,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
       }, null, 8 /* PROPS */, ["record", "insuranceProviders", "listQuotePlans", "onSuccess", "onError"])];
     }),
     _: 1 /* STABLE */
-  }, 8 /* PROPS */, ["modelValue"])]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", _hoisted_188, [_hoisted_189, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_DataTable, {
+  }, 8 /* PROPS */, ["modelValue"])]), $setup.hasRole($setup.rolesEnum.CarAdvisor) ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementBlock)("div", _hoisted_188, [_hoisted_189, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     headers: $setup.emailsHeaders,
     items: $setup.followUpEmails || [],
@@ -44994,7 +44996,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "hide-rows-per-page": "",
     "rows-per-page": 15,
     "hide-footer": $setup.followUpEmails.length < 15
-  }, null, 8 /* PROPS */, ["headers", "items", "hide-footer"])]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementVNode)("div", _hoisted_190, [_hoisted_191, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_DataTable, {
+  }, null, 8 /* PROPS */, ["headers", "items", "hide-footer"])])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), $setup.hasRole($setup.rolesEnum.CarAdvisor) ? ((0,vue__WEBPACK_IMPORTED_MODULE_7__.openBlock)(), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createElementBlock)("div", _hoisted_190, [_hoisted_191, (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_DataTable, {
     "table-class-name": "tablefixed compact",
     headers: $setup.actionsHeaders,
     items: $setup.followUpActions || [],
@@ -45002,7 +45004,7 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
     "hide-rows-per-page": "",
     "rows-per-page": 15,
     "hide-footer": $setup.followUpActions.length < 15
-  }, null, 8 /* PROPS */, ["headers", "items", "hide-footer"])]), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_EmbeddedProducts, {
+  }, null, 8 /* PROPS */, ["headers", "items", "hide-footer"])])) : (0,vue__WEBPACK_IMPORTED_MODULE_7__.createCommentVNode)("v-if", true), (0,vue__WEBPACK_IMPORTED_MODULE_7__.createVNode)(_component_EmbeddedProducts, {
     data: $props.embeddedProducts,
     link: $props.record.uuid,
     code: $props.record.code

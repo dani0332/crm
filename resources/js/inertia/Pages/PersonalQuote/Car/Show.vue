@@ -1737,7 +1737,7 @@ onMounted(() => getFollowUpsByQuote());
           <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
         </h3>
         <div v-if="!hasRole(rolesEnum.PA)">
-          <x-tooltip v-if="hideFollowUp">
+          <x-tooltip v-if="hideFollowUp" v-show="hasRole(rolesEnum.CarAdvisor)">
             <x-button
               class="ml-2 mr-2"
               :disabled="disableFollowUp"
@@ -2072,7 +2072,10 @@ onMounted(() => getFollowUpsByQuote());
         />
       </x-modal>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div
+      class="p-4 rounded shadow mb-6 bg-white"
+      v-if="hasRole(rolesEnum.CarAdvisor)"
+    >
       <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
       <DataTable
         table-class-name="tablefixed compact"
@@ -2085,7 +2088,10 @@ onMounted(() => getFollowUpsByQuote());
       >
       </DataTable>
     </div>
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div
+      class="p-4 rounded shadow mb-6 bg-white"
+      v-if="hasRole(rolesEnum.CarAdvisor)"
+    >
       <h3 class="font-semibold text-primary-800 text-lg mb-4">Actions</h3>
       <DataTable
         table-class-name="tablefixed compact"
