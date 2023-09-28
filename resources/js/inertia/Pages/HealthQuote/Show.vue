@@ -519,7 +519,7 @@ const onExportPlans = () => {
         let copayIdToBeAdded = plan.selectedCopayId;
         plan.coPayments.forEach(element => {
             if (element.id == copayIdToBeAdded) {
-                addOns[plan.id] = element;
+                addOns[plan.id] = {coPayment:element};
             }
         });
     });

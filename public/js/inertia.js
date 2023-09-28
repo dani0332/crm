@@ -8579,7 +8579,9 @@ function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input ==
         var copayIdToBeAdded = plan.selectedCopayId;
         plan.coPayments.forEach(function (element) {
           if (element.id == copayIdToBeAdded) {
-            addOns[plan.id] = element;
+            addOns[plan.id] = {
+              coPayment: element
+            };
           }
         });
       });
