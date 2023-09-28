@@ -1737,7 +1737,7 @@ onMounted(() => getFollowUpsByQuote());
           <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
         </h3>
         <div v-if="!hasRole(rolesEnum.PA)">
-          <x-tooltip v-if="hideFollowUp" v-show="hasRole(rolesEnum.CarAdvisor)">
+          <x-tooltip v-if="hideFollowUp && hasRole(rolesEnum.CarAdvisor)">
             <x-button
               class="ml-2 mr-2"
               :disabled="disableFollowUp"

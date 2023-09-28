@@ -7,6 +7,16 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue']);
+
+const value = computed({
+  get() {
+    return props.modelValue;
+  },
+  set(value) {
+    emit('update:modelValue', value);
+  },
+});
+
 const { isRequired, allowEmpty } = useRules();
 
 const notification = useToast();
@@ -103,10 +113,10 @@ function onSubmit() {
 onMounted(() => getPauseReaons());
 </script>
 <template>
-  <x-modal v-model="props.modelValue" backdrop size="lg">
+  <x-modal v-model="value" backdrop size="lg" :show-close="true">
     <x-form class="p-5" @submit="onSubmit" :auto-focus="false">
       <!-- <div > -->
-      <p>Select a reason:</p>
+      <p class="font-bold">Select a reason:</p>
       <div class="py-1 px-5" v-for="reason in reasons" :key="reason.code">
         <x-radio
           v-model="selectedReason"
@@ -127,7 +137,7 @@ onMounted(() => getPauseReaons());
         </x-field>
       </div>
       <x-field
-        class="mt-3"
+        class="mt-5"
         label="Choose the date to resume Automated Follow-ups"
       >
         <DatePicker
