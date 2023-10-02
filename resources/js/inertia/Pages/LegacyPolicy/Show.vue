@@ -215,7 +215,6 @@ const moveToImcrm = async policyNumber => {
       </div>
       <div class="text-sm"></div>
 
-
       <!-- payments start -->
       <template v-if="can(permissionEnum.LEGACY_INSTALLMENTS)">
         <div class="mt-6">
@@ -231,6 +230,9 @@ const moveToImcrm = async policyNumber => {
           hide-footer
           fixed-checkbox       
         >
+          <template #item-comment="{ comment }">
+            {{ comment ? comment : 'null' }}
+          </template>
           <template #item-date_from="{ date_from }">
               {{ formatDate(date_from) }}
           </template>
@@ -243,24 +245,31 @@ const moveToImcrm = async policyNumber => {
           <template #item-tax="{ tax }">
               {{ tax }} AED
           </template>
+          <template #item-comm="{ comm }">
+              {{ comm }}%
+          </template>
+          <template #item-commission_sum="{ commission_sum }">
+              {{ commission_sum }} AED
+          </template>
+          <template #item-discount="{ discount }">
+              {{ discount }} AED
+          </template>          
           <template #item-gross_premium="{ gross_premium }">
               {{ gross_premium }} AED
           </template>
           <template #item-customer_payable="{ customer_payable }">
               {{ customer_payable }} AED
           </template>
-          
-          
         </DataTable>
         <!-- Display the total customer payable outside the DataTable -->
       <table>      
           <tr>
             <th>Total Gross Premium:</th>
-            <td class="custom-table">{{ calculateTotalCustomerPayable }} AED</td>
+            <td class="custom-table">{{ calculateGrossPremium }} AED</td>
             <th>Total Tax:</th>
             <td class="custom-table">{{ calculateTax }} AED</td>
             <th>Total Customer Payable:</th>
-            <td class="custom-table">{{ calculateGrossPremium }} AED</td>
+            <td class="custom-table">{{ calculateTotalCustomerPayable }} AED</td>
           </tr>      
       </table>
     </template>

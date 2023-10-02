@@ -23,13 +23,13 @@ const formatLabel = (inputString) => {
   <template v-if="type == 'single'">    
       <table>
         <tbody>
-          <tr><td colspan="2"><strong>{{ title }}</strong></td></tr>
+          <tr><td class="fixheight" colspan="2"><strong>{{ title }}</strong></td></tr>
           <div v-for="(mainRecord, index) in legacy" :key="index">        
             <tr>
               <template v-if="index !== '_id'">
                 <th>{{ formatLabel(index) }}</th>
                 <td>
-                  {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord }}
+                  {{ index.toLowerCase().includes('date') ? formatDate(mainRecord) : mainRecord?mainRecord:'null' }}
                 </td>
               </template>
             </tr>
@@ -46,7 +46,7 @@ const formatLabel = (inputString) => {
               <template v-if="subIndex !== '_id'">
                 <th>{{ formatLabel(subIndex) }}</th>
                 <td>                  
-                  {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) : subRecord }}
+                  {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) :  subRecord?subRecord:'null' }}
                 </td>
               </template>
             </tr>        
@@ -72,5 +72,9 @@ table th {
   padding: 5px;
   min-width:150px;
   text-align: left;  
+}
+
+.fixheight {
+  height: 20px;
 }
 </style>
