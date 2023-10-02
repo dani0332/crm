@@ -1004,7 +1004,7 @@ class CarQuoteService extends BaseService
 
         $carQuote->quote_type_id = QuoteTypeId::Car;
 
-        /*if ($totalPlans > 0) {
+        if ($totalPlans > 0) {
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $carQuote->uuid,
@@ -1019,7 +1019,7 @@ class CarQuoteService extends BaseService
                     'file_name' => $pdf['name']
                 ];
             }
-        }*/
+        }
 
         $carQuote->plans = $plans;
 
