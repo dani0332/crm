@@ -527,6 +527,7 @@ class CarAllocationService extends AllocationService
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'mobilePhone' => $user->mobile_no,
+            'whatsAppNumber' => str_replace("+", "", $user->mobile_no),
             'advisorEmail' => $user->email,
             'landLine' => $user->landline_no,
             'advisorName' => $user->name,
