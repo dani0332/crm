@@ -90,6 +90,8 @@ class CarQuoteController extends Controller
     public function followupStarted(FollowupStartedRequest $request)
     {
         CarQuoteRepository::followupStarted($request->validated());
+
+        return response()->json(['success' => true]);
     }
 
 }
