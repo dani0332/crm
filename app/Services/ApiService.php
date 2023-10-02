@@ -52,7 +52,6 @@ class ApiService
             $newMyAlFredUser = new MyAlFredUser();
             $newMyAlFredUser->signup_url = $WEGenerateUrlResponse;
             $newMyAlFredUser->customer_id = $customer->id;
-            $newMyAlFredUser->code = substr($WEGenerateUrlResponse, strpos($WEGenerateUrlResponse, 'signup/') + 7); // code;
             $newMyAlFredUser->source = 'IMCRM';
             $newMyAlFredUser->save();
 
