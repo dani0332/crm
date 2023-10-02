@@ -1,9 +1,10 @@
 <script setup>
 const props = defineProps({
   carMakes: Array,
+  kenPath: String,
 });
 
-const page = usePage();
+const notification = useToast();
 
 const { isRequired } = useRules();
 const carModels = ref([]);
@@ -32,16 +33,22 @@ function onSubmit(isValid) {
   if (isValid) {
     loader.table = true;
     axios
-      .post(`${page.props.kenPath}/get-vehicle-value`, {
+      .post(`${props.kenPath}/get-vehicle-value`, {
         carModelDetailId: valuationForm.carTrim,
         yearOfManufacture: valuationForm.yearOfManufacture,
       })
       .then(response => {
-        console.log(response);
         tableData.value = response.data;
+        notification.success({
+          title: 'Success',
+          position: 'top',
+        });
       })
       .catch(error => {
-        console.log(error);
+        notification.error({
+          title: "Error! Can't Calculate Depreciation.",
+          position: 'top',
+        });
       })
       .finally(() => (loader.table = false));
   }
@@ -54,7 +61,12 @@ const getCarModel = e => {
     .then(response => {
       carModels.value = response.data;
     })
-    .catch(error => console.log(error))
+    .catch(error =>
+      notification.error({
+        title: 'Error',
+        position: 'top',
+      }),
+    )
     .finally(() => (isloading.value = false));
 };
 
@@ -65,7 +77,12 @@ function getCarTrim() {
     .then(response => {
       carTrims.value = response.data;
     })
-    .catch(error => console.log(error))
+    .catch(error =>
+      notification.error({
+        title: 'Error',
+        position: 'top',
+      }),
+    )
     .finally(() => (trimloading.value = false));
 }
 

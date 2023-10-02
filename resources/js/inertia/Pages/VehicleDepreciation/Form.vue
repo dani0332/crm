@@ -9,10 +9,10 @@ const props = defineProps({
 const { isRequired } = useRules();
 
 const deprecationForm = useForm({
-  car_make_value: props.vehicledepreciation?.car_make_id ?? null,
+  car_make_id: props.vehicledepreciation?.car_make_id ?? null,
   insurance_provider_value:
     props.vehicledepreciation?.insurance_provider_id ?? null,
-  car_model_value: props.vehicledepreciation?.car_model_id ?? null,
+  car_model_id: props.vehicledepreciation?.car_model_id ?? null,
   first_year: props.vehicledepreciation?.first_year ?? null,
   second_year: props.vehicledepreciation?.second_year ?? null,
   third_year: props.vehicledepreciation?.third_year ?? null,
@@ -65,7 +65,7 @@ const onSubmit = isValid => {
     <div class="grid sm:grid-cols-3 gap-4">
       <x-field label="Car Make">
         <x-select
-          v-model="deprecationForm.car_make_value"
+          v-model="deprecationForm.car_make_id"
           :options="
             props.carmakes.map(item => ({
               value: item.id,
@@ -77,7 +77,7 @@ const onSubmit = isValid => {
       </x-field>
       <x-field label="Car Model">
         <x-select
-          v-model="deprecationForm.car_model_value"
+          v-model="deprecationForm.car_model_id"
           :options="
             props.carmodels.map(item => ({
               value: item.id,
