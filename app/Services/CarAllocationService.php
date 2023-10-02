@@ -543,7 +543,7 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    public function buildNoPlansEmailData($carQuote)
+    public function buildNoPlansEmailData($carQuote, $previousAdvisor)
     {
         $user = User::where('id', $carQuote->advisor_id)->first();
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
@@ -559,12 +559,15 @@ class CarAllocationService extends AllocationService
             'carQuoteId' => $carQuote->code,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
+            'previousAdvisorName' => !empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'previousAdvisorStatus' => !empty($previousAdvisor) ?  AssignmentTypeEnum::getAssignmentTypeText($previousAdvisor->status) : '',
+            'isReAssignment' => !empty($previousAdvisor) ? true : false,
         ];
 
         return $emailData;
     }
 
-    public function buildOnePlansEmailData($carQuote, $planArray)
+    public function buildOnePlansEmailData($carQuote, $planArray, $previousAdvisor)
     {
         $plan = (object) $planArray[0];
         $advisor = User::where('id', $carQuote->advisor_id)->first();
@@ -595,7 +598,7 @@ class CarAllocationService extends AllocationService
         return $emailData;
     }
 
-    public function buildPlansEmailData($carQuote, $plans)
+    public function buildPlansEmailData($carQuote, $plans, $previousAdvisor)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);

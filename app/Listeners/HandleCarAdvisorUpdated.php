@@ -10,6 +10,7 @@ use App\Jobs\IntroEmailJob;
 use App\Models\CarQuotePlanDetail;
 use App\Models\Customer;
 use App\Models\Tier;
+use App\Models\User;
 use App\Services\CarAllocationService;
 use App\Services\SendSmsCustomerService;
 
@@ -39,8 +40,11 @@ class HandleCarAdvisorUpdated
         info('inside handle car update advisor');
 
         $lead = $event->lead;
+        $oldAdvisorId = $event->oldAdvisorId;
 
-        $this->triggerCarQuoteEmail($lead);
+        $previousAdvisor = User::where('id', $oldAdvisorId)->first();
+
+        $this->triggerCarQuoteEmail($lead, $previousAdvisor);
 
         info('SMS sending code reached');
 
@@ -57,7 +61,7 @@ class HandleCarAdvisorUpdated
         info('inside after build sms');
     }
 
-    public function triggerCarQuoteEmail($lead)
+    public function triggerCarQuoteEmail($lead, $previousAdvisor)
     {
         $emailData = '';
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
@@ -69,15 +73,15 @@ class HandleCarAdvisorUpdated
 
         if (count($plans) == 0) {
             info('Inside zero plan for sending email');
-            $emailData = $this->carQuoteService->buildNoPlansEmailData($lead);
+            $emailData = $this->carQuoteService->buildNoPlansEmailData($lead, $previousAdvisor);
             $emailTemplateId = $lead->tier_id == $tierR->id ? 492 : 494;
         } elseif (count($plans) == 1) {
             info('Inside single plan for sending email');
-            $emailData = $this->carQuoteService->buildPlansEmailData($lead, $plans);
+            $emailData = $this->carQuoteService->buildPlansEmailData($lead, $plans, $previousAdvisor);
             $emailTemplateId = $lead->tier_id == $tierR->id ? 497 : 490;
         } else {
             info('Inside multiple plan for sending email');
-            $emailData = $this->carQuoteService->buildPlansEmailData($lead, reset($plans));
+            $emailData = $this->carQuoteService->buildPlansEmailData($lead, $plans, $previousAdvisor);
             $emailTemplateId = $lead->tier_id == $tierR->id ? 491 : 493;
         }
 
