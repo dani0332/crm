@@ -8,6 +8,7 @@ return new class extends Migration
     public function up()
     {
         DB::unprepared("
+            DROP PROCEDURE IF EXISTS GetUserStatusChange;
             CREATE PROCEDURE `GetUserStatusChange`(IN userId INT)
             BEGIN
                 SELECT
