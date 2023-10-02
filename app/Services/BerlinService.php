@@ -10,7 +10,7 @@ class BerlinService extends BaseService
     private $berlinEndpoint;
     private $berlinUserName;
     private $berlinAuthPassword;
-    protected $customerService;
+    private $customerService;
 
     public function __construct(CustomerService $customerService)
     {
