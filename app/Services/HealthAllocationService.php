@@ -23,7 +23,7 @@ class HealthAllocationService extends AllocationService
     public function fetchLead($quoteId)
     {
         return HealthQuote::where('uuid', $quoteId)
-            ->where('quote_status_id', QuoteStatusEnum::Quoted)
+            ->where('quote_status_id', QuoteStatusEnum::Qualified)
             ->whereNotNull('health_quote_request.price_starting_from')
             ->where('health_quote_request.is_error_email_sent', false)
             ->whereNull('health_quote_request.advisor_id')
