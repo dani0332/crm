@@ -84,10 +84,15 @@ class UnconSubmissionReminder implements ShouldQueue
             $q->whereIn('name', [CarTeamType::RENEWALS, CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::MOTOR_CORPLINE_RENEWALS]);
         })->whereHas('roles', function ($q) {
             $q->whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
-        })->with(['managers'])->get();
+        })->withActive()->with(['managers' => function($q){
+            $q->withActive();
+        }])->get();
 
-        $to = implode(',', $advisors->pluck('email')->toArray());
-        $cc = implode(',', $advisors->pluck('managers.*.email')->unique()->flatten()->all());
+        $managers = $advisors->pluck('managers.*.email')
+            ->push('april.pascual@insurancemarket.ae')->unique()->flatten()->all();
+
+        $to = implode(',', $advisors->pluck('email')->unique()->toArray());
+        $cc = implode(',', $managers);
 
         $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE)->value('value');
 
