@@ -349,7 +349,7 @@ const leadStatusOptions = computed(() => {
   const source = page.props.record.source;
   const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD; 	
   
-  const filteredLeadStatuses = page.props.leadStatuses.filter(status => {
+  const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
 	  
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
@@ -1061,23 +1061,25 @@ const actionsHeaders = ref([
 ]);
 
 const getFollowUpsByQuote = () => {
-  axios
-    .get(
-      `${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`,
-    )
-    .then(response => {
-      let { status, emails, actions, id } = response.data.data;
-      if (status == 'PENDING' || status == 'IN_PROGRESS')
-        disableFollowUp.value = false;
-      else disableFollowUp.value = true;
-      followUpstatus.value = status;
-      followUpEmails.value = emails;
-      followUpActions.value = actions;
-      followUpId.value = id;
-    })
-    .catch(error => {
-      hideFollowUp.value = false;
-    });
+	try {
+		axios
+			.get(`${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`)
+			.then(response => {
+			let { status, emails, actions, id } = response.data.data;
+			if (status == 'PENDING' || status == 'IN_PROGRESS')
+				disableFollowUp.value = false;
+			else disableFollowUp.value = true;
+			followUpstatus.value = status;
+			followUpEmails.value = emails;
+			followUpActions.value = actions;
+			followUpId.value = id;
+			})
+			.catch(error => {
+				hideFollowUp.value = false;
+			});
+	} catch (error) {
+		hideFollowUp.value = false;
+	}  
 };
 
 const closeModal = v => {

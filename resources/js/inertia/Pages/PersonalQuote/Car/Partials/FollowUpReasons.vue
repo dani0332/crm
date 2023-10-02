@@ -48,14 +48,18 @@ watch(
 );
 
 const getPauseReaons = () => {
-  axios
-    .get(`${props.kyoEndPoint}/lookups/pause-followup-reasons`)
-    .then(response => {
-      reasons.value = response.data.data;
-    })
-    .catch(error => {
-      console.log(error);
-    });
+  try {
+    axios
+      .get(`${props.kyoEndPoint}/lookups/pause-followup-reasons`)
+      .then(response => {
+        reasons.value = response.data.data;
+      })
+      .catch(error => {
+        console.log(error);
+      });    
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const isValid = () => {
