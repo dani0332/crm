@@ -9,6 +9,7 @@ defineProps({
   quoteStatuses: Array,
   quoteBatches: Object,
   advisors: Array,
+  kyoEndPoint: String,
 });
 
 const quoteType = 'car';
@@ -150,7 +151,7 @@ const sendtemplateForm = data => {
   data.renewal_batch = filters.renewal_batch;
   data.quote_batch_id = filters.quote_batch_id;
   axios
-    .post(`${process.env.MIX_KYO_END_POINT}/workflows`, data)
+    .post(`${page.props.kyoEndPoint}/workflows`, data)
     .then(response => {
       showFollowUpModal.value = false;
       notification.success({

@@ -63,7 +63,8 @@ class CarQuoteController extends Controller
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
             'advisors' => $advisors,
-            'quoteBatches' => $quoteBatches
+            'quoteBatches' => $quoteBatches,
+            'kyoEndPoint' => env('KYO_END_POINT')
         ]);
     }
 
