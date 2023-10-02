@@ -67,7 +67,8 @@ defineProps({
 	allowQuoteLogAction: Boolean,
 	lostApproveReasons: Array,
 	lostRejectReasons: Array,
-	leadDocsStoragePath: String
+	leadDocsStoragePath: String,
+	kyoEndPoint: String
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1062,7 +1063,7 @@ const actionsHeaders = ref([
 const getFollowUpsByQuote = () => {
   axios
     .get(
-      `${process.env.MIX_KYO_END_POINT}/followups/car/${page.props.record.uuid}`,
+      `${kyoEndPoint}/followups/car/${page.props.record.uuid}`,
     )
     .then(response => {
       let { status, emails, actions, id } = response.data.data;
@@ -1968,6 +1969,7 @@ onMounted(() => getFollowUpsByQuote());
         :uuid="page.props.record.id"
         :source="page.props.record.source"
         :followUpId="followUpId"
+		:kyoEndPoint="kyoEndPoint"
       />
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>

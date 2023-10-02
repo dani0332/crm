@@ -4,6 +4,7 @@ const props = defineProps({
   uuid: String,
   source: String,
   followUpId: String,
+  kyoEndPoint: String
 });
 
 const emit = defineEmits(['update:modelValue']);
@@ -48,7 +49,7 @@ watch(
 
 const getPauseReaons = () => {
   axios
-    .get(`${process.env.MIX_KYO_END_POINT}/lookups/pause-followup-reasons`)
+    .get(`${kyoEndPoint}/lookups/pause-followup-reasons`)
     .then(response => {
       reasons.value = response.data.data;
     })
@@ -81,7 +82,7 @@ function onSubmit() {
     isloading.value = true;
     axios
       .post(
-        `${process.env.MIX_KYO_END_POINT}/followups/${props.followUpId}/pause`,
+        `${kyoEndPoint}/followups/${props.followUpId}/pause`,
         {
           reason_id: getReasonId.value[0].id,
           action_by_email: usePage().props.auth.user.email,
