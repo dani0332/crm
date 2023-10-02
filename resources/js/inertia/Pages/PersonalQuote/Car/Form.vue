@@ -205,21 +205,26 @@ const setCarMake = (id) => {
 					</ul>
 				</x-alert>
 
-				<!-- <x-field label="RENEWAL BATCH" required v-if="isEdit">
-					<x-input v-model="quoteForm.renewal_batch" :rules="[isRequired]" class="w-full" />
-				</x-field> -->
+				<x-field label="RENEWAL BATCH" required v-if="isEdit">
+					<x-input 
+						v-model="quoteForm.renewal_batch" 
+						:rules="[isRequired]" 
+						class="w-full"
+						:error="quoteForm.errors.renewal_batch"
+						/>
+				</x-field>
 
 				<x-field label="FIRST NAME" required>
-					<x-input v-model="quoteForm.first_name" :rules="[isRequired]" class="w-full" />
+					<x-input v-model="quoteForm.first_name" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.first_name" />
 				</x-field>
 
 				<x-field label="LAST NAME" required>
-					<x-input v-model="quoteForm.last_name" :rules="[isRequired]" class="w-full" />
+					<x-input v-model="quoteForm.last_name" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.last_name" />
 				</x-field>
 
 				<x-field label="EMAIL" required>
 					<x-input v-model="quoteForm.email" type="email" :disabled="isEdit" :rules="[isRequired, isEmail]"
-						class="w-full" />
+						class="w-full" :error="quoteForm.errors.email" />
 				</x-field>
 
 				<x-field label="PHONE NUMBER" required>
@@ -227,7 +232,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="DATE OF BIRTH" required>
-					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" />
+					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" />
 				</x-field>
 
 				<x-field label="NATIONALITY" required>
@@ -235,7 +240,7 @@ const setCarMake = (id) => {
 						value: item.id,
 						label: item.text,
 					}))
-						" :hasError="isEmptyField" />
+						" :hasError="isEmptyField" :error="quoteForm.errors.nationality_id" />
 				</x-field>
 
 				<x-field label="UAE LICENCE HELD FOR" required>
@@ -244,6 +249,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:error="quoteForm.errors.uae_license_held_for_id"
 						:hasError="isEmptyField" />
 				</x-field>
 
@@ -263,6 +269,7 @@ const setCarMake = (id) => {
 						@update:modelValue="getCarModel(true)"
 						class="w-full" 
 						:hasError="isEmptyField"
+						:error="quoteForm.errors.car_make_id"
 					/>
 				</x-field>
 
@@ -272,11 +279,12 @@ const setCarMake = (id) => {
 						:options="carModelOptions"					
 						@update:modelValue="getModelDetails(true)"
 						class="w-full"
+						:error="quoteForm.errors.car_model_id"
 						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="CYLINDER" required>
-					<x-input v-model="quoteForm.cylinder" class="w-full" type="number" :rules="[isRequired]" />
+					<x-input v-model="quoteForm.cylinder" class="w-full" type="number" :rules="[isRequired]" :error="quoteForm.errors.cylinder" />
 				</x-field>
 
 				<x-field label="TRIM" >
@@ -289,11 +297,12 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:error="quoteForm.errors.year_of_manufacture"
 						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
-					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]" />
+					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]"  :error="quoteForm.errors.car_value_tier"/>
 				</x-field>
 
 				<x-field label="VEHICLE TYPE" required>
@@ -302,11 +311,12 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:error="quoteForm.errors.vehicle_type_id"
 						:hasError="isEmptyField" />
 				</x-field>
 
 				<x-field label="SEAT CAPACITY" required>
-					<x-input v-model="quoteForm.seat_capacity" class="w-full" type="number" :rules="[isRequired]" />
+					<x-input v-model="quoteForm.seat_capacity" class="w-full" type="number" :rules="[isRequired]" :error="quoteForm.errors.seat_capacity" />
 				</x-field>
 
 				<x-field label="EMIRATE OF REGISTRATION" required>
@@ -314,7 +324,7 @@ const setCarMake = (id) => {
 						value: item.id,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full" :error="quoteForm.errors.emirate_of_registration_id" />
 				</x-field>
 
 				<x-field label="TYPE OF CAR INSURANCE" required>
@@ -322,7 +332,7 @@ const setCarMake = (id) => {
 						value: item.id,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full" :error="quoteForm.errors.car_type_insurance_id" />
 				</x-field>
 
 				<x-field label="CURRENTLY INSURED WITH" required>
@@ -331,6 +341,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:error="quoteForm.errors.currently_insured_with_id"
 						:hasError="isEmptyField" />
 				</x-field>
 
@@ -339,7 +350,7 @@ const setCarMake = (id) => {
 						value: item.id,
 						label: item.text,
 					}))
-						" class="w-full" />
+						" class="w-full" :error="quoteForm.errors.claim_history_id" />
 				</x-field>
 
 				<x-field label="CAN YOU PROVIDE NO-CLAIMS LETTER FROM YOUR PREVIOUS INSURERS?">

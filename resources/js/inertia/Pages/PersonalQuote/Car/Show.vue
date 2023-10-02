@@ -630,7 +630,7 @@ const activityForm = useForm({
   title: null,
   description: null,
   due_date: null,
-  assignee_id: null,
+  assignee_id: page.props.auth?.user?.id ?? null,
   status: null,
   activity_id: null,
   uuid: null,
@@ -1501,6 +1501,7 @@ onMounted(() => getFollowUpsByQuote());
 							/> -->
 							<x-input
 								v-model="leadStatusForm.next_followup_date"
+								:value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
 								type="datetime-local"
 								placeholder="Please select follow-up date & time"
 								class="w-full"
