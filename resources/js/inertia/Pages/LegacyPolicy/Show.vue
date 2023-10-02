@@ -1,6 +1,6 @@
 <script setup>
 const props = defineProps({
-  policy: Object,  
+  policy: Object,
 });
 
 const moveToImcrmModal = ref(false);
@@ -10,7 +10,7 @@ const getS3TempUrl = async file => {
   try {
     const response = await axios.post('/legacy-policy/get-s3-temp-url', {
       fileName: file,
-    });    
+    });
     // Check if the request was successful and the response contains the URL
     if (response.status === 200 && response.data.url) {
       // Open the URL in a new tab
@@ -19,33 +19,32 @@ const getS3TempUrl = async file => {
       notification.error({
         title: response.data.error,
         position: 'top',
-      });      
+      });
     }
   } catch (error) {
     notification.error({
-        title: error,
-        position: 'top',
-      });
+      title: error,
+      position: 'top',
+    });
     console.error('An error occurred:', error);
-  }    
+  }
 };
 
 const selectedLead = ref(null);
 
-const setSelectedLead = (document) => {
+const setSelectedLead = document => {
   selectedLead.value = document;
 };
 
-const submitLead = (policy) => {
+const submitLead = policy => {
   if (selectedLead.value) {
-    
-     // Open the URL in a new tab
-     if(selectedLead.value.link!='new') {
+    // Open the URL in a new tab
+    if (selectedLead.value.link != 'new') {
       window.open(selectedLead.value.link, '_blank');
-     } else {
+    } else {
       moveToImcrm(policy.policy?.policy_no, false);
       moveToImcrmModal.value = false;
-     }
+    }
 
     console.log('Link URL:', selectedLead.value.link);
     console.log('Selected Document:', selectedLead.value.code);
@@ -69,7 +68,7 @@ const dynamicTableHeader = computed(() => {
     { text: 'Make', value: 'make' },
     { text: 'Model', value: 'model' },
     { text: 'Model Year', value: 'model_Year' },
-    { text: 'Destination', value: 'destination' },    
+    { text: 'Destination', value: 'destination' },
     { text: 'Salary band', value: 'salary_band' },
     { text: 'Landlord or Tenant', value: 'landlord_or_tenant' },
     { text: 'Apartment or Villa', value: 'apartment_or_villa' },
@@ -78,72 +77,108 @@ const dynamicTableHeader = computed(() => {
     { text: 'Advisor', value: 'advisor' },
   ];
   console.log(props.policy.quoteType);
-  
+
   // Exclude columns according if quote type is car
   if (props.policy.quoteType === 'Car') {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'destination' && column.value !== 'salary_band'
-                  && column.value !== 'landlord_or_tenant' && column.value !== 'apartment_or_villa'
-                  && column.value !== 'breed' && column.value !== 'business_type_of_insurance.code'                  
+      column =>
+        column.value !== 'destination' &&
+        column.value !== 'salary_band' &&
+        column.value !== 'landlord_or_tenant' &&
+        column.value !== 'apartment_or_villa' &&
+        column.value !== 'breed' &&
+        column.value !== 'business_type_of_insurance.code',
     );
   }
 
   // Exclude columns according if quote type is Travel
   if (props.policy.quoteType === 'Travel') {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'model_Year' && column.value !== 'salary_band'
-                  && column.value !== 'landlord_or_tenant' && column.value !== 'apartment_or_villa'
-                  && column.value !== 'breed' && column.value !== 'business_type_of_insurance.code'
-                  && column.value !== 'make' && column.value !== 'model'
+      column =>
+        column.value !== 'model_Year' &&
+        column.value !== 'salary_band' &&
+        column.value !== 'landlord_or_tenant' &&
+        column.value !== 'apartment_or_villa' &&
+        column.value !== 'breed' &&
+        column.value !== 'business_type_of_insurance.code' &&
+        column.value !== 'make' &&
+        column.value !== 'model',
     );
   }
 
   // Exclude columns according if quote type is Health
   if (props.policy.quoteType === 'Health') {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'destination' && column.value !== 'model_Year'
-                  && column.value !== 'landlord_or_tenant' && column.value !== 'apartment_or_villa'
-                  && column.value !== 'breed' && column.value !== 'business_type_of_insurance.code'
-                  && column.value !== 'make' && column.value !== 'model'
+      column =>
+        column.value !== 'destination' &&
+        column.value !== 'model_Year' &&
+        column.value !== 'landlord_or_tenant' &&
+        column.value !== 'apartment_or_villa' &&
+        column.value !== 'breed' &&
+        column.value !== 'business_type_of_insurance.code' &&
+        column.value !== 'make' &&
+        column.value !== 'model',
     );
   }
 
   // Exclude columns according if quote type is Home
   if (props.policy.quoteType === 'Home') {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'destination' && column.value !== 'salary_band'
-                  && column.value !== 'model_Year' && column.value !== 'advisor'
-                  && column.value !== 'breed' && column.value !== 'business_type_of_insurance.code'
-                  && column.value !== 'make' && column.value !== 'model'
+      column =>
+        column.value !== 'destination' &&
+        column.value !== 'salary_band' &&
+        column.value !== 'model_Year' &&
+        column.value !== 'advisor' &&
+        column.value !== 'breed' &&
+        column.value !== 'business_type_of_insurance.code' &&
+        column.value !== 'make' &&
+        column.value !== 'model',
     );
   }
 
   // Exclude columns according if quote type is Pet
   if (props.policy.quoteType === 'Pet') {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'destination' && column.value !== 'salary_band'
-                  && column.value !== 'landlord_or_tenant' && column.value !== 'apartment_or_villa'
-                  && column.value !== 'model' && column.value !== 'business_type_of_insurance.code'
-                  && column.value !== 'model_Year' && column.value !== 'make' 
+      column =>
+        column.value !== 'destination' &&
+        column.value !== 'salary_band' &&
+        column.value !== 'landlord_or_tenant' &&
+        column.value !== 'apartment_or_villa' &&
+        column.value !== 'model' &&
+        column.value !== 'business_type_of_insurance.code' &&
+        column.value !== 'model_Year' &&
+        column.value !== 'make',
     );
   }
 
   // Exclude columns according if quote type is Cycle / Bike
   if (props.policy.quoteType === 'Cycle' || props.policy.quoteType === 'Bike') {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'destination' && column.value !== 'salary_band'
-                  && column.value !== 'landlord_or_tenant' && column.value !== 'apartment_or_villa'
-                  && column.value !== 'breed' && column.value !== 'business_type_of_insurance.code'                 
+      column =>
+        column.value !== 'destination' &&
+        column.value !== 'salary_band' &&
+        column.value !== 'landlord_or_tenant' &&
+        column.value !== 'apartment_or_villa' &&
+        column.value !== 'breed' &&
+        column.value !== 'business_type_of_insurance.code',
     );
   }
 
   // Exclude columns according if quote type is Business / Life
-  if (props.policy.quoteType === 'Business' || props.policy.quoteType === 'Life') {
+  if (
+    props.policy.quoteType === 'Business' ||
+    props.policy.quoteType === 'Life'
+  ) {
     return defaultTableHeader.filter(
-      (column) => column.value !== 'destination' && column.value !== 'salary_band'
-                  && column.value !== 'landlord_or_tenant' && column.value !== 'apartment_or_villa'
-                  && column.value !== 'breed'  && column.value !== 'model'
-                  && column.value !== 'model_Year' && column.value !== 'make'
+      column =>
+        column.value !== 'destination' &&
+        column.value !== 'salary_band' &&
+        column.value !== 'landlord_or_tenant' &&
+        column.value !== 'apartment_or_villa' &&
+        column.value !== 'breed' &&
+        column.value !== 'model' &&
+        column.value !== 'model_Year' &&
+        column.value !== 'make',
     );
   }
   return defaultTableHeader;
@@ -190,13 +225,32 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
       <h2 class="text-xl font-semibold">Legacy Policy Detail</h2>
 
       <div class="flex gap-2">
+        <x-tooltip position="bottom" v-if="policy?.moved_to_imcrm">
+          <label
+            class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600 mb-0.5"
+          >
+          </label>
+          <template #tooltip
+            >Lead was already moved to IMCRM. Please click on the reference ID
+            located in the IMCRM details to make changes to the lead.</template
+          >
+          <x-button
+            v-show="true"
+            size="sm"
+            color="#ff5e00"
+            :disabled="policy?.moved_to_imcrm"
+            @click="moveToImcrm(policy.policy?.policy_no)"
+          >
+            Move to IMCRM
+          </x-button>
+        </x-tooltip>
         <x-button
+          v-else
           v-show="true"
           size="sm"
           color="#ff5e00"
           :disabled="policy?.moved_to_imcrm"
           @click="moveToImcrm(policy.policy?.policy_no)"
-          :tooltip-text="policy?.moved_to_imcrm ? 'Button is disabled' : ''"
         >
           Move to IMCRM
         </x-button>
@@ -204,36 +258,38 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      
       <div v-if="policy?.imcrm_link">
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">IMCRM Details</h3>
-        <x-divider class="mb-4 mt-1" />
+        <div class="mt-6">
+          <h3 class="font-semibold text-primary-800">IMCRM Details</h3>
+          <x-divider class="mb-4 mt-1" />
+        </div>
+        <div class="text-sm">
+          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Reference Id</dt>
+              <dd v-if="policy?.imcrm_link">
+                <a
+                  :href="policy?.imcrm_link"
+                  class="text-primary-500 hover:underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  REF-{{ policy?.imcrm_link.match(/\/([^/]+)$/)?.[1] }}</a
+                >
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Created By</dt>
+              <dd>{{ policy?.moved_to_imcrm_by }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">Created Date</dt>
+              <dd>{{ policy?.moved_to_imcrm_date }}</dd>
+            </div>
+          </dl>
+        </div>
       </div>
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Reference Id</dt>
-            <dd v-if="policy?.imcrm_link">
-              <a
-                :href="policy?.imcrm_link"
-                class="text-primary-500 hover:underline"
-                target="_blank" rel="noopener noreferrer"
-              > REF-{{ policy?.imcrm_link.match(/\/([^/]+)$/)?.[1] }}</a>
-            </dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Created By</dt>
-            <dd>{{ policy?.moved_to_imcrm_by }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Created Date</dt>
-            <dd>{{ policy?.moved_to_imcrm_date }}</dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-      
+
       <div class="mt-6">
         <h3 class="font-semibold text-primary-800">Policy Details</h3>
         <x-divider class="mb-4 mt-1" />
@@ -321,30 +377,30 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
         <ul>
           <li v-for="quoteDocument in policy?.documents?.quote">
             <x-button
-            size="xs"
-            color="blue"
-            class="mb-1"
-            outlined
-            @click.prevent="getS3TempUrl(quoteDocument.document_path)"
-          >
-          {{ quoteDocument.document_name }}
-          </x-button>           
+              size="xs"
+              color="blue"
+              class="mb-1"
+              outlined
+              @click.prevent="getS3TempUrl(quoteDocument.document_path)"
+            >
+              {{ quoteDocument.document_name }}
+            </x-button>
           </li>
         </ul>
-        
+
         <x-divider class="mb-4 mt-1" />
         Policy Documents
         <ul>
           <li v-for="quoteDocument in policy?.documents?.policy">
-          <x-button
-            size="xs"
-            color="blue"
-            class="mb-1"
-            outlined
-            @click.prevent="getS3TempUrl(quoteDocument.document_path)"
-          >
-          {{ quoteDocument.document_name }}
-          </x-button>
+            <x-button
+              size="xs"
+              color="blue"
+              class="mb-1"
+              outlined
+              @click.prevent="getS3TempUrl(quoteDocument.document_path)"
+            >
+              {{ quoteDocument.document_name }}
+            </x-button>
           </li>
         </ul>
         <x-divider class="mb-4 mt-1" />
@@ -358,11 +414,10 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
               outlined
               @click.prevent="getS3TempUrl(quoteDocument.document_path)"
             >
-            {{ quoteDocument.document_name }}
-            </x-button>          
+              {{ quoteDocument.document_name }}
+            </x-button>
           </li>
         </ul>
-        
       </div>
       <div class="text-sm"></div>
     </div>
@@ -390,14 +445,14 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
         fixed-checkbox
         v-if="!single"
       >
-        <template #item-id="{ id,link }">
+        <template #item-id="{ id, link }">
           <input
-                type="radio"
-                :id="'radio-document-' + id"
-                :name="'quote-document-radio'"
-                class="mr-2" 
-                @click="setSelectedLead({ link: link })"
-              />
+            type="radio"
+            :id="'radio-document-' + id"
+            :name="'quote-document-radio'"
+            class="mr-2"
+            @click="setSelectedLead({ link: link })"
+          />
         </template>
         <template #item-uuid="{ link, code }">
           <Link :href="`${link}`" class="text-primary-500 hover:underline">
@@ -412,14 +467,16 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
         </template>
       </DataTable>
       <div>
-            <input
-                type="radio"
-                :id="'radio-document-0'"
-                :name="'quote-document-radio'"
-                class="ml-4 mr-1 mt-3"
-                @click="setSelectedLead({ link: 'new' })"        
-              />
-        <label for="radio-create-new"><strong>No matches found. Create new IMCRN lead</strong></label>        
+        <input
+          type="radio"
+          :id="'radio-document-0'"
+          :name="'quote-document-radio'"
+          class="ml-4 mr-1 mt-3"
+          @click="setSelectedLead({ link: 'new' })"
+        />
+        <label for="radio-create-new"
+          ><strong>No matches found. Create new IMCRN lead</strong></label
+        >
       </div>
 
       <div class="flex justify-end my-4 gap-3 mb-4">

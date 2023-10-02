@@ -19,7 +19,7 @@ class LegacyPolicyController extends Controller
     public function index(Request $request)
     {
         $policies = [];
-        if (! empty($request->all())) {
+        if (!empty($request->all())) {
             $policies = InslyDetailRepository::getData();
         }
 
@@ -33,7 +33,7 @@ class LegacyPolicyController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show($mongoId)
-    {       
+    {
         $policy = InslyDetailRepository::getBy('_id', $mongoId);
         //dd($policy->toArray());
         return inertia('LegacyPolicy/Show', ['policy' => $policy]);
@@ -46,21 +46,21 @@ class LegacyPolicyController extends Controller
 
         return $policy;
     }
-    
+
     public function getS3TempUrl(Request $request)
     {
         $expiryDate = now()->addMinutes(40);
         $fileName = $request->fileName;
         $fileName = 'afia/2020_09/21/10037772/31948184.png'; //FILE EXISTS ON AWS SERVER
-        $temporaryUrl = null;    
+        $temporaryUrl = null;
         if (Storage::disk('s3')->has($fileName)) {
             $temporaryUrl = Storage::disk('s3')->temporaryUrl($fileName, $expiryDate);
-        }    
+        }
         // Check if a temporary URL was generated
         if ($temporaryUrl) {
             return response()->json(['url' => $temporaryUrl]);
         } else {
             return response()->json(['error' => 'File does not exists on server']);
         }
-    }    
+    }
 }

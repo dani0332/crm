@@ -53,6 +53,7 @@ class BusinessQuoteService extends BaseService
                 'bqrd.next_followup_date',
                 'bqrd.notes',
                 'bqrd.transapp_code',
+                'bqrd.insly_id',
                 'ls.text as lost_reason',
                 'bqr.source',
                 'bqr.policy_number',
@@ -98,13 +99,13 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
             ->orderBy('advisor_id', 'ASC');
-        if (! empty($CDBID)) {
+        if (!empty($CDBID)) {
             $query->where('bqr.id', '=', $CDBID);
         }
-        if (! empty($email)) {
+        if (!empty($email)) {
             $query->where('bqr.email', '=', $email);
         }
-        if (! empty($mobile_no)) {
+        if (!empty($mobile_no)) {
             $query->where('bqr.mobile_no', '=', $mobile_no);
         }
 
@@ -131,7 +132,7 @@ class BusinessQuoteService extends BaseService
     public function getDetailEntity($id)
     {
         $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
-        if (! $entity) {
+        if (!$entity) {
             $entity = $this->createDetailEntity($id);
         }
 
@@ -151,7 +152,7 @@ class BusinessQuoteService extends BaseService
     {
         $entity = BusinessQuoteRequestDetail::where('business_quote_request_id', $id)->first();
         $lostId = 0;
-        if (! is_null($entity) && $entity->lost_reason_id) {
+        if (!is_null($entity) && $entity->lost_reason_id) {
             $lostId = $entity->lost_reason_id;
         }
 
@@ -180,7 +181,7 @@ class BusinessQuoteService extends BaseService
             'source' => $sourceName,
             'referenceUrl' => $appUrl,
         ];
-        if (! Auth::user()->hasRole('ADMIN')) {
+        if (!Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
         }
 
@@ -209,8 +210,10 @@ class BusinessQuoteService extends BaseService
             $searchProperties = $model->searchProperties;
         }
         // if ($request->ajax()) {
-        if (empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)) {
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
             $this->query->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
@@ -272,23 +275,23 @@ class BusinessQuoteService extends BaseService
             }
         }
         foreach ($searchProperties as $item) {
-            if (! empty($request[$item]) && $item != 'created_at') {
+            if (!empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
-                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
                     if ($request[$item][0] == 'null') {
                         $this->query->whereNull('advisor_id');
                     } else {
                         $this->query->whereIn('advisor_id', $request[$item]);
                     }
-                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && ! empty($request[$item])) {
+                } elseif ($item == DatabaseColumnsString::QUOTE_STATUS_ID && is_array($request[$item]) && !empty($request[$item])) {
                     $this->query->whereIn('quote_status_id', $request[$item]);
                 } else {
                     $skipped = ['is_renewal', 'previous_policy_expiry_date'];
                     if (in_array($item, $skipped)) {
                         continue;
                     }
-                    $this->query->where($this->getQuerySuffix($item).'.'.$item, $request[$item]);
+                    $this->query->where($this->getQuerySuffix($item) . '.' . $item, $request[$item]);
                 }
             }
         }
@@ -375,7 +378,7 @@ class BusinessQuoteService extends BaseService
             $businessQuote->save();
 
             if (isset($request->return_to_view)) {
-                return redirect('quote/business/'.$businessQuote->id)->with('success', 'Business Quote has been updated');
+                return redirect('quote/business/' . $businessQuote->id)->with('success', 'Business Quote has been updated');
             }
         } else {
             return redirect('quote/business')->with('message', 'Business Quote not found');
@@ -406,13 +409,13 @@ class BusinessQuoteService extends BaseService
             'business_type_of_insurance_id' => 'select|title|required',
             'brief_details' => 'textarea|required',
             'previous_quote_id' => 'readonly|title',
-            'is_renewal' => 'static|'.GenericRequestEnum::Yes.','.GenericRequestEnum::No.'',
+            'is_renewal' => 'static|' . GenericRequestEnum::Yes . ',' . GenericRequestEnum::No . '',
             'renewal_expiry_date' => 'input|date|title|range',
             'renewal_batch' => 'input|none',
             'previous_policy_expiry_date' => 'input|date|title|range',
             'previous_quote_policy_number' => 'input|title',
             'previous_quote_policy_premium' => 'input|title',
-            'gender' => '|static|'.GenericRequestEnum::MALE_SINGLE.','.GenericRequestEnum::FEMALE_SINGLE.','.GenericRequestEnum::FEMALE_MARRIED.'',
+            'gender' => '|static|' . GenericRequestEnum::MALE_SINGLE . ',' . GenericRequestEnum::FEMALE_SINGLE . ',' . GenericRequestEnum::FEMALE_MARRIED . '',
             'parent_duplicate_quote_id' => 'input|title',
             'renewal_import_code' => 'input|text',
             'device' => 'input|title',
@@ -539,7 +542,7 @@ class BusinessQuoteService extends BaseService
             $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
         $userId = (int) $request->assigned_to_id_new;
-        Log::info('Leads ids to assign: '.json_encode($leadsIds));
+        Log::info('Leads ids to assign: ' . json_encode($leadsIds));
         $result = [];
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
