@@ -32,3 +32,14 @@ export const useObjToUrl = obj => {
     })
     .join('&');
 };
+
+// Function to format the date
+export const formatDate = (dateObject) => {
+  if (dateObject && dateObject.$date && dateObject.$date.$numberLong) {
+    const timestamp = parseInt(dateObject.$date.$numberLong);
+    const formattedDate = new Date(timestamp);
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return formattedDate.toLocaleDateString('en-US', options);    
+  }
+  return null; 
+};
