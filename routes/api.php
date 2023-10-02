@@ -4,7 +4,7 @@ use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\CarQuoteController;
+use App\Http\Controllers\API\V1\CarQuoteController;
 
 /*
 |--------------------------------------------------------------------------
