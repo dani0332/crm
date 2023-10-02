@@ -128,6 +128,28 @@ class CarAllocationService extends AllocationService
         return [$plans, $yearOfManufacture];
     }
 
+    /**
+     * @param $leadSource
+     * @param $tierUserIds
+     * @return array|mixed
+     */
+    public function executeRevivalCheck($leadSource, $tierUserIds): mixed
+    {
+        if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED) {
+            // if lead source is revival replied then we should only assign to organic advisors
+
+            // Retrieve the ID of Organic team.
+            $organicId = Team::whereIn('name', TeamNameEnum::ORGANIC)->select('id')->get();
+
+            // Retrieve the user IDs associated with organic team.
+            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->select('user_id')->get();
+
+            // Getting common to get only organic advisors
+            $tierUserIds = array_intersect($tierUserIds, $organicUserIds);
+        }
+        return $tierUserIds;
+    }
+
     protected function getDeferredLeads(): mixed
     {
         return CarQuote::whereNull('advisor_id')->where('deferred', 1)->whereBetween('deferred_at', [now()->subDay(2)->toDateTimeString(), now()]);
@@ -177,22 +199,11 @@ class CarAllocationService extends AllocationService
         return null;
     }
 
-    public function getEligibleUserForAllocation($tierId, $advisorId = null, $isReassignmentJob = false, $leadSource)
+    public function getEligibleUserForAllocation($tierId, $advisorId, $isReassignmentJob, $leadSource)
     {
         $tierUserIds = $this->getTierUserIds($tierId, $advisorId);
 
-        if($leadSource == LeadSourceEnum::REVIVAL_REPLIED){
-            // if lead source is revival replied then we should only assign to organic advisors
-            
-            // Retrieve the ID of Organic team.
-            $organicId = Team::whereIn('name', TeamNameEnum::ORGANIC)->select('id')->get();
-
-            // Retrieve the user IDs associated with organic team.
-            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->select('user_id')->get();
-
-            // Getting common to get only organic advisors
-            $tierUserIds = array_intersect($tierUserIds, $organicUserIds);
-        }
+        $tierUserIds = $this->executeRevivalCheck($leadSource, $tierUserIds);
 
         // Define the order in which user statuses should be considered.
         $statusOrder = [
