@@ -1063,7 +1063,7 @@ const actionsHeaders = ref([
 const getFollowUpsByQuote = () => {
   axios
     .get(
-      `${kyoEndPoint}/followups/car/${page.props.record.uuid}`,
+      `${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`,
     )
     .then(response => {
       let { status, emails, actions, id } = response.data.data;

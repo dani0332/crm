@@ -49,7 +49,7 @@ watch(
 
 const getPauseReaons = () => {
   axios
-    .get(`${kyoEndPoint}/lookups/pause-followup-reasons`)
+    .get(`${props.kyoEndPoint}/lookups/pause-followup-reasons`)
     .then(response => {
       reasons.value = response.data.data;
     })
@@ -82,7 +82,7 @@ function onSubmit() {
     isloading.value = true;
     axios
       .post(
-        `${kyoEndPoint}/followups/${props.followUpId}/pause`,
+        `${props.kyoEndPoint}/followups/${props.followUpId}/pause`,
         {
           reason_id: getReasonId.value[0].id,
           action_by_email: usePage().props.auth.user.email,
