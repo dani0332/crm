@@ -39,7 +39,7 @@ class CarAllocation implements Allocation
             if ($tier) {
                 info('Tier finalized for lead : '.$lead->uuid.' is : '.$tier->name);
                 // Find available users for the tier
-                $availableUsers = $this->findAvailableUsers($tier->id);
+                $availableUsers = $this->findAvailableUsers($tier->id, $lead->source);
 
                 // Find custom rules for the lead
                 $rules = $this->findRules($lead);
@@ -92,9 +92,9 @@ class CarAllocation implements Allocation
         return $this->carAllocationService->getTierById($lead->tier_id);
     }
 
-    protected function findAvailableUsers($tierId): array|Collection
+    protected function findAvailableUsers($tierId, $leadSource): array|Collection
     {
-        return $this->carAllocationService->getEligibleUserForAllocation($tierId);
+        return $this->carAllocationService->getEligibleUserForAllocation($tierId, null, false, $leadSource);
     }
 
     protected function findRules($lead)
