@@ -38,21 +38,28 @@ const formatLabel = (inputString) => {
       </table>
   </template>
   <template v-if="type == 'multiple'">  
-    <div v-for="(mainRecord, index) in legacy" :key="index">
-      <table>
-        <tbody>
-            <tr v-if="title!=''"><td colspan="2"><strong>{{ title }}</strong></td></tr>          
-            <tr v-for="(subRecord, subIndex) in mainRecord" :key="subIndex">
-              <template v-if="subIndex !== '_id'">
-                <th>{{ formatLabel(subIndex) }}</th>
-                <td>                  
-                  {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) :  subRecord?subRecord:'null' }}
-                </td>
-              </template>
-            </tr>        
-        </tbody>
-      </table>
-    </div> 
+    <template v-if="legacy.length>0" >
+      <div v-for="(mainRecord, index) in legacy" :key="index">
+        <table>
+          <tbody>
+              <tr v-if="title!=''"><td colspan="2"><strong>{{ title }}</strong></td></tr>          
+              <tr v-for="(subRecord, subIndex) in mainRecord" :key="subIndex">
+                <template v-if="subIndex !== '_id'">
+                  <th>{{ formatLabel(subIndex) }}</th>
+                  <td>                  
+                    {{ subIndex.toLowerCase().includes('date') ? formatDate(subRecord) :  subRecord?subRecord:'null' }}
+                  </td>
+                </template>
+              </tr>        
+          </tbody>
+        </table>
+      </div>
+    </template>
+    <template v-else>
+        <p>No record found</p>
+    </template>
+    
+    
   </template>  
 </template>
 
