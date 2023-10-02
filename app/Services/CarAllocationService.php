@@ -129,8 +129,6 @@ class CarAllocationService extends AllocationService
     }
 
     /**
-     * @param $leadSource
-     * @param $tierUserIds
      * @return array|mixed
      */
     public function executeRevivalCheck($leadSource, $tierUserIds): mixed
@@ -147,6 +145,7 @@ class CarAllocationService extends AllocationService
             // Getting common to get only organic advisors
             $tierUserIds = array_intersect($tierUserIds, $organicUserIds);
         }
+
         return $tierUserIds;
     }
 
