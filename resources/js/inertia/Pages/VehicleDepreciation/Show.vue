@@ -17,13 +17,13 @@ defineProps({
       >
         <x-button size="sm" color="rose" tag="div"> Delete </x-button>
       </Link>
-      <Link :href="route('vehicledepreciation.edit', vehicledepreciation.id)">
-        <x-button size="sm" color="#ff5e00" tag="div"> Edit </x-button>
-      </Link>
       <Link :href="route('vehicledepreciation.index')">
         <x-button size="sm" color="#ff5e00" tag="div">
           Depreciation List
         </x-button>
+      </Link>
+      <Link :href="route('vehicledepreciation.edit', vehicledepreciation.id)">
+        <x-button size="sm" color="" tag="div"> Edit </x-button>
       </Link>
     </div>
   </div>
