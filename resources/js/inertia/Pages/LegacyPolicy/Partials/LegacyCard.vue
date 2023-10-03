@@ -55,7 +55,7 @@ const formatLabel = (inputString) => {
         </table>
       </div>
     </template>
-    <template v-else>
+    <template v-else-if="title==''">
         <p>No record found</p>
     </template>
     
