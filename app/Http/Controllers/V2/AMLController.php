@@ -16,6 +16,7 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
+use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\PersonalQuote;
 use App\Models\QuoteStatus;
@@ -176,10 +177,12 @@ class AMLController extends Controller
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 //        dd($quoteRequest->toArray());
 
-
         $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $nationalities =  NationalityRepository::withActive()->get();
+        $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
 
 
         $quoteStatusCode = '';
@@ -211,7 +214,10 @@ class AMLController extends Controller
             'quoteRequest' => $quoteRequest,
             'membersDetails' => $membersDetail,
             'memberRelations' => $memberRelations,
+            'uboRelations' => $uboRelations,
             'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'industryType' => $industryType,
 
             'kycLogs' => $kycLogs,
             'quoteStatusCode' => $quoteStatusCode,
@@ -370,5 +376,10 @@ class AMLController extends Controller
     {
         return inertia('Aml/UploadUae');
         // return view('aml.upload');
+    }
+
+    public function fetchEntity(Request $request)
+    {
+        dd($request->toArray());
     }
 }

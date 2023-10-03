@@ -1,13 +1,16 @@
 <script setup>
-import {XDivider, XModal} from "@indielayer/ui";
-import MemberDetails from "../../Components/MemberDetails.vue";
+import IndividualModel from "./Partials/IndividualModel.vue";
+import EntityModel from "./Partials/EntityModel.vue";
 
 const props = defineProps({
     quoteType: Object,
     quoteRequest: Object,
     membersDetails: Object,
     memberRelations: Object,
+    uboRelations: Object,
     nationalities: Object,
+    emirates: Object,
+    industryType: Object,
 
 
     businessTypeCode: Object,
@@ -25,7 +28,6 @@ const props = defineProps({
     isCompanySearchEnabled: {type: [Array, String]},
 });
 
-const notification = useNotifications('toast');
 const page = usePage();
 const loader = reactive({
     table: false,
@@ -34,26 +36,6 @@ const loader = reactive({
 const modals = reactive({
     insuranceForm: false,
     insuredDetailConfirm: false
-});
-
-const addMemberTransition = ref(false);
-const editMemberDetails = ref(false);
-const addMemberTransitionClick = () => {
-    addMemberTransition.value = !addMemberTransition.value;
-};
-
-const nationalitiesOptions = computed(() => {
-    return page.props.nationalities.map(nat => ({
-        value: nat.id,
-        label: nat.text,
-    }));
-});
-
-const memberRelationOptions = computed(() => {
-    return page.props.memberRelations.map(relation => ({
-        value: relation.code,
-        label: relation.text,
-    }));
 });
 
 const tableHeader = [
@@ -66,91 +48,9 @@ const tableHeader = [
     {text: 'Created At', value: 'created_at'},
     {text: 'Updated At', value: 'updated_at'},
 ];
-const memberDetailsTable = reactive({
-    isLoading: false,
-    columns: [
-        {
-            text: 'Full Name',
-            value: 'first_name',
-        },
-        {
-            text: 'Date of Birth',
-            value: 'dob',
-        },
-        {
-            text: 'Nationality',
-            value: 'nationality',
-        },
-        {
-            text: 'Relation',
-            value: 'relation',
-        },
-        {
-            text: 'Action',
-            value: 'action',
-        },
-    ],
-});
+
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
-
-const memberForm = reactive({
-    id: null,
-    first_name: '',
-    dob: null,
-    relation_code: null,
-    nationality_id: null,
-    quote_request_id: props.quoteRequest.id,
-    customer_id: props.quoteRequest.customer_id,
-    quote_type: props.quoteType.code
-});
-
-function onEditMember(data) {
-    addMemberTransition.value = true;
-    editMemberDetails.value = true;
-    memberForm.id = data.id;
-    memberForm.first_name = data.first_name;
-    memberForm.dob = data.dob;
-    memberForm.relation_code = data.relation_code;
-    memberForm.nationality_id = data.nationality_id;
-    memberForm.quote_request_id = data.quote_request_id;
-    memberForm.quote_type = props.quoteType.code;
-}
-
-const onMemberSubmit = isValid => {
-    if (!isValid) return;
-    if(editMemberDetails.value) {
-        axios.put(`/members/${memberForm.id}`, memberForm)
-        .then(res => {
-            notification.success({
-                title: 'Member Updated Successfully',
-                position: 'top',
-            });
-            memberForm.reset();
-        })
-        .catch(err => {
-            notification.error({
-                title: 'Something went wrong',
-                position: 'top',
-            });
-        });
-    } else {
-        axios.post(`/members`, memberForm)
-        .then(res => {
-            notification.success({
-                title: 'Member Added Successfully',
-                position: 'top',
-            });
-            memberForm.reset();
-        })
-        .catch(err => {
-            notification.error({
-                title: 'Something went wrong',
-                position: 'top',
-            });
-        });
-    }
-}
 
 const dateAndTimeFormat = date => {
     return date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
@@ -168,46 +68,11 @@ const dateToYear = date => {
     return '';
 }
 
-const insuredFormDetails = useForm({
-    customer_id: props.quoteRequest.customer_id,
-    insured_first_name: props.quoteRequest?.customer?.insured_first_name ?? null,
-    insured_last_name: props.quoteRequest?.customer?.insured_last_name ?? null,
-    nationality: props.quoteRequest?.customer.nationality_id ?? null,
-    date_of_birth: props.quoteRequest?.customer.dob ?? null
-});
-
-const insuredDetailsSubmit = isValid => {
-    if (!isValid) return;
-
-    insuredFormDetails.get(`${props.quoteRequest.id}/quoteUpdate`, {
-            preserveScroll: true,
-            onError: errors => {
-                notification.error({
-                    title: errors.error || 'Data not saved',
-                    position: 'top',
-                });
-            },
-            onSuccess: () => {
-                // const session = usePage().props.flash;
-                // notification.success(session.success);
-                additionalContact.reset();
-                notification.success({
-                    title: 'Additional Contact Added',
-                    position: 'top',
-                });
-            },
-            onFinish: () => {
-                modals.addContact = false;
-            },
-        });
-};
-
 </script>
 
 <template>
     <div>
         <Head title="AML"/>
-
         <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
             <h2 class="text-xl font-semibold">{{ quoteType.text }} Quote</h2>
             <div class="flex gap-2">
@@ -686,245 +551,30 @@ const insuredDetailsSubmit = isValid => {
             </div>
         </div>
 
-        <x-modal v-model="modals.insuranceForm" size="xl" show-close backdrop>
-            <template #header>Update and Verify</template>
-            <p class="text-center mb-10">Please confirm the Name, Nationality, and Date of Birth of the insured person(s) as per the Emirates ID</p>
-            <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-                <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">Insured First Name</dt>
-                        <dd>
-                            <x-input
-                                v-model="insuredFormDetails.insured_first_name"
-                                placeholder="Insured First Name"
-                                class="w-full"
-                            />
-                        </dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">Insured Last Name</dt>
-                        <dd>
-                            <x-input
-                                v-model="insuredFormDetails.insured_last_name"
-                                placeholder="Insured Last Name"
-                                class="w-full"
-                            />
-                        </dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">Nationality</dt>
-                        <dd>
-                            <ComboBox
-                                :single="true"
-                                v-model="insuredFormDetails.nationality"
-                                placeholder="Select Nationality"
-                                :options="nationalitiesOptions"
-                                class="w-full"
-                            />
-                        </dd>
-                    </div>
-                    <div class="grid sm:grid-cols-2">
-                        <dt class="font-medium">Date of Birth</dt>
-                        <dd>
-                            <DatePicker
-                                v-model="insuredFormDetails.date_of_birth"
-                                placeholder="Date of Birth"
-                                class="w-full"
-                            />
-                        </dd>
-                    </div>
-                </dl>
+        <!-- AML Screening Models Start -->
+        <EntityModel
+            v-if="quoteType.code === 'Business'"
+            v-model="modals.insuranceForm"
+            :quoteType="quoteType"
+            :quoteDetails="quoteRequest"
+            :nationalities="nationalities"
+            :membersDetails="membersDetails"
+            :memberRelations="memberRelations"
+            :uboRelations="uboRelations"
+        />
 
-                <x-divider class="mb-4 mt-1" />
-
-                <Transition name="fade">
-                    <div v-if="addMemberTransition" class="mb-4">
-                        <p class="font-semibold text-center mb-5">Add Member</p>
-                        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                            <div class="grid sm:grid-cols-2">
-                                <dt class="font-medium">Member Name</dt>
-                                <dd>
-                                    <x-input
-                                        v-model="memberForm.first_name"
-                                        placeholder="Member Name"
-                                        class="w-full"
-                                    />
-                                </dd>
-                            </div>
-                            <div class="grid sm:grid-cols-2">
-                                <dt class="font-medium">Nationality</dt>
-                                <dd>
-                                    <ComboBox
-                                        v-model="memberForm.nationality_id"
-                                        :single="true"
-                                        placeholder="Select Nationality"
-                                        :options="nationalitiesOptions"
-                                        class="w-full"
-                                    />
-                                </dd>
-                            </div>
-                            <div class="grid sm:grid-cols-2">
-                                <dt class="font-medium">Date of Birth</dt>
-                                <dd>
-                                    <DatePicker
-                                        v-model="memberForm.dob"
-                                        placeholder="Date of Birth"
-                                        class="w-full"
-                                    />
-                                </dd>
-                            </div>
-                            <div class="grid sm:grid-cols-2">
-                                <dt class="font-medium">Relation</dt>
-                                <dd>
-                                    <x-select
-                                        v-model="memberForm.relation_code"
-                                        placeholder="Select Relation"
-                                        :options="memberRelationOptions"
-                                        class="w-full"
-                                    />
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
-                </Transition>
-
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="font-semibold text-primary-800 text-lg">
-                        Member Details
-                        <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
-                    </h3>
-                    <x-button
-                        v-if="addMemberTransition"
-                        @click.prevent="onMemberSubmit"
-                        size="sm"
-                        color="success"
-                    >
-                        Submit Member
-                    </x-button>
-                    <x-button
-                        v-if="!addMemberTransition"
-                        @click.prevent="addMemberTransitionClick"
-                        size="sm"
-                        color="orange"
-                    >
-                        Add Member
-                    </x-button>
-                </div>
-
-                <DataTable
-                    table-class-name="tablefixed compact"
-                    :headers="memberDetailsTable.columns"
-                    :items="membersDetails || []"
-                    show-index
-                    border-cell
-                    hide-rows-per-page
-                    hide-footer
-                >
-                    <template #item-index="{ code }">
-                        <div>{{ code }}</div>
-                    </template>
-                    <template #item-dob="{ dob }">
-                        {{ dateFormat(dob) }}
-                    </template>
-                    <template #item-relation="{ relation }">
-                        {{ relation?.text }}
-                    </template>
-                    <template #item-nationality="{ nationality }">
-                        {{ nationality?.text }}
-                    </template>
-                    <template #item-action="item">
-                        <div class="flex gap-2">
-                            <x-button
-                                size="xs"
-                                color="primary"
-                                outlined
-                                @click.prevent="onEditMember(item)"
-                            >
-                                Edit
-                            </x-button>
-                        </div>
-                    </template>
-                </DataTable>
-
-                <x-divider class="mb-4 mt-4" />
-
-            <p class="text-center mb-5">Payer Details</p>
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Payment Method</dt>
-                    <dd>
-                        <x-input
-                            placeholder="Payment Method"
-                            class="w-full"
-                            disabled
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Payer Name</dt>
-                    <dd>
-                        <x-input
-                            placeholder="Payer Name"
-                            class="w-full"
-                            disabled
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Total Amount</dt>
-                    <dd>
-                        <x-input
-                            placeholder="Total Amount"
-                            class="w-full"
-                            disabled
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Paid By</dt>
-                    <dd>
-                        <x-input
-                            placeholder="Paid By"
-                            class="w-full"
-                            disabled
-                        />
-                    </dd>
-                </div>
-            </dl>
-            <div class="text-right space-x-4 mt-8"  >
-                <x-button
-                    size="sm"
-                    color="success"
-                    :loading="insuredFormDetails.processing"
-                    @click.prevent="modals.insuredDetailConfirm = true"
-                >
-                    Confirm
-                </x-button>
-            </div>
-            </x-form>
-        </x-modal>
-        <x-modal v-model="modals.insuredDetailConfirm" show-close backdrop>
-            <p>Are you sure you want to run AML screen for this lead as Individual Customer?</p>
-            <template #actions>
-                <div class="text-center space-x-4">
-                    <x-button
-                        size="sm"
-                        color="#ff5e00"
-                        @click.prevent="modals.insuredDetailConfirm = false"
-                    >
-                        No
-                    </x-button>
-                    <x-button
-                        size="sm"
-                        color="success"
-                        @click.prevent="insuredDetailsSubmit"
-                        :loading="insuredFormDetails.processing"
-                    >
-                        Yes
-                    </x-button>
-                </div>
-            </template>
-        </x-modal>
+        <IndividualModel
+            v-else
+            v-model="modals.insuranceForm"
+            :quoteType="quoteType"
+            :quoteDetails="quoteRequest"
+            :nationalities="nationalities"
+            :emirates="emirates"
+            :industryType="industryType"
+            :membersDetails="membersDetails"
+            :memberRelations="memberRelations"
+            :uboRelations="uboRelations"
+        />
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="flex flex-wrap gap-3 justify-between items-center mb-4">

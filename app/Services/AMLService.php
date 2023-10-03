@@ -126,7 +126,9 @@ class AMLService
             $quoteRequestDetails = BusinessQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer' => function($customer){
+                    $customer->with('entities');
+                },
                 'businessTypeOfInsurance',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
