@@ -171,6 +171,8 @@ class LeadAllocationService extends BaseService
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
                 $lead->advisor_id = $advisorId;
+                $lead->quote_updated_at = now();
+
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
