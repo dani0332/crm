@@ -181,7 +181,7 @@ class LeadAllocationService extends BaseService
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
 
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
                     CammyJob::dispatch($lead, 'intro');
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
                 }

@@ -35,7 +35,7 @@ class User extends Authenticatable implements AuditableContract
         'name',
         'email',
         'password',
-        'profile_photo_path'
+        'profile_photo_path',
     ];
 
     /**
