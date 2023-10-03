@@ -747,7 +747,7 @@ class CarQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
 
-        if ($request->ajax()) {
+        // if ($request->ajax()) {
             $this->addLeadViewEligibilityCheck();
 
             if (
@@ -820,7 +820,7 @@ class CarQuoteService extends BaseService
                     }
                 }
             }
-        }
+        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';

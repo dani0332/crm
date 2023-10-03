@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import PaymentTable from './Partials/PaymentTable.vue'
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -363,6 +363,9 @@ const leadStatusOptions = computed(() => {
     label: status.text,
   }));
 });
+
+const leadStatusesOptions = ref([]);
+
 const leadStatusDisabled = computed(() => {
 	return (
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
@@ -1086,7 +1089,35 @@ const closeModal = v => {
   if (v) disableFollowUp.value = v;
   showfollowup.value = false;
 };
-onMounted(() => getFollowUpsByQuote());
+onMounted(() => {
+	getFollowUpsByQuote()
+	setLeadStatuses();
+});
+
+const setLeadStatuses = () => {
+	const isLeadPool = hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]);
+	const isPA =hasAnyRole([rolesEnum.PA, rolesEnum.Admin]);
+	const renewal_batch = page.props.record.renewal_batch;
+	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
+	const source = page.props.record.source;
+	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
+
+	const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
+		
+		if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
+			return false;
+		}
+		// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
+		// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
+		return true;
+	});
+
+	return filteredLeadStatuses.map(status => ({
+		value: status.id,
+		label: status.text,
+	}));
+}
+
 </script>
 
 <template>

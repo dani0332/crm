@@ -3,7 +3,7 @@ defineProps({
   quotes: Object,
   advisors: Array,
   dropdownSource: Object,
-  todayAssignmentCount: Number,
+  todayAssignmentCount: String,
   userMaxCap: Number
 });
 

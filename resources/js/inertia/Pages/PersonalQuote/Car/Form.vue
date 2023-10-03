@@ -240,8 +240,11 @@ const setCarMake = (id) => {
 					<ComboBox v-model="quoteForm.nationality_id" :single="true" :options="dropdownSource.nationality_id.map(item => ({
 						value: item.id,
 						label: item.text,
-					}))
-						" :hasError="isEmptyField" :error="quoteForm.errors.nationality_id" />
+					}))" 
+					:hasError="isEmptyField" 
+					:error="quoteForm.errors.nationality_id" 
+					:rules="[isRequired]" 
+					/>
 				</x-field>
 
 				<x-field label="UAE LICENCE HELD FOR" required>
@@ -250,6 +253,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:rules="[isRequired]" 
 						:error="quoteForm.errors.uae_license_held_for_id"
 						:hasError="isEmptyField" />
 				</x-field>
@@ -269,6 +273,7 @@ const setCarMake = (id) => {
 						:options="carMakeOptions"
 						@update:modelValue="getCarModel(true)"
 						class="w-full" 
+						:rules="[isRequired]" 
 						:hasError="isEmptyField"
 						:error="quoteForm.errors.car_make_id"
 					/>
@@ -280,6 +285,7 @@ const setCarMake = (id) => {
 						:options="carModelOptions"					
 						@update:modelValue="getModelDetails(true)"
 						class="w-full"
+						:rules="[isRequired]" 
 						:error="quoteForm.errors.car_model_id"
 						:hasError="isEmptyField" />
 				</x-field>
@@ -299,6 +305,7 @@ const setCarMake = (id) => {
 					}))
 						" class="w-full"
 						:error="quoteForm.errors.year_of_manufacture"
+						:rules="[isRequired]" 
 						:hasError="isEmptyField" />
 				</x-field>
 
@@ -312,6 +319,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:rules="[isRequired]" 
 						:error="quoteForm.errors.vehicle_type_id"
 						:hasError="isEmptyField" />
 				</x-field>
@@ -342,6 +350,7 @@ const setCarMake = (id) => {
 						label: item.text,
 					}))
 						" class="w-full"
+						:rules="[isRequired]" 
 						:error="quoteForm.errors.currently_insured_with_id"
 						:hasError="isEmptyField" />
 				</x-field>
