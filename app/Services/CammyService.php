@@ -52,7 +52,7 @@ class CammyService
                     $plans->push([
                         'name' => $plan->name,
                         'provider' => $plan->providerName,
-                        'premium' => (string) $plan->actualPremium,
+                        'premium' => (string) $plan->actualPremium ?? '',
                         'features' => $features->toArray(),
                         'logo' => $plan->logo,
                         'planLink' => $plan->planLink,
