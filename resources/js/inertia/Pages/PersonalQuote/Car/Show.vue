@@ -1099,8 +1099,8 @@ const setLeadStatuses = () => {
 	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
 	const source = page.props.record.source;
 	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
-
-	const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
+	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Object.values(page.props.leadStatuses);
+	const filteredLeadStatuses = statuses?.filter(status => {
 		
 		if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 			return false;
