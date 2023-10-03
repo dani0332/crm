@@ -1059,7 +1059,7 @@ class HealthQuoteService extends BaseService
                 $lead->quote_updated_at = now();
                 $lead->save();
 
-                if ($lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                     CammyJob::dispatch($lead, 'intro');
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
                 }
@@ -1100,7 +1100,7 @@ class HealthQuoteService extends BaseService
                 $lead->quote_updated_at = now();
                 $lead->save();
 
-                if ($lead->quote_status_id == QuoteStatusEnum::Quoted) {
+                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
                     CammyJob::dispatch($lead, 'intro');
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
                 }
