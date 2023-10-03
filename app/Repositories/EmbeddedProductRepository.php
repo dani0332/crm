@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Facades\PostMark;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
@@ -114,16 +115,31 @@ class EmbeddedProductRepository extends BaseRepository
 
         $ep = $this->where('id', $epId)->first();
         $premium = '';
+        $optionsIds = [];
         if ($ep->prices) {
             $premium = $ep->prices->sum('price');
+            $optionsIds = $ep->prices->pluck('id');
         }
 
+        // certificate generation
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $transaction = EmbeddedTransaction::where([
+            ['quote_type_id', '=', $quoteTypeId],
+            ['quote_request_id',  '=', $quoteId],
+            ['is_selected',  '=', true],
+            ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
+        ])->whereIn('product_id', $optionsIds)->get();
+
+        $certificate_number = "";
+        if ($transaction->isNotEmpty()) {
+            $certificate_number = $transaction[0]['certificate_number'];
+        }
         $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
         $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
         $viewData['type'] = $modelType;
         $viewData['master_policy_number'] = '';
-        $viewData['certificate_number'] = '';
+        $viewData['certificate_number'] = $certificate_number;
         $viewData['premium'] = $premium;
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
@@ -261,20 +277,24 @@ class EmbeddedProductRepository extends BaseRepository
         }
 
         // certificate generation
-        // $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
-        // $transaction = EmbeddedTransaction::where([
-        //     ['quote_type_id', '=', $quoteTypeId],
-        //     ['quote_request_id',  '=', $quoteId],
-        //     ['is_selected',  '=', true],
-        //     ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
-        // ])->whereIn('product_id', $optionsIds)->get();
+        $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+        $transaction = EmbeddedTransaction::where([
+            ['quote_type_id', '=', $quoteTypeId],
+            ['quote_request_id',  '=', $quoteId],
+            ['is_selected',  '=', true],
+            ['payment_status_id',  '=', PaymentStatusEnum::CAPTURED],
+        ])->whereIn('product_id', $optionsIds)->get();
 
+        $certificate_number = "";
+        if ($transaction->isNotEmpty()) {
+            $certificate_number = $transaction[0]['certificate_number'];
+        }
         $viewData['name'] = $quoteObject->first_name . ' ' . $quoteObject->last_name;
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
         $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
         $viewData['type'] = $modelType;
         $viewData['master_policy_number'] = '';
-        $viewData['certificate_number'] = '';
+        $viewData['certificate_number'] = $certificate_number;
         $viewData['premium'] = $premium;
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
 
