@@ -33,6 +33,7 @@ use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
+use App\Repositories\AuditRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -993,11 +994,21 @@ class CRUDController extends Controller
 
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
+        $updatedAtAudit = '';
+        $auditLog = AuditRepository::select('updated_at')
+            ->where('auditable_id', $record->id)
+            ->where('auditable_type', 'App\Models\CarQuote')
+            ->latest()
+            ->first();
+        if ($auditLog) {
+            $updatedAtAudit = $auditLog->updated_at;
+        }
+
         $isPlanUpdateActive = $this->applicationStorageService->getIsActiveByKey('IMCRM_CAR_QUOTE_PLANS_EDIT_IS_DISABLED');
         if (gettype($quotePlans) != 'string') {
             $listQuotePlans = $quotePlans->quotes->plans;
 
-            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access']));
+            return view('shared.plan_details', compact(['listQuotePlans', 'quoteId', 'planId', 'isPlanUpdateActive', 'access', 'updatedAtAudit']));
         }
     }
 

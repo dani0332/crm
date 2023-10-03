@@ -12,7 +12,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class BaseModel extends Model implements AuditableContract
 {
-    use HasFactory , Auditable;
+    use Auditable , HasFactory;
     use SoftDeletes;
 
     public $isGetList = false;

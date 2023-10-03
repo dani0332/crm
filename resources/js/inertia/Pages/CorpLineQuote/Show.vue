@@ -264,7 +264,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(route('activities.update-activity', activityForm.uuid), {
+    activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -283,7 +283,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(route('activities.create-activity'), {
+    activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onFinish: () => {
         modals.activity = false;

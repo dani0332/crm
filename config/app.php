@@ -187,7 +187,7 @@ return [
         OwenIt\Auditing\AuditingServiceProvider::class,
         Spatie\Fractal\FractalServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
-        Jenssegers\Mongodb\MongodbServiceProvider::class,
+        MongoDB\Laravel\MongoDBServiceProvider::class,
 
     ],
 
