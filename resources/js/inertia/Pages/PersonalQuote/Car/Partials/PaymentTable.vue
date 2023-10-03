@@ -40,12 +40,13 @@ const paymentTableHeaders = [
   { text: 'Payment ID', value: 'code', align: 'center' },
   { text: 'Payment Status', value: 'payment_status.code' },
   { text: 'Provider Name', value: 'insurance_provider.text' },
-  { text: 'Plan Name', value: 'health_plan.text' },
-  { text: 'Captured Amount', value: 'captured_amount', sortable: true },
-  { text: 'Status Change Date', value: 'payment_status_log.created_at' },
-  { text: 'Captured At', value: 'captured_at' },
+  { text: 'Plan Name', value: 'plan_name' },
+  { text: 'Authorize Amount', value: 'captured_amount'},
+  { text: 'Status Change Date', value: 'status_changed_at' },
   { text: 'Authorized At', value: 'authorized_at' },
+  { text: 'Captured At', value: 'captured_at' },
   { text: 'Payment method', value: 'payment_method.name' },
+  { text: 'Captured Amount', value: 'premium_captured'},
   { text: 'Reference', value: 'reference' },
   { text: 'Status Details', value: 'payment_status_message' },
   { text: 'Actions', value: 'actions', sortable: false },
@@ -94,8 +95,8 @@ const generateCCLink = async code => {
 
 const addPaymentModal = () => {
   paymentMethodsForm.reset();
-  paymentMethodsForm.payment_method = '';
-  paymentMethodsForm.collection_type = '';
+  paymentMethodsForm.payment_method = 'CC';
+  paymentMethodsForm.collection_type = 'broker';
   paymentMethodsForm.amount = '';
   paymentMethodsForm.payment_reference = '';
   paymentMethodsForm.paymentCode = '';
@@ -238,7 +239,7 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can.create_payments && !can.approve_payments"
+        v-if="!permissionEnum.ApprovePayments && permissionEnum.PaymentsCreate && quoteRequest.plan"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -257,46 +258,13 @@ const providerId = computed(() => {
       <template #item-code="{ code }">
         {{ code.toUpperCase() }}
       </template>
-      <!-- <template #item-actions="item">
-        <div class="flex gap-2">
-          <template v-if="can.approve_payments">
-            <x-button
-              size="xs"
-              color="error"
-              v-if="item.approve_button"
-              @click="approvePayment(item)"
-            >
-              Approve
-            </x-button>
-            <x-button
-              size="xs"
-              disabled
-              color="error"
-              v-if="item.approved_button"
-            >
-              Approved
-            </x-button>
-          </template>
-          <template v-else>
-            <x-button
-              size="xs"
-              color="orange"
-              v-if="item.copy_link_button"
-              @click="generateCCLink(item.code)"
-            >
-              Copy Link
-            </x-button>
-            <x-button
-              size="xs"
-              color="emerald"
-              v-if="can.edit_payments && item.edit_button"
-              @click="editPaymentModal(item)"
-            >
-              Edit
-            </x-button>
-          </template>
-        </div>
-      </template> -->
+      <template #item-plan_name="item">
+        {{ quoteRequest.plan ? quoteRequest.plan.text : '' }}
+      </template>
+      <template #item-status_changed_at="item">
+        {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
+      </template>
+      
       <template #item-actions="item">
             <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments)">
@@ -342,7 +310,7 @@ const providerId = computed(() => {
       </template>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
-          <x-field label="Capture Amount" required>
+          <x-field label="Price Including VAT" required>
             <x-input
               class="w-full"
               :rules="[rules.isRequired, rules.amount]"
@@ -353,6 +321,7 @@ const providerId = computed(() => {
             <x-select
               class="w-full"
               v-model="paymentMethodsForm.collection_type"
+              :disabled="true"
               :options="collectionTypes"
               :rules="[rules.isRequired]"
             >
@@ -363,6 +332,7 @@ const providerId = computed(() => {
               class="w-full md:col-span-2"
               v-model="paymentMethodsForm.payment_method"
               :options="paymentMethods"
+              :disabled="true"
               :rules="[rules.isRequired]"
             >
             </x-select>
@@ -377,11 +347,10 @@ const providerId = computed(() => {
             Plan Name :
             <span class="text-primary-800">{{ getPlanName }}</span>
           </p>
-          <x-field label="Payment Reference" required>
+          <x-field label="Payment Reference" required v-if="paymentMethodsForm.payment_method != 'CC'">
             <x-input
               class="w-full md:col-span-2"
               :rules="[rules.isRequired, rules.reference]"
-              v-show="paymentMethodsForm.payment_method != 'CC'"
               v-model="paymentMethodsForm.payment_reference"
             />
           </x-field>

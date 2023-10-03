@@ -340,15 +340,13 @@ const paymentItems = computed(() => {
 })
 
 const leadStatusOptions = computed(() => {
-
-  const isAdmin = hasRole(rolesEnum.Admin);
-  const isLeadPool = isAdmin || hasRole(rolesEnum.LeadPool);
-  const isPA = isAdmin || hasRole(rolesEnum.PA);
-  const renewal_batch = page.props.record.renewal_batch;
-  const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
-  const source = page.props.record.source;
-  const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
-  const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
+	const isLeadPool = hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool]);
+	const isPA = hasAnyRole([rolesEnum.Admin, rolesEnum.PA]);
+	const renewal_batch = page.props.record.renewal_batch;
+	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
+	const source = page.props.record.source;
+	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
+	const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
 	  
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
@@ -1885,9 +1883,9 @@ const setLeadStatuses = () => {
           >
             Download PDF
           </x-button>
-          <!-- <x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id || !record.previous_quote_policy_number">
-						Send OCB Email to Customer
-					</x-button> -->
+          	<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id">
+				Send OCB Email to Customer
+			</x-button>
 					
 					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
