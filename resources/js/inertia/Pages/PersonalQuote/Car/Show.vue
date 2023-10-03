@@ -1043,7 +1043,8 @@ const followUpId = ref('');
 const hideFollowUp = ref(true);
 
 const emailsHeaders = ref([
-  { text: 'Email Subject', value: 'customer_email' },
+  { text: 'Email', value: 'customer_email' },
+  { text: 'Subject', value: 'subject' },
   { text: 'Schedule Date', value: 'schedule_date' },
   { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
