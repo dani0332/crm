@@ -560,7 +560,7 @@ class CarAllocationService extends AllocationService
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? AssignmentTypeEnum::getAssignmentTypeText($previousAdvisor->status) : '',
+            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor) ? true : false,
         ];
 
