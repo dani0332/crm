@@ -44,7 +44,7 @@ const cancelPaymentForm = item => {
 const paymentForm = useForm({
   reason: null,
   amount: null,
-  modelType: 'Health',
+  modelType: props.modelType,
   embedded_id: null,
   quote_id: null,
 });
@@ -195,8 +195,8 @@ const toggleProduct = (ep, event) => {
       selectedEp.value.splice(ep.transactions[0].code, 1);
     }
   }
-  let data = { quote_uuid: usePage().props.quote.uuid, id: id };
-  let requestUrl = '/quotes/' + usePage().props.modelType + '/toggle-product';
+  let data = { quote_uuid: usePage().props.quote.uuid, id: id,modelType:props.modelType };
+  let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
@@ -285,8 +285,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
               color="primary"
             />
             <x-checkbox
-              v-else
-              @change="toggleProduct(prices[0].id, $event)"
+              v-if="prices[0].transactions[0]?.is_selected == '0'"
+              @change="toggleProduct(prices[0], $event)"
               color="primary"
             />
             {{
