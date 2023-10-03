@@ -286,8 +286,11 @@ function calculateValuesAndHighlight() {
         advisorRetention = advisorRetention == 'NaN' ? '0.00' : advisorRetention;
 
         let imRetention = 0.00;
-        if (hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarDeputyManager]) == true &&
-            hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts]) != true) {
+        // if (hasAnyRole([rolesEnum.CarAdvisor, rolesEnum.CarDeputyManager]) == true &&
+        //     hasAnyRole([rolesEnum.CarManager, rolesEnum.RenewalsManager, rolesEnum.SeniorManagement, rolesEnum.Accounts]) != true)
+        if (item.total_allocated_leads_by_all_advisors  != undefined  || item.total_allocated_leads_by_all_advisors == ''
+            && item.renewed_by_all_advisors != undefined  || item.renewed_by_all_advisors == '')
+            {
             imRetention = (
                 (
                     parseInt(item.renewed_by_all_advisors) /
@@ -310,12 +313,7 @@ function calculateValuesAndHighlight() {
             ).toFixed(2);
         }
         imRetention = imRetention == 'NaN' ? '0.00' : imRetention;
-        console.log("hayya hayya");
-        console.log(item.total_by_volume_segment_advisors);
-        console.log(item.renewed_by_volume_segment_advisors);
-        console.log(item.car_sold_by_volume_segment);
-        console.log(item.uncontactable_by_volume_segment);
-        console.log("end");
+       
         let valueSegmentConversion = (
             (
                 parseInt(item.renewed_by_value_segment_advisors) /
