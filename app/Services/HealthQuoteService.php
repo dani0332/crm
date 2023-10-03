@@ -1056,6 +1056,7 @@ class HealthQuoteService extends BaseService
             if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
                 info('inside the check for manual assignment QA');
                 $lead->advisor_id = $userId;
+                $lead->quote_updated_at = now();
                 $lead->save();
 
                 if ($lead->quote_status_id == QuoteStatusEnum::Quoted) {
@@ -1096,6 +1097,7 @@ class HealthQuoteService extends BaseService
                 }
             } else {
                 $lead->advisor_id = $userId;
+                $lead->quote_updated_at = now();
                 $lead->save();
 
                 if ($lead->quote_status_id == QuoteStatusEnum::Quoted) {
