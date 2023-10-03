@@ -36,6 +36,7 @@ const carModelOptions = computed(() => {
 const quoteForm = useForm({
 	modelType: '"Car"',
 	model: props.model,
+	renewal_batch: props.quote?.renewal_batch || '',
 	first_name: props.quote?.first_name || '',
 	last_name: props.quote?.last_name || '',
 	email: props.quote?.email || '',
