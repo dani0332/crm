@@ -41,6 +41,7 @@ final class UserStatusEnum extends Enum
             default:
                 break;
         }
+
         return $statusText;
     }
 }
