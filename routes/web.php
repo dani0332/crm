@@ -38,6 +38,7 @@ use App\Http\Controllers\RenewalsUploadController;
 use App\Http\Controllers\RentACarController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SageApi;
 use App\Http\Controllers\StatusController;
 use App\Http\Controllers\SubTypeOfInsuranceController;
 use App\Http\Controllers\TeamController;
@@ -102,6 +103,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('leadsearch', function () {
         return redirect('home');
     });
+    Route::get('verify-sage', [SageApi::class, 'index']);
 
     Route::get('home', function () {
         return inertia('Home/Home');
@@ -175,6 +177,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
+
+    Route::post('/quotes/car/post-sage-data', [SageApi::class, 'processSagePost'])->name('post-sage-data');
+    // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
 
     Route::resource('leadassignment', LeadAssignmentController::class)->names([
         'index' => 'leadassignment.index',
