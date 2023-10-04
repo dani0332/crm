@@ -282,7 +282,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
     protected function insertMappingRecords($quoteTypeId, $insuranceProviderId)
     {
         $getMappedValue = \DB::table('insurance_provider_quote_type')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId])->count();
-        if (!$getMappedValue) {
+        if (! $getMappedValue) {
             \DB::table('insurance_provider_quote_type')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId]);
         }
     }
