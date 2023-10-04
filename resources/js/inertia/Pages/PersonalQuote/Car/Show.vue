@@ -2076,6 +2076,8 @@ onMounted(() => {
       	:data="embeddedProducts"
       	:link="record.uuid"
       	:code="record.code"
+		:quote="record"
+      	:modelType="quoteType"
     	/>
 
 		<div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">

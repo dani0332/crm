@@ -241,7 +241,7 @@ const providerId = computed(() => {
       <x-button
         v-if="can(permissionEnum.PaymentsCreate) &&
           !can(permissionEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA)"
+          !hasRole(rolesEnum.PA) && quoteRequest.plan"
         size="sm"
         color="orange"
         @click="addPaymentModal"

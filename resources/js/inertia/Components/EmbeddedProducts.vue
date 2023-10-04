@@ -1,8 +1,15 @@
 <script setup>
+const notification = useNotifications('toast');
+import { XButton } from '@indielayer/ui';
+
 const props = defineProps({
   data: {
     type: Array,
     default: () => [],
+  },
+  paymentLink: {
+    type: String,
+    default: '',
   },
   link: {
     type: String,
@@ -12,12 +19,100 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  modelType: {
+    type: String,
+    default: '',
+  },
+  quote: {
+    type: Object,
+    default: {},
+  },
 });
 
+const modals = reactive({
+  cancelPayment: false,
+});
+
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+
+const cancelPaymentForm = item => {
+  paymentForm.reset();
+  paymentForm.embedded_id = item.id;
+  paymentForm.quote_id = usePage().props.quote.id;
+  modals.cancelPayment = true;
+};
+const paymentForm = useForm({
+  reason: null,
+  amount: null,
+  modelType: props.modelType,
+  embedded_id: null,
+  quote_id: null,
+});
+
+const downloadLoader = ref(false);
+const sendDocumentLoader = ref(false);
+const sendDocumentForm = useForm({
+  quoteId: props.quote.id,
+  modelType: props.modelType,
+  isInertia: true,
+});
+
+const downloadDcoument = id => {
+  downloadLoader.value = true;
+  axios
+    .post(
+      '/embedded-products/download-document',
+      {
+        quoteId: props.quote.id,
+        modelType: props.modelType,
+        epId: id,
+        isInertia: true,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Certificate Downloaded',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      downloadLoader.value = false;
+    });
+};
+const sendDcoument = id => {
+  sendDocumentLoader.value = true;
+  sendDocumentForm
+    .transform(data => ({
+      ...data,
+      epId: id,
+    }))
+    .post('/embedded-products/send-document', {
+      preserveScroll: true,
+      onSuccess: () => {
+        sendDocumentLoader.value = false;
+      },
+      onError: () => {
+        sendDocumentLoader.value = false;
+      },
+    });
+};
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
 const selectedItems = ref([]);
+const selectedEp = ref([]);
 
 const epTable = reactive({
   isLoading: false,
@@ -57,12 +152,26 @@ const ppDoc = str => {
   const doc = JSON.parse(str);
   return doc[0]?.path !== '' ? usePage().props.cdnPath + doc[0]?.path : '';
 };
+const checkTransactionExist = item => {
+  for (let price of item.prices) {
+    for (let transaction of price.transactions) {
+      var timeStart = new Date(transaction.created_at);
+      var timeEnd = new Date();
+      var hourDiff = timeEnd - timeStart;
+      if (transaction.payment_status_id == 6 && hourDiff <= 172800000) {
+        return false;
+      }
+    }
+  }
+  return true;
+};
 
 const { copy, copied } = useClipboard();
-const notification = useNotifications('toast');
 
 const onCopyText = () => {
-  copy(props.link);
+  let ep_code = selectedEp.value[0];
+  let paymentLink = props.paymentLink + '?code=' + ep_code + '&quoteTypeId=20';
+  copy(paymentLink);
   if (copied)
     notification.success({
       title: 'Link copied to clipboard',
@@ -76,6 +185,44 @@ const paymentStatus = id => {
   return item ? item : 'N/A';
 };
 
+const toggleProduct = (ep, event) => {
+  let id = ep.id;
+  if (event.target.checked) {
+    selectedEp.value.push(ep.transactions[0]?.code);
+  } else {
+    var index = selectedEp.value.indexOf(ep.embedded_product_id);
+    if (index !== -1) {
+      selectedEp.value.splice(ep.transactions[0].code, 1);
+    }
+  }
+  let data = { quote_uuid: usePage().props.quote.uuid, id: id,modelType:props.modelType };
+  let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
+  axios
+    .post(requestUrl, data)
+    .then(res => {
+      notification.success('Updated');
+    })
+    .catch(err => {
+      notification.error('Something went wrong');
+    });
+};
+const onActivitySubmit = isValid => {
+  if (!isValid) return;
+  const method = 'post';
+  const url = '/quotes/cancel-payment';
+  axios
+    .post(url, paymentForm)
+    .then(res => {
+      notification.success('Processed');
+    })
+    .catch(err => {
+      if (err.response.data) {
+        notification.error(err.response.data[0]);
+      } else {
+        notification.error('Something went wrong');
+      }
+    });
+};
 const hasAnyRole = roles => useHasAnyRole(roles);
 </script>
 
@@ -95,7 +242,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
       </h3>
       <div class="flex flex-wrap gap-3">
         <x-button
-          v-if="selectedItems.length > 0"
+          v-if="selectedEp.length > 0"
           size="sm"
           @click.prevent="onCopyText()"
         >
@@ -103,9 +250,7 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         </x-button>
       </div>
     </div>
-
     <DataTable
-      v-model:items-selected="selectedItems"
       table-class-name="tablefixed"
       :headers="epTable.columns"
       :items="props.data || []"
@@ -127,12 +272,23 @@ const hasAnyRole = roles => useHasAnyRole(roles);
             <x-tag color="primary">
               {{ (parseFloat(item.price) + (item.price * 5) / 100).toFixed(2) }}
             </x-tag>
-            <template #tooltip> {{ item.variant }} </template>
+            <template #tooltip>{{ item.variant }} </template>
           </x-tooltip>
         </div>
 
         <div v-else>
           <x-tag color="primary">
+            <x-checkbox
+              v-if="prices[0].transactions[0]?.is_selected == '1'"
+              @change="toggleProduct(prices[0], $event)"
+              :model-value="true"
+              color="primary"
+            />
+            <x-checkbox
+              v-if="prices[0].transactions[0]?.is_selected == '0'"
+              @change="toggleProduct(prices[0], $event)"
+              color="primary"
+            />
             {{
               (
                 parseFloat(prices[0]?.price) +
@@ -155,10 +311,22 @@ const hasAnyRole = roles => useHasAnyRole(roles);
 
       <template #item-actions="item">
         <div class="flex flex-col gap-1">
-          <x-button size="xs" color="emerald" disabled>
+          <x-button
+            size="xs"
+            color="emerald"
+            :disabled="!item.send_document_button"
+            :loading="sendDocumentLoader"
+            @click.prevent="sendDcoument(item.id)"
+          >
             Send Documents
           </x-button>
-          <x-button size="xs" color="#ff5e00" disabled>
+          <x-button
+            size="xs"
+            color="#ff5e00"
+            :disabled="!item.send_document_button"
+            :loading="downloadLoader"
+            @click.prevent="downloadDcoument(item.id)"
+          >
             Download Certificate
           </x-button>
           <x-button
@@ -170,8 +338,53 @@ const hasAnyRole = roles => useHasAnyRole(roles);
           >
             Download Product Wordings
           </x-button>
+          <x-button
+            size="xs"
+            color="#ff5e00"
+            :disabled="checkTransactionExist(item)"
+            @click.prevent="cancelPaymentForm(item)"
+          >
+            Cancel Payments
+          </x-button>
         </div>
       </template>
     </DataTable>
+    <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
+      <template #header> Cancel Payment </template>
+
+      <x-form @submit="onActivitySubmit" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-input
+            v-model="paymentForm.amount"
+            label="Amount"
+            :rules="[isRequired, isNumber]"
+            class="w-full"
+          />
+
+          <x-textarea
+            v-model="paymentForm.reason"
+            label="Reason"
+            maxlength="250"
+            :adjust-to-text="false"
+            class="w-full"
+          />
+        </div>
+
+        <div class="text-right space-x-4 mt-12">
+          <x-button size="sm" @click.prevent="modals.cancelPayment = false">
+            Cancel
+          </x-button>
+
+          <x-button
+            size="sm"
+            color="emerald"
+            :loading="paymentForm.processing"
+            type="submit"
+          >
+            Cancel Payment
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
   </div>
 </template>

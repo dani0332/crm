@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Repositories\EmbeddedProductRepository;
 
@@ -102,5 +103,29 @@ class EmbeddedProductController extends Controller
             'success' => true,
             'message' => 'Embedded Product status updated',
         ]);
+    }
+
+    public function sendDocument(EmbeddedProducDocumentRequest $request)
+    {
+        $response = EmbeddedProductRepository::sendDocument($request->validated());
+        if ($request->has('isInertia')) {
+            if ($response == 200) {
+                return redirect()->back()->with('success', 'Certificate send Successfully');
+            } else {
+                return redirect()->back()->with('error', 'Send Certificate failed');
+            }
+        } else {
+            if ($response == 200) {
+
+                return response()->json(['status' => 200, 'success' => 'Certificate send Successfully.']);
+            } else {
+                return response()->json(['status' => 400, 'error' => 'Send Certificate failed.']);
+            }
+        }
+    }
+
+    public function downloadDocument(EmbeddedProducDocumentRequest $request)
+    {
+        return EmbeddedProductRepository::downloadCertificate($request->validated());
     }
 }
