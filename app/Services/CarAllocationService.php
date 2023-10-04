@@ -543,57 +543,36 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    public function buildNoPlansEmailData($carQuote, $previousAdvisor)
+    private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
-        $user = User::where('id', $carQuote->advisor_id)->first();
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'mobilePhone' => $user->mobile_no,
-            'whatsAppNumber' => str_replace('+', '', $user->mobile_no),
-            'advisorEmail' => $user->email,
-            'landLine' => $user->landline_no,
-            'advisorName' => $user->name,
-            'documentUrl' => [$documentUrl],
+            'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
+            'mobilePhone' => $advisor->mobile_no,
+            'whatsAppNumber' => str_replace('+', '', $advisor->mobile_no),
+            'landLine' => $advisor->landline_no,
+            'advisorEmail' => $advisor->email,
+            'advisorName' => $advisor->name,
+            'documentUrl' => [$documentUrl],
             'carQuoteId' => $carQuote->code,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => ! empty($previousAdvisor) ? true : false,
+            'previousAdvisorName' => !empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'previousAdvisorStatus' => !empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
+            'isReAssignment' => !empty($previousAdvisor),
         ];
 
         return $emailData;
     }
 
-    public function buildOnePlansEmailData($carQuote, $planArray, $previousAdvisor)
+    public function buildNoPlansEmailData($carQuote, $previousAdvisor)
     {
-        $plan = (object) $planArray[0];
         $advisor = User::where('id', $carQuote->advisor_id)->first();
-        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        info('plan passed for email is : '.json_encode($plan).' and type is : '.gettype($plan));
-        $emailData = (object) [
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerEmail' => $carQuote->email,
-            'mobilePhone' => $advisor->mobile_no,
-            'landLine' => $advisor->landline_no,
-            'advisorEmail' => $advisor->email,
-            'advisorName' => $advisor->name,
-            'documentUrl' => [$documentUrl],
-            'vehicleName' => $this->getVehicleName($carQuote),
-            'currentInsurer' => $carQuote->currently_insured_with,
-            'carValue' => $carQuote->car_value,
-            'excessAed' => $plan->excess ? $plan->excess : '',
-            'repairType' => $plan->repair_type ? $plan->repair_type : '',
-            'discountPremium' => $plan->discount_premium ? $plan->discount_premium : '',
-            'carQuoteId' => $carQuote->code,
-            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-            'planName' => $plan->plan_name,
-            'benefits' => $this->getPlanBenefits($plan),
-            'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
-        ];
+
+        $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
+        $emailData->isReAssignment = !empty($previousAdvisor);
 
         return $emailData;
     }
@@ -601,8 +580,6 @@ class CarAllocationService extends AllocationService
     public function buildPlansEmailData($carQuote, $plans, $previousAdvisor)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
-        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-
         $insurerPlans = [];
         foreach ($plans as $plan) {
             $insurerPlans[] = [
@@ -617,22 +594,9 @@ class CarAllocationService extends AllocationService
             ];
         }
 
-        $emailData = (object) [
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerEmail' => $carQuote->email,
-            'mobilePhone' => $advisor->mobile_no,
-            'landLine' => $advisor->landline_no,
-            'advisorEmail' => $advisor->email,
-            'advisorName' => $advisor->name,
-            'documentUrl' => [$documentUrl],
-            'vehicleName' => $this->getVehicleName($carQuote),
-            'currentInsurer' => $carQuote->currently_insured_with,
-            'carQuoteId' => $carQuote->code,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-            'plans' => $insurerPlans,
-            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-        ];
+        $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
+        $emailData->plans = $insurerPlans;
+        $emailData->isReAssignment = !empty($previousAdvisor);
 
         return $emailData;
     }
