@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CustomerTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class AMLCheckRequest extends FormRequest
@@ -21,12 +22,28 @@ class AMLCheckRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'insured_first_name' => 'required|max:200',
-            'insured_last_name' => 'required|max:200',
-            'nationality' => 'required',
-            'date_of_birth' => 'required',
-            'customer_id' => 'required'
-        ];
+        $rules = [];
+        if ($this->customer_type == CustomerTypeEnum::Individual) {
+            $rules = array_merge($rules, [
+                'insured_first_name' => 'required|max:200',
+                'insured_last_name' => 'required|max:200',
+                'nationality_id' => 'required',
+                'dob' => 'required',
+            ]);
+        }
+
+        if ($this->customer_type == CustomerTypeEnum::Entity) {
+            $rules = array_merge($rules, [
+                'trade_license' => 'required|max:200',
+                'company_name' => 'required|max:200',
+                'company_address' => 'required',
+                'entity_type' => 'nullable',
+                'industry_type' => 'nullable',
+                'emirate_of_registration' => 'nullable',
+            ]);
+        }
+
+        return $rules;
+
     }
 }

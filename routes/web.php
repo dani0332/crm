@@ -411,8 +411,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('aml/download/history', [$controller, 'sanctionListHistory'])->name('sanctionListHistory');
         Route::get('aml/upload/uae', [$controller, 'uploadUaeSanctionList'])->name('uploadUaeSanctionList');
         Route::post('aml/upload/uae-list', [$controller, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
-        Route::get('fetch-entity', [V2AMLController::class, 'fetchEntity'])->name('fetch-entity');
+        Route::get('aml-fetch-entity', [V2AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
+        Route::post('link-entity-details', [V2AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
     });
+
 
 
     Route::group(['prefix' => 'medical'], function () {

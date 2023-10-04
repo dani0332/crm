@@ -7,19 +7,19 @@ use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\AML;
-use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
-use App\Models\Entity;
+use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
+use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\User;
-use App\Models\YachtQuote;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Config;
@@ -72,6 +72,9 @@ class AMLService
         if (in_array($quoteTypeId, $migratedQuoteTypes)) {
             $checkAMLService = new CheckAmlService();
             $isDataMigrated = $checkAMLService->isDataMigrated($quoteTypeId, $quoteRequestId);
+
+            if(!$isDataMigrated)
+                $quoteRequestId = $checkAMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
         }
 
         if($quoteTypeId == QuoteTypes::CAR->id()) {
@@ -126,9 +129,7 @@ class AMLService
             $quoteRequestDetails = BusinessQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer' => function($customer){
-                    $customer->with('entities');
-                },
+                'customer',
                 'businessTypeOfInsurance',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
@@ -143,7 +144,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            if($isDataMigrated) {
+            if(!$isDataMigrated) {
                 $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
                     'petQuote',
                     'customer',
@@ -172,7 +173,8 @@ class AMLService
         $quoteId = $quoteRequestId;
         $amlQuoteUrl = Config::get('constants.APP_URL') . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-        $customerType = Entity::where('customer_id', $customerDetails->customer_id)->count() > 0 ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+//        $customerType = Entity::where('customer_id', $customerDetails->customer_id)->count() > 0 ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+        $customerType = CustomerTypeEnum::Individual;
 
         if ($customerType == CustomerTypeEnum::Individual) {
             $bridgerParseData = [
@@ -284,5 +286,43 @@ class AMLService
                 $message->from($fromEmail, $fromName);
             }
         );
+    }
+
+    public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
+    {
+        $customerChildDetails = [];
+        $customerType = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
+
+        if($customerType == CustomerTypeEnum::IndividualShort) {
+
+            if ($quoteType->code == QuoteTypes::HEALTH->value) {
+                $customerChildDetails = HealthMemberDetail::where([
+                    'health_quote_request_id' => $quoteRequestId
+                ])->select(['first_name', 'last_name', 'dob', 'nationality_id'])->get();
+
+            } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
+                $customerChildDetails = TravelMemberDetail::where([
+                    'travel_quote_request_id' => $quoteRequestId
+                ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+            }
+            else {
+                $customerChildDetails = QuoteMemberDetailsRepository::where([
+                    'customer_type' => CustomerTypeEnum::Individual,
+                    'quote_type_id' => $quoteType->id,
+                    'quote_request_id' => $quoteRequestId,
+                ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+            }
+        }
+
+        if ($customerType == CustomerTypeEnum::EntityShort) {
+            $customerChildDetails = QuoteMemberDetailsRepository::where([
+                'customer_type' => CustomerTypeEnum::Entity,
+                'quote_type_id' => $quoteType->id,
+                'quote_request_id' => $quoteRequestId,
+            ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+        }
+
+        return $customerChildDetails;
+
     }
 }

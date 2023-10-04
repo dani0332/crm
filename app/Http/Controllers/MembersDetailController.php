@@ -34,17 +34,21 @@ class MembersDetailController extends Controller
 
             if($quoteObject) {
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));
-                $customerType = Entity::where('customer_id', $request->customer_id)->count() > 0 ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
                 $quoteMemberCount = QuoteMemberDetail::where([
                     'quote_request_id' => $request->quote_request_id,
                     'quote_type_id' => $quoteTypeId,
-                    'customer_id' => $request->customer_id
+                    'customer_type' => $request->customer_type
                 ])->count();
+
+                $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?
+                    CustomerTypeEnum::IndividualShort . '-' . $request->customer_id . '-' .(++$quoteMemberCount) :
+                    CustomerTypeEnum::EntityShort . '-' . $request->entity_id . '-' .(++$quoteMemberCount);
 
                 QuoteMemberDetail::updateOrCreate(array_merge($request->validated(), [
                     'quote_type_id' => $quoteTypeId,
                     'customer_id' => $request->customer_id,
-                    'code' => $customerType . '-' . $request->customer_id . '-' .($quoteMemberCount+1)
+                    'code' => $quoteMemberCode,
+                    'customer_type' => $request->customer_type
                 ]));
                 $quoteObject->updated_at = Carbon::now();
                 $quoteObject->save();

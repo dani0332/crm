@@ -5,7 +5,8 @@
         quoteType: Object,
         nationalities: Object,
         membersDetails: Object,
-        memberRelations: Object
+        memberRelations: Object,
+        customerType: String
     });
 
     const dateFormat = date =>
@@ -64,7 +65,8 @@
         nationality_id: null,
         quote_request_id: props.quoteDetails.id,
         customer_id: props.quoteDetails.customer_id,
-        quote_type: props.quoteType.code
+        quote_type: props.quoteType.code,
+        customer_type: props.customerType
     });
 
     function onEditMember(data) {

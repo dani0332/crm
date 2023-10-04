@@ -4,8 +4,10 @@
         quoteDetails: Object,
         quoteType: Object,
         nationalities: Object,
-        membersDetails: Object,
-        uboRelations: Object
+        uboDetails: Object,
+        uboRelations: Object,
+        customerType: String,
+        entity_id: Number
     });
 
     const dateFormat = date =>
@@ -57,14 +59,17 @@
     });
 
     const uboForm = reactive({
+        customer_id: props.quoteDetails.customer_id,
+        quote_type: props.quoteType.code,
+        customer_type: props.customerType,
+        entity_id: props.entity_id,
         id: null,
         first_name: '',
         dob: null,
         relation_code: null,
         nationality_id: null,
         quote_request_id: props.quoteDetails.id,
-        customer_id: props.quoteDetails.customer_id,
-        quote_type: props.quoteType.code
+
     });
 
     function onEditUBO(data) {
@@ -170,7 +175,7 @@
     <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
             UBO Details
-            <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
+            <x-tag size="sm">{{ uboDetails.length || 0 }}</x-tag>
         </h3>
         <x-button
             v-if="addNewUBODetails"
@@ -193,7 +198,7 @@
     <DataTable
         table-class-name="tablefixed compact"
         :headers="UBODetailsTable.columns"
-        :items="membersDetails || []"
+        :items="uboDetails || []"
         show-index
         border-cell
         hide-rows-per-page

@@ -5,12 +5,15 @@ import EntityModel from "./Partials/EntityModel.vue";
 const props = defineProps({
     quoteType: Object,
     quoteRequest: Object,
+    entityDetails: Object,
     membersDetails: Object,
+    uboDetails: Object,
     memberRelations: Object,
     uboRelations: Object,
     nationalities: Object,
     emirates: Object,
     industryType: Object,
+    customerTypeEnum: Object,
 
 
     businessTypeCode: Object,
@@ -557,10 +560,13 @@ const dateToYear = date => {
             v-model="modals.insuranceForm"
             :quoteType="quoteType"
             :quoteDetails="quoteRequest"
+            :entityDetails="entityDetails"
             :nationalities="nationalities"
             :membersDetails="membersDetails"
+            :uboDetails="uboDetails"
             :memberRelations="memberRelations"
             :uboRelations="uboRelations"
+            :customerTypeEnum="customerTypeEnum"
         />
 
         <IndividualModel
@@ -568,12 +574,15 @@ const dateToYear = date => {
             v-model="modals.insuranceForm"
             :quoteType="quoteType"
             :quoteDetails="quoteRequest"
+            :entityDetails="entityDetails"
             :nationalities="nationalities"
             :emirates="emirates"
             :industryType="industryType"
             :membersDetails="membersDetails"
+            :uboDetails="uboDetails"
             :memberRelations="memberRelations"
             :uboRelations="uboRelations"
+            :customerTypeEnum="customerTypeEnum"
         />
 
         <div class="p-4 rounded shadow mb-6 bg-white">
