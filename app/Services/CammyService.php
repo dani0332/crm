@@ -29,7 +29,7 @@ class CammyService
         if ($trigger != self::UNSUB) {
             $quote = $this->healthQuoteService->getQuotePlansPriority($lead->uuid);
             if (! isset($quote) || is_string($quote)) {
-                info('Cammy Service - '.$lead->code.' - Failed - '.$quote);
+                info('Cammy Service - '.$lead->code.' - Failed - No Response from KEN');
 
                 return false;
             }
