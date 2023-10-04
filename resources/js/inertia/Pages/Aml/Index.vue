@@ -15,16 +15,17 @@ const loader = reactive({
 
 const { isRequired } = useRules();
 
-const amlCreatedStartDate = ref(
-  dayjs().subtract(30, 'day').format('YYYY-MM-DD'),
-);
-const amlCreatedEndDate = ref(dayjs().format('YYYY-MM-DD'));
+const tableHeader = [
+    { text: 'AML Id', value: 'id' },
+    { text: 'Quote Type', value: 'quote_type_text' },
+    { text: 'Ref-ID', value: 'cdb_id' },
+    { text: 'Input', value: 'input' },
+    { text: 'Screenshot', value: 'screenshot' },
+    { text: 'Created At', value: 'created_at' },
+    { text: 'Updated At', value: 'updated_at' },
+];
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss');
-
-const rules = {
-  isRequired,
-};
 
 let availableFilters = {
   quoteType: null,
@@ -57,18 +58,17 @@ function onReset() {
 }
 
 function onSubmit(isValid) {
+
   if (isValid) {
     //remove empty fields
     Object.keys(filtersForm).forEach(
       key => filtersForm[key] == '' && delete filtersForm[key],
     );
 
-    console.log(dayjs().diff(dayjs(filtersForm.amlCreatedStartDate), 'day'));
-
     filtersForm.get(`/kyc/aml`, {
       preserveScroll: true,
       onBefore: () => {
-        if (dayjs().diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
+        if (dayjs(filtersForm.amlCreatedEndDate).diff(dayjs(filtersForm.amlCreatedStartDate), 'day') > 30) {
           filtersForm.setError(
             'amlCreatedStartDate',
             'Allowed no. of days between start & end dates are 30 days.',
@@ -106,15 +106,7 @@ const quoteTypeOptions = computed(() =>
 onMounted(() => {
   setQueryStringFilters();
 });
-const tableHeader = [
-  { text: 'AML Id', value: 'id' },
-  { text: 'Quote Type', value: 'quote_type_text' },
-  { text: 'CDB Id', value: 'cdb_id' },
-  { text: 'Input', value: 'input' },
-  { text: 'Screenshot', value: 'screenshot' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Updated At', value: 'updated_at' },
-];
+
 </script>
 
 <template>
@@ -138,7 +130,7 @@ const tableHeader = [
           label="Search By"
           placeholder=""
           :options="[
-            { value: 'cdbId', label: 'CDB ID' },
+            { value: 'cdbId', label: 'Ref-ID' },
             { value: 'customerEmail', label: 'Customer Email' },
             { value: 'id', label: 'AML ID' },
           ]"

@@ -16,12 +16,12 @@ class HealthQuote extends Model implements AuditableContract
 
     public function emirate()
     {
-        return $this->hasOne(Emirate::class, 'id', 'emirate_of_your_visa_id');
+        return $this->belongsTo(Emirate::class, 'emirate_of_your_visa_id');
     }
 
     public function customer()
     {
-        return $this->hasOne(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
     }
 
     public function currentlyInsured()
@@ -31,17 +31,27 @@ class HealthQuote extends Model implements AuditableContract
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
+        return $this->belongsTo(Nationality::class, 'nationality_id');
     }
 
     public function paymentStatus()
     {
-        return $this->hasOne(PaymentStatus::class, 'id', 'payment_status_id');
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
 
     public function quoteStatus()
     {
-        return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
+        return $this->belongsTo(QuoteStatus::class, 'quote_status_id');
+    }
+
+    public function healthCoverFor()
+    {
+        return $this->belongsTo(HealthCoverFor::class, 'cover_for_id');
+    }
+
+    public function maritalStatus()
+    {
+        return $this->belongsTo(MartialStatus::class, 'marital_status_id');
     }
 
     public function healthQuoteRequestDetail()

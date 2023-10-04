@@ -33,6 +33,16 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteStatus::class);
     }
 
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
     public function homeQuoteRequestDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');

@@ -1,0 +1,49 @@
+<?php
+
+namespace App\Http\Requests;
+
+use App\Enums\CustomerTypeEnum;
+use Illuminate\Foundation\Http\FormRequest;
+
+class AMLCheckRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        $rules = [];
+        if ($this->customer_type == CustomerTypeEnum::Individual) {
+            $rules = array_merge($rules, [
+                'insured_first_name' => 'required|max:200',
+                'insured_last_name' => 'required|max:200',
+                'nationality_id' => 'required',
+                'dob' => 'required',
+            ]);
+        }
+
+        if ($this->customer_type == CustomerTypeEnum::Entity) {
+            $rules = array_merge($rules, [
+                'trade_license' => 'required|max:200',
+                'company_name' => 'required|max:200',
+                'company_address' => 'required',
+                'entity_type' => 'nullable',
+                'industry_type' => 'nullable',
+                'emirate_of_registration' => 'nullable',
+            ]);
+        }
+
+        return $rules;
+
+    }
+}

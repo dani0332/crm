@@ -434,6 +434,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
             quoteTypeCode::Yacht,
+            quoteTypeCode::Aml
         ];
     }
 }

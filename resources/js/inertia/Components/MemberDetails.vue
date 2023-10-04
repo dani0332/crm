@@ -1,5 +1,4 @@
 <script setup>
-
 const props = defineProps({
     quote: Object,
     membersDetails: Object,
@@ -34,14 +33,12 @@ const nationalitiesOptions = computed(() => {
         label: nat.text,
     }));
 });
-
 const memberRelationOptions = computed(() => {
     return page.props.memberRelations.map(relation => ({
         value: relation.code,
         label: relation.text,
     }));
 });
-
 const memberActionEdit = ref(false);
 const memberDetailsTable = reactive({
     isLoading: false,
@@ -68,12 +65,10 @@ const memberDetailsTable = reactive({
         },
     ],
 });
-
 const memberFieldReq = reactive({
     nationality: false,
     dob: false,
 });
-
 const memberForm = useForm({
     id: null,
     first_name: '',
@@ -83,13 +78,11 @@ const memberForm = useForm({
     quote_request_id: page.props.quote.id,
     quote_type: props.quote_type
 });
-
 const addMemberModal = () => {
     memberForm.reset();
     memberActionEdit.value = false;
     modals.member = true;
 };
-
 function onEditMember(data) {
     memberActionEdit.value = true;
     modals.member = true;
@@ -101,13 +94,10 @@ function onEditMember(data) {
     memberForm.quote_request_id = data.quote_request_id;
     memberForm.quote_type = props.quote_type;
 }
-
 const onMemberSubmit = isValid => {
-
     memberFieldReq.nationality = (memberForm.nationality_id == null);
     memberFieldReq.dob = (memberForm.dob == null);
     if (!isValid) return;
-
     if (memberActionEdit.value) {
         memberForm.put(`/members/${memberForm.id}`, {
             preserveScroll: true,
@@ -140,12 +130,10 @@ const onMemberSubmit = isValid => {
 const confirmDeleteData = reactive({
     member: null,
 });
-
 const memberDelete = id => {
     modals.memberConfirm = true;
     confirmDeleteData.member = id;
 };
-
 const memberDeleteConfirmed = () => {
     memberForm.delete(`/members/${props.quote_type}-${confirmDeleteData.member}`, {
         preserveScroll: true,
@@ -160,7 +148,6 @@ const memberDeleteConfirmed = () => {
         },
     });
 };
-
 </script>
 
 <template>
@@ -271,27 +258,27 @@ const memberDeleteConfirmed = () => {
         </x-modal>
 
         <x-modal v-model="modals.memberConfirm" show-close backdrop>
-        <template #header> Delete Member Detail </template>
-        <p>Are you sure you want to delete this?</p>
-        <template #actions>
-            <div class="text-right space-x-4">
-                <x-button
-                    size="sm"
-                    ghost
-                    @click.prevent="modals.memberConfirm = false"
-                >
-                    Cancel
-                </x-button>
-                <x-button
-                    size="sm"
-                    color="error"
-                    @click.prevent="memberDeleteConfirmed"
-                    :loading="memberForm.processing"
-                >
-                    Delete
-                </x-button>
-            </div>
-        </template>
-    </x-modal>
+            <template #header> Delete Member Detail </template>
+            <p>Are you sure you want to delete this?</p>
+            <template #actions>
+                <div class="text-right space-x-4">
+                    <x-button
+                        size="sm"
+                        ghost
+                        @click.prevent="modals.memberConfirm = false"
+                    >
+                        Cancel
+                    </x-button>
+                    <x-button
+                        size="sm"
+                        color="error"
+                        @click.prevent="memberDeleteConfirmed"
+                        :loading="memberForm.processing"
+                    >
+                        Delete
+                    </x-button>
+                </div>
+            </template>
+        </x-modal>
     </div>
 </template>

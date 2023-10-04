@@ -48,6 +48,16 @@ class BusinessQuote extends Model implements AuditableContract
         return $this->belongsTo(QuoteStatus::class);
     }
 
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function businessQuoteRequestDetail()
     {
         return $this->hasOne(BusinessQuoteRequestDetail::class, 'business_quote_request_id', 'id');

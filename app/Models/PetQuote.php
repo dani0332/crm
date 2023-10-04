@@ -19,6 +19,22 @@ class PetQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteStatus::class, 'id', 'quote_status_id');
     }
 
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function petQuoteRequestDetail()
     {
         return $this->hasOne(PetQuoteRequestDetail::class, 'pet_quote_request_id', 'id');
