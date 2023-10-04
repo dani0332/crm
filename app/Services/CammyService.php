@@ -92,7 +92,8 @@ class CammyService
                 $apiEndPoint .= '/api/v1/unsubscribe';
                 $responseMessage = 'Unsubscribe Email trigerred successfully';
                 $data = [
-                    'cdbid' => $lead->code,
+                    'quoteUID' => $lead->code,
+                    'quoteTypeId' => QuoteTypeId::Health,
                     'emailAddress' => $lead->email,
                 ];
                 break;
