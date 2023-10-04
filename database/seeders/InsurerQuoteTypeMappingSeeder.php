@@ -123,7 +123,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Dubai National Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::DNIRC) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Car, QuoteTypeId::GroupMedical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Home, QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Car, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -274,7 +274,6 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
-
                 }
             }
         }
@@ -283,7 +282,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
     protected function insertMappingRecords($quoteTypeId, $insuranceProviderId)
     {
         $getMappedValue = \DB::table('insurance_provider_quote_type')->where(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId])->count();
-        if (! $getMappedValue) {
+        if (!$getMappedValue) {
             \DB::table('insurance_provider_quote_type')->insert(['quote_type_id' => $quoteTypeId, 'insurance_provider_id' => $insuranceProviderId]);
         }
     }
