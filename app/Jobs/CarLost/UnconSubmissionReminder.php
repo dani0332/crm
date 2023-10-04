@@ -84,7 +84,7 @@ class UnconSubmissionReminder implements ShouldQueue
             $q->whereIn('name', [CarTeamType::RENEWALS, CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::MOTOR_CORPLINE_RENEWALS]);
         })->whereHas('roles', function ($q) {
             $q->whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
-        })->withActive()->with(['managers' => function($q){
+        })->withActive()->with(['managers' => function ($q) {
             $q->withActive();
         }])->get();
 
