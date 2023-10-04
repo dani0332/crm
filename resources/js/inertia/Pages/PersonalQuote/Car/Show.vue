@@ -346,7 +346,12 @@ const leadStatusOptions = computed(() => {
 	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
 	const source = page.props.record.source;
 	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
-	const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
+	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Object.values(page.props.leadStatuses);
+	
+	console.log('leadStatuses', page.props.leadStatuses);
+	console.log('statuses', statuses);
+
+	const filteredLeadStatuses = statuses?.filter(status => {
 	  
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
@@ -361,8 +366,6 @@ const leadStatusOptions = computed(() => {
     label: status.text,
   }));
 });
-
-const leadStatusesOptions = ref([]);
 
 const leadStatusDisabled = computed(() => {
 	return (
@@ -1089,32 +1092,8 @@ const closeModal = v => {
 };
 onMounted(() => {
 	getFollowUpsByQuote()
-	setLeadStatuses();
+	// setLeadStatuses();
 });
-
-const setLeadStatuses = () => {
-	const isLeadPool = hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]);
-	const isPA =hasAnyRole([rolesEnum.PA, rolesEnum.Admin]);
-	const renewal_batch = page.props.record.renewal_batch;
-	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
-	const source = page.props.record.source;
-	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
-	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Array.from(page.props.leadStatuses);
-	const filteredLeadStatuses = statuses?.filter(status => {
-		
-		if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
-			return false;
-		}
-		// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-		// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
-		return true;
-	});
-
-	return filteredLeadStatuses.map(status => ({
-		value: status.id,
-		label: status.text,
-	}));
-}
 
 </script>
 
