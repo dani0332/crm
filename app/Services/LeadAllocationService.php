@@ -180,13 +180,14 @@ class LeadAllocationService extends BaseService
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
 
+                // GetQuotePlansJob::dispatch($lead);
+                DB::commit();
+
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                 && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                    CammyJob::dispatch($lead, 'intro');
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
+                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
                 }
-                GetQuotePlansJob::dispatch($lead);
-                DB::commit();
 
                 return true;
             } catch (\Exception $e) {

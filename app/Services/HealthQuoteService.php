@@ -1060,8 +1060,8 @@ class HealthQuoteService extends BaseService
                 $lead->save();
 
                 if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                    CammyJob::dispatch($lead, 'intro');
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
+                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
                 }
 
                 continue;
@@ -1101,8 +1101,8 @@ class HealthQuoteService extends BaseService
                 $lead->save();
 
                 if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                    CammyJob::dispatch($lead, 'intro');
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email');
+                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
                 }
             }
         }
