@@ -270,7 +270,7 @@ const providerId = computed(() => {
       <template #item-actions="item">
             <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_method_code == 'CC' && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
+                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
                         size="xs" 
                         color="primary" 
                         outlined 
@@ -283,7 +283,7 @@ const providerId = computed(() => {
                     </x-button>
                 </template>
                 <template v-if="can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_method_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
+                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
                         size="xs" 
                         color="primary" 
                         outlined 

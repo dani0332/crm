@@ -49,7 +49,7 @@ const quoteForm = useForm({
 	nationality_id: props.quote?.nationality_id || null,
 	back_home_license_held_for_id: props.quote?.back_home_license_held_for_id || null,
 	gender: props.quote?.gender || null,
-	currently_insured_with_id: props.quote?.currently_insured_with || null,
+	currently_insured_with_id:  null,
 	policy_start_date: props.quote?.policy_start_date || null,
 	is_ebp_renewal: props.quote?.is_ebp_renewal || null,
 	is_ecommerce: props.quote?.is_ecommerce || null,
@@ -130,7 +130,7 @@ const getModelDetails = (onchange) => {
 }
 
 function onSubmit(isValid) {
-	if (quoteForm.nationality_id == null) {
+	if (quoteForm.nationality_id == null || quoteForm.currently_insured_with_id == null) {
 		isEmptyField.value = true;
 	} else {
 		isEmptyField.value = false;
@@ -241,7 +241,7 @@ const setCarMake = (id) => {
 						value: item.id,
 						label: item.text,
 					}))" 
-					:hasError="isEmptyField" 
+					:hasError="quoteForm.errors.nationality_id" 
 					:error="quoteForm.errors.nationality_id" 
 					:rules="[isRequired]" 
 					/>
@@ -255,7 +255,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.uae_license_held_for_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.uae_license_held_for_id" />
 				</x-field>
 
 				<x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
@@ -274,7 +274,7 @@ const setCarMake = (id) => {
 						@update:modelValue="getCarModel(true)"
 						class="w-full" 
 						:rules="[isRequired]" 
-						:hasError="isEmptyField"
+						:hasError="quoteForm.errors.car_make_id"
 						:error="quoteForm.errors.car_make_id"
 					/>
 				</x-field>
@@ -287,7 +287,7 @@ const setCarMake = (id) => {
 						class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.car_model_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.car_model_id" />
 				</x-field>
 
 				<x-field label="CYLINDER" required>
@@ -306,7 +306,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:error="quoteForm.errors.year_of_manufacture"
 						:rules="[isRequired]" 
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.year_of_manufacture" />
 				</x-field>
 
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
@@ -321,7 +321,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.vehicle_type_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.vehicle_type_id" />
 				</x-field>
 
 				<x-field label="SEAT CAPACITY" required>
@@ -352,7 +352,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.currently_insured_with_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.currently_insured_with_id" />
 				</x-field>
 
 				<x-field label="CLAIM HISTORY" required>

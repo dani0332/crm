@@ -383,6 +383,7 @@ onMounted(() => {
                     :options="paymentStatusOptions"
                     placeholder="Please select payment status"
                     class="w-full"
+                    :single="true"
                 />
                 <x-select
                     v-model="filters.is_ecommerce"
