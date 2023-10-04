@@ -138,7 +138,7 @@ class EmbeddedProductRepository extends BaseRepository
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
         $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
         $viewData['type'] = $modelType;
-        $viewData['master_policy_number'] = '';
+        $viewData['master_policy_number'] = 1234;
         $viewData['certificate_number'] = $certificate_number;
         $viewData['premium'] = $premium;
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
@@ -293,7 +293,7 @@ class EmbeddedProductRepository extends BaseRepository
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
         $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
         $viewData['type'] = $modelType;
-        $viewData['master_policy_number'] = '';
+        $viewData['master_policy_number'] = 1234;
         $viewData['certificate_number'] = $certificate_number;
         $viewData['premium'] = $premium;
         $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
