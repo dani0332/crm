@@ -11,6 +11,7 @@ class RenewalsBatchEmails extends Model
     use HasFactory;
 
     protected $table = 'renewals_batch_emails';
+    protected $guarded = [];
 
     public function getCreatedAtAttribute($table)
     {
