@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             CreateAndAssignSubTeamsToAdvisors::class,
             MemberRelationsSeeder::class,
             GenericPermissionSeeder::class,
+            AddApiLogViewToPermssion::class,
         ]);
     }
 }

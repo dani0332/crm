@@ -36,7 +36,7 @@ class HealthQuoteService extends BaseService
     protected $leadAllocationService;
     protected $httpService;
 
-    use AddPremiumAllLobs, RolePermissionConditions, GetUserTreeTrait, GenericQueriesAllLobs;
+    use AddPremiumAllLobs, GenericQueriesAllLobs, GetUserTreeTrait, RolePermissionConditions;
 
     public function __construct(HttpRequestService $httpService, LeadAllocationService $leadAllocationService)
     {

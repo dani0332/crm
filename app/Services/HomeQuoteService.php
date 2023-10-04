@@ -21,8 +21,8 @@ class HomeQuoteService extends BaseService
 {
     protected $query;
 
-    use RolePermissionConditions;
     use AddPremiumAllLobs;
+    use RolePermissionConditions;
 
     protected $leadAllocationService;
 

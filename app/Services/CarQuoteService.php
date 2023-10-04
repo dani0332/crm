@@ -1328,11 +1328,18 @@ class CarQuoteService extends BaseService
 
     private function updateExistingQuoteViewCount($userId, $leadId)
     {
-        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->first();
+        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->first();
         if ($quoteViewCount) {
             $quoteViewCount->user_id = $userId;
             $quoteViewCount->visit_count = 0;
             $quoteViewCount->save();
+        } else {
+            QuoteViewCount::create([
+                'quote_id' => $leadId,
+                'quote_type_id' => 1,
+                'user_id' => $userId,
+                'visit_count' => 1,
+            ]);
         }
     }
 
