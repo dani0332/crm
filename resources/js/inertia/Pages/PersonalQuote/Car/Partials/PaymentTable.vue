@@ -12,6 +12,7 @@ const props = defineProps({
   payments: Array,
   can: Object,
   paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
   quoteRequest: Object,
   paymentMethods: Array,
   quote: Object,
@@ -53,9 +54,52 @@ const paymentTableHeaders = [
 ];
 
 const collectionTypes = [
-  { value: '', label: 'Select Collection Type' },
-  { value: 'broker', label: 'Broker' },
-  { value: 'insurer', label: 'Insurer' },
+  { value: '', label: 'Select Collection Type' , tooltip: '2e333'},
+  { value: 'broker', label: 'Broker' , tooltip: 'bbbb'},
+  { value: 'insurer', label: 'Insurer' , tooltip: 'iii'},
+];
+
+const frequencyTypes = [
+  { value: '', label: 'Select Frequency'},
+  { value: 'upfront', label: 'Upfront' },
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'semi_annual', label: 'Semi Annual' },
+  { value: 'split_payments', label: 'Split Payments' },
+  { value: 'custom', label: 'Custom' },
+];
+
+const creditApprovalReasons = [
+  { value: ' ', label: 'Select Approval Reason'},
+  { value: 'available_credit_balance', label: 'Available credit balance' },
+  { value: 'post_dated_cheque_payment', label: 'Post-dated cheque payment' },
+  { value: 'cheque_under_clearance', label: 'Cheque under clearance' },
+  { value: 'other_reasons', label: 'Other reasons' },  
+];
+
+const discountTypes = [
+  { value: ' ', label: 'Select Discount Type'},
+  { value: 'refer_a_friend', label: 'Refer-a-friend' },
+  { value: 'incentive_offset', label: 'Incentive offset' },
+  { value: 'managerial_approval_discount', label: 'Managerial approval discount' },
+  { value: 'employee_discount', label: 'Employee discount' },
+  { value: 'family_employee_discount', label: 'Family employee discount' }, 
+];
+
+const discountReasons = [
+  { value: '', label: 'Select Discount Reason'},
+  { value: 'promotional_campaign_discount', label: 'Promotional campaign discount' },
+  { value: 'loyalty_reward_discount', label: 'Loyalty reward discount' },
+  { value: 'competitive_pricing_discount', label: 'Competitive pricing discount' },
+  { value: 'custom_discount_reason', label: 'Custom discount reason' },  
+];
+
+const totalPayments = [
+  { value: '1', label: '1'},
+  { value: '2', label: '2'},
+  { value: '3', label: '3'},
+  { value: '4', label: '4'},
+  { value: '5', label: '5'},
 ];
 
 const generateCCLink = async code => {
@@ -102,7 +146,13 @@ const addPaymentModal = () => {
   paymentMethodsForm.paymentCode = '';
 
   paymentMethodsForm.status = 'create';
+  paymentMethodsForm.collectionDate = new Date();
+  paymentMethodsForm
   createPaymentModal.value = true;
+  paymentMethodsForm.payment_no = '1';
+  paymentMethodsForm.frequency = 'upfront';
+  paymentMethodsForm.discount = ' ';
+  paymentMethodsForm.credit_approval = ' ';
 };
 
 const editPaymentModal = payment => {
@@ -238,14 +288,22 @@ const providerId = computed(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+
       <x-button
+        size="sm"
+        color="emerald"
+        @click="addPaymentModal"
+      >
+        Add Manual Payment
+      </x-button>
+      <!-- HAFEEZ TEMPORARY <x-button
         v-if="!permissionEnum.ApprovePayments && permissionEnum.PaymentsCreate && quoteRequest.plan"
         size="sm"
         color="orange"
         @click="addPaymentModal"
       >
         Add Payment
-      </x-button>
+      </x-button> -->
     </div>
     <DataTable
       table-class-name="tablefixed compact"
@@ -303,72 +361,197 @@ const providerId = computed(() => {
         <span class="text-primary-800 font-semibold">
           {{
             paymentMethodsForm.status == 'create'
-              ? 'New Payment'
+              ? 'Add Manual Payment'
               : 'Update Payment'
           }}
         </span>
       </template>
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
-          <x-field label="Price Including VAT" required>
+          <x-tooltip>
+            <x-field label="COLLECTION DATE" class="w-full" required>
+              <DatePicker
+                  name="collection_date"
+                  v-model="paymentMethodsForm.collectionDate"
+                  :rules="[rules.isRequired]"                  
+              />           
+            </x-field>
+            <template #tooltip>
+               <span>{{ paymentTooltipEnum.COLLECTION_DATE }}</span>
+            </template>
+          </x-tooltip>
+
+          <x-field label="TOTAL PRICE">
             <x-input
-              class="w-full"
-              :rules="[rules.isRequired, rules.amount]"
-              v-model="paymentMethodsForm.amount"
-            />
-          </x-field>
-          <x-field label="Collection Type" required>
-            <x-select
-              class="w-full"
+                class="w-full"
+                value="100"
+                :disabled="true"
+              />
+          </x-field>          
+         
+          <x-field label="COLLECTED BY" required>
+           <select
+              class="w-full beautiful-select"
               v-model="paymentMethodsForm.collection_type"
-              :disabled="true"
               :options="collectionTypes"
               :rules="[rules.isRequired]"
-            >
-            </x-select>
+              >
+              <template v-for="option in collectionTypes" :key="option.value">
+                <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>
+              </template>
+           </select>
           </x-field>
-          <x-field label="Payment Method" required>
+
+          
+          <x-field label="PROVIDER NAME">
+            <x-input
+                class="w-full"
+                value="provider name"
+                :disabled="true"
+              />
+          </x-field>     
+          
+          
+          <x-field label="FREQUENCY" required>
             <x-select
-              class="w-full md:col-span-2"
-              v-model="paymentMethodsForm.payment_method"
-              :options="paymentMethods"
-              :disabled="true"
+              class="w-full"
+              v-model="paymentMethodsForm.frequency"
+              :options="frequencyTypes"
               :rules="[rules.isRequired]"
             >
             </x-select>
           </x-field>
 
-          <p class="text-sm text-gray-500">
-            Provider Name:
-            <span class="text-primary-800">{{ providerName }}</span>
-          </p>
-
-          <p class="text-sm text-gray-500">
-            Plan Name :
-            <span class="text-primary-800">{{ getPlanName }}</span>
-          </p>
-          <x-field label="Payment Reference" required v-if="paymentMethodsForm.payment_method != 'CC'">
+          <x-field label="PLAN NAME">
             <x-input
-              class="w-full md:col-span-2"
-              :rules="[rules.isRequired, rules.reference]"
-              v-model="paymentMethodsForm.payment_reference"
-            />
-          </x-field>
+                class="w-full"
+                value="plan name"
+                :disabled="true"
+              />
+          </x-field>    
 
-          <div
-            class="w-full md:col-span-2 flex justify-end"
-            v-if="
-              paymentMethodsForm.status == 'create' ||
-              paymentMethodsForm.status == 'edit'
-            "
-          >
-            <x-button color="primary" type="submit">
-              {{ paymentMethodsForm.status == 'create' ? 'Create' : 'Update' }}
-              Payment
-            </x-button>
+          <x-field label="PAYMENT NO" required>
+            <x-select
+              class="w-full"
+              v-model="paymentMethodsForm.payment_no"
+              :options="totalPayments"
+              :rules="[rules.isRequired]"
+            >
+            </x-select>
+          </x-field> 
+          
+          <x-field label="PAYMENT STATUS">
+            <x-input
+                class="w-full"
+                value="payment status"
+                :disabled="true"
+              />
+          </x-field>   
+          <x-field label="CREDIT APPROVAL">
+            <x-select
+              class="w-full"
+              v-model="paymentMethodsForm.credit_approval"                            
+              :options="creditApprovalReasons"              
+            >
+            </x-select>
+          </x-field>          
+          <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)">
+            <x-select
+              class="w-full"
+              :options="discountTypes"
+              v-model="paymentMethodsForm.discount"              
+            >
+            </x-select>
+          </x-field>
+          
+        </div>
+        <x-divider class="mb-4 mt-1" />
+
+        <div class="w-full grid">
+          <!-- Header -->
+          <div class="flex w-full">
+            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">PAYMENT NO *</span></div>
+            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">PAYMENT METHOD *</span></div>
+            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">TOTAL AMOUNT *</span></div>
+            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">DUE DATE</span></div>
+            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">DOCUMENTS</span></div>
+          </div>
+          
+          <!-- Fields -->
+          <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count">
+          <div class="flex w-full custombreak">
+            <div class="w-1/5 px-2">{{ count }}</div>
+            <div class="w-1/5 px-2">
+                <x-select
+                class="w-full md:col-span-2"
+                name="paymentMethod[]"
+                v-model="paymentMethodsForm.payment_method"
+                :options="paymentMethods"                
+                :rules="[rules.isRequired]"
+              >
+              </x-select>
+            </div>
+            <div class="w-1/5 px-2">
+                <x-input
+                name="totalAmount[]"
+                class="w-full"
+                :rules="[rules.isRequired]"              
+              />
+            </div>
+            <div class="w-1/5 px-2">
+              <DatePicker
+                  name="dueDate[]"
+                  v-model="paymentMethodsForm.collectionDate"                      
+              />  
+            </div>
+            <div class="w-1/5 px-2">Upload Document</div>
           </div>
         </div>
+
+          
+      </div>
+  
+      <x-divider class="mb-4 mt-1" />
+
+      <div class="w-full grid">
+        <x-field label="NOTES">
+          <x-input
+            class="w-full"            
+          />
+        </x-field>
+      </div>
+
+      <x-divider class="mb-4 mt-1" />
+ 
+      <div
+        class="w-full md:col-span-2 flex justify-end"
+        v-if="
+          paymentMethodsForm.status == 'create' ||
+          paymentMethodsForm.status == 'edit'
+        "
+      >
+        <x-button color="emerald" type="submit">
+          {{ paymentMethodsForm.status == 'create' ? 'Add Manual' : 'Update' }}
+          Payment
+        </x-button>
+      </div>
       </x-form>
     </x-modal>
   </div>
 </template>
+<style scoped>
+/* Add your beautiful styling here */
+.beautiful-select {
+  /* Example styles */
+  border: 2px solid #e5e7eb;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #fff;
+  color: #333;
+  font-size: 16px;
+  width: 100%;
+  /* You can customize these styles to your liking */
+}
+
+
+</style>

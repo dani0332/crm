@@ -20,6 +20,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\PaymentTooltip;
 use App\Exports\CarQuoteExport;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
@@ -609,6 +610,8 @@ class CRUDController extends Controller
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
 
+            $paymentTooltipEnum = PaymentTooltip::asArray();
+
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
@@ -616,7 +619,8 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint'
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
+                'paymentTooltipEnum'
             ]));
         }
 

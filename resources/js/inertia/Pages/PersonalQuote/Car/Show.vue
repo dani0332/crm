@@ -68,7 +68,8 @@ defineProps({
 	lostApproveReasons: Array,
 	lostRejectReasons: Array,
 	leadDocsStoragePath: String,
-	kyoEndPoint: String
+	kyoEndPoint: String,
+	paymentTooltipEnum: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1491,6 +1492,8 @@ const setLeadStatuses = () => {
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 				<div class="w-full md:w-50">
 					<div class="flex flex-col gap-4">
+						
+						<!-- HAFEEZ TEMPORARY 
 						<x-select
 							v-model="leadStatusForm.leadStatus"
 							label="Status"
@@ -1499,6 +1502,7 @@ const setLeadStatuses = () => {
 							placeholder="Lead Status"
 							class="w-full"
 						/>
+						-->
 						
 						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved">
 							<x-input								
@@ -1699,6 +1703,7 @@ const setLeadStatuses = () => {
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
 		/>
 		<div class="p-4 rounded shadow mb-6 bg-white">
