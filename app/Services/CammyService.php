@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
 use Exception;
 
 class CammyService
@@ -70,8 +71,8 @@ class CammyService
                 $apiEndPoint .= '/api/v1/quotation';
                 $responseMessage = 'Quotation Email trigerred successfully';
                 $data = [
-                    'cdbid' => $lead->code,
-                    'type' => $trigger,
+                    'quoteUID' => $lead->code,
+                    'quoteTypeId' => QuoteTypeId::Health,
                     'contact' => ['firstName' => $lead->first_name, 'lastName' => $lead->last_name],
                     'fromEmail' => isset($lead->advisor) ? $lead->advisor->email : 'no-reply@alert.insurancemarket.email',
                     'toEmail' => $lead->email,
