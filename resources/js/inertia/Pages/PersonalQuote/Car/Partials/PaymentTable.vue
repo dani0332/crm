@@ -239,7 +239,9 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="!permissionEnum.ApprovePayments && permissionEnum.PaymentsCreate && quoteRequest.plan"
+        v-if="can(permissionsEnum.PaymentsCreate) &&
+          !can(permissionsEnum.ApprovePayments) &&
+          !hasRole(rolesEnum.PA)"
         size="sm"
         color="orange"
         @click="addPaymentModal"
