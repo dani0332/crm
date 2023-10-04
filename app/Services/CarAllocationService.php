@@ -596,6 +596,7 @@ class CarAllocationService extends AllocationService
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
+        $emailData->totalPlans = count($insurerPlans);
         $emailData->isReAssignment = ! empty($previousAdvisor);
 
         return $emailData;
