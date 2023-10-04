@@ -14,7 +14,7 @@ return new class extends Migration
         if (Schema::hasTable('customer_members')) {
             Schema::table('customer_members', function ($table) {
                 if (! Schema::hasColumn('customer_members', 'policy_id')) {
-                    $table->integer('policy_id')->index()->nullable()->default(null);
+                    $table->integer('policy_id')->unsigned()->index()->nullable()->default(null);
                 }
             });
         }
