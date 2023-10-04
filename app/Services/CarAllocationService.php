@@ -559,9 +559,9 @@ class CarAllocationService extends AllocationService
             'carQuoteId' => $carQuote->code,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-            'previousAdvisorName' => !empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => !empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => !empty($previousAdvisor),
+            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
+            'isReAssignment' => ! empty($previousAdvisor),
         ];
 
         return $emailData;
@@ -572,7 +572,7 @@ class CarAllocationService extends AllocationService
         $advisor = User::where('id', $carQuote->advisor_id)->first();
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
-        $emailData->isReAssignment = !empty($previousAdvisor);
+        $emailData->isReAssignment = ! empty($previousAdvisor);
 
         return $emailData;
     }
@@ -596,7 +596,7 @@ class CarAllocationService extends AllocationService
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
-        $emailData->isReAssignment = !empty($previousAdvisor);
+        $emailData->isReAssignment = ! empty($previousAdvisor);
 
         return $emailData;
     }
