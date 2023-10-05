@@ -144,9 +144,6 @@ class AllocationService
         return $assignmentText;
     }
 
-
-
-
     public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
     {
         // Check if $lead or $newAdvisorId is not provided
@@ -172,7 +169,7 @@ class AllocationService
         }
     }
 
-    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead , $systemAssignedTypes)
+    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
     {
         if ($advisorAllocationRecord === null || $lead === null) {
             return;
@@ -225,6 +222,5 @@ class AllocationService
             }
         }
     }
-
 
 }
