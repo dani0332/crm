@@ -437,7 +437,7 @@ class SendEmailCustomerService extends BaseService
             'quoteUID' => $quoteUuid,
             'resend' => false,
         ];
-        $response = Capi::request('/v1-send-health-quote-plan-email', 'post', $dataArr);
+        $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
         if ($response && isset($response->status)) {
             $msg = '';
             if (isset($response->msg)) {
