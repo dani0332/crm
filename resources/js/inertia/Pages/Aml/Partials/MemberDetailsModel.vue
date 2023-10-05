@@ -63,6 +63,18 @@ const memberDetailsTable = reactive({
     },
   ],
 });
+function onEditMember(data) {
+  memberForm.clearErrors();
+  addMember.value = true;
+  editMemberDetails.value = true;
+  memberForm.quote_type = props.quoteType.code;
+  memberForm.quote_request_id = props.quoteDetails.id;
+  memberForm.id = data.id;
+  memberForm.first_name = data.first_name;
+  memberForm.dob = data.dob;
+  memberForm.relation_code = data.relation_code;
+  memberForm.nationality_id = data.nationality_id;
+}
 
 const memberForm = useForm({
   quote_type: props.quoteType.code,
@@ -75,27 +87,6 @@ const memberForm = useForm({
   relation_code: null,
   nationality_id: null,
 });
-
-function onEditMember(data) {
-  memberForm.clearErrors();
-  addMember.value = true;
-  editMemberDetails.value = true;
-  memberForm.quote_type = props.quoteType.code;
-  memberForm.quote_request_id = data.quote_request_id;
-  memberForm.id = data.id;
-  memberForm.first_name = data.first_name;
-  memberForm.dob = data.dob;
-  memberForm.relation_code = data.relation_code;
-  memberForm.nationality_id = data.nationality_id;
-}
-
-// const reset = () => {
-//   memberForm.id = null;
-//   memberForm.first_name = null;
-//   memberForm.dob = null;
-//   memberForm.relation_code = null;
-//   memberForm.nationality_id = null;
-// };
 
 function onMemberSubmit(isValid) {
   if (memberForm.nationality_id == null) isEmptyField.value = true;
