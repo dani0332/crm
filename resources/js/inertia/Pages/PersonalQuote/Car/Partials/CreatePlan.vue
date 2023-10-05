@@ -1,5 +1,5 @@
 <script setup>
-
+const notification = useNotifications('toast');
 const props = defineProps({
     record: Object,
     insuranceProviders: Array,
