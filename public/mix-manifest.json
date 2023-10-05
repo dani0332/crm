@@ -1,9 +1,9 @@
 {
-    "/js/inertia.js": "/js/inertia.js?id=3fd94f945352096ef4131f771d7046c3",
-    "/js/manifest.js": "/js/manifest.js?id=107323244bbeaa45711a232948fd684d",
-    "/css/app.css": "/css/app.css?id=feb7670b46208af41f334195f2dc4e31",
-    "/css/livewire.css": "/css/livewire.css?id=a44b7c9cff0822ac6351cf5052738cb8",
-    "/js/vendor.js": "/js/vendor.js?id=89115cba738d82301b24c839c6f8a2c8",
+    "/js/inertia.js": "/js/inertia.js?id=e72cbbf74196f024614fe6b60c6719aa",
+    "/js/manifest.js": "/js/manifest.js?id=de02459fa8b72396fa2204fa971259f9",
+    "/css/app.css": "/css/app.css?id=c6048af4b9d06e09a64e9746cfeb97fb",
+    "/css/livewire.css": "/css/livewire.css?id=4ba0933a2b50c1ffb1e99b63697147c8",
+    "/js/vendor.js": "/js/vendor.js?id=144065b74ff2cf0fce8c981fc374c8ab",
     "/build/js/customjs.min.js": "/build/js/customjs.min.js?id=7ce827486359e2c66000c641ef92abd6",
     "/build/css/style.min.css": "/build/css/style.min.css?id=fcba58ff05f5884e4776ba0aa75e4daa"
 }

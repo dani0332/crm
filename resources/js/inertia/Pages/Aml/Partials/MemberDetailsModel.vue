@@ -73,7 +73,7 @@
         addMember.value = true;
         editMemberDetails.value = true;
         memberForm.quote_type = props.quoteType.code;
-        memberForm.quote_request_id = data.quote_request_id;
+        memberForm.quote_request_id = props.quoteDetails.id;
         memberForm.id = data.id;
         memberForm.first_name = data.first_name;
         memberForm.dob = data.dob;
