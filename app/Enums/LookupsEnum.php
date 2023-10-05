@@ -13,4 +13,5 @@ enum LookupsEnum: string
     case COMPANY_TYPE = 'company-type';
     case CAR_LOST_REJECT_REASONS = 'car-lost-reject-reasons';
     case CAR_LOST_APPROVE_REASONS = 'car-lost-approve-reasons';
+    case ENTITY_TYPE = 'entity-type';
 }

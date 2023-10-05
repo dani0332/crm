@@ -298,7 +298,7 @@ class AMLService
             if ($quoteType->code == QuoteTypes::HEALTH->value) {
                 $customerChildDetails = HealthMemberDetail::where([
                     'health_quote_request_id' => $quoteRequestId
-                ])->select(['first_name', 'last_name', 'dob', 'nationality_id'])->get();
+                ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
 
             } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
                 $customerChildDetails = TravelMemberDetail::where([

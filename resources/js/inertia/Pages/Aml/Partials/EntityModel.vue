@@ -4,8 +4,8 @@
 
     const props = defineProps({
         modelValue: {type: Boolean, default: false},
-        quoteDetails: Object,
         quoteType: Object,
+        quoteDetails: Object,
         entityDetails: Object,
         nationalities: Object,
         membersDetails: Object,
@@ -134,12 +134,12 @@
             entity_id: tradeLicenseEntity.entity_id
         };
         axios.post(route('link-entity-details'), entityDetails)
-            .then(res => {
-                notification.success({
-                    title: res.data.message,
-                    position: 'top',
-                });
+        .then(res => {
+            notification.success({
+                title: res.data.message,
+                position: 'top',
             });
+        });
     }
 
 </script>

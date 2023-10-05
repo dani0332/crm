@@ -1,14 +1,14 @@
 <script setup>
-
     const props = defineProps({
-        quoteDetails: Object,
         quoteType: Object,
+        quoteDetails: Object,
         nationalities: Object,
         membersDetails: Object,
         memberRelations: Object,
         customerType: String
     });
 
+    const notification = useToast();
     const dateFormat = date =>
         date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -26,10 +26,10 @@
         }));
     });
 
-    const addNewMember = ref(false);
+    const addMember = ref(false);
     const editMemberDetails = ref(false);
-    const addNewMemberTrigger = () => {
-        addNewMember.value = !addNewMember.value;
+    const addMemberToggle = () => {
+        addMember.value = !addMember.value;
     };
     const memberDetailsTable = reactive({
         isLoading: false,
@@ -58,27 +58,27 @@
     });
 
     const memberForm = reactive({
-        id: null,
-        first_name: '',
-        dob: null,
-        relation_code: null,
-        nationality_id: null,
+        quote_type: props.quoteType.code,
+        customer_type: props.customerType,
         quote_request_id: props.quoteDetails.id,
         customer_id: props.quoteDetails.customer_id,
-        quote_type: props.quoteType.code,
-        customer_type: props.customerType
+        id: null,
+        first_name: null,
+        dob: null,
+        relation_code: null,
+        nationality_id: null
     });
 
     function onEditMember(data) {
-        addNewMember.value = true;
+        addMember.value = true;
         editMemberDetails.value = true;
+        memberForm.quote_type = props.quoteType.code;
+        memberForm.quote_request_id = data.quote_request_id;
         memberForm.id = data.id;
         memberForm.first_name = data.first_name;
         memberForm.dob = data.dob;
         memberForm.relation_code = data.relation_code;
         memberForm.nationality_id = data.nationality_id;
-        memberForm.quote_request_id = data.quote_request_id;
-        memberForm.quote_type = props.quoteType.code;
     }
 
     const onMemberSubmit = isValid => {
@@ -106,7 +106,7 @@
                         position: 'top',
                     });
                     memberForm.reset();
-                    addNewMember.value = false;
+                    addMember.value = false;
                 })
                 .catch(err => {
                     notification.error({
@@ -120,72 +120,72 @@
 
 <template>
     <Transition name="fade">
-        <div v-if="addNewMember" class="mb-4">
-            <p class="font-semibold text-center mb-5">Add Member</p>
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Member Name</dt>
-                    <dd>
-                        <x-input
-                            v-model="memberForm.first_name"
-                            placeholder="Member Name"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Nationality</dt>
-                    <dd>
-                        <ComboBox
-                            v-model="memberForm.nationality_id"
-                            :single="true"
-                            placeholder="Select Nationality"
-                            :options="nationalitiesOptions"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Date of Birth</dt>
-                    <dd>
-                        <DatePicker
-                            v-model="memberForm.dob"
-                            placeholder="Date of Birth"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Relation</dt>
-                    <dd>
-                        <x-select
-                            v-model="memberForm.relation_code"
-                            placeholder="Select Relation"
-                            :options="memberRelationOptions"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
+        <div v-if="addMember" class="mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg mb-3">
+                Add Member
+            </h3>
+            <x-button
+                v-if="addMember"
+                @click.prevent="addMemberToggle"
+                size="sm"
+                color="red"
+            >
+                Hide
+            </x-button>
+            <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
+                <x-field label="Member Name">
+                    <x-input
+                        v-model="memberForm.first_name"
+                        placeholder="Member Name"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Nationality">
+                    <ComboBox
+                        :single="true"
+                        v-model="memberForm.nationality_id"
+                        placeholder="Select Nationality"
+                        :options="nationalitiesOptions"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Date of Birth">
+                    <DatePicker
+                        v-model="memberForm.dob"
+                        placeholder="Date of Birth"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Relation">
+                    <x-select
+                        v-model="memberForm.relation_code"
+                        placeholder="Select Relation"
+                        :options="memberRelationOptions"
+                        class="w-full"
+                    />
+                </x-field>
             </dl>
         </div>
     </Transition>
+    <x-divider v-if="addMember" class="mb-3 mt-1" />
+
     <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
             Member Details
             <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
         </h3>
         <x-button
-            v-if="addNewMember"
+            v-if="addMember"
             @click.prevent="onMemberSubmit"
             :loading="memberForm.loading"
             size="sm"
-            color="success"
+            color="primary"
         >
             Submit Member
         </x-button>
         <x-button
-            v-if="!addNewMember"
-            @click.prevent="addNewMemberTrigger"
+            v-if="!addMember"
+            @click.prevent="addMemberToggle"
             size="sm"
             color="orange"
         >

@@ -27,8 +27,26 @@ class MembersDetailController extends Controller
     public function store(MemberDetailRequest $request)
     {
         if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health)) {
-            HealthMemberDetail::create($request->validated());
-            HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+            $healthMemberDetails = $request->validated();
+
+            if(!in_array('health_quote_request_id', $request->validated())) {
+                $healthMemberDetails = array_merge([
+                    'health_quote_request_id' => $request->quote_request_id,
+                    'customer_id' => $request->customer_id,
+                ], $healthMemberDetails);
+                unset($healthMemberDetails['quote_request_id']);
+            }
+
+            $healthMemberCount = HealthMemberDetail::where([
+                'health_quote_request_id' => $healthMemberDetails['health_quote_request_id'],
+                'customer_id' => $healthMemberDetails['customer_id'],
+            ])->count();
+
+            HealthMemberDetail::create(array_merge($healthMemberDetails, [
+                'code' => CustomerTypeEnum::IndividualShort .'-'. $healthMemberDetails['customer_id'] .'-'. ++$healthMemberCount
+            ]));
+
+            HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
         } else {
             $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
 
@@ -37,7 +55,7 @@ class MembersDetailController extends Controller
                 $quoteMemberCount = QuoteMemberDetail::where([
                     'quote_request_id' => $request->quote_request_id,
                     'quote_type_id' => $quoteTypeId,
-                    'customer_type' => $request->customer_type
+                    'customer_type' => $request->customer_type,
                 ])->count();
 
                 $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?

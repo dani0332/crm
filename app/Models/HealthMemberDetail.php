@@ -30,7 +30,7 @@ class HealthMemberDetail extends Model
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
+        return $this->belongsTo(Nationality::class, 'nationality_id');
     }
 
     public function salaryBand()
@@ -46,5 +46,10 @@ class HealthMemberDetail extends Model
     public function documents()
     {
         return $this->hasMany(QuoteDocument::class, 'member_detail_id');
+    }
+
+    public function relation()
+    {
+        return $this->belongsTo(Lookup::class, 'relation_code', 'code');
     }
 }

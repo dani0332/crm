@@ -75,5 +75,46 @@ class LookupSeeder extends Seeder
                 ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveIncorrectEmail', 'text' => 'Incorrect email ID - email ID belongs to a different person', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::COMPANY_TYPE)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Consultancy', 'text' => 'Consultancy'],
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Manufacturing', 'text' => 'Manufacturing'],
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'LegalServices', 'text' => 'Legal Services'],
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Brokers', 'text' => 'Brokers'],
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Construction', 'text' => 'Construction'],
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'FoodBeverages', 'text' => 'Food & Beverages'],
+                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'ServiceProvider', 'text' => 'Service Provider'],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::MEMBER_RELATION)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relHusband', 'text' => 'Husband'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relWife', 'text' => 'Wife'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relMother', 'text' => 'Mother'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relFather', 'text' => 'Father'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'reSon', 'text' => 'Son'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relDaughter', 'text' => 'Daughter'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relBrother', 'text' => 'Brother'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relSister', 'text' => 'Sister'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relFriend', 'text' => 'Friend'],
+                ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relBusinessPartner', 'text' => 'Business Partner'],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::UBO_RELATION)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::UBO_RELATION, 'code' => 'relOwner', 'text' => 'Owner'],
+                ['key' => LookupsEnum::UBO_RELATION, 'code' => 'relPartner', 'text' => 'Partner'],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::ENTITY_TYPE)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::ENTITY_TYPE, 'code' => 'Parent', 'text' => 'Parent'],
+                ['key' => LookupsEnum::ENTITY_TYPE, 'code' => 'SubEntity', 'text' => 'Sub Entity'],
+            ]);
+        }
     }
 }

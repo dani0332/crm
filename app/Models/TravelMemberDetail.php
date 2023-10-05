@@ -18,6 +18,16 @@ class TravelMemberDetail extends Model
         return $this->belongsTo(TravelQuote::class, 'id', 'primary_member_id');
     }
 
+    public function nationality()
+    {
+        return $this->belongsTo(Nationality::class, 'nationality_id');
+    }
+
+    public function relation()
+    {
+        return $this->belongsTo(Lookup::class, 'relation_code', 'code');
+    }
+
     public function getDobAttribute($value)
     {
         return Carbon::parse($value)->format('Y-m-d');

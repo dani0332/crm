@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -18,11 +19,13 @@ use App\Models\CommunicationMode;
 use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\Entity;
+use App\Models\HealthMemberDetail;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
+use App\Models\TravelMemberDetail;
 use App\Models\UAEAMLListUploads;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
@@ -150,7 +153,7 @@ class AMLController extends Controller
     /**
      * Display the specified resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \Inertia\Response|\Inertia\ResponseFactory
      */
     public function show(AML $aml)
     {
@@ -166,50 +169,42 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
+        $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
-
-        // Need to update with Limit when new UI going to Live
-        $kycLogs = AML::where([
-            'quote_request_id' => $quoteRequestId,
-            'quote_type_id' => $quoteTypeId
-        ])->orderBy('created_at', 'desc')->get();
+        $amlRecordFetch = AML::where([ 'quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId ]);
+        $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
-        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId);
-        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId, CustomerTypeEnum::Entity);
 
+        if ($quoteTypeId == QuoteTypeId::Health) {
+            $membersDetail = HealthMemberDetail::with(['relation', 'nationality'])->where('health_quote_request_id', $quoteRequest->id)->get();
+        } elseif ($quoteTypeId == QuoteTypeId::Travel) {
+            $membersDetail = TravelMemberDetail::with(['relation', 'nationality'])->where('travel_quote_request_id', $quoteRequest->id)->get();;
+        } else {
+            $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId);
+        }
+
+        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId, CustomerTypeEnum::Entity);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
-
         $nationalities =  NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
+        $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
 
-        $quoteStatusCode = '';
+        $nationalityList = $this->sanctionListService->fetchNationality();
+        $yearsList = $this->sanctionListService->years();
+        $firstAmlLogResults = $amlRecordFetch->first()->results_found ?? 0;
+        $latestAmlLogResults = $amlRecordFetch->latest()->first()->results_found ?? 0;
+        $getAMLNumRows = $amlRecordFetch->count();
+
         if ($quoteRequest && $quoteRequest->quote_status_id && $quoteRequest->quote_status_id != '') {
             $quoteStatus = QuoteStatus::where('id', '=', $quoteRequest->quote_status_id)->get(['code']);
             $quoteStatusCode = $quoteStatus[0]->code;
         }
-
-        $isCurrentUserFromCompliance = 0;
-        if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
-            $isCurrentUserFromCompliance = 1;
-        }
-
-        $isCurrentUserFromPaAml = 0;
-        if (auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML])) {
-            $isCurrentUserFromPaAml = 1;
-        }
-
-        $firstAmlLogResults = AML::where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->first()->results_found ?? 0;
-        $latestAmlLogResults = AML::where('quote_type_id', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->latest()->first()->results_found ?? 0;
-
-        $getAMLNumRows = AML::where('quote_type_id', '=', $quoteTypeId)->where('quote_request_id', $quoteRequestId)->count();
-
-        $nationalityList = $this->sanctionListService->fetchNationality();
-        $yearsList = $this->sanctionListService->years();
 
         $data = [
             'quoteType' => $quoteType,
@@ -223,7 +218,6 @@ class AMLController extends Controller
             'emirates' => $emirates,
             'industryType' => $industryType,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
-
             'kycLogs' => $kycLogs,
             'quoteStatusCode' => $quoteStatusCode,
             'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
@@ -237,9 +231,9 @@ class AMLController extends Controller
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
-            $data['businessTypeCode'] = BusinessQuoteType::where('id', '=', $quoteRequest->business_type_of_insurance_id)->value('code');
-            $data['businessCoverTypeText'] = BusinessCoverType::where('id', '=', $quoteRequest->business_cover_type_id)->value('text');
-            $data['businessCommuModeText'] = CommunicationMode::where('id', '=', $quoteRequest->business_communication_mode_id)->value('text');
+            $data['businessTypeCode'] = BusinessQuoteType::where('id', $quoteRequest->business_type_of_insurance_id)->value('code');
+            $data['businessCoverTypeText'] = BusinessCoverType::where('id', $quoteRequest->business_cover_type_id)->value('text');
+            $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
         return inertia('Aml/Details', $data);
@@ -303,6 +297,20 @@ class AMLController extends Controller
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
+
+                Entity::updateOrCreate(['trade_license', $AMLCheckRequest->trade_license],[
+                    'company_name' => $AMLCheckRequest->company_name,
+                    'company_address' => $AMLCheckRequest->company_address,
+                    'entity_type_code' => $AMLCheckRequest->entity_type,
+                    'industry_type_code' => $AMLCheckRequest->industry_type,
+                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration
+                ]);
+
+                QuoteRequestEntityMapping::updateOrCreate([
+                    'quote_type_id' => $quoteType->id,
+                    'quote_request_id' => $quoteRequestId
+                ],['entity_id' => $AMLCheckRequest->entity_id]);
+
                 $getMemberOrUBODetails[] = [
                     'first_name' => $customer->insured_first_name,
                     'last_name' => $customer->insured_last_name,
@@ -311,6 +319,8 @@ class AMLController extends Controller
                     'code' => CustomerTypeEnum::EntityShort . '-'. $customer->id,
                 ];
             }
+
+            dd($getMemberOrUBODetails->toArray());
 
             foreach ($getMemberOrUBODetails as $value):
                 Log::info('Bridger API call for AML Check with customer ID '.$value->code.' And data pass for Bridger API are : '.json_encode($value));
@@ -405,6 +415,8 @@ class AMLController extends Controller
             'quote_request_id' => $request->quote_request_id
         ],['entity_id' => $request->entity_id]);
 
-        return response()->json(['message' => 'Entity Linked Successfully']);
+        $entity = Entity::where('id', $request->entity_id)->first();
+
+        return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
     }
 }
