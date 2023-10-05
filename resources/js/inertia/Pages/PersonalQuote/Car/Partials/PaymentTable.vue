@@ -19,6 +19,7 @@ const props = defineProps({
 });
 
 const createPaymentModal = ref(false);
+const isPaymentNoEnabled = ref(false);
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
@@ -54,10 +55,74 @@ const paymentTableHeaders = [
 ];
 
 const collectionTypes = [
-  { value: '', label: 'Select Collection Type' , tooltip: '2e333'},
-  { value: 'broker', label: 'Broker' , tooltip: 'bbbb'},
-  { value: 'insurer', label: 'Insurer' , tooltip: 'iii'},
+  { value: '', label: 'Select Collection Type' },
+  { value: 'broker', label: 'Broker' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_BROKER},
+  { value: 'insurer', label: 'Insurer' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_INSURER},
 ];
+
+
+// Watch for changes in paymentMethodsForm.frequency
+//watch(paymentMethodsForm.frequency, handleFrequencyTypeChange);
+
+const totalPayments = [
+  { value: '1', label: '1'},
+  { value: '2', label: '2'},
+  { value: '3', label: '3'},
+  { value: '4', label: '4'},
+  { value: '5', label: '5'},
+];
+const handleCollectionTypeChange = () => {
+  if (paymentMethodsForm.collection_type === 'insurer') {
+    paymentMethodsForm.payment_method = 'BT';
+  } else {
+    paymentMethodsForm.payment_method = 'CC';
+  }
+};
+
+const handleFrequencyTypeChange = () => {
+  var resetPaymentMethod = false;
+  isPaymentNoEnabled.value = false;
+  if (paymentMethodsForm.frequency === 'monthly') {
+    resetPaymentMethod = true;
+    paymentMethodsForm.payment_no = '12';
+  } else if (paymentMethodsForm.frequency === 'quarterly') {
+    resetPaymentMethod = true;
+    paymentMethodsForm.payment_no = '4';
+  } else if (paymentMethodsForm.frequency === 'semi_annual') {
+    resetPaymentMethod = true;
+    paymentMethodsForm.payment_no = '2';
+  } else if (paymentMethodsForm.frequency === 'split_payments') {
+    isPaymentNoEnabled.value = true;
+    paymentMethodsForm.payment_no = '1';
+    if(totalPayments.length > 5){
+      totalPayments.splice(-7);
+    }    
+  } else if (paymentMethodsForm.frequency === 'custom') {
+    isPaymentNoEnabled.value = true;
+    paymentMethodsForm.payment_no = '1';
+
+    
+    for (let i = 6; i <= 12; i++) { // Append 7 more values to totalPayments
+      totalPayments.push({ value: i.toString(), label: i.toString() });
+    }
+  } else {
+    paymentMethodsForm.payment_no = '1';
+  }
+
+  if (paymentMethodsForm.payment_method==='CC' && resetPaymentMethod){
+      paymentMethodsForm.payment_method = 'BT';
+    }    
+};
+
+// Define a computed property to determine if 'insurer' should be disabled
+const isCCDisabled = computed(() => {
+  return (
+          paymentMethodsForm.frequency === 'monthly' || 
+          paymentMethodsForm.frequency === 'quarterly' || 
+          paymentMethodsForm.frequency === 'semi_annual'
+        
+          );
+});
 
 const frequencyTypes = [
   { value: '', label: 'Select Frequency'},
@@ -94,13 +159,7 @@ const discountReasons = [
   { value: 'custom_discount_reason', label: 'Custom discount reason' },  
 ];
 
-const totalPayments = [
-  { value: '1', label: '1'},
-  { value: '2', label: '2'},
-  { value: '3', label: '3'},
-  { value: '4', label: '4'},
-  { value: '5', label: '5'},
-];
+
 
 const generateCCLink = async code => {
   try {
@@ -380,89 +439,148 @@ const providerId = computed(() => {
                <span>{{ paymentTooltipEnum.COLLECTION_DATE }}</span>
             </template>
           </x-tooltip>
+          <x-tooltip>
+            <x-field label="TOTAL PRICE" class="w-full">
+              <x-input
+                  class="w-full"
+                  value="100"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+               <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
+            </template>
+          </x-tooltip>         
+          <x-tooltip>
+            <x-field label="COLLECTED BY" class="w-full" required>
+            <select
+                class="beautiful-select"
+                v-model="paymentMethodsForm.collection_type"
+                :options="collectionTypes"
+                :rules="[rules.isRequired]"
+                @change="handleCollectionTypeChange"
+                >
+                <template v-for="option in collectionTypes" :key="option.value">
+                    <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                </template>
+            </select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.COLLECTED_BY }}</span>
+            </template>
+          </x-tooltip>
 
-          <x-field label="TOTAL PRICE">
-            <x-input
+          <x-tooltip>
+            <x-field label="PROVIDER NAME" class="w-full">
+              <x-input
+                  class="w-full"
+                  value="provider name"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
+            </template>    
+          </x-tooltip>
+          
+          <x-tooltip>
+            <x-field label="FREQUENCY" class="w-full" required>
+              
+              <select
+                  class="beautiful-select"
+                  v-model="paymentMethodsForm.frequency"
+                  :options="frequencyTypes"
+                  :rules="[rules.isRequired]"
+                  @change="handleFrequencyTypeChange"
+                  >
+                  <template v-for="option in frequencyTypes" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                  </template>
+              </select>
+              
+              
+              
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.FREQUENCY }}</span>
+            </template>
+          </x-tooltip>
+
+          <x-tooltip>
+            <x-field label="PLAN NAME" class="w-full">
+              <x-input
+                  class="w-full"
+                  value="plan name"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PLAN_NAME }}</span>
+            </template>
+          </x-tooltip>  
+
+          <x-tooltip>
+            <x-field label="PAYMENT NO" class="w-full" required>
+              
+              <select
+                  class="beautiful-select"
+                  v-model="paymentMethodsForm.payment_no"
+                  :options="totalPayments"
+                  :rules="[rules.isRequired]"
+                  :disabled="!isPaymentNoEnabled"
+                  >
+                  <template v-for="option in totalPayments" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                  </template>
+              </select>            
+              
+              
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_NO }}</span>
+            </template>
+          </x-tooltip>
+          
+          <x-tooltip>
+            <x-field label="PAYMENT STATUS" class="w-full">
+              <x-input
+                  class="w-full"
+                  value="payment status"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
+            </template>
+          </x-tooltip>
+          
+          <x-tooltip>
+            <x-field label="CREDIT APPROVAL" class="w-full">
+              <x-select
                 class="w-full"
-                value="100"
-                :disabled="true"
-              />
-          </x-field>          
-         
-          <x-field label="COLLECTED BY" required>
-           <select
-              class="w-full beautiful-select"
-              v-model="paymentMethodsForm.collection_type"
-              :options="collectionTypes"
-              :rules="[rules.isRequired]"
+                v-model="paymentMethodsForm.credit_approval"                            
+                :options="creditApprovalReasons"              
               >
-              <template v-for="option in collectionTypes" :key="option.value">
-                <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>
-              </template>
-           </select>
-          </x-field>
-
+              </x-select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.CREDIT_APPROVAL }}</span>
+            </template>
+          </x-tooltip>
           
-          <x-field label="PROVIDER NAME">
-            <x-input
+          <x-tooltip>
+            <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)" class="w-full">
+              <x-select
                 class="w-full"
-                value="provider name"
-                :disabled="true"
-              />
-          </x-field>     
-          
-          
-          <x-field label="FREQUENCY" required>
-            <x-select
-              class="w-full"
-              v-model="paymentMethodsForm.frequency"
-              :options="frequencyTypes"
-              :rules="[rules.isRequired]"
-            >
-            </x-select>
-          </x-field>
-
-          <x-field label="PLAN NAME">
-            <x-input
-                class="w-full"
-                value="plan name"
-                :disabled="true"
-              />
-          </x-field>    
-
-          <x-field label="PAYMENT NO" required>
-            <x-select
-              class="w-full"
-              v-model="paymentMethodsForm.payment_no"
-              :options="totalPayments"
-              :rules="[rules.isRequired]"
-            >
-            </x-select>
-          </x-field> 
-          
-          <x-field label="PAYMENT STATUS">
-            <x-input
-                class="w-full"
-                value="payment status"
-                :disabled="true"
-              />
-          </x-field>   
-          <x-field label="CREDIT APPROVAL">
-            <x-select
-              class="w-full"
-              v-model="paymentMethodsForm.credit_approval"                            
-              :options="creditApprovalReasons"              
-            >
-            </x-select>
-          </x-field>          
-          <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)">
-            <x-select
-              class="w-full"
-              :options="discountTypes"
-              v-model="paymentMethodsForm.discount"              
-            >
-            </x-select>
-          </x-field>
+                :options="discountTypes"
+                v-model="paymentMethodsForm.discount"              
+              >
+              </x-select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+            </template>
+          </x-tooltip>
           
         </div>
         <x-divider class="mb-4 mt-1" />
@@ -470,11 +588,56 @@ const providerId = computed(() => {
         <div class="w-full grid">
           <!-- Header -->
           <div class="flex w-full">
-            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">PAYMENT NO *</span></div>
-            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">PAYMENT METHOD *</span></div>
-            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">TOTAL AMOUNT *</span></div>
-            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">DUE DATE</span></div>
-            <div class="w-1/5 px-2"><span class="text-primary-800 font-semibold">DOCUMENTS</span></div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-primary-800 font-semibold">
+                  PAYMENT NO *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_NO_2 }}</span>
+                </template>
+              </x-tooltip>              
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-primary-800 font-semibold">
+                  PAYMENT METHOD *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_METHOD }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-primary-800 font-semibold">
+                  TOTAL AMOUNT *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-primary-800 font-semibold">
+                  DUE DATE *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.DUE_DATE }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-primary-800 font-semibold">
+                  DOCUMENTS *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.DOCUMENTS }}</span>
+                </template>
+              </x-tooltip>
+            </div>
           </div>
           
           <!-- Fields -->
@@ -482,14 +645,24 @@ const providerId = computed(() => {
           <div class="flex w-full custombreak">
             <div class="w-1/5 px-2">{{ count }}</div>
             <div class="w-1/5 px-2">
-                <x-select
-                class="w-full md:col-span-2"
-                name="paymentMethod[]"
+
+              <select
+                class="beautiful-select"
                 v-model="paymentMethodsForm.payment_method"
-                :options="paymentMethods"                
-                :rules="[rules.isRequired]"
+                :options="paymentMethods"
+                :rules="[rules.isRequired]"                
               >
-              </x-select>
+                <!-- Use the title attribute to set the tooltip text -->
+                <option
+                  v-for="option in paymentMethods"
+                  :key="option.value"
+                  :value="option.value"
+                  :title="option.tooltip"
+                  :disabled="option.value === 'CC' && isCCDisabled"
+                >{{ option.label }}</option>
+              </select>
+
+               
             </div>
             <div class="w-1/5 px-2">
                 <x-input
