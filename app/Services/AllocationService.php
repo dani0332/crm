@@ -151,7 +151,7 @@ class AllocationService
             return;
         }
 
-        info('Previous assignment type is : '. $previousAssignmentType);
+        info('Previous assignment type is : '.$previousAssignmentType);
 
         //Constants for system assigned types
         $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
@@ -205,7 +205,7 @@ class AllocationService
                 // Determine if the previous assignment was system-assigned
                 $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
 
-                info('Previous assignment type was either system assigned or system reassigned : '. $isSystemAssigned);
+                info('Previous assignment type was either system assigned or system reassigned : '.$isSystemAssigned);
 
                 // Update allocation counts based on assignment type (if applicable)
                 if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
