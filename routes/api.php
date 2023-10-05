@@ -32,7 +32,7 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/car', [CarQuoteController::class, 'index']);
     Route::post('quotes/car/{uuid}/update-lead-status', [CarQuoteController::class, 'updateLeadStatus']);
     Route::get('quotes/car/{uuid}/ocb-details', [CarQuoteController::class, 'getOcbDetails']);
-    Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
+
 
     Route::post('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'store']);
     Route::get('quotes/{quoteType}/{quoteUuid}/documents', [QuoteDocumentController::class, 'index']);
@@ -40,4 +40,6 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/{quoteType}/document-types', [QuoteDocumentController::class, 'getQuoteDocumentsToReceive']);
     Route::post('quotes/{quoteType}/export-plans-pdf', [GenericLobController::class, 'exportPlansPdf'])->name('exportPlansPdf');
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
+
+    Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
 });
