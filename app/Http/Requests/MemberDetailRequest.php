@@ -29,18 +29,18 @@ class MemberDetailRequest extends FormRequest
             'nationality_id' => 'nullable',
             'first_name' => 'nullable',
             'relation_code' => 'nullable',
+            'quote_request_id' => 'required'
         ];
 
         if (strtolower(request()->quote_type) == strtolower(quoteTypeCode::Health)) {
-            $rules['health_quote_request_id'] = 'required';
-            $rules['gender'] = 'required';
+            $rules['health_quote_request_id'] = 'sometimes|required';
+            $rules['gender'] = 'sometimes|required';
             $rules['emirate_of_your_visa_id'] = 'nullable';
             $rules['member_category_id'] = 'nullable';
             $rules['salary_band_id'] = 'nullable';
             $rules['modelType'] = '';
-        } else {
-            $rules['quote_request_id'] = 'required';
         }
+
 
         return $rules;
     }

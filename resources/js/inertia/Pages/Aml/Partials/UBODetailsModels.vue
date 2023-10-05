@@ -1,5 +1,4 @@
 <script setup>
-
     const props = defineProps({
         quoteDetails: Object,
         quoteType: Object,
@@ -10,6 +9,7 @@
         entity_id: Number
     });
 
+    const notification = useToast();
     const dateFormat = date =>
         date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
@@ -27,10 +27,10 @@
         }));
     });
 
-    const addNewUBODetails = ref(false);
+    const addUBODetails = ref(false);
     const editUBODetails = ref(false);
-    const addNewUBOTrigger = () => {
-        addNewUBODetails.value = !addNewUBODetails.value;
+    const addUBOToggle = () => {
+        addUBODetails.value = !addUBODetails.value;
     };
     const UBODetailsTable = reactive({
         isLoading: false,
@@ -59,29 +59,28 @@
     });
 
     const uboForm = reactive({
-        customer_id: props.quoteDetails.customer_id,
         quote_type: props.quoteType.code,
         customer_type: props.customerType,
+        quote_request_id: props.quoteDetails.id,
+        customer_id: props.quoteDetails.customer_id,
         entity_id: props.entity_id,
         id: null,
         first_name: '',
         dob: null,
         relation_code: null,
-        nationality_id: null,
-        quote_request_id: props.quoteDetails.id,
-
+        nationality_id: null
     });
 
     function onEditUBO(data) {
-        addNewUBODetails.value = true;
+        addUBODetails.value = true;
         editUBODetails.value = true;
+        uboForm.quote_type = props.quoteType.code;
+        uboForm.quote_request_id = data.quote_request_id;
         uboForm.id = data.id;
         uboForm.first_name = data.first_name;
         uboForm.dob = data.dob;
         uboForm.relation_code = data.relation_code;
         uboForm.nationality_id = data.nationality_id;
-        uboForm.quote_request_id = data.quote_request_id;
-        uboForm.quote_type = props.quoteType.code;
     }
 
     const onUBOSubmit = isValid => {
@@ -90,7 +89,7 @@
             axios.put(`/members/${uboForm.id}`, uboForm)
                 .then(res => {
                     notification.success({
-                        title: 'Member Updated Successfully',
+                        title: 'UBO Updated Successfully',
                         position: 'top',
                     });
                     uboForm.reset();
@@ -105,11 +104,11 @@
             axios.post(`/members`, uboForm)
                 .then(res => {
                     notification.success({
-                        title: 'Member Added Successfully',
+                        title: 'UBO Added Successfully',
                         position: 'top',
                     });
                     uboForm.reset();
-                    addNewUBODetails.value = false;
+                    addUBODetails.value = false;
                 })
                 .catch(err => {
                     notification.error({
@@ -123,62 +122,62 @@
 
 <template>
     <Transition name="fade">
-        <div v-if="addNewUBODetails" class="mb-4">
-            <p class="font-semibold text-center mb-5">Add UBO Details</p>
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Full Name</dt>
-                    <dd>
-                        <x-input
-                            v-model="uboForm.first_name"
-                            placeholder="Member Name"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Nationality</dt>
-                    <dd>
-                        <ComboBox
-                            v-model="uboForm.nationality_id"
-                            :single="true"
-                            placeholder="Select Nationality"
-                            :options="nationalitiesOptions"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Date of Birth</dt>
-                    <dd>
-                        <DatePicker
-                            v-model="uboForm.dob"
-                            placeholder="Date of Birth"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
-                <div class="grid sm:grid-cols-2">
-                    <dt class="font-medium">Position</dt>
-                    <dd>
-                        <x-select
-                            v-model="uboForm.relation_code"
-                            placeholder="Select Position"
-                            :options="uboRelationOptions"
-                            class="w-full"
-                        />
-                    </dd>
-                </div>
+        <div v-if="addUBODetails" class="mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg mb-3">
+                Add UBO Details
+            </h3>
+            <x-button
+                v-if="addUBODetails"
+                @click.prevent="addUBOToggle"
+                size="sm"
+                color="red"
+            >
+                Hide
+            </x-button>
+            <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
+                <x-field label="Full Name">
+                    <x-input
+                        v-model="uboForm.first_name"
+                        placeholder="Full Name"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Nationality">
+                    <ComboBox
+                        :single="true"
+                        v-model="uboForm.nationality_id"
+                        placeholder="Select Nationality"
+                        :options="nationalitiesOptions"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Date of Birth">
+                    <DatePicker
+                        v-model="uboForm.dob"
+                        placeholder="Date of Birth"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Position">
+                    <x-select
+                        v-model="uboForm.relation_code"
+                        placeholder="Select Position"
+                        :options="uboRelationOptions"
+                        class="w-full"
+                    />
+                </x-field>
             </dl>
         </div>
     </Transition>
+    <x-divider v-if="addUBODetails" class="mb-3 mt-1" />
+
     <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
             UBO Details
             <x-tag size="sm">{{ uboDetails.length || 0 }}</x-tag>
         </h3>
         <x-button
-            v-if="addNewUBODetails"
+            v-if="addUBODetails"
             @click.prevent="onUBOSubmit"
             :loading="uboForm.loading"
             size="sm"
@@ -187,8 +186,8 @@
             Submit UBO Details
         </x-button>
         <x-button
-            v-if="!addNewUBODetails"
-            @click.prevent="addNewUBOTrigger"
+            v-if="!addUBODetails"
+            @click.prevent="addUBOToggle"
             size="sm"
             color="orange"
         >

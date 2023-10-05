@@ -6,10 +6,11 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Http\Requests\MemberDetailRequest;
-use App\Models\Entity;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\QuoteMemberDetail;
+use App\Models\TravelMemberDetail;
+use App\Models\TravelQuote;
 use App\Services\LookupService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -27,17 +28,50 @@ class MembersDetailController extends Controller
     public function store(MemberDetailRequest $request)
     {
         if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health)) {
-            HealthMemberDetail::create($request->validated());
-            HealthQuote::find($request->health_quote_request_id)->update(['quote_updated_at' => Carbon::now()]);
+            $healthMemberDetails = $request->validated();
+
+            if(!in_array('health_quote_request_id', $request->validated())) {
+                $healthMemberDetails = array_merge([
+                    'health_quote_request_id' => $request->quote_request_id,
+                    'customer_id' => $request->customer_id,
+                ], $healthMemberDetails);
+                unset($healthMemberDetails['quote_request_id']);
+            }
+
+            $healthMemberCount = HealthMemberDetail::where('customer_id', $healthMemberDetails['customer_id'])->count();
+            HealthMemberDetail::create(array_merge($healthMemberDetails, [
+                'code' => CustomerTypeEnum::IndividualShort .'-'. $healthMemberDetails['customer_id'] .'-'. ++$healthMemberCount
+            ]));
+
+            HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
+
+        } elseif(strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel)) {
+            $travelMemberDetails = $request->validated();
+
+            if(!in_array('travel_quote_request_id', $request->validated())) {
+                $travelMemberDetails = array_merge([
+                    'travel_quote_request_id' => $request->quote_request_id,
+                    'customer_id' => $request->customer_id,
+                ], $travelMemberDetails);
+                unset($travelMemberDetails['quote_request_id']);
+            }
+
+            $travelMemberCount = TravelMemberDetail::where('customer_id', $travelMemberDetails['customer_id'])->count();
+            TravelMemberDetail::create(array_merge($travelMemberDetails, [
+                'code' => CustomerTypeEnum::IndividualShort .'-'. $travelMemberDetails['customer_id'] .'-'. ++$travelMemberCount
+            ]));
+
+            TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
+
         } else {
             $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
 
             if($quoteObject) {
                 $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));
                 $quoteMemberCount = QuoteMemberDetail::where([
-                    'quote_request_id' => $request->quote_request_id,
+                    'customer_id' => $request->customer_id,
                     'quote_type_id' => $quoteTypeId,
-                    'customer_type' => $request->customer_type
+                    'customer_type' => $request->customer_type,
                 ])->count();
 
                 $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?
@@ -84,7 +118,16 @@ class MembersDetailController extends Controller
     public function update(MemberDetailRequest $request, $id)
     {
         if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health)) {
-            HealthMemberDetail::findOrFail($id)->update($request->validated());
+            $healthMemberDetails = $request->validated();
+
+            if(!in_array('health_quote_request_id', $request->validated())) {
+                $healthMemberDetails = array_merge([
+                    'health_quote_request_id' => $request->quote_request_id
+                ], $healthMemberDetails);
+                unset($healthMemberDetails['quote_request_id']);
+            }
+
+            HealthMemberDetail::findOrFail($id)->update($healthMemberDetails);
 
             $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
             HealthQuote::where('primary_member_id', $id)->update($healthMemberData);
@@ -94,7 +137,22 @@ class MembersDetailController extends Controller
                 $heathLeadData = array_merge($heathLeadData, $healthMemberData);
             }
 
-            HealthQuote::find($request->health_quote_request_id)->update($heathLeadData);
+            HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update($heathLeadData);
+
+        } elseif(strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel)) {
+            $travelMemberDetails = $request->validated();
+
+            if(!in_array('travel_quote_request_id', $request->validated())) {
+                $travelMemberDetails = array_merge([
+                    'travel_quote_request_id' => $request->quote_request_id,
+                ], $travelMemberDetails);
+                unset($travelMemberDetails['quote_request_id']);
+            }
+
+            TravelMemberDetail::findOrFail($id)->update($travelMemberDetails);
+            TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
+            TravelQuote::where('primary_member_id', $id)->update(['dob' => $travelMemberDetails['dob']]);
+
         } else {
             $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
             $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));

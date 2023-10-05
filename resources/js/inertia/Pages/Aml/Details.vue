@@ -14,8 +14,6 @@ const props = defineProps({
     emirates: Object,
     industryType: Object,
     customerTypeEnum: Object,
-
-
     businessTypeCode: Object,
     businessCoverTypeText: Array,
     businessCommuModeText: Array,
@@ -38,7 +36,6 @@ const loader = reactive({
 
 const modals = reactive({
     insuranceForm: false,
-    insuredDetailConfirm: false
 });
 
 const tableHeader = [
@@ -277,11 +274,11 @@ const dateToYear = date => {
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Home">
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CREATED AT</dt>
-                            <dd>{{ dateAndTimeFormat(quoteRequest.created_at) }}</dd>
+                            <dd>{{ quoteRequest.created_at }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">UPDATED AT</dt>
-                            <dd>{{ dateAndTimeFormat(quoteRequest.updated_at) }}</dd>
+                            <dd>{{ quoteRequest.updated_at }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">I AM</dt>
@@ -556,7 +553,7 @@ const dateToYear = date => {
 
         <!-- AML Screening Models Start -->
         <EntityModel
-            v-if="quoteType.code === 'Business'"
+            v-if="quoteType.code === quoteTypeCodeEnum.Business"
             v-model="modals.insuranceForm"
             :quoteType="quoteType"
             :quoteDetails="quoteRequest"
