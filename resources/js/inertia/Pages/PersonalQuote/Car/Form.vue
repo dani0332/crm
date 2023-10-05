@@ -14,6 +14,12 @@ const props = defineProps({
 const { isRequired, isEmail } = useRules();
 const isEmptyField = ref(false);
 const isError = ref(false);
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
 
 const isEdit = computed(() => {
 	return route().current().includes('edit');
@@ -112,7 +118,7 @@ const getModelDetails = (onchange) => {
 			
 			if (item) {
 				notification.success({
-					title: 'Assumptions found',
+					title: 'Vehicle Assumptions Data Found',
 					position: 'top',
 				});
 				quoteForm.cylinder = item.cylinder;
@@ -122,7 +128,7 @@ const getModelDetails = (onchange) => {
 			}
 			else{
 				notification.error({
-					title: 'Assumptions not found',
+					title: 'No Vehicle Assumptions Data Found',
 					position: 'top',
 				});
 			}
@@ -189,6 +195,9 @@ const setCarMake = (id) => {
 			<h2 class="text-xl font-semibold">
 				{{ isEdit ? 'Edit' : 'Create' }} Car
 			</h2>
+			<div class="alert" v-if="isEdit && hasRole(rolesEnum.CarManager)">
+				Only Renewal Batch # field will be updated
+			</div>
 			<div>
 				<Link :href="route('car.index')">
 				<x-button size="sm" color="#1d83bc" tag="div"> Car List </x-button>
@@ -206,12 +215,13 @@ const setCarMake = (id) => {
 					</ul>
 				</x-alert>
 
-				<x-field label="RENEWAL BATCH" required v-if="isEdit">
+				<x-field label="RENEWAL BATCH" v-if="isEdit" :required="hasRole(rolesEnum.CarManager)">
 					<x-input 
 						v-model="quoteForm.renewal_batch" 
-						:rules="[isRequired]" 
+						:rules="hasRole(rolesEnum.CarManager) ? [isRequired] : []"
 						class="w-full"
 						:error="quoteForm.errors.renewal_batch"
+						:disabled="!hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool]) || (!can(permissionEnum.RenewalBatchUpdate) && !!quoteForm.renewal_batch)"
 						/>
 				</x-field>
 
@@ -233,7 +243,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="DATE OF BIRTH" required>
-					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" />
+					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" :disabled="isEdit" />
 				</x-field>
 
 				<x-field label="NATIONALITY" required>
@@ -310,7 +320,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
-					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]"  :error="quoteForm.errors.car_value_tier"/>
+					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]"  :error="quoteForm.errors.car_value_tier" :disabled="isEdit && !hasRole(rolesEnum.LeadPool)"/>
 				</x-field>
 
 				<x-field label="VEHICLE TYPE" required>
