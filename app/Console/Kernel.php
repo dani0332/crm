@@ -17,6 +17,12 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         Commands\AddBatchNumber::class,
+        Commands\TierAssignment::class,
+        Commands\UpdateUserStatus::class,
+        Commands\QuoteAllocation::class,
+        Commands\LeadsReassignment::class,
+        Commands\ResetLeadAllocationCounts::class,
+        Commands\UpdateHealthStatus::class,
     ];
 
     /**
@@ -43,13 +49,7 @@ class Kernel extends ConsoleKernel
             ->at('9:00');
 
         $schedule
-            ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);
-
-        $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
-
-        $schedule
-            ->command('telescope:prune --hours=48')->daily()->onOneServer()->withoutOverlapping(1);
 
         $schedule
             ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
@@ -60,7 +60,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('reset:user-allocation-count')->dailyAt('23:58');
+        $schedule->command('ResetLeadAllocationCounts:cron')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
 
     }
 

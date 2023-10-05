@@ -15,7 +15,7 @@ class ResetLeadAllocationCounts extends Command
      *
      * @var string
      */
-    protected $signature = 'reset:user-allocation-count';
+    protected $signature = 'ResetLeadAllocationCounts:cron';
 
     /**
      * The console command description.
