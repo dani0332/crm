@@ -582,7 +582,7 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
             $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::HOME->id());
             $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
-
+            $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
 
             $payments->each(function ($payment) {
@@ -641,6 +641,7 @@ class CRUDController extends Controller
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
+                'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
@@ -649,6 +650,7 @@ class CRUDController extends Controller
                 'membersDetails' => $membersDetail,
                 'memberRelations' => $memberRelations,
                 'nationalities' => $nationalities,
+                'industryType' => $industryType
             ]);
         }
 
@@ -673,7 +675,7 @@ class CRUDController extends Controller
             $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-
+            $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
 
             $documentTypes = collect($documentTypes)->groupBy('category');
@@ -754,6 +756,7 @@ class CRUDController extends Controller
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
+                'quoteTypeId' => $quoteTypeId,
                 'notProductionApproval' => $notProductionApproval,
                 'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
@@ -772,6 +775,7 @@ class CRUDController extends Controller
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                 ],
                 'customerTypeEnum' => CustomerTypeEnum::asArray(),
+                'industryType' => $industryType
             ]);
         } else {
             return view('shared.show', compact([

@@ -52,4 +52,8 @@ class HealthMemberDetail extends Model
     {
         return $this->hasMany(QuoteDocument::class, 'member_detail_id');
     }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 }

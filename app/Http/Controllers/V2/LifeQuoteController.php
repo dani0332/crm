@@ -91,7 +91,7 @@ class LifeQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $nationalities = NationalityRepository::withActive()->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
-
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
@@ -117,6 +117,7 @@ class LifeQuoteController extends Controller
 
         return inertia('LifeQuote/Show', [
             'quoteType' => QuoteTypes::LIFE,
+            'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
             'activities' => $activitiesData,
@@ -129,7 +130,8 @@ class LifeQuoteController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
-            'membersDetails' => $membersDetails
+            'membersDetails' => $membersDetails,
+            'industryType' => $industryType
         ]);
     }
 

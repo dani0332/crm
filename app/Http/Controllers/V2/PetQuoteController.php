@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -92,6 +93,7 @@ class PetQuoteController extends Controller
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::PET->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::PET->id(),
@@ -99,9 +101,7 @@ class PetQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::PET->value, $quote->code);
-
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::PET->id(), $quote->id);
 
         return inertia('PetQuote/Show', [
@@ -124,6 +124,8 @@ class PetQuoteController extends Controller
             'membersDetails' => $membersDetail,
             'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
+            'quoteTypeId' => QuoteTypeId::Pet,
+            'industryType' => $industryType
         ]);
     }
 

@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
@@ -92,7 +93,12 @@ class TravelQuoteService extends BaseService
             'direction_code',
             'coverage_code',
             'tqr.primary_member_id',
-            DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = tqr.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type'),
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Travel.' AND quote_request_id = tqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
             'c.emirates_id_number',

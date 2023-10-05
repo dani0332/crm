@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -87,7 +88,12 @@ class LifeQuoteRepository extends BaseRepository
             'paymentStatus', 'customer.additionalContactInfo'])
             ->select([
                 'life_quote_request.*',
-                \DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = life_quote_request.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type')
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Life.' AND quote_request_id = life_quote_request.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type')
             ])->firstOrFail();
     }
 
