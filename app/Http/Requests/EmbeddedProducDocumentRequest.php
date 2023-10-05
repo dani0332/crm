@@ -24,10 +24,22 @@ class EmbeddedProducDocumentRequest extends FormRequest
     public function rules()
     {
         return [
-            'epId' => 'required',
+            'epId' => 'required|exists:embedded_products,id',
             'modelType' => 'required',
             'quoteId' => 'required',
 
+        ];
+    }
+
+    /**
+     * @return string[]
+     */
+    public function messages()
+    {
+        return [
+            'epId.required' => 'EP id is required',
+            'modelType.required' => 'Model Type is required',
+            'quoteId.required' => 'Quote id is required',
         ];
     }
 }
