@@ -398,6 +398,9 @@ class CarAllocationService extends AllocationService
     {
         info('About to assign car lead with UUID: '.$lead->uuid.' to user with ID: '.$userId);
 
+        //Store the previous Assignment Type
+        $previousAssignmentType = $lead->assignment_type;
+
         // Store the previous advisor ID.
         $previousUserId = $lead->advisor_id;
 
@@ -407,12 +410,12 @@ class CarAllocationService extends AllocationService
         info('Advisor and tier assignment completed for lead with UUID: '.$carQuote->uuid.' to user with ID: '.$userId.' and tier name: '.$tier->name);
 
         // Update the car lead detail record and store the previous advisor assigned date.
-        $previousAdvisorAssignedDate = $this->updateCarLeadDetailRecord($lead->id);
+        $previousAdvisorAssignedDate = $this->updateCarLeadDetailRecord($carQuote->id);
 
         info('Updating user record in lead allocation table with count increment for User ID: '.$userId);
 
         // Depending on the assignment type, either add or adjust allocation counts.
-        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate);
+        $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($userId) : $this->adjustAllocationCounts($userId, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
 
         info('Completed assignment of lead, and lead count update is done for quote with code: '.$carQuote->code);
     }
