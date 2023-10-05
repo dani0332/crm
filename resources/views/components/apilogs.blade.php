@@ -31,7 +31,7 @@ use Carbon\Carbon;
                               <td>{{ $apilog->quote_uuid }}</td>
                               <td>{{ $apilog->call_type }}</td>
                               <td style="color: {{ ($apilog->status === 'passed' || $apilog->status === 'N/A') ? 'green' : 'red' }}">{{ strtoupper($apilog->status) }}</td>
-                              <td>{{ $apilog->carQuotePlanDetails->provider_name }}</td>
+                              <td>{{ $apilog->insuranceProvider->text }}</td>
                               <td>{{ date('d/m/Y H:i:s',strtotime($apilog->created_at)) }}</td>
                               <td>
                               <button class="btn btn-warning btn-sm view-button"
@@ -39,7 +39,7 @@ use Carbon\Carbon;
                                     data-ref-id="{{ $apilog->quote_uuid }}"
                                     data-call-type="{{ $apilog->call_type }}"
                                     data-status="{{ strtoupper($apilog->status) }}"
-                                    data-provider-name="{{ $apilog->carQuotePlanDetails->provider_name }}"
+                                    data-provider-name="{{ $apilog->insuranceProvider->text }}"
                                     data-request="{{ $apilog->request }}"
                                     data-response="{{ $apilog->response }}"
                                     data-created-at="{{ date('d/m/Y H:i:s',strtotime($apilog->created_at)) }}"
