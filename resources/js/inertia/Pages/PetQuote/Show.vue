@@ -19,6 +19,7 @@ defineProps({
   isBetaUser: Boolean,
   storageUrl: String,
   quoteType: String,
+  quoteTypeId: Number,
   can: Object,
   activities: Object,
   advisors: Object,
@@ -29,7 +30,8 @@ defineProps({
   customerTypeEnum: Object,
   nationalities: Array,
   memberRelations: Array,
-  membersDetails: Array
+  membersDetails: Array,
+    industryType: Object
 });
 
 const page = usePage();
@@ -77,6 +79,13 @@ const onCreateDuplicate = isValid => {
   });
 };
 
+const industryTypeOptions = computed(() => {
+    return page.props.industryType.map(indType => ({
+        value: indType.code,
+        label: indType.text,
+    }));
+});
+
 const isProfileUpdateAllow = computed(() => {
     return hasAnyRole([
         page.props.rolesEnum.PA,
@@ -112,6 +121,82 @@ const updateProfileDetails = isValid => {
                 });
             });
         },
+    });
+}
+
+const entityForm = reactive({
+    entity_id: null,
+    trade_license:  null,
+    company_address: null,
+    entity_type: null,
+    industry_type: null,
+    emirate_of_registration: null,
+});
+
+const entityDetailsFound = ref(false);
+const tradeLicenseEntity = reactive({
+    entity_id: null,
+    trade_license: null,
+    company_name: null,
+    company_address: null
+});
+
+const searchByTradeLicense = () => {
+    let url = `/kyc/aml-fetch-entity?trade_license=${entityForm.trade_license}`;
+    axios.get(url)
+        .then(res => {
+            if(res.data.status) {
+                let response = res.data.response;
+                entityDetailsFound.value = true;
+                tradeLicenseEntity.entity_id = response.id;
+                tradeLicenseEntity.trade_license = response.trade_license_no;
+                tradeLicenseEntity.company_name = response.company_name;
+                tradeLicenseEntity.company_address = response.company_address;
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+
+            } else {
+                notification.error({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+};
+
+const linkEntity = () => {
+    let entityDetails = {
+        quote_type_id: page.props.quoteTypeId,
+        quote_request_id: page.props.quote.id,
+        entity_id: tradeLicenseEntity.entity_id
+    };
+    axios.post(route('link-entity-details'), entityDetails)
+        .then(res => {
+            if(res.data.status) {
+                let response = res.data.response;
+
+                // Append Entity data in fields
+                entityForm.trade_license = response.trade_license_no;
+                entityForm.company_name = response.company_name;
+                entityForm.company_address = response.company_address;
+                entityForm.entity_type = response.entity_type_code;
+                entityForm.industry_type = response.industry_type_code;
+                entityForm.emirate_of_registration = response.emirate_of_registration_id;
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+                entityDetailsFound.value = false;
+            }
+        }).catch(err => {
+        console.log(err);
     });
 }
 
@@ -434,6 +519,96 @@ const updateProfileDetails = isValid => {
                           </dd>
                       </div>
                   </dl>
+                  <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">FIRST NAME</dt>
+                          <dd>{{ quote.first_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">LAST NAME</dt>
+                          <dd>{{ quote.last_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">MOBILE NUMBER</dt>
+                          <dd>{{ quote.mobile_no }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMAIL</dt>
+                          <dd>{{ quote.email }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">COMPANY NAME</dt>
+                          <dd>{{ quote.email }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">TRADE LICENSE NO</dt>
+                          <dd>
+                              <x-input
+                                  v-model="entityForm.trade_license"
+                                  placeholder="TRADE LICENSE NO"
+                                  type="text"
+                                  class="w-full"
+                              />
+                              <x-button
+                                  @click.prevent="searchByTradeLicense"
+                                  size="xs"
+                                  color="primary"
+                              >
+                                  Search
+                              </x-button>
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                          <dd>
+                              <ComboBox
+                                  v-model="entityForm.emirate_of_registration"
+                                  :single="true"
+                                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                                  :options="emiratesOptions"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">COMPANY ADDRESS</dt>
+                          <dd>
+                              <x-input
+                                  v-model="entityForm.company_address"
+                                  placeholder="COMPANY ADDRESS"
+                                  type="text"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">INDUSTRY TYPE</dt>
+                          <dd>
+                              <ComboBox
+                                  :single="true"
+                                  v-model="entityForm.industry_type"
+                                  placeholder="SELECT INDUSTRY TYPE"
+                                  :options="industryTypeOptions"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">ENTITY TYPE</dt>
+                          <dd>
+                              <ComboBox
+                                  :single="true"
+                                  v-model="entityForm.entity_type"
+                                  placeholder="SELECT ENTITY TYPE"
+                                  :options="[
+                                    {label: 'Parent', value: 'Parent'},
+                                    {label: 'Sub Entity', value: 'SubEntity'}
+                                ]"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                  </dl>
                   <div class="flex justify-end">
                       <x-button
                           v-if="isProfileUpdateAllow"
@@ -449,6 +624,50 @@ const updateProfileDetails = isValid => {
               </div>
           </x-form>
       </div>
+      <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
+          <h3 class="font-semibold text-center text-lg mb-10">Entity found with the entered Trade License number</h3>
+          <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Trade License No</dt>
+                  <dd>
+                      <x-input
+                          v-model="tradeLicenseEntity.trade_license"
+                          placeholder="TRADE LICENSE NO"
+                          type="text"
+                          class="w-full"
+                          disabled
+                      />
+                  </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Company Name</dt>
+                  <dd>
+                      <x-input
+                          v-model="tradeLicenseEntity.company_name"
+                          placeholder="Company Name"
+                          type="text"
+                          class="w-full"
+                          disabled
+                      />
+                  </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Company Address</dt>
+                  <dd>
+                      <x-input
+                          v-model="tradeLicenseEntity.company_address"
+                          placeholder="Company Address"
+                          type="text"
+                          class="w-full"
+                          disabled
+                      />
+                  </dd>
+              </div>
+              <div class="text-left space-x-4" >
+                  <x-button size="sm" color="orange" @click.prevent="linkEntity"> Link </x-button>
+              </div>
+          </dl>
+      </x-modal>
 
       <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 

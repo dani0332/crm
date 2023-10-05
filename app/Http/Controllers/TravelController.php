@@ -150,7 +150,7 @@ class TravelController extends Controller
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
-
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
@@ -167,6 +167,7 @@ class TravelController extends Controller
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
+            'quoteTypeId' => QuoteTypeId::Travel,
             'dropdownSource' => $dropdownSource,
             'leadStatuses' => $dropdownSource['quote_status_id'],
             'advisors' => $advisors,
@@ -219,6 +220,7 @@ class TravelController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
+            'industryType' => $industryType
         ]);
     }
 

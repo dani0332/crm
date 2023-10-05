@@ -8,6 +8,7 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -109,7 +110,12 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
-            DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = hqr.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type'),
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Health.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
             'c.emirates_id_number',

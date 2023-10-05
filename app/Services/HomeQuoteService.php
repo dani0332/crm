@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -74,7 +75,12 @@ class HomeQuoteService extends BaseService
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
             'hqr.renewal_import_code',
-            DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = hqr.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type'),
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
             'c.insured_first_name',
             'c.insured_last_name',
             'c.emirates_id_number',

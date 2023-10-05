@@ -52,9 +52,5 @@ class HealthMemberDetail extends Model
     {
         return $this->hasMany(QuoteDocument::class, 'member_detail_id');
     }
-
-    public function relation()
-    {
-        return $this->belongsTo(Lookup::class, 'relation_code', 'code');
-    }
+    
 }

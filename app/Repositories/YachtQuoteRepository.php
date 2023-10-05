@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -94,7 +95,12 @@ class YachtQuoteRepository extends BaseRepository
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('IF(EXISTS (SELECT * FROM entities WHERE `customer_id` = '.$this->getTable().'.customer_id), "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'") as customer_type')
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Yacht.' AND quote_request_id = '.$this->getTable().'.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type')
             ])
             ->firstOrFail();
     }
