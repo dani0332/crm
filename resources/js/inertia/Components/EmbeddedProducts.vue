@@ -2,6 +2,7 @@
 const notification = useNotifications('toast');
 import { XButton } from '@indielayer/ui';
 
+const page = usePage();
 const props = defineProps({
   data: {
     type: Array,
@@ -170,7 +171,7 @@ const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
   let ep_code = selectedEp.value[0];
-  let paymentLink = props.paymentLink + '?code=' + ep_code + '&quoteTypeId=20';
+  let paymentLink = page.props.epLink + '?code=' + ep_code + '&quoteTypeId=1';
   copy(paymentLink);
   if (copied)
     notification.success({
