@@ -1,0 +1,1 @@
+<x-Apilogs  :auditableId="$auditableId" :auditableType="$auditableType"/>
