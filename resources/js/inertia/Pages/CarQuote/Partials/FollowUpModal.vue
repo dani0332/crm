@@ -31,7 +31,7 @@ const followUpForm = ref({
         <x-radio
           class="my-2"
           v-model="followUpForm.template_id"
-          :value="521"
+          :value="523"
           label="Holiday Template"
         />
         <div class="mb-2">
