@@ -171,7 +171,6 @@ const additionalContactDelete = id => {
 };
 
 const additionalContactDeleteConfirmed = () => {
-    const isEmail = confirmData.contactPrimary.key === 'email';
   router.post(
     `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
     {
