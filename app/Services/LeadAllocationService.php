@@ -184,14 +184,14 @@ class LeadAllocationService extends BaseService
                 DB::commit();
 
                 Haystack::build()
-                ->addJob(new GetQuotePlansJob($lead))
-                ->then(function () use ($lead) {
-                    if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                        && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                        // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
-                        IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
-                    }
-                })->dispatch();
+                    ->addJob(new GetQuotePlansJob($lead))
+                    ->then(function () use ($lead) {
+                        if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                            && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                            // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                        }
+                    })->dispatch();
 
                 return true;
             } catch (\Exception $e) {
