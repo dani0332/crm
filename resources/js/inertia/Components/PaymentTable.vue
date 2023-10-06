@@ -279,7 +279,7 @@ const approvePayment = payment => {
           <x-input
             class="w-full"
             :rules="[rules.isRequired, rules.amount]"
-            label="Capture Amount*"
+            label="Price Including VAT*"
             v-model="paymentMethodsForm.amount"
           />
 

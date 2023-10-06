@@ -747,7 +747,7 @@ class CarQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
 
-        if ($request->ajax()) {
+        // if ($request->ajax()) {
             $this->addLeadViewEligibilityCheck();
 
             if (
@@ -820,7 +820,7 @@ class CarQuoteService extends BaseService
                     }
                 }
             }
-        }
+        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -1065,6 +1065,8 @@ class CarQuoteService extends BaseService
             ->select(
                 'car_addon.text AS car_addon_text',
                 'car_addon_option.value AS car_addon_option_value',
+                'car_addon_option.price AS car_addon_option_price',
+                // 'car_addon_option.vat AS car_addon_option_vat',
                 'car_quote_request_addon.price AS car_quote_request_addon_price',
                 'car_addon.type AS car_addon_type'
             )
@@ -1453,7 +1455,7 @@ class CarQuoteService extends BaseService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
         if ($request->planIds) {
-            $data = explode(',', $request->planIds);
+            $data = $request->planIds;
             $isDisabled = $request->toggle;
             $plansArray = [];
             for ($i = 0; $i < count($data); $i++) {
@@ -1574,6 +1576,30 @@ class CarQuoteService extends BaseService
         }
     }
 
+    public function getValidationArray() : array 
+    {
+        return [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'dob' => 'required',
+            'nationality_id' => 'required',
+            'uae_license_held_for_id' => 'required',
+            'back_home_license_held_for_id' => 'nullable',
+            'year_of_manufacture' => 'required',
+            'emirate_of_registration_id' => 'required',
+            'car_type_insurance_id' => 'required',
+            'claim_history_id' => 'required',
+            'additional_notes' => 'nullable',
+            'car_value_tier' => 'required',
+            'seat_capacity' => 'required',
+            'cylinder' => 'required|string',
+            'vehicle_type_id' => 'required',
+            'car_make_id' => 'required', // ID
+            'car_model_id' => 'required', // ID
+            'currently_insured_with_id' => 'required|string'
+        ]; 
+    }
+    
     /**
      * @return bool[]
      */

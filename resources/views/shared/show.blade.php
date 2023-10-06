@@ -485,7 +485,7 @@ use App\Enums\GenericRequestEnum;
 
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
-        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" />
+        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" :record="$record"/>
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
