@@ -24,7 +24,7 @@ class HealthMemberDetail extends Model
     }
 
     public function memberCategory()
-    {
+    { 
         return $this->belongsTo(MemberCategory::class, 'member_category_id', 'id');
     }
 
@@ -52,8 +52,4 @@ class HealthMemberDetail extends Model
     {
         return $this->hasMany(QuoteDocument::class, 'member_detail_id');
     }
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 }
