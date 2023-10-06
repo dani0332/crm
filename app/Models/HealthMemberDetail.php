@@ -24,7 +24,7 @@ class HealthMemberDetail extends Model
     }
 
     public function memberCategory()
-    {
+    { 
         return $this->belongsTo(MemberCategory::class, 'member_category_id', 'id');
     }
 
