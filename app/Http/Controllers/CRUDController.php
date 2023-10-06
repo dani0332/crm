@@ -666,6 +666,8 @@ class CRUDController extends Controller
                     $listQuotePlans = [];
                 }
             }
+
+            $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Health, CustomerTypeEnum::Entity);
             $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
             $memberCategories = $this->lookupService->getMemberCategories();
             $salaryBands = $this->lookupService->getSalaryBands();
@@ -677,7 +679,7 @@ class CRUDController extends Controller
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Health);
-
+            $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $documentTypes = collect($documentTypes)->groupBy('category');
 
             $quoteDocuments = $quoteDocuments->map(function ($quoteDocument) {
@@ -734,6 +736,7 @@ class CRUDController extends Controller
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
+
                 'membersDetail' => $membersDetail,
                 'memberCategories' => $memberCategories,
                 'memberRelations' => $memberRelations,
@@ -775,7 +778,9 @@ class CRUDController extends Controller
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
                 ],
                 'customerTypeEnum' => CustomerTypeEnum::asArray(),
-                'industryType' => $industryType
+                'industryType' => $industryType,
+                'UBOsDetails' => $uboDetails,
+                'UBORelations' => $uboRelations
             ]);
         } else {
             return view('shared.show', compact([

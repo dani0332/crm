@@ -27,13 +27,13 @@ class MembersDetailController extends Controller
      */
     public function store(MemberDetailRequest $request)
     {
-        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health)) {
+        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health) && 
+            (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
             $healthMemberDetails = $request->validated();
 
             if(!in_array('health_quote_request_id', $request->validated())) {
                 $healthMemberDetails = array_merge([
                     'health_quote_request_id' => $request->quote_request_id,
-                    'customer_id' => $request->customer_id,
                 ], $healthMemberDetails);
                 unset($healthMemberDetails['quote_request_id']);
             }
@@ -45,7 +45,8 @@ class MembersDetailController extends Controller
 
             HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
 
-        } elseif(strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel)) {
+        } elseif(strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) && 
+            (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
             $travelMemberDetails = $request->validated();
 
             if(!in_array('travel_quote_request_id', $request->validated())) {

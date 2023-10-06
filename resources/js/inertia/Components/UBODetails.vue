@@ -80,7 +80,9 @@ const UBOForm = useForm({
     relation_code: null,
     nationality_id: null,
     quote_request_id: page.props.quote.id,
-    quote_type: props.quote_type
+    customer_id: page.props.quote.customer_id,
+    quote_type: props.quote_type,
+    customer_type: page.props.quote.customer_type
 });
 
 const addUBOModal = () => {

@@ -29,7 +29,8 @@ class MemberDetailRequest extends FormRequest
             'nationality_id' => 'nullable',
             'first_name' => 'nullable',
             'relation_code' => 'nullable',
-            'quote_request_id' => 'required'
+            'quote_request_id' => 'sometimes|required',
+            'customer_id' => 'required'
         ];
 
         if (strtolower(request()->quote_type) == strtolower(quoteTypeCode::Health)) {
