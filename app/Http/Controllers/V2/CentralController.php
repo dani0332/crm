@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -14,6 +15,8 @@ use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
 use App\Models\Customer;
+use App\Models\Entity;
+use App\Models\QuoteRequestEntityMapping;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -99,11 +102,23 @@ class CentralController extends Controller
 
     public function updateCustomerProfileDetails(CustomerProfileRequest $customerProfileRequest)
     {
-        $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Individual) {
+            $customer = Customer::where('id', $customerProfileRequest->customer_id)->firstOrFail();
 
-        $customer->update($customerProfileRequest->only([
-            'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date'
-        ]));
+            $customer->update($customerProfileRequest->only([
+                'insured_first_name', 'insured_last_name', 'emirates_id_number', 'emirates_id_expiry_date'
+            ]));
+        }
+
+        if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
+            Entity::updateOrCreate(['trade_license', $customerProfileRequest->trade_license], $customerProfileRequest->validated());
+
+            QuoteRequestEntityMapping::updateOrCreate([
+                'quote_type_id' => $customerProfileRequest->quote_type_id,
+                'quote_request_id' => $customerProfileRequest->quote_request_id
+            ], ['entity_id' => $customerProfileRequest->entity_id]);
+
+        }        
 
         return redirect()->back();
     }

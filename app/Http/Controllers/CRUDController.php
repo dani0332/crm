@@ -736,7 +736,6 @@ class CRUDController extends Controller
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
                 'ecomDetails' => $ecomDetails,
-
                 'membersDetail' => $membersDetail,
                 'memberCategories' => $memberCategories,
                 'memberRelations' => $memberRelations,

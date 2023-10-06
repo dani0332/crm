@@ -82,7 +82,8 @@ const UBOForm = useForm({
     quote_request_id: page.props.quote.id,
     customer_id: page.props.quote.customer_id,
     quote_type: props.quote_type,
-    customer_type: page.props.quote.customer_type
+    customer_type: page.props.quote.customer_type,
+    entity_id: page.props.quote.entity_id
 });
 
 const addUBOModal = () => {
@@ -148,7 +149,7 @@ const UBODelete = id => {
 };
 
 const UBODeleteConfirmed = () => {
-    UBOForm.delete(`/members/${props.quote_type}-${confirmDeleteData.UBO}`, {
+    UBOForm.delete(`/members/${props.quote.customer_type}-${props.quote_type}-${confirmDeleteData.UBO}`, {
         preserveScroll: true,
         onSuccess: () => {
             notification.success({
@@ -171,7 +172,7 @@ const UBODeleteConfirmed = () => {
                 UBO Details
                 <x-tag size="sm">{{ UBOsDetails.length || 0 }}</x-tag>
             </h3>
-            <x-button @click.prevent="addUBOModal" size="sm" color="orange">
+            <x-button v-if="page.props.quote.entity_id" @click.prevent="addUBOModal" size="sm" color="orange">
                 Add UBO
             </x-button>
         </div>
@@ -185,8 +186,8 @@ const UBODeleteConfirmed = () => {
             hide-rows-per-page
             hide-footer
         >
-            <template #item-index="{ index }">
-                <div>UBO {{ index }}</div>
+            <template #item-index="{ index, code }">
+                <div>{{ code ?? 'UBO ' + index }}</div>
             </template>
             <template #item-dob="{ dob }">
                 {{ dateFormat(dob) }}

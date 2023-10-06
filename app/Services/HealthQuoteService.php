@@ -119,7 +119,15 @@ class HealthQuoteService extends BaseService
             'c.insured_first_name',
             'c.insured_last_name',
             'c.emirates_id_number',
-            'c.emirates_id_expiry_date'
+            'c.emirates_id_expiry_date',
+            'qrem.entity_id',
+            'ent.code as entity_code',
+            'ent.trade_license_no',
+            'ent.company_name',
+            'ent.company_address',
+            'ent.entity_type_code',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -135,7 +143,12 @@ class HealthQuoteService extends BaseService
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
-            ->leftJoin('customer as c','hqr.customer_id', 'c.id');
+            ->leftJoin('customer as c','hqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function getEntity($id)

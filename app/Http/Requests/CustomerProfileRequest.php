@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\CustomerTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
 
@@ -24,13 +25,29 @@ class CustomerProfileRequest extends FormRequest
      */
     public function rules()
     {
-        return [
-            'customer_id' => 'required|int',
-            'insured_first_name' => 'required',
-            'insured_last_name' => 'required',
-            'emirates_id_number'=> 'required',
-            'emirates_id_expiry_date' => 'required|after_or_equal:today|date_format:Y-m-d'
-        ];
+        $rules = [];
+        if ($this->customer_type == CustomerTypeEnum::Individual) {
+            $rules = array_merge($rules, [
+                'customer_id' => 'required|int',
+                'insured_first_name' => 'required|max:200',
+                'insured_last_name' => 'required|max:200',
+                'emirates_id_number' => 'required',
+                'emirates_id_expiry_date' => 'required|after_or_equal:today|date_format:Y-m-d'
+            ]);
+        }
+
+        if ($this->customer_type == CustomerTypeEnum::Entity) {
+            $rules = array_merge($rules, [
+                'trade_license' => 'required|max:200',
+                'company_name' => 'required|max:200',
+                'company_address' => 'required',
+                'entity_type_code' => 'nullable',
+                'industry_type_code' => 'nullable',
+                'emirate_of_registration_id' => 'nullable',
+            ]);
+        }
+
+        return $rules;
     }
 
     /**

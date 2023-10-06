@@ -943,7 +943,7 @@ const onCopyText = text => {
 };
 
 const isProfileUpdateAllow = computed(() => {
-    return hasAnyRole([
+    return !hasAnyRole([
         page.props.rolesEnum.PA,
         page.props.rolesEnum.OE,
         page.props.rolesEnum.NRA
@@ -951,11 +951,25 @@ const isProfileUpdateAllow = computed(() => {
 });
 
 const customerProfileForm = useForm({
-    customer_id: page.props.quote.customer_id,
-    insured_first_name: page.props.quote.insured_first_name || '',
-    insured_last_name: page.props.quote.insured_last_name || '',
-    emirates_id_number: page.props.quote.emirates_id_number || null,
-    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+  customer_id: page.props.quote.customer_id,
+  customer_type: page.props.quote.customer_type,
+  quote_type: page.props.modelType,
+  quote_type_id: page.props.quoteTypeId,
+  quote_request_id: page.props.quote.id,
+
+  insured_first_name: page.props.quote.insured_first_name || '',
+  insured_last_name: page.props.quote.insured_last_name || '',
+  emirates_id_number: page.props.quote.emirates_id_number || null,
+  emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+
+  entity_id: page.props.quote.entity_id ?? null,
+  trade_license: page.props.quote.trade_license_no ?? null,
+  company_name: page.props.quote.company_name ?? null,
+  company_address: page.props.quote.company_address ?? null,
+  entity_type_code: page.props.quote.entity_type_code ?? null,
+  industry_type_code: page.props.quote.industry_type_code ?? null,
+  emirate_of_registration_id: page.props.quote.emirate_of_registration_id ?? null,
+
 });
 
 const updateProfileDetails = isValid => {
@@ -980,15 +994,6 @@ const updateProfileDetails = isValid => {
     });
 }
 
-const entityForm = reactive({
-    entity_id: null,
-    trade_license:  null,
-    company_address: null,
-    entity_type: null,
-    industry_type: null,
-    emirate_of_registration: null,
-});
-
 const entityDetailsFound = ref(false);
 const tradeLicenseEntity = reactive({
     entity_id: null,
@@ -998,7 +1003,7 @@ const tradeLicenseEntity = reactive({
 });
 
 const searchByTradeLicense = () => {
-    let url = `/kyc/aml-fetch-entity?trade_license=${entityForm.trade_license}`;
+    let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license}`;
     axios.get(url)
         .then(res => {
             if(res.data.status) {
@@ -1038,12 +1043,12 @@ const linkEntity = () => {
                 let response = res.data.response;
 
                 // Append Entity data in fields
-                entityForm.trade_license = response.trade_license_no;
-                entityForm.company_name = response.company_name;
-                entityForm.company_address = response.company_address;
-                entityForm.entity_type = response.entity_type_code;
-                entityForm.industry_type = response.industry_type_code;
-                entityForm.emirate_of_registration = response.emirate_of_registration_id;
+                customerProfileForm.trade_license = response.trade_license_no;
+                customerProfileForm.company_name = response.company_name;
+                customerProfileForm.company_address = response.company_address;
+                customerProfileForm.entity_type = response.entity_type_code;
+                customerProfileForm.industry_type = response.industry_type_code;
+                customerProfileForm.emirate_of_registration = response.emirate_of_registration_id;
 
                 notification.success({
                     title: res.data.message,
@@ -1411,13 +1416,13 @@ onMounted(() => {
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">COMPANY NAME</dt>
-                        <dd>{{ quote.email }}</dd>
+                        <dd>{{ customerProfileForm.company_name }}</dd>
                     </div>
                     <div class="grid sm:grid-cols-2">
                         <dt class="font-medium">TRADE LICENSE NO</dt>
                         <dd>
                             <x-input
-                                v-model="entityForm.trade_license"
+                                v-model="customerProfileForm.trade_license"
                                 placeholder="TRADE LICENSE NO"
                                 type="text"
                                 class="w-full"
@@ -1435,7 +1440,7 @@ onMounted(() => {
                         <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                         <dd>
                             <ComboBox
-                                v-model="entityForm.emirate_of_registration"
+                                v-model="customerProfileForm.emirate_of_registration_id"
                                 :single="true"
                                 placeholder="SELECT EMIRATES OF REGISTRATION"
                                 :options="emiratesOptions"
@@ -1447,7 +1452,7 @@ onMounted(() => {
                         <dt class="font-medium">COMPANY ADDRESS</dt>
                         <dd>
                             <x-input
-                                v-model="entityForm.company_address"
+                                v-model="customerProfileForm.company_address"
                                 placeholder="COMPANY ADDRESS"
                                 type="text"
                                 class="w-full"
@@ -1459,7 +1464,7 @@ onMounted(() => {
                         <dd>
                             <ComboBox
                                 :single="true"
-                                v-model="entityForm.industry_type"
+                                v-model="customerProfileForm.industry_type_code"
                                 placeholder="SELECT INDUSTRY TYPE"
                                 :options="industryTypeOptions"
                                 class="w-full"
@@ -1471,7 +1476,7 @@ onMounted(() => {
                         <dd>
                             <ComboBox
                                 :single="true"
-                                v-model="entityForm.entity_type"
+                                v-model="customerProfileForm.entity_type_code"
                                 placeholder="SELECT ENTITY TYPE"
                                 :options="[
                                     {label: 'Parent', value: 'Parent'},
@@ -1542,162 +1547,7 @@ onMounted(() => {
           </dl>
       </x-modal>
 
-      <div class="p-4 rounded shadow mb-6 bg-white">
-          <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-              <h3 class="font-semibold text-primary-800 text-lg">
-                  Customer Additional Contacts
-                  <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-              </h3>
-              <x-button
-                  size="sm"
-                  color="orange"
-                  @click.prevent="addAdditionalContact"
-              >
-                  Add Additional Contacts
-              </x-button>
-          </div>
-
-          <DataTable
-              table-class-name="compact"
-              :headers="additionalContactTable"
-              :items="customerAdditionalContacts || []"
-              border-cell
-              hide-rows-per-page
-              hide-footer
-          >
-              <template #item-key="{ key }">
-                  <span v-if="key === 'email'"> Email Address </span>
-                  <span v-else> Mobile Number </span>
-              </template>
-              <template #item-action="item">
-                  <div class="space-x-4">
-                      <x-button
-                          size="xs"
-                          color="emerald"
-                          outlined
-                          @click.prevent="additionalContactPrimary(item)"
-                      >
-                          Make Primary
-                      </x-button>
-                      <x-button
-                          size="xs"
-                          color="error"
-                          outlined
-                          @click.prevent="additionalContactDelete(item.id)"
-                      >
-                          Delete
-                      </x-button>
-                  </div>
-              </template>
-          </DataTable>
-
-          <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-              <template #header> Add Additional Contacts </template>
-
-              <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-                  <div class="grid gap-4">
-                      <x-field label="Type" required>
-                          <x-select
-                              v-model="additionalContact.additional_contact_type"
-                              :options="[
-                  { value: 'email', label: 'Email' },
-                  { value: 'mobile_no', label: 'Mobile Number' },
-                ]"
-                              :rules="[isRequired]"
-                              placeholder="Select Type"
-                              class="w-full"
-                          />
-                      </x-field>
-                      <x-field
-                          label="Value"
-                          required
-                          v-if="additionalContact.additional_contact_type === 'mobile_no'"
-                      >
-                          <x-input
-                              v-model="additionalContact.additional_contact_val"
-                              :rules="[isRequired, isMobileNo]"
-                              class="w-full"
-                          />
-                      </x-field>
-                      <x-field
-                          label="Value"
-                          required
-                          v-if="additionalContact.additional_contact_type === 'email'"
-                      >
-                          <x-input
-                              v-model="additionalContact.additional_contact_val"
-                              :rules="[isRequired, isEmail]"
-                              class="w-full"
-                          />
-                      </x-field>
-                  </div>
-
-                  <div class="text-right space-x-4 mt-12">
-                      <x-button size="sm" @click.prevent="modals.addContact = false">
-                          Cancel
-                      </x-button>
-
-                      <x-button
-                          size="sm"
-                          color="emerald"
-                          :loading="additionalContact.processing"
-                          type="submit"
-                      >
-                          Save
-                      </x-button>
-                  </div>
-              </x-form>
-          </x-modal>
-
-          <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-              <template #header> Delete Additional Contact </template>
-              <p>Are you sure you want to delete this?</p>
-              <template #actions>
-                  <div class="text-right space-x-4">
-                      <x-button
-                          size="sm"
-                          ghost
-                          @click.prevent="modals.contactDeleteConfirm = false"
-                      >
-                          Cancel
-                      </x-button>
-                      <x-button
-                          size="sm"
-                          color="error"
-                          @click.prevent="additionalContactDeleteConfirmed"
-                          :loading="contactLoader"
-                      >
-                          Delete
-                      </x-button>
-                  </div>
-              </template>
-          </x-modal>
-
-          <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-              <template #header> Primary Additional Contact </template>
-              <p>Are you sure you want to make this information as Primary?</p>
-              <template #actions>
-                  <div class="text-right space-x-4">
-                      <x-button
-                          size="sm"
-                          ghost
-                          @click.prevent="modals.contactPrimaryConfirm = false"
-                      >
-                          Cancel
-                      </x-button>
-                      <x-button
-                          size="sm"
-                          color="emerald"
-                          @click.prevent="additionalContactPrimaryConfirmed"
-                          :loading="contactLoader"
-                      >
-                          Confirm
-                      </x-button>
-                  </div>
-              </template>
-          </x-modal>
-      </div>
-      <div class="p-4 rounded shadow mb-6 bg-white">
+      <div v-if="quote.customer_type == page.props.customerTypeEnum.Individual" class="p-4 rounded shadow mb-6 bg-white">
           <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
               <h3 class="font-semibold text-primary-800 text-lg">
                   Member Details
@@ -1719,8 +1569,8 @@ onMounted(() => {
               :hide-footer="travelers.length < 15"
               show-index
           >
-              <template #item-index="{ index }">
-                  <div>Member {{ index }}</div>
+              <template #item-index="{ index, code }">
+                  <div> {{ code ?? 'Member ' + index }}</div>
               </template>
               <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
 
@@ -1810,6 +1660,16 @@ onMounted(() => {
           </x-modal>
       </div>
 
+      <UBODetails
+        v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+        :quote="quote"
+        :UBOsDetails="UBOsDetails"
+        :nationalities="nationalities"
+        :UBORelations="UBORelations"
+        :quote_type="page.props.modelType"
+          />
+
+
       <x-modal v-model="confirmModal.show" show-close backdrop>
           <template #header> {{ confirmModal.title }} </template>
           <p>{{ confirmModal.message }}</p>
@@ -1829,6 +1689,162 @@ onMounted(() => {
               </div>
           </template>
       </x-modal>
+
+      <div class="p-4 rounded shadow mb-6 bg-white">
+            <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                <h3 class="font-semibold text-primary-800 text-lg">
+                    Customer Additional Contacts
+                    <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+                </h3>
+                <x-button
+                    size="sm"
+                    color="orange"
+                    @click.prevent="addAdditionalContact"
+                >
+                    Add Additional Contacts
+                </x-button>
+            </div>
+
+            <DataTable
+                table-class-name="compact"
+                :headers="additionalContactTable"
+                :items="customerAdditionalContacts || []"
+                border-cell
+                hide-rows-per-page
+                hide-footer
+            >
+                <template #item-key="{ key }">
+                    <span v-if="key === 'email'"> Email Address </span>
+                    <span v-else> Mobile Number </span>
+                </template>
+                <template #item-action="item">
+                    <div class="space-x-4">
+                        <x-button
+                            size="xs"
+                            color="emerald"
+                            outlined
+                            @click.prevent="additionalContactPrimary(item)"
+                        >
+                            Make Primary
+                        </x-button>
+                        <x-button
+                            size="xs"
+                            color="error"
+                            outlined
+                            @click.prevent="additionalContactDelete(item.id)"
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+            </DataTable>
+
+            <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+                <template #header> Add Additional Contacts </template>
+
+                <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+                    <div class="grid gap-4">
+                        <x-field label="Type" required>
+                            <x-select
+                                v-model="additionalContact.additional_contact_type"
+                                :options="[
+                                  { value: 'email', label: 'Email' },
+                                  { value: 'mobile_no', label: 'Mobile Number' },
+                                ]"
+                                :rules="[isRequired]"
+                                placeholder="Select Type"
+                                class="w-full"
+                            />
+                        </x-field>
+                        <x-field
+                            label="Value"
+                            required
+                            v-if="additionalContact.additional_contact_type === 'mobile_no'"
+                        >
+                            <x-input
+                                v-model="additionalContact.additional_contact_val"
+                                :rules="[isRequired, isMobileNo]"
+                                class="w-full"
+                            />
+                        </x-field>
+                        <x-field
+                            label="Value"
+                            required
+                            v-if="additionalContact.additional_contact_type === 'email'"
+                        >
+                            <x-input
+                                v-model="additionalContact.additional_contact_val"
+                                :rules="[isRequired, isEmail]"
+                                class="w-full"
+                            />
+                        </x-field>
+                    </div>
+
+                    <div class="text-right space-x-4 mt-12">
+                        <x-button size="sm" @click.prevent="modals.addContact = false">
+                            Cancel
+                        </x-button>
+
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            :loading="additionalContact.processing"
+                            type="submit"
+                        >
+                            Save
+                        </x-button>
+                    </div>
+                </x-form>
+            </x-modal>
+
+            <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
+                <template #header> Delete Additional Contact </template>
+                <p>Are you sure you want to delete this?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="modals.contactDeleteConfirm = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="error"
+                            @click.prevent="additionalContactDeleteConfirmed"
+                            :loading="contactLoader"
+                        >
+                            Delete
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
+
+            <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+                <template #header> Primary Additional Contact </template>
+                <p>Are you sure you want to make this information as Primary?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="modals.contactPrimaryConfirm = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            @click.prevent="additionalContactPrimaryConfirmed"
+                            :loading="contactLoader"
+                        >
+                            Confirm
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
+        </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
