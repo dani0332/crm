@@ -73,6 +73,7 @@ class AMLController extends Controller
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
                     QuoteTypes::CYCLE->id(),
+                    QuoteTypes::JETSKI->id()
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -371,7 +372,54 @@ class AMLController extends Controller
                         ->where('pet_quote_request.id', $quoteRequestId)->first();
                 }
                 $auditLogLine = 'PetQuote';
-            } else {
+            } elseif($quoteTypeCode == quoteTypeCode::Cycle) {
+                $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())
+                    ->select([
+                        'personal_quotes.*',
+                        'cycle_quote_request.cycle_make',
+                        'cycle_quote_request.cycle_model',
+                        'cycle_quote_request.year_of_manufacture_id',
+                        'cycle_quote_request.accessories',
+                        'cycle_quote_request.has_accident',
+                        'cycle_quote_request.has_good_condition',
+                        'payment_status.text as payment_status_text',
+                        'quote_status.text as quote_status_text',
+                        'customer.first_name as cust_f_name',
+                        'customer.last_name as cust_l_name',
+                    ])
+                    ->leftJoin('cycle_quote_request', 'cycle_quote_request.personal_quote_id', 'personal_quotes.id')
+                    ->leftjoin('customer', 'customer.id', 'personal_quotes.customer_id')
+                    ->leftjoin('quote_status', 'personal_quotes.quote_status_id', 'quote_status.id')
+                    ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
+                    ->where('personal_quotes.id', $quoteRequestId)
+                    ->first();
+                $auditLogLine = 'CycleQuote';
+            } elseif ($quoteTypeCode == quoteTypeCode::Jetski) {
+                $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())
+                    ->select([
+                        'personal_quotes.*',
+                        'jetski_quote_request.jetski_make',
+                        'jetski_quote_request.jetski_model',
+                        'jetski_quote_request.year_of_manufacture_id',
+                        'jetski_quote_request.max_speed',
+                        'jetski_quote_request.seat_capacity',
+                        'jetski_quote_request.engine_power',
+                        'jetski_quote_request.jetski_material_id',
+                        'jetski_quote_request.jetski_use_id',
+                        'jetski_quote_request.claim_history',
+                        'payment_status.text as payment_status_text',
+                        'quote_status.text as quote_status_text',
+                        'customer.first_name as cust_f_name',
+                        'customer.last_name as cust_l_name',
+                    ])
+                    ->leftJoin('jetski_quote_request', 'jetski_quote_request.personal_quote_id', 'personal_quotes.id')
+                    ->leftjoin('customer', 'customer.id', 'personal_quotes.customer_id')
+                    ->leftjoin('quote_status', 'personal_quotes.quote_status_id', 'quote_status.id')
+                    ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
+                    ->where('personal_quotes.id', $quoteRequestId)
+                    ->first();
+                $auditLogLine = 'JetskiQuote';
+            }else {
                 $quoteRequest = '';
             }
         } else {
