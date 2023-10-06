@@ -8,7 +8,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class InsuranceCompany extends BaseModel implements AuditableContract
 {
-    use HasFactory,Auditable;
+    use Auditable,HasFactory;
 
     protected $table = 'insurance_companies';
     public $access = [

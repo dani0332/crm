@@ -11,10 +11,12 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Sammyjo20\LaravelHaystack\Concerns\Stackable;
+use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
-class GetQuotePlansJob implements ShouldQueue
+class GetQuotePlansJob implements ShouldQueue, StackableJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, GenericQueriesAllLobs;
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
     public $tries = 3;
     public $timeout = 30;

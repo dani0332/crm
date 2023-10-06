@@ -18,7 +18,7 @@ use Throwable;
 // Scheduled to delete , job moved to console command
 class CarLeadAllocationJob implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, GetUserTreeTrait;
+    use Dispatchable, GetUserTreeTrait, InteractsWithQueue, Queueable;
 
     public int $tries = 2;
     public int $timeout = 55;
