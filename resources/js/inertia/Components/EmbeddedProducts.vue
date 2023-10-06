@@ -170,8 +170,8 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-  let ep_code = selectedEp.value[0];
-  let paymentLink = page.props.epLink + '?code=' + ep_code + '&quoteTypeId=1';
+
+let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
   copy(paymentLink);
   if (copied)
     notification.success({
@@ -187,16 +187,18 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
+    console.log('eeeep',ep.transactions);
+  //  console.log('item',item.insurance_provider.code);
   let id = ep.id;
   if (event.target.checked) {
-    selectedEp.value.push(ep.transactions[0]?.code);
+    selectedEp.value.push(id);
   } else {
-    var index = selectedEp.value.indexOf(ep.embedded_product_id);
+    var index =  selectedEp.value.indexOf(id);
     if (index !== -1) {
-      selectedEp.value.splice(ep.transactions[0].code, 1);
+      selectedEp.value.splice(id, 1);
     }
   }
-  let data = { quote_uuid: usePage().props.quote.uuid, id: id,modelType:props.modelType };
+  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
@@ -263,41 +265,29 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         {{ short_code + '-' + props.code }}
       </template>
 
-      <template #item-prices="{ prices }">
+      <template #item-prices="{prices}">
         <div v-if="prices.length > 1" class="flex gap-3">
-          <x-tooltip
-            v-for="item in prices"
-            :key="'price_' + item.id"
-            position="bottom"
-          >
-            <x-tag color="primary">
-              {{ (parseFloat(item.price) + (item.price * 5) / 100).toFixed(2) }}
+
+
+            <x-tag color="primary" v-for="priceItem  in prices">
+                <x-checkbox
+
+                    v-if="priceItem.transactions[0]?.is_selected == '1'"
+                    @change="toggleProduct(priceItem, $event)"
+                    :model-value="true"
+                    color="primary"
+                />
+                <x-checkbox
+
+                    v-else
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                />
+              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
             </x-tag>
-            <template #tooltip>{{ item.variant }} </template>
-          </x-tooltip>
+
         </div>
 
-        <div v-else>
-          <x-tag color="primary">
-            <x-checkbox
-              v-if="prices[0].transactions[0]?.is_selected == '1'"
-              @change="toggleProduct(prices[0], $event)"
-              :model-value="true"
-              color="primary"
-            />
-            <x-checkbox
-              v-if="prices[0].transactions[0]?.is_selected == '0'"
-              @change="toggleProduct(prices[0], $event)"
-              color="primary"
-            />
-            {{
-              (
-                parseFloat(prices[0]?.price) +
-                (prices[0]?.price * 5) / 100
-              ).toFixed(2)
-            }}
-          </x-tag>
-        </div>
       </template>
 
       <template #item-ep_status="{ ep_status }"> N/A </template>

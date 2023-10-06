@@ -113,6 +113,7 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
+            'ihp.code as plan_provider_code'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -125,6 +126,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('users as wcu', 'wcu.id', '=', 'hqr.wcu_id')
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
+            ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+            ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
@@ -132,6 +135,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
+
         return $this->query->where('hqr.uuid', $id)->first();
     }
 
@@ -1103,7 +1107,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntityPlainByUUID($uuid)
     {
-        return HealthQuote::where('uuid', $uuid)->first();
+        return HealthQuote::where('uuid', $uuid)->with('plan')->first();
     }
 
     public function getEcomDetails($data)
@@ -1317,12 +1321,12 @@ class HealthQuoteService extends BaseService
             ->where('quote_type_id',$type->id)
             ->whereIn('product_id',$embeddedProductOptionsIds)
             ->first();
-        if(isset($embededTransaction->payments[0])){
+        if(isset($embededTransaction->payments)){
             $payment = $embededTransaction->payments[0];
             $maxAmount = $payment->premium_captured - $payment->premium_refunded;
             if($maxAmount >= $request->amount) {
                 $paymentAction = new PaymentAction();
-                $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
+                $paymentAction->payment_code = $embededTransaction->code; //$embededTransaction->code;
                 $paymentAction->is_fulfilled = 0;
                 $paymentAction->action_type = 'REFUND';
                 $paymentAction->reason = $request->reason;
@@ -1333,7 +1337,7 @@ class HealthQuoteService extends BaseService
                 $data = [
                     'uuid'  => $request->uuid,
                     'type_id' => $type->id,
-                    'code' => $payment->code
+                    'code' => $embededTransaction->code
 
                 ];
                 $processResponse = $this->processCancelPayment($data);
