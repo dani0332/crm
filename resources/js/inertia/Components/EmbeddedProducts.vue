@@ -187,8 +187,6 @@ const paymentStatus = id => {
 };
 
 const toggleProduct = (ep, event) => {
-    console.log('eeeep',ep.transactions);
-  //  console.log('item',item.insurance_provider.code);
   let id = ep.id;
   if (event.target.checked) {
     selectedEp.value.push(id);

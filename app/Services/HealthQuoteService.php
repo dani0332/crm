@@ -1107,7 +1107,7 @@ class HealthQuoteService extends BaseService
 
     public function getEntityPlainByUUID($uuid)
     {
-        return HealthQuote::where('uuid', $uuid)->with('plan')->first();
+        return HealthQuote::where('uuid', $uuid)->first();
     }
 
     public function getEcomDetails($data)

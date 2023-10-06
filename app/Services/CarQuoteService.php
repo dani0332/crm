@@ -469,7 +469,7 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->with('plan_id')->first();
+        return CarQuote::where('id', $id)->first();
     }
 
     public function fillModelProperties()
