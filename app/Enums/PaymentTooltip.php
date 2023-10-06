@@ -30,4 +30,12 @@ final class PaymentTooltip extends Enum
     // Collector dropdown list
     const COLLECTOR_LIST_BROKER    = 'Payment made directly to Insurancemarket.ae by the customer.';
     const COLLECTOR_LIST_INSURER   = 'Payment made directly to the insurer by the customer.';
+
+    // Frequency dropdown list
+    const FREQUENCY_LIST_UPFRONT   = 'This refers to a one-time payment that needs to be settled before any services are provided or goods delivered. It\'s an advance payment, often covering the total amount.';
+    const FREQUENCY_LIST_MONTHLY   = 'This is a recurring payment method where the customer pays a specified amount every month, typically at the beginning or end of the month. It spreads the total amount over 12 equal payments throughout the year.';
+    const FREQUENCY_LIST_QUARTERLY = 'Under this payment term, the total amount is divided into four parts. Payments are expected every three months, which means four times in a year.';
+    const FREQUENCY_LIST_SEMI_ANNUAL = 'This payment structure requires the customer to make payments twice a year. It breaks down the total amount into two equal parts, usually made every six months.';
+    const FREQUENCY_LIST_SPLIT_PAYMENTS    = 'This allows the customer flexibility in settling the total amount. They can pay in multiple, divided amounts or use different payment methods for each portion. It\'s especially useful when coordinating payments from multiple sources or for larger amounts.';
+    const FREQUENCY_LIST_CUSTOM   = 'Gain flexibility in settling the total amount. You can make payments in multiple, divided amounts using various payment terms and methods. Adjust the number of payments needed, ranging from 1 to 12, and customize due dates for each payment number to suit customers preferences';
 }
