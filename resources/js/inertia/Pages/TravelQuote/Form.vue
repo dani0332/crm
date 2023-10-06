@@ -134,9 +134,7 @@ function onSubmit(isValid) {
   quoteForm.clearErrors();
 
   const method =  'post';
-  const url =  route('travel.store'); //editMode.value
-   // ? route('travel.update', props.quote.uuid)
-   // : route('travel.store');
+  const url =  route('travel.store');
 
   const options = {
     onError: errors => {
