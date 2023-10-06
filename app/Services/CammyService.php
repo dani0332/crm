@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\QuoteTypeId;
 use Exception;
 
 class CammyService
@@ -28,7 +29,7 @@ class CammyService
         if ($trigger != self::UNSUB) {
             $quote = $this->healthQuoteService->getQuotePlansPriority($lead->uuid);
             if (! isset($quote) || is_string($quote)) {
-                info('Cammy Service - '.$lead->code.' - Failed - No response from KEN');
+                info('Cammy Service - '.$lead->code.' - Failed - No Response from KEN');
 
                 return false;
             }
@@ -52,10 +53,10 @@ class CammyService
                     $plans->push([
                         'name' => $plan->name,
                         'provider' => $plan->providerName,
-                        'premium' => (string) $plan->actualPremium,
+                        'premium' => '',
                         'features' => $features->toArray(),
                         'logo' => $plan->logo,
-                        'planLink' => $plan->planLink,
+                        'planLink' => $plan->planLink ?? '',
                     ]);
                 }
             }
@@ -67,11 +68,11 @@ class CammyService
 
         switch ($trigger) {
             case self::INTRO:
-                $apiEndPoint .= '/api/v1/introduction';
-                $responseMessage = 'Introduction Email trigerred successfully';
+                $apiEndPoint .= '/api/v1/quotation';
+                $responseMessage = 'Quotation Email trigerred successfully';
                 $data = [
-                    'cdbid' => $lead->code,
-                    'type' => $trigger,
+                    'quoteUID' => $lead->code,
+                    'quoteTypeId' => QuoteTypeId::Health,
                     'contact' => ['firstName' => $lead->first_name, 'lastName' => $lead->last_name],
                     'fromEmail' => isset($lead->advisor) ? $lead->advisor->email : 'no-reply@alert.insurancemarket.email',
                     'toEmail' => $lead->email,
@@ -91,7 +92,8 @@ class CammyService
                 $apiEndPoint .= '/api/v1/unsubscribe';
                 $responseMessage = 'Unsubscribe Email trigerred successfully';
                 $data = [
-                    'cdbid' => $lead->code,
+                    'quoteUID' => $lead->code,
+                    'quoteTypeId' => QuoteTypeId::Health,
                     'emailAddress' => $lead->email,
                 ];
                 break;

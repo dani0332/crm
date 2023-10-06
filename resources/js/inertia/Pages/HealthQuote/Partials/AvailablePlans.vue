@@ -4,11 +4,22 @@ const props = defineProps({
   genders: Object,
 });
 
+const emit = defineEmits(['copayUpdate']);
+
 const notification = useToast();
 
 const genderText = v => {
   return props.genders[v];
 };
+
+const coPayOptions = computed(() => {
+  return Object.keys(props.plan.coPayments).map(
+    index => ({
+      value: props.plan.coPayments[index].id,
+      label: props.plan.coPayments[index].text,
+    }),
+  );
+});
 
 const ipmiBenefits = reactive({
   region: '',
@@ -25,6 +36,8 @@ const hidePlan = ref(props.plan.isHidden),
   newPremiums = ref([]);
 
 const toggleLoader = ref(false);
+
+const coPay = ref('');
 
 const canUpdate = computed(() => {
   return props.plan.providerCode == 'CIG' || props.plan.providerCode == 'BUP';
@@ -96,6 +109,37 @@ const onMemberUpdate = member => {
     });
 };
 
+// const onToggleManual = () => {
+//     // toggleLoader.value = true;
+//     console.log('manual toggle action');
+//     console.log(props.plan);
+// }
+
+const selectedCopay = ref([]);
+const defaultCopayId = ref(null);
+
+const onCoPaySelect = copayId => {
+
+    props.plan.ratesPerCopay.forEach(element => {
+
+        if (element.healthPlanCoPaymentId == copayId)
+        {
+            let copayDetails = {
+                'id' : element.healthPlanCoPaymentId,
+                'premium' : element.premium,
+                'discounted_premium' : element.discountPremium,
+                'vat' : element.vat,
+                'planId': props.plan.id,
+            }
+
+            selectedCopay.value = copayDetails
+        }
+    });
+
+    emit('copayUpdate', selectedCopay.value);
+    console.log(selectedCopay.value);
+};
+
 const onTogglePlans = () => {
   toggleLoader.value = true;
 
@@ -126,6 +170,32 @@ const onTogglePlans = () => {
       toggleLoader.value = false;
     });
 };
+
+const getDefaultVaues = () => {
+
+    let smallestCopayValue = 0;
+    if (selectedCopay.value === undefined || selectedCopay.value.length == 0) {
+        props.plan.ratesPerCopay.forEach(function callback(element, index) {
+            if (index == 0) {
+                smallestCopayValue = element.premium
+                defaultCopayId.value = element.healthPlanCoPaymentId
+            }
+            else if (element.premium < smallestCopayValue ) {
+                smallestCopayValue = element.premium
+                defaultCopayId.value = element.healthPlanCoPaymentId
+            }
+        });
+
+        props.plan.actualPremium = smallestCopayValue
+    }
+};
+
+
+onMounted( () => {
+    getDefaultVaues();
+    coPay.value = defaultCopayId.value; // get the default selected value for coPay
+    console.log(coPay);
+});
 </script>
 
 <template>
@@ -158,7 +228,14 @@ const onTogglePlans = () => {
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 p-4">
             <div class="md:col-span-2 text-right select-none border-b pb-2">
-              <x-toggle
+                <!-- <x-toggle
+                v-model="isManual"
+                color="success"
+                label="Manual"
+                @change="onToggleManual"
+                :loading="toggleLoader"
+              /> -->
+                <x-toggle
                 v-model="hidePlan"
                 color="error"
                 label="Hide Plan"
@@ -179,8 +256,13 @@ const onTogglePlans = () => {
               <dd>{{ props.plan.eligibilityName }}</dd>
             </div>
             <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">Base Price</dt>
-              <dd>{{ props.plan.actualPremium }}</dd>
+                <dt class="font-medium">Base Price</dt>
+                <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
+                    {{ props.plan.actualPremium }}
+                </dd>
+                <dd v-else>
+                    {{ selectedCopay.premium }}
+                </dd>
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Basmah</dt>
@@ -192,13 +274,27 @@ const onTogglePlans = () => {
             </div>
             <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
-              <dd>
+              <dd v-if="selectedCopay === undefined || selectedCopay.length == 0">
+                    {{
+                    props.plan.actualPremium +
+                    (props.plan.basmah || 0) +
+                    (props.plan.policyFee || 0)
+                    }}
+                </dd>
+                <dd v-else>
+                    {{
+                    selectedCopay.premium +
+                    (props.plan.basmah || 0) +
+                    (props.plan.policyFee || 0)
+                    }}
+                </dd>
+              <!-- <dd>
                 {{
                   props.plan.actualPremium +
                   (props.plan.basmah || 0) +
                   (props.plan.policyFee || 0)
                 }}
-              </dd>
+              </dd> -->
             </div>
           </dl>
         </TabPanel>
@@ -305,6 +401,37 @@ const onTogglePlans = () => {
                 {{ genderText(item.gender) }}
               </template>
               <template #item-premium="{ item }">
+              <section  v-for="data in item.ratesPerCopay">
+                    <x-input
+                    v-if="data.healthPlanCoPaymentId == selectedCopay.id"
+                    :value="data.premium"
+                    :disabled="data.premium != 0 && !isManual"
+                    size="sm"
+                    @update:modelValue="onMemberPremiumUpdate(item, $event)"
+                    />
+                    <x-input
+                    v-else-if="(selectedCopay === undefined || selectedCopay.length == 0) &&
+                        data.healthPlanCoPaymentId == defaultCopayId"
+                    :value="data.premium"
+                    :disabled="data.premium != 0 && !isManual"
+                    size="sm"
+                    @update:modelValue="onMemberPremiumUpdate(item, $event)"
+                    />
+                    <x-button
+                    v-if="$page.props.permissions.pa"
+                    color="primary"
+                    class="ml-2"
+                    size="sm"
+                    outlined
+                    :loading="memberFormLoader"
+                    @click.prevent="onMemberUpdate(item)"
+                    >
+                    Update
+                    </x-button>
+              </section>
+              </template>
+
+              <!-- <template #item-premium="{ item }">
                 <x-input
                   :value="item.premium"
                   :disabled="item.premium != 0 && !isManual"
@@ -322,7 +449,7 @@ const onTogglePlans = () => {
                 >
                   Update
                 </x-button>
-              </template>
+              </template> -->
             </x-table>
           </div>
         </TabPanel>
@@ -369,8 +496,20 @@ const onTogglePlans = () => {
             </div>
           </dl>
         </TabPanel>
-
+        <!-- I will work here -->
         <TabPanel>
+          <div class="grid md:grid-cols-1 gap-5 p-4 copay-select">
+            <ComboBox
+            class="w-full"
+            v-model="coPay"
+            :options="coPayOptions"
+            :single="true"
+            label="Co-Pay"
+            placeholder="Select a Co-Pay option"
+            @update:model-value="onCoPaySelect"
+            >
+            </ComboBox>
+          </div>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
               v-for="data in props.plan.benefits.coInsurance || []"
@@ -380,8 +519,16 @@ const onTogglePlans = () => {
               <dd>{{ data.value }}</dd>
             </div>
           </dl>
+          <!-- <div class="grid md:grid-cols-1 gap-5 p-4 float-right">
+            <x-button
+              color="primary"
+              size="sm"
+            >
+              Update & Save
+            </x-button>
+          </div> -->
         </TabPanel>
-
+        <!-- between here -->
         <TabPanel>
           <dl class="grid md:grid-cols-2 gap-5 p-4">
             <div
