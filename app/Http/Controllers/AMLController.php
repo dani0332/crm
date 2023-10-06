@@ -64,7 +64,6 @@ class AMLController extends Controller
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
 
         if ($request->ajax()) {
-
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeCode = QuoteType::where('id', $request->quoteType)->value('code');
                 $quoteRequestTable = strtolower($quoteTypeCode).'_quote_request';
@@ -73,6 +72,7 @@ class AMLController extends Controller
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
+                    QuoteTypes::CYCLE->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -174,7 +174,6 @@ class AMLController extends Controller
         $quoteTypeText = $quoteType[0]->text;
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
         if ($quoteTypeCode != '') {
-
             if ($quoteTypeCode == quoteTypeCode::Car) {
                 $quoteRequest = CarQuote::select(
                     'car_quote_request.*',
@@ -358,7 +357,6 @@ class AMLController extends Controller
                         ->leftjoin('payment_status', 'personal_quotes.payment_status_id', 'payment_status.id')
                         ->where('personal_quotes.id', $quoteRequestId)
                         ->first();
-
                 } else {
                     $quoteRequest = PetQuote::select([
                         'pet_quote_request.*',
@@ -463,7 +461,6 @@ class AMLController extends Controller
 
     public function kycLogsRecords(Request $request)
     {
-
         $kycLogs = AML::where([
             'quote_request_id' => $request->quote_request_id,
             'quote_type_id' => $request->quote_type_id,
@@ -472,8 +469,8 @@ class AMLController extends Controller
         return DataTables::of($kycLogs)
             ->addIndexColumn()
             ->make(true);
-
     }
+
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
         $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType);
