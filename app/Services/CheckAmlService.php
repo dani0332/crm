@@ -284,9 +284,7 @@ class CheckAmlService
             $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
         }
 
-        $dataMigrationDate = match ($quoteTypeId) {
-            QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14')
-        };
+        $dataMigrationDate = Carbon::createFromFormat('Y-m-d', '2023-08-14');
 
         return Carbon::createFromFormat(
             config('constants.DATE_FORMAT_ONLY'),
