@@ -118,7 +118,11 @@ const outboundRegions = [
 ];
 
 function addTravler() {
-  quoteForm.members.push({ dob: '', gender: '' });
+    if(quoteForm.members.length == 0){
+        quoteForm.members.push({dob: '', gender: '', primary:true});
+    }else {
+        quoteForm.members.push({dob: '', gender: ''});
+    }
 }
 function removeMember(index) {
   quoteForm.members.splice(index, 1);
@@ -129,10 +133,8 @@ function onSubmit(isValid) {
 
   quoteForm.clearErrors();
 
-  const method = editMode.value ? 'put' : 'post';
-  const url = editMode.value
-    ? route('travel.update', props.quote.uuid)
-    : route('travel.store');
+  const method =  'post';
+  const url =  route('travel.store');
 
   const options = {
     onError: errors => {
@@ -203,7 +205,6 @@ onMounted(() => {
             v-model="quoteForm.has_arrived_uae"
             :options="alreadylived"
             class="w-full"
-            :disabled="editMode"
             :rules="[isRequired]"
           />
         </x-field>
@@ -216,7 +217,6 @@ onMounted(() => {
             v-model="quoteForm.has_arrived_destination"
             :options="alreadylived"
             class="w-full"
-            :disabled="editMode"
             :rules="[isRequired]"
           />
         </x-field>
@@ -394,11 +394,6 @@ onMounted(() => {
           size="md"
           color="emerald"
           type="submit"
-          :disabled="
-            editMode &&
-            (quoteForm.has_arrived_destination == '1' ||
-              quoteForm.has_arrived_uae == '1')
-          "
           :loading="quoteForm.processing"
         >
           {{ editMode ? 'Update' : 'Create' }}
