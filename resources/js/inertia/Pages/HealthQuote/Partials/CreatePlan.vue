@@ -346,8 +346,8 @@ watch(
     </div>
 
     <div class="flex justify-end">
-      <x-button type="submit" color="primary" :loading="createForm.loading">
-        Add Plan
+      <x-button type="submit" color="emerald" :loading="createForm.loading">
+        Save Plan
       </x-button>
     </div>
   </x-form>
