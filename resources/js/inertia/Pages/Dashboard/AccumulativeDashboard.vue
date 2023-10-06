@@ -73,9 +73,9 @@ function createUnassignedChartBySource() {
 
 function createLeadCountByAdvisor() {
   columnChartData.value = prepareGraphData(
-    props.unAssignedLeadsByTier,
-    'tierNames',
-    'leadCount',
+    props.advisorLeadsAssignedData,
+    'name',
+    'total_leads',
   );
 }
 
@@ -88,8 +88,8 @@ function getDataForAdvisor() {
     .then(response => {
       if (response) {
         var cData = [];
-        for (let index = 0; index < response.length; index++) {
-          var node = response[index];
+        for (let index = 0; index < response.data.length; index++) {
+          var node = response.data[index];
           cData.push({ name: node.name, y: parseFloat(node.total_leads) });
         }
         if (cData.length > 0) columnChartData.value = cData;
@@ -108,14 +108,14 @@ watch(
     createUnassignedChartByTier();
     createAssignedChartByTier();
     createUnassignedChartBySource();
-    getDataForAdvisor();
+    // getDataForAdvisor();
   },
 );
 
 watch(
   () => filters.teamFilter,
   () => {
-    getDataForAdvisor();
+    // getDataForAdvisor();
   },
 );
 
@@ -193,7 +193,7 @@ onMounted(() => {
       <ChartsPie
         :title="'Unassigned Leads Received Summary (by tier)'"
         :seriesName="'Leads'"
-        :data="LeadRcdSummary"
+        :data="UnassignedLeadRcdSummary"
       />
     </div>
     <div class="grid grid-cols-2 gap-4">
@@ -232,6 +232,7 @@ onMounted(() => {
             label: item.name,
           }))
         "
+        @update:model-value="getDataForAdvisor()"
       />
     </x-field>
     <ChartsColumn

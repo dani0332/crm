@@ -4,6 +4,7 @@ import { Chart } from 'highcharts-vue';
 const props = defineProps({
   title: String,
   seriesName: String,
+  data: Array,
 });
 
 const chartRef = ref(null);
