@@ -4,9 +4,13 @@ namespace App\Services;
 
 use App\Enums\QuoteTypes;
 use App\Models\AML;
+use App\Models\BikeQuote;
+use App\Models\CycleQuote;
+use App\Models\JetskiQuote;
 use App\Models\PetQuote;
 use App\Models\QuoteType;
 use App\Models\User;
+use App\Models\YachtQuote;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
 use Carbon\Carbon;
@@ -284,7 +288,15 @@ class CheckAmlService
             $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
         }
 
-        $dataMigrationDate = Carbon::createFromFormat('Y-m-d', '2023-08-14');
+        $escapeMigrateDate = Carbon::createFromFormat('Y-m-d', Carbon::parse($createdDate)->format('Y-m-d'));
+
+        $dataMigrationDate = match ($quoteTypeId) {
+            QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            QuoteTypes::CYCLE->id() => $escapeMigrateDate,
+            QuoteTypes::BIKE->id() => $escapeMigrateDate,
+            QuoteTypes::YACHT->id() => $escapeMigrateDate,
+            QuoteTypes::JETSKI->id() => $escapeMigrateDate,
+        };
 
         return Carbon::createFromFormat(
             config('constants.DATE_FORMAT_ONLY'),
@@ -305,7 +317,11 @@ class CheckAmlService
         $updateData = empty($updateData) ? ['pa_id' => auth()->id()] : $updateData;
 
         return match ($quoteTypeId) {
-            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYCLE->id() => CycleQuote::where($filterColumn, $quoteRequestId)->touch(),
+            QuoteTypes::BIKE->id() => BikeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::JETSKI->id() => JetskiQuote::where($filterColumn, $quoteRequestId)->touch(),
         };
     }
 }
