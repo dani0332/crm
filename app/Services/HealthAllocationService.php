@@ -32,7 +32,7 @@ class HealthAllocationService extends AllocationService
 
     public function fetchReAssignmentLead($advisorId)
     {
-        $from = now()->subDay()->setTime(18, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         info('leads will be picked up in reassignment from : '.$from);
 
         $leads = HealthQuote::whereBetween('created_at', [$from, now()])
