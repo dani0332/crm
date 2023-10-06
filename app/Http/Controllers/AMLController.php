@@ -73,7 +73,7 @@ class AMLController extends Controller
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
                     QuoteTypes::CYCLE->id(),
-                    QuoteTypes::JETSKI->id()
+                    QuoteTypes::JETSKI->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = $this->checkAmlService->isDataMigrated($request->quoteType, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -372,7 +372,7 @@ class AMLController extends Controller
                         ->where('pet_quote_request.id', $quoteRequestId)->first();
                 }
                 $auditLogLine = 'PetQuote';
-            } elseif($quoteTypeCode == quoteTypeCode::Cycle) {
+            } elseif ($quoteTypeCode == quoteTypeCode::Cycle) {
                 $quoteRequest = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())
                     ->select([
                         'personal_quotes.*',
@@ -419,7 +419,7 @@ class AMLController extends Controller
                     ->where('personal_quotes.id', $quoteRequestId)
                     ->first();
                 $auditLogLine = 'JetskiQuote';
-            }else {
+            } else {
                 $quoteRequest = '';
             }
         } else {
