@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\GenericRequestEnum;
+use App\Http\Requests\ChangePrimaryContactRequest;
+use App\Http\Requests\CustomerAdditionalContactRequest;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Repositories\CustomerRepository;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
@@ -15,7 +17,6 @@ use App\Traits\GenericQueriesAllLobs;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 
 class CustomerController extends Controller
 {
@@ -176,116 +177,31 @@ class CustomerController extends Controller
         ]]);
     }
 
-    public function makeAdditionalContactPrimary(Request $request)
+    public function makeAdditionalContactPrimary(ChangePrimaryContactRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'quote_id' => 'required',
-            'quote_type' => 'required',
-            'key' => 'required',
-            'value' => 'required',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['error' => [
-                'message' => $validator->errors(),
-            ]]);
-        }
+
         $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-        if ($request->key == GenericRequestEnum::EMAIL) {
-            $quoteObject->email = $request->value;
-            if ($quoteObject->customer && ! $this->customerService->getCustomerByEmail($request->value)) {
-                Log::info('Customer additional contact primary email updated. Previous Email: '.$quoteObject->email.' New Email: '.$request->value);
-                $quoteObject->customer->update(['email' => $request->value]);
-            } else {
-                if ($request->isInertia) {
-                    return redirect()->back()->withErrors(['Email Address already in use for a customer.']);
-                }
+        $makePrimary = CustomerRepository::makeAdditionalContactPrimary($quoteObject, $request->validated());
+        $response = ['data' => ['message' => 'Primary Contact Updated']];
 
-                return response()->json(['data' => [
-                    'message' => 'Email Address already in use for a customer.',
-                ]]);
-            }
-        } elseif ($request->key == GenericRequestEnum::MOBILE_NO) {
-            $quoteObject->mobile_no = $request->value;
-            if ($quoteObject->customer) {
-                Log::info('Customer additional contact primary mobile_no updated. Previous Mobile_No: '.$quoteObject->mobile_no.' New Mobile_No: '.$request->value);
-                $quoteObject->customer->update(['mobile_no' => $request->value]);
-
-                if (isset($request->quote_primary_mobile_no) && isset($request->quote_customer_id)) {
-                    CustomerAdditionalContact::create([
-                        'customer_id' => $request->quote_customer_id,
-                        'key' => 'mobile_no',
-                        'value' => trim($request->quote_primary_mobile_no),
-                    ]);
-                }
-            }
-            // Add quote_previous_primary_mobile_no in customer_additional_contact
+        if (!$makePrimary) {
+            $response = ['data' => ['message' => 'Primary Contact Not Updated']];
         }
-        $quoteObject->save();
 
         if (isset($request->isInertia) && $request->isInertia) {
             return redirect()->back();
         }
 
-        return response()->json(['data' => [
-            'message' => 'Primary Contact Updated',
-        ]]);
+        return response()->json($response);
     }
 
-    public function addAdditionalContact(Request $request)
+    public function addAdditionalContact(CustomerAdditionalContactRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'customer_id' => 'required',
-            'additional_contact_type' => 'required',
-            'additional_contact_val' => 'required',
-        ]);
-
-        if ($request->isInertia == true && $validator->fails()) {
-            return redirect()->back()->withErrors($validator->errors());
-        }
-
-        if ($validator->fails()) {
-            return response()->json(['error' => [
-                'message' => $validator->errors(),
-            ]]);
-        }
-
-        $key = $request->additional_contact_type;
-        $value = $request->additional_contact_val;
-        $quoteObject = $this->getQuoteObject($request->quote_type, $request->quote_id);
-
-        if ($key == GenericRequestEnum::EMAIL) {
-            $isAdditionalEmailExist = $this->customerService->checkAdditionalEmailExist($quoteObject, $value);
-
-            if ($isAdditionalEmailExist) {
-                if ($request->isInertia) {
-                    vAbort('Email Address already in use for a customer. Please try another.');
-                }
-
-                return response()->json(['error' => [
-                    'message' => 'Email Address already in use for a customer. Please try another.',
-                ]]);
-            }
-        }
-
-        if ($key == GenericRequestEnum::MOBILE_NO) {
-            $isAdditionalMobileNoExist = $this->customerService->checkAdditionalMobileNoExist($quoteObject, $value);
-
-            if ($isAdditionalMobileNoExist) {
-                if ($request->isInertia) {
-                    vAbort('Mobile Number already in use for a customer. Please try another.');
-                }
-
-                return response()->json(['error' => [
-                    'message' => 'Mobile Number already in use for a customer. Please try another.',
-                ]]);
-            }
-        }
-
-        Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$key.' value: '.$value);
-        CustomerAdditionalContact::create([
+        Log::info('Customer additional contact id: '.$request->customer_id.' new: '.$request->key.' value: '.$request->value);
+        CustomerAdditionalContact::updateOrCreate([
             'customer_id' => $request->customer_id,
-            'key' => $key,
-            'value' => trim($value),
+            'key' => $request->key,
+            'value' => trim($request->value),
         ]);
 
         if (isset($request->isInertia) && $request->isInertia) {
@@ -295,5 +211,10 @@ class CustomerController extends Controller
         return response()->json(['data' => [
             'message' => 'Contact added successfully.',
         ]]);
+    }
+
+    public function customerAlreadyEmailExistCheck(Request $request)
+    {
+        return response()->json(['response' => (bool) $this->customerService->getCustomerByEmail($request->value)]);
     }
 }

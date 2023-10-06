@@ -29,9 +29,6 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -70,9 +67,6 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const confirmData = reactive({
-  contactPrimary: null,
-});
 
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
@@ -232,116 +226,6 @@ const activityDeleteConfirmed = () => {
       },
       onFinish: () => {
         modals.activityConfirm = false;
-      },
-    },
-  );
-};
-
-// additional contact
-
-const additionalContactTable = [
-  { text: 'Type', value: 'key' },
-  { text: 'Value', value: 'value' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Action', value: 'action' },
-];
-
-const additionalContact = useForm({
-  id: null,
-  additional_contact_type: null,
-  additional_contact_val: null,
-  quote_id: page.props.quote.id,
-  customer_id: page.props.quote.customer_id,
-  quote_type: 'home',
-});
-
-const onAdditionalContactSubmit = isValid => {
-  if (!isValid) return;
-  additionalContact
-    .transform(data => ({
-      ...data,
-      isInertia: true,
-    }))
-    .post(`/customer-additional-contact/add`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        additionalContact.reset();
-        notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
-        });
-      },
-      onError: err => {
-        notification.error({ title: err.error, position: 'top' });
-      },
-      onFinish: () => {
-        modals.addContact = false;
-      },
-    });
-};
-
-const additionalContactDelete = id => {
-  modals.contactDeleteConfirm = true;
-  confirmDeleteData.contact = id;
-};
-
-const additionalContactDeleteConfirmed = () => {
-  router.post(
-    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
-    {
-      isInertia: true,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactDeleteConfirm = false;
-      },
-    },
-  );
-};
-
-const additionalContactPrimary = data => {
-  modals.contactPrimaryConfirm = true;
-  confirmData.contactPrimary = data;
-};
-
-const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
-      isInertia: true,
-      quote_id: page.props.quote.id,
-      key: confirmData.contactPrimary.key,
-      value: confirmData.contactPrimary.value,
-      quote_type: 'home',
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Primary',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactPrimaryConfirm = false;
       },
     },
   );
@@ -880,6 +764,8 @@ const policyDetails = useForm({
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

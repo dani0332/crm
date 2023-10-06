@@ -213,6 +213,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
     Route::post('/customer-additional-contact/{id}/make-primary', [CustomerController::class, 'makeAdditionalContactPrimary']);
     Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
+    Route::post('/customer-primary-email-check', [CustomerController::class, 'customerAlreadyEmailExistCheck']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
