@@ -64,15 +64,20 @@ class TransAppService extends BaseService
 
         $expiryDate = Carbon::now()->addMonths(12);
         $customer = CustomerService::getCustomerById($customerId);
-        $customerEmail = $customer->email;
-        $customerMobile = $customer->mobile_no;
         $customer->myalfred_expiry_date = $expiryDate;
         $customer->save();
 
+        $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $request->email);
+        info('createTransaction responseExtend: '.$responseExtend);
+
+        if ($responseExtend != 201) {
+            $customerToken = MyAlFredUser::select('code')->where('customer_id', $customerId)->orderBy('created_at', 'asc')->first();
+            $message = 'Customer trying to extend subscription but not exist in myAflred - Customer Email: '.$request->email.' - Token: '.$customerToken;
+            Log::info($message);
+        }
+
         if ($existingCustomer) { // Existing customer
             if ($existingCustomer->is_we_sent == 1) { // is_we_sent is true
-                $responseExtend = $this->berlinService->extendCustomerSubscription($customerId);
-
                 if ($responseExtend == 200) { // Send email/sms if customer not signup
                     dispatch(new MAWelcomeJob($customer, 'TRANSAPP', 'transapp-myalfred-we'));
                 }
@@ -81,12 +86,6 @@ class TransAppService extends BaseService
 
                 if ($responseContact != 201 && $responseContact != 204) {
                     $message = 'myAlfred signup link to issued - Customer Email: '.$request->email;
-                    Log::info($message);
-                }
-
-                if ($responseExtend != 201) {
-                    $customerToken = MyAlFredUser::select('code')->where('customer_id', $customerId)->orderBy('created_at', 'asc')->first();
-                    $message = 'Customer trying to extend subscription but not exist in myAflred - Customer Email: '.$request->email.' - Token: '.$customerToken;
                     Log::info($message);
                 }
             }

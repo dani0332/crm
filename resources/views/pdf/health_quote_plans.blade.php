@@ -262,8 +262,10 @@
         $vatPercentage = \App\Models\ApplicationStorage::where('key_name', \App\Enums\ApplicationStorageEnums::VAT_VALUE)->first()->value ?? 0;
 
         foreach ($quotePlans->quote->plans as &$quotePlan){
-            $addonsPrice = 0;
-            $addonsVat   = 0;
+            $addonsPrice = $addonsVat =
+            $quotePlan->discountPremium =
+            $quotePlan->vat =
+            $quotePlan->total= 0;
 
             if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
                 continue;
@@ -275,8 +277,28 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
+            $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
 
-            $quotePlan->addons = (isset($addons[$quotePlan->id])) ? json_decode(json_encode($addons[$quotePlan->id])) : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+            // Discount Premium and VAT new Implementation
+            if(isset($quotePlan->addons['coPayment'])) {
+                $coPayId = $quotePlan->addons['coPayment']['id'];
+                foreach ($quotePlan->ratesPerCopay as $coPayKey => $coPayVal) {
+                    if( $coPayVal->healthPlanCoPaymentId == $coPayId) {
+                        $quotePlan->discountPremium = $coPayVal->discountPremium;
+                        $quotePlan->vat = $coPayVal->vat;
+                        $quotePlan->total = $quotePlan->discountPremium;
+                    }
+                }
+            } else {
+                $discountPremium = $vat = [];
+                foreach ($quotePlan->ratesPerCopay as $coPayKey => $coPayVal) {
+                    $discountPremium[] =  $coPayVal->discountPremium;
+                    $vat[] = $coPayVal->vat;
+                }
+                $quotePlan->discountPremium = collect($discountPremium)->min();
+                $quotePlan->vat = collect($vat)->min();
+                $quotePlan->total = $quotePlan->discountPremium;
+            }
 
             foreach ($quotePlan->benefits as &$benefit) {
 
@@ -287,10 +309,6 @@
                 //set default values
                 $benefit->price = 0;
                 $benefit->vat = 0;
-
-                $quotePlan->discountPremium += $addonsPrice;
-                $quotePlan->vat += $addonsVat;
-                $quotePlan->total = $quotePlan->discountPremium  + $quotePlan->vat;
                 $plans[$quotePlan->id] = $quotePlan;
 
             }
@@ -338,6 +356,7 @@
             ["code" => "newBorn", "title" => "Newborn Cover", "type" => 'maternityCover'],
 
             ["code" => "heading", "title" => "Co‐pay or Co‐insurance"],
+            ["code" => "coPayment", "title" => "Outpatient co-pay", "type" => 'coInsurance'],
             ["code" => "consultation", "title" => "Outpatient Consultation", "type" => 'coInsurance'],
             ["code" => "diagnostics", "title" => "Outpatient Diagnostics", "type" => 'coInsurance'],
             ["code" => "physiotherapy", "title" => "Outpatient Physiotherapy", "type" => 'coInsurance'],
@@ -367,7 +386,7 @@
     <footer>
         <table class="tbl-footer">
             <div style="float: left;">
-                    <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:'/image/alfred-theme.png'}}">
+                    <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:public_path('image/alfred-theme.png')}}">
             </div>
             <div style="float: left; margin-left: 10px; margin-top: 20px">
                 @if(isset($quote->advisor->name) && !empty($quote->advisor->name))
@@ -456,6 +475,11 @@
             </thead>
             <tbody>
                 @foreach($features as $feature)
+
+                @if($feature['code'] == 'coPayment' && !isset($addons))
+                    @php continue; @endphp
+                @endif
+
                 {{-- heading row --}}
                 @if(@$feature['code'] == 'heading')
                 <tr>
@@ -503,7 +527,11 @@
                                 @endforeach
                                 {!! ($value)  !!}
                             @else
-                                {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
+                                @if($feature['code'] == 'coPayment')
+                                    {{ $addons[$planId]['coPayment']['text'] ?? 'N/A' }}
+                                @else
+                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
+                                @endif
                             @endif
                         </p>
                     </td>

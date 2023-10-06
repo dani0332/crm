@@ -62,7 +62,6 @@ class MAWelcomeJob implements ShouldQueue
                         $newMyAlfredUser = new MyAlFredUser;
                         $newMyAlfredUser->signup_url = null;
                         $newMyAlfredUser->customer_id = $customer->id;
-                        $newMyAlfredUser->code = $customerInviteCode;
                         $newMyAlfredUser->source = $this->source;
                         $newMyAlfredUser->save();
                     }
