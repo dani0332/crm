@@ -313,7 +313,7 @@ const totalPriceVAT = computed(() => {
 		item.addons.forEach(addon => {
 			addon.carAddonOption.forEach(option => {
 				if (option.isSelected && option.price != 0) {
-					vat += option.price + option.vat;
+					vat += parseInt(option.price) + option.vat;
 				}
 			})
 		})		
