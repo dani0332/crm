@@ -85,6 +85,9 @@ const { isRequired, isEmail, isNumber, isMobile } = useRules();
 const isCarLostStatus = (statusId) => {
 	return statusId == page.props.quoteStatusEnum.CarSold || statusId == page.props.quoteStatusEnum.Uncontactable
 }
+const prepareDate = (date) => {
+	return date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1];
+}
 
 const leadStatusForm = useForm({
 	modelType: 'Car',
@@ -95,7 +98,7 @@ const leadStatusForm = useForm({
 	notes: page.props.record.notes || null,
 	trans_code: page.props.record.transapp_code || null,
 	lostReason: page.props.record.lost_reason_id || null,
-	next_followup_date: page.props.record.next_followup_date || null,
+	next_followup_date: page.props.record.next_followup_date ? prepareDate(page.props.record.next_followup_date) : null,
 	tier_id : page.props.record.tier_id || null,
 	lost_approval_status: '',
 	approve_reason_id: '',
@@ -105,6 +108,8 @@ const leadStatusForm = useForm({
 	proof_document: null,
 	car_lost_quote_log_id: page.props.paymentEntityModel.car_lost_quote_log?.id || 0
 });
+
+
 
 const leadApprovalStatusOptions = computed(() => {
 	let arr = [];
@@ -313,7 +318,7 @@ const totalPriceVAT = computed(() => {
 		item.addons.forEach(addon => {
 			addon.carAddonOption.forEach(option => {
 				if (option.isSelected && option.price != 0) {
-					vat += option.price + option.vat;
+					vat += parseInt(option.price) + option.vat;
 				}
 			})
 		})		
@@ -889,10 +894,8 @@ const onLeadStatus = () => {
   leadStatusForm.transform(data => {
 	let date = data.next_followup_date;
 	if (date !== null && date !== '') {
-		let parts = date.split('T');
-		let dateString = parts[0].split('-').reverse().join('-');
-		let timeString = parts[1].split('.')[0] + ':00';
-		date = dateString + ' ' + timeString;
+		date = new Date(date);
+		date = date.toISOString().split('T')[0].split('-').reverse().join('-') + ' ' + date.toTimeString().split(' ')[0];
 	}
 	data.next_followup_date = date;
 	return data;
@@ -1497,22 +1500,22 @@ onMounted(() => {
 							/>
 						</x-field>
 						<x-field label="Followup Date" v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-							<!-- <DatePicker								
+							<DatePicker								
 								v-model="leadStatusForm.next_followup_date"
 								withTime
 								:rules="[isRequired]"
 								placeholder="Please select follow-up date & time" 
 								:error="leadStatusForm.errors.next_followup_date"
 								class="w-full" 
-							/> -->
-							<x-input
+							/>
+							<!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
 								:value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
 								type="datetime-local"
 								placeholder="Please select follow-up date & time"
 								class="w-full"
 								:error="leadStatusForm.errors.next_followup_date"
-							/>
+							/> -->
 						</x-field>
 						<x-select
 							v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
