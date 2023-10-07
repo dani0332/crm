@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Model;
 
 class PaymentAction extends Model
@@ -12,6 +11,4 @@ class PaymentAction extends Model
     /**
      * @return bool
      */
-
-
 }

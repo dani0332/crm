@@ -62,7 +62,8 @@ class CustomerRepository extends BaseRepository
         }
     }
 
-    public function fetchMakeAdditionalContactPrimary($quoteObject, $request) {
+    public function fetchMakeAdditionalContactPrimary($quoteObject, $request)
+    {
         $_return = true;
         try {
             DB::beginTransaction();

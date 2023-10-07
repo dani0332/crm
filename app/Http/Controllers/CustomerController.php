@@ -184,7 +184,7 @@ class CustomerController extends Controller
         $makePrimary = CustomerRepository::makeAdditionalContactPrimary($quoteObject, $request->validated());
         $response = ['data' => ['message' => 'Primary Contact Updated']];
 
-        if (!$makePrimary) {
+        if (! $makePrimary) {
             $response = ['data' => ['message' => 'Primary Contact Not Updated']];
         }
 

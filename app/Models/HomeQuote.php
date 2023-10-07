@@ -57,7 +57,7 @@ class HomeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(Customer::class);
     }
-    
+
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
