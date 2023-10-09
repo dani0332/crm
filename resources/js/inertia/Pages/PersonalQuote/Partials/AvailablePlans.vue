@@ -9,7 +9,6 @@ const props = defineProps({
 	hidden: Boolean,
 	notAdvisorAndManagerAndPA: Boolean,
 	isPlanUpdateActive: Boolean,
-	totalSelectedAddonsPriceWithVat: Number,
 	genericRequestEnum: Object,
 });
 
@@ -37,10 +36,18 @@ const ancillaryExcessOptions = computed(() => {
 });
 
 const totalPremiumWithVat = computed(() => {
+	let addonVat = 0;
+	props.plan.addons.forEach(addon => {
+		addon.carAddonOption.forEach(option => {
+			if (option.isSelected && option.price != 0) {
+				addonVat += parseInt(option.price) + option.vat;
+			}
+		})
+	})
 	return (
 		props.plan.discountPremium +
 		props.plan.vat +
-		props.totalSelectedAddonsPriceWithVat
+		addonVat
 	);
 });
 
@@ -281,7 +288,7 @@ const onToggleManual = () => {
 					</dl>
 					<dl class="grid md:grid-cols-2 gap-x-6 border-top pl-4">
 						<div class="grid sm:grid-cols-2">
-							<dt class="font-bold">Total Price with VAT:</dt>
+							<dt class="font-bold">Total Premium with VAT:</dt>
 							<dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
 						</div>
 						<div class="flex justify-end">

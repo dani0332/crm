@@ -881,6 +881,18 @@ const confirmDeleteDoc = () => {
   );
 };
 
+const getAddonVat = (item) => {
+	let addonVat = 0;
+	item.addons.forEach(addon => {
+		addon.carAddonOption.forEach(option => {
+			if (option.isSelected && option.price != 0) {
+				addonVat += parseInt(option.price) + option.vat;
+			}
+		})
+	})
+	return addonVat;
+}
+
 const copyLink = () => {
 	copy(page.props.planURL);
 	if (copied)
@@ -1957,7 +1969,7 @@ onMounted(() => {
 					{{ discountPremium ? parseFloat(discountPremium).toFixed(2) : '0.00' }}
 				</template>
 				<template #item-premiumWithVat="item">
-					{{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+					{{ parseFloat(item.discountPremium + item.vat + getAddonVat(item)).toFixed(2) }}
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
