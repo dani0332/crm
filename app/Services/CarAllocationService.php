@@ -622,7 +622,7 @@ class CarAllocationService extends AllocationService
 
     public function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/providerCode='.$plan->providerCode.'%planId='.$plan->id;
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/providerCode='.$plan->provider_code.'%planId='.$plan->id;
 
         return $buyNowLink;
     }
