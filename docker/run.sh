@@ -11,7 +11,7 @@ chmod -R 775 bootstrap/cache
 php artisan config:clear
 php artisan route:clear
 php artisan view:clear
-php artisan view:cache
+#php artisan view:cache
 #php artisan route:cache
 #php artisan queue:restart
 
