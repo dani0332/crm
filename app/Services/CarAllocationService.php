@@ -560,6 +560,8 @@ class CarAllocationService extends AllocationService
             'advisorName' => $advisor->name,
             'documentUrl' => [$documentUrl],
             'carQuoteId' => $carQuote->code,
+            'vehicleName' => $this->getVehicleName($carQuote),
+            'currentInsurer' => $carQuote->currently_insured_with,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
             'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
