@@ -288,18 +288,26 @@ class RenewalBatchReportService extends BaseService
                 $qry->whereIn('advisor_id', $filters->advisors);
             });
 
+            if ($authUserIsDeputyManager) {
+                $userIds = $this->deputyManagerWalkTree($authUserId);
+            } else {
+                $userIds = $this->walkTree($authUserId);
+            }
+
+            $userIdsString = ! empty($userIds) ? implode(',', $userIds) : '0';
+
             $advisors = ! empty($filters->advisors) ? implode(',', $filters->advisors) : '0';
 
             $query->addSelect(
                 DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$advisors.'), 1, 0)) as total_allocated_leads'),
 
-                DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$combinedSegmentUserIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
+                DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$userIdsString.'), 1, 0)) as total_allocated_leads_by_all_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                         and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$advisors.') THEN 1 ELSE 0 END) as renewed'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
-                        and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$combinedSegmentUserIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
+                        and payments.captured_at <= "'.$reportDateEnd.'" and car_quote_request.advisor_id in ('.$userIdsString.') THEN 1 ELSE 0 END) as renewed_by_all_advisors'),
 
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
                         and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
@@ -308,19 +316,27 @@ class RenewalBatchReportService extends BaseService
                         and car_quote_request.advisor_id in ('.$advisors.')
                         THEN 1 ELSE 0 END) as car_sold'),
 
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::CarSold.'
+                        and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::CarSold.'
+                        and car_lost_quote_logs.status = "Approved"
+                        and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
+                        and car_quote_request.advisor_id in ('.$userIdsString.')
+                        THEN 1 ELSE 0 END) as car_sold_by_all_advisors'),
+
                 DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::Uncontactable.'
                         and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::Uncontactable.'
                         and car_lost_quote_logs.status = "Approved"
                         and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
                         and car_quote_request.advisor_id in ('.$advisors.')
                         THEN 1 ELSE 0 END) as uncontactable'),
-            );
 
-            if ($authUserIsDeputyManager) {
-                $userIds = $this->deputyManagerWalkTree($authUserId);
-            } else {
-                $userIds = $this->walkTree($authUserId);
-            }
+                DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::Uncontactable.'
+                        and car_lost_quote_logs.quote_status_id = '.QuoteStatusEnum::Uncontactable.'
+                        and car_lost_quote_logs.status = "Approved"
+                        and car_lost_quote_logs.updated_at <="'.$reportDateEnd.'"
+                        and car_quote_request.advisor_id in ('.$userIdsString.')
+                        THEN 1 ELSE 0 END) as uncontactable_by_all_advisors'),
+            );
 
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         } elseif (! isset($filters->advisors) && $authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
