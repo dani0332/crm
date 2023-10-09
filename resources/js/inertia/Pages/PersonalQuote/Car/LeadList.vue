@@ -16,7 +16,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const createLead = reactive({
     modal: false,
-    type: ''    
+    type: ''
 });
 
 const tableHeader = [
@@ -51,19 +51,28 @@ const tableHeader = [
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'QUOTE LINK', value: 'quote_link' },  
+  { text: 'QUOTE LINK', value: 'quote_link' },
 ];
 
 const ecommerceOptions = [
     { value: '', label: 'Please select is ecommerce' },
     { value: 'Yes', label: 'Yes' },
     { value: 'No', label: 'No' },
+]
+
+const assignmentTypeOptions = [
+    { value: '', label: 'Please select is assignment type' },
+    { value: 1, label: 'System Assigned' },
+    { value: 2, label: 'System ReAssigned' },
+    { value: 3, label: 'Manual Assigned' },
+    { value: 4, label: 'Manual ReAssigned' },
 ]
 
 const advisorOptions = computed(() => {
@@ -123,28 +132,28 @@ const paymentStatusOptions = computed(() => {
 });
 
 const filters = reactive({
-    code: '', 
-    first_name: '', 
-    last_name: '', 
-    email: '', 
-    mobile_no: '', 
-    quote_status_id: [], 
-    created_at: '', 
-    currently_insured_with: '', 
-    renewal_expiry_date: '', 
-    is_ecommerce: '', 
-    payment_status_id: '', 
-    renewal_batch: '', 
-    previous_quote_policy_number: '', 
-    car_type_insurance_id: '', 
-    vehicle_type_id: '', 
-    advisor_assigned_date: '', 
-    tier_id: [], 
-    quote_batch_id: [], 
-    advisor_id: [], 
-    advisor_assigned_date_end: '', 
-    renewal_expiry_date_end: '', 
-    created_at_end: '', 
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    quote_status_id: [],
+    created_at: '',
+    currently_insured_with: '',
+    renewal_expiry_date: '',
+    is_ecommerce: '',
+    payment_status_id: '',
+    renewal_batch: '',
+    previous_quote_policy_number: '',
+    car_type_insurance_id: '',
+    vehicle_type_id: '',
+    advisor_assigned_date: '',
+    tier_id: [],
+    quote_batch_id: [],
+    advisor_id: [],
+    advisor_assigned_date_end: '',
+    renewal_expiry_date_end: '',
+    created_at_end: '',
     page: 1,
 });
 
@@ -423,7 +432,7 @@ onMounted(() => {
                     :options="carTypeInsurances"
                     placeholder="Please select an option"
                     class="w-full"
-                />                
+                />
                 <x-input
                     v-model="filters.renewal_batch"
                     type="number"
@@ -466,6 +475,15 @@ onMounted(() => {
                     placeholder="Please select Advisor"
                     :options="advisorOptions"
                 />
+
+                <x-select
+                    v-model="filters.assignment_type"
+                    label="Assignment Type"
+                    name="assignment_type"
+                    :options="assignmentTypeOptions"
+                    placeholder="Please select assignment type"
+                    class="w-full"
+                />
             </div>
             <div class="flex justify-between gap-3 mb-4 mt-1">
                 <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -504,7 +522,7 @@ onMounted(() => {
                     </div>
                     <x-form @submit="onAssignLead" :auto-focus="false">
                         <div class="w-full flex flex-col md:flex-row gap-4">
-                        
+
                         <ComboBox
                             :single="true"
                             v-model="assignForm.assigned_to_id_new"

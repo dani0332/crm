@@ -134,6 +134,10 @@ class AdvisorPerformanceReportService extends BaseService
             info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
+        if (isset($filters->assignmentTypes) && $filters->assignmentTypes != 'All') {
+            info('assignment_type are : '.json_encode($filters->assignmentTypes));
+            $query->where('car_quote_request.assignment_type', $filters->assignmentTypes);
+        }
         if (isset($filters->teams) && count($filters->teams) > 0) {
             info('teamsFilter are : '.json_encode($filters->teams));
             $value = $filters->teams;
