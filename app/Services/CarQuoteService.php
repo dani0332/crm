@@ -803,8 +803,7 @@ class CarQuoteService extends BaseService
                     }
                 } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                }
-                elseif ($item == 'assignment_type' && is_array($request[$item]) && ! empty($request[$item])) {
+                } elseif ($item == 'assignment_type' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.assignment_type', $request[$item]);
                 } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
                     $this->query->whereIn('cqr.tier_id', $request[$item]);
