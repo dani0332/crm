@@ -464,6 +464,7 @@ const modals = reactive({
   docConfirm: false,
   createPlan:false,
   sendConfirm:false,
+  showEmailEventsModal: false
 });
 
 const confirmData = reactive({
@@ -1052,6 +1053,7 @@ const emailsHeaders = ref([
   { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
+  {text: 'Actions', value: 'actions'}
 ]);
 const followUpActions = ref([]);
 const actionsHeaders = ref([
@@ -1093,6 +1095,49 @@ onMounted(() => {
 	getFollowUpsByQuote()
 	// setLeadStatuses();
 });
+
+
+
+//activities
+const emailEventsTable = [
+  { text: 'Event Type', value: 'type' },
+  { text: 'DateTime', value: 'event_date' }
+];
+
+const emailEvents = ref([]);
+const loadEmailEvents = (email) => {
+
+  let data = {
+        isInertial: true,
+        message_id: email.message_id,
+        customer_email: email.customer_email
+    };
+
+    axios
+	  		.post(`/followups/emails/events`, data)
+	  		.then(response => {
+
+          if(response.data.length) {
+            modals.showEmailEventsModal = true;
+	  		    emailEvents.value = response.data;
+          } 
+          else
+          {
+            notification.success({
+              title: 'Email Events not available.',
+              position: 'top',
+            });
+          }
+          
+	  		})
+	  		.catch(error => {
+          notification.error({
+            title: 'Something went wrong while fetching events.',
+            position: 'top',
+          });
+	  			modals.showEmailEventsModal = false;
+      });
+}
 
 </script>
 
@@ -2042,6 +2087,23 @@ onMounted(() => {
       class="p-4 rounded shadow mb-6 bg-white"
       v-if="hasRole(rolesEnum.CarAdvisor)"
     >
+
+    <x-modal v-model="modals.showEmailEventsModal" size="lg" show-close backdrop>
+      <template #header> Email Events </template>
+      <DataTable
+        table-class-name="compact"
+        :headers="emailEventsTable"
+        :items="emailEvents"
+        border-cell
+        hide-rows-per-page        
+      >
+        
+      </DataTable>
+      
+    </x-modal>
+
+  
+
       <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
       <DataTable
         table-class-name="tablefixed compact"
@@ -2052,6 +2114,21 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="followUpEmails.length < 15"
       >
+
+      <template #item-actions="item">
+          <div class="flex gap-2">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              @click.prevent="loadEmailEvents(item)"
+            >
+              View Logs
+            </x-button>
+            
+          </div>
+        </template>
+
       </DataTable>
     </div>
     <div
