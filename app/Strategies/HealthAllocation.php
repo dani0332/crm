@@ -59,7 +59,7 @@ class HealthAllocation implements Allocation
 
     private function fetchAvailableAdvisor($leadTeam)
     {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam);
+        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, false);
     }
 
     private function assignLead($lead, $advisor)

@@ -78,7 +78,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 
     private function fetchAvailableAdvisor($leadTeam)
     {
-        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam);
+        return $this->healthAllocationService->fetchAvailableAdvisor($leadTeam, true);
     }
 
     private function assignLead($lead, $advisor)

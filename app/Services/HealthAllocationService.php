@@ -71,13 +71,16 @@ class HealthAllocationService extends AllocationService
         }
     }
 
-    public function fetchAvailableAdvisor($leadTeam)
+    public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob)
     {
         $statusOrder = [
             UserStatusEnum::ONLINE,
             UserStatusEnum::OFFLINE,
-            UserStatusEnum::UNAVAILABLE,
         ];
+
+        if (! $isReassignmentJob) {
+            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
 
         foreach ($statusOrder as $status) {
             $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
@@ -108,6 +111,7 @@ class HealthAllocationService extends AllocationService
 
     public function assignLead($lead, $advisor, $assignmentType)
     {
+        $previousAssignmentType = $lead->assignment_type;
         $previousUserId = $lead->advisor_id;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
@@ -118,7 +122,7 @@ class HealthAllocationService extends AllocationService
 
         if ($lead->source != LeadSourceEnum::REFERRAL) {
             info('lead source is not referral so about to update allocation record');
-            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate);
+            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
         }
 
         $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
