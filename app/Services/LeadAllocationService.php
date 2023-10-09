@@ -188,7 +188,7 @@ class LeadAllocationService extends BaseService
                     ->then(function () use ($lead) {
                         if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                             && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                            // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
                         }
                     })->dispatch();
