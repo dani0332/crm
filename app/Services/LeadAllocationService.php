@@ -182,17 +182,6 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-                $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
-                $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-                // if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                //     SyncSIBContactJob::dispatch($lead);
-                // }
-                //Disabling - Enable for RM Deployment
-                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    CammyJob::dispatch($lead, 'intro');
-                }
-                GetQuotePlansJob::dispatch($lead);
                 DB::commit();
 
                 Haystack::build()

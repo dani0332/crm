@@ -251,20 +251,6 @@ class CRUDService extends BaseService
                 $entity->tier_id = $request->tier_id;
             }
             $entity->save();
-            //if model is health, team is EBP and status changed to Quoted manually then trigger EBP flow
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health) && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                if ($request->leadStatus == QuoteStatusEnum::Quoted) {
-                    CammyJob::dispatch($entity, 'intro');
-                } else {
-                    SyncSIBContactJob::dispatch($entity);
-                }
-
-                if ($previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-                ) {
-                    CammyJob::dispatch($entity, 'unsub');
-                }
-            }
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
