@@ -23,9 +23,16 @@ const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
+const isCheckDetailsEnabled = ref(false);
 
 const discountValue = ref(0); // Initial discount value
 const totalPrice = ref(2000); // Initial total price
+const paymentTypesFiltered = ref([]);
+
+const paymentMethodsModels = ref([]);
+const splitAmountModels = ref([]);
+const dueDateModels = ref([]);
+const fileUploadModels = ref([]);
 
 const totalAmount = computed(() => {
   const discount = discountValue.value;
@@ -86,21 +93,77 @@ const collectionTypes = [
   { value: 'broker', label: 'Broker' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_BROKER},
   { value: 'insurer', label: 'Insurer' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_INSURER},
 ];
-
-
-// Watch for changes in paymentMethodsForm.frequency
-//watch(paymentMethodsForm.frequency, handleFrequencyTypeChange);
-
 const totalPayments = ref([
   { value: '1', label: '1'},
  ]);
-const handleCollectionTypeChange = () => {
-  if (paymentMethodsForm.collection_type === 'insurer') {
-    paymentMethodsForm.payment_method = 'BT';
+
+const paymentTypes = ref([
+  { value: '', label: 'Select Payment Method'},
+  { value: 'BT', label: 'Bank Transfer', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_BT },
+  { value: 'CSH', label: 'Cash', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CSH},
+  { value: 'CHQ', label: 'Cheque', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CHQ },
+  { value: 'CC', label: 'Credit Card', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CC },
+  { value: 'PDC', label: 'Post Dated Cheque', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PDC },
+  { value: 'IP', label: 'Insurer Payment', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_IP },
+  { value: 'PP', label: 'Parttial Payment', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PP },
+  { value: 'MP', label: 'Multiple Payment', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_MP },
+  { value: 'CA', label: 'Credit Approval', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CA },
+  { value: 'PPR', label: 'Proforma Payment Request', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PPR },
+  { value: 'IN_PL', label: 'Insure Now Pay Later', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_IN_PL },
+]);
+
+const frequencyTypes = [
+  { value: '', label: 'Select Frequency'},
+  { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
+  { value: 'annually', label: 'Annually'},
+  { value: 'monthly', label: 'Monthly' },
+  { value: 'quarterly', label: 'Quarterly' },
+  { value: 'semi_annual', label: 'Semi Annual' },
+  { value: 'split_payments', label: 'Split Payments' },
+  { value: 'custom', label: 'Custom' },
+];
+
+const handlePaymentOptions = () => {
+  if( paymentMethodsModels.value[1] === 'CHQ' || paymentMethodsModels.value[1] === 'PDC' ) {
+    isCheckDetailsEnabled.value = true;
   } else {
-    paymentMethodsForm.payment_method = 'CC';
+    isCheckDetailsEnabled.value = false;
+  }
+}
+
+const handleCollectionTypeChange = () => {
+  //customize payment method based on collection type
+  paymentTypesFiltered.value = paymentTypes.value;
+
+  paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'CA', 'MP', 'PP'].includes(item.value));    
+  if (paymentMethodsForm.collection_type === 'insurer') {    
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CC', 'BT', 'CSH'].includes(item.value));
+    paymentMethodsModels.value[1] = 'IP';
+  } else {
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
+    paymentMethodsModels.value[1] = '';
   }
 };
+
+const handlePaymentTypes = (count) => {
+  var paymentTypesWithoutCheck = paymentTypesFiltered.value;
+  if (  count >= 2  && 
+        (
+          paymentMethodsForm.frequency === 'semi_annual' ||
+          paymentMethodsForm.frequency === 'quarterly' ||
+          paymentMethodsForm.frequency === 'monthly' ||
+          paymentMethodsForm.frequency === 'custom'
+        )
+    ){
+    paymentTypesWithoutCheck =  paymentTypesFiltered.value.filter(item => !['CHQ','CC'].includes(item.value));    
+  }
+
+  if(paymentMethodsForm.frequency === 'upfront' || paymentMethodsForm.frequency === 'split_payments' ){
+    paymentTypesWithoutCheck =  paymentTypesWithoutCheck.filter(item => !['PDC'].includes(item.value));    
+  }
+
+  return paymentTypesWithoutCheck;  
+}
 
 const handleApprovalReasonChange = () => {
   if(paymentMethodsForm.credit_approval === 'other_reasons'){
@@ -164,8 +227,8 @@ const handleFrequencyTypeChange = () => {
   } else {
     paymentMethodsForm.payment_no = '1';
   }
-  if (paymentMethodsForm.payment_method==='CC' && resetPaymentMethod){
-      paymentMethodsForm.payment_method = 'BT';
+  if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod){
+    paymentMethodsModels.value[1] = 'BT';
   }    
 };
 
@@ -178,17 +241,6 @@ const isCCDisabled = computed(() => {
         
           );
 });
-
-const frequencyTypes = [
-  { value: '', label: 'Select Frequency'},
-  { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
-  { value: 'annually', label: 'Annually'},
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'semi_annual', label: 'Semi Annual' },
-  { value: 'split_payments', label: 'Split Payments' },
-  { value: 'custom', label: 'Custom' },
-];
 
 const creditApprovalReasons = [
   { value: ' ', label: 'Select Approval Reason'},
@@ -214,8 +266,6 @@ const discountReasons = [
   { value: 'competitive_pricing_discount', label: 'Competitive pricing discount' },
   { value: 'custom_discount_reason', label: 'Custom discount reason' },  
 ];
-
-
 
 const generateCCLink = async code => {
   try {
@@ -254,7 +304,10 @@ const generateCCLink = async code => {
 
 const addPaymentModal = () => {
   paymentMethodsForm.reset();
-  paymentMethodsForm.payment_method = 'CC';
+  paymentMethodsForm.payment_method = '';
+  
+  paymentMethodsModels.value[1] = '';
+  dueDateModels[1] = new Date();
   paymentMethodsForm.collection_type = 'broker';
   paymentMethodsForm.amount = '';
   paymentMethodsForm.payment_reference = '';
@@ -268,6 +321,7 @@ const addPaymentModal = () => {
   paymentMethodsForm.frequency = 'upfront';
   paymentMethodsForm.discount = ' ';
   paymentMethodsForm.credit_approval = ' ';
+  handleCollectionTypeChange();
 };
 
 const editPaymentModal = payment => {
@@ -475,7 +529,7 @@ const providerId = computed(() => {
             </div>
         </template>
     </DataTable>
-    <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
+    <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">
           {{
@@ -777,35 +831,49 @@ const providerId = computed(() => {
               <div class="w-1/5 px-2">
                 <select
                   class="beautiful-select"
-                  v-model="paymentMethodsForm.payment_method"
-                  :options="paymentMethods"
+                  v-model="paymentMethodsModels[count]"
+                  :options="handlePaymentTypes(count)"
                   :rules="[rules.isRequired]"                
-                  :name="'payment_method[' + count + ']'" 
+                  :name="'payment_types[' + count + ']'"
+                  @change="handlePaymentOptions()"
                 >
                   <!-- Use the title attribute to set the tooltip text -->
                   <option
-                    v-for="option in paymentMethods"
+                    v-for="option in handlePaymentTypes(count)"
                     :key="option.value"
                     :value="option.value"
                     :title="option.tooltip"
                     :disabled="option.value === 'CC' && isCCDisabled"
                   >{{ option.label }}</option>
                 </select>
+                <x-input
+                  class="w-full mt-2"
+                  v-if = "isCheckDetailsEnabled && count==1"
+                  :name="'cheque_details[' + count + ']'"
+                  placeholder="Cheque Details"         
+                />
               </div>
               <div class="w-1/5 px-2">
                 <x-input
-                  :name="'totalAmount[' + count + ']'"
+                  v-model="splitAmountModels[count]"
                   class="w-full"
                   :rules="[rules.isRequired]"              
                 />
               </div>
               <div class="w-1/5 px-2">
                 <DatePicker
-                  :name="'dueDate[' + count + ']'" 
-                  v-model="paymentMethodsForm.collectionDate"                      
+                  v-model="dueDateModels[count]"
+                  :value="dueDateModels[count]"
                 />  
               </div>
-              <div class="w-1/5 px-2">Upload Document</div>
+              <div class="w-1/5 px-2">
+                <x-input
+                  class="w-full"
+                  v-model="fileUploadModels[count]"
+                  placeholder="Upload Files"         
+                />
+
+              </div>
             </div>
           </div>
 
