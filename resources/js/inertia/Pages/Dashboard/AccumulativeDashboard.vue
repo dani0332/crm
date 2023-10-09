@@ -13,6 +13,7 @@ const props = defineProps({
   revivalLeadsCount: Array,
   advisorLeadsAssignedData: Array,
   assignedLeadsBySource: Array,
+  leadReceivedSummaryBySource: Array,
 });
 
 const LeadRcdSummary = ref([]);
@@ -21,9 +22,9 @@ const revivalLeadsCountChart = ref([]);
 const columnChartData = ref([]);
 
 const tableHeader = ref([
-  { text: 'LEAD SOURCE', value: 'uuid' },
-  { text: 'COUNT BY LEAD SOURCE', value: 'first_name' },
-  { text: 'PERCENTAGE', value: 'last_name' },
+  { text: 'LEAD SOURCE', value: 'source' },
+  { text: 'COUNT BY LEAD SOURCE', value: 'leadSourceCount' },
+  { text: 'PERCENTAGE', value: 'percentage' },
 ]);
 
 const allTeams = computed(() => [...Object.values(props.teams)]);
@@ -205,7 +206,7 @@ onMounted(() => {
     </div>
   </div>
   <div class="my-12">
-    <h2 class="text-[#308BCA] font-bold text-2xl mb-3">
+    <h2 class="text-primary-500 font-bold text-2xl mb-3">
       Total Leads Received Summary (by LeadSource)
     </h2>
     <DataTable
@@ -215,7 +216,7 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
       fixed-checkbox
-      :items="[]"
+      :items="props.leadReceivedSummaryBySource || []"
     >
     </DataTable>
   </div>
