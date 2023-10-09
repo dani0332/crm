@@ -159,7 +159,7 @@ const checkTransactionExist = item => {
       var timeStart = new Date(transaction.created_at);
       var timeEnd = new Date();
       var hourDiff = timeEnd - timeStart;
-      if (transaction.payment_status_id == 6 && hourDiff <= 172800000) {
+      if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && hourDiff <= 172800000) {
         return false;
       }
     }
@@ -274,12 +274,15 @@ const hasAnyRole = roles => useHasAnyRole(roles);
                     @change="toggleProduct(priceItem, $event)"
                     :model-value="true"
                     color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+
                 />
                 <x-checkbox
 
                     v-else
                     @change="toggleProduct(priceItem, $event)"
                     color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
                 />
               {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
             </x-tag>
