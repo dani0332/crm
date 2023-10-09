@@ -226,7 +226,8 @@ const onLogout = () => {
                 </svg>
               </button>
             </div>
-            <div>
+            <div class="flex gap-3 items-center">
+              <UserStatus />
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
