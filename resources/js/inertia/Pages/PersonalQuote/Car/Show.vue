@@ -290,7 +290,7 @@ const historyLoading = ref(false);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=car&recordId=${page.props.paymentEntityModel.id}`,
+    `/quotes/lead-history?modelType=car&recordId=${page.props.paymentEntityModel.id}&quoteTypeId=${page.props.quoteTypeId}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -298,11 +298,11 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Lead Status', value: 'NewStatus' },
-  { text: 'Advisor', value: '' },
-  { text: 'Notes', value: 'NewNotes' },
+	{ text: 'Modified At', value: 'created_at' },
+	{ text: 'Modified By', value: 'created_by.email' },
+	{ text: 'Lead Status From', value: 'previous_quote_status.text' },
+	{ text: 'Lead Status To', value: 'current_quote_status.text' },
+	{ text: 'Notes', value: 'notes' },
 ];
 
 const availablePlansItems = computed(() => {
@@ -1536,14 +1536,17 @@ onMounted(() => {
 					</div>
 				</div>
 				<div class="w-full md:w-50">
-					<x-textarea
-						v-model="leadStatusForm.notes"
-						type="text"
-						label="Notes"
-						placeholder="Lead Notes"
-						class="w-full"
-						:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
-					/>
+					<x-field label="Notes" :required="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
+						<x-textarea
+							v-model="leadStatusForm.notes"
+							type="text"
+							placeholder="Lead Notes"
+							class="w-full"
+							:rules="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer ? [isRequired] : []"
+							:error="leadStatusForm.errors.notes"
+							:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
+						/>
+					</x-field>					
 				</div>
 			</div>
 			<template v-if="isCarLostStatus(record.quote_status_id)">
