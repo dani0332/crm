@@ -502,46 +502,59 @@ const planClicked = plan => {
 };
 
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
-    notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
-      position: 'top',
+    if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+        notification.error({
+            title: 'Please select 3 to 5 plans to download PDF.',
+            position: 'top',
+        });
+        return;
+    }
+    exportLoader.value = true;
+    const planIds = selectedPlans.value.map(p => {
+        return p.id;
     });
-    return;
-  }
-  exportLoader.value = true;
-  const planIds = selectedPlans.value.map(p => {
-    return p.id;
-  });
-  axios
-    .post(
-      '/api/v1/quotes/health/export-plans-pdf',
-      {
-        plan_ids: planIds,
-        quote_uuid: page.props.quote.uuid,
-      },
-      {
-        responseType: 'json',
-      },
-    )
-    .then(response => {
-      const link = document.createElement('a');
-      let fileName = response.data.name;
-      link.href = response.data.data;
-      link.setAttribute('download', fileName);
-      document.body.appendChild(link);
-      link.click();
-      notification.success({
-        title: 'Plans Exported',
-        position: 'top',
-      });
-    })
-    .catch(error => {
-      console.log(error);
-    })
-    .finally(() => {
-      exportLoader.value = false;
+
+    let addOns = {};
+
+    selectedPlans.value.map(plan => {
+        let copayIdToBeAdded = plan.selectedCopayId;
+        plan.coPayments.forEach(element => {
+            if (element.id == copayIdToBeAdded) {
+                addOns[plan.id] = {coPayment:element};
+            }
+        });
     });
+
+    axios
+        .post(
+            '/api/v1/quotes/health/export-plans-pdf',
+            {
+                plan_ids: planIds,
+                quote_uuid: page.props.quote.uuid,
+                addons: addOns,
+            },
+            {
+                responseType: 'json',
+            },
+        )
+        .then(response => {
+            const link = document.createElement('a');
+            let fileName = response.data.name;
+            link.href = response.data.data;
+            link.setAttribute('download', fileName);
+            document.body.appendChild(link);
+            link.click();
+            notification.success({
+                title: 'Plans Exported',
+                position: 'top',
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        })
+        .finally(() => {
+            exportLoader.value = false;
+        });
 };
 
 const onTogglePlans = toggle => {
@@ -644,11 +657,13 @@ watch(
     }
   },
 );
+
+const plansData = ref(page.props.listQuotePlans);
+
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort(
-    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
-  ),
+  plansData.value.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden)),
 );
+
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
@@ -689,6 +704,7 @@ const onPlanFiltersSubmit = () => {
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
 };
+
 const onPlanFiltersReset = () => {
   planFilters.insurer = [];
   planFilters.network = [];
@@ -699,6 +715,46 @@ const onPlanFiltersReset = () => {
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
 };
+
+const isMounted = ref(false);
+
+const selectedCoPay = reactive({
+  id: null,
+  premium: null,
+  planId: null,
+});
+
+const getSmallestCopayRateAsDefaultValue = () => {
+  let smallestCopayValue = 0;
+  let defaultCopayId = 0;
+  plansData.value.forEach(element => {
+    element.ratesPerCopay.forEach(function callback(value, index) {
+      if (index == 0) {
+        smallestCopayValue = value.premium;
+        defaultCopayId = value.healthPlanCoPaymentId;
+      } else if (value.premium < smallestCopayValue) {
+        smallestCopayValue = value.premium;
+        defaultCopayId = value.healthPlanCoPaymentId;
+      }
+    });
+
+    if (isMounted.value && selectedCoPay.planId == element.id) {
+      element.actualPremium = selectedCoPay.premium;
+      element.selectedCopayId = selectedCoPay.id;
+    } else {
+      element.selectedCopayId = defaultCopayId;
+      element.actualPremium = smallestCopayValue;
+    }
+  });
+};
+
+const onSelectedCopay = data => {
+  selectedCoPay.id = data.id;
+  selectedCoPay.premium = data.premium;
+  selectedCoPay.planId = data.planId;
+  getSmallestCopayRateAsDefaultValue();
+};
+
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -1058,6 +1114,8 @@ onMounted(() => {
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
+  getSmallestCopayRateAsDefaultValue();
+  isMounted.value = true;
 });
 </script>
 <template>
@@ -1800,9 +1858,9 @@ onMounted(() => {
           </x-badge>
 
           <x-button
-            v-if="false"
+            v-if="isBetaUser"
             size="sm"
-            color="primary"
+            color="emerald"
             @click.prevent="modals.createPlan = true"
           >
             Add Plan
@@ -1849,8 +1907,8 @@ onMounted(() => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, vat, basmah }">
-          {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
+        <template #item-total="{ actualPremium, policyFee, basmah }">
+          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0)) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1870,7 +1928,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
                 )
               "
             >
@@ -1884,7 +1942,11 @@ onMounted(() => {
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
-        <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
+        <LazyAvailablePlan
+          :plan="selectedPlan"
+          :genders="genderOptions"
+          @copay-update="onSelectedCopay"
+        />
       </x-modal>
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
