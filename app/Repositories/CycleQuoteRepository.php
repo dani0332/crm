@@ -124,6 +124,7 @@ class CycleQuoteRepository extends BaseRepository
                 },
                 'createdBy',
                 'updatedBy',
+                'customer.additionalContactInfo',
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },

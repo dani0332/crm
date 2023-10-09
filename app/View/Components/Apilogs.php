@@ -33,7 +33,7 @@ class Apilogs extends Component
         $auditableId = $this->auditableId;
         if ($this->auditableType == CarQuote::class) {
             $uuid = CarQuote::where('id', $auditableId)->value('uuid');
-            $apilogs = InsurerRequestResponse::with('carQuotePlanDetails')
+            $apilogs = InsurerRequestResponse::with('insuranceProvider')
                 ->select('*')
                 ->where('insurer_request_response.quote_uuid', $uuid)
                 ->orderByDesc('insurer_request_response.created_at')

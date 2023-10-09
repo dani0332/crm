@@ -71,16 +71,11 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const confirmData = reactive({
-  contactPrimary: null,
-});
-
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
-  contactLoader = ref(false),
   historyLoading = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
@@ -134,9 +129,6 @@ const modals = reactive({
   createPlan: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
   planDetails: false,
 });
 const travelFields = computed(() => {
@@ -703,125 +695,6 @@ const advisorOptions = computed(() => {
     label: advisor.name,
   }));
 });
-
-// additional contact
-
-const additionalContactTable = [
-  { text: 'Type', value: 'key' },
-  { text: 'Value', value: 'value' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Action', value: 'action' },
-];
-
-const additionalContact = useForm({
-  id: null,
-  additional_contact_type: null,
-  additional_contact_val: null,
-  quote_id: page.props.quote.id,
-  customer_id: page.props.quote.customer_id,
-  quote_type: 'travel',
-});
-
-const addAdditionalContact = () => {
-  additionalContact.additional_contact_type = null;
-  additionalContact.additional_contact_val = null;
-  modals.addContact = true;
-};
-
-const onAdditionalContactSubmit = isValid => {
-  if (!isValid) return;
-  additionalContact
-    .transform(data => ({
-      ...data,
-      isInertia: true,
-    }))
-    .post(`/customer-additional-contact/add`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.addContact = false;
-      },
-      onError: err => {
-        const firstError = Object.values(err)[0];
-        notification.error({
-          title: firstError,
-          position: 'top',
-        });
-      },
-    });
-};
-
-const additionalContactDelete = id => {
-  modals.contactDeleteConfirm = true;
-  confirmDeleteData.contact = id;
-};
-
-const additionalContactDeleteConfirmed = () => {
-  router.post(
-    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
-    {
-      isInertia: true,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactDeleteConfirm = false;
-      },
-    },
-  );
-};
-
-const additionalContactPrimary = data => {
-  modals.contactPrimaryConfirm = true;
-  confirmData.contactPrimary = data;
-};
-
-const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
-      isInertia: true,
-      quote_id: page.props.quote.id,
-      key: confirmData.contactPrimary.key,
-      value: confirmData.contactPrimary.value,
-      quote_type: 'travel',
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Primary',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactPrimaryConfirm = false;
-      },
-    },
-  );
-};
 
 const historyData = ref(null);
 
@@ -1664,6 +1537,8 @@ onMounted(() => {
       :data="embeddedProducts"
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1801,161 +1676,15 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Customer Additional Contacts
-          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-        </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="addAdditionalContact"
-        >
-          Add Additional Contacts
-        </x-button>
-      </div>
+      <customerAdditionalContacts
+          quoteType="Travel"
+          :customerId="quote.customer_id"
+          :quoteId="quote.id"
+          :contacts="customerAdditionalContacts"
+          :quoteEmail="quote.email"
+          :quoteMobile="quote.mobile_no"
 
-      <DataTable
-        table-class-name="compact"
-        :headers="additionalContactTable"
-        :items="customerAdditionalContacts || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-key="{ key }">
-          <span v-if="key === 'email'"> Email Address </span>
-          <span v-else> Mobile Number </span>
-        </template>
-        <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="additionalContactPrimary(item)"
-            >
-              Make Primary
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="additionalContactDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts </template>
-
-        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-field label="Type" required>
-              <x-select
-                v-model="additionalContact.additional_contact_type"
-                :options="[
-                  { value: 'email', label: 'Email' },
-                  { value: 'mobile_no', label: 'Mobile Number' },
-                ]"
-                :rules="[isRequired]"
-                placeholder="Select Type"
-                class="w-full"
-              />
-            </x-field>
-            <x-field
-              label="Value"
-              required
-              v-if="additionalContact.additional_contact_type === 'mobile_no'"
-            >
-              <x-input
-                v-model="additionalContact.additional_contact_val"
-                :rules="[isRequired, isMobileNo]"
-                class="w-full"
-              />
-            </x-field>
-            <x-field
-              label="Value"
-              required
-              v-if="additionalContact.additional_contact_type === 'email'"
-            >
-              <x-input
-                v-model="additionalContact.additional_contact_val"
-                :rules="[isRequired, isEmail]"
-                class="w-full"
-              />
-            </x-field>
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.addContact = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="additionalContact.processing"
-              type="submit"
-            >
-              Save
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-        <template #header> Delete Additional Contact </template>
-        <p>Are you sure you want to delete this?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactDeleteConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="additionalContactDeleteConfirmed"
-              :loading="contactLoader"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact </template>
-        <p>Are you sure you want to make this information as Primary?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactPrimaryConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="additionalContactPrimaryConfirmed"
-              :loading="contactLoader"
-            >
-              Confirm
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
+      />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

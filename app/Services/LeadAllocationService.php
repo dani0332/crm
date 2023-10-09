@@ -15,7 +15,6 @@ use App\Enums\RuleTypeEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
-use App\Jobs\SyncSIBContactJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -39,6 +38,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
 {
@@ -174,6 +174,8 @@ class LeadAllocationService extends BaseService
                 }
                 $lead->assignment_type = $lead->advisor == null ? AssignmentTypeEnum::MANUAL_ASSIGNED : AssignmentTypeEnum::MANUAL_REASSIGNED;
                 $lead->advisor_id = $advisorId;
+                $lead->quote_updated_at = now();
+
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
@@ -192,6 +194,16 @@ class LeadAllocationService extends BaseService
                 }
                 GetQuotePlansJob::dispatch($lead);
                 DB::commit();
+
+                Haystack::build()
+                    ->addJob(new GetQuotePlansJob($lead))
+                    ->then(function () use ($lead) {
+                        if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                            && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                            // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                        }
+                    })->dispatch();
 
                 return true;
             } catch (\Exception $e) {

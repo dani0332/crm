@@ -436,6 +436,8 @@ class ClaimController extends Controller
         $message = '';
         if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
             $message = 'Plan has been updated';
+
+            return redirect()->back()->with('message', $message);
         } else {
             if (isset($response->message)) {
                 $responseMessage = $response->message;
@@ -445,7 +447,8 @@ class ClaimController extends Controller
             $message = 'Car Plan has not been updated '.$responseMessage;
         }
 
-        return $message;
+        return redirect()->back()->withErrors('message', $message);
+
     }
 
     public function getoverdueleads(Request $request)

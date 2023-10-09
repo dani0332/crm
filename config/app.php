@@ -164,7 +164,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         Laravel\Socialite\SocialiteServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
-
+        App\Providers\PostMarkServiceProvider::class,
         /*
          * Package Service Providers...
          */
@@ -246,6 +246,7 @@ return [
         'LookUpModel' => App\helpers\LookUpModelHelper::class,
         'KenService' => \App\Services\KenService::class,
         'CapiService' => \App\Services\CapiService::class,
+        'PostMark' => \App\Facades\PostMark::class,
     ],
 
 ];

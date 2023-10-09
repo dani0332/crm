@@ -35,8 +35,8 @@ class DatabaseSeeder extends Seeder
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
             addReassignmentTime::class,
-            GenericPermissionSeeder::class,
             AddApiLogViewToPermssion::class,
+            GenericPermissionSeeder::class,
         ]);
     }
 }

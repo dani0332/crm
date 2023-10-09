@@ -10,6 +10,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
+use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
 use App\Models\GenericModel;
@@ -267,7 +268,6 @@ class CRUDService extends BaseService
 
             if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
                 && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
-
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
@@ -325,6 +325,25 @@ class CRUDService extends BaseService
                         'created_by_id' => auth()->user()->id,
                     ]);
                 }
+            }
+
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Health)
+                && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+            ) {
+                if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
+                    // CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                } else {
+                    SyncSIBContactJob::dispatch($entity);
+                }
+
+                // if (
+                //     $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+                //     || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                // ) {
+                //     CammyJob::dispatch($entity, 'unsub');
+                // }
             }
 
             QuoteStatusLog::create([

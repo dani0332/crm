@@ -226,21 +226,47 @@ const onLogout = () => {
                 </svg>
               </button>
             </div>
-            <div class="flex gap-3 items-center">
-              <UserStatus />
-
+            <div>
               <x-popover align="right" block>
-                <x-button> {{ user.name }}</x-button>
+                <x-button size="sm" ghost>
+                  <div class="flex gap-3 items-center">
+                    <x-avatar
+                      size="sm"
+                      color="#999"
+                      :alt="user.name"
+                      :image="
+                        user.profile_photo_path != null
+                          ? user.profile_photo_path
+                          : '/image/alfred-theme.png'
+                      "
+                      outlined
+                      rounded
+                    />
+                    <span>{{ user.name }}</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      fill="none"
+                      role="presentation"
+                      class="stroke-2 w-3 h-3"
+                    >
+                      <path d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </x-button>
                 <template #content>
                   <x-popover-container class="p-2">
-                    <button class="flex gap-2 items-center" @click="onLogout">
+                    <button
+                      class="flex gap-2 items-center px-2 group w-full"
+                      @click="onLogout"
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke-width="2"
                         stroke="currentColor"
-                        class="w-6 h-6 text-red-600"
+                        class="w-6 h-6 text-error-600"
                       >
                         <path
                           stroke-linecap="round"
@@ -248,7 +274,11 @@ const onLogout = () => {
                           d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
                         />
                       </svg>
-                      <span class="text-sm font-semibold">Logout</span>
+                      <span
+                        class="text-sm font-semibold group-hover:text-error-600"
+                      >
+                        Logout
+                      </span>
                     </button>
                   </x-popover-container>
                 </template>
