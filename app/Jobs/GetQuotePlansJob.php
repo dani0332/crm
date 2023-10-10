@@ -51,12 +51,23 @@ class GetQuotePlansJob implements ShouldQueue, StackableJob
 
         switch ($quoteTypeCode) {
             case QuoteTypeShortCode::HEA:
-                $healthQuoteService->getQuotePlans($this->lead->uuid);
+                $statusCode = $healthQuoteService->getQuotePlans($this->lead->uuid);
+                if (! isset($statusCode)) {
+                    info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
+
+                    return false;
+                } elseif (is_string($statusCode)) {
+                    info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
+
+                    return false;
+                }
                 $this->lead->quote_updated_at = Carbon::now();
                 $this->lead->save();
                 break;
             default:
                 break;
         }
+
+        return true;
     }
 }

@@ -7,9 +7,11 @@ use App\Enums\AssignmentTypeEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\HealthQuote;
 use App\Models\HealthQuoteRequestDetail;
@@ -17,6 +19,7 @@ use App\Models\Team;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthAllocationService extends AllocationService
 {
@@ -127,15 +130,15 @@ class HealthAllocationService extends AllocationService
             $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
         }
 
-        $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
-        $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-
-        if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-            CammyJob::dispatch($lead, 'intro');
-        }
-
-        GetQuotePlansJob::dispatch($lead);
+        Haystack::build()
+            ->addJob(new GetQuotePlansJob($lead))
+            ->then(function () use ($lead) {
+                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                    && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                }
+            })->dispatch();
     }
 
     public function updateQuoteDetail($leadId)
@@ -146,10 +149,8 @@ class HealthAllocationService extends AllocationService
         $oldAdvisorAssignedDate = '';
 
         if ($quoteDetail) {
-
             $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date;
             $this->updateExistingQuoteDetail($quoteDetail, $leadId);
-
         } else {
             $this->createNewQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
         }

@@ -16,8 +16,11 @@ class ReAssignCarLeadsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue , Queueable;
 
-    protected CarAllocationService $carAllocationService;
-    protected $advisorId;
+    public $tries = 3;
+    public $timeout = 15;
+    public $backoff = 30;
+    private CarAllocationService $carAllocationService;
+    private $advisorId;
 
     public function __construct(CarAllocationService $carAllocationService, $advisorId)
     {

@@ -15,8 +15,11 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue , Queueable;
 
-    protected $healthAllocationService;
-    protected $advisorId;
+    public $tries = 3;
+    public $timeout = 15;
+    public $backoff = 30;
+    private $healthAllocationService;
+    private $advisorId;
 
     public function __construct(HealthAllocationService $healthAllocationService, $advisorId)
     {
