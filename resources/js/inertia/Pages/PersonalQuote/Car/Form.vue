@@ -55,13 +55,9 @@ const quoteForm = useForm({
 	nationality_id: props.quote?.nationality_id || null,
 	back_home_license_held_for_id: props.quote?.back_home_license_held_for_id || null,
 	gender: props.quote?.gender || null,
-	currently_insured_with_id:  null,
+	currently_insured_with_id: props.quote?.currently_insured_with || null,
 	policy_start_date: props.quote?.policy_start_date || null,
-	is_ebp_renewal: props.quote?.is_ebp_renewal || null,
 	is_ecommerce: props.quote?.is_ecommerce || null,
-	has_dental: props.quote?.has_dental || null,
-	has_worldwide_cover: props.quote?.has_worldwide_cover || null,
-	has_home: props.quote?.has_home || null,
 	car_make_id: props.quote?.car_make_id || null,
 	vehicle_type_id: props.quote?.vehicle_type_id || null,
 	trim: props.quote?.trim || null,
@@ -75,6 +71,8 @@ const quoteForm = useForm({
 	has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents || null,
 	car_value_tier: props.quote?.car_value_tier || ''
 });
+
+const isDisbaled = (!hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool])) || (!can(permissionEnum.RenewalBatchUpdate) && !!quoteForm.renewal_batch);
 
 const trimOptions = ref([]);
 
@@ -159,7 +157,7 @@ function onSubmit(isValid) {
 		},
 	};
 
-	quoteForm.submit(method, url, options);
+	quoteForm.transform(data => ({ ...data, isDisbaled })).submit(method, url, options);
 }
 
 onMounted(() => {
@@ -215,13 +213,13 @@ const setCarMake = (id) => {
 					</ul>
 				</x-alert>
 
-				<x-field label="RENEWAL BATCH" v-if="isEdit" :required="hasRole(rolesEnum.CarManager)">
+				<x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
 					<x-input 
 						v-model="quoteForm.renewal_batch" 
-						:rules="hasRole(rolesEnum.CarManager) ? [isRequired] : []"
+						:rules="isDisbaled ? [] : (hasRole(rolesEnum.CarManager) ? [isRequired] : [])"
 						class="w-full"
 						:error="quoteForm.errors.renewal_batch"
-						:disabled="!hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool]) || (!can(permissionEnum.RenewalBatchUpdate) && !!quoteForm.renewal_batch)"
+						:disabled="isDisbaled"
 						/>
 				</x-field>
 

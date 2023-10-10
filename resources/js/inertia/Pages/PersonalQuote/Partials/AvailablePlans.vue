@@ -239,7 +239,7 @@ const onToggleManual = () => {
 						</div>
 						<div class="grid sm:grid-cols-2">
 							<dt class="mt-2">Insurer Quote No.:</dt>
-							<x-input v-model="planForm.insurer_quote_no" :disabled="!planForm.is_manual_update" size="sm" />
+							<x-input v-model="planForm.insurer_quote_no" :disabled="!planForm.is_manual_update" maxlength="50" size="sm" />
 						</div>
 						<div class="grid sm:grid-cols-2">
 							<dt class="mt-2">Actual Premium:</dt>
