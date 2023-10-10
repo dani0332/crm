@@ -2114,7 +2114,9 @@ const loadEmailEvents = (email) => {
         :headers="emailEventsTable"
         :items="emailEvents"
         border-cell
-        hide-rows-per-page        
+        hide-rows-per-page       
+        :rows-per-page="10"
+        :hide-footer="followUpEmails.length < 10" 
       >
         
       </DataTable>

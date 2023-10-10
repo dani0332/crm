@@ -45677,8 +45677,10 @@ function render(_ctx, _cache, $props, $setup, $data, $options) {
         headers: $setup.emailEventsTable,
         items: $setup.emailEvents,
         "border-cell": "",
-        "hide-rows-per-page": ""
-      }, null, 8 /* PROPS */, ["items"])];
+        "hide-rows-per-page": "",
+        "rows-per-page": 10,
+        "hide-footer": $setup.followUpEmails.length < 10
+      }, null, 8 /* PROPS */, ["items", "hide-footer"])];
     }),
     _: 1 /* STABLE */
   }, 8 /* PROPS */, ["modelValue"]), _hoisted_198, (0,vue__WEBPACK_IMPORTED_MODULE_8__.createVNode)(_component_DataTable, {
