@@ -103,7 +103,7 @@ const carTypeInsurances = computed(() => {
 
 const providers = computed(() => {
     return page.props.dropdownSource.car_plan_provider_id.map(provider => ({
-        value: provider.id,
+        value: provider.text,
         label: provider.text,
     }));
 });
@@ -383,6 +383,7 @@ onMounted(() => {
                     :options="paymentStatusOptions"
                     placeholder="Please select payment status"
                     class="w-full"
+                    :single="true"
                 />
                 <x-select
                     v-model="filters.is_ecommerce"

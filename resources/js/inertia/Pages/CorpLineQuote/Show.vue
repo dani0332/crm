@@ -819,6 +819,8 @@ const onAssignLead = () => {
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
     />
 
     <!-- Payments -->

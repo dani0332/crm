@@ -86,6 +86,9 @@ const { isRequired, isEmail, isNumber, isMobile } = useRules();
 const isCarLostStatus = (statusId) => {
 	return statusId == page.props.quoteStatusEnum.CarSold || statusId == page.props.quoteStatusEnum.Uncontactable
 }
+const prepareDate = (date) => {
+	return date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1];
+}
 
 const leadStatusForm = useForm({
 	modelType: 'Car',
@@ -96,7 +99,7 @@ const leadStatusForm = useForm({
 	notes: page.props.record.notes || null,
 	trans_code: page.props.record.transapp_code || null,
 	lostReason: page.props.record.lost_reason_id || null,
-	next_followup_date: page.props.record.next_followup_date || null,
+	next_followup_date: page.props.record.next_followup_date ? prepareDate(page.props.record.next_followup_date) : null,
 	tier_id : page.props.record.tier_id || null,
 	lost_approval_status: '',
 	approve_reason_id: '',
@@ -106,6 +109,8 @@ const leadStatusForm = useForm({
 	proof_document: null,
 	car_lost_quote_log_id: page.props.paymentEntityModel.car_lost_quote_log?.id || 0
 });
+
+
 
 const leadApprovalStatusOptions = computed(() => {
 	let arr = [];
@@ -286,7 +291,7 @@ const historyLoading = ref(false);
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=car&recordId=${page.props.paymentEntityModel.id}`,
+    `/quotes/lead-history?modelType=car&recordId=${page.props.paymentEntityModel.id}&quoteTypeId=${page.props.quoteTypeId}`,
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -294,11 +299,11 @@ const onLoadHistoryData = async () => {
 };
 
 const historyDataTable = [
-  { text: 'Modified At', value: 'ModifiedAt' },
-  { text: 'Modified By', value: 'ModifiedBy' },
-  { text: 'Lead Status', value: 'NewStatus' },
-  { text: 'Advisor', value: '' },
-  { text: 'Notes', value: 'NewNotes' },
+	{ text: 'Modified At', value: 'created_at' },
+	{ text: 'Modified By', value: 'created_by.email' },
+	{ text: 'Lead Status From', value: 'previous_quote_status.text' },
+	{ text: 'Lead Status To', value: 'current_quote_status.text' },
+	{ text: 'Notes', value: 'notes' },
 ];
 
 const availablePlansItems = computed(() => {
@@ -314,7 +319,7 @@ const totalPriceVAT = computed(() => {
 		item.addons.forEach(addon => {
 			addon.carAddonOption.forEach(option => {
 				if (option.isSelected && option.price != 0) {
-					vat += option.price + option.vat;
+					vat += parseInt(option.price) + option.vat;
 				}
 			})
 		})		
@@ -347,7 +352,8 @@ const leadStatusOptions = computed(() => {
 	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
 	const source = page.props.record.source;
 	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
-	const filteredLeadStatuses = page.props.leadStatuses?.filter(status => {
+	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Object.values(page.props.leadStatuses);
+	const filteredLeadStatuses = statuses?.filter(status => {
 	  
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
@@ -362,8 +368,6 @@ const leadStatusOptions = computed(() => {
     label: status.text,
   }));
 });
-
-const leadStatusesOptions = ref([]);
 
 const leadStatusDisabled = computed(() => {
 	return (
@@ -461,6 +465,7 @@ const modals = reactive({
   docConfirm: false,
   createPlan:false,
   sendConfirm:false,
+  showEmailEventsModal: false
 });
 
 const confirmData = reactive({
@@ -878,6 +883,18 @@ const confirmDeleteDoc = () => {
   );
 };
 
+const getAddonVat = (item) => {
+	let addonVat = 0;
+	item.addons.forEach(addon => {
+		addon.carAddonOption.forEach(option => {
+			if (option.isSelected && option.price != 0) {
+				addonVat += parseInt(option.price) + option.vat;
+			}
+		})
+	})
+	return addonVat;
+}
+
 const copyLink = () => {
 	copy(page.props.planURL);
 	if (copied)
@@ -891,10 +908,8 @@ const onLeadStatus = () => {
   leadStatusForm.transform(data => {
 	let date = data.next_followup_date;
 	if (date !== null && date !== '') {
-		let parts = date.split('T');
-		let dateString = parts[0].split('-').reverse().join('-');
-		let timeString = parts[1].split('.')[0] + ':00';
-		date = dateString + ' ' + timeString;
+		date = new Date(date);
+		date = date.toISOString().split('T')[0].split('-').reverse().join('-') + ' ' + date.toTimeString().split(' ')[0];
 	}
 	data.next_followup_date = date;
 	return data;
@@ -1051,6 +1066,7 @@ const emailsHeaders = ref([
   { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
+  {text: 'Actions', value: 'actions'}
 ]);
 const followUpActions = ref([]);
 const actionsHeaders = ref([
@@ -1090,31 +1106,54 @@ const closeModal = v => {
 };
 onMounted(() => {
 	getFollowUpsByQuote()
-	setLeadStatuses();
+	// setLeadStatuses();
 });
 
-const setLeadStatuses = () => {
-	const isLeadPool = hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]);
-	const isPA =hasAnyRole([rolesEnum.PA, rolesEnum.Admin]);
-	const renewal_batch = page.props.record.renewal_batch;
-	const previous_quote_policy_number = page.props.record.previous_quote_policy_number;
-	const source = page.props.record.source;
-	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
-	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Array.from(page.props.leadStatuses);
-	const filteredLeadStatuses = statuses?.filter(status => {
-		
-		if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
-			return false;
-		}
-		// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-		// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
-		return true;
-	});
 
-	return filteredLeadStatuses.map(status => ({
-		value: status.id,
-		label: status.text,
-	}));
+
+//activities
+const emailEventsTable = [
+  { text: 'Event Type', value: 'type' },
+  { text: 'DateTime', value: 'event_date' }
+];
+
+const emailEvents = ref([]);
+const loadingEmailEvents = ref(false);
+
+const loadEmailEvents = (email) => {
+
+  loadingEmailEvents.value = email.id;
+  let data = {
+        isInertial: true,
+        message_id: email.message_id,
+        customer_email: email.customer_email
+    };
+
+    axios
+	  		.post(`/followups/emails/events`, data)
+	  		.then(response => {
+          loadingEmailEvents.value = false;
+          if(response.data.length) {
+            modals.showEmailEventsModal = true;
+	  		    emailEvents.value = response.data;
+          } 
+          else
+          {
+            notification.success({
+              title: 'Email Events not available.',
+              position: 'top',
+            });
+          }
+          
+	  		})
+	  		.catch(error => {
+          loadingEmailEvents.value = false;
+          notification.error({
+            title: 'Something went wrong while fetching events.',
+            position: 'top',
+          });
+	  			modals.showEmailEventsModal = false;
+      });
 }
 
 </script>
@@ -1526,22 +1565,22 @@ const setLeadStatuses = () => {
 							/>
 						</x-field>
 						<x-field label="Followup Date" v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-							<!-- <DatePicker								
+							<DatePicker								
 								v-model="leadStatusForm.next_followup_date"
 								withTime
 								:rules="[isRequired]"
 								placeholder="Please select follow-up date & time" 
 								:error="leadStatusForm.errors.next_followup_date"
 								class="w-full" 
-							/> -->
-							<x-input
+							/>
+							<!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
 								:value="new Date(leadStatusForm.next_followup_date).toLocaleDateString('en-US')"
 								type="datetime-local"
 								placeholder="Please select follow-up date & time"
 								class="w-full"
 								:error="leadStatusForm.errors.next_followup_date"
-							/>
+							/> -->
 						</x-field>
 						<x-select
 							v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
@@ -1562,14 +1601,17 @@ const setLeadStatuses = () => {
 					</div>
 				</div>
 				<div class="w-full md:w-50">
-					<x-textarea
-						v-model="leadStatusForm.notes"
-						type="text"
-						label="Notes"
-						placeholder="Lead Notes"
-						class="w-full"
-						:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
-					/>
+					<x-field label="Notes" :required="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
+						<x-textarea
+							v-model="leadStatusForm.notes"
+							type="text"
+							placeholder="Lead Notes"
+							class="w-full"
+							:rules="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer ? [isRequired] : []"
+							:error="leadStatusForm.errors.notes"
+							:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
+						/>
+					</x-field>					
 				</div>
 			</div>
 			<template v-if="isCarLostStatus(record.quote_status_id)">
@@ -1982,7 +2024,7 @@ const setLeadStatuses = () => {
 					{{ discountPremium ? parseFloat(discountPremium).toFixed(2) : '0.00' }}
 				</template>
 				<template #item-premiumWithVat="item">
-					{{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+					{{ parseFloat(item.discountPremium + item.vat + getAddonVat(item)).toFixed(2) }}
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
@@ -2070,6 +2112,25 @@ const setLeadStatuses = () => {
       class="p-4 rounded shadow mb-6 bg-white"
       v-if="hasRole(rolesEnum.CarAdvisor)"
     >
+
+    <x-modal v-model="modals.showEmailEventsModal" size="lg" show-close backdrop>
+      <template #header> Email Events </template>
+      <DataTable
+        table-class-name="compact"
+        :headers="emailEventsTable"
+        :items="emailEvents"
+        border-cell
+        hide-rows-per-page       
+        :rows-per-page="10"
+        :hide-footer="followUpEmails.length < 10" 
+      >
+        
+      </DataTable>
+      
+    </x-modal>
+
+  
+
       <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
       <DataTable
         table-class-name="tablefixed compact"
@@ -2080,6 +2141,22 @@ const setLeadStatuses = () => {
         :rows-per-page="15"
         :hide-footer="followUpEmails.length < 15"
       >
+
+      <template #item-actions="item">
+          <div class="flex gap-2">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              :loading="loadingEmailEvents == item.id"
+              @click.prevent="loadEmailEvents(item)"
+            >
+              View Events
+            </x-button>
+            
+          </div>
+        </template>
+
       </DataTable>
     </div>
     <div
@@ -2103,6 +2180,8 @@ const setLeadStatuses = () => {
       	:data="embeddedProducts"
       	:link="record.uuid"
       	:code="record.code"
+		:quote="record"
+      	:modelType="quoteType"
     	/>
 
 		<div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
@@ -2556,156 +2635,16 @@ const setLeadStatuses = () => {
 				</x-form>
       		</x-modal>
 		</div> 
-		<div class="p-4 rounded shadow mb-6 bg-white">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">
-					Customer Additional Contacts
-					<x-tag size="sm">{{ customerAdditionInfoList.length || 0 }}</x-tag>
-				</h3>
-				<div>
-					<template v-if="! hasRole(rolesEnum.PA)">
-						<x-button
-						size="sm"
-						color="orange"
-						@click.prevent="
-							additionalContact.reset();
-							modals.addContact = true;
-						"
-						>
-						Add Additional Contacts
-						</x-button>
-					</template>
-				</div>
-			</div>
-			<DataTable
-				table-class-name="tablefixed compact"
-				:headers="customerAdditionalContactsTable.columns"
-				:items="customerAdditionInfoList || []"
-				show-index
-				border-cell
-				fixed-checkbox
-				hide-rows-per-page
-				hide-footer
-			>
-			<template #item-key="item">
-				{{ item.key.replace('_', ' ').toLowerCase().replace(/\b[a-z]/g, (l) => l.toUpperCase()) }}
-			</template>
-				<template #item-action="item">
-					<div class="flex gap-2">
-						<x-button
-							size="xs"
-							color="primary"
-							outlined
-							@click.prevent="additionalContactPrimary(item)"
-						>
-							Make Primary
-						</x-button>
-						<!-- <x-button
-							v-if="item.id && !(record.quote_status_id == quoteStatusEnum.CarSold || record.quote_status_id == quoteStatusEnum.Uncontactable)"
-							size="xs"
-							color="error"
-							outlined
-							@click.prevent="additionalContactDelete(item.id)"
-						>
-							Delete
-						</x-button> -->
-					</div>
-				</template>
-			</DataTable>
-			<x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-			<template #header> Delete Additional Contact </template>
-			<p>Are you sure you want to delete this?</p>
-				<template #actions>
-					<div class="text-right space-x-4">
-					<x-button
-						size="sm"
-						ghost
-						@click.prevent="modals.contactDeleteConfirm = false"
-					>
-						Cancel
-					</x-button>
-					<x-button
-						size="sm"
-						color="error"
-						@click.prevent="additionalContactDeleteConfirmed"
-						:loading="contactLoader"
-					>
-						Delete
-					</x-button>
-					</div>
-				</template>
-			</x-modal>
-			<x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-				<template #header> Primary Additional Contact </template>
-				<p>Are you sure you want to make this information as Primary?</p>
-				<template #actions>
-				<div class="text-right space-x-4">
-					<x-button
-					size="sm"
-					ghost
-					@click.prevent="modals.contactPrimaryConfirm = false"
-					>
-					Cancel
-					</x-button>
-					<x-button
-					size="sm"
-					color="emerald"
-					@click.prevent="additionalContactPrimaryConfirmed"
-					:loading="contactLoader"
-					>
-					Confirm
-					</x-button>
-				</div>
-				</template>
-      		</x-modal>
-			<x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-				<template #header> Add Additional Contacts </template>
+		<customerAdditionalContacts
+          quoteType="Car"
+          :customerId="record.customer_id"
+          :quoteId="record.id"
+          :contacts="customerAdditionInfoList"
+          :quoteEmail="record.email"
+          :quoteMobile="record.mobile_no"
 
-				<x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-					<div class="grid gap-4">
-						<x-field label="Type" required>
-						<x-select
-						v-model="additionalContact.additional_contact_type"
-						:options="[
-							{ value: 'email', label: 'Email' },
-							{ value: 'mobile_no', label: 'Mobile Number' },
-						]"
-						:rules="[isRequired]"
-						placeholder="Select Type"
-						class="w-full"
-						/>
-						</x-field>
-						<x-field label="Value" required>
-						<x-input
-						v-model="additionalContact.additional_contact_val"
-						:rules="[
-							isRequired,
-							additionalContact.additional_contact_type === 'email'
-							? isEmail
-							: isNumber,
-						]"
-						class="w-full"
-						/>
-						</x-field>
-					</div>
-
-					<div class="text-right space-x-4 mt-12">
-						<x-button size="sm" @click.prevent="modals.addContact = false">
-						Cancel
-						</x-button>
-
-						<x-button
-						size="sm"
-						color="emerald"
-						:loading="additionalContact.processing"
-						type="submit"
-						>
-						Save
-						</x-button>
-					</div>
-				</x-form>
-      		</x-modal>
-		</div> 
+      />
+		
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 		<div>

@@ -18,6 +18,7 @@ class GenericLobController extends Controller
 
     public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
     {
+        // init services
         $this->carQuoteService = $carQuoteService;
         $this->healthQuoteService = $healthQuoteService;
     }
@@ -32,7 +33,7 @@ class GenericLobController extends Controller
         $serviceName = strtolower($quoteType).'QuoteService';
         $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
 
-        //return error if any
+        //return error if any ..
         if (isset($response['error'])) {
             vAbort($response['error']);
         }

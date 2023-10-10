@@ -14,6 +14,12 @@ const props = defineProps({
 const { isRequired, isEmail } = useRules();
 const isEmptyField = ref(false);
 const isError = ref(false);
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
+const rolesEnum = page.props.rolesEnum;
+const permissionEnum = page.props.permissionsEnum;
 
 const isEdit = computed(() => {
 	return route().current().includes('edit');
@@ -51,11 +57,7 @@ const quoteForm = useForm({
 	gender: props.quote?.gender || null,
 	currently_insured_with_id: props.quote?.currently_insured_with || null,
 	policy_start_date: props.quote?.policy_start_date || null,
-	is_ebp_renewal: props.quote?.is_ebp_renewal || null,
 	is_ecommerce: props.quote?.is_ecommerce || null,
-	has_dental: props.quote?.has_dental || null,
-	has_worldwide_cover: props.quote?.has_worldwide_cover || null,
-	has_home: props.quote?.has_home || null,
 	car_make_id: props.quote?.car_make_id || null,
 	vehicle_type_id: props.quote?.vehicle_type_id || null,
 	trim: props.quote?.trim || null,
@@ -69,6 +71,8 @@ const quoteForm = useForm({
 	has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents || null,
 	car_value_tier: props.quote?.car_value_tier || ''
 });
+
+const isDisbaled = (!hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool])) || (!can(permissionEnum.RenewalBatchUpdate) && !!quoteForm.renewal_batch);
 
 const trimOptions = ref([]);
 
@@ -112,7 +116,7 @@ const getModelDetails = (onchange) => {
 			
 			if (item) {
 				notification.success({
-					title: 'Assumptions found',
+					title: 'Vehicle Assumptions Data Found',
 					position: 'top',
 				});
 				quoteForm.cylinder = item.cylinder;
@@ -122,7 +126,7 @@ const getModelDetails = (onchange) => {
 			}
 			else{
 				notification.error({
-					title: 'Assumptions not found',
+					title: 'No Vehicle Assumptions Data Found',
 					position: 'top',
 				});
 			}
@@ -130,7 +134,7 @@ const getModelDetails = (onchange) => {
 }
 
 function onSubmit(isValid) {
-	if (quoteForm.nationality_id == null) {
+	if (quoteForm.nationality_id == null || quoteForm.currently_insured_with_id == null) {
 		isEmptyField.value = true;
 	} else {
 		isEmptyField.value = false;
@@ -153,7 +157,7 @@ function onSubmit(isValid) {
 		},
 	};
 
-	quoteForm.submit(method, url, options);
+	quoteForm.transform(data => ({ ...data, isDisbaled })).submit(method, url, options);
 }
 
 onMounted(() => {
@@ -189,6 +193,9 @@ const setCarMake = (id) => {
 			<h2 class="text-xl font-semibold">
 				{{ isEdit ? 'Edit' : 'Create' }} Car
 			</h2>
+			<div class="alert" v-if="isEdit && hasRole(rolesEnum.CarManager)">
+				Only Renewal Batch # field will be updated
+			</div>
 			<div>
 				<Link :href="route('car.index')">
 				<x-button size="sm" color="#1d83bc" tag="div"> Car List </x-button>
@@ -206,12 +213,13 @@ const setCarMake = (id) => {
 					</ul>
 				</x-alert>
 
-				<x-field label="RENEWAL BATCH" required v-if="isEdit">
+				<x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
 					<x-input 
 						v-model="quoteForm.renewal_batch" 
-						:rules="[isRequired]" 
+						:rules="isDisbaled ? [] : (hasRole(rolesEnum.CarManager) ? [isRequired] : [])"
 						class="w-full"
 						:error="quoteForm.errors.renewal_batch"
+						:disabled="isDisbaled"
 						/>
 				</x-field>
 
@@ -233,7 +241,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="DATE OF BIRTH" required>
-					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" />
+					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" :disabled="isEdit" />
 				</x-field>
 
 				<x-field label="NATIONALITY" required>
@@ -241,7 +249,7 @@ const setCarMake = (id) => {
 						value: item.id,
 						label: item.text,
 					}))" 
-					:hasError="isEmptyField" 
+					:hasError="quoteForm.errors.nationality_id" 
 					:error="quoteForm.errors.nationality_id" 
 					:rules="[isRequired]" 
 					/>
@@ -255,7 +263,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.uae_license_held_for_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.uae_license_held_for_id" />
 				</x-field>
 
 				<x-field label="HOME COUNTRY DRIVING LICENSE HELD FOR">
@@ -274,7 +282,7 @@ const setCarMake = (id) => {
 						@update:modelValue="getCarModel(true)"
 						class="w-full" 
 						:rules="[isRequired]" 
-						:hasError="isEmptyField"
+						:hasError="quoteForm.errors.car_make_id"
 						:error="quoteForm.errors.car_make_id"
 					/>
 				</x-field>
@@ -287,7 +295,7 @@ const setCarMake = (id) => {
 						class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.car_model_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.car_model_id" />
 				</x-field>
 
 				<x-field label="CYLINDER" required>
@@ -306,11 +314,11 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:error="quoteForm.errors.year_of_manufacture"
 						:rules="[isRequired]" 
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.year_of_manufacture" />
 				</x-field>
 
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
-					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]"  :error="quoteForm.errors.car_value_tier"/>
+					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]"  :error="quoteForm.errors.car_value_tier" :disabled="isEdit && !hasRole(rolesEnum.LeadPool)"/>
 				</x-field>
 
 				<x-field label="VEHICLE TYPE" required>
@@ -321,7 +329,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.vehicle_type_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.vehicle_type_id" />
 				</x-field>
 
 				<x-field label="SEAT CAPACITY" required>
@@ -352,7 +360,7 @@ const setCarMake = (id) => {
 						" class="w-full"
 						:rules="[isRequired]" 
 						:error="quoteForm.errors.currently_insured_with_id"
-						:hasError="isEmptyField" />
+						:hasError="quoteForm.errors.currently_insured_with_id" />
 				</x-field>
 
 				<x-field label="CLAIM HISTORY" required>

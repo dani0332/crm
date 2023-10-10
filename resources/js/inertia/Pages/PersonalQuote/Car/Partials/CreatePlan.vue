@@ -1,5 +1,5 @@
 <script setup>
-
+const notification = useNotifications('toast');
 const props = defineProps({
     record: Object,
     insuranceProviders: Array,
@@ -96,6 +96,18 @@ const preventExponent = (event) =>{
   if (event.key === 'e' || event.key === 'E') {
       event.preventDefault();
     }
+}
+
+const getAddonVat = (item) => {
+	let addonVat = 0;
+	item.addons.forEach(addon => {
+		addon.carAddonOption.forEach(option => {
+			if (option.isSelected && option.price != 0) {
+				addonVat += parseInt(option.price) + option.vat;
+			}
+		})
+	})
+	return addonVat;
 }
 </script>
 <template>
@@ -195,7 +207,7 @@ const preventExponent = (event) =>{
   hide-rows-per-page
   hide-footer>
     <template #item-premiumWithVat="item">
-      {{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+      {{ parseFloat(item.discountPremium + item.vat + getAddonVat(item)).toFixed(2) }}
     </template>
   </DataTable>
 </template>

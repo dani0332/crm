@@ -14,7 +14,6 @@ use App\Enums\RuleTypeEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
-use App\Jobs\SyncSIBContactJob;
 use App\Mail\HealthAssignmentIssueEmail;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -38,6 +37,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class LeadAllocationService extends BaseService
 {
@@ -172,24 +172,26 @@ class LeadAllocationService extends BaseService
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
                 $lead->advisor_id = $advisorId;
+                $lead->quote_updated_at = now();
+
                 $lead->save();
                 info('Lead Id '.$lead->uuid.' assigned to advisor '.$advisorId);
                 if ($lead->source != LeadSourceEnum::REFERRAL) {
                     $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-                $releaseDate = Carbon::parse('2022-10-10 11:00:00')->timestamp;
-                $leadCreated = Carbon::parse($lead->created_at)->timestamp;
-                if ($lead->health_team_type == HealthTeamType::EBP && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                    SyncSIBContactJob::dispatch($lead);
-                }
-                //Disabling - Enable for RM Deployment
-                // if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
-                // && $leadCreated > $releaseDate && $lead->quote_status_id == QuoteStatusEnum::Quoted) {
-                //     CammyJob::dispatch($lead, 'intro');
-                // }
-                GetQuotePlansJob::dispatch($lead);
+
                 DB::commit();
+
+                Haystack::build()
+                    ->addJob(new GetQuotePlansJob($lead))
+                    ->then(function () use ($lead) {
+                        if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
+                            && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                            // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                        }
+                    })->dispatch();
 
                 return true;
             } catch (\Exception $e) {
@@ -673,7 +675,6 @@ class LeadAllocationService extends BaseService
 
     public function getRulesByLeadSource($carLead)
     {
-
         $commercialKeywords = CommercialKeyword::select('id', 'name')->get();
 
         $commercialCarMake = CarMake::where('id', $carLead->car_make_id)
@@ -700,7 +701,6 @@ class LeadAllocationService extends BaseService
                 info('commercial records: '.json_encode($records->get()));
 
                 return $records->get();
-
             }
         }
 
@@ -723,7 +723,6 @@ class LeadAllocationService extends BaseService
         info('lead source records: '.json_encode($records->get()));
 
         return $records->get();
-
     }
 
     public function checkIfLeadIsRenewal($lead)

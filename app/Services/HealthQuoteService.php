@@ -8,14 +8,20 @@ use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Jobs\CammyJob;
+use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
+use App\Models\PaymentAction;
+use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -1054,7 +1060,13 @@ class HealthQuoteService extends BaseService
             if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
                 info('inside the check for manual assignment QA');
                 $lead->advisor_id = $userId;
+                $lead->quote_updated_at = now();
                 $lead->save();
+
+                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                    // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                }
 
                 continue;
             }
@@ -1089,7 +1101,13 @@ class HealthQuoteService extends BaseService
                 }
             } else {
                 $lead->advisor_id = $userId;
+                $lead->quote_updated_at = now();
                 $lead->save();
+
+                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                    // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                }
             }
         }
 
@@ -1303,5 +1321,100 @@ class HealthQuoteService extends BaseService
 
             return $response;
         }
+    }
+
+    public function cancelPayment($request)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
+        $type = QuoteType::where('code', $request->modelType)->first();
+        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
+            ->where('quote_type_id', $type->id)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->first();
+        if (isset($embededTransaction->payments[0])) {
+            $payment = $embededTransaction->payments[0];
+            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+            if ($maxAmount >= $request->amount) {
+                $paymentAction = new PaymentAction();
+                $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
+                $paymentAction->is_fulfilled = 0;
+                $paymentAction->action_type = 'REFUND';
+                $paymentAction->reason = $request->reason;
+                $paymentAction->amount = $request->amount;
+                $paymentAction->created_by = auth()->user()->email;
+
+                $paymentAction->save();
+                $data = [
+                    'uuid' => $request->uuid,
+                    'type_id' => $type->id,
+                    'code' => $payment->code,
+
+                ];
+                $processResponse = $this->processCancelPayment($data);
+
+                return response($processResponse, 403);
+            } else {
+                return response(['should not be maximum'], 403);
+            }
+        }
+
+        return response(['Payment not exist'], 403);
+
+    }
+    public function toggleSelection($data, $quoteTypeId)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/toggle-embedded-product';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        $toggleData = [
+            'quoteUid' => $data->quote_uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'epOptionId' => $data->id,
+        ];
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        $response = $this->httpService->processRequest($toggleData, $apiCreds);
+
+        return $response;
+    }
+    public function processCancelPayment($data)
+    {
+        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
+        $apiToken = config('constants.MARSHALL_API_TOKEN');
+        $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
+        $apiUserName = config('constants.MARSHALL_API_USER');
+        $apiPassword = config('constants.MARSHALL_API_PWD');
+
+        $carPlanData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $apiCreds = [
+            'apiEndPoint' => $apiEndPoint,
+            'apiToken' => $apiToken,
+            'apiTimeout' => $apiTimeout,
+            'apiUserName' => $apiUserName,
+            'apiPassword' => $apiPassword,
+        ];
+
+        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
+
+        return $response;
     }
 }
