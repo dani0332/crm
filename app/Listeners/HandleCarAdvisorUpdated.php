@@ -73,11 +73,11 @@ class HandleCarAdvisorUpdated
 
         if (count($plans) == 0) {
             info('Inside zero plan for sending email');
-            $emailData = $this->carQuoteService->buildNoPlansEmailData($lead, $previousAdvisor);
+            $emailData = $this->carQuoteService->buildNoPlansEmailData($lead, $previousAdvisor, $tierR->id);
             $emailTemplateId = $lead->tier_id == $tierR->id ? 492 : 494;
         } else {
             info('Inside multiple plan for sending email');
-            $emailData = $this->carQuoteService->buildPlansEmailData($lead, $plans, $previousAdvisor);
+            $emailData = $this->carQuoteService->buildPlansEmailData($lead, $plans, $previousAdvisor, $tierR->id);
             $emailTemplateId = $lead->tier_id == $tierR->id ? 491 : 493;
         }
 

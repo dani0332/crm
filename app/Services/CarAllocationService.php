@@ -572,17 +572,23 @@ class CarAllocationService extends AllocationService
         return $emailData;
     }
 
-    public function buildNoPlansEmailData($carQuote, $previousAdvisor)
+    public function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->isReAssignment = ! empty($previousAdvisor);
+        if($carQuote->tier_id == $tierRId)
+        {
+            $emailData->isRenewal = true;
+            $emailData->policyNumber = $carQuote->previous_quote_policy_number;
+            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
 
+        }
         return $emailData;
     }
 
-    public function buildPlansEmailData($carQuote, $plans, $previousAdvisor)
+    public function buildPlansEmailData($carQuote, $plans, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $insurerPlans = [];
@@ -603,6 +609,14 @@ class CarAllocationService extends AllocationService
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
         $emailData->isReAssignment = ! empty($previousAdvisor);
+
+        if($carQuote->tier_id == $tierRId)
+        {
+            $emailData->isRenewal = true;
+            $emailData->policyNumber = $carQuote->previous_quote_policy_number;
+            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
+
+        }
 
         return $emailData;
     }
