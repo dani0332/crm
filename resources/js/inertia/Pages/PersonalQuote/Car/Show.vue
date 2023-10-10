@@ -1117,8 +1117,11 @@ const emailEventsTable = [
 ];
 
 const emailEvents = ref([]);
+const loadingEmailEvents = ref(false);
+
 const loadEmailEvents = (email) => {
 
+  loadingEmailEvents.value = email.id;
   let data = {
         isInertial: true,
         message_id: email.message_id,
@@ -1128,7 +1131,7 @@ const loadEmailEvents = (email) => {
     axios
 	  		.post(`/followups/emails/events`, data)
 	  		.then(response => {
-
+          loadingEmailEvents.value = false;
           if(response.data.length) {
             modals.showEmailEventsModal = true;
 	  		    emailEvents.value = response.data;
@@ -1143,6 +1146,7 @@ const loadEmailEvents = (email) => {
           
 	  		})
 	  		.catch(error => {
+          loadingEmailEvents.value = false;
           notification.error({
             title: 'Something went wrong while fetching events.',
             position: 'top',
@@ -2136,9 +2140,10 @@ const loadEmailEvents = (email) => {
               size="xs"
               color="primary"
               outlined
+              :loading="loadingEmailEvents == item.id"
               @click.prevent="loadEmailEvents(item)"
             >
-              View Logs
+              View Events
             </x-button>
             
           </div>
