@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -15,7 +16,7 @@ class ReAssignHealthLeadsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue , Queueable;
 
-    public $tries = 3;
+    public $tries = 2;
     public $timeout = 15;
     public $backoff = 30;
     private $healthAllocationService;
@@ -94,5 +95,10 @@ class ReAssignHealthLeadsJob implements ShouldQueue
             DB::rollback();
             Log::error($e->getMessage());
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
     }
 }

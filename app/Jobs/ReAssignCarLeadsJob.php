@@ -9,6 +9,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -16,7 +17,7 @@ class ReAssignCarLeadsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue , Queueable;
 
-    public $tries = 3;
+    public $tries = 2;
     public $timeout = 15;
     public $backoff = 30;
     private CarAllocationService $carAllocationService;
@@ -127,5 +128,10 @@ class ReAssignCarLeadsJob implements ShouldQueue
     private function updateLeadTier($lead, $tier)
     {
         $this->carAllocationService->updateLeadTier($lead, $tier);
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->advisorId))->dontRelease()];
     }
 }
