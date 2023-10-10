@@ -165,6 +165,15 @@ function addUpdatedTraveller() {
 onMounted(() => {
   addUpdatedTraveller();
 });
+
+watch(() => quoteForm.direction_code, (newValue, oldValue) => {
+    if (newValue == 'travelUaeOutbound') {
+        quoteForm.has_arrived_uae = '0';
+    } else {
+        quoteForm.has_arrived_uae = '1';
+    }
+});
+
 </script>
 
 <template>
