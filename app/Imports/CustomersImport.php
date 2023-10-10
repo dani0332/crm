@@ -84,7 +84,8 @@ class CustomersImport implements OnEachRow
                 }
             }
 
-            $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
+            $existingQuoteCustomer = QuoteCustomer::where(['customer_id' => $customerId, 'cdb_id' => $this->CDBId])->first();
+
             if (! $existingQuoteCustomer) {
                 $newQuoteCustomer = new QuoteCustomer();
                 $newQuoteCustomer->cdb_id = $this->CDBId;
