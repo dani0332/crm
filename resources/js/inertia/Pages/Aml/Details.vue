@@ -335,7 +335,7 @@ const dateToYear = date => {
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CHILDREN</dt>
-                            <dd>{{ quoteRequest?.childern?.text ?? '' }}</dd>
+                            <dd>{{ quoteRequest?.children?.text ?? '' }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">MARITAL STATUS</dt>

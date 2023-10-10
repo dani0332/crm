@@ -76,7 +76,9 @@ const memberForm = useForm({
     relation_code: null,
     nationality_id: null,
     quote_request_id: page.props.quote.id,
-    quote_type: props.quote_type
+    quote_type: props.quote_type,
+    customer_id: page.props.quote.customer_id,
+    customer_type: page.props.quote.customer_type
 });
 const addMemberModal = () => {
     memberForm.reset();
@@ -171,8 +173,8 @@ const memberDeleteConfirmed = () => {
             hide-rows-per-page
             hide-footer
         >
-            <template #item-index="{ index }">
-                <div>Member {{ index }}</div>
+            <template #item-index="{ index, code }">
+                <div>{{ code ?? 'Member ' + index }}</div>
             </template>
             <template #item-dob="{ dob }">
                 {{ dateFormat(dob) }}

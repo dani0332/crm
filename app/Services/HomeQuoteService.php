@@ -84,7 +84,15 @@ class HomeQuoteService extends BaseService
             'c.insured_first_name',
             'c.insured_last_name',
             'c.emirates_id_number',
-            'c.emirates_id_expiry_date'
+            'c.emirates_id_expiry_date',
+            'qrem.entity_id',
+            'ent.code as entity_code',
+            'ent.trade_license_no',
+            'ent.company_name',
+            'ent.company_address',
+            'ent.entity_type_code',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id'
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
@@ -92,7 +100,12 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
-            ->leftJoin('customer as c','hqr.customer_id', 'c.id');
+            ->leftJoin('customer as c','hqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function getEntity($id)

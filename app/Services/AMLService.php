@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Mail;
 
 class AMLService
 {
-    use GenericQueriesAllLobs;
+//    use GenericQueriesAllLobs;
 
     public static function isDataMigrated($quoteTypeId, $quoteRequestId = '', $parseDate = ''): bool
     {
@@ -117,7 +117,7 @@ class AMLService
                 'paymentStatus',
                 'customer',
                 'purposeOfInsurance',
-                'childern',
+                'children',
                 'maritalStatus',
                 'insuranceTenure',
                 'numberOfYears',
@@ -163,77 +163,77 @@ class AMLService
         return $quoteRequestDetails;
     }
 
-    public static function amlCheck($customerDetails, $quoteRequestId, $quoteTypeId, $isEmailSendingEnable = true)
-    {
-        $apiEndPoint = '';
-        $apiToken = '';
-        $apiTimeout = '';
-        $customerName = '';
-        $bridgerParseData = [];
-        $quoteId = $quoteRequestId;
-        $amlQuoteUrl = Config::get('constants.APP_URL') . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
-        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-//        $customerType = Entity::where('customer_id', $customerDetails->customer_id)->count() > 0 ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
-        $customerType = CustomerTypeEnum::Individual;
-
-        if ($customerType == CustomerTypeEnum::Individual) {
-            $bridgerParseData = [
-                'first_name' => $customerDetails->first_name,
-                'last_name' => $customerDetails->last_name,
-                'dob' => $customerDetails->dob,
-                'citizenship' => $customerDetails->nationality_id,
-                'id_number' => $customerDetails->code,
-            ];
-
-            $customerName = $customerDetails->first_name. ' ' .$customerDetails->last_name;
-        }
-
-        $client = new \GuzzleHttp\Client();
-        $bridgerRequest = $client->post(
-            $apiEndPoint,
-            [
-                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
-                'body' => json_encode($bridgerParseData),
-                'timeout' => $apiTimeout,
-            ]
-        );
-
-        $getStatusCode = $bridgerRequest->getStatusCode();
-        $getContents = $bridgerRequest->getBody();
-        $getDecodeContents = json_decode($getContents);
-
-        // Checking if the API call wasn't successful
-        $apiSuccessCode = [201, 200];
-        if (!in_array($getStatusCode, $apiSuccessCode)) {
-
-            $amlDataForEmail = $apiResponseMessage = '';
-            if (is_array($getDecodeContents) || is_object($getDecodeContents)) {
-                foreach ($getDecodeContents as $key1 => $value1) {
-                    $apiResponseMessage .= $key1.': '.$value1;
-                    $apiResponseMessage .= '<pre>';
-                }
-            }
-
-            foreach ($bridgerParseData as $key => $value) {
-                $amlDataForEmail .= $key.': '.$value;
-                $amlDataForEmail .= '<pre>';
-            }
-
-            // Send Error Email alert to Engineering Team
-            AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
-        } else {
-            if ($getDecodeContents) {
-                // Send Email alert to Compliance team only
-                if (checkPersonalQuotes($quoteType->code) && (AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
-                    $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
-                }
-                $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
-                if ($isEmailSendingEnable && $quoteRefId) {
-                    AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerName, $quoteType->text);
-                }
-            }
-        }
-    }
+//    public static function amlCheck($customerDetails, $quoteRequestId, $quoteTypeId, $isEmailSendingEnable = true)
+//    {
+//        $apiEndPoint = '';
+//        $apiToken = '';
+//        $apiTimeout = '';
+//        $customerName = '';
+//        $bridgerParseData = [];
+//        $quoteId = $quoteRequestId;
+//        $amlQuoteUrl = Config::get('constants.APP_URL') . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
+//        $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
+////        $customerType = Entity::where('customer_id', $customerDetails->customer_id)->count() > 0 ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
+//        $customerType = CustomerTypeEnum::Individual;
+//
+//        if ($customerType == CustomerTypeEnum::Individual) {
+//            $bridgerParseData = [
+//                'first_name' => $customerDetails->first_name,
+//                'last_name' => $customerDetails->last_name,
+//                'dob' => $customerDetails->dob,
+//                'citizenship' => $customerDetails->nationality_id,
+//                'id_number' => $customerDetails->code,
+//            ];
+//
+//            $customerName = $customerDetails->first_name. ' ' .$customerDetails->last_name;
+//        }
+//
+//        $client = new \GuzzleHttp\Client();
+//        $bridgerRequest = $client->post(
+//            $apiEndPoint,
+//            [
+//                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
+//                'body' => json_encode($bridgerParseData),
+//                'timeout' => $apiTimeout,
+//            ]
+//        );
+//
+//        $getStatusCode = $bridgerRequest->getStatusCode();
+//        $getContents = $bridgerRequest->getBody();
+//        $getDecodeContents = json_decode($getContents);
+//
+//        // Checking if the API call wasn't successful
+//        $apiSuccessCode = [201, 200];
+//        if (!in_array($getStatusCode, $apiSuccessCode)) {
+//
+//            $amlDataForEmail = $apiResponseMessage = '';
+//            if (is_array($getDecodeContents) || is_object($getDecodeContents)) {
+//                foreach ($getDecodeContents as $key1 => $value1) {
+//                    $apiResponseMessage .= $key1.': '.$value1;
+//                    $apiResponseMessage .= '<pre>';
+//                }
+//            }
+//
+//            foreach ($bridgerParseData as $key => $value) {
+//                $amlDataForEmail .= $key.': '.$value;
+//                $amlDataForEmail .= '<pre>';
+//            }
+//
+//            // Send Error Email alert to Engineering Team
+//            AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
+//        } else {
+//            if ($getDecodeContents) {
+//                // Send Email alert to Compliance team only
+//                if (checkPersonalQuotes($quoteType->code) && (AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
+//                    $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
+//                }
+//                $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
+//                if ($isEmailSendingEnable && $quoteRefId) {
+//                    AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerName, $quoteType->text);
+//                }
+//            }
+//        }
+//    }
 
     public static function sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode)
     {
@@ -296,30 +296,30 @@ class AMLService
         if($customerType == CustomerTypeEnum::IndividualShort) {
 
             if ($quoteType->code == QuoteTypes::HEALTH->value) {
-                $customerChildDetails = HealthMemberDetail::where([
+                $customerChildDetails = HealthMemberDetail::with('nationality')->where([
                     'health_quote_request_id' => $quoteRequestId
-                ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+                ])->get();
 
             } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
-                $customerChildDetails = TravelMemberDetail::where([
+                $customerChildDetails = TravelMemberDetail::with('nationality')->where([
                     'travel_quote_request_id' => $quoteRequestId
-                ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+                ])->get();
             }
             else {
-                $customerChildDetails = QuoteMemberDetailsRepository::where([
+                $customerChildDetails = QuoteMemberDetailsRepository::with('nationality')->where([
                     'customer_type' => CustomerTypeEnum::Individual,
                     'quote_type_id' => $quoteType->id,
                     'quote_request_id' => $quoteRequestId,
-                ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+                ])->get();
             }
         }
 
         if ($customerType == CustomerTypeEnum::EntityShort) {
-            $customerChildDetails = QuoteMemberDetailsRepository::where([
+            $customerChildDetails = QuoteMemberDetailsRepository::with('nationality')->where([
                 'customer_type' => CustomerTypeEnum::Entity,
                 'quote_type_id' => $quoteType->id,
                 'quote_request_id' => $quoteRequestId,
-            ])->select(['first_name', 'last_name', 'dob', 'nationality_id', 'code'])->get();
+            ])->get();
         }
 
         return $customerChildDetails;

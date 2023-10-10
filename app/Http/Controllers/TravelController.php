@@ -16,10 +16,12 @@ use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Models\Emirate;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -162,6 +164,9 @@ class TravelController extends Controller
         $fields = array_diff_key($fields, array_flip($removeFields));
 
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
+        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Travel, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
@@ -220,7 +225,10 @@ class TravelController extends Controller
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'nationalities' => $nationalities,
             'memberRelations' => $memberRelations,
-            'industryType' => $industryType
+            'industryType' => $industryType,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
+            'emirates' => $emirates,
         ]);
     }
 

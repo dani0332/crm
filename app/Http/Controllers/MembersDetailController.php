@@ -27,7 +27,7 @@ class MembersDetailController extends Controller
      */
     public function store(MemberDetailRequest $request)
     {
-        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health) && 
+        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health) &&
             (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
             $healthMemberDetails = $request->validated();
 
@@ -45,7 +45,7 @@ class MembersDetailController extends Controller
 
             HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
 
-        } elseif(strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) && 
+        } elseif(strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) &&
             (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
             $travelMemberDetails = $request->validated();
 

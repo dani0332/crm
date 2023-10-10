@@ -84,8 +84,10 @@ class LifeQuoteRepository extends BaseRepository
     public function fetchGetBy($column, $value)
     {
         return $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance', 'childern', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo'])
+            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
+            'paymentStatus', 'customer.additionalContactInfo', 'quoteRequestEntityMapping' => function($entityMapping){
+                $entityMapping->with('entity');
+            }])
             ->select([
                 'life_quote_request.*',
                 \DB::raw('IF(EXISTS (
@@ -109,7 +111,7 @@ class LifeQuoteRepository extends BaseRepository
             'currency' => CurrencyTypeRepository::withActive()->get(),
             'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
             'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'childern' => LifeChildrenRepository::withActive()->get(),
+            'children' => LifeChildrenRepository::withActive()->get(),
             'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
             'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 

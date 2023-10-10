@@ -1107,7 +1107,7 @@ const customerProfileForm = useForm({
     emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
 
     entity_id: page.props.quote.entity_id ?? null,
-    trade_license: page.props.quote.trade_license_no ?? null,
+    trade_license_no: page.props.quote.trade_license_no ?? null,
     company_name: page.props.quote.company_name ?? null,
     company_address: page.props.quote.company_address ?? null,
     entity_type_code: page.props.quote.entity_type_code ?? null,
@@ -1146,7 +1146,7 @@ const tradeLicenseEntity = reactive({
 });
 
 const searchByTradeLicense = () => {
-    let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license}`;
+    let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
     axios.get(url)
         .then(res => {
             if(res.data.status) {
@@ -1186,7 +1186,7 @@ const linkEntity = () => {
                 let response = res.data.response;
 
                 // Append Entity data in fields
-                customerProfileForm.trade_license = response.trade_license_no;
+                customerProfileForm.trade_license_no = response.trade_license_no;
                 customerProfileForm.company_name = response.company_name;
                 customerProfileForm.company_address = response.company_address;
                 customerProfileForm.entity_type_code = response.entity_type_code;
@@ -1597,7 +1597,7 @@ onMounted(() => {
                           <dt class="font-medium">TRADE LICENSE NO</dt>
                           <dd>
                               <x-input
-                                  v-model="customerProfileForm.trade_license"
+                                  v-model="customerProfileForm.trade_license_no"
                                   placeholder="TRADE LICENSE NO"
                                   type="text"
                                   class="w-full"

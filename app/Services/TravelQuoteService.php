@@ -102,7 +102,15 @@ class TravelQuoteService extends BaseService
             'c.insured_first_name',
             'c.insured_last_name',
             'c.emirates_id_number',
-            'c.emirates_id_expiry_date'
+            'c.emirates_id_expiry_date',
+            'qrem.entity_id',
+            'ent.code as entity_code',
+            'ent.trade_license_no',
+            'ent.company_name',
+            'ent.company_address',
+            'ent.entity_type_code',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id'
         )
             ->leftJoin('travel_cover_for as tcf', 'tcf.id', '=', 'tqr.travel_cover_for_id')
             ->leftJoin('travel_quote_request_detail as tqrd', 'tqr.id', '=', 'tqrd.travel_quote_request_id')
@@ -115,7 +123,12 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
-            ->leftJoin('customer as c','tqr.customer_id', 'c.id');
+            ->leftJoin('customer as c','tqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'tqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function saveTravelQuote(Request $request)

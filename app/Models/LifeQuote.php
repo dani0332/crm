@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Carbon\Carbon;
@@ -60,7 +61,7 @@ class LifeQuote extends Model implements AuditableContract
         return $this->belongsTo(LifePurposeOfInsurance::class, 'purpose_of_insurance_id', 'id');
     }
 
-    public function childern()
+    public function children()
     {
         return $this->belongsTo(LifeChildren::class, 'children_id', 'id');
     }
@@ -98,5 +99,11 @@ class LifeQuote extends Model implements AuditableContract
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Life);
     }
 }

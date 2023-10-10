@@ -34,7 +34,7 @@ const customerType = computed({
     return cusType.value;
   },
   set(val) {
-    cusType.value = val;
+    return cusType.value = val;
   },
 });
 

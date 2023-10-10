@@ -31,11 +31,13 @@ use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteTypeRepository;
+use App\Services\BridgerInsightService;
 use App\Services\CheckAmlService;
 use App\Services\AMLService;
 use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -284,50 +286,49 @@ class AMLController extends Controller
 
             if($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
 
-                $customer = Customer::findOrFail($AMLCheckRequest->customer_id);
+                $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
 
                 $getMemberOrUBODetails[] = [
                     'first_name' => $customer->insured_first_name,
                     'last_name' => $customer->insured_last_name,
-                    'dob' => $customer->dob,
-                    'nationality_id' => (int) $customer->nationality_id,
+                    'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
+                    'nationality' => $customer->nationality->toArray(),
                     'code' => CustomerTypeEnum::IndividualShort . '-'. $customer->id,
                 ];
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
 
-                Entity::updateOrCreate(['trade_license', $AMLCheckRequest->trade_license],[
+                $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license],[
                     'company_name' => $AMLCheckRequest->company_name,
                     'company_address' => $AMLCheckRequest->company_address,
                     'entity_type_code' => $AMLCheckRequest->entity_type,
                     'industry_type_code' => $AMLCheckRequest->industry_type,
                     'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration
                 ]);
+                $entityId = $entity->id;
+                $entity->update(['code' => CustomerTypeEnum::EntityShort . '-'. $entityId]);
 
                 QuoteRequestEntityMapping::updateOrCreate([
                     'quote_type_id' => $quoteType->id,
                     'quote_request_id' => $quoteRequestId
-                ],['entity_id' => $AMLCheckRequest->entity_id]);
+                ],['entity_id' => $entityId]);
 
                 $getMemberOrUBODetails[] = [
-                    'first_name' => $customer->insured_first_name,
-                    'last_name' => $customer->insured_last_name,
-                    'dob' => $customer->dob,
-                    'nationality_id' => (int) $customer->nationality_id,
-                    'code' => CustomerTypeEnum::EntityShort . '-'. $customer->id,
+                    'company_name' => $entity->company_name,
+                    'code' => CustomerTypeEnum::EntityShort . '-'. $entityId,
                 ];
             }
-
             dd($getMemberOrUBODetails->toArray());
-
+            $bridgerInsightService = new BridgerInsightService();
             foreach ($getMemberOrUBODetails as $value):
                 Log::info('Bridger API call for AML Check with customer ID '.$value->code.' And data pass for Bridger API are : '.json_encode($value));
-//            Need to enable when integrate API
+                $bridgerInsightService->searchAMLResult($value, $quoteRequestId, $quoteTypeId, $AMLCheckRequest->customer_type);
 //                AMLService::amlCheck($value, $quoteRequestId, $quoteTypeId);
                 sleep(5);
             endforeach;
+            dd("final");
 
             return redirect()->back()->with('success', 'Quote is updated');
         }
@@ -414,6 +415,21 @@ class AMLController extends Controller
             'quote_type_id' => $request->quote_type_id,
             'quote_request_id' => $request->quote_request_id
         ],['entity_id' => $request->entity_id]);
+
+//        $quoteRequestMapping = QuoteRequestEntityMapping::where([
+//            'quote_type_id' => $request->quote_type_id,
+//            'quote_request_id' => $request->quote_request_id
+//        ])->first() ?? [];
+//
+//        if(!empty($quoteRequestMapping)){
+//            $quoteRequestMapping->update(['entity_id' => $request->entity_id]);
+//        } else {
+//            QuoteRequestEntityMapping::create([
+//                'quote_type_id' => $request->quote_type_id,
+//                'quote_request_id' => $request->quote_request_id,
+//                'entity_id' => $request->entity_id
+//            ]);
+//        }
 
         $entity = Entity::where('id', $request->entity_id)->first();
 

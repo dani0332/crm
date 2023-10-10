@@ -83,7 +83,7 @@ const UBOForm = useForm({
     customer_id: page.props.quote.customer_id,
     quote_type: props.quote_type,
     customer_type: page.props.quote.customer_type,
-    entity_id: page.props.quote.entity_id
+    entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? page.props.quote.entity_id
 });
 
 const addUBOModal = () => {
@@ -172,7 +172,9 @@ const UBODeleteConfirmed = () => {
                 UBO Details
                 <x-tag size="sm">{{ UBOsDetails.length || 0 }}</x-tag>
             </h3>
-            <x-button v-if="page.props.quote.entity_id" @click.prevent="addUBOModal" size="sm" color="orange">
+            <x-button
+                v-if="page.props.quote?.quote_request_entity_mapping?.entity_id ?? page.props.quote.entity_id"
+                @click.prevent="addUBOModal" size="sm" color="orange">
                 Add UBO
             </x-button>
         </div>

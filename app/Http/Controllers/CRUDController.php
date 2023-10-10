@@ -584,6 +584,9 @@ class CRUDController extends Controller
             $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
+            $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Home, CustomerTypeEnum::Entity);
+            $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
             $payments->each(function ($payment) {
                 $allow = $payment->payment_status_id != PaymentStatusEnum::CAPTURED && $payment->payment_status_id != PaymentStatusEnum::AUTHORISED && ! auth()->user()->hasRole(RolesEnum::PA);
@@ -650,7 +653,10 @@ class CRUDController extends Controller
                 'membersDetails' => $membersDetail,
                 'memberRelations' => $memberRelations,
                 'nationalities' => $nationalities,
-                'industryType' => $industryType
+                'industryType' => $industryType,
+                'UBOsDetails' => $uboDetails,
+                'UBORelations' => $uboRelations,
+                'emirates' => $emirates,
             ]);
         }
 

@@ -111,14 +111,14 @@ class CentralController extends Controller
         }
 
         if ($customerProfileRequest->customer_type == CustomerTypeEnum::Entity) {
-            Entity::updateOrCreate(['trade_license', $customerProfileRequest->trade_license], $customerProfileRequest->validated());
+            Entity::updateOrCreate(['trade_license_no' => $customerProfileRequest->trade_license_no], $customerProfileRequest->validated());
 
             QuoteRequestEntityMapping::updateOrCreate([
                 'quote_type_id' => $customerProfileRequest->quote_type_id,
                 'quote_request_id' => $customerProfileRequest->quote_request_id
             ], ['entity_id' => $customerProfileRequest->entity_id]);
 
-        }        
+        }
 
         return redirect()->back();
     }

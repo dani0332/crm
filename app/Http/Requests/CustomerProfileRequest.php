@@ -38,7 +38,7 @@ class CustomerProfileRequest extends FormRequest
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
             $rules = array_merge($rules, [
-                'trade_license' => 'required|max:200',
+                'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
                 'company_address' => 'required',
                 'entity_type_code' => 'nullable',
