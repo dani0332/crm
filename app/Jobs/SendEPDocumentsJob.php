@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Facades\PostMark;
 use Exception;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -15,7 +14,6 @@ use Illuminate\Support\Facades\Log;
 class SendEPDocumentsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
 
     protected $emailData = null;
     /**
@@ -34,9 +32,9 @@ class SendEPDocumentsJob implements ShouldQueue
     {
         try {
             $response = PostMark::sendEmail($this->emailData);
-            info('Ep send documents email response  - : ' . json_encode($response));
+            info('Ep send documents email response  - : '.json_encode($response));
         } catch (Exception $e) {
-            Log::error('Ep send documents email ERROR:' . $e->getMessage());
+            Log::error('Ep send documents email ERROR:'.$e->getMessage());
         }
     }
 }
