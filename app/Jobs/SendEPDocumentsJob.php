@@ -16,8 +16,8 @@ class SendEPDocumentsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public $tries = 3;
-    public $timeout = 300;
-    public $backoff = 10;
+    public $timeout = 60;
+    public $backoff = 180;
     private $emailData = null;
 
     /**
