@@ -1,4 +1,6 @@
 <script setup>
+//import PaymentTable from '../PersonalQuote/Car/Partials/PaymentTable.vue';
+import PaymentTable from './../../Components/PaymentTable.vue';
 defineProps({
   quote: Object,
   leadStatuses: Array,
@@ -19,6 +21,7 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
+  paymentTooltipEnum: Object,
 });
 
 const page = usePage();
@@ -400,9 +403,9 @@ const policyDetails = useForm({
 
 <template>
   <div>
-    <Head title="Home Detail" />
+    <Head title="Home Detail22" />
     <div class="flex justify-between items-center flex-wrap gap-2">
-      <h2 class="text-xl font-semibold">Home Detail</h2>
+      <h2 class="text-xl font-semibold">Home Detai22l</h2>
       <div class="flex gap-2">
         <x-button size="sm" color="#ff5e00" @click.prevent="openDuplicate">
           Duplicate Lead
@@ -863,16 +866,15 @@ const policyDetails = useForm({
       </x-modal>
     </div>
 
-    <PaymentTable
-      v-if="isBetaUser"
-      :payments="payments"
-      :can="can"
-      :isBetaUser="isBetaUser"
-      :quoteRequest="quoteRequest"
-      :paymentMethods="paymentMethods"
-      :insuranceProviders="insuranceProviders"
-      :quote="quote"
-    />
+    <PaymentTable 
+			v-if="isBetaUser"
+      quoteType="Health"
+			:payments="payments"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
+		/>
     <customerAdditionalContacts
       quoteType="Home"
       :customerId="quote.customer_id"

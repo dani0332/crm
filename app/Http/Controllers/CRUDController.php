@@ -438,6 +438,7 @@ class CRUDController extends Controller
         }
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
+        $paymentTooltipEnum = PaymentTooltip::asArray();
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
@@ -609,9 +610,7 @@ class CRUDController extends Controller
             $leadDocsStoragePath = createCdnUrl('');
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
-
-            $paymentTooltipEnum = PaymentTooltip::asArray();
-
+            
             return inertia('PersonalQuote/Car/Show', compact([
                 'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
@@ -723,6 +722,7 @@ class CRUDController extends Controller
                 'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
                 'quoteRequest' => $paymentEntityModel,
                 'embeddedProducts' => $embeddedProducts,
+                'paymentTooltipEnum' => PaymentTooltip::asArray(),
             ]);
         }
 
@@ -1619,6 +1619,8 @@ class CRUDController extends Controller
 
     public function storePayment(Request $request)
     {
+
+        dd($request->all());
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);

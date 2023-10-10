@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import PaymentTable from './Partials/PaymentTable.vue'
+import PaymentTable from './../../../Components/PaymentTable.vue';
 import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import QuoteStatus from './../Partials/QuoteStatus.vue';
@@ -1700,6 +1700,7 @@ const setLeadStatuses = () => {
     
 		<PaymentTable 
 			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Car"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"

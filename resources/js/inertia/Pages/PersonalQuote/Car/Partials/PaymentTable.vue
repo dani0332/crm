@@ -36,20 +36,19 @@ const fileUploadModels = ref([]);
 
 const totalAmount = computed(() => {
   const discount = discountValue.value;
-  if (discount > 50) {
+  if (discount > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
     return 0;
   } else {
     return totalPrice.value - discount;
   }
 });
-
 const discountError = computed(() => {
   const regex = /^\d+(\.\d{1,2})?$/;
   if (!regex.test(discountValue.value)) {
     return 'Discount must be a valid number';
   }    
   // Check if the discount exceeds 50 and return an error message
-  if (discountValue.value > 50) {
+  if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
     return 'Discount should not exceed 50 AED';
   }
   return '';
@@ -89,7 +88,7 @@ const paymentTableHeaders = [
 ];
 
 const collectionTypes = [
-  { value: '', label: 'Select Collection Type' },
+  { value: '', label: 'Select Collection' },
   { value: 'broker', label: 'Broker' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_BROKER},
   { value: 'insurer', label: 'Insurer' , tooltip: props.paymentTooltipEnum.COLLECTOR_LIST_INSURER},
 ];
@@ -98,7 +97,7 @@ const totalPayments = ref([
  ]);
 
 const paymentTypes = ref([
-  { value: '', label: 'Select Payment Method'},
+  { value: '', label: 'Select Payment'},
   { value: 'BT', label: 'Bank Transfer', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_BT },
   { value: 'CSH', label: 'Cash', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CSH},
   { value: 'CHQ', label: 'Cheque', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CHQ },
@@ -115,13 +114,38 @@ const paymentTypes = ref([
 const frequencyTypes = [
   { value: '', label: 'Select Frequency'},
   { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
-  { value: 'annually', label: 'Annually'},
   { value: 'monthly', label: 'Monthly' },
   { value: 'quarterly', label: 'Quarterly' },
   { value: 'semi_annual', label: 'Semi Annual' },
   { value: 'split_payments', label: 'Split Payments' },
   { value: 'custom', label: 'Custom' },
 ];
+
+const creditApprovalReasons = [
+  { value: ' ', label: 'Approval Reason'},
+  { value: 'available_credit_balance', label: 'Available credit balance' },
+  { value: 'post_dated_cheque_payment', label: 'Post-dated cheque payment' },
+  { value: 'cheque_under_clearance', label: 'Cheque under clearance' },
+  { value: 'other_reasons', label: 'Other reasons' },  
+];
+
+const discountTypes = [
+  { value: ' ', label: 'Discount Type'},
+  { value: 'refer_a_friend', label: 'Refer a friend' },
+  { value: 'incentive_offset', label: 'Incentive offset' },
+  { value: 'managerial_approval_discount', label: 'Managerial approval discount' },
+  { value: 'employee_discount', label: 'Employee discount' },
+  { value: 'family_employee_discount', label: 'Family employee discount' }, 
+];
+
+const discountReasons = [
+  { value: '', label: 'Discount Reason'},
+  { value: 'promotional_campaign_discount', label: 'Promotional campaign discount' },
+  { value: 'loyalty_reward_discount', label: 'Loyalty reward discount' },
+  { value: 'competitive_pricing_discount', label: 'Competitive pricing discount' },
+  { value: 'custom_discount_reason', label: 'Custom discount reason' },  
+];
+
 
 const handlePaymentOptions = () => {
   if( paymentMethodsModels.value[1] === 'CHQ' || paymentMethodsModels.value[1] === 'PDC' ) {
@@ -184,6 +208,7 @@ const resetDiscount = () => {
 };
 
 const handleDiscountChange = () => {
+  discountValue.value = 0;
   if(paymentMethodsForm.discount === ' '){
     isDiscountEnabled.value = false;    
   }else{
@@ -198,25 +223,50 @@ const handleDiscountChange = () => {
     isDiscountReasonEnabled.value = true;
   } else{
     isDiscountReasonEnabled.value = false;
-  }  
+  }
+
+  if(paymentMethodsForm.discount === 'employee_discount'){
+    discountValue.value = totalPrice.value * (12.5 / 100).toFixed(2); // for car
+  }
+
+  if(paymentMethodsForm.discount === 'family_employee_discount'){
+    discountValue.value = totalPrice.value * (7.5 / 100).toFixed(2); // for car
+  }
+
+
 };
 
-const handleFrequencyTypeChange = () => {
+const calculatePaymentBreakup = (totalRows) => {
+  var perInstallmentPrice = parseFloat((totalPrice.value/totalRows).toFixed(2));
+  dueDateModels.value[1] = new Date();
+  for (let i = 1; i <= totalRows; i++) { 
+    splitAmountModels.value[i] = perInstallmentPrice;
+    if(i>1){
+      paymentMethodsModels.value[i] = '';
+    }    
+  }
+}
+
+const handleFrequencyChange = () => {
   var resetPaymentMethod = false;
   totalPayments.value = [];
   for (let i = 1; i <= 12; i++) { // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
+  calculatePaymentBreakup(1);
   isPaymentNoEnabled.value = false;
   if (paymentMethodsForm.frequency === 'monthly') {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '12';
+    calculatePaymentBreakup(12);
   } else if (paymentMethodsForm.frequency === 'quarterly') {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '4';
+    calculatePaymentBreakup(4);
   } else if (paymentMethodsForm.frequency === 'semi_annual') {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '2';
+    calculatePaymentBreakup(2);
   } else if (paymentMethodsForm.frequency === 'split_payments') {
     isPaymentNoEnabled.value = true;
     paymentMethodsForm.payment_no = '1';
@@ -242,30 +292,6 @@ const isCCDisabled = computed(() => {
           );
 });
 
-const creditApprovalReasons = [
-  { value: ' ', label: 'Select Approval Reason'},
-  { value: 'available_credit_balance', label: 'Available credit balance' },
-  { value: 'post_dated_cheque_payment', label: 'Post-dated cheque payment' },
-  { value: 'cheque_under_clearance', label: 'Cheque under clearance' },
-  { value: 'other_reasons', label: 'Other reasons' },  
-];
-
-const discountTypes = [
-  { value: ' ', label: 'Select Discount Type'},
-  { value: 'refer_a_friend', label: 'Refer a friend' },
-  { value: 'incentive_offset', label: 'Incentive offset' },
-  { value: 'managerial_approval_discount', label: 'Managerial approval discount' },
-  { value: 'employee_discount', label: 'Employee discount' },
-  { value: 'family_employee_discount', label: 'Family employee discount' }, 
-];
-
-const discountReasons = [
-  { value: '', label: 'Select Discount Reason'},
-  { value: 'promotional_campaign_discount', label: 'Promotional campaign discount' },
-  { value: 'loyalty_reward_discount', label: 'Loyalty reward discount' },
-  { value: 'competitive_pricing_discount', label: 'Competitive pricing discount' },
-  { value: 'custom_discount_reason', label: 'Custom discount reason' },  
-];
 
 const generateCCLink = async code => {
   try {
@@ -307,7 +333,6 @@ const addPaymentModal = () => {
   paymentMethodsForm.payment_method = '';
   
   paymentMethodsModels.value[1] = '';
-  dueDateModels[1] = new Date();
   paymentMethodsForm.collection_type = 'broker';
   paymentMethodsForm.amount = '';
   paymentMethodsForm.payment_reference = '';
@@ -322,6 +347,7 @@ const addPaymentModal = () => {
   paymentMethodsForm.discount = ' ';
   paymentMethodsForm.credit_approval = ' ';
   handleCollectionTypeChange();
+  calculatePaymentBreakup(1);
 };
 
 const editPaymentModal = payment => {
@@ -557,7 +583,7 @@ const providerId = computed(() => {
             <x-field label="TOTAL PRICE" class="w-full">
               <x-input
                   class="w-full"
-                  :value="getTotalPrice"
+                  :value="totalPrice"
                   :disabled="true"
                 />
             </x-field>
@@ -568,7 +594,7 @@ const providerId = computed(() => {
           <x-tooltip>
             <x-field label="COLLECTED BY" class="w-full" required>
             <select
-                class="beautiful-select"
+                class="custom-select"
                 v-model="paymentMethodsForm.collection_type"
                 :options="collectionTypes"
                 :rules="[rules.isRequired]"
@@ -600,11 +626,11 @@ const providerId = computed(() => {
           <x-tooltip>
             <x-field label="FREQUENCY" class="w-full" required>              
               <select
-                  class="beautiful-select"
+                  class="custom-select"
                   v-model="paymentMethodsForm.frequency"
                   :options="frequencyTypes"
                   :rules="[rules.isRequired]"
-                  @change="handleFrequencyTypeChange"
+                  @change="handleFrequencyChange"
                   >
                   <template v-for="option in frequencyTypes" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
@@ -632,11 +658,12 @@ const providerId = computed(() => {
           <x-tooltip>
             <x-field label="PAYMENT NO" class="w-full" required>              
               <select
-                  class="beautiful-select"
+                  class="custom-select"
                   v-model="paymentMethodsForm.payment_no"
                   :options="totalPayments"
                   :rules="[rules.isRequired]"
                   :disabled="!isPaymentNoEnabled"
+                  @change="calculatePaymentBreakup(paymentMethodsForm.payment_no)"
                   >
                   <template v-for="option in totalPayments" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
@@ -668,7 +695,7 @@ const providerId = computed(() => {
                 &#10006; 
               </span>
               <select
-                  class="beautiful-select"
+                  class="custom-select"
                   v-model="paymentMethodsForm.credit_approval"
                   :options="creditApprovalReasons"
                   @change="handleApprovalReasonChange"
@@ -697,7 +724,7 @@ const providerId = computed(() => {
                 &#10006; 
               </span> 
               <select
-                  class="beautiful-select"
+                  class="custom-select"
                   v-model="paymentMethodsForm.discount"
                   :options="discountTypes"
                   @change="handleDiscountChange"
@@ -718,7 +745,7 @@ const providerId = computed(() => {
           <x-tooltip v-if="isDiscountReasonEnabled">
             <x-field label="DISCOUNT REASON" class="w-full" required>              
               <select
-                  class="beautiful-select"
+                  class="custom-select"
                   v-model="paymentMethodsForm.discount_reason"
                   :options="discountReasons"
                   :rules="[rules.isRequired]"                  
@@ -830,11 +857,10 @@ const providerId = computed(() => {
               <div class="w-1/5 px-2">{{ count }}</div>
               <div class="w-1/5 px-2">
                 <select
-                  class="beautiful-select"
+                  class="custom-select"
                   v-model="paymentMethodsModels[count]"
                   :options="handlePaymentTypes(count)"
                   :rules="[rules.isRequired]"                
-                  :name="'payment_types[' + count + ']'"
                   @change="handlePaymentOptions()"
                 >
                   <!-- Use the title attribute to set the tooltip text -->
@@ -863,7 +889,8 @@ const providerId = computed(() => {
               <div class="w-1/5 px-2">
                 <DatePicker
                   v-model="dueDateModels[count]"
-                  :value="dueDateModels[count]"
+                  class="w-full"
+                  :rules="[rules.isRequired]"              
                 />  
               </div>
               <div class="w-1/5 px-2">
@@ -872,7 +899,6 @@ const providerId = computed(() => {
                   v-model="fileUploadModels[count]"
                   placeholder="Upload Files"         
                 />
-
               </div>
             </div>
           </div>
@@ -910,15 +936,15 @@ const providerId = computed(() => {
 </template>
 <style scoped>
 /* Add your beautiful styling here */
-.beautiful-select {
+.custom-select {
   /* Example styles */
   border: 2px solid #e5e7eb;
-  padding: 10px;
+  padding: 7px;
   border-radius: 5px;
   background-color: #fff;
   color: #333;
   font-size: 16px;
-  width: 100%;
+  width: 100%;  
   /* You can customize these styles to your liking */
 }
 
@@ -927,15 +953,11 @@ const providerId = computed(() => {
 }
 .close-icon {
   position: absolute;
-  top: 12px;
+  top: 8px;
   left: 0;
-  padding-left: 3px;
+  padding-left: 445px;
   cursor: pointer;
   color: #333; /* Customize the close icon color */
 }
-
-
-
-
 
 </style>

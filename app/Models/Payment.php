@@ -144,4 +144,9 @@ class Payment extends Model
         return $this->belongsTo(InsuranceProvider::class);
     }
 
+    public function splitPayments()
+    {
+        return $this->hasMany(PaymentSplits::class, 'code', 'code');
+    }
+
 }
