@@ -6,6 +6,7 @@ use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\PostMark;
+use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
@@ -329,6 +330,7 @@ class EmbeddedProductRepository extends BaseRepository
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
-        return PostMark::sendEmail($body);
+
+        SendEPDocumentsJob::dispatch($body);
     }
 }

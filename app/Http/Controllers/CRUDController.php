@@ -23,6 +23,8 @@ use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
+use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -159,7 +161,8 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
-            if (isset($upcomingBatch->deadline->deadline_date) &&
+            if (
+                isset($upcomingBatch->deadline->deadline_date) &&
                 auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
                 UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS])
             ) {
@@ -1202,6 +1205,28 @@ class CRUDController extends Controller
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
                 // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
+
+                // Ep send documents
+                $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
+                $epTransaction = EmbeddedTransaction::where([
+                    ['quote_type_id',   $quoteTypeId],
+                    ['quote_request_id', $request->leadId],
+                    ['is_selected', 1],
+                ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+
+                if ($epTransaction->isNotEmpty()) {
+                    foreach ($epTransaction as $item) {
+
+                        $product_id = $item->product_id;
+                        $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                        // EP Send documents
+                        $data = [];
+                        $data['quoteId'] = $request->leadId;
+                        $data['modelType'] = $request->modelType;
+                        $data['epId'] = $embedded_product_id;
+                        EmbeddedProductRepository::sendDocument($data);
+                    }
+                }
             }
             if (
                 $request->leadStatus == QuoteStatusEnum::FollowupCall ||
