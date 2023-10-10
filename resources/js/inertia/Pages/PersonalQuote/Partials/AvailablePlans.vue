@@ -83,7 +83,7 @@ const planForm = useForm({
 	premium_vat: props.vat ? props.vat : 0,
 	car_value: props.record.car_value,
 	excess: props.plan.excess || 0,
-	is_disabled: props.plan.isDisabled && props.plan.isDisabled == props.genericRequestEnum.FALSE,
+	is_disabled: props.plan.isDisabled,
 	is_create: 0,
 	addons: props.plan.addons,
 	insurerTrim: props.plan.insurerTrimId || null,
