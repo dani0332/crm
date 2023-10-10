@@ -35,9 +35,9 @@ class SendEPDocumentsJob implements ShouldQueue
     {
         try {
             $response = PostMark::sendEmail($this->emailData);
-            info('SendEPDocumentsJob - Response: '.json_encode($response));
+            info('SendEPDocumentsJob - Response: ' . json_encode($response));
         } catch (Exception $e) {
-            Log::error('SendEPDocumentsJob - ERROR:'.$e->getMessage());
+            Log::error('SendEPDocumentsJob - ERROR:' . $e->getMessage());
         }
     }
 }
