@@ -580,8 +580,8 @@ class CarAllocationService extends AllocationService
         $emailData->isReAssignment = ! empty($previousAdvisor);
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
-            $emailData->policyNumber = 'Dummy Policy Number'; //$carQuote->previous_quote_policy_number;
-            $emailData->renewalDueDate = 'Dummy Expiry Date'; //$carQuote->previous_policy_expiry_date;
+            $emailData->policyNumber = $carQuote->previous_quote_policy_number;
+            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
 
         }
 
@@ -612,8 +612,8 @@ class CarAllocationService extends AllocationService
 
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
-            $emailData->policyNumber = 'Dummy Policy Number'; //$carQuote->previous_quote_policy_number;
-            $emailData->renewalDueDate = 'Dummy Expiry Date'; //$carQuote->previous_policy_expiry_date;
+            $emailData->policyNumber =  $carQuote->previous_quote_policy_number;
+            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
 
         }
 
