@@ -578,13 +578,13 @@ class CarAllocationService extends AllocationService
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->isReAssignment = ! empty($previousAdvisor);
-        if($carQuote->tier_id == $tierRId)
-        {
+        if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
 
         }
+
         return $emailData;
     }
 
@@ -610,8 +610,7 @@ class CarAllocationService extends AllocationService
         $emailData->totalPlans = count($insurerPlans);
         $emailData->isReAssignment = ! empty($previousAdvisor);
 
-        if($carQuote->tier_id == $tierRId)
-        {
+        if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
