@@ -167,13 +167,30 @@ onMounted(() => {
 });
 
 watch(() => quoteForm.direction_code, (newValue, oldValue) => {
-    if (newValue == 'travelUaeOutbound') {
-        quoteForm.has_arrived_uae = '0';
-    } else {
+    if (newValue == travelQuoteEnum.TRAVEL_UAE_INBOUND){
         quoteForm.has_arrived_uae = '1';
+        quoteForm.has_arrived_destination = null;
+    }else{
+        quoteForm.has_arrived_uae = null;
+        quoteForm.has_arrived_destination = '0';
     }
 });
 
+watch(() => quoteForm.has_arrived_uae, (newValue, oldValue) => {
+    resetTravelInfo(newValue);
+});
+
+watch(() => quoteForm.has_arrived_destination, (newValue, oldValue) => {
+    resetTravelInfo(newValue);
+});
+
+function resetTravelInfo(value){
+    if(value == 1){
+        quoteForm.start_date= null;
+        quoteForm.end_date= null;
+        quoteForm.coverage_code= null;
+    }
+}
 </script>
 
 <template>
@@ -233,8 +250,8 @@ watch(() => quoteForm.direction_code, (newValue, oldValue) => {
       <div
         class="grid sm:grid-cols-2 gap-4"
         v-if="
-          quoteForm.has_arrived_uae == '0' ||
-          quoteForm.has_arrived_destination == '0'
+          !(quoteForm.has_arrived_uae == 1 ||
+          quoteForm.has_arrived_destination == 1)
         "
       >
         <x-field label="Travel Coverage" required>
