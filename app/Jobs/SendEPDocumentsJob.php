@@ -15,13 +15,16 @@ class SendEPDocumentsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $emailData = null;
+    public $tries = 3;
+    public $timeout = 20;
+    public $backoff = 60;
+    private $emailData = null;
+
     /**
      * Create a new job instance.
      */
     public function __construct($data)
     {
-
         $this->emailData = $data;
     }
 
@@ -32,9 +35,9 @@ class SendEPDocumentsJob implements ShouldQueue
     {
         try {
             $response = PostMark::sendEmail($this->emailData);
-            info('Ep send documents email response  - : '.json_encode($response));
+            info('SendEPDocumentsJob - Response: ' . json_encode($response));
         } catch (Exception $e) {
-            Log::error('Ep send documents email ERROR:'.$e->getMessage());
+            Log::error('SendEPDocumentsJob - ERROR:' . $e->getMessage());
         }
     }
 }
