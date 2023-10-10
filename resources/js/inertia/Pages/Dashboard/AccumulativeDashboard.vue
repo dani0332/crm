@@ -16,6 +16,25 @@ const props = defineProps({
   leadReceivedSummaryBySource: Array,
 });
 
+const { isActive, pasue, resume } = useTimeoutPoll(fetchData, 60000);
+
+const totalLeadsReceived = ref(props.totalLeadsReceived);
+const totalLeadsReceivedEcommerce = ref(props.totalLeadsReceivedEcommerce);
+const totalUnAssignedLeadsReceived = ref(props.totalUnAssignedLeadsReceived);
+const totalUnAssignedLeadsReceivedEcommerce = ref(
+  props.totalUnAssignedLeadsReceivedEcommerce,
+);
+const teams = ref(props.teams);
+const teamWiseLeadsAssignedAverage = ref(props.teamWiseLeadsAssignedAverage);
+const totalUnAssignedRevivalLeads = ref(props.totalUnAssignedRevivalLeads);
+const leadsCountByTier = ref(props.leadsCountByTier);
+const unAssignedLeadsByTier = ref(props.unAssignedLeadsByTier);
+const revivalLeadsCount = ref(props.revivalLeadsCount);
+const advisorLeadsAssignedData = ref(props.advisorLeadsAssignedData);
+const leadReceivedSummaryBySource = ref(props.leadReceivedSummaryBySource);
+const assignedLeadsBySource = ref(props.assignedLeadsBySource);
+const carAdvisors = ref(props.carAdvisors);
+
 const LeadRcdSummary = ref([]);
 const UnassignedLeadRcdSummary = ref([]);
 const revivalLeadsCountChart = ref([]);
@@ -27,12 +46,39 @@ const tableHeader = ref([
   { text: 'PERCENTAGE', value: 'percentage' },
 ]);
 
-const allTeams = computed(() => [...Object.values(props.teams)]);
+const allTeams = computed(() => [...Object.values(teams.value)]);
 
 const filters = reactive({
   teamFilter: [],
   range: [],
 });
+
+async function fetchData() {
+  let response = await axios.get(
+    `/get-recent-daily-stats?range=${filters.range}&teamFilter[]=${filters.teamFilter}`,
+  );
+  if (response.data) {
+    totalLeadsReceived.value = response.data.totalLeadsReceived;
+    totalLeadsReceivedEcommerce.value =
+      response.data.totalLeadsReceivedEcommerce;
+    totalUnAssignedLeadsReceived.value =
+      response.data.totalUnAssignedLeadsReceived;
+    totalUnAssignedLeadsReceivedEcommerce.value =
+      response.data.totalUnAssignedLeadsReceivedEcommerce;
+    totalUnAssignedRevivalLeads.value =
+      response.data.totalUnAssignedRevivalLeads;
+    unAssignedLeadsByTier.value = [...response.data.unAssignedLeadsByTier];
+    teamWiseLeadsAssignedAverage.value = [
+      ...response.data.teamWiseLeadsAssignedAverage,
+    ];
+    revivalLeadsCount.value = [...response.data.revivalLeadsCount];
+    leadsCountByTier.value = [...response.data.leadsCountByTier];
+    advisorLeadsAssignedData.value = [
+      ...response.data.advisorLeadsAssignedData,
+    ];
+    setInitialState();
+  }
+}
 
 function prepareGraphData(source, xAxisName, yAxisName) {
   var graphData = [];
@@ -45,7 +91,7 @@ function prepareGraphData(source, xAxisName, yAxisName) {
 
 function createAssignedChartByTier() {
   LeadRcdSummary.value = prepareGraphData(
-    props.leadsCountByTier,
+    leadsCountByTier.value,
     'tierNames',
     'leadCount',
   );
@@ -53,7 +99,7 @@ function createAssignedChartByTier() {
 
 function createUnassignedChartByTier() {
   UnassignedLeadRcdSummary.value = prepareGraphData(
-    props.unAssignedLeadsByTier,
+    unAssignedLeadsByTier.value,
     'tierNames',
     'leadCount',
   );
@@ -63,18 +109,18 @@ function createUnassignedChartBySource() {
   revivalLeadsCountChart.value = [
     {
       name: 'Revival Leads',
-      y: parseInt(props.revivalLeadsCount[0]['revival_leads']),
+      y: parseInt(revivalLeadsCount.value[0]['revival_leads']),
     },
     {
       name: 'Non Revival Leads',
-      y: parseInt(props.revivalLeadsCount[0]['non_revival_leads']),
+      y: parseInt(revivalLeadsCount.value[0]['non_revival_leads']),
     },
   ];
 }
 
 function createLeadCountByAdvisor() {
   columnChartData.value = prepareGraphData(
-    props.advisorLeadsAssignedData,
+    advisorLeadsAssignedData.value,
     'name',
     'total_leads',
   );
@@ -102,27 +148,25 @@ function getDataForAdvisor() {
     });
 }
 
-watch(
-  () => filters.range,
-  () => {
-    createLeadCountByAdvisor();
-    createUnassignedChartByTier();
-    createAssignedChartByTier();
-    createUnassignedChartBySource();
-    // getDataForAdvisor();
-  },
-);
+watchEffect(() => {
+  setTimeout(() => {
+    resume();
+  }, 60000);
+});
 
-watch(
-  () => filters.teamFilter,
-  () => {
-    // getDataForAdvisor();
-  },
-);
+const setInitialState = () => {
+  createLeadCountByAdvisor();
+  createUnassignedChartByTier();
+  createAssignedChartByTier();
+  createUnassignedChartBySource();
+};
 
 onMounted(() => {
   filters.range = [new Date().toDateString(), new Date().toDateString()];
+  setInitialState();
 });
+
+onUnmounted(() => (isActive.value = false));
 </script>
 <template>
   <Head title="Accmulative Dashboard" />
@@ -182,6 +226,7 @@ onMounted(() => {
         size="sm"
         v-model="filters.range"
         model-type="yyyy-MM-dd"
+        @update:modelValue="fetchData()"
       />
     </div>
 
@@ -216,7 +261,7 @@ onMounted(() => {
       hide-rows-per-page
       hide-footer
       fixed-checkbox
-      :items="props.leadReceivedSummaryBySource || []"
+      :items="leadReceivedSummaryBySource || []"
     >
     </DataTable>
   </div>
