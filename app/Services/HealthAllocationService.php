@@ -28,7 +28,6 @@ class HealthAllocationService extends AllocationService
         $query = HealthQuote::where('uuid', $quoteId)
             ->where('quote_status_id', QuoteStatusEnum::Qualified)
             ->whereNotNull('health_quote_request.price_starting_from')
-            ->where('health_quote_request.is_error_email_sent', false)
             ->whereNull('health_quote_request.advisor_id');
         info('query for health lead : '.$quoteId.' is : '.$query->toSql().' and bindings are : '.json_encode($query->getBindings()));
 
