@@ -99,7 +99,7 @@ const onTogglePlans = () => {
 		.post('/quotes/car/manual-plan-toggle', {
 			modelType: 'Car',
 			planIds: [props.plan.id],
-			quote_uuid: usePage().props.record.uuid,
+			car_quote_uuid: usePage().props.record.uuid,
 			toggle: planForm.is_disabled,
 		})
 		.then(response => {
