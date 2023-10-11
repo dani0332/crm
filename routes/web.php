@@ -169,9 +169,10 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
-        Artisan::call('view:cache');
         Artisan::call('route:clear');
-        Artisan::call('config:cache');
+        Artisan::call('config:clear');
+        Artisan::call('view:clear');
+        Artisan::call('view:cache');
 
         return '<h1>All cache cleared and optimized. LARAVEL Version='.app()->version().'</h1>';
     });
