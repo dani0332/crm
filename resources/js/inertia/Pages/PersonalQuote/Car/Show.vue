@@ -1112,7 +1112,8 @@ onMounted(() => {
 
 //activities
 const emailEventsTable = [
-  { text: 'Event Type', value: 'type' },
+  { text: 'Type', value: 'type' },
+  { text: 'Sub Type', value: 'sub_type' },
   { text: 'DateTime', value: 'event_date' }
 ];
 
