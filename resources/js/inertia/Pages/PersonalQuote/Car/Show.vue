@@ -2637,7 +2637,7 @@ const loadEmailEvents = (email) => {
           :contacts="customerAdditionInfoList"
           :quoteEmail="record.email"
           :quoteMobile="record.mobile_no"
-
+			:canDelete="false"
       />
 		
 

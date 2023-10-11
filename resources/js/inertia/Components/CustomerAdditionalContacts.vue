@@ -19,6 +19,11 @@ const props = defineProps({
     },
     quoteMobile: {
         type: String
+    },
+    canDelete: {
+      type: Boolean,
+      required: false,
+      default: true
     }
 });
 
@@ -237,6 +242,7 @@ const additionalContactDeleteConfirmed = () => {
               Make Primary
             </x-button>
             <x-button
+              v-if="canDelete"
               size="xs"
               color="error"
               outlined
