@@ -14,9 +14,6 @@ ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/do
 # Install php extensions
 RUN chmod +x /usr/local/bin/install-php-extensions && sync
 RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
-#RUN apt-get install php8.1-mbstring php8.1-mysql php8.1-gd
-#RUN apt-get install zlib1g-dev libpng-dev -y
-#RUN docker-php-ext-install gd
 RUN pecl install redis \
     && docker-php-ext-enable redis
 
@@ -36,7 +33,8 @@ RUN apt-get update && apt-get install -y \
     libmemcached-dev \
     nginx \
     wget \
-    gnupg
+    gnupg \
+    supervisor
 RUN docker-php-ext-install gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
 # Install node 20
@@ -47,21 +45,20 @@ RUN bash /tmp/nodesource_setup.sh
 RUN apt update && apt install nodejs -y
 
 # Install yarn
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt update
-RUN apt install yarn -y
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
+apt update && \
+apt install yarn -y
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
 # Install papertrail
-RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz
-RUN tar xzf ./remote_syslog*.tar.gz
-RUN cp /var/www/remote_syslog/remote_syslog /usr/local/bin
-
+RUN wget https://github.com/papertrail/remote_syslog2/releases/download/v0.20/remote_syslog_linux_amd64.tar.gz && \
+tar xzf ./remote_syslog*.tar.gz && \
+cp /var/www/remote_syslog/remote_syslog /usr/local/bin
 
 # Install supervisor
-RUN apt-get install -y supervisor
+#RUN apt-get install -y supervisor
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
@@ -70,8 +67,9 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Add user for laravel application
-RUN groupadd -g 1000 www
-RUN useradd -u 1000 -ms /bin/bash -g www www
+RUN groupadd -g 1000 www && \
+useradd -u 1000 -ms /bin/bash -g www www
+
 RUN doppler configure set token ${IMCRM_TOKEN}
 
 RUN \
@@ -88,14 +86,11 @@ RUN \
       -e 's/;newrelic.daemon.start_timeout =.*/newrelic.daemon.start_timeout=5s/' \
       /usr/local/etc/php/conf.d/newrelic.ini
 # PHP Error Log Files
-RUN mkdir /var/log/php
-RUN touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
+RUN mkdir /var/log/php && \
+touch /var/log/php/errors.log && chmod 777 /var/log/php/errors.log
 
 EXPOSE 80
 EXPOSE 443
-
-# Copy code to /var/www
-#ARG CACHEBUST=1
 
 # Check yarn packages
 COPY --chown=www:www-data package*.json yarn.lock /var/www/
@@ -111,12 +106,12 @@ COPY --chown=www:www-data . /var/www
 RUN chmod -R ugo+w /var/www/storage
 
 # Copy nginx/php/supervisor configs
-RUN cp docker/supervisor.conf /etc/supervisord.conf
-RUN cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini
+RUN cp docker/supervisor.conf /etc/supervisord.conf && \
+cp docker/blanka.ini /usr/local/etc/php/conf.d/app.ini && \
 # RUN cp docker/info.php /var/www/public/
-RUN cp docker/nginx.conf /etc/nginx/sites-enabled/default
-RUN cp -r docker/*.pem /etc/nginx/conf.d/
-RUN cp docker/log_files.yml /etc/
+cp docker/nginx.conf /etc/nginx/sites-enabled/default && \
+cp -r docker/*.pem /etc/nginx/conf.d/ && \
+cp docker/log_files.yml /etc/
 
 # Deployment steps
 RUN composer install --optimize-autoloader --no-dev
