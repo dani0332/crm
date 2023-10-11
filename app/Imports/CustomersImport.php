@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
+use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\Log;
@@ -17,13 +18,20 @@ class CustomersImport implements OnEachRow
     public $CDBId;
     public $inviatationEmail;
     public $sendEmailCustomerService;
+    public $berlinService;
 
-    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail, SendEmailCustomerService $sendEmailCustomerService)
-    {
+    public function __construct(
+        $myalfredExpiryDate,
+        $cdbId,
+        $inviatationEmail,
+        SendEmailCustomerService $sendEmailCustomerService,
+        BerlinService $berlinService,
+    ) {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
         $this->CDBId = $cdbId;
         $this->inviatationEmail = $inviatationEmail;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->berlinService = $berlinService;
     }
 
     /**
@@ -84,7 +92,11 @@ class CustomersImport implements OnEachRow
                 }
             }
 
-            $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
+            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email);
+            info('CustomersImport responseExtend: '.$responseExtend);
+
+            $existingQuoteCustomer = QuoteCustomer::where(['customer_id' => $customerId, 'cdb_id' => $this->CDBId])->first();
+
             if (! $existingQuoteCustomer) {
                 $newQuoteCustomer = new QuoteCustomer();
                 $newQuoteCustomer->cdb_id = $this->CDBId;
