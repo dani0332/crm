@@ -55,7 +55,7 @@ const quoteForm = useForm({
 	nationality_id: props.quote?.nationality_id || null,
 	back_home_license_held_for_id: props.quote?.back_home_license_held_for_id || null,
 	gender: props.quote?.gender || null,
-	currently_insured_with_id: props.quote?.currently_insured_with || null,
+	currently_insured_with: props.quote?.currently_insured_with || null,
 	policy_start_date: props.quote?.policy_start_date || null,
 	is_ecommerce: props.quote?.is_ecommerce || null,
 	car_make_id: props.quote?.car_make_id || null,
@@ -134,7 +134,7 @@ const getModelDetails = (onchange) => {
 }
 
 function onSubmit(isValid) {
-	if (quoteForm.nationality_id == null || quoteForm.currently_insured_with_id == null) {
+	if (quoteForm.nationality_id == null || quoteForm.currently_insured_with == null) {
 		isEmptyField.value = true;
 	} else {
 		isEmptyField.value = false;
@@ -353,14 +353,14 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="CURRENTLY INSURED WITH" required>
-					<ComboBox v-model="quoteForm.currently_insured_with_id" :single="true" :options="dropdownSource.currently_insured_with.map(item => ({
+					<ComboBox v-model="quoteForm.currently_insured_with" :single="true" :options="dropdownSource.currently_insured_with.map(item => ({
 						value: item.text,
 						label: item.text,
 					}))
 						" class="w-full"
 						:rules="[isRequired]" 
-						:error="quoteForm.errors.currently_insured_with_id"
-						:hasError="quoteForm.errors.currently_insured_with_id" />
+						:error="quoteForm.errors.currently_insured_with"
+						:hasError="quoteForm.errors.currently_insured_with" />
 				</x-field>
 
 				<x-field label="CLAIM HISTORY" required>

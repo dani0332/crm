@@ -1597,7 +1597,7 @@ class CarQuoteService extends BaseService
             'vehicle_type_id' => 'required',
             'car_make_id' => 'required', // ID
             'car_model_id' => 'required', // ID
-            'currently_insured_with_id' => 'required|string',
+            'currently_insured_with' => 'required|string',
         ];
     }
 
