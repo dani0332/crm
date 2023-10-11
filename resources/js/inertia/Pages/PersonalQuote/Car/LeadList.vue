@@ -67,10 +67,17 @@ const ecommerceOptions = [
 ]
 
 const advisorOptions = computed(() => {
-    return page.props.advisors.map(advisor => ({
+    let options = page.props.advisors.map(advisor => ({
         value: advisor.id,
         label: advisor.name,
     }));
+
+    options.push({
+        value: 'null',
+        label: 'UnAssigned'
+    })
+
+    return options;
 });
 
 const leadStatuses = computed(() => {
@@ -459,7 +466,7 @@ onMounted(() => {
                     class="w-full"
                     placeholder="Search by Previous Policy Number"
                 />
-                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)"
+                <ComboBox v-if="true || !hasRole(rolesEnum.CarAdvisor)"
                     v-model="filters.advisor_id"
                     label="Advisor"
                     name="advisor_id"
