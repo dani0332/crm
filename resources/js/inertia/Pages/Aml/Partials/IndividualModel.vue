@@ -34,7 +34,7 @@ const customerType = computed({
     return cusType.value;
   },
   set(val) {
-    return cusType.value = val;
+    return (cusType.value = val);
   },
 });
 
@@ -103,6 +103,7 @@ const insuredDetailsSubmit = isValid => {
 };
 
 const entityDetailsFound = ref(false);
+const linkLoader = ref(false);
 const switchToEntityView = () => {
   customerType.value = props.customerTypeEnum.Entity;
   modals.insuredDetailConfirmation = false;
@@ -125,7 +126,6 @@ const searchByTradeLicense = () => {
     .then(res => {
       if (res.data.status) {
         let response = res.data.response;
-
         entityDetailsFound.value = true;
         tradeLicenseEntity.entity_id = response.id;
         tradeLicenseEntity.trade_license = response.trade_license_no;
@@ -150,6 +150,7 @@ const searchByTradeLicense = () => {
 };
 
 const linkEntity = () => {
+  linkLoader.value = true;
   let entityDetails = {
     quote_type_id: props.quoteType.id,
     quote_request_id: props.quoteDetails.id,
@@ -161,7 +162,6 @@ const linkEntity = () => {
       if (res.data.status) {
         let response = res.data.response;
 
-        // Append Entity data in fields
         insuredFormDetails.trade_license = response.trade_license_no;
         insuredFormDetails.company_name = response.company_name;
         insuredFormDetails.company_address = response.company_address;
@@ -169,17 +169,18 @@ const linkEntity = () => {
         insuredFormDetails.industry_type = response.industry_type_code;
         insuredFormDetails.emirate_of_registration =
           response.emirate_of_registration_id;
-
         notification.success({
           title: res.data.message,
           position: 'top',
         });
-        entityDetailsFound.value = false;
       }
+      linkLoader.value = false;
+      console.log(entityDetailsFound.value);
     })
     .catch(err => {
       console.log(err);
-    });
+    })
+    .finally(() => (entityDetailsFound.value = false));
 };
 </script>
 
@@ -387,7 +388,12 @@ const linkEntity = () => {
             >
               Hide
             </x-button>
-            <x-button size="sm" color="orange" @click.prevent="linkEntity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="linkEntity"
+              :loading="linkLoader"
+            >
               Link
             </x-button>
           </div>

@@ -1,6 +1,7 @@
 <script setup>
 import UBODetailsModels from './UBODetailsModels.vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
+import { onClickOutside } from '@vueuse/core';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -17,6 +18,7 @@ const props = defineProps({
 
 const loader = ref({
   search: false,
+  link: false,
 });
 const emit = defineEmits(['update:modelValue', 'loaded']);
 const notification = useToast();
@@ -30,9 +32,10 @@ const modals = reactive({
   individualView: false,
 });
 
+const cusType = ref(props.customerTypeEnum.Entity);
 const customerType = computed({
-  get: () => props.customerTypeEnum.Entity,
-  set: val => val,
+  get: () => cusType.value,
+  set: val => (cusType.value = val),
 });
 
 const entityFound = ref(false);
@@ -59,7 +62,8 @@ const insuredFormDetails = useForm({
   company_address: props.entityDetails?.entity?.company_address,
   entity_type_code: props.entityDetails?.entity?.entity_type_code,
   industry_type_code: props.entityDetails?.entity?.industry_type_code,
-  emirate_of_registration_id: props.entityDetails?.entity?.emirate_of_registration_id,
+  emirate_of_registration_id:
+    props.entityDetails?.entity?.emirate_of_registration_id,
 });
 
 const insuredDetailsSubmit = isValid => {
@@ -100,9 +104,14 @@ const tradeLicenseEntity = reactive({
   company_address: null,
 });
 
+const resetTradeEntity = () => {
+  tradeLicenseEntity.entity_id = null;
+  tradeLicenseEntity.trade_license = '';
+  tradeLicenseEntity.company_name = '';
+  tradeLicenseEntity.company_address = '';
+};
 const searchByTradeLicense = () => {
   loader.value.search = true;
-  console.log(loader.value.search);
   let url = `/kyc/aml-fetch-entity?trade_license=${insuredFormDetails.trade_license_no}`;
   axios
     .get(url)
@@ -125,6 +134,8 @@ const searchByTradeLicense = () => {
           title: res.data.message,
           position: 'top',
         });
+        resetTradeEntity();
+        entityFound.value = false;
       }
     })
     .catch(err => {
@@ -134,22 +145,141 @@ const searchByTradeLicense = () => {
 };
 
 const linkEntity = () => {
+  loader.value.link = true;
   let entityDetails = {
     quote_type_id: props.quoteType.id,
     quote_request_id: props.quoteDetails.id,
     entity_id: tradeLicenseEntity.entity_id,
   };
-  axios.post(route('link-entity-details'), entityDetails).then(res => {
-    notification.success({
-      title: res.data.message,
-      position: 'top',
-    });
-  });
+  axios
+    .post(route('link-entity-details'), entityDetails)
+    .then(res => {
+      entityFound.value = false;
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      notification.success({
+        title: res.data.message,
+        position: 'top',
+      });
+    })
+    .finally(() => (loader.value.link = false));
 };
+
+const show = ref(true);
 </script>
 
 <template>
-  <x-modal v-model="showModal" size="xl" show-close backdrop>
+  <AppModal :showClose="true" :showHeader="true" v-model:modelValue="showModal">
+    <template #header>Update and Verify</template>
+    <template #default>
+      <p class="text-center mb-10">
+        Please confirm the Company Name, and UBO details as per the Trade
+        License
+      </p>
+      <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
+        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 mb-5">
+          <x-field label="Trade License No">
+            <x-input
+              v-model="insuredFormDetails.trade_license_no"
+              placeholder="Trade License No"
+              type="text"
+              class="w-full"
+            />
+            <x-button
+              @click.prevent="searchByTradeLicense"
+              size="xs"
+              color="primary"
+              :loading="loader.search"
+            >
+              Search
+            </x-button>
+          </x-field>
+          <x-field label="Company Name">
+            <x-input
+              v-model="insuredFormDetails.company_name"
+              placeholder="Company Name"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Company Address">
+            <x-textarea
+              v-model="insuredFormDetails.company_address"
+              placeholder="Company Address"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
+        </dl>
+        <div v-if="entityFound" class="mb-5">
+          <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
+            <x-field label="Trade License No">
+              <x-input
+                v-model="tradeLicenseEntity.trade_license"
+                type="text"
+                class="w-full"
+                disabled
+              />
+            </x-field>
+            <x-field label="Company Name">
+              <x-input
+                v-model="tradeLicenseEntity.company_name"
+                type="text"
+                class="w-full"
+                disabled
+              />
+            </x-field>
+            <x-field label="Company Address">
+              <x-input
+                v-model="tradeLicenseEntity.company_address"
+                type="text"
+                class="w-full"
+                disabled
+              />
+            </x-field>
+            <div class="text-left space-x-4">
+              <x-button size="sm" color="info"> Hide </x-button>
+              <x-button
+                size="sm"
+                color="orange"
+                @click.prevent="linkEntity"
+                :loading="loader.link"
+              >
+                Link
+              </x-button>
+            </div>
+          </dl>
+        </div>
+        <x-divider class="mb-4 mt-1" />
+
+        <UBODetailsModels
+          :quoteDetails="quoteDetails"
+          :quoteType="quoteType"
+          :nationalities="nationalities"
+          :uboDetails="uboDetails"
+          :uboRelations="uboRelations"
+          :entity_id="insuredFormDetails.entity_id"
+          :customerType="props.customerTypeEnum.Entity"
+        />
+        <x-divider class="mb-4 mt-1" />
+
+        <div class="text-right space-x-4 mt-8">
+          <x-button
+            size="sm"
+            color="success"
+            @click.prevent="modals.insuredDetailConfirmation = true"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </x-form>
+    </template>
+  </AppModal>
+  <!-- <x-modal v-model="showModal" size="xl" show-close backdrop>
     <template #header>Update and Verify</template>
     <p class="text-center mb-10">
       Please confirm the Company Name, and UBO details as per the Trade License
@@ -218,7 +348,12 @@ const linkEntity = () => {
           </x-field>
           <div class="text-left space-x-4">
             <x-button size="sm" color="info"> Hide </x-button>
-            <x-button size="sm" color="orange" @click.prevent="linkEntity">
+            <x-button
+              size="sm"
+              color="orange"
+              @click.prevent="linkEntity"
+              :loading="loader.link"
+            >
               Link
             </x-button>
           </div>
@@ -247,9 +382,45 @@ const linkEntity = () => {
         </x-button>
       </div>
     </x-form>
-  </x-modal>
+  </x-modal> -->
 
-  <x-modal v-model="modals.insuredDetailConfirmation" show-close backdrop>
+  <AppModal
+    :actions="true"
+    v-model:modelValue="modals.insuredDetailConfirmation"
+    :backdrop-close="false"
+  >
+    <template #header>
+      <p>Confirmation</p>
+    </template>
+    <template #default>
+      <p>Are you sure you want to run AML screen for this lead as Entity?</p>
+    </template>
+    <template #actions>
+      <div class="text-center space-x-4">
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="switchToIndividualView"
+        >
+          No
+        </x-button>
+        <x-button
+          size="sm"
+          color="success"
+          @click.prevent="insuredDetailsSubmit"
+          :loading="insuredFormDetails.processing"
+        >
+          Yes
+        </x-button>
+      </div>
+    </template>
+  </AppModal>
+  <!-- <x-modal
+    v-model="modals.insuredDetailConfirmation"
+    show-close
+    :backdrop="true"
+    ref="target"
+  >
     <p>Are you sure you want to run AML screen for this lead as Entity?</p>
     <template #actions>
       <div class="text-center space-x-4">
@@ -270,7 +441,7 @@ const linkEntity = () => {
         </x-button>
       </div>
     </template>
-  </x-modal>
+  </x-modal> -->
 
   <!-- Individual Type Insured Form -->
   <x-modal v-model="modals.individualView" size="xl" show-close backdrop>
