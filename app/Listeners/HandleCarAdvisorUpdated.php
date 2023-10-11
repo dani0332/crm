@@ -72,7 +72,7 @@ class HandleCarAdvisorUpdated
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
         // Retrieve plans with available ratings for the given lead
-        $plans = $this->httpService->executeGetPlansApi($lead->uuid, true, false, false);
+        $plans = $this->httpService->getPlans($lead->uuid, true, false, false);
 
         // Determine the email template ID
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
@@ -82,6 +82,7 @@ class HandleCarAdvisorUpdated
 
         // Log email data and template ID
         info('Email data: '.json_encode($emailData));
+
         info('Email template ID: '.json_encode($emailTemplateId));
 
         // Dispatch an email job to send the email

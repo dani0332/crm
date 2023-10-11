@@ -235,23 +235,22 @@ class AllocationService
             ->first();
 
         return ['auto_assignment_count' => $allocationCount->auto_assignment_count,
-                'manual_assignment_count' => $allocationCount->manual_assignment_count,
-                'max_capacity' => $allocationCount->max_capacity];
+            'manual_assignment_count' => $allocationCount->manual_assignment_count,
+            'max_capacity' => $allocationCount->max_capacity];
     }
 
     public function getYesterdayCounts($userId)
     {
         $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
-        $leads = CarQuote::
-                    join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
-                    ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
-                    ->where('advisor_id', $userId)->get();
+        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+                        ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
+                        ->where('advisor_id', $userId)->get();
 
         $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
         $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
 
-        return ['auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0 , 'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0];
+        return ['auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0, 'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0];
     }
 
 }

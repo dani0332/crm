@@ -1514,11 +1514,6 @@ class HealthQuoteService extends BaseService
         return $response;
     }
 
-    /**
-     * @param int $userId
-     * @param $lead
-     * @return void
-     */
     public function assignLeadDirectlyForQA(int $userId, $lead): void
     {
         info('inside the check for manual assignment QA');
@@ -1532,18 +1527,10 @@ class HealthQuoteService extends BaseService
         }
     }
 
-    /**
-     * @param $lead
-     * @param mixed $leadId
-     * @param array $result
-     * @param bool $skipLead
-     * @param int $userId
-     * @return array
-     */
     public function validateLead($lead, mixed $leadId, array $result, bool $skipLead, int $userId): array
     {
         if ($lead->health_team_type == null || $lead->health_team_type == '') {
-            info('Lead with id: ' . $leadId . ' is not assigned to any health team');
+            info('Lead with id: '.$leadId.' is not assigned to any health team');
             $msg = 'Health team is missing please select health team first';
             array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
             $skipLead = true;
@@ -1552,11 +1539,12 @@ class HealthQuoteService extends BaseService
         $user = User::where('id', $userId)->first();
         $subTeam = Team::where('id', $user->sub_team_id)->first();
         if (strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
-            info('Advisor : ' . $userId . ' can take lead: ' . $leadId . ' but he is not assigned to the correct health team');
+            info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
             $msg = 'User sub team mismatch with lead health team';
             array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
             $skipLead = true;
         }
-        return array($result, $skipLead);
+
+        return [$result, $skipLead];
     }
 }
