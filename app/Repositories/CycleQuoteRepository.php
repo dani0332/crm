@@ -130,6 +130,9 @@ class CycleQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
+                'quoteRequestEntityMapping' => function($entityMapping) {
+                    $entityMapping->with('entity');
+                }
             ])
             ->select([
                 $this->getTable().'.*',

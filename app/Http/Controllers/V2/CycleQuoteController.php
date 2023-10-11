@@ -5,10 +5,12 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
+use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -122,8 +124,10 @@ class CycleQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
-
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CYCLE->id(), $quote->id);
+        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypeId::Cycle, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         return inertia('CycleQuote/Show', [
             'quoteType' => QuoteTypes::CYCLE,
@@ -145,6 +149,9 @@ class CycleQuoteController extends Controller
             'membersDetails' => $membersDetail,
             'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
         ]);
     }
 }

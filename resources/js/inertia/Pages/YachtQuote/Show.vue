@@ -28,7 +28,9 @@ defineProps({
   nationalities: Array,
   memberRelations: Array,
   membersDetails: Array,
-    industryType: Object
+    industryType: Object,
+    UBORelations: Array,
+    UBOsDetails: Array
 });
 
 const page = usePage();
@@ -44,9 +46,14 @@ const industryTypeOptions = computed(() => {
         label: indType.text,
     }));
 });
-
+const emiratesOptions = computed(() => {
+    return page.props.emirates.map(em => ({
+        value: em.id,
+        label: em.text,
+    }));
+});
 const isProfileUpdateAllow = computed(() => {
-    return hasAnyRole([
+    return !hasAnyRole([
         page.props.rolesEnum.PA,
         page.props.rolesEnum.OE,
         page.props.rolesEnum.NRA
@@ -55,10 +62,23 @@ const isProfileUpdateAllow = computed(() => {
 
 const customerProfileForm = useForm({
     customer_id: page.props.quote.customer_id,
+    customer_type: page.props.quote.customer_type,
+    quote_type: page.props.modelType,
+    quote_type_id: page.props.quoteTypeId,
+    quote_request_id: page.props.quote.id,
+
     insured_first_name: page.props.quote?.customer.insured_first_name || '',
     insured_last_name: page.props.quote?.customer.insured_last_name || '',
     emirates_id_number: page.props.quote?.customer.emirates_id_number || null,
     emirates_id_expiry_date: page.props.quote?.customer.emirates_id_expiry_date || null,
+
+    entity_id: page.props.quote?.quote_request_entity_mapping?.entity_id ?? null,
+    trade_license_no: page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ?? null,
+    company_name: page.props.quote?.quote_request_entity_mapping?.entity?.company_name ?? null,
+    company_address: page.props.quote?.quote_request_entity_mapping?.entity?.company_address ?? null,
+    entity_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.entity_type_code ?? null,
+    industry_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.industry_type_code ?? null,
+    emirate_of_registration_id: page.props.quote?.quote_request_entity_mapping?.entity?.emirate_of_registration_id ?? null,
 });
 
 const updateProfileDetails = isValid => {
@@ -83,15 +103,6 @@ const updateProfileDetails = isValid => {
     });
 }
 
-const entityForm = reactive({
-    entity_id: null,
-    trade_license:  null,
-    company_address: null,
-    entity_type: null,
-    industry_type: null,
-    emirate_of_registration: null,
-});
-
 const entityDetailsFound = ref(false);
 const tradeLicenseEntity = reactive({
     entity_id: null,
@@ -101,7 +112,7 @@ const tradeLicenseEntity = reactive({
 });
 
 const searchByTradeLicense = () => {
-    let url = `/kyc/aml-fetch-entity?trade_license=${entityForm.trade_license}`;
+    let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
     axios.get(url)
         .then(res => {
             if(res.data.status) {
@@ -141,12 +152,12 @@ const linkEntity = () => {
                 let response = res.data.response;
 
                 // Append Entity data in fields
-                entityForm.trade_license = response.trade_license_no;
-                entityForm.company_name = response.company_name;
-                entityForm.company_address = response.company_address;
-                entityForm.entity_type = response.entity_type_code;
-                entityForm.industry_type = response.industry_type_code;
-                entityForm.emirate_of_registration = response.emirate_of_registration_id;
+                customerProfileForm.trade_license_no = response.trade_license_no;
+                customerProfileForm.company_name = response.company_name;
+                customerProfileForm.company_address = response.company_address;
+                customerProfileForm.entity_type_code = response.entity_type_code;
+                customerProfileForm.industry_type_code = response.industry_type_code;
+                customerProfileForm.emirate_of_registration_id = response.emirate_of_registration_id;
 
                 notification.success({
                     title: res.data.message,
@@ -469,13 +480,13 @@ const linkEntity = () => {
                       </div>
                       <div class="grid sm:grid-cols-2">
                           <dt class="font-medium">COMPANY NAME</dt>
-                          <dd>{{ quote.email }}</dd>
+                          <dd>{{ customerProfileForm.company_name }}</dd>
                       </div>
                       <div class="grid sm:grid-cols-2">
                           <dt class="font-medium">TRADE LICENSE NO</dt>
                           <dd>
                               <x-input
-                                  v-model="entityForm.trade_license"
+                                  v-model="customerProfileForm.trade_license_no"
                                   placeholder="TRADE LICENSE NO"
                                   type="text"
                                   class="w-full"
@@ -493,7 +504,7 @@ const linkEntity = () => {
                           <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
                           <dd>
                               <ComboBox
-                                  v-model="entityForm.emirate_of_registration"
+                                  v-model="customerProfileForm.emirate_of_registration_id"
                                   :single="true"
                                   placeholder="SELECT EMIRATES OF REGISTRATION"
                                   :options="emiratesOptions"
@@ -505,7 +516,7 @@ const linkEntity = () => {
                           <dt class="font-medium">COMPANY ADDRESS</dt>
                           <dd>
                               <x-input
-                                  v-model="entityForm.company_address"
+                                  v-model="customerProfileForm.company_address"
                                   placeholder="COMPANY ADDRESS"
                                   type="text"
                                   class="w-full"
@@ -517,7 +528,7 @@ const linkEntity = () => {
                           <dd>
                               <ComboBox
                                   :single="true"
-                                  v-model="entityForm.industry_type"
+                                  v-model="customerProfileForm.industry_type_code"
                                   placeholder="SELECT INDUSTRY TYPE"
                                   :options="industryTypeOptions"
                                   class="w-full"
@@ -529,7 +540,7 @@ const linkEntity = () => {
                           <dd>
                               <ComboBox
                                   :single="true"
-                                  v-model="entityForm.entity_type"
+                                  v-model="customerProfileForm.entity_type_code"
                                   placeholder="SELECT ENTITY TYPE"
                                   :options="[
                                     {label: 'Parent', value: 'Parent'},
@@ -600,8 +611,6 @@ const linkEntity = () => {
           </dl>
       </x-modal>
 
-      <AdditionalContacts :quote="quote" :quote-type="quoteType" />
-
       <MemberDetails
           :quote="quote"
           :membersDetails="membersDetails"
@@ -609,6 +618,8 @@ const linkEntity = () => {
           :memberRelations="memberRelations"
           :quote_type=quoteType
       />
+
+      <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteActivities
       :can="can"

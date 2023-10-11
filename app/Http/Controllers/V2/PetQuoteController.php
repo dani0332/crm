@@ -10,6 +10,7 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
+use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -94,6 +95,9 @@ class PetQuoteController extends Controller
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::PET->value);
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypeId::Pet, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::PET->id(),
@@ -125,7 +129,10 @@ class PetQuoteController extends Controller
             'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
             'quoteTypeId' => QuoteTypeId::Pet,
-            'industryType' => $industryType
+            'industryType' => $industryType,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
         ]);
     }
 

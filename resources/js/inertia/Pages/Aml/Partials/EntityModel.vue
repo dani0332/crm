@@ -47,18 +47,19 @@ const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: customerType,
   quote_type: props.quoteType.code,
+
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
   insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
+
   entity_id: props.entityDetails?.entity?.id,
-  trade_license: props.entityDetails?.entity?.trade_license_no,
+  trade_license_no: props.entityDetails?.entity?.trade_license_no,
   company_name: props.entityDetails?.entity?.company_name,
   company_address: props.entityDetails?.entity?.company_address,
-  entity_type: props.entityDetails?.entity?.entity_type_code,
-  industry_type: props.entityDetails?.entity?.industry_type_code,
-  emirate_of_registration:
-    props.entityDetails?.entity?.emirate_of_registration_id,
+  entity_type_code: props.entityDetails?.entity?.entity_type_code,
+  industry_type_code: props.entityDetails?.entity?.industry_type_code,
+  emirate_of_registration_id: props.entityDetails?.entity?.emirate_of_registration_id,
 });
 
 const insuredDetailsSubmit = isValid => {
@@ -68,15 +69,13 @@ const insuredDetailsSubmit = isValid => {
     preserveScroll: true,
     onError: errors => {
       notification.error({
-        title: errors.error || 'Data not saved',
+        title: errors.error || 'Quote not updated',
         position: 'top',
       });
     },
     onSuccess: () => {
-      // const session = usePage().props.flash;
-      // notification.success(session.success);
       notification.success({
-        title: 'Additional Contact Added',
+        title: 'Quote is updated',
         position: 'top',
       });
     },
@@ -93,6 +92,7 @@ const switchToIndividualView = () => {
   customerType.value = props.customerTypeEnum.Individual;
 };
 
+const entityDetailsFound = ref(false);
 const tradeLicenseEntity = reactive({
   entity_id: null,
   trade_license: null,
@@ -103,7 +103,7 @@ const tradeLicenseEntity = reactive({
 const searchByTradeLicense = () => {
   loader.value.search = true;
   console.log(loader.value.search);
-  let url = `/kyc/aml-fetch-entity?trade_license=${insuredFormDetails.trade_license}`;
+  let url = `/kyc/aml-fetch-entity?trade_license=${insuredFormDetails.trade_license_no}`;
   axios
     .get(url)
     .then(res => {
@@ -159,7 +159,7 @@ const linkEntity = () => {
       <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 mb-5">
         <x-field label="Trade License No">
           <x-input
-            v-model="insuredFormDetails.trade_license"
+            v-model="insuredFormDetails.trade_license_no"
             placeholder="Trade License No"
             type="text"
             class="w-full"
@@ -227,7 +227,6 @@ const linkEntity = () => {
       <x-divider class="mb-4 mt-1" />
 
       <UBODetailsModels
-        v-if="insuredFormDetails.trade_license"
         :quoteDetails="quoteDetails"
         :quoteType="quoteType"
         :nationalities="nationalities"

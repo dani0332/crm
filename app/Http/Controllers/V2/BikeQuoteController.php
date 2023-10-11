@@ -5,10 +5,12 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
+use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
@@ -106,8 +108,10 @@ class BikeQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::BIKE->id(), $quote->id);
+        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypeId::Bike, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
@@ -128,6 +132,9 @@ class BikeQuoteController extends Controller
             'membersDetails' => $membersDetail,
             'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
         ]);
     }
 

@@ -88,7 +88,6 @@ class MembersDetailController extends Controller
                 $quoteMemberCount = QuoteMemberDetail::where([
                     'customer_type' => $request->customer_type,
                     'customer_entity_id' => $customerEntityId,
-                    'quote_type_id' => $quoteTypeId,
                 ])->count();
 
                 $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?

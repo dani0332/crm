@@ -83,6 +83,7 @@ class AMLController extends Controller
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
+                    QuoteTypes::CYCLE
                 ])) {
                     if (isset($request->amlCreatedStartDate) && !empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -285,7 +286,6 @@ class AMLController extends Controller
             }
 
             if($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
 
@@ -300,12 +300,12 @@ class AMLController extends Controller
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
 
-                $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license],[
+                $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license_no],[
                     'company_name' => $AMLCheckRequest->company_name,
                     'company_address' => $AMLCheckRequest->company_address,
-                    'entity_type_code' => $AMLCheckRequest->entity_type,
-                    'industry_type_code' => $AMLCheckRequest->industry_type,
-                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration
+                    'entity_type_code' => $AMLCheckRequest->entity_type_code,
+                    'industry_type_code' => $AMLCheckRequest->industry_type_code,
+                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id
                 ]);
                 $entityId = $entity->id;
                 $entity->update(['code' => CustomerTypeEnum::EntityShort . '-'. $entityId]);
@@ -320,6 +320,7 @@ class AMLController extends Controller
                     'code' => CustomerTypeEnum::EntityShort . '-'. $entityId,
                 ];
             }
+
             dd($getMemberOrUBODetails->toArray());
             $bridgerInsightService = new BridgerInsightService();
             foreach ($getMemberOrUBODetails as $value):

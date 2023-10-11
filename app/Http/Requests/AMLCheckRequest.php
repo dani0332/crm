@@ -34,12 +34,12 @@ class AMLCheckRequest extends FormRequest
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
             $rules = array_merge($rules, [
-                'trade_license' => 'required|max:200',
+                'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
                 'company_address' => 'required',
-                'entity_type' => 'nullable',
-                'industry_type' => 'nullable',
-                'emirate_of_registration' => 'nullable',
+                'entity_type_code' => 'nullable',
+                'industry_type_code' => 'nullable',
+                'emirate_of_registration_id' => 'nullable',
             ]);
         }
 

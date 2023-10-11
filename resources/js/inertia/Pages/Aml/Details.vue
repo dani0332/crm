@@ -407,11 +407,11 @@ const dateToYear = date => {
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Pet">
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">CREATED AT</dt>
-                            <dd>{{ dateAndTimeFormat(quoteRequest.created_at) }}</dd>
+                            <dd>{{ quoteRequest.created_at }}</dd>
                         </div>
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">UPDATED AT</dt>
-                            <dd>{{ dateAndTimeFormat(quoteRequest.updated_at) }}</dd>
+                            <dd>{{ quoteRequest.updated_at }}</dd>
                         </div>
                     </template>
                     <template v-if="quoteType.code == quoteTypeCodeEnum.Yacht">

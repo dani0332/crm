@@ -144,7 +144,7 @@ class AMLService
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            if(!$isDataMigrated) {
+            if($isDataMigrated) {
                 $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
                     'petQuote',
                     'customer',

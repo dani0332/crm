@@ -65,7 +65,10 @@ class BusinessQuoteRepository extends BaseRepository
             ->with([
                 'advisor',
                 'businessQuoteRequestDetail.lostReason',
-                'customer'
+                'customer',
+                'quoteRequestEntityMapping' => function($entityMapping) {
+                    $entityMapping->with('entity');
+                }
             ])
             ->select([
                 $this->getTable().'.*',

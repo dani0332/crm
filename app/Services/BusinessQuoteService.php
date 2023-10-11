@@ -7,6 +7,7 @@ use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\BusinessQuote;
 use App\Models\BusinessQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -72,14 +73,27 @@ class BusinessQuoteService extends BaseService
                 'c.insured_first_name',
                 'c.insured_last_name',
                 'c.emirates_id_number',
-                'c.emirates_id_expiry_date'
+                'c.emirates_id_expiry_date',
+                'qrem.entity_id',
+                'ent.code as entity_code',
+                'ent.trade_license_no',
+                'ent.company_name',
+                'ent.company_address',
+                'ent.entity_type_code',
+                'ent.industry_type_code',
+                'ent.emirate_of_registration_id'
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->leftJoin('customer as c','bqr.customer_id', 'c.id');
+            ->leftJoin('customer as c','bqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function getEntity($id)

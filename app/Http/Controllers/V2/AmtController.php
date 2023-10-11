@@ -13,6 +13,7 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\Emirate;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
@@ -248,13 +249,16 @@ class AmtController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
-        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id());
+        $UBODetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id(), CustomerTypeEnum::Entity);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        $memberRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         return inertia('GroupMedicalQuote/Show', [
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
+            'modelType' => QuoteTypes::BUSINESS,
+            'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'typeCode' => quoteTypeCode::GroupMedical,
@@ -264,9 +268,10 @@ class AmtController extends Controller
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
-            'UBOsDetails' => $membersDetail,
-            'UBORelations' => $memberRelations,
+            'UBOsDetails' => $UBODetails,
+            'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
+            'emirates' => $emirates,
         ]);
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use OwenIt\Auditing\Auditable;
@@ -78,5 +79,11 @@ class PetQuote extends Model implements AuditableContract
                 ['auditable_type' => PetQuote::class, 'key' => 'personal_quote_id'],
             ],
         ];
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Pet);
     }
 }

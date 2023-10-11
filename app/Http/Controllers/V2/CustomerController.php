@@ -18,9 +18,4 @@ class CustomerController extends Controller
 
         return back();
     }
-
-    public function getCustomerEntity(Request $request)
-    {
-        return response()->json(['customer_entity' => []]);
-    }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -232,5 +233,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function leadHistory()
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Pet);
     }
 }

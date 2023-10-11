@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Config;
@@ -76,5 +77,11 @@ class BusinessQuote extends Model implements AuditableContract
     public function payments()
     {
         return $this->morphMany(Payment::class, 'paymentable');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Business);
     }
 }

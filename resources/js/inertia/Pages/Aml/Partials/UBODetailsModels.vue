@@ -145,7 +145,6 @@ const onUBOSubmit = isValid => {
           Add UBO Details
         </h3>
         <x-button
-          v-if="addUBODetails"
           @click.prevent="addUBOToggle"
           size="sm"
           color="red"

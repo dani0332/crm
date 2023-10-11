@@ -17,6 +17,7 @@ use App\Enums\RolesEnum;
 use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
+use App\Models\Emirate;
 use App\Models\Nationality;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -166,9 +167,10 @@ class BusinessQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id());
+        $UBODetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id(), CustomerTypeEnum::Entity);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
-        $memberRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -198,6 +200,7 @@ class BusinessQuoteController extends Controller
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,
+            'quoteTypeId' => QuoteTypeId::Business,
             'dropdownSource' => $dropdownSource,
             'leadStatuses' => $dropdownSource['quote_status_id'],
             'advisors' => $advisors,
@@ -242,9 +245,10 @@ class BusinessQuoteController extends Controller
             'typeCode' => quoteTypeCode::CORPLINE,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'companyTypes' => $companyType,
-            'UBOsDetails' => $membersDetail,
-            'UBORelations' => $memberRelations,
+            'UBOsDetails' => $UBODetails,
+            'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
+            'emirates' => $emirates,
         ]);
     }
 

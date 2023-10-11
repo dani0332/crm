@@ -46,7 +46,6 @@ class TravelMembersDetailController extends Controller
             $quoteMemberCount = QuoteMemberDetail::where([
                 'customer_type' => $request->customer_type,
                 'customer_entity_id' => $customerEntityId,
-                'quote_type_id' => QuoteTypeId::Travel,
             ])->count();
 
             QuoteMemberDetail::updateOrCreate(array_merge($travelMemberDetails), [
