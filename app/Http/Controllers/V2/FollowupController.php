@@ -27,7 +27,10 @@ class FollowupController extends Controller
         {
             foreach ($response->get('Items') as $item)
             {
-                $events[] = ['type' => $item['messageSubType']['S'], 'event_date' => Carbon::createFromTimestamp(substr($item['eventOccurredAt']['N'], 0, 10))->format('d-M-Y H:i:s')];
+                $events[] = [
+                    'type' => $item['messageType']['S'],
+                    'sub_type' => $item['messageSubType']['S'],
+                    'event_date' => Carbon::createFromTimestamp(substr($item['eventOccurredAt']['N'], 0, 10))->format('d-M-Y H:i:s')];
             }
         }
 
