@@ -16,6 +16,7 @@ class BridgerInsightService
     private $bridgerClientID;
     private $bridgerUserName;
     private $bridgerPassword;
+    private $bridgerAPIKey;
 
     public function __construct()
     {
@@ -23,18 +24,19 @@ class BridgerInsightService
         $this->bridgerClientID = 'AFIALLCAETEST';
         $this->bridgerUserName = 'DaniyalS01';
         $this->bridgerPassword = 'user@1234@';
+        $this->bridgerAPIKey = '043b2bb1-2af9-46fe-add5-e6cee1e39259';
     }
 
     public function getJWTToken()
     {
-        $this->bridgerEndPoint .= '/api/Token/Issue';
+        $tokenEndPoint = $this->bridgerEndPoint . '/api/Token/Issue';
         $bridgerAuthBasic = base64_encode($this->bridgerClientID . '/' . $this->bridgerUserName . ':' . $this->bridgerPassword);
         $bridgerClient = new \GuzzleHttp\Client();
         $_return = ['status' => true];
 
         try {
             $tokenRequest = $bridgerClient->post(
-                $this->bridgerEndPoint,
+                $tokenEndPoint,
                 [
                     'headers' => [
                         'Content-Type' => 'application/json',
@@ -46,6 +48,7 @@ class BridgerInsightService
             if ($tokenRequest->getStatusCode() == 200) {
                 $getDecodeContents = json_decode($tokenRequest->getBody());
                 $_return['response'] = $getDecodeContents->access_token;
+                Log::info('Bridger Insight Service - New Token Generated');
 
                 return $_return;
             }
@@ -59,81 +62,41 @@ class BridgerInsightService
         return $_return;
     }
 
-    public function searchAMLResult($memberUboDetails, $quoteRequestId, $quoteTypeId, $customerType)
+    public function searchAMLResult($bridgerAPIToken, $memberUboDetails, $quoteRequestId, $quoteTypeId, $customerType)
     {
-//        $getAMLToken = $this->getJWTToken();
-//        if ($getAMLToken['status']) {
-        if (true) {
+        if ($bridgerAPIToken['status']) {
             $quoteId = $quoteRequestId;
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = Config::get('constants.APP_URL') . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
-            $this->bridgerEndPoint .= '/api/Lists/Search';
+            $bridgerEndPoint = $this->bridgerEndPoint . '/api/Lists/Search';
             $bridgerClient = new \GuzzleHttp\Client();
+            $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
             switch ($customerType){
                 case CustomerTypeEnum::Individual:
                     $customerOrEntityName = $memberUboDetails['first_name']. ' ' . $memberUboDetails['last_name'];
-                    $dateOfBirth = explode('-', $memberUboDetails['dob']);
-                    $amlSearchData = [
-                        'SearchInput' => [
-                            'Records' => [
-                                'Entity' => [
-                                    'EntityType' => CustomerTypeEnum::Individual,
-                                    'Name' => [
-                                        'First' => $memberUboDetails['first_name'],
-                                        'Last' => $memberUboDetails['last_name']
-                                    ],
-                                    'AdditionalInfo' => [
-                                        [
-                                            'Type' => 'DOB',
-                                            'Date' => [ 'Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]
-                                        ],
-                                        [
-                                            'Type' => 'Citizenship',
-                                            'Value' => $memberUboDetails?->nationality?->text ?? ''
-                                        ]
-                                    ],
-                                    'IDs' => [[
-                                        'Type' => 'Account',
-                                        'Number' => $memberUboDetails->code,
-                                    ]]
-                                ]
-                            ]
-                        ]
-                    ];
+                    $amlSearchData = $this->getPayload(CustomerTypeEnum::Individual, $memberUboDetails, $getBasicConfiguration);
                     break;
 
                 case CustomerTypeEnum::Entity:
-                    $customerOrEntityName = 'Company Name';
-                    $amlSearchData = [
-                        'SearchInput' => [
-                            'Records' => [
-                                'Entity' => [
-                                    'EntityType' => CustomerTypeEnum::Business,
-                                    'Name' => 'Company Name',
-                                    "IDs" => [
-                                        'Number' => '345433',
-                                        'Type' => 'Account'
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ];
+                    $customerOrEntityName = $memberUboDetails['company_name'];
+                    $amlSearchData = $this->getPayload(CustomerTypeEnum::Entity, $memberUboDetails, $getBasicConfiguration);
                     break;
 
-                default: $amlSearchData = []; $customerOrEntityName = '';
+                default:
+                    $amlSearchData = [];
+                    $customerOrEntityName = '';
             }
-
-            dd($amlSearchData);
 
             try {
                 $bridgerRequest = $bridgerClient->post(
-                    $this->bridgerEndPoint,
+                    $bridgerEndPoint,
                     [
                         'headers' => [
                             'Content-Type' => 'application/json',
                             'Accept' => 'application/json',
-                            'X-API-Key' => $getAMLToken['response'],
+                            'Authorization' => 'Bearer '.$bridgerAPIToken['response'],
+                            'X-API-Key' => $this->bridgerAPIKey,
                         ],
                         'body' => json_encode($amlSearchData),
                         'timeout' => 10,
@@ -170,7 +133,8 @@ class BridgerInsightService
                         }
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
-                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType->text);
+                            Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
+                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents), $customerOrEntityName, $quoteType->text);
                         }
                     }
                 }
@@ -179,4 +143,75 @@ class BridgerInsightService
             }
         }
     }
+
+    private function getBridgerXGBasicConfig()
+    {
+        return [
+            'SearchConfiguration' => [
+                'AssignResultTo' => [
+                    'Division' => 'Default Division',
+                    'EmailNotification' => false,
+                    'Type' => 'Role',
+                    'RolesOrUsers' => ['Administrator']
+                ],
+                'WriteResultsToDatabase' => false,
+                'PredefinedSearchName' => 'List Screening'
+            ]
+        ];
+    }
+
+    private function getPayload($customerType, $details, $basicConfig)
+    {
+        $payLoad = [];
+        switch ($customerType){
+            case CustomerTypeEnum::Individual:
+                $dateOfBirth = explode('-', $details['dob']);
+                $payLoad = array_merge($basicConfig, [
+                    'SearchInput' => [
+                        'Records' => [
+                            [
+                                'Entity' => [
+                                    'EntityType' => CustomerTypeEnum::Individual,
+                                    'Name' => [ 'First' => $details['first_name'], 'Last' => $details['last_name']],
+                                    'AdditionalInfo' => [
+                                        ['Type' => 'DOB', 'Date' => [ 'Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]],
+                                        ['Type' => 'Citizenship', 'Value' => isset($details['nationality']) ? $details['nationality']['text'] : '' ]
+                                    ],
+                                    'IDs' => [
+                                        ['Type' => 'Account', 'Number' => $details['code']]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]);
+
+                break;
+            case CustomerTypeEnum::Entity:
+                $payLoad = array_merge($basicConfig, [
+                    'SearchInput' => [
+                        'Records' => [
+                            [
+                                'Entity' => [
+                                    'EntityType' => CustomerTypeEnum::Business,
+                                    'Name' => $details['company_name'],
+                                    "IDs" => [
+                                        'Number' => $details['code'],
+                                        'Type' => 'Account'
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]);
+
+                break;
+
+            default : return $payLoad;
+        }
+
+        return $payLoad;
+    }
+
+
 }
