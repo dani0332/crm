@@ -10,6 +10,7 @@ const can = permission => useCan(permission);
 
 const props = defineProps({
   payments: Array,
+  splitPayments: Array,
   can: Object,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
@@ -19,7 +20,7 @@ const props = defineProps({
   quoteType: String,
 });
 
-console.log('hafeez'+ JSON.stringify(props.quoteRequest));
+console.log('hafeez'+ JSON.stringify(props.payments));
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
@@ -27,6 +28,7 @@ const isCustomReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref(false);
+const isExpandedSplitPayments = ref(false);
 
 const discountValue = ref(0); // Initial discount value
 const totalPrice = ref(props.quoteRequest.premium); // Initial total price
@@ -36,8 +38,9 @@ const paymentMethodsModels = ref([]);
 const splitAmountModels = ref([]);
 const dueDateModels = ref([]);
 const fileUploadModels = ref([]);
+const checkDetailModels = ref([]);
 
-const totalAmount = computed(() => {
+const totalAmount = computed(() => { // Calculate total amount based on discount amount
   const discount = discountValue.value;
   if (discount > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
     return 0;
@@ -73,22 +76,6 @@ const rules = {
     return 'Amount must be a valid number';
   },
 };
-
-const paymentTableHeaders = [
-  { text: 'Payment ID', value: 'code', align: 'center' },
-  { text: 'Payment Status', value: 'payment_status.code' },
-  { text: 'Provider Name', value: 'insurance_provider.text' },
-  { text: 'Plan Name', value: 'plan_name' },
-  { text: 'Authorize Amount', value: 'captured_amount'},
-  { text: 'Status Change Date', value: 'status_changed_at' },
-  { text: 'Authorized At', value: 'authorized_at' },
-  { text: 'Captured At', value: 'captured_at' },
-  { text: 'Payment method', value: 'payment_method.name' },
-  { text: 'Captured Amount', value: 'premium_captured'},
-  { text: 'Reference', value: 'reference' },
-  { text: 'Status Details', value: 'payment_status_message' },
-  { text: 'Actions', value: 'actions', sortable: false },
-];
 
 const collectionTypes = [
   { value: '', label: 'Select Collection' },
@@ -333,7 +320,7 @@ const generateCCLink = async code => {
 
 const addPaymentModal = () => {
   paymentMethodsForm.reset();
-  paymentMethodsForm.payment_method = '';
+  paymentMethodsForm.payment_method = 'CHQ';
   paymentMethodsModels.value[1] = '';
 
   if( props.quoteType === 'Health' || props.quoteType === 'Group Medical' || 
@@ -390,7 +377,7 @@ const addPayment = isValid => {
     plan_id: props.quoteRequest.plan.id,
     insurance_provider_id: providerId.value,
     collection_type: paymentMethodsForm.collection_type,
-    payment_methods: paymentMethodsForm.payment_method,
+    payment_methods: 'CHQ',
     reference: paymentMethodsForm.payment_reference,
     payment_no: paymentMethodsForm.payment_no,
     frequency: paymentMethodsForm.frequency,
@@ -399,6 +386,11 @@ const addPayment = isValid => {
     discount_reason: paymentMethodsForm.discount_reason,
     custom_reason: paymentMethodsForm.custom_reason,
     collection_date: paymentMethodsForm.collectionDate,
+    notes: paymentMethodsForm.notes,
+    total_amount: totalAmount.value, // after discount calculation
+    total_price: totalPrice.value, 
+    collection_date: paymentMethodsForm.collectionDate,
+    discount_value: discountValue.value, // discount amount
     isInertia: true,
   };
 
@@ -407,6 +399,7 @@ const addPayment = isValid => {
     split_amount: splitAmountModels.value,
     payment_type: paymentMethodsModels.value,
     due_date: dueDateModels.value,
+    check_detail: checkDetailModels.value,
   };
 
   if (paymentMethodsForm.status === 'edit') {
@@ -527,26 +520,133 @@ const providerId = computed(() => {
         Add Payment
       </x-button> -->
     </div>
-    <DataTable
-      table-class-name="tablefixed compact"
-      :headers="paymentTableHeaders"
-      :items="payments || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-code="{ code }">
-        {{ code.toUpperCase() }}
-      </template>
-      <template #item-plan_name="item">
-        {{ quoteRequest.plan ? quoteRequest.plan.text : '' }}
-      </template>
-      <template #item-status_changed_at="item">
-        {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
-      </template>
-      
-      <template #item-actions="item">
-            <div class="flex gap-2">
+
+    
+    <div class="vue3-easy-data-table">
+      <div class="vue3-easy-data-table__main border-cell">
+        <table>
+          <thead class="vue3-easy-data-table__header">
+            <tr>
+              <th><x-tooltip>
+                  Payment ID
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Payment Ref ID
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_REF_ID }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Collection Date
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTION_DATE }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Due Date
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DUE_DATE }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Method
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Total Price
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_PRICE }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Discount
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DISCOUNT_VALUE }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Total Amount
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_AMOUNT }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Paid Amount
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTED_AMOUNT }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Payment Status
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_STATUS }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Payment Allocation Status
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+              <th>
+                <x-tooltip>
+                  Actions
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ACTION }}</span>
+                  </template>
+                </x-tooltip>
+              </th>
+            </tr>
+          </thead>         
+          
+          <tbody class="vue3-easy-data-table__body">
+            <tr v-for="item in payments" :key="item.code">
+              <td>
+                <span
+                  class="expand-pointer"
+                  @click="isExpandedSplitPayments=!isExpandedSplitPayments"
+                >
+                  {{ isExpandedSplitPayments ? '-' : '+' }}
+                </span>
+              </td>
+              <td>{{ item.code }}</td>             
+              <td>{{ item.collection_date }}</td>
+              <td>{{ item.collection_date }}</td>
+              <td>{{ item.payment_methods_code }}</td>
+              <td>{{ item.total_price }}</td>
+              <td>{{ item.discount_value }}</td>
+              <td>{{ item.total_amount }}</td>
+              <td>{{ item.captured_amount }}</td>
+              <td>{{ item.payment_status_id }}</td>
+              <td>{{ item.payment_status_id }}</td>             
+              <td>
+                <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments)">
                     <x-button v-if="item.payment_method_code == 'CC' && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
                         size="xs" 
@@ -556,7 +656,7 @@ const providerId = computed(() => {
                     >
                         Copy Link
                     </x-button>
-                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="error" @click="editPaymentModal(item)">
+                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="primary" outlined @click="editPaymentModal(item)">
                         Edit
                     </x-button>
                 </template>
@@ -576,8 +676,28 @@ const providerId = computed(() => {
                     </x-button>
                 </template>
             </div>
-        </template>
-    </DataTable>
+              </td>
+            </tr>
+            <template v-if="isExpandedSplitPayments">
+            <tr v-for="splitPayment in splitPayments" :key="splitPayment.id">
+              <td>{{ splitPayment.sr_no }}</td>
+              <td></td>
+              <td>{{ splitPayment.due_date }}</td>
+              <td>{{ splitPayment.due_date }}</td>
+              <td>{{ splitPayment.payment_method }}</td>
+              <td></td>
+              <td></td>
+              <td>{{ splitPayment.payment_amount }}</td>
+              <td></td>
+              <td>{{ splitPayment.payment_status_id }}</td>
+              <td></td>
+              <td><x-button size="xs" color="primary" outlined >View</x-button></td>
+            </tr>
+          </template>
+          </tbody>
+        </table>
+      </div>
+    </div>
     <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">
@@ -899,7 +1019,7 @@ const providerId = computed(() => {
                 <x-input
                   class="w-full mt-2"
                   v-if = "isCheckDetailsEnabled && count==1"
-                  :name="'cheque_details[' + count + ']'"
+                  v-model="checkDetailModels[count]"
                   placeholder="Cheque Details"         
                 />
               </div>
@@ -935,7 +1055,8 @@ const providerId = computed(() => {
       <div class="w-full grid">
         <x-field label="NOTES">
           <x-input
-            class="w-full"            
+            class="w-full"
+            v-model="paymentMethodsForm.notes"          
           />
         </x-field>
       </div>
@@ -982,5 +1103,13 @@ const providerId = computed(() => {
   cursor: pointer;
   color: #333; /* Customize the close icon color */
 }
+
+.expand-pointer {
+  cursor: pointer;
+  font-size: 35px;
+  padding-left: 35px;
+  font-weight: bold;
+}
+
 
 </style>

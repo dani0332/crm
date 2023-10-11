@@ -35,6 +35,7 @@ use App\Models\HealthPlanType;
 use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
@@ -447,6 +448,8 @@ class CRUDController extends Controller
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
+        $splitPayments = \App\Models\PaymentSplits::where('code',$paymentEntityModel->code)->get();
+      
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
 
@@ -619,7 +622,7 @@ class CRUDController extends Controller
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
-                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint'
+                'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint','paymentTooltipEnum','splitPayments',
             ]));
         }
 
@@ -723,8 +726,8 @@ class CRUDController extends Controller
                 'quoteRequest' => $paymentEntityModel,
                 'embeddedProducts' => $embeddedProducts,
                 'quoteType' => QuoteTypes::HOME,
-		'paymentTooltipEnum' => PaymentTooltip::asArray(),            
-]);
+                        'paymentTooltipEnum' => PaymentTooltip::asArray(),            
+                ]);
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Health && in_array($this->genericModel->modelType, newUi())) { // Health plans to display on detail view
@@ -1623,13 +1626,27 @@ class CRUDController extends Controller
 
     public function storePayment(Request $request)
     {
+
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
+
+       // dd($request->all());
         $paymentInformation = [
+            'total_price' => $request->total_price,
+            'notes' => !empty($request->notes) ? $request->notes : null,
+            'custom_reason' => !empty($request->custom_reason) ? $request->custom_reason : null,
+            'discount_reason' => $request->discount_reason,
+            'discount' => $request->discount,
+            'frequency' => $request->frequency,
+            'credit_approval' => $request->credit_approval,
+            'total_payments' => $request->payment_no,            
             'collection_type' => $request->collection_type,
-            'captured_amount' => $request->captured_amount,
+            'captured_amount' => 0, 
+            'total_amount' => $request->total_amount, //amount after discount
+            'collection_date' => $request->collection_date,
+            'discount_value' => $request->discount_value,
             'payment_methods_code' => $request->payment_methods,
             'payment_status_id' => PaymentStatusEnum::DRAFT,
             'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
@@ -1648,6 +1665,22 @@ class CRUDController extends Controller
             $paymentInformation['authorized_at'] = now();
         }
         $payment = Payment::create($paymentInformation);
+
+        //Add split payments start        
+        for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
+            $splitPaymentInformation = [
+                'code' => $paymentInformation['code'],
+                'sr_no' => $i,
+                'payment_method' => $request->split_payment_details['payment_type'][$i],
+                'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
+                'payment_amount' => $request->split_payment_details['split_amount'][$i],
+                'due_date' => $request->split_payment_details['due_date'][$i],   
+                'payment_status_id' => PaymentStatusEnum::DRAFT,             
+            ];
+            PaymentSplits::create($splitPaymentInformation);
+        }
+        //Add split payments ends
+
         $quoteModel->payments()->save($payment);
         $paymentLog = new PaymentStatusLog([
             'current_payment_status_id' => PaymentStatusEnum::DRAFT,

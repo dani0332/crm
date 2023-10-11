@@ -39,6 +39,26 @@ class AddNewFieldsInToPaymentsTable extends Migration
             if (! Schema::hasColumn('payments', 'custom_reason')) {
                 $table->text('custom_reason')->nullable();
             }
+
+            if (! Schema::hasColumn('payments', 'notes')) {
+                $table->text('notes')->nullable();
+            }
+
+            if (! Schema::hasColumn('payments', 'total_price')) {
+                $table->float('total_price', 16, 2)->nullable();
+            }
+
+            if (! Schema::hasColumn('payments', 'collection_date')) {
+                $table->dateTime('collection_date')->nullable();
+            }
+
+            if (! Schema::hasColumn('payments', 'discount_value')) {
+                $table->float('discount_value', 16, 2)->nullable();
+            }
+
+            if (! Schema::hasColumn('payments', 'total_amount')) {
+                $table->float('total_amount', 16, 2)->nullable();
+            }
             
         });
         

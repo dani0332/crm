@@ -16,8 +16,10 @@ return new class extends Migration
             $table->string('code', 15);
             $table->string('sr_no', 15);
             $table->string('payment_method', 50);
+            $table->string('check_detail', 500)->nullable();
             $table->float('payment_amount', 16, 2);
-            $table->dateTime('due_date')->nullable();
+            $table->dateTime('due_date');
+            $table->integer('payment_status_id');
             $table->timestamps();
             $table->foreign('code')->references('code')->on('payments')->onDelete('no action');
         });

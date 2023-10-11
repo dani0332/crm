@@ -6,6 +6,20 @@ use BenSampo\Enum\Enum;
 
 final class PaymentTooltip extends Enum
 {
+    //Managment section
+    const PAYMENT_MANAGEMENT_PAYMENT_NO = 'This refers to the sequence or installment number of the payment. It helps in tracking multiple payments for a lead.';
+    const PAYMENT_MANAGEMENT_PAYMENT_REF_ID = 'This is the unique identifier for the payment, directly tied to the lead in question. Use it for tracking or referencing a specific transaction.';
+    const PAYMENT_MANAGEMENT_COLLECTION_DATE = 'The date when the payment is due or when it was collected. Ensure to update this date accurately to maintain proper payment records.';
+    const PAYMENT_MANAGEMENT_DUE_DATE = 'The final date by which the payment should be received. It\'s essential for tracking overdue payments and managing collection efforts.';
+    const PAYMENT_MANAGEMENT_PAYMENT_METHOD = 'Indicates how the payment was made. This could be via bank transfer, cheque, credit card, etc. Update this based on the client\'s chosen payment mode.';
+    const PAYMENT_MANAGEMENT_TOTAL_PRICE = 'The entire amount due before any potential discounts. Remember, VAT is exempt for Life Insurance policies.';
+    const PAYMENT_MANAGEMENT_DISCOUNT_VALUE = 'Any reduction applied to the total price. Always ensure there\'s a valid reason for any discount given. It\'s the difference between the total price and the total amount that the client has to pay for.';
+    const PAYMENT_MANAGEMENT_TOTAL_AMOUNT = 'This is the final amount due from the client after subtracting discounts (if any) from the total price.';
+    const PAYMENT_MANAGEMENT_COLLECTED_AMOUNT = 'The actual amount we\'ve successfully collected from the client. This should match with the Total amount once full payment is received.';
+    const PAYMENT_MANAGEMENT_PAYMENT_STATUS = 'Tracks the progression of the payment. \'New\' indicates a fresh transaction, while \'Paid\' confirms the receipt of funds. Update this status as the payment process advances.';
+    const PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS = 'Indicates whether this payment is allocated to a specific invoice. This ensures that there\'s a clear record of invoicing for this payment.';
+    const PAYMENT_MANAGEMENT_ACTION = 'Here, you can manage the payment details.Use \'Edit\' to modify payment information, \'View\' to see the entire payment setup, and \'Copy Link\' to share a direct payment link for clients preferring card payments.';
+
     //Main section
     const COLLECTION_DATE = 'The date when the payment is due or when it was collected. Ensure to update this date accurately to maintain proper payment records.';
     const TOTAL_PRICE = 'The entire amount due before any potential discounts. Remember, VAT is exempt for Life Insurance policies.';
