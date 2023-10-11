@@ -10,6 +10,8 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Jobs\CammyJob;
+use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\HealthMemberDetail;
@@ -1080,7 +1082,13 @@ class HealthQuoteService extends BaseService
             if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
                 info('inside the check for manual assignment QA');
                 $lead->advisor_id = $userId;
+                $lead->quote_updated_at = now();
                 $lead->save();
+
+                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                    // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                }
 
                 continue;
             }
@@ -1115,7 +1123,13 @@ class HealthQuoteService extends BaseService
                 }
             } else {
                 $lead->advisor_id = $userId;
+                $lead->quote_updated_at = now();
                 $lead->save();
+
+                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                    // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                }
             }
         }
 

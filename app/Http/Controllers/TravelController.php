@@ -293,6 +293,10 @@ class TravelController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         }
+        if (isset($response->quoteUID)) {
+            return redirect('/quotes/travel/'.$response->quoteUID)->with('message', 'Quote created successfully.');
+
+        }
 
         return redirect('/quotes/travel')->with('message', 'Quote created successfully.');
     }

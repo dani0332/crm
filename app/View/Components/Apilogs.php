@@ -38,6 +38,7 @@ class Apilogs extends Component
                 ->where('insurer_request_response.quote_uuid', $uuid)
                 ->orderByDesc('insurer_request_response.created_at')
                 ->get();
+
             return view('components.apilogs', compact('apilogs'));
         }
     }
