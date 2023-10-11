@@ -11,6 +11,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Jobs\AMLEmailsJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessCoverType;
@@ -40,7 +41,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Bus;
 
 class AMLController extends Controller
 {
@@ -264,6 +265,7 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+        $amlJobs = [];
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
 
@@ -285,6 +287,9 @@ class AMLController extends Controller
                 }
             }
 
+            $bridgerInsightService = new BridgerInsightService();
+            $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+
             if($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
@@ -296,6 +301,11 @@ class AMLController extends Controller
                     'nationality' => $customer->nationality->toArray(),
                     'code' => CustomerTypeEnum::IndividualShort . '-'. $customer->id,
                 ];
+
+                foreach ($getMemberOrUBODetails as $memberDetail) {
+                    $amlJobs[] = new AMLEmailsJob($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                }
+                Bus::chain($amlJobs)->onQueue('aml')->dispatch();
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -315,23 +325,17 @@ class AMLController extends Controller
                     'quote_request_id' => $quoteRequestId
                 ],['entity_id' => $entityId]);
 
-                $getMemberOrUBODetails[] = [
-                    'company_name' => $entity->company_name,
-                    'code' => CustomerTypeEnum::EntityShort . '-'. $entityId,
-                ];
+                // Bridger Insight API Call for Entity
+                $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort . '-'. $entityId];
+                $amlJobs[] = new AMLEmailsJob($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity);
+
+                foreach ($getMemberOrUBODetails as $memberDetail) {
+                    $amlJobs[] = new AMLEmailsJob($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                }
+                Bus::chain($amlJobs)->onQueue('aml')->dispatch();
             }
 
-            dd($getMemberOrUBODetails->toArray());
-            $bridgerInsightService = new BridgerInsightService();
-            foreach ($getMemberOrUBODetails as $value):
-                Log::info('Bridger API call for AML Check with customer ID '.$value->code.' And data pass for Bridger API are : '.json_encode($value));
-                $bridgerInsightService->searchAMLResult($value, $quoteRequestId, $quoteTypeId, $AMLCheckRequest->customer_type);
-//                AMLService::amlCheck($value, $quoteRequestId, $quoteTypeId);
-                sleep(5);
-            endforeach;
-            dd("final");
-
-            return redirect()->back()->with('success', 'Quote is updated');
+            return redirect()->back();
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
