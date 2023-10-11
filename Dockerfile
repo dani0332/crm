@@ -1,9 +1,6 @@
 FROM php:8.1-fpm
 ARG IMCRM_TOKEN
 ARG NODE_MAJOR=20
-#ARG NGINX_FILE
-#ARG NEW_RELIC_LICENSE_KEY
-#ARG NEW_RELIC_APP_NAME
 
 # Set working directory
 WORKDIR /var/www
@@ -16,6 +13,15 @@ RUN chmod +x /usr/local/bin/install-php-extensions && sync
 RUN install-php-extensions mbstring pdo_mysql zip exif pcntl memcached
 RUN pecl install redis \
     && docker-php-ext-enable redis
+# Install node 20
+RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
+RUN bash /tmp/nodesource_setup.sh
+#RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+#    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+
+# Install yarn
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
+echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
@@ -34,21 +40,11 @@ RUN apt-get update && apt-get install -y \
     nginx \
     wget \
     gnupg \
-    supervisor
+    supervisor \
+    nodejs \
+    yarn
 RUN docker-php-ext-install gd
 RUN pecl install mongodb && docker-php-ext-enable mongodb
-# Install node 20
-RUN curl -sL https://deb.nodesource.com/setup_16.x -o /tmp/nodesource_setup.sh
-RUN bash /tmp/nodesource_setup.sh
-#RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-#    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
-RUN apt update && apt install nodejs -y
-
-# Install yarn
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
-echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
-apt update && \
-apt install yarn -y
 
 RUN (curl -Ls --tlsv1.2 --proto "=https" --retry 3 https://cli.doppler.com/install.sh || wget -t 3 -qO- https://cli.doppler.com/install.sh) | sh
 
