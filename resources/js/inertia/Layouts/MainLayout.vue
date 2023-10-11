@@ -225,7 +225,10 @@ const onLogout = () => {
                   ></path>
                 </svg>
               </button>
+
+              <div id="headerportal"></div>
             </div>
+
             <div class="flex gap-3 items-center">
               <UserStatus />
               <x-popover align="right" block>
