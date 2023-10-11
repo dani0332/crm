@@ -75,6 +75,16 @@ const assignmentTypeOptions = [
     { value: 4, label: 'Manual ReAssigned' },
 ]
 
+const filteredTableHeader = computed(() => {
+  if (!hasRole(rolesEnum.CarAdvisor)) {
+    // If the user does not have the "CarAdvisor" role, include all columns
+    return tableHeader;
+  } else {
+    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
+    return tableHeader.filter(column => column.value !== 'source' && column.value !== 'assignment_type');
+  }
+});
+
 const advisorOptions = computed(() => {
     return page.props.advisors.map(advisor => ({
         value: advisor.id,
@@ -476,7 +486,7 @@ onMounted(() => {
                     :options="advisorOptions"
                 />
 
-                <x-select
+                <x-select v-if="!hasRole(rolesEnum.CarAdvisor)"
                     v-model="filters.assignment_type"
                     label="Assignment Type"
                     name="assignment_type"
@@ -563,7 +573,7 @@ onMounted(() => {
             v-model:items-selected="quotesSelected"
             table-class-name="tablefixed"
             :loading="loader.table"
-            :headers="tableHeader"
+            :headers="filteredTableHeader"
             :items="quotes.data || []"
             border-cell
             hide-rows-per-page

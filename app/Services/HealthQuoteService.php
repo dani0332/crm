@@ -114,6 +114,11 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
+            DB::raw('(CASE
+            WHEN hqr.assignment_type = 1 THEN "System Assigned"
+            WHEN hqr.assignment_type = 2 THEN "System ReAssigned"
+            WHEN hqr.assignment_type = 3 THEN "Manual Assigned"
+            WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -341,8 +346,8 @@ class HealthQuoteService extends BaseService
             // if user has advisor Role then fetch leads assigned to the user only
             $this->query->where('hqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
-        if (isset($request->code) && $request->code != '') {
-            $this->query->where('hqr.code', $request->code);
+        if (isset($request->assignment_type) && ! empty($request->assignment_type)) {
+            $this->query->where('hqr.assignment_type', $request->assignment_type);
         }
         if (isset($request->first_name) && $request->first_name != '') {
             $this->query->where('hqr.first_name', $request->first_name);
@@ -607,6 +612,7 @@ class HealthQuoteService extends BaseService
             'is_ebp_renewal' => 'input|checkbox|title',
             'source' => 'input|text|title',
             'marital_status_id' => 'select|title',
+            'assignment_type' => 'input|title|none',
             'cover_for_id' => 'select|title|required',
             'nationality_id' => 'select|title|required',
             'lead_type_id' => 'select|title',
@@ -763,6 +769,9 @@ class HealthQuoteService extends BaseService
                 break;
             case 'device':
                 $title = 'Device';
+                break;
+            case 'assignment_type':
+                $title = 'Assignment Type';
                 break;
             default:
                 break;
@@ -1047,11 +1056,9 @@ class HealthQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
-        if ($request->selectTmLeadId == '' || $request->selectTmLeadId == null) {
-            $leadsIds = array_map('intval', explode(',', trim($request->entityId, ',')));
-        } else {
-            $leadsIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
-        }
+        $sourceData = ($request->selectTmLeadId == '' || $request->selectTmLeadId === null) ? $request->entityId : $request->selectTmLeadId;
+        $leadsIds = array_map('intval', explode(',', trim($sourceData, ',')));
+
         $userId = (int) $request->assigned_to_id_new;
         info('Leads ids to assign: '.json_encode($leadsIds));
         $result = [];
