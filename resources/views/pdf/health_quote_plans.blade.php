@@ -286,7 +286,7 @@
                     if( $coPayVal->healthPlanCoPaymentId == $coPayId) {
                         $quotePlan->discountPremium = $coPayVal->discountPremium;
                         $quotePlan->vat = $coPayVal->vat;
-                        $quotePlan->total = $quotePlan->discountPremium;
+                        $quotePlan->total = ($quotePlan->discountPremium + $coPayVal->vat);
                     }
                 }
             } else {
@@ -295,9 +295,10 @@
                     $discountPremium[] =  $coPayVal->discountPremium;
                     $vat[] = $coPayVal->vat;
                 }
+                $minVat = collect($vat)->min();
                 $quotePlan->discountPremium = collect($discountPremium)->min();
-                $quotePlan->vat = collect($vat)->min();
-                $quotePlan->total = $quotePlan->discountPremium;
+                $quotePlan->vat = $minVat;
+                $quotePlan->total = ($quotePlan->discountPremium + $minVat);
             }
 
             foreach ($quotePlan->benefits as &$benefit) {
@@ -464,7 +465,7 @@
                         <th>
                             <p class="text-center">
                                 @if($plans[$planId]->discountPremium)
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
+                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/health-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
                                 @else
                                     N/A
                                 @endif
