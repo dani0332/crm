@@ -13,19 +13,8 @@ const props = defineProps({
 });
 
 const notification = useToast();
-
-const genderText = v => {
-	return props.genders[v];
-};
-
-const ipmiBenefits = reactive({
-	region: '',
-	insurance: '',
-	payment: '',
-	network: '',
-	healthCare: false,
-	motherBaby: false,
-});
+const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+const halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 
 const ancillaryExcessOptions = computed(() => {
 	let arr = [];
@@ -232,7 +221,7 @@ const onToggleManual = () => {
 							<dd>
 								{{
 									props.plan.repairType && props.plan.repairType == 'COMP'
-									? 'NON-AGENCY'
+									? (coreInsurer.includes(props.plan.providerCode) ? 'Premium workshop' : (halfLiveInsurer.includes(props.plan.providerCode) ? 'Non-Agency workshop' : 'NON-AGENCY'))
 									: props.plan.repairType
 								}}
 							</dd>
