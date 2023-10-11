@@ -150,6 +150,10 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->pdfAttachment->name,
                 ];
             }
+            if($emailData->advisorEmailAddress == null || $emailData->advisorName == null) {
+                $emailData->advisorEmailAddress = "askalfred@insurancemarket.ae";
+                $emailData->advisorName = "Alfred";
+            }
 
             $body = [
                 'sender' => [
