@@ -8,12 +8,10 @@ use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
-use App\Models\CarQuote;
 use App\Models\User;
 
 class CarEmailService extends BaseService
 {
-
     private $httpService;
     public function __construct(HttpRequestService $httpService)
     {
@@ -62,7 +60,7 @@ class CarEmailService extends BaseService
 
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
-            $emailData->policyNumber =  $carQuote->previous_quote_policy_number;
+            $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
 
         }

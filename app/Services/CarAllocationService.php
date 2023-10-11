@@ -14,7 +14,6 @@ use App\Enums\TiersEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
-use App\Models\CarModelDetail;
 use App\Models\CarQuote;
 use App\Models\CarQuotePlanDetail;
 use App\Models\CarQuoteRequestDetail;

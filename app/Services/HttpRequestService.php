@@ -47,12 +47,12 @@ class HttpRequestService extends BaseService
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
 
         // Configuration values
-        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT') . '/get-car-quote-plans';
+        $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-car-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
         $plansApiTimeout = config('constants.KEN_API_TIMEOUT');
         $plansApiUserName = config('constants.KEN_API_USER');
         $plansApiPassword = config('constants.KEN_API_PWD');
-        $authBasic = base64_encode($plansApiUserName . ':' . $plansApiPassword);
+        $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
         // Prepare the request data
         $plansDataArr = [
@@ -89,7 +89,7 @@ class HttpRequestService extends BaseService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                         'x-api-token' => $plansApiToken,
-                        'Authorization' => 'Basic ' . $authBasic,
+                        'Authorization' => 'Basic '.$authBasic,
                     ],
                     'body' => json_encode($plansDataArr),
                     'timeout' => $plansApiTimeout,
@@ -103,12 +103,13 @@ class HttpRequestService extends BaseService
                 // Parse and return the response
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
+
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             // Handle exceptions and errors
             $response = $e->getResponse();
-            $contents = (string)$response->getBody();
+            $contents = (string) $response->getBody();
             $response = json_decode($contents);
 
             if (isset($response->message)) {
@@ -124,7 +125,6 @@ class HttpRequestService extends BaseService
             return $responseBodyAsString;
         }
     }
-
 
     public function getPlans($id, $getLatestRating, $isRenewalSort = false, $isDisabledEnabled = false)
     {

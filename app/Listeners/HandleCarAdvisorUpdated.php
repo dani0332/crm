@@ -81,8 +81,8 @@ class HandleCarAdvisorUpdated
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisor, $tierR->id);
 
         // Log email data and template ID
-        info('Email data: ' . json_encode($emailData));
-        info('Email template ID: ' . json_encode($emailTemplateId));
+        info('Email data: '.json_encode($emailData));
+        info('Email template ID: '.json_encode($emailTemplateId));
 
         // Dispatch an email job to send the email
         IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'lms-intro-email');
