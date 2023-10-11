@@ -3,6 +3,11 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  userMaxCap: Number,
+  todayAutoCount: Number,
+  todayManualCount: Number,
+  yesterdayAutoCount: Number,
+  yesterdayManualCount: Number,
 });
 
 const page = usePage();
@@ -38,7 +43,6 @@ const tableHeader = [
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
-  { text: 'WC ADVISOR', value: 'wcu_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
@@ -56,7 +60,7 @@ const tableHeader = [
 ];
 
 const filteredTableHeader = computed(() => {
-  if (!hasRole(rolesEnum.HealthAdvisor)) {
+  if (!hasRole(rolesEnum.EBPAdvisor) && !hasRole(rolesEnum.RMNB) && !hasRole(rolesEnum.RMSpeed)) {
     // If the user does not have the "CarAdvisor" role, include all columns
     return tableHeader;
   } else {
@@ -221,6 +225,13 @@ onMounted(() => {
     <Head title="Health List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
+      <LeadAssignedWidget v-if="hasRole(rolesEnum.CarAdvisor)"
+            :todayAutoCount="todayAutoCount"
+            :todayManualCount="todayManualCount"
+            :yesterdayAutoCount="yesterdayAutoCount"
+            :yesterdayManualCount="yesterdayManualCount"
+            :userMaxCap="userMaxCap"
+            />
       <div class="space-x-3">
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>

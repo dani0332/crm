@@ -1,9 +1,25 @@
 <script setup>
 const props = defineProps({
-  leads: {
-    type: Object,
-    default: () => ({}),
-  },
+    todayAutoCount: {
+        required: true,
+        type: Number,
+    },
+    todayManualCount: {
+        required: true,
+        type: Number,
+    },
+    yesterdayAutoCount: {
+        required: true,
+        type: Number,
+    },
+    yesterdayManualCount: {
+        required: true,
+        type: Number,
+    },
+    userMaxCap:{
+        required: true,
+        type: Number,
+    },
 });
 const mounted = ref(false);
 
@@ -17,27 +33,36 @@ onMounted(() => {
       <div class="flex justify-between text-sm w-full gap-3">
         <x-tooltip position="bottom" align="top" class="arrow-t">
           <x-tag
-            color="gray"
+            color="blue"
             class="underline decoration-dotted decoration-primary-700"
             outlined
           >
-            <span>Assigned Yesterday: </span>
-            <strong>38</strong>
+            <span>Assigned Yesterday : &nbsp;</span>
+            <strong> {{ yesterdayAutoCount + yesterdayManualCount }}</strong>
           </x-tag>
-          <template #tooltip> Auto 30 | Manual 8 </template>
+          <template #tooltip> Auto : {{ yesterdayAutoCount }} | Manual : {{ yesterdayManualCount }} </template>
         </x-tooltip>
 
         <x-tooltip position="bottom" align="top" class="arrow-t">
           <x-tag
-            color="gray"
+            color="blue"
             class="underline decoration-dotted decoration-primary-700"
             outlined
           >
-            <span>Assigned Today: </span>
-            <strong>38</strong>
+            <span>Assigned Today : &nbsp;</span>
+            <strong>{{ todayAutoCount + todayManualCount }}</strong>
           </x-tag>
-          <template #tooltip> Auto 30 | Manual 8 </template>
+          <template #tooltip> Auto : {{ todayAutoCount }} | Manual : {{ todayManualCount }} </template>
         </x-tooltip>
+
+        <x-tag
+            color="gray"
+            class="decoration-primary-700"
+            outlined
+          >
+            <span>Max Capacity : &nbsp;</span>
+            <strong>{{ userMaxCap }}</strong>
+          </x-tag>
       </div>
     </teleport>
   </template>

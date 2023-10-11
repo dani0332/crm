@@ -5,6 +5,10 @@ defineProps({
   dropdownSource: Object,
   todayAssignmentCount: String,
   userMaxCap: Number,
+  todayAutoCount: Number,
+  todayManualCount: Number,
+  yesterdayAutoCount: Number,
+  yesterdayManualCount: Number,
 });
 
 const page = usePage();
@@ -317,7 +321,13 @@ onMounted(() => {
     <div class="flex justify-between items-center flex-wrap gap-4">
       <h2 class="text-xl font-semibold">Lead List</h2>
 
-      <LeadAssignedWidget v-if="hasRole(rolesEnum.CarAdvisor)" />
+      <LeadAssignedWidget v-if="hasRole(rolesEnum.CarAdvisor)"
+            :todayAutoCount="todayAutoCount"
+            :todayManualCount="todayManualCount"
+            :yesterdayAutoCount="yesterdayAutoCount"
+            :yesterdayManualCount="yesterdayManualCount"
+            :userMaxCap="userMaxCap"
+            />
 
       <div class="space-x-3">
         <x-button

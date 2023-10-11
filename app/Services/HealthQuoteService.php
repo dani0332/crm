@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceTypes;
@@ -22,6 +23,7 @@ use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\PaymentAction;
 use App\Models\QuoteType;
+use App\Models\QuoteViewCount;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -579,11 +581,14 @@ class HealthQuoteService extends BaseService
         if (empty($childRecord)) {
             $childRecord = $this->createDetailEntity($id);
         }
+        $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
         if ($childRecord->advisor_id != null) {
             $childRecord->advisor_assigned_by_id = Auth::user()->id;
             $childRecord->advisor_assigned_date = now();
             $childRecord->save();
         }
+
+        return $oldAdvisorAssignedDate;
     }
 
     public function fillModelProperties()
@@ -1056,69 +1061,153 @@ class HealthQuoteService extends BaseService
 
     public function processManualLeadAssignment($request): array
     {
+        // Extract lead IDs from the request
         $sourceData = ($request->selectTmLeadId == '' || $request->selectTmLeadId === null) ? $request->entityId : $request->selectTmLeadId;
         $leadsIds = array_map('intval', explode(',', trim($sourceData, ',')));
-
         $userId = (int) $request->assigned_to_id_new;
-        info('Leads ids to assign: '.json_encode($leadsIds));
-        $result = [];
+
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
-            if (Auth::user()->hasPermissionTo('manual-lead-assignment-QA')) {
-                info('inside the check for manual assignment QA');
-                $lead->advisor_id = $userId;
-                $lead->quote_updated_at = now();
-                $lead->save();
 
-                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
-                }
+            $lead->health_team_type = $request->assign_team;
 
-                continue;
-            }
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Health)) {
-                if ($lead->health_team_type == null || $lead->health_team_type == '') {
-                    info('Lead with id: '.$leadId.' is not assigned to any health team');
-                    $msg = 'Health team is missing please select health team first';
-                    array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+            $oldAssignmentType = $lead->assignment_type;
 
-                    continue;
-                }
-                if ($this->leadAllocationService->checkIfAdvisorCanTakeLead($userId)) {
-                    info('Advisor : '.$userId.' can take lead: '.$leadId);
-                    $user = User::where('id', $userId)->first();
-                    $subTeam = Team::where('id', $user->sub_team_id)->first();
-                    if (strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
-                        info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
-                        $msg = 'User sub team mismatch with lead health team';
-                        array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+            $isReassignment = $lead->advisor_id != null ? true : false; // checking if the advisor is already assigned or not for reassignment email template
 
-                        continue;
-                    }
-                    $this->leadAllocationService->assignLead($lead, $userId, true);
-                    $this->updateChildRecord($lead->id);
-                    info('Lead: '.$leadId.' assigned to advisor: '.$userId);
-                } else {
-                    info('Advisor : '.$userId.' cannot take lead: '.$leadId);
-                    $msg = 'Advisor is not allowed to take lead with Ref-ID : '.$lead->code;
-                    array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+            $previousAdvisorId = $lead->advisor_id; // saving previous advisor before updating the new to update the counts
 
-                    continue;
-                }
-            } else {
-                $lead->advisor_id = $userId;
-                $lead->quote_updated_at = now();
-                $lead->save();
+            $lead->advisor_id = $userId;
 
-                if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
-                }
+            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
+
+            info('Manual assignment done for lead : '.$lead->uuid);
+
+            $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
+
+            info('after update Old advisor assigned date is : '.$oldAdvisorAssignedDate);
+
+            info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
+
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
+
+            $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
+
+            $lead->quote_updated_at = now();
+
+            $lead->save();
+
+            if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+                CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
             }
         }
 
-        return $result;
+        return [];
+    }
+
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    {
+        // Check if $lead or $newAdvisorId is not provided
+        if ($lead === null || $newAdvisorId === null) {
+            return;
+        }
+
+        info('Previous assignment type is : '.$previousAssignmentType);
+
+        //Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+
+        // Get the allocation record for the new advisor
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+
+        // Update allocation counts for the new advisor only if its different from previous advisor
+        if ($newAdvisorId !== $previousAdvisorId) {
+            // Update allocation counts for the new advisor (if applicable)
+            $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
+        }
+
+        // Get the allocation record for the previous advisor (if applicable)
+        if ($previousAdvisorId !== null) {
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+
+            // Update allocation counts for the previous advisor (if applicable)
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+        }
+    }
+
+    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
+    {
+        if ($advisorAllocationRecord === null || $lead === null) {
+            return;
+        }
+
+        // Determine if the lead was system-assigned or manually assigned
+        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
+
+        // Update allocation counts based on assignment type
+        if ($isSystemAssigned) {
+            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
+        } else {
+            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
+        }
+
+        // Increment the total allocation count and update timestamps
+        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
+        $advisorAllocationRecord->last_allocated = now()->timestamp;
+        $advisorAllocationRecord->updated_at = now();
+
+        // Save the updated allocation record
+        $advisorAllocationRecord->save();
+    }
+
+    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
+    {
+        // Check if there is a previous advisor and the lead assignment date is today
+        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
+            if ($previousAdvisorAllocationRecord !== null) {
+
+                // Determine if the previous assignment was system-assigned
+                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
+
+                info('Previous assignment type was either system assigned or system reassigned : '.$isSystemAssigned);
+
+                // Update allocation counts based on assignment type (if applicable)
+                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
+                    info('About to deduct from auto assignment count for previous advisor');
+                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                    info('About to deduct from manual assignment count for previous advisor');
+                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+                }
+
+                // Decrement the total allocation count (if it's greater than 0) and update timestamps
+                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
+                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+                    $previousAdvisorAllocationRecord->updated_at = now();
+                }
+
+                // Save the updated allocation record
+                $previousAdvisorAllocationRecord->save();
+            }
+        }
+    }
+
+    private function updateExistingQuoteViewCount($userId, $leadId)
+    {
+        $quoteViewCount = QuoteViewCount::where('quote_id', $leadId)->where('user_id', $userId)->where('quote_type_id', 3)->first();
+        if ($quoteViewCount) {
+            $quoteViewCount->user_id = $userId;
+            $quoteViewCount->visit_count = 0;
+            $quoteViewCount->save();
+        } else {
+            QuoteViewCount::create([
+                'quote_id' => $leadId,
+                'quote_type_id' => 3,
+                'user_id' => $userId,
+                'visit_count' => 1,
+            ]);
+        }
     }
 
     public function getEntityPlainByUUID($uuid)
@@ -1423,5 +1512,51 @@ class HealthQuoteService extends BaseService
         $response = $this->httpService->processRequest($carPlanData, $apiCreds);
 
         return $response;
+    }
+
+    /**
+     * @param int $userId
+     * @param $lead
+     * @return void
+     */
+    public function assignLeadDirectlyForQA(int $userId, $lead): void
+    {
+        info('inside the check for manual assignment QA');
+        $lead->advisor_id = $userId;
+        $lead->quote_updated_at = now();
+        $lead->save();
+
+        if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
+            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+        }
+    }
+
+    /**
+     * @param $lead
+     * @param mixed $leadId
+     * @param array $result
+     * @param bool $skipLead
+     * @param int $userId
+     * @return array
+     */
+    public function validateLead($lead, mixed $leadId, array $result, bool $skipLead, int $userId): array
+    {
+        if ($lead->health_team_type == null || $lead->health_team_type == '') {
+            info('Lead with id: ' . $leadId . ' is not assigned to any health team');
+            $msg = 'Health team is missing please select health team first';
+            array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+            $skipLead = true;
+        }
+
+        $user = User::where('id', $userId)->first();
+        $subTeam = Team::where('id', $user->sub_team_id)->first();
+        if (strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
+            info('Advisor : ' . $userId . ' can take lead: ' . $leadId . ' but he is not assigned to the correct health team');
+            $msg = 'User sub team mismatch with lead health team';
+            array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
+            $skipLead = true;
+        }
+        return array($result, $skipLead);
     }
 }
