@@ -103,7 +103,10 @@ class HttpRequestService extends BaseService
             // Check the response status code
             $getStatusCode = $kenRequest->getStatusCode();
 
+            info('quote plans call status code is '.$getStatusCode);
+
             if ($getStatusCode == 200) {
+                info('quote plans call is done ');
                 // Parse and return the response
                 $getContents = $kenRequest->getBody();
                 $getdecodeContents = json_decode($getContents);
