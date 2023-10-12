@@ -443,7 +443,7 @@ class RenewalBatchReportService extends BaseService
         }
 
         $query->where('car_quote_request.created_at', '<=', $reportDateEnd);
-    
+
         return $query;
     }
 
