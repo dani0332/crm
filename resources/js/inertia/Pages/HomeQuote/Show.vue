@@ -1279,7 +1279,6 @@ const linkEntity = () => {
     </div>
 
     <PaymentTable
-      v-if="isBetaUser"
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
