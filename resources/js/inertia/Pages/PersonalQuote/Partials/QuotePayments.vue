@@ -228,7 +228,7 @@ const rolesEnum = page.props.rolesEnum;
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button

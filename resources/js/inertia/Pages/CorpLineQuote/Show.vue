@@ -825,7 +825,6 @@ const onAssignLead = () => {
 
     <!-- Payments -->
     <PaymentTable
-      v-if="isBetaUser"
       :payments="payments"
       :can="permissions"
       :isBetaUser="isBetaUser"

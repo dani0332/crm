@@ -478,9 +478,8 @@ use App\Enums\GenericRequestEnum;
             </div>
         </div>
 
-        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
-        @endif
+
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :access="$access" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
 
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
