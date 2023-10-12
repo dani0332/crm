@@ -54,7 +54,7 @@ class HttpRequestService extends BaseService
         $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
-        info('quote plans call is starting '. $plansApiEndPoint . ' ' . $plansApiToken . ' ' . $plansApiTimeout . ' ' . $plansApiUserName . ' ' . $plansApiPassword . ' ' . $authBasic . ' ' . $quoteUuId . ' ' . $getLatestRating . ' ' . $isRenewalSort . ' ' . $isDisabledEnabled);
+        info('quote plans call is starting '.$plansApiEndPoint.' '.$plansApiToken.' '.$plansApiTimeout.' '.$plansApiUserName.' '.$plansApiPassword.' '.$authBasic.' '.$quoteUuId.' '.$getLatestRating.' '.$isRenewalSort.' '.$isDisabledEnabled);
 
         // Prepare the request data
         $plansDataArr = [
@@ -82,7 +82,7 @@ class HttpRequestService extends BaseService
 
         $client = new \GuzzleHttp\Client();
 
-        info('quote plans call data is ' . json_encode($plansDataArr));
+        info('quote plans call data is '.json_encode($plansDataArr));
 
         try {
             // Make the API request
