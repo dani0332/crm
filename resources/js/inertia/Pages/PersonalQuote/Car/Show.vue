@@ -196,9 +196,9 @@ const availablePlansTable = reactive({
 		{ text: 'PAB cover', value: 'addons' },
 		{ text: 'Roadside assistance', value: 'roadSideAssistance' },
 		{ text: 'Oman cover TPL', value: 'omanCoverTPL' },
-		{ text: 'Actual Premium', value: 'actualPremium' },
-		{ text: 'Discounted Premium', value: 'discountPremium' },
-		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+		{ text: 'Actual Price', value: 'actualPremium' },
+		{ text: 'Discounted Price', value: 'discountPremium' },
+		{ text: 'Price with VAT.', value: 'premiumWithVat' },
 		{ text: 'Excess', value: 'excess' },
 		{ text: 'Action', value: 'action' },
 	]
@@ -1207,7 +1207,7 @@ const loadEmailEvents = (email) => {
 			<div class="text-sm">
 				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">PREMIUM</dt>
+						<dt class="font-medium">PRICE</dt>
 						<dd>{{ record.premium ?? '' }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
@@ -1531,7 +1531,7 @@ const loadEmailEvents = (email) => {
 						<dd>{{ record.previous_policy_expiry_date ?? '' }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Premium</dt>
+						<dt class="font-medium">Previous Policy Price</dt>
 						<dd>{{ record.previous_quote_policy_premium ?? '' }}</dd>
 					</div>
 					<template v-if="hasRole(rolesEnum.Admin)">

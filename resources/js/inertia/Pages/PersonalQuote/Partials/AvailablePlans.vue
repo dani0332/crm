@@ -127,7 +127,7 @@ const onUpdatePlan = () => {
 
 	if (planForm.discounted_premium > planForm.actual_premium) {
 		notification.error({
-	      	title: 'Discounted premium cannot be greater than Actual Premium',
+	      	title: 'Discounted price cannot be greater than Actual price',
 	      	position: 'top',
 	    });
 		return;
@@ -231,12 +231,12 @@ const onToggleManual = () => {
 							<x-input v-model="planForm.insurer_quote_no" :disabled="!planForm.is_manual_update" maxlength="50" size="sm" />
 						</div>
 						<div class="grid sm:grid-cols-2">
-							<dt class="mt-2">Actual Premium:</dt>
+							<dt class="mt-2">Actual Price:</dt>
 							<x-input v-model="planForm.actual_premium" :disabled="!planForm.is_manual_update" size="sm"
 								@keydown="validateDecimal" />
 						</div>
 						<div class="grid sm:grid-cols-2">
-							<dt class="mt-2">Discounted Premium:</dt>
+							<dt class="mt-2">Discounted Price:</dt>
 							<x-input v-model="planForm.discounted_premium" size="sm" @keydown="validateDecimal" />
 						</div>
 						<div class="grid sm:grid-cols-2">
@@ -277,7 +277,7 @@ const onToggleManual = () => {
 					</dl>
 					<dl class="grid md:grid-cols-2 gap-x-6 border-top pl-4">
 						<div class="grid sm:grid-cols-2">
-							<dt class="font-bold">Total Premium with VAT:</dt>
+							<dt class="font-bold">Total Price with VAT:</dt>
 							<dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
 						</div>
 						<div class="flex justify-end">
@@ -318,7 +318,7 @@ const onToggleManual = () => {
 						</template>
 						<x-divider class="mb-3 mt-3" />
 						<div class="grid sm:grid-cols-4">
-							<dt class="font-bold">Total Premium with VAT:</dt>
+							<dt class="font-bold">Total Price with VAT:</dt>
 							<dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
 						</div>
 						<div class="flex justify-end">

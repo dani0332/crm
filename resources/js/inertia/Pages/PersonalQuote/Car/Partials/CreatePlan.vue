@@ -15,7 +15,7 @@ const quotePlansTable = reactive({
 		{ text: 'Provider Name', value: 'providerName' },
 		{ text: 'Plan Name', value: 'name' },
 		{ text: 'Repair Type', value: 'repairType' },
-		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+		{ text: 'Price with VAT.', value: 'premiumWithVat' },
 	]
 });
 
@@ -144,13 +144,13 @@ const getAddonVat = (item) => {
     </div>
     <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
       <div class="w-full md:w-1/3">
-        <x-field label="Premium without vat" required>  
+        <x-field label="Price without vat" required>  
         <x-input
         v-model="addPlanForm.actual_premium"
         :rules="[isRequired]"
         class="w-full"
         type="number"
-        placeholder="Enter Premium without vat"
+        placeholder="Enter Price without vat"
         @keydown = "preventExponent"
         />
         </x-field>
