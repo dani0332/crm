@@ -28,7 +28,8 @@ class CarEmailService extends BaseService
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
-            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
+            $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
+            $emailData->renewalDueDate = $carbonDate
 
         }
 
@@ -61,7 +62,8 @@ class CarEmailService extends BaseService
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
-            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
+            $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
+            $emailData->renewalDueDate = $carbonDate;
 
         }
 
