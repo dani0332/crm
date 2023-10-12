@@ -139,7 +139,7 @@ class CarQuoteController extends Controller
     {
         $response = CarQuoteRepository::updateCareQuotePlanDetails($request->validated());
 
-        return response()->json($response);
+        return redirect()->back(); //response()->json($response);
     }
 
     public function search(CarQuoteRequest $request)

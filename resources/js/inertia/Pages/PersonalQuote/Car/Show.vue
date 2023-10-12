@@ -459,6 +459,7 @@ const modals = reactive({
   contactDeleteConfirm:false,
   activity:false,
   activityConfirm:false,
+  changeInsurer: false,
   notes:false,
   plan: false,
   docConfirm: false,
@@ -736,6 +737,42 @@ const activityDeleteConfirmed = () => {
   );
 };
 
+const changeInsurerForm = useForm({
+	uuid: '',
+	plan_id: '',
+	provider_code: ''
+});
+
+const confirmChangeInsurer = (plan) => {
+	modals.changeInsurer = true;
+	changeInsurerForm.uuid = page.props.record.uuid;
+	changeInsurerForm.plan_id = plan.id;
+	changeInsurerForm.provider_code = plan.providerCode;
+}
+
+const onConfirmChangeInsurer = () => {
+	changeInsurerForm.post('change-insurer', {
+		preseveScroll: true,
+		preserveState: true,
+		onSuccess: () => {
+			notification.success({
+				title: 'Insurer Changed successfully',
+				position: 'top',
+			});
+		},
+		onError: (err) => {
+			notification.error({
+				title: 'Something went wrong',
+				position: 'top',
+			});
+			conslo.log(err);
+		},
+		onFinish: () => {
+			modals.changeInsurer = false;
+		},
+	})
+}
+
 const notesForm = useForm({
 
 	quote_id: page.props.record.id,
@@ -747,7 +784,7 @@ const notesForm = useForm({
 	description:null,
 });
 
-const addNotes = () => {
+const addNotes = () => {quotes/car/change-insurer
   notesForm.reset();
   modals.notes = true;
 };
@@ -2030,13 +2067,37 @@ const loadEmailEvents = (email) => {
 							Copy
 						</x-button>
 						<template v-if="item.actualPremium > 0 && item.id != record.plan_id">
-							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined>
+							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined @click="confirmChangeInsurer(item)">
 								Change Insurer
 							</x-button>
 						</template>
 					</div>
 				</template>
 			</DataTable>
+
+			<x-modal v-model="modals.changeInsurer" show-close backdrop>
+				<template #header> Change Insurer </template>
+				<p>Are you sure to change insurer?</p>
+				<template #actions>
+				<div class="text-right space-x-4">
+					<x-button
+					size="sm"
+					ghost
+					@click.prevent="modals.changeInsurer = false"
+					>
+					Cancel
+					</x-button>
+					<x-button
+					size="sm"
+					color="error"
+					:loading="changeInsurerForm.processing"
+					@click.prevent="onConfirmChangeInsurer"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+      		</x-modal>
 
       <FollowUpReasons
         :modelValue="showfollowup"
