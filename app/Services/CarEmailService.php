@@ -9,6 +9,7 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\User;
+use Carbon\Carbon;
 
 class CarEmailService extends BaseService
 {
@@ -29,8 +30,7 @@ class CarEmailService extends BaseService
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
-            $emailData->renewalDueDate = $carbonDate
-
+            $emailData->renewalDueDate = $carbonDate;
         }
 
         return $emailData;
