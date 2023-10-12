@@ -501,59 +501,59 @@ const planClicked = plan => {
 };
 
 const onExportPlans = () => {
-    if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
-        notification.error({
-            title: 'Please select 3 to 5 plans to download PDF.',
-            position: 'top',
-        });
-        return;
-    }
-    exportLoader.value = true;
-    const planIds = selectedPlans.value.map(p => {
-        return p.id;
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 3 to 5 plans to download PDF.',
+      position: 'top',
     });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
 
-    let addOns = {};
+  let addOns = {};
 
-    selectedPlans.value.map(plan => {
-        let copayIdToBeAdded = plan.selectedCopayId;
-        plan.coPayments.forEach(element => {
-            if (element.id == copayIdToBeAdded) {
-                addOns[plan.id] = {coPayment:element};
-            }
-        });
+  selectedPlans.value.map(plan => {
+    let copayIdToBeAdded = plan.selectedCopayId;
+    plan.coPayments.forEach(element => {
+      if (element.id == copayIdToBeAdded) {
+        addOns[plan.id] = { coPayment: element };
+      }
     });
+  });
 
-    axios
-        .post(
-            '/api/v1/quotes/health/export-plans-pdf',
-            {
-                plan_ids: planIds,
-                quote_uuid: page.props.quote.uuid,
-                addons: addOns,
-            },
-            {
-                responseType: 'json',
-            },
-        )
-        .then(response => {
-            const link = document.createElement('a');
-            let fileName = response.data.name;
-            link.href = response.data.data;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            notification.success({
-                title: 'Plans Exported',
-                position: 'top',
-            });
-        })
-        .catch(error => {
-            console.log(error);
-        })
-        .finally(() => {
-            exportLoader.value = false;
-        });
+  axios
+    .post(
+      '/api/v1/quotes/health/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        addons: addOns,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
 };
 
 const onTogglePlans = toggle => {
@@ -1704,7 +1704,6 @@ onMounted(() => {
     </div>
 
     <PaymentTable
-      v-if="isBetaUser"
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
