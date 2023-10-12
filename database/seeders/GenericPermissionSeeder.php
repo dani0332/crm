@@ -54,7 +54,7 @@ class GenericPermissionSeeder extends Seeder
         $roles = [
             RolesEnum::CarAdvisor, RolesEnum::CarManager, RolesEnum::CarDeputyManager,
             RolesEnum::TravelAdvisor, RolesEnum::TravelManager,
-            RolesEnum::HomeAdvisor,
+            RolesEnum::HomeAdvisor, RolesEnum::HomeManager,
             RolesEnum::PetAdvisor, RolesEnum::PetManager,
             RolesEnum::CycleAdvisor, RolesEnum::CycleManager,
             RolesEnum::BikeAdvisor, RolesEnum::BikeManager,
