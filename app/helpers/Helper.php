@@ -493,3 +493,12 @@ if (! function_exists('checkPersonalQuotes')) {
         ]);
     }
 }
+
+function getBase64FileInfo($base64File){
+    $fileSize = strlen($base64File);
+    @list($type, $file_data) = explode(';', $base64File);
+    @list(, $file_data) = explode(',', $file_data);
+    @list(, $fileMimeType) = explode(':', $type);
+    @list(, $extension) = explode('/', $fileMimeType);
+    return [$extension, $fileMimeType, $file_data, $fileSize];
+}
