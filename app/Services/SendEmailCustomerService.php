@@ -9,6 +9,7 @@ use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use App\Enums\DefaultAdvisorEnum;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -151,8 +152,10 @@ class SendEmailCustomerService extends BaseService
                 ];
             }
             if($emailData->advisorEmailAddress == null || $emailData->advisorName == null) {
-                $emailData->advisorEmailAddress = "askalfred@insurancemarket.ae";
-                $emailData->advisorName = "Alfred";
+                $emailData->advisorEmailAddress = DefaultAdvisorEnum::ADVISOREMAIL;
+                $emailData->advisorName = DefaultAdvisorEnum::ADVISORNAME;
+                $emailData->advisorMobileNo = DefaultAdvisorEnum::ADVISORMOBILENO;
+                $emailData->advisorLandlineNo = DefaultAdvisorEnum::ADVISORMOBILENO;
             }
 
             $body = [
