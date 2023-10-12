@@ -54,6 +54,8 @@ class HttpRequestService extends BaseService
         $plansApiPassword = config('constants.KEN_API_PWD');
         $authBasic = base64_encode($plansApiUserName.':'.$plansApiPassword);
 
+        info('quote plans call is starting '. $plansApiEndPoint . ' ' . $plansApiToken . ' ' . $plansApiTimeout . ' ' . $plansApiUserName . ' ' . $plansApiPassword . ' ' . $authBasic . ' ' . $quoteUuId . ' ' . $getLatestRating . ' ' . $isRenewalSort . ' ' . $isDisabledEnabled);
+
         // Prepare the request data
         $plansDataArr = [
             'quoteUID' => $quoteUuId,
@@ -79,6 +81,8 @@ class HttpRequestService extends BaseService
         }
 
         $client = new \GuzzleHttp\Client();
+
+        info('quote plans call data is ' . json_encode($plansDataArr));
 
         try {
             // Make the API request
@@ -130,6 +134,7 @@ class HttpRequestService extends BaseService
     {
         $quotePlans = $this->executeGetPlansApi($id, $getLatestRating, $isRenewalSort, $isDisabledEnabled);
 
+        info('quote plans call is done ');
         // Check if the $quotePlans object has a message property
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             return [];
