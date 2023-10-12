@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class FollowupController extends Controller
 {
-    function getEmailEvents(EmailEventsRequest $request)
+    public function getEmailEvents(EmailEventsRequest $request)
     {
         $response = DynamoDb::table('kazuya-email-content-stage')
             ->setKeyConditionExpression('#recipientEmail = :recipientEmail')
@@ -23,10 +23,8 @@ class FollowupController extends Controller
 
         $events = [];
 
-        if($response->get('Items'))
-        {
-            foreach ($response->get('Items') as $item)
-            {
+        if ($response->get('Items')) {
+            foreach ($response->get('Items') as $item) {
                 $events[] = [
                     'type' => $item['messageType']['S'],
                     'sub_type' => $item['messageSubType']['S'],

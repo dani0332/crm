@@ -136,7 +136,6 @@ class HealthQuoteService extends BaseService
 
     public function getEntity($id)
     {
-
         return $this->query->where('hqr.uuid', $id)->first();
     }
 
@@ -1351,11 +1350,7 @@ class HealthQuoteService extends BaseService
                 $data = [
                     'uuid' => $request->uuid,
                     'type_id' => $type->id,
-<<<<<<< HEAD
-                    'code' => $payment->code,
-=======
                     'code' => $embededTransaction->code,
->>>>>>> ebe1cccc3a083c245daa6a923d41d1bede84d5aa
 
                 ];
                 $processResponse = $this->processCancelPayment($data);
@@ -1367,8 +1362,8 @@ class HealthQuoteService extends BaseService
         }
 
         return response(['Payment not exist'], 403);
-
     }
+
     public function toggleSelection($data, $quoteTypeId)
     {
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/toggle-embedded-product';
@@ -1395,6 +1390,7 @@ class HealthQuoteService extends BaseService
 
         return $response;
     }
+
     public function processCancelPayment($data)
     {
         $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
