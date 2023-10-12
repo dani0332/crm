@@ -323,8 +323,8 @@
             // Add Policy Price
             $policyFee = (isset($providers[$quotePlan->providerId]['health_policy_fee'])) ? $providers[$quotePlan->providerId]['health_policy_fee'] : 0;
             $quotePlan->discountPremium += $policyFee;
-            $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
-            $quotePlan->total += $policyFee + ($policyFee * ($vatPercentage / 100 ));
+            // $quotePlan->vat += ($policyFee * ($vatPercentage / 100 ));
+            $quotePlan->total += $policyFee;
 
         }
 
