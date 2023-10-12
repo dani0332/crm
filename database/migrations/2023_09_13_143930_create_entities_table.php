@@ -19,7 +19,6 @@ class CreateEntitiesTable extends Migration
             $table->string('trade_license_no');
             $table->string('company_name');
             $table->string('company_address');
-            $table->string('entity_type_code')->nullable();
             $table->string('industry_type_code')->nullable();
             $table->integer('emirate_of_registration_id')->nullable();
             $table->foreign('emirate_of_registration_id')->references('id')->on('emirates');

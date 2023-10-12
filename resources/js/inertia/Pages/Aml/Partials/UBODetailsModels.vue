@@ -72,7 +72,7 @@ const uboForm = useForm({
   customer_type: props.customerType,
   quote_request_id: props.quoteDetails.id,
   customer_id: props.quoteDetails.customer_id,
-  entity_id: props.entity_id,
+  entity_id: props.entity_id ?? null,
   id: null,
   first_name: '',
   dob: null,
@@ -209,6 +209,7 @@ const onUBOSubmit = isValid => {
       </x-button>
       <x-button
         v-else
+        v-if="uboForm.entity_id"
         @click.prevent="addUBOToggle(true)"
         size="sm"
         color="orange"

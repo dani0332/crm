@@ -291,14 +291,16 @@ class AMLController extends Controller
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
             if($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
+
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
+                $customer->refresh();
 
                 $getMemberOrUBODetails[] = [
                     'first_name' => $customer->insured_first_name,
                     'last_name' => $customer->insured_last_name,
                     'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
-                    'nationality' => $customer->nationality->toArray(),
+                    'nationality' => $customer->nationality->toArray() ?? [],
                     'code' => CustomerTypeEnum::IndividualShort . '-'. $customer->id,
                 ];
 
@@ -313,7 +315,6 @@ class AMLController extends Controller
                 $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license_no],[
                     'company_name' => $AMLCheckRequest->company_name,
                     'company_address' => $AMLCheckRequest->company_address,
-                    'entity_type_code' => $AMLCheckRequest->entity_type_code,
                     'industry_type_code' => $AMLCheckRequest->industry_type_code,
                     'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id
                 ]);
@@ -323,7 +324,7 @@ class AMLController extends Controller
                 QuoteRequestEntityMapping::updateOrCreate([
                     'quote_type_id' => $quoteType->id,
                     'quote_request_id' => $quoteRequestId
-                ],['entity_id' => $entityId]);
+                ],['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
                 // Bridger Insight API Call for Entity
                 $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort . '-'. $entityId];
@@ -416,27 +417,17 @@ class AMLController extends Controller
 
     public function linkEntityDetails(Request $request)
     {
-        QuoteRequestEntityMapping::updateOrCreate([
-            'quote_type_id' => $request->quote_type_id,
-            'quote_request_id' => $request->quote_request_id
-        ],['entity_id' => $request->entity_id]);
+        $updateFields = ['entity_id' => $request->entity_id, 'entity_type_code' => LookupsEnum::PARENT_ENTITY];
+        if ($request->triggeredFrom) {
+            $updateFields['entity_type_code'] = LookupsEnum::SUB_ENTITY;
+        }
 
-//        $quoteRequestMapping = QuoteRequestEntityMapping::where([
-//            'quote_type_id' => $request->quote_type_id,
-//            'quote_request_id' => $request->quote_request_id
-//        ])->first() ?? [];
-//
-//        if(!empty($quoteRequestMapping)){
-//            $quoteRequestMapping->update(['entity_id' => $request->entity_id]);
-//        } else {
-//            QuoteRequestEntityMapping::create([
-//                'quote_type_id' => $request->quote_type_id,
-//                'quote_request_id' => $request->quote_request_id,
-//                'entity_id' => $request->entity_id
-//            ]);
-//        }
-
-        $entity = Entity::where('id', $request->entity_id)->first();
+        QuoteRequestEntityMapping::updateOrCreate(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id], $updateFields);
+        $entity = Entity::with([
+            'quoteRequestEntityMapping' => function($mappedEntity) use ($request) {
+                $mappedEntity->where(['quote_type_id' => $request->quote_type_id, 'quote_request_id' => $request->quote_request_id]);
+            }]
+        )->where('id', $request->entity_id)->first();
 
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
     }

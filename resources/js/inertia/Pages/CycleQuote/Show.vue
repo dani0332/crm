@@ -137,7 +137,7 @@ const customerProfileForm = useForm({
     trade_license_no: page.props.quote?.quote_request_entity_mapping?.entity?.trade_license_no ?? null,
     company_name: page.props.quote?.quote_request_entity_mapping?.entity?.company_name ?? null,
     company_address: page.props.quote?.quote_request_entity_mapping?.entity?.company_address ?? null,
-    entity_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.entity_type_code ?? null,
+    entity_type_code: page.props.quote?.quote_request_entity_mapping?.entity_type_code ?? 'Parent',
     industry_type_code: page.props.quote?.quote_request_entity_mapping?.entity?.industry_type_code ?? null,
     emirate_of_registration_id: page.props.quote?.quote_request_entity_mapping?.entity?.emirate_of_registration_id ?? null,
 
@@ -166,14 +166,22 @@ const updateProfileDetails = isValid => {
 }
 
 const entityDetailsFound = ref(false);
+const getParentEntityModel = ref(false);
 const tradeLicenseEntity = reactive({
     entity_id: null,
     trade_license: null,
     company_name: null,
-    company_address: null
+    company_address: null,
+    triggeredFrom: false
 });
 
-const searchByTradeLicense = () => {
+const entityTypeChange = event => {
+    if(event === 'SubEntity') {
+        getParentEntityModel.value = true;
+    }
+}
+
+const searchByTradeLicense = trigger => {
     let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
     axios.get(url)
         .then(res => {
@@ -184,6 +192,7 @@ const searchByTradeLicense = () => {
                 tradeLicenseEntity.trade_license = response.trade_license_no;
                 tradeLicenseEntity.company_name = response.company_name;
                 tradeLicenseEntity.company_address = response.company_address;
+                tradeLicenseEntity.triggeredFrom = (trigger === 'SubEntity');
 
                 notification.success({
                     title: res.data.message,
@@ -206,7 +215,8 @@ const linkEntity = () => {
     let entityDetails = {
         quote_type_id: page.props.quoteTypeId,
         quote_request_id: page.props.quote.id,
-        entity_id: tradeLicenseEntity.entity_id
+        entity_id: tradeLicenseEntity.entity_id,
+        triggeredFrom: tradeLicenseEntity.triggeredFrom
     };
     axios.post(route('link-entity-details'), entityDetails)
         .then(res => {
@@ -217,7 +227,7 @@ const linkEntity = () => {
                 customerProfileForm.trade_license_no = response.trade_license_no;
                 customerProfileForm.company_name = response.company_name;
                 customerProfileForm.company_address = response.company_address;
-                customerProfileForm.entity_type_code = response.entity_type_code;
+                customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
                 customerProfileForm.industry_type_code = response.industry_type_code;
                 customerProfileForm.emirate_of_registration_id = response.emirate_of_registration_id;
 
@@ -643,8 +653,9 @@ const linkEntity = () => {
                           <dt class="font-medium">ENTITY TYPE</dt>
                           <dd>
                               <ComboBox
+                                  @update:modelValue="entityTypeChange($event)"
                                   :single="true"
-                                  v-model="customerProfileForm.entity_type_code"
+                                  v-model:modelValue="customerProfileForm.entity_type_code"
                                   placeholder="SELECT ENTITY TYPE"
                                   :options="[
                                     {label: 'Parent', value: 'Parent'},
@@ -670,6 +681,33 @@ const linkEntity = () => {
               </div>
           </x-form>
       </div>
+      <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
+          <h3 class="font-semibold text-center text-lg mb-10">Search Entity by Parent Entity Trade License No</h3>
+          <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Parent Entity Trade License No</dt>
+                  <dd>
+                      <x-input
+                          v-model="customerProfileForm.trade_license_no"
+                          placeholder="TRADE LICENSE NO"
+                          type="text"
+                          class="w-full"
+                      />
+                  </dd>
+              </div>
+          </dl>
+          <div class="flex justify-end">
+              <x-button
+                  class="mt-4"
+                  color="primary"
+                  size="sm"
+                  :loading="customerProfileForm.processing"
+                  @click.prevent="searchByTradeLicense('SubEntity')"
+              >
+                  Search
+              </x-button>
+          </div>
+      </x-modal>
       <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
           <h3 class="font-semibold text-center text-lg mb-10">Entity found with the entered Trade License number</h3>
           <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">

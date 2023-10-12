@@ -134,7 +134,7 @@ class BridgerInsightService
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
-                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents), $customerOrEntityName, $quoteType->text);
+                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
                         }
                     }
                 }
@@ -194,10 +194,9 @@ class BridgerInsightService
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Business,
-                                    'Name' => $details['company_name'],
+                                    'Name' => [ 'Full' => $details['company_name']],
                                     "IDs" => [
-                                        'Number' => $details['code'],
-                                        'Type' => 'Account'
+                                        [ 'Type' => 'Account', 'Number' => $details['code']]
                                     ]
                                 ]
                             ]

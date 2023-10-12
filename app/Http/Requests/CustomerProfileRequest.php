@@ -41,7 +41,6 @@ class CustomerProfileRequest extends FormRequest
                 'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
                 'company_address' => 'required',
-                'entity_type_code' => 'nullable',
                 'industry_type_code' => 'nullable',
                 'emirate_of_registration_id' => 'nullable',
             ]);

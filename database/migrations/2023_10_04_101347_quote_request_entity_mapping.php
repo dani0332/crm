@@ -12,11 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('quote_request_entity_mapping', function (Blueprint $table) {
+            $table->id();
             $table->integer('quote_type_id');
             $table->foreign('quote_type_id')->references('id')->on('quote_type');
             $table->integer('quote_request_id');
             $table->bigInteger('entity_id');
             $table->foreign('entity_id')->references('id')->on('entities');
+            $table->string('entity_type_code')->nullable();
             $table->timestamps();
         });
     }

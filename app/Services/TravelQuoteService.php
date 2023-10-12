@@ -108,7 +108,7 @@ class TravelQuoteService extends BaseService
             'ent.trade_license_no',
             'ent.company_name',
             'ent.company_address',
-            'ent.entity_type_code',
+            'qrem.entity_type_code',
             'ent.industry_type_code',
             'ent.emirate_of_registration_id'
         )

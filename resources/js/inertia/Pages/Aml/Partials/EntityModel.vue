@@ -32,12 +32,6 @@ const modals = reactive({
   individualView: false,
 });
 
-const cusType = ref(props.customerTypeEnum.Entity);
-const customerType = computed({
-  get: () => cusType.value,
-  set: val => (cusType.value = val),
-});
-
 const entityFound = ref(false);
 const nationalitiesOptions = computed(() => {
   return props.nationalities.map(nat => ({
@@ -48,7 +42,7 @@ const nationalitiesOptions = computed(() => {
 
 const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
-  customer_type: customerType,
+  customer_type: props.customerTypeEnum.Entity,
   quote_type: props.quoteType.code,
 
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
@@ -93,7 +87,7 @@ const switchToIndividualView = () => {
   modals.insuredDetailConfirmation = false;
   showModal.value = false;
   modals.individualView = true;
-  customerType.value = props.customerTypeEnum.Individual;
+  insuredFormDetails.customer_type = props.customerTypeEnum.Individual;
 };
 
 const entityDetailsFound = ref(false);
