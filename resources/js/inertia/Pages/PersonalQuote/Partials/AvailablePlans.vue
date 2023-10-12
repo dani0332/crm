@@ -82,6 +82,14 @@ const planForm = useForm({
 	current_url: usePage().url,
 });
 
+watch(
+	() => planForm.actual_premium, 
+	() => {
+		planForm.discounted_premium = planForm.actual_premium
+	},
+	{ immediate: true }
+)
+
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
 	{ index: 0, label: 'General Info' },
@@ -127,7 +135,7 @@ const onUpdatePlan = () => {
 
 	if (planForm.discounted_premium > planForm.actual_premium) {
 		notification.error({
-	      	title: 'Discounted price cannot be greater than Actual price',
+	      	title: 'Discounted Price must be lower than Actual Price',
 	      	position: 'top',
 	    });
 		return;
