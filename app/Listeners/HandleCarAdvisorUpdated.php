@@ -74,6 +74,8 @@ class HandleCarAdvisorUpdated
         // Retrieve plans with available ratings for the given lead
         $plans = $this->httpService->getPlans($lead->uuid, true, false, false);
 
+        info('plans: '.json_encode($plans));
+
         // Determine the email template ID
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
 

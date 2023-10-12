@@ -42,12 +42,12 @@ class CarEmailService extends BaseService
         $insurerPlans = [];
         foreach ($plans as $plan) {
             $insurerPlans[] = [
-                'carValue' => $carQuote->car_value,
+                'carValue' => $carQuote->carValue,
                 'excessAed' => $plan->excess,
-                'repairType' => $plan->repair_type,
+                'repairType' => $plan->repairType,
                 'discountPremium' => $plan->discount_premium,
-                'planName' => $plan->plan_name,
-                'providerCode' => strtolower($plan->provider_code),
+                'planName' => $plan->name,
+                'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
             ];
@@ -132,7 +132,7 @@ class CarEmailService extends BaseService
 
     public function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/providerCode='.$plan->provider_code.'%planId='.$plan->id;
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/providerCode='.$plan->providerCode.'%planId='.$plan->id;
 
         return $buyNowLink;
     }
