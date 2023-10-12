@@ -111,6 +111,9 @@ class HttpRequestService extends BaseService
                 return $getdecodeContents;
             }
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
+            // add info for error and exception along with stack trace
+            info('exception occurred in quote plans call with error : '.$e->getMessage());
+            info('exception occurred in quote plans call with error stack as  : '.$e->getTraceAsString());
             // Handle exceptions and errors
             $response = $e->getResponse();
             $contents = (string) $response->getBody();
