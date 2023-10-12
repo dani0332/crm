@@ -6,7 +6,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CarAllocation implements Allocation
@@ -48,15 +47,7 @@ class CarAllocation implements Allocation
                 $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
                 if ($advisorId && $advisorId != 0) {
-                    DB::beginTransaction();
-                    try {
-                        // Assign the lead to the advisor and send an email
-                        $this->assignLead($lead, $advisorId, $tier);
-                        DB::commit();
-                    } catch (\Exception $e) {
-                        DB::rollback();
-                        Log::error($e->getMessage());
-                    }
+                    $this->assignLead($lead, $advisorId, $tier);
                 } else {
                     // Update the lead's tier information
                     $this->updateLeadTier($lead, $tier);

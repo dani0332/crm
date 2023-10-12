@@ -67,19 +67,20 @@ class HandleCarAdvisorUpdated
 
     public function triggerCarQuoteEmail($lead, $previousAdvisor)
     {
+        info('inside trigger car quote email');
         // Initialize email data and retrieve Tier R information
         $emailData = '';
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+        info('tier R id is '.$tierR->id);
 
         // Retrieve plans with available ratings for the given lead
         $plans = $this->httpService->getPlans($lead->uuid, true, false, false);
-
         // Determine the email template ID
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
-
+        info('email template id is '.$emailTemplateId.' for lead '.$lead->uuid);
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisor, $tierR->id);
-
+        info('email data is '.json_encode($emailData).' for lead '.$lead->uuid);
         // Log email data and template ID
         info('Email data: '.json_encode($emailData));
 

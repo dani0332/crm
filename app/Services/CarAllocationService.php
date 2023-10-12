@@ -31,6 +31,7 @@ use App\Models\User;
 use App\Models\UserTeams;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CarAllocationService extends AllocationService
 {
@@ -421,27 +422,35 @@ class CarAllocationService extends AllocationService
 
     private function assignLeadToUserAndGetQuote($lead, $userId, $tier, $assignmentType): mixed
     {
-        // Check if the lead was previously assigned to an advisor and log the change.
-        if (! empty($lead->advisor_id)) {
-            info('Lead with UUID: '.$lead->uuid.' was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
+        DB::beginTransaction();
+        try {
+            // Assign the lead to the advisor and send an email
+            // Check if the lead was previously assigned to an advisor and log the change.
+            if (! empty($lead->advisor_id)) {
+                info('Lead with UUID: '.$lead->uuid.' was previously assigned to User ID: '.$lead->advisor_id.' and is now being assigned to User ID: '.$userId);
+            }
+
+            // Update lead properties.
+            $lead->tier_id = $tier->id;
+            $lead->advisor_id = $userId;
+            $lead->cost_per_lead = $tier->cost_per_lead;
+            $lead->auto_assigned = true;
+            $lead->assignment_type = $assignmentType;
+
+            // Get the latest quote batch and assign it to the lead.
+            $quoteBatch = QuoteBatches::latest()->first();
+            $lead->quote_batch_id = $quoteBatch->id;
+
+            // Log information about the quote batch assignment.
+            info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' to Quote with UUID: '.$lead->uuid);
+
+            // Save the updated lead.
+            $lead->save();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e->getMessage());
         }
-
-        // Update lead properties.
-        $lead->tier_id = $tier->id;
-        $lead->advisor_id = $userId;
-        $lead->cost_per_lead = $tier->cost_per_lead;
-        $lead->auto_assigned = true;
-        $lead->assignment_type = $assignmentType;
-
-        // Get the latest quote batch and assign it to the lead.
-        $quoteBatch = QuoteBatches::latest()->first();
-        $lead->quote_batch_id = $quoteBatch->id;
-
-        // Log information about the quote batch assignment.
-        info('About to assign Quote Batch with ID: '.$quoteBatch->id.' and Name: '.$quoteBatch->name.' to Quote with UUID: '.$lead->uuid);
-
-        // Save the updated lead.
-        $lead->save();
 
         return $lead;
     }
