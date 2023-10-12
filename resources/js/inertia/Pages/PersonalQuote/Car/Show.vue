@@ -130,7 +130,7 @@ const carLostQuoteLogsTable = reactive({
 		{ text: 'Notes', value: 'notes' },
 		{ text: 'Lead Status', value: 'quote_status.text' },
 		{ text: 'Approval Status', value: 'status' },
-		{ text: 'Documents', value: 'documents' },		
+		{ text: 'Documents', value: 'documents' },
 	]
 })
 
@@ -174,7 +174,7 @@ const paymentDetailsTable = reactive({
       text: 'Reference',
       value: 'reference',
     },
-    
+
     {
       text: 'Action',
       value: 'action',
@@ -321,7 +321,7 @@ const totalPriceVAT = computed(() => {
 					vat += parseInt(option.price) + option.vat;
 				}
 			})
-		})		
+		})
 	})
 	return vat;
 })
@@ -353,12 +353,12 @@ const leadStatusOptions = computed(() => {
 	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
 	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Object.values(page.props.leadStatuses);
 	const filteredLeadStatuses = statuses?.filter(status => {
-	  
+
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
 	}
 	// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
+	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
     return true;
   });
 
@@ -371,8 +371,8 @@ const leadStatusOptions = computed(() => {
 const leadStatusDisabled = computed(() => {
 	return (
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
-		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || 
-		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake && 
+		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate ||
+		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake &&
 		(!hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]))) ||
 		(!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
 	);
@@ -739,7 +739,7 @@ const activityDeleteConfirmed = () => {
 const notesForm = useForm({
 
 	quote_id: page.props.record.id,
-	quote_type_id:page.props.quoteTypeId,	
+	quote_type_id:page.props.quoteTypeId,
 	quote_uuid: page.props.record.uuid,
 	customer_name: page.props.record.first_name,
 	customer_email: page.props.record.email,
@@ -929,7 +929,7 @@ const onLeadStatus = () => {
   );
 };
 const toggleLoader = ref(false);
- 
+
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
 
@@ -1096,7 +1096,7 @@ const getFollowUpsByQuote = () => {
 			});
 	} catch (error) {
 		hideFollowUp.value = false;
-	}  
+	}
 };
 
 const closeModal = v => {
@@ -1136,7 +1136,7 @@ const loadEmailEvents = (email) => {
           if(response.data.length) {
             modals.showEmailEventsModal = true;
 	  		    emailEvents.value = response.data;
-          } 
+          }
           else
           {
             notification.success({
@@ -1144,7 +1144,7 @@ const loadEmailEvents = (email) => {
               position: 'top',
             });
           }
-          
+
 	  		})
 	  		.catch(error => {
           loadingEmailEvents.value = false;
@@ -1506,7 +1506,7 @@ const loadEmailEvents = (email) => {
 							<dt class="font-medium"></dt>
 							<dd></dd>
 						</div>
-					</template>					
+					</template>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">Policy Number</dt>
 						<dd>{{ record.policy_number }}</dd>
@@ -1539,10 +1539,10 @@ const loadEmailEvents = (email) => {
 							placeholder="Lead Status"
 							class="w-full"
 						/>
-						
+
 						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved">
-							<x-input								
-								v-model="leadStatusForm.trans_code"								
+							<x-input
+								v-model="leadStatusForm.trans_code"
 								placeholder="TransApp Code is required"
 								class="w-full"
 								:rules="[rules.isRequired]"
@@ -1550,7 +1550,7 @@ const loadEmailEvents = (email) => {
 							/>
 						</x-field>
 						<x-field label="Lost Reason" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost">
-							<x-select							
+							<x-select
 								v-model="leadStatusForm.lostReason"
 								:options="lostReasons?.map(item => ({
 									value: item.id,
@@ -1562,13 +1562,13 @@ const loadEmailEvents = (email) => {
 							/>
 						</x-field>
 						<x-field label="Followup Date" v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-							<DatePicker								
+							<DatePicker
 								v-model="leadStatusForm.next_followup_date"
 								withTime
 								:rules="[isRequired]"
-								placeholder="Please select follow-up date & time" 
+								placeholder="Please select follow-up date & time"
 								:error="leadStatusForm.errors.next_followup_date"
-								class="w-full" 
+								class="w-full"
 							/>
 							<!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
@@ -1608,7 +1608,7 @@ const loadEmailEvents = (email) => {
 							:error="leadStatusForm.errors.notes"
 							:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
 						/>
-					</x-field>					
+					</x-field>
 				</div>
 			</div>
 			<template v-if="isCarLostStatus(record.quote_status_id)">
@@ -1692,9 +1692,9 @@ const loadEmailEvents = (email) => {
 						</x-field>
 					</div>
 				</div>
-			</template>			
+			</template>
 
-			<DataTable 
+			<DataTable
 				v-if="paymentEntityModel.car_lost_quote_logs.length > 0"
 				table-class-name="mt-5 tablefixed compact"
 				:headers="carLostQuoteLogsTable.columns"
@@ -1736,9 +1736,8 @@ const loadEmailEvents = (email) => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-    
+
 		<PaymentTable 
-			v-if="hasRole(rolesEnum.BetaUser)"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -1750,7 +1749,7 @@ const loadEmailEvents = (email) => {
 				<x-divider class="mb-4 mt-1" />
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-				<div class="w-full md:w-1/2">					
+				<div class="w-full md:w-1/2">
 					<x-field label="Cylinder" required>
 						<x-input
 							v-model="assumptionsForm.cylinder"
@@ -1840,7 +1839,7 @@ const loadEmailEvents = (email) => {
 					<div class="flex flex-col gap-4">
 						<x-field label="Current Insurance" required>
 							<x-select
-								v-model="assumptionsForm.current_insurance_status"								
+								v-model="assumptionsForm.current_insurance_status"
 								:options="currentInsuranceOptions"
 								placeholder="Current Insurance"
 								class="w-full"
@@ -1929,7 +1928,7 @@ const loadEmailEvents = (email) => {
           	<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id">
 				Send OCB Email to Customer
 			</x-button>
-					
+
 					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
@@ -1985,7 +1984,7 @@ const loadEmailEvents = (email) => {
 					<template v-for="addon in addons" :key="addon">
 						<template v-for="option in addon.carAddonOption" :key="option">
 							<span v-if="addon.code">
-								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">									
+								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">
 									{{ addon.text }}: {{ option.value }} <br />
 								</template>
 							</span>
@@ -2115,16 +2114,16 @@ const loadEmailEvents = (email) => {
         :headers="emailEventsTable"
         :items="emailEvents"
         border-cell
-        hide-rows-per-page       
+        hide-rows-per-page
         :rows-per-page="10"
-        :hide-footer="followUpEmails.length < 10" 
+        :hide-footer="followUpEmails.length < 10"
       >
-        
+
       </DataTable>
-      
+
     </x-modal>
 
-  
+
 
       <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
       <DataTable
@@ -2148,7 +2147,7 @@ const loadEmailEvents = (email) => {
             >
               View Events
             </x-button>
-            
+
           </div>
         </template>
 
@@ -2275,7 +2274,7 @@ const loadEmailEvents = (email) => {
 						</template>
 
 					</template>
-					
+
 				</div>
 			</div>
 			<DataTable
@@ -2369,11 +2368,11 @@ const loadEmailEvents = (email) => {
 						class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
 					>
 						{{ quoteDocument.original_name || quoteDocument.doc_name }}
-					</a> 
+					</a>
 					</div>
 				</div>
     		</x-modal>
-		</div> 
+		</div>
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2425,7 +2424,7 @@ const loadEmailEvents = (email) => {
 					</div>
 				</template>
 			</DataTable>
-		</div> 
+		</div>
 
 		<!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2489,7 +2488,7 @@ const loadEmailEvents = (email) => {
 					</x-button>
 				</div>
 				</x-form>
-          </x-modal>		
+          </x-modal>
 		</div>  -->
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -2629,7 +2628,7 @@ const loadEmailEvents = (email) => {
 				</div>
 				</x-form>
       		</x-modal>
-		</div> 
+		</div>
 		<customerAdditionalContacts
           quoteType="Car"
           :customerId="record.customer_id"
@@ -2639,7 +2638,7 @@ const loadEmailEvents = (email) => {
           :quoteMobile="record.mobile_no"
 			:canDelete="false"
       />
-		
+
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 		<div>
