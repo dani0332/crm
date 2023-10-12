@@ -106,7 +106,7 @@ const isProfileUpdateAllow = computed(() => {
 const customerProfileForm = useForm({
 
     customer_id: page.props.quote.customer_id,
-    customer_type: customerType.value,
+    customer_type: page.props.quote.customer_type,
     quote_type: page.props.modelType,
     quote_type_id: page.props.quoteTypeId,
     quote_request_id: page.props.quote.id,
