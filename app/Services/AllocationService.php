@@ -244,8 +244,8 @@ class AllocationService
         $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
-                        ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
-                        ->where('advisor_id', $userId)->get();
+            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
+            ->where('advisor_id', $userId)->get();
 
         $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
         $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
