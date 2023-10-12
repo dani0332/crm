@@ -155,7 +155,6 @@ class SendEmailCustomerService extends BaseService
                 $emailData->advisorEmailAddress = DefaultAdvisorEnum::ADVISOREMAIL;
                 $emailData->advisorName = DefaultAdvisorEnum::ADVISORNAME;
                 $emailData->advisorMobileNo = DefaultAdvisorEnum::ADVISORMOBILENO;
-                $emailData->advisorLandlineNo = DefaultAdvisorEnum::ADVISORMOBILENO;
             }
 
             $body = [
