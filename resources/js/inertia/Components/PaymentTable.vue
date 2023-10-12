@@ -20,7 +20,7 @@ const props = defineProps({
   quoteType: String,
 });
 
-console.log('hafeez'+ JSON.stringify(props.payments));
+//console.log('hafeez'+ JSON.stringify(props.paymentMethods));
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
@@ -29,17 +29,21 @@ const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref(false);
 const isExpandedSplitPayments = ref(false);
+const isPaymentCalculationError = ref(false);
 
 const discountValue = ref(0); // Initial discount value
 const totalPrice = ref(props.quoteRequest.premium); // Initial total price
 const paymentTypesFiltered = ref([]);
 
+const isPaymentMetodNotSelected = ref([]);
 const paymentMethodsModels = ref([]);
 const splitAmountModels = ref([]);
 const dueDateModels = ref([]);
 const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
 
+const totalAmount = ref(props.quoteRequest.premium); // Initial total price
+/*
 const totalAmount = computed(() => { // Calculate total amount based on discount amount
   const discount = discountValue.value;
   if (discount > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
@@ -47,7 +51,18 @@ const totalAmount = computed(() => { // Calculate total amount based on discount
   } else {
     return totalPrice.value - discount;
   }
-});
+});*/
+
+const calculateTotalAmount = () => {
+  const discount = discountValue.value;
+  if (discount > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
+    totalAmount.value = totalPrice.value;
+  } else {
+    totalAmount.value = totalPrice.value - discount;    
+  }
+  calculatePaymentBreakup();  
+}
+
 const discountError = computed(() => {
   const regex = /^\d+(\.\d{1,2})?$/;
   if (!regex.test(discountValue.value)) {
@@ -75,7 +90,34 @@ const rules = {
     }
     return 'Amount must be a valid number';
   },
+  notEmptyOrZero: v => {
+    if (v !== '') {
+      return true;
+    }
+    return 'Value cannot be empty';
+  },
 };
+
+const validatePaymentOption = () => {  
+      var totalSplitAmount = 0;
+      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+        totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));       
+        const validationResult = rules.notEmptyOrZero(paymentMethodsModels.value[i]);
+        isPaymentMetodNotSelected.value[i] = false;
+        if (validationResult !== true) {          
+          isPaymentMetodNotSelected.value[i] = true;        
+          return true;
+        }
+      }
+
+      //console.log('totalSplitAmount'+totalSplitAmount.toFixed(2));
+      //console.log('totalAmount'+totalAmount.value.toFixed(2));
+      if(totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)){
+        isPaymentCalculationError.value = true;
+        return true;
+      }
+    return false;
+  }
 
 const collectionTypes = [
   { value: '', label: 'Select Collection' },
@@ -86,6 +128,10 @@ const totalPayments = ref([
   { value: '1', label: '1'},
  ]);
 
+ const paymentTypes = ref(props.paymentMethods.filter(item => !['CR_FAYAZ', 'CR_HITESH', 'CR_MAHESH', 'CR'].includes(item.value)));
+ paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
+ 
+ /*
 const paymentTypes = ref([
   { value: '', label: 'Select Payment'},
   { value: 'BT', label: 'Bank Transfer', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_BT },
@@ -99,7 +145,7 @@ const paymentTypes = ref([
   { value: 'CA', label: 'Credit Approval', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CA },
   { value: 'PPR', label: 'Proforma Payment Request', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PPR },
   { value: 'IN_PL', label: 'Insure Now Pay Later', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_IN_PL },
-]);
+]);*/
 
 const frequencyTypes = [
   { value: '', label: 'Select Frequency'},
@@ -194,6 +240,7 @@ const resetCreditApproval = () => {
 
 const resetDiscount = () => {
   isDiscountEnabled.value = false;
+  isDiscountReasonEnabled.value = false;
   paymentMethodsForm.discount = '';
 };
 
@@ -203,7 +250,8 @@ const handleDiscountChange = () => {
   if(paymentMethodsForm.discount === ''){
     isDiscountEnabled.value = false;    
   }else{
-    isDiscountEnabled.value = true;    
+    isDiscountEnabled.value = true; 
+    isDiscountReasonEnabled.value = true;   
   }  
   if(
     paymentMethodsForm.discount === 'refer_a_friend' ||
@@ -221,15 +269,13 @@ const handleDiscountChange = () => {
 
   if(paymentMethodsForm.discount === 'family_employee_discount'){
     discountValue.value = totalPrice.value * (7.5 / 100).toFixed(2); // for car
-  }
-
-
+  }  
 };
 
-const calculatePaymentBreakup = (totalRows) => {
-  var perInstallmentPrice = parseFloat((totalPrice.value/totalRows).toFixed(2));
+const calculatePaymentBreakup = () => {
+  var perInstallmentPrice = parseFloat((totalAmount.value/paymentMethodsForm.payment_no).toFixed(2));
   dueDateModels.value[1] = new Date();
-  for (let i = 1; i <= totalRows; i++) { 
+  for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
     splitAmountModels.value[i] = perInstallmentPrice;
     if(i>1){
       paymentMethodsModels.value[i] = '';
@@ -243,20 +289,20 @@ const handleFrequencyChange = () => {
   for (let i = 1; i <= 12; i++) { // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
-  calculatePaymentBreakup(1);
+  calculatePaymentBreakup();
   isPaymentNoEnabled.value = false;
   if (paymentMethodsForm.frequency === 'monthly') {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '12';
-    calculatePaymentBreakup(12);
+    calculatePaymentBreakup();
   } else if (paymentMethodsForm.frequency === 'quarterly') {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '4';
-    calculatePaymentBreakup(4);
+    calculatePaymentBreakup();
   } else if (paymentMethodsForm.frequency === 'semi_annual') {
     resetPaymentMethod = true;
     paymentMethodsForm.payment_no = '2';
-    calculatePaymentBreakup(2);
+    calculatePaymentBreakup();
   } else if (paymentMethodsForm.frequency === 'split_payments') {
     isPaymentNoEnabled.value = true;
     paymentMethodsForm.payment_no = '1';
@@ -322,6 +368,8 @@ const addPaymentModal = () => {
   paymentMethodsForm.reset();
   paymentMethodsForm.payment_method = 'CHQ';
   paymentMethodsModels.value[1] = '';
+  totalAmount.value = totalPrice.value;
+  isPaymentCalculationError.value = false;
 
   if( props.quoteType === 'Health' || props.quoteType === 'Group Medical' || 
       props.quoteType === 'Life' || props.quoteType === 'Marine'){
@@ -343,7 +391,7 @@ const addPaymentModal = () => {
   paymentMethodsForm.discount = '';
   paymentMethodsForm.credit_approval = '';
   handleCollectionTypeChange();
-  calculatePaymentBreakup(1);
+  calculatePaymentBreakup();
 };
 
 const editPaymentModal = payment => {
@@ -368,6 +416,7 @@ const paymentMethodsForm = useForm({
 
 const addPayment = isValid => {
   if (!isValid) return;
+  if (validatePaymentOption()) return;  
 
   let data = {
     captured_amount: paymentMethodsForm.amount,
@@ -638,13 +687,13 @@ const providerId = computed(() => {
               <td>{{ item.code }}</td>             
               <td>{{ item.collection_date }}</td>
               <td>{{ item.collection_date }}</td>
-              <td>{{ item.payment_methods_code }}</td>
+              <td>{{ item.payment_method.name }}</td>
               <td>{{ item.total_price }}</td>
               <td>{{ item.discount_value }}</td>
               <td>{{ item.total_amount }}</td>
               <td>{{ item.captured_amount }}</td>
-              <td>{{ item.payment_status_id }}</td>
-              <td>{{ item.payment_status_id }}</td>             
+              <td>{{ item.payment_status.text }}</td>
+              <td>{{ item.payment_status_message }}</td>             
               <td>
                 <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments)">
@@ -684,12 +733,12 @@ const providerId = computed(() => {
               <td></td>
               <td>{{ splitPayment.due_date }}</td>
               <td>{{ splitPayment.due_date }}</td>
-              <td>{{ splitPayment.payment_method }}</td>
+              <td>{{ splitPayment.payment_method.name }}</td>
               <td></td>
               <td></td>
               <td>{{ splitPayment.payment_amount }}</td>
               <td></td>
-              <td>{{ splitPayment.payment_status_id }}</td>
+              <td>{{ splitPayment.payment_status.text }}</td>
               <td></td>
               <td><x-button size="xs" color="primary" outlined >View</x-button></td>
             </tr>
@@ -911,9 +960,10 @@ const providerId = computed(() => {
                     class="w-full"
                     v-model="discountValue"
                     name="discount_value"
-                    :rules="[rules.amount]"                    
-                />
-                <div v-if="discountError" class="text-red-500 text-sm">{{ discountError }}</div>
+                    :rules="[rules.amount]"
+                    @keyup="calculateTotalAmount()"                    
+                />                
+                <p v-if="discountError" class="text-sm text-red-500 dark:text-red-400 mt-1">{{ discountError }}</p>
               </x-field>
               
               <template #tooltip>
@@ -939,11 +989,19 @@ const providerId = computed(() => {
           
         </div>
         <x-divider class="mb-4 mt-10" />
+        <x-alert
+            v-if="isPaymentCalculationError"
+						color="error"
+						class="mb-5"						
+					>
+					Your calculations are wrong	
+				</x-alert>
+
 
         <div class="w-full grid">
           <!-- Header -->
           <div class="flex w-full">
-            <div class="w-1/5 px-2">
+            <div class="w-1/6 px-2 text-center">
               <x-tooltip>
                 <span class="text-sm text-primary-800 font-semibold">
                   PAYMENT NO *
@@ -998,13 +1056,12 @@ const providerId = computed(() => {
           <!-- Fields -->
           <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count">
             <div class="flex w-full custombreak">
-              <div class="w-1/5 px-2">{{ count }}</div>
+              <div class="w-1/6 px-2 text-center">{{ count }}</div>
               <div class="w-1/5 px-2">
                 <select
-                  class="custom-select"
+                  class="w-full custom-select"
                   v-model="paymentMethodsModels[count]"
                   :options="handlePaymentTypes(count)"
-                  :rules="[rules.isRequired]"                
                   @change="handlePaymentOptions()"
                 >
                   <!-- Use the title attribute to set the tooltip text -->
@@ -1016,6 +1073,7 @@ const providerId = computed(() => {
                     :disabled="option.value === 'CC' && isCCDisabled"
                   >{{ option.label }}</option>
                 </select>
+                <p v-if="isPaymentMetodNotSelected[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 <x-input
                   class="w-full mt-2"
                   v-if = "isCheckDetailsEnabled && count==1"
@@ -1107,9 +1165,8 @@ const providerId = computed(() => {
 .expand-pointer {
   cursor: pointer;
   font-size: 35px;
-  padding-left: 35px;
+  padding-left: 30px;
   font-weight: bold;
 }
-
 
 </style>

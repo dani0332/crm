@@ -1749,7 +1749,7 @@ const loadEmailEvents = (email) => {
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
-			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name } })"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 		/>
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>

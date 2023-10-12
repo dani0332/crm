@@ -448,7 +448,7 @@ class CRUDController extends Controller
         }
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
-        $splitPayments = \App\Models\PaymentSplits::where('code',$paymentEntityModel->code)->get();
+        $splitPayments = \App\Models\PaymentSplits::with(['paymentStatus','paymentMethod'])->where('code',$paymentEntityModel->code)->get();
       
         $mainPayment = $paymentEntityModel->payments()->where('code', '=', $paymentEntityModel->code)->first();
         $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');

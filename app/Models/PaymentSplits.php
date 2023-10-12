@@ -16,4 +16,14 @@ class PaymentSplits extends Model
     {
         return $this->belongsTo(Payment::class, 'code', 'code');
     }
+
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class,'payment_status_id', 'id');
+    }
+
+    public function paymentMethod()
+    {
+        return $this->belongsTo(PaymentMethod::class, 'payment_method', 'code');
+    }
 }
