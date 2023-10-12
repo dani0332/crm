@@ -76,7 +76,7 @@ class CarEmailService extends BaseService
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
             'mobilePhone' => $advisor->mobile_no,
-            'whatsAppNumber' => !empty($advisor->mobile_no) ? str_replace('+', '', $advisor->mobile_no) : '',
+            'whatsAppNumber' => ! empty($advisor->mobile_no) ? str_replace('+', '', $advisor->mobile_no) : '',
             'landLine' => $advisor->landline_no,
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,
