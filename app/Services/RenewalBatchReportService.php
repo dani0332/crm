@@ -442,6 +442,8 @@ class RenewalBatchReportService extends BaseService
             $query->whereIn('users.sub_team_id', $subTeamsIds);
         }
 
+        $query->where('car_quote_request.created_at', '<=', $reportDateEnd);
+    
         return $query;
     }
 
