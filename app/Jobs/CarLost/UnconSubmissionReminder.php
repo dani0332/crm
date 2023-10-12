@@ -47,14 +47,17 @@ class UnconSubmissionReminder implements ShouldQueue
      */
     public function handle()
     {
+        info('UnconSubmissionReminder - Uncontactable Submission reminder job started');
+
         //get next uncontactable batch
         $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
         if (! isset($upcomingBatch->id)) {
             info('UnconSubmissionReminder - No upcoming batch available for uncontactable resubmission reminder. no need to send email');
-
             return true;
         }
+
+        info('UnconSubmissionReminder - Upcoming batch found: '.$upcomingBatch->name.' with deadline date: '.$upcomingBatch->deadline->deadline_date);
 
         //include next 3 more batches for information
         $nextBatches = RenewalBatch::whereHas('deadline', function ($q) use ($upcomingBatch) {
@@ -63,8 +66,7 @@ class UnconSubmissionReminder implements ShouldQueue
         })->with(['deadline' => function ($q) use ($upcomingBatch) {
             $q->where('quote_status_id', QuoteStatusEnum::Uncontactable)
                 ->whereDate('deadline_date', '>', $upcomingBatch->deadline->deadline_date);
-        }])
-            ->limit(3)->get();
+        }])->limit(3)->get();
 
         $emailData['batches'][] = [
             'batch' => $upcomingBatch->name,
@@ -80,27 +82,45 @@ class UnconSubmissionReminder implements ShouldQueue
             ];
         }
 
-        $advisors = User::whereHas('teams', function ($q) {
-            $q->whereIn('name', [CarTeamType::RENEWALS, CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::MOTOR_CORPLINE_RENEWALS]);
-        })->whereHas('roles', function ($q) {
-            $q->whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
-        })->withActive()->with(['managers' => function ($q) {
-            $q->withActive();
-        }])->get();
-
-        $managers = $advisors->pluck('managers.*.email')
-            ->push('april.pascual@insurancemarket.ae')->unique()->flatten()->all();
-
-        $to = implode(',', $advisors->pluck('email')->unique()->toArray());
-        $cc = implode(',', $managers);
+        $teamsGroups = [
+            [CarTeamType::RENEWALS],
+            [CarTeamType::BDM, CarTeamType::SBDM],
+            [CarTeamType::MOTOR_CORPLINE_RENEWALS],
+        ];
 
         $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE)->value('value');
 
-        info('UnconSubmissionReminder - Sending Uncontactable Submissions reminder email');
+        foreach ($teamsGroups as $teams)
+        {
+            info('UnconSubmissionReminder - Getting advisors for teams: '.implode(',', $teams));
 
-        SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
+            $advisors = User::whereHas('teams', function ($q) use($teams) {
+                $q->whereIn('name', $teams);
+            })->whereHas('roles', function ($q) {
+                $q->whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
+            })->withActive()->with(['managers' => function($q){
+                $q->where('is_active', 1);
+            }])->get();
 
-        info('UnconSubmissionReminder - Uncontactable Submission reminder email is sent');
+            if(count($advisors) == 0) {
+                info('UnconSubmissionReminder - No advisors found for teams: '.implode(',', $teams).'. No need to send email');
+                continue;
+            }
+
+            //extract unique manager emails
+            $managers = $advisors->pluck('managers.*.email')
+                ->push('april.pascual@insurancemarket.ae')
+                ->flatten()->unique()->toArray();
+
+            $to = implode(',', $advisors->pluck('email')->unique()->toArray());
+            $cc = implode(',', $managers);
+
+            info('UnconSubmissionReminder - Sending Uncontactable Submissions reminder email started');
+
+            SIBService::sendEmailUsingSIB(intval($templateId), $emailData, '', $to, $cc);
+
+            info('UnconSubmissionReminder - Uncontactable Submission reminder email completed');
+        }
     }
 
     /**
