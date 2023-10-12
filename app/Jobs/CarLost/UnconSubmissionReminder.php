@@ -54,6 +54,7 @@ class UnconSubmissionReminder implements ShouldQueue
 
         if (! isset($upcomingBatch->id)) {
             info('UnconSubmissionReminder - No upcoming batch available for uncontactable resubmission reminder. no need to send email');
+
             return true;
         }
 
@@ -90,20 +91,20 @@ class UnconSubmissionReminder implements ShouldQueue
 
         $templateId = ApplicationStorage::where('key_name', ApplicationStorageEnums::UNCON_RENEWALS_REMINDER_TEMPLATE)->value('value');
 
-        foreach ($teamsGroups as $teams)
-        {
+        foreach ($teamsGroups as $teams) {
             info('UnconSubmissionReminder - Getting advisors for teams: '.implode(',', $teams));
 
-            $advisors = User::whereHas('teams', function ($q) use($teams) {
+            $advisors = User::whereHas('teams', function ($q) use ($teams) {
                 $q->whereIn('name', $teams);
             })->whereHas('roles', function ($q) {
                 $q->whereIn('name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
-            })->withActive()->with(['managers' => function($q){
+            })->withActive()->with(['managers' => function ($q) {
                 $q->where('is_active', 1);
             }])->get();
 
-            if(count($advisors) == 0) {
+            if (count($advisors) == 0) {
                 info('UnconSubmissionReminder - No advisors found for teams: '.implode(',', $teams).'. No need to send email');
+
                 continue;
             }
 
