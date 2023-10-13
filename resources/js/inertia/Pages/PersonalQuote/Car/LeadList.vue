@@ -90,10 +90,17 @@ const filteredTableHeader = computed(() => {
 });
 
 const advisorOptions = computed(() => {
-  return page.props.advisors.map(advisor => ({
-    value: advisor.id,
-    label: advisor.name,
-  }));
+    let options = page.props.advisors.map(advisor => ({
+        value: advisor.id,
+        label: advisor.name,
+    }));
+
+    options.push({
+        value: '',
+        label: 'UnAssigned'
+    })
+
+    return options;
 });
 
 const leadStatuses = computed(() => {

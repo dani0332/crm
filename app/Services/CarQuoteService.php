@@ -796,7 +796,7 @@ class CarQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if ($request[$item][0] == null) {
                         $this->query->whereNull('cqr.advisor_id');
                     } else {
                         $this->query->whereIn('cqr.advisor_id', $request[$item]);
