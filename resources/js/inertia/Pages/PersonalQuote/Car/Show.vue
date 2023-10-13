@@ -1119,20 +1119,32 @@ const getFollowUpsByQuote = () => {
 		axios
 			.get(`${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`)
 			.then(response => {
+        
 			let { status, emails, actions, id } = response.data.data;
-			if (status == 'PENDING' || status == 'IN_PROGRESS')
-				disableFollowUp.value = false;
-			else disableFollowUp.value = true;
-			followUpstatus.value = status;
-			followUpEmails.value = emails;
-			followUpActions.value = actions;
-			followUpId.value = id;
+
+      if(id) {
+          hideFollowUp.value = false;
+
+          if (status == 'PENDING' || status == 'IN_PROGRESS')  {        
+            disableFollowUp.value = false;
+          }				
+          else disableFollowUp.value = true;
+
+          followUpstatus.value = status;
+          followUpEmails.value = emails;
+          followUpActions.value = actions;
+          followUpId.value = id;
+        }
+        else
+        {
+          hideFollowUp.value = true;
+        }			
 			})
 			.catch(error => {
-				hideFollowUp.value = false;
+        hideFollowUp.value = true;
 			});
 	} catch (error) {
-		hideFollowUp.value = false;
+		hideFollowUp.value = true;    
 	}
 };
 
@@ -1141,7 +1153,11 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 onMounted(() => {
-	getFollowUpsByQuote()
+
+  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
+    getFollowUpsByQuote();
+  }
+	
 	// setLeadStatuses();
 });
 
@@ -1923,7 +1939,7 @@ const loadEmailEvents = (email) => {
           <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
         </h3>
         <div v-if="!hasRole(rolesEnum.PA)">
-          <x-tooltip v-if="hideFollowUp && hasRole(rolesEnum.CarAdvisor)">
+          <x-tooltip v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)">
             <x-button
               class="ml-2 mr-2"
               :disabled="disableFollowUp"
@@ -2099,6 +2115,7 @@ const loadEmailEvents = (email) => {
       		</x-modal>
 
       <FollowUpReasons
+        v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
         :modelValue="showfollowup"
         @update:modelValue="value => closeModal(value)"
         :uuid="page.props.record.id"
@@ -2106,6 +2123,7 @@ const loadEmailEvents = (email) => {
         :followUpId="followUpId"
 		:kyoEndPoint="kyoEndPoint"
       />
+
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
@@ -2163,9 +2181,10 @@ const loadEmailEvents = (email) => {
         />
       </x-modal>
     </div>
+    
     <div
       class="p-4 rounded shadow mb-6 bg-white"
-      v-if="hasRole(rolesEnum.CarAdvisor)"
+      v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
     >
 
     <x-modal v-model="modals.showEmailEventsModal" size="lg" show-close backdrop>
@@ -2186,7 +2205,7 @@ const loadEmailEvents = (email) => {
 
 
 
-      <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
+      <h3 class="font-semibold text-primary-800 text-lg mb-4">Auto Followup - Emails</h3>
       <DataTable
         table-class-name="tablefixed compact"
         :headers="emailsHeaders"
@@ -2213,12 +2232,8 @@ const loadEmailEvents = (email) => {
         </template>
 
       </DataTable>
-    </div>
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-      v-if="hasRole(rolesEnum.CarAdvisor)"
-    >
-      <h3 class="font-semibold text-primary-800 text-lg mb-4">Actions</h3>
+
+      <h3 class="font-semibold text-primary-800 text-lg mt-5 mb-4">Auto Followup - Actions</h3>
       <DataTable
         table-class-name="tablefixed compact"
         :headers="actionsHeaders"
@@ -2229,8 +2244,9 @@ const loadEmailEvents = (email) => {
         :hide-footer="followUpActions.length < 15"
       >
       </DataTable>
-    </div>
 
+    </div>
+    
 		<EmbeddedProducts
       	:data="embeddedProducts"
       	:link="record.uuid"
