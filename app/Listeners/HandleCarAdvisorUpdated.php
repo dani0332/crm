@@ -81,7 +81,6 @@ class HandleCarAdvisorUpdated
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisor, $tierR->id);
 
-
         // Dispatch an email job to send the email
         IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'lms-intro-email');
     }
@@ -108,10 +107,6 @@ class HandleCarAdvisorUpdated
         }
     }
 
-    /**
-     * @param array $plans
-     * @return array
-     */
     public function executePlansSelectionLogic(array $plans): array
     {
         // Sort plans from lowest to highest by discount premium
@@ -137,6 +132,6 @@ class HandleCarAdvisorUpdated
         }
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
-        return !empty($top6Plans) ? $top6Plans : $plans;
+        return ! empty($top6Plans) ? $top6Plans : $plans;
     }
 }

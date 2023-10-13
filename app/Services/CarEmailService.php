@@ -58,6 +58,7 @@ class CarEmailService extends BaseService
             $emailData->renewalDueDate = $carbonDate;
 
         }
+
         return $emailData;
     }
 
@@ -191,6 +192,7 @@ class CarEmailService extends BaseService
         } else {
             $result = $repairType;
         }
+
         return $result;
     }
 }
