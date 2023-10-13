@@ -36,7 +36,6 @@
         "vue": "^3.3.4",
         "vue3-dropzone": "^2.0.1",
         "vue3-easy-data-table": "^1.5.47",
-        "webpack": "^5.88.2",
         "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
     }
 }
