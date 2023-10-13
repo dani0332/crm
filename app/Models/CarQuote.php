@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Auth;
@@ -426,5 +427,11 @@ class CarQuote extends BaseModel
     public function carLostQuoteLog()
     {
         return $this->hasOne(CarLostQuoteLog::class, 'car_quote_request_id')->latestOfMany();
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Car);
     }
 }

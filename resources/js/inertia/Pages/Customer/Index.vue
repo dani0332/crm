@@ -1,5 +1,7 @@
 <script setup>
 
+import {useGetShowPageRoute} from "../../Composables/utilities";
+
 const props = defineProps({
     customers : Object,
     userId: Number,
@@ -17,6 +19,8 @@ const loader = reactive({
     table: false,
     export: false,
 });
+
+const getDetailPageRoute = (uuid, quote_type_id, business_type_of_insurance_id) => useGetShowPageRoute(uuid, quote_type_id, business_type_of_insurance_id);
 
 const getQuoteType = quoteTypeKey => {
     return props.quoteTypes[quoteTypeKey];
@@ -127,10 +131,10 @@ function onReset(){
                 </Link>
             </template>
 
-            <template #item-code="{ code, uuid, advisor_id, quote_type_id }">
+            <template #item-code="{ code, uuid, advisor_id, quote_type_id, business_type_of_insurance_id }">
                 <Link
                     v-if="userId === advisor_id"
-                    :href="useGetShowPageRoute(uuid, quote_type_id)"
+                    :href="getDetailPageRoute(uuid, quote_type_id, business_type_of_insurance_id)"
                     target="_blank"
                     class="text-primary-500 hover:underline"
                 >

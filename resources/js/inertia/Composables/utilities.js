@@ -33,14 +33,16 @@ export const useObjToUrl = obj => {
     .join('&');
 };
 
-export const useGetShowPageRoute = (uuid, quoteTypeId) => {
+export const useGetShowPageRoute = (uuid, quoteTypeId, business_type_of_insurance_id) => {
+
+    let business_route = (business_type_of_insurance_id == 5) ? route('amt.show', uuid) : route('business.show', uuid);
 
     const routesObj = {
         1: route('car.show', uuid),
         2: route('home.show', uuid),
         3: route('health.show', uuid),
         4: route('life-quotes-show', uuid),
-        5: route('business.show', uuid),
+        5: business_route,
         6: route('bike-quotes-show', uuid),
         7: route('yacht-quotes-show', uuid),
         8: route('travel.show', uuid),
