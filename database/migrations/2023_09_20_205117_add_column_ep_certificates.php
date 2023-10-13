@@ -15,7 +15,7 @@ class AddColumnEpCertificates extends Migration
     {
         Schema::table('embedded_transactions', function (Blueprint $table) {
             if (! Schema::hasColumn('embedded_transactions', 'certificate_number')) {
-                $table->string('certificate_number',20)->nullable()->index();
+                $table->string('certificate_number', 20)->nullable()->index();
             }
         });
 

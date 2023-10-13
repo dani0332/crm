@@ -538,7 +538,8 @@ class CRUDService extends BaseService
             'epOptionId' => $data->id,
         ];
 
-        $response = Ken::request('/toggle-embedded-product','post',$toggleData);
+        $response = Ken::request('/toggle-embedded-product', 'post', $toggleData);
+
         return $response;
     }
     public function cancelPayment($request)
@@ -590,8 +591,7 @@ class CRUDService extends BaseService
             ],
         ];
 
-        $response = Marshall::request('/payment/checkout/cancel','post',$planData);
-
+        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
 
         return $response;
     }

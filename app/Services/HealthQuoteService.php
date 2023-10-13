@@ -12,16 +12,12 @@ use App\Jobs\CammyJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\PaymentAction;
-use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -1325,10 +1321,5 @@ class HealthQuoteService extends BaseService
             return $response;
         }
     }
-
-
-
-
-
 
 }
