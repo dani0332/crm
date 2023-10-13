@@ -125,9 +125,8 @@ class CarEmailService extends BaseService
 
     public function getPlanBenefits($plan)
     {
-        $planAddonsArray = json_decode($plan->addons);
         $planAddons = [];
-        foreach ($planAddonsArray as $addon) {
+        foreach ($plan->addons as $addon) {
             $planAddons[] = [
                 'value' => $addon->text,
             ];
