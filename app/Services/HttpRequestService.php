@@ -145,6 +145,7 @@ class HttpRequestService extends BaseService
         if (isset($quotePlans->message) && $quotePlans->message != '') {
             return [];
         }
+
         // Extract the plans if they exist, otherwise return an empty array
         return isset($quotePlans->quotes->plans) ? $quotePlans->quotes->plans : [];
     }
