@@ -41,12 +41,16 @@ class CarEmailService extends BaseService
         $advisor = User::where('id', $carQuote->advisor_id)->first();
         $plans = $this->httpService->getPlans($carQuote->uuid, true, false, false);
         $insurerPlans = [];
+        // sort plans from lowest to highest by discount premium and update $plans
+        usort($plans, function ($a, $b) {
+            return $a->discountPremium <=> $b->discountPremium;
+        });
         foreach ($plans as $plan) {
             $insurerPlans[] = [
                 'carValue' => $carQuote->carValue,
                 'excessAed' => $plan->excess,
                 'repairType' => $plan->repairType,
-                'discountPremium' => $plan->discount_premium,
+                'discountPremium' => $plan->discountPremium,
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
