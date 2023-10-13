@@ -55,8 +55,7 @@ class HandleCarAdvisorUpdated
     }
     public function buildSMS($lead)
     {
-
-        info('inside buidl sms ');
+        info('inside build sms');
         $content = 'Hi ';
         $clientNumber = '+923340555850';
         $customer = Customer::where('id', 19811)->first();
@@ -67,24 +66,21 @@ class HandleCarAdvisorUpdated
 
     public function triggerCarQuoteEmail($lead, $previousAdvisor)
     {
-        info('inside trigger car quote email');
         // Initialize email data and retrieve Tier R information
         $emailData = '';
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-        info('tier R id is '.$tierR->id);
 
         // Retrieve plans with available ratings for the given lead
         $plans = $this->httpService->getPlans($lead->uuid, true, false, false);
+
+        $plans = $this->executePlansSelectionLogic($plans);
+
         // Determine the email template ID
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
-        info('email template id is '.$emailTemplateId.' for lead '.$lead->uuid);
+
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisor, $tierR->id);
-        info('email data is '.json_encode($emailData).' for lead '.$lead->uuid);
-        // Log email data and template ID
-        info('Email data: '.json_encode($emailData));
 
-        info('Email template ID: '.json_encode($emailTemplateId));
 
         // Dispatch an email job to send the email
         IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'lms-intro-email');
@@ -112,4 +108,35 @@ class HandleCarAdvisorUpdated
         }
     }
 
+    /**
+     * @param array $plans
+     * @return array
+     */
+    public function executePlansSelectionLogic(array $plans): array
+    {
+        // Sort plans from lowest to highest by discount premium
+        usort($plans, function ($a, $b) {
+            return $a->discountPremium <=> $b->discountPremium;
+        });
+
+        // Check if there are any 'Comp' plans
+        $compPlans = array_filter($plans, function ($plan) {
+            return $plan->repairType == 'Comp' && $plan->isRatingAvailable == true;
+        });
+
+        if (count($compPlans) > 0) {
+            // If 'Comp' plans exist, return the top 6 'Comp' plans
+            $top6Plans = array_slice($compPlans, 0, 6);
+        } else {
+            // If there are no 'Comp' plans, return the top 6 plans
+            $filteredPlans = array_filter($plans, function ($plan) {
+                return $plan->repairType == 'TPL' && $plan->isRatingAvailable == true;
+            });
+
+            $top6Plans = array_slice($filteredPlans, 0, 6);
+        }
+
+        // return $top6Plans if $top6Plans is not empty otherwise return $plans
+        return !empty($top6Plans) ? $top6Plans : $plans;
+    }
 }

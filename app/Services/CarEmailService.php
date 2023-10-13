@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\CarPlanType;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -13,13 +14,6 @@ use Carbon\Carbon;
 
 class CarEmailService extends BaseService
 {
-    private $httpService;
-    public function __construct(HttpRequestService $httpService)
-    {
-        $this->httpService = $httpService;
-        parent::__construct();
-    }
-
     public function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
@@ -36,20 +30,15 @@ class CarEmailService extends BaseService
         return $emailData;
     }
 
-    public function buildPlansEmailData($carQuote, $previousAdvisor, $tierRId)
+    public function buildPlansEmailData($carQuote, $plans, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
-        $plans = $this->httpService->getPlans($carQuote->uuid, true, false, false);
         $insurerPlans = [];
-        // sort plans from lowest to highest by discount premium and update $plans
-        usort($plans, function ($a, $b) {
-            return $a->discountPremium <=> $b->discountPremium;
-        });
         foreach ($plans as $plan) {
             $insurerPlans[] = [
                 'carValue' => $carQuote->carValue,
                 'excessAed' => $plan->excess,
-                'repairType' => $plan->repairType,
+                'repairType' => $this->getUpdateRepairType($plan->repairType, $plan->providerCode),
                 'discountPremium' => $plan->discountPremium,
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
@@ -57,7 +46,6 @@ class CarEmailService extends BaseService
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
             ];
         }
-
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
@@ -70,13 +58,13 @@ class CarEmailService extends BaseService
             $emailData->renewalDueDate = $carbonDate;
 
         }
-
         return $emailData;
     }
 
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
+
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
@@ -186,5 +174,23 @@ class CarEmailService extends BaseService
         }
 
         return $vehicleName;
+    }
+
+    private function getUpdateRepairType($repairType, $providerCode)
+    {
+        $coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+        $halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
+        if ($repairType == CarPlanType::COMP) {
+            if (in_array($providerCode, $coreInsurer)) {
+                $result = 'Premium workshop';
+            } elseif (in_array($providerCode, $halfLiveInsurer)) {
+                $result = 'Non-Agency workshop';
+            } else {
+                $result = 'NON-AGENCY';
+            }
+        } else {
+            $result = $repairType;
+        }
+        return $result;
     }
 }
