@@ -248,13 +248,11 @@ class EmbeddedProductRepository extends BaseRepository
 
                         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
 
-                        $exploded = explode('/', $path);
-
                         $file = file_get_contents($pwDoc);
                         $mimeType = $fileInfo->buffer($file);
                         $attachments[] = [
                             'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => end($exploded),
+                            'Name' => $ep->display_name . '- Policy Wordings.pdf',
                             'ContentType' => $mimeType,
                         ];
                     }
@@ -312,7 +310,6 @@ class EmbeddedProductRepository extends BaseRepository
             'From' => config('constants.MA_FROM_EMAIL'),
             'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             'To' => $quoteObject->email,
-            // 'To' => 'nouman.hussain@insurancemarket.ae',
             'Tag' => '',
             'TemplateAlias' => 'embedded-products-payment-auth',
             'Attachments' => isset($attachments) ? $attachments : null,
