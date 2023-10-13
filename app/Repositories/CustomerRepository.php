@@ -20,17 +20,14 @@ class CustomerRepository extends BaseRepository
     }
 
     /**
-     * @return CustomerAdditionalContact
+     * @return bool
      */
     public function fetchStoreAdditionalContact($customerId, $data)
     {
-        Log::info('Customer additional contact id: '.$customerId.' new: '.$data['key'].' value: '.$data['value']);
+        $customer = $this->findOrFail($customerId);
+        $customer->additionalContactInfo()->create($data);
 
-        return CustomerAdditionalContact::updateOrCreate([
-            'customer_id' => $customerId,
-            'key' => $data['key'],
-            'value' => trim($data['value']),
-        ]);
+        return $customer;
     }
 
     public function fetchGetAdditionalContacts($customerId, $quoteMobileNo)

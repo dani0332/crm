@@ -5,7 +5,6 @@ import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
-import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 
 defineProps({
   quote: Object,

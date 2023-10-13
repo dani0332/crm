@@ -49,15 +49,15 @@ const modals = reactive({
 });
 
 const addAdditionalContact = () => {
-    additionalContact.key = null;
-    additionalContact.value = null;
+    additionalContact.additional_contact_type = null;
+    additionalContact.additional_contact_val = null;
     modals.addContact = true;
 };
 
 const additionalContact = useForm({
     id: null,
-    key: null,
-    value: null,
+    additional_contact_type: null,
+    additional_contact_val: null,
     quote_id: props.quoteId,
     customer_id: props.customerId,
     quote_type: props.quoteType,
@@ -260,7 +260,7 @@ const additionalContactDeleteConfirmed = () => {
         <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
           <div class="grid gap-4">
             <x-select
-              v-model="additionalContact.key"
+              v-model="additionalContact.additional_contact_type"
               label="Type"
               :options="[
                 { value: 'email', label: 'Email' },
@@ -272,16 +272,16 @@ const additionalContactDeleteConfirmed = () => {
             />
 
             <x-input
-              v-if="additionalContact.key === 'mobile_no'"
-              v-model="additionalContact.value"
+              v-if="additionalContact.additional_contact_type === 'mobile_no'"
+              v-model="additionalContact.additional_contact_val"
               label="Value"
               :rules="[isRequired, isMobileNo]"
               class="w-full"
             />
 
             <x-input
-              v-if="additionalContact.key === 'email'"
-              v-model="additionalContact.value"
+              v-if="additionalContact.additional_contact_type === 'email'"
+              v-model="additionalContact.additional_contact_val"
               label="Value"
               :rules="[isRequired, isEmail]"
               class="w-full"
