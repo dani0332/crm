@@ -334,7 +334,6 @@ const onCreateDuplicate = isValid => {
     />
 
     <QuotePayments
-      v-if="isBetaUser"
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"

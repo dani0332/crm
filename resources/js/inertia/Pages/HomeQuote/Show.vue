@@ -866,7 +866,6 @@ const policyDetails = useForm({
     </div>
 
     <PaymentTable
-      v-if="isBetaUser"
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"

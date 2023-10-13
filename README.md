@@ -61,4 +61,4 @@ To run Cypress tests on local machine:
 - Run cypress runner using command ```yarn cypress open```
 - Select e2e tests and then any browser i.e. chrome. 
 - Try running your desired test. 
-- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran. 
+- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran.
