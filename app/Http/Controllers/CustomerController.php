@@ -6,6 +6,7 @@ use App\Enums\GenericRequestEnum;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
+use App\Repositories\CustomerRepository;
 use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\CustomerUploadService;
@@ -295,5 +296,10 @@ class CustomerController extends Controller
         return response()->json(['data' => [
             'message' => 'Contact added successfully.',
         ]]);
+    }
+
+    public function customerAlreadyEmailExistCheck(Request $request)
+    {
+        return response()->json(['response' => (bool) $this->customerService->getCustomerByEmail($request->value)]);
     }
 }

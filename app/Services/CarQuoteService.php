@@ -142,7 +142,8 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier'
+                'cqr.car_value_tier',
+                'cpip.code as plan_provider_code'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -747,80 +748,80 @@ class CarQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
 
-        if ($request->ajax()) {
-            $this->addLeadViewEligibilityCheck();
+        // if ($request->ajax()) {
+        $this->addLeadViewEligibilityCheck();
 
-            if (
-                empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
-            ) {
-                $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-            }
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
+            $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+        }
 
-            if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
-                $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
-                $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
-            }
-            if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
-                $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
-                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
-            }
-            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = $this->parseDate($request['next_followup_date'], true);
-                $dateTo = $this->parseDate($request['next_followup_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
-            }
-            if (
-                in_array('created_at', $searchProperties)
-                && isset($request->created_at) && $request->created_at != ''
-                && empty($request->email)
-                && empty($request->code)
-                && empty($request->renewal_batch)
-                && empty($request->quote_batch_id)
-            ) {
-                $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], false);
-                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
-            }
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
+            $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+        }
+        if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
+            $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
+            $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
+        }
+        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+            $dateFrom = $this->parseDate($request['next_followup_date'], true);
+            $dateTo = $this->parseDate($request['next_followup_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+        }
+        if (
+            in_array('created_at', $searchProperties)
+            && isset($request->created_at) && $request->created_at != ''
+            && empty($request->email)
+            && empty($request->code)
+            && empty($request->renewal_batch)
+            && empty($request->quote_batch_id)
+        ) {
+            $dateFrom = $this->parseDate($request['created_at'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], false);
+            $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
+        }
 
-            foreach ($searchProperties as $item) {
-                if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
-                    if ($request[$item] == 'null') {
-                        $this->query->whereNull($item);
-                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                        if ($request[$item][0] == 'null') {
-                            $this->query->whereNull('cqr.advisor_id');
-                        } else {
-                            $this->query->whereIn('cqr.advisor_id', $request[$item]);
-                        }
-                    } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                        $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                    } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                        $this->query->whereIn('cqr.tier_id', $request[$item]);
-                    } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                        $this->query->whereIn('qb.id', $request[$item]);
+        foreach ($searchProperties as $item) {
+            if (! empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
+                if ($request[$item] == 'null') {
+                    $this->query->whereNull($item);
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    if ($request[$item][0] == 'null' || $request[$item][0] == null) {
+                        $this->query->whereNull('cqr.advisor_id');
                     } else {
-                        $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
-                        if ($item == 'policy_number') {
-                            $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
-                        } elseif ($item == 'show_renewal_upload_leads') {
-                            if ($request[$item] == 'Yes') {
-                                $this->query->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD);
-                            } else {
-                                $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
-                            }
+                        $this->query->whereIn('cqr.advisor_id', $request[$item]);
+                    }
+                } elseif ($item == 'quote_status_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    $this->query->whereIn('cqr.quote_status_id', $request[$item]);
+                } elseif ($item == 'tier_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    $this->query->whereIn('cqr.tier_id', $request[$item]);
+                } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && ! empty($request[$item])) {
+                    $this->query->whereIn('qb.id', $request[$item]);
+                } else {
+                    $searchedValue = preg_match("/\b".'Yes'."\b/i", $request[$item]) || preg_match("/\b".'No'."\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
+                    if ($item == 'policy_number') {
+                        $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
+                    } elseif ($item == 'show_renewal_upload_leads') {
+                        if ($request[$item] == 'Yes') {
+                            $this->query->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD);
                         } else {
-                            if ($item == 'email' && $searchedValue == '0') {
-                                continue;
-                            }
-                            $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
+                            $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
                         }
+                    } else {
+                        if ($item == 'email' && $searchedValue == '0') {
+                            continue;
+                        }
+                        $this->query->where($this->getQuerySuffix($item).'.'.$item, $searchedValue);
                     }
                 }
             }
         }
+        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -1007,6 +1008,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            // "callSource" => "imcrm"
         ];
 
         if ($isDisabledEnabled) {
@@ -1065,6 +1067,8 @@ class CarQuoteService extends BaseService
             ->select(
                 'car_addon.text AS car_addon_text',
                 'car_addon_option.value AS car_addon_option_value',
+                'car_addon_option.price AS car_addon_option_price',
+                // 'car_addon_option.vat AS car_addon_option_vat',
                 'car_quote_request_addon.price AS car_quote_request_addon_price',
                 'car_addon.type AS car_addon_type'
             )
@@ -1453,7 +1457,7 @@ class CarQuoteService extends BaseService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
         if ($request->planIds) {
-            $data = explode(',', $request->planIds);
+            $data = $request->planIds;
             $isDisabled = $request->toggle;
             $plansArray = [];
             for ($i = 0; $i < count($data); $i++) {
@@ -1574,6 +1578,30 @@ class CarQuoteService extends BaseService
         }
     }
 
+    public function getValidationArray(): array
+    {
+        return [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'dob' => 'required',
+            'nationality_id' => 'required',
+            'uae_license_held_for_id' => 'required',
+            'back_home_license_held_for_id' => 'nullable',
+            'year_of_manufacture' => 'required',
+            'emirate_of_registration_id' => 'required',
+            'car_type_insurance_id' => 'required',
+            'claim_history_id' => 'required',
+            'additional_notes' => 'nullable',
+            'car_value_tier' => 'required',
+            'seat_capacity' => 'required',
+            'cylinder' => 'required|string',
+            'vehicle_type_id' => 'required',
+            'car_make_id' => 'required', // ID
+            'car_model_id' => 'required', // ID
+            'currently_insured_with' => 'required|string',
+        ];
+    }
+
     /**
      * @return bool[]
      */
@@ -1615,4 +1643,5 @@ class CarQuoteService extends BaseService
 
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
+
 }

@@ -425,6 +425,7 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
+            quoteTypeCode::Car,
             quoteTypeCode::Travel,
             quoteTypeCode::Home,
             quoteTypeCode::Life,
