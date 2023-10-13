@@ -143,7 +143,7 @@ class CarQuoteService extends BaseService
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
-                'ihp.code as plan_provider_code'
+                'cpip.code as plan_provider_code'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -164,8 +164,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id')
             ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
-            ->leftJoin('car_plan as cp2', 'cp2.id', '=', 'cqr.plan_id')
-            ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'cp2.provider_id')
             ->leftJoin('quote_view_count as qvc', function ($join) {
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
