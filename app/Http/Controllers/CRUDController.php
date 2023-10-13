@@ -245,6 +245,14 @@ class CRUDController extends Controller
 
             $quote_status = $dropdownSource['quote_status_id'];
 
+            $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
+            $userMaxCap = $todaysAllocationData['max_capacity'];
+            $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
+            $todayManualCount = $todaysAllocationData['manual_assignment_count'];
+            $yesterdayAllocationData = $this->allocationService->getHealthYesterdayCounts(auth()->user()->id);
+            $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
+            $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
+
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
