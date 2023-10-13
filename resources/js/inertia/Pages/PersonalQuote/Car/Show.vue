@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import PaymentTable from './Partials/PaymentTable.vue'
-import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import QuoteStatus from './../Partials/QuoteStatus.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
