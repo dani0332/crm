@@ -258,7 +258,7 @@ class AllocationService
     {
         $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
-        $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.car_quote_request_id', '=', 'health_quote_request.id')
+        $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
             ->whereBetween('health_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
             ->where('advisor_id', $userId)->get();
 
