@@ -8,13 +8,19 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
+use App\Facades\Marshall;
 use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
+use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
 use App\Models\GenericModel;
+use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -523,5 +529,70 @@ class CRUDService extends BaseService
         ];
 
         return $genderOptions;
+    }
+    public function toggleSelection($data, $quoteTypeId)
+    {
+        $toggleData = [
+            'quoteUid' => $data->quote_uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'epOptionId' => $data->id,
+        ];
+
+        $response = Ken::request('/toggle-embedded-product','post',$toggleData);
+        return $response;
+    }
+    public function cancelPayment($request)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
+        $type = QuoteType::where('code', $request->modelType)->first();
+        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
+            ->where('quote_type_id', $type->id)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->first();
+        if (isset($embededTransaction->payments[0])) {
+            $payment = $embededTransaction->payments[0];
+            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+            if ($maxAmount >= $request->amount) {
+                $paymentAction = new PaymentAction();
+                $paymentAction->payment_code = $embededTransaction->code; //$embededTransaction->code;
+                $paymentAction->is_fulfilled = 0;
+                $paymentAction->action_type = 'REFUND';
+                $paymentAction->reason = $request->reason;
+                $paymentAction->amount = $request->amount;
+                $paymentAction->created_by = auth()->user()->email;
+
+                $paymentAction->save();
+                $data = [
+                    'uuid' => $request->uuid,
+                    'type_id' => $type->id,
+                    'code' => $embededTransaction->code,
+
+                ];
+                $processResponse = $this->processCancelPayment($data);
+
+                return response($processResponse, 403);
+            } else {
+                return response(['should not be maximum'], 403);
+            }
+        }
+
+        return response(['Payment not exist'], 403);
+    }
+    public function processCancelPayment($data)
+    {
+        $planData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $response = Marshall::request('/payment/checkout/cancel','post',$planData);
+
+
+        return $response;
     }
 }

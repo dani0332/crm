@@ -1763,14 +1763,14 @@ class CRUDController extends Controller
 
     public function cancelPayment(Request $request)
     {
-        return $this->healthQuoteService->cancelPayment($request);
+        return $this->crudService->cancelPayment($request);
     }
 
     public function toggleEmbeddedProduct(Request $request)
     {
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
 
-        return $this->healthQuoteService->toggleSelection($request, $quoteTypeId);
+        return $this->crudService->toggleSelection($request, $quoteTypeId);
     }
 
     /**

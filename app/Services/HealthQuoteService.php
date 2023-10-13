@@ -1326,99 +1326,9 @@ class HealthQuoteService extends BaseService
         }
     }
 
-    public function cancelPayment($request)
-    {
-        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
-        $type = QuoteType::where('code', $request->modelType)->first();
-        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
-            ->where('quote_type_id', $type->id)
-            ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->first();
-        if (isset($embededTransaction->payments[0])) {
-            $payment = $embededTransaction->payments[0];
-            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-            if ($maxAmount >= $request->amount) {
-                $paymentAction = new PaymentAction();
-                $paymentAction->payment_code = $embededTransaction->code; //$embededTransaction->code;
-                $paymentAction->is_fulfilled = 0;
-                $paymentAction->action_type = 'REFUND';
-                $paymentAction->reason = $request->reason;
-                $paymentAction->amount = $request->amount;
-                $paymentAction->created_by = auth()->user()->email;
 
-                $paymentAction->save();
-                $data = [
-                    'uuid' => $request->uuid,
-                    'type_id' => $type->id,
-                    'code' => $embededTransaction->code,
 
-                ];
-                $processResponse = $this->processCancelPayment($data);
 
-                return response($processResponse, 403);
-            } else {
-                return response(['should not be maximum'], 403);
-            }
-        }
 
-        return response(['Payment not exist'], 403);
-    }
 
-    public function toggleSelection($data, $quoteTypeId)
-    {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/toggle-embedded-product';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
-
-        $toggleData = [
-            'quoteUid' => $data->quote_uuid,
-            'quoteTypeId' => $quoteTypeId,
-            'epOptionId' => $data->id,
-        ];
-
-        $apiCreds = [
-            'apiEndPoint' => $apiEndPoint,
-            'apiToken' => $apiToken,
-            'apiTimeout' => $apiTimeout,
-            'apiUserName' => $apiUserName,
-            'apiPassword' => $apiPassword,
-        ];
-
-        $response = $this->httpService->processRequest($toggleData, $apiCreds);
-
-        return $response;
-    }
-
-    public function processCancelPayment($data)
-    {
-        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
-        $apiToken = config('constants.MARSHALL_API_TOKEN');
-        $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
-        $apiUserName = config('constants.MARSHALL_API_USER');
-        $apiPassword = config('constants.MARSHALL_API_PWD');
-
-        $carPlanData = [
-            'quoteUID' => $data['uuid'],
-            'quoteTypeId' => $data['type_id'],
-            'payments' => [
-                [
-                    'codeRef' => $data['code'],
-                ],
-            ],
-        ];
-
-        $apiCreds = [
-            'apiEndPoint' => $apiEndPoint,
-            'apiToken' => $apiToken,
-            'apiTimeout' => $apiTimeout,
-            'apiUserName' => $apiUserName,
-            'apiPassword' => $apiPassword,
-        ];
-
-        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
-        return $response;
-    }
 }

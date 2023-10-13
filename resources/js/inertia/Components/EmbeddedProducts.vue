@@ -37,9 +37,11 @@ const modals = reactive({
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
+    console.log('item',item);
   paymentForm.reset();
   paymentForm.embedded_id = item.id;
-  paymentForm.quote_id = usePage().props.quote.id;
+  paymentForm.quote_id = props.quote.id;
+  paymentForm.uuid = props.quote.uuid;
   modals.cancelPayment = true;
 };
 const paymentForm = useForm({
@@ -201,6 +203,7 @@ const toggleProduct = (ep, event) => {
   axios
     .post(requestUrl, data)
     .then(res => {
+        console.log('res',res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -264,7 +267,8 @@ const hasAnyRole = roles => useHasAnyRole(roles);
       </template>
 
       <template #item-prices="{prices}">
-        <div v-if="prices.length > 1" class="flex gap-3">
+
+        <div v-if="prices.length > 0" class="flex gap-3">
 
 
             <x-tag color="primary" v-for="priceItem  in prices">
