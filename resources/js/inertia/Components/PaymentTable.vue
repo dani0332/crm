@@ -10,7 +10,6 @@ const can = permission => useCan(permission);
 
 const props = defineProps({
   payments: Array,
-  splitPayments: Array,
   can: Object,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
@@ -19,8 +18,6 @@ const props = defineProps({
   quote: Object,
   quoteType: String,
 });
-
-//console.log('hafeez'+ JSON.stringify(props.paymentMethods));
 
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
@@ -43,15 +40,6 @@ const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
 
 const totalAmount = ref(props.quoteRequest.premium); // Initial total price
-/*
-const totalAmount = computed(() => { // Calculate total amount based on discount amount
-  const discount = discountValue.value;
-  if (discount > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
-    return 0;
-  } else {
-    return totalPrice.value - discount;
-  }
-});*/
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
@@ -109,9 +97,6 @@ const validatePaymentOption = () => {
           return true;
         }
       }
-
-      //console.log('totalSplitAmount'+totalSplitAmount.toFixed(2));
-      //console.log('totalAmount'+totalAmount.value.toFixed(2));
       if(totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)){
         isPaymentCalculationError.value = true;
         return true;
@@ -130,23 +115,7 @@ const totalPayments = ref([
 
  const paymentTypes = ref(props.paymentMethods.filter(item => !['CR_FAYAZ', 'CR_HITESH', 'CR_MAHESH', 'CR'].includes(item.value)));
  paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
- 
- /*
-const paymentTypes = ref([
-  { value: '', label: 'Select Payment'},
-  { value: 'BT', label: 'Bank Transfer', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_BT },
-  { value: 'CSH', label: 'Cash', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CSH},
-  { value: 'CHQ', label: 'Cheque', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CHQ },
-  { value: 'CC', label: 'Credit Card', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CC },
-  { value: 'PDC', label: 'Post Dated Cheque', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PDC },
-  { value: 'IP', label: 'Insurer Payment', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_IP },
-  { value: 'PP', label: 'Parttial Payment', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PP },
-  { value: 'MP', label: 'Multiple Payment', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_MP },
-  { value: 'CA', label: 'Credit Approval', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_CA },
-  { value: 'PPR', label: 'Proforma Payment Request', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_PPR },
-  { value: 'IN_PL', label: 'Insure Now Pay Later', tooltip: props.paymentTooltipEnum.PAYMENT_LIST_IN_PL },
-]);*/
-
+  
 const frequencyTypes = [
   { value: '', label: 'Select Frequency'},
   { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
@@ -181,7 +150,6 @@ const discountReasons = [
   { value: 'competitive_pricing_discount', label: 'Competitive pricing discount' },
   { value: 'custom_discount_reason', label: 'Custom discount reason' },  
 ];
-
 
 const handlePaymentOptions = () => {
   if( paymentMethodsModels.value[1] === 'CHQ' || paymentMethodsModels.value[1] === 'PDC' ) {
@@ -527,9 +495,6 @@ const getPlanName = computed(() => {
   return plan ? plan.text : 'Not Available';
 });
 
-const getTotalPrice = computed(() => {
-  return 200;  
-});
 
 const providerName = computed(() => {
   const plan = props.quoteRequest.plan;
@@ -569,10 +534,9 @@ const providerId = computed(() => {
         Add Payment
       </x-button> -->
     </div>
-
     
-    <div class="vue3-easy-data-table">
-      <div class="vue3-easy-data-table__main border-cell">
+    <div class="vue3-easy-data-table tablefixed">
+      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell">
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
@@ -728,7 +692,7 @@ const providerId = computed(() => {
               </td>
             </tr>
             <template v-if="isExpandedSplitPayments">
-            <tr v-for="splitPayment in splitPayments" :key="splitPayment.id">
+            <tr v-for="splitPayment in payments[0].payment_splits" :key="splitPayment.id">
               <td>{{ splitPayment.sr_no }}</td>
               <td></td>
               <td>{{ splitPayment.due_date }}</td>
@@ -994,7 +958,7 @@ const providerId = computed(() => {
 						color="error"
 						class="mb-5"						
 					>
-					Your calculations are wrong	
+					The system has detected a discrepancy. Before you hit 'Add Manual Payment,' please check the each payment transaction. If you spot any discrepancies, make the necessary adjustments. Once everything lines up, you're good to proceed.	
 				</x-alert>
 
 
@@ -1096,6 +1060,16 @@ const providerId = computed(() => {
                 />  
               </div>
               <div class="w-1/5 px-2">
+                <!--
+                <Dropzone
+                  :id="documentType.id"
+                  :accept="documentType.accepted_files"
+                  :max-files="documentType.max_files"
+                  :max-size="documentType.max_size"
+                  :loading="docForm.processing"
+                  @change="uploadFile(documentType, $event)"
+                />
+                -->
                 <x-input
                   class="w-full"
                   v-model="fileUploadModels[count]"

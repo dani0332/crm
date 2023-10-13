@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             AddApiLogViewToPermssion::class,
             PaymentMethodsAddSeeder::class,
+            AddNewDocumentTypeSeeder::class,
         ]);
     }
 }

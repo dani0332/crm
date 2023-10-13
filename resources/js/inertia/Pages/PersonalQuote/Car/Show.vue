@@ -69,8 +69,7 @@ defineProps({
 	lostRejectReasons: Array,
 	leadDocsStoragePath: String,
 	kyoEndPoint: String,
-	paymentTooltipEnum: Object,
-	splitPayments: Array,
+	paymentTooltipEnum: Object,	
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1745,7 +1744,6 @@ const loadEmailEvents = (email) => {
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Car"
 			:payments="payments"
-			:splitPayments="splitPayments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"

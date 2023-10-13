@@ -12,7 +12,7 @@ class PaymentSplits extends Model
     protected $table = 'payment_splits';
     protected $fillable = ['code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount', 'due_date', 'payment_status_id'];
     
-    public function splitPayments()
+    public function payment()
     {
         return $this->belongsTo(Payment::class, 'code', 'code');
     }
