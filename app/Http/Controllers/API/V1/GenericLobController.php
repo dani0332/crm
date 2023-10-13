@@ -17,7 +17,7 @@ class GenericLobController extends Controller
     protected $healthQuoteService;
 
     public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
-    {        
+    {
         $this->carQuoteService = $carQuoteService;
         $this->healthQuoteService = $healthQuoteService;
     }

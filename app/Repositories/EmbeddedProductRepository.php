@@ -252,7 +252,7 @@ class EmbeddedProductRepository extends BaseRepository
                         $mimeType = $fileInfo->buffer($file);
                         $attachments[] = [
                             'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => $ep->display_name . '- Policy Wordings.pdf',
+                            'Name' => $ep->display_name.'- Policy Wordings.pdf',
                             'ContentType' => $mimeType,
                         ];
                     }
