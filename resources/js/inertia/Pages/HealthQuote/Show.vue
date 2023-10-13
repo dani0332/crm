@@ -755,36 +755,43 @@ const isMounted = ref(false);
 const selectedCoPay = reactive({
   id: null,
   premium: null,
+  vat: null,
   planId: null,
 });
 
 const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
+  let smallestCopayVAT = 0;
   plansData.value.forEach(element => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
-        smallestCopayValue = value.premium;
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat)
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
-        smallestCopayValue = value.premium;
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat);
         defaultCopayId = value.healthPlanCoPaymentId;
       }
     });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
+      element.vat = selectedCoPay.vat;
       element.selectedCopayId = selectedCoPay.id;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
+      element.vat = smallestCopayVAT;
     }
   });
 };
 
 const onSelectedCopay = data => {
   selectedCoPay.id = data.id;
-  selectedCoPay.premium = data.premium;
+  selectedCoPay.premium = Number(data.premium);
+  selectedCoPay.vat = Number(data.vat);
   selectedCoPay.planId = data.planId;
   getSmallestCopayRateAsDefaultValue();
 };
@@ -2433,8 +2440,8 @@ onMounted(() => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, policyFee, basmah }">
-          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0)) }}
+        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
