@@ -132,6 +132,6 @@ class HandleCarAdvisorUpdated
         }
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
-        return ! empty($top6Plans) ? $top6Plans : $plans;
+        return ! empty($top6Plans) ? $top6Plans : [];
     }
 }
