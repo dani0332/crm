@@ -374,7 +374,6 @@ const permissionsEnum = page.props.permissionsEnum;
     />
 
     <QuotePayments
-      v-if="isBetaUser"
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"

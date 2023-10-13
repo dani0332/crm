@@ -512,12 +512,25 @@ const onExportPlans = () => {
   const planIds = selectedPlans.value.map(p => {
     return p.id;
   });
+
+  let addOns = {};
+
+  selectedPlans.value.map(plan => {
+    let copayIdToBeAdded = plan.selectedCopayId;
+    plan.coPayments.forEach(element => {
+      if (element.id == copayIdToBeAdded) {
+        addOns[plan.id] = { coPayment: element };
+      }
+    });
+  });
+
   axios
     .post(
       '/api/v1/quotes/health/export-plans-pdf',
       {
         plan_ids: planIds,
         quote_uuid: page.props.quote.uuid,
+        addons: addOns,
       },
       {
         responseType: 'json',
@@ -643,11 +656,13 @@ watch(
     }
   },
 );
+
+const plansData = ref(page.props.listQuotePlans);
+
 const listQuotePlansFiltered = ref(
-  page.props.listQuotePlans.sort(
-    (a, b) => Number(!b.isHidden) - Number(!a.isHidden),
-  ),
+  plansData.value.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden)),
 );
+
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
@@ -688,6 +703,7 @@ const onPlanFiltersSubmit = () => {
   modals.planFilters = false;
   planDataTable.value.updatePage(1);
 };
+
 const onPlanFiltersReset = () => {
   planFilters.insurer = [];
   planFilters.network = [];
@@ -698,6 +714,53 @@ const onPlanFiltersReset = () => {
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
 };
+
+const isMounted = ref(false);
+
+const selectedCoPay = reactive({
+  id: null,
+  premium: null,
+  vat: null,
+  planId: null,
+});
+
+const getSmallestCopayRateAsDefaultValue = () => {
+  let smallestCopayValue = 0;
+  let defaultCopayId = 0;
+  let smallestCopayVAT = 0;
+  plansData.value.forEach(element => {
+    element.ratesPerCopay.forEach(function callback(value, index) {
+      if (index == 0) {
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat)
+        defaultCopayId = value.healthPlanCoPaymentId;
+      } else if (value.premium < smallestCopayValue) {
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat);
+        defaultCopayId = value.healthPlanCoPaymentId;
+      }
+    });
+
+    if (isMounted.value && selectedCoPay.planId == element.id) {
+      element.actualPremium = selectedCoPay.premium;
+      element.vat = selectedCoPay.vat;
+      element.selectedCopayId = selectedCoPay.id;
+    } else {
+      element.selectedCopayId = defaultCopayId;
+      element.actualPremium = smallestCopayValue;
+      element.vat = smallestCopayVAT;
+    }
+  });
+};
+
+const onSelectedCopay = data => {
+  selectedCoPay.id = data.id;
+  selectedCoPay.premium = Number(data.premium);
+  selectedCoPay.vat = Number(data.vat);
+  selectedCoPay.planId = data.planId;
+  getSmallestCopayRateAsDefaultValue();
+};
+
 // quoteDocuments
 
 const quoteDocumentsTable = reactive({
@@ -1057,6 +1120,8 @@ onMounted(() => {
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
+  getSmallestCopayRateAsDefaultValue();
+  isMounted.value = true;
 });
 </script>
 <template>
@@ -1639,7 +1704,6 @@ onMounted(() => {
     </div>
 
     <PaymentTable
-      v-if="isBetaUser"
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -1799,9 +1863,9 @@ onMounted(() => {
           </x-badge>
 
           <x-button
-            v-if="false"
+            v-if="isBetaUser"
             size="sm"
-            color="primary"
+            color="emerald"
             @click.prevent="modals.createPlan = true"
           >
             Add Plan
@@ -1848,8 +1912,8 @@ onMounted(() => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, vat, basmah }">
-          {{ fixedValue(actualPremium + (vat || 0) + (basmah || 0)) }}
+        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -1869,7 +1933,7 @@ onMounted(() => {
                 onCopyText(
                   ecomHealthInsuranceQuoteUrl +
                     quote.uuid +
-                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}`,
+                    `/payment/?providerCode=${item.providerCode}&planId=${item.id}&selectedCopayId=${item.selectedCopayId}`,
                 )
               "
             >
@@ -1883,7 +1947,11 @@ onMounted(() => {
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
         </template>
-        <LazyAvailablePlan :plan="selectedPlan" :genders="genderOptions" />
+        <LazyAvailablePlan
+          :plan="selectedPlan"
+          :genders="genderOptions"
+          @copay-update="onSelectedCopay"
+        />
       </x-modal>
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>

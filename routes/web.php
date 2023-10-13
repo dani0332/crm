@@ -168,11 +168,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('/clear-cache', function () {
         Artisan::call('cache:clear');
-        Artisan::call('view:cache');
         Artisan::call('route:clear');
-        Artisan::call('config:cache');
+        Artisan::call('config:clear');
+        Artisan::call('view:clear');
 
-        return '<h1>All cache cleared and optimized. LARAVEL Version='.app()->version().'</h1>';
+        return '<h1>All cache cleared. LARAVEL Version='.app()->version().'</h1>';
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
@@ -234,7 +234,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('batches/{id}/plans-processes', [RenewalsUploadController::class, 'plansProcesses'])->name('batch-plans-processes');
         Route::get('batches/{id}', [RenewalsUploadController::class, 'batchDetail'])->name('batch-renewal-detail');
         Route::get('batches/{id}/fetch-plans', [RenewalsUploadController::class, 'fetchPlans'])->name('batch-fetch-plans');
-        Route::get('batches/{id}/batch-process', [RenewalsUploadController::class, 'runBatchProcess'])->name('run-batch-process');
+        Route::get('batches/{batch}/schedule-renewals-ocb', [RenewalsUploadController::class, 'scheduleRenewalsOcb'])->name('run-batch-process');
         Route::get('uploaded-leads/{id}/validation-failed', [RenewalsUploadController::class, 'validationFailed'])->name('renewal-validation-failed');
         Route::get('uploaded-leads/{id}/validation-failed/download', [RenewalsUploadController::class, 'downloadValidationFailed']);
         Route::get('uploaded-leads/{id}/validation-passed', [RenewalsUploadController::class, 'validationPassed']);

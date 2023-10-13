@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
 use Exception;
 
 class SendSmsCustomerService extends BaseService
@@ -14,20 +13,20 @@ class SendSmsCustomerService extends BaseService
         $this->applicationStorageService = $applicationStorageService;
     }
 
-    public function sendMAInviteSMS(Customer $customer, $inviteCode)
+    public function sendMAInviteSMS($email, $mobile_no)
     {
-        if (! $customer->mobile_no) {
+        if (! $mobile_no) {
             info('sendMAInviteSMS - Error - No Mobile Number for Customer');
 
             return false;
         }
         $isSmsTestingEnabled = $this->applicationStorageService->getValueByKey('IS_MA_SMS_AFIA_TESTING_ENABLE');
 
-        if ($isSmsTestingEnabled && ! $this->isAfiaEmail($customer->email)) {
+        if ($isSmsTestingEnabled && ! $this->isAfiaEmail($email)) {
             return false;
         }
 
-        $customerMobile = str_replace([' ', '-'], '', $customer->mobile_no);
+        $customerMobile = str_replace([' ', '-'], '', $mobile_no);
         if (preg_match('/^(?:971|00971|\+971|0)?(?:50|51|52|54|55|56|58)\d{7}$/', $customerMobile)) {
             $mobileNumber = '971'.substr($customerMobile, -9);
         } else {
@@ -35,12 +34,12 @@ class SendSmsCustomerService extends BaseService
         }
 
         if (! $mobileNumber) {
-            info('Invalid mobile number: '.$customerMobile.' | email: '.$customer->email.' | class: '.get_class());
+            info('Invalid mobile number: '.$customerMobile.' | email: '.$email.' | class: '.get_class());
 
             return false;
         }
 
-        $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use code '.$inviteCode.' to sign up! optoutMA4741';
+        $smsMessage = 'Welcome to the InsuranceMarket.ae family! Avail offers from over 100 brands on the myAlfred app. Download the app and use email address to sign up! optoutMA4741';
         try {
             $smsEndpoint = config('constants.SMS_ENDPOINT');
             $smsSender = config('constants.SMS_SENDER_ID');
@@ -59,10 +58,10 @@ class SendSmsCustomerService extends BaseService
 
             $responseCode = $clientRequest->getStatusCode();
 
-            info('sendMAInviteSMS - Sent - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode);
+            info('sendMAInviteSMS - Sent - Response: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$email);
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
-            info('sendMAInviteSMS - Error - Response Code: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$customer->email.' | Invite Code: '.$inviteCode.' | class: '.get_class());
+            info('sendMAInviteSMS - Error - Response Code: '.$responseCode.' | mobile: '.$customerMobile.' | email: '.$email.' | class: '.get_class());
         }
 
         return $responseCode;

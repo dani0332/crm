@@ -45,7 +45,7 @@ class CarLostStatusRejected implements ShouldQueue
 
         $emailData = [
             'uuid' => $this->quote->uuid,
-            'reason' => $this->carLostQuoteLog->reason->text,
+            'reason' => $this->carLostQuoteLog->reason->text ?? null,
             'advisor_name' => $this->quote->advisor->name,
             'notes' => $this->carLostQuoteLog->notes,
         ];
