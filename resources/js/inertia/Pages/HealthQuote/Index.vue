@@ -14,6 +14,7 @@ const page = usePage();
 const notification = useToast();
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
 const loader = reactive({

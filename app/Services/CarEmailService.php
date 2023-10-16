@@ -39,7 +39,7 @@ class CarEmailService extends BaseService
                 'carValue' => empty($plan->carValue) ? 'N/A' : $plan->carValue,
                 'excessAed' => empty($plan->excess) ? 'N/A' : $plan->excessAed,
                 'repairType' => $this->getUpdateRepairType($plan->repairType, $plan->providerCode),
-                'discountPremium' => $plan->discountPremium,
+                'discountPremium' => !empty($plan->discountPremium) ?  number_format($plan->discountPremium, 2) : '',
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
