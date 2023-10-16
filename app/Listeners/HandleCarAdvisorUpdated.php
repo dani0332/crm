@@ -122,7 +122,7 @@ class HandleCarAdvisorUpdated
             // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
             return property_exists($plan, 'repairType') &&
                    property_exists($plan, 'isRatingAvailable') &&
-                   $plan->repairType === CarPlanType::COMP &&
+                   ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
                    $plan->isRatingAvailable === true;
         });
 

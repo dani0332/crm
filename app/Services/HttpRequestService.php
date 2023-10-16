@@ -67,15 +67,12 @@ class HttpRequestService extends BaseService
                     'field' => 'isRenewalSort',
                     'value' => $isRenewalSort,
                 ],
+                [
+                    'field' => 'isDisabled',
+                    'value' => $isDisabledEnabled,
+                ],
             ],
         ];
-
-        if ($isDisabledEnabled) {
-            $plansDataArr['filters'][] = [
-                'field' => 'isDisabled',
-                'value' => false,
-            ];
-        }
 
         $client = new \GuzzleHttp\Client();
         try {
