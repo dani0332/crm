@@ -4,10 +4,8 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\InslyDetailRepository;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LegacyPolicyController extends Controller
 {
@@ -19,7 +17,7 @@ class LegacyPolicyController extends Controller
     public function index(Request $request)
     {
         $policies = [];
-        if (!empty($request->all())) {
+        if (! empty($request->all())) {
             $policies = InslyDetailRepository::getData();
         }
 
@@ -35,6 +33,7 @@ class LegacyPolicyController extends Controller
     public function show($mongoId)
     {
         $policy = InslyDetailRepository::getBy('_id', $mongoId);
+
         return inertia('LegacyPolicy/Show', ['policy' => $policy]);
     }
 

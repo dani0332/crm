@@ -10,8 +10,6 @@ use App\Models\QuoteType;
 use App\Services\CapiRequestService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use MongoDB\Operation\Update;
 
 class InslyDetailRepository extends BaseRepository
 {
@@ -24,15 +22,15 @@ class InslyDetailRepository extends BaseRepository
     {
         $query = InslyDetail::query();
 
-        if (!empty(request()->policy_number)) {
+        if (! empty(request()->policy_number)) {
             $query->where('policy_no', '=', request()->policy_number);
         }
 
-        if (!empty(request()->email)) {
+        if (! empty(request()->email)) {
             $query->where('customer.email', '=', request()->email);
         }
 
-        if (!empty(request()->mobile_no)) {
+        if (! empty(request()->mobile_no)) {
             $query->where('customer.mobile_phone', '=', request()->mobile_no);
         }
         $data = $query->simplePaginate()->withQueryString()->toArray();
@@ -46,9 +44,10 @@ class InslyDetailRepository extends BaseRepository
         $data = $policy->toArray();
         $policy->quoteType = $this->getQuoteType($data['policy']['coverage']);
 
-        if (!empty($data['installments'])) {
+        if (! empty($data['installments'])) {
             $policy->premium = collect($data['installments'])->sum('gross_premium');
         }
+
         return $policy;
     }
 
@@ -62,13 +61,14 @@ class InslyDetailRepository extends BaseRepository
                 $quoteType = $key;
             }
         }
+
         return $quoteType;
     }
 
     public function fetchSaveToImcrm($data)
     {
-        $policyNumber   = $data['policyNumber'];
-        $validateAll    = $data['validateAll'];
+        $policyNumber = $data['policyNumber'];
+        $validateAll = $data['validateAll'];
 
         $policy = $this->where('policy_no', $policyNumber)->first();
 
@@ -77,7 +77,7 @@ class InslyDetailRepository extends BaseRepository
         $inslyPolicyIssueDate = $phpDateTime->format('Y-m-d');
         $appUrl = env('APP_URL');
 
-        if (!empty($policy)) {
+        if (! empty($policy)) {
             $coverage = $policy['policy']['coverage'];
             $quoteType = $this->getQuoteType($coverage);
 
@@ -87,13 +87,13 @@ class InslyDetailRepository extends BaseRepository
 
                 $quote = $model::where('policy_number', $policyNumber)->first();
 
-                if (!empty($quote) && $validateAll) {
+                if (! empty($quote) && $validateAll) {
                     if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
-                        $quote->link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $quote->uuid;
+                        $quote->link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     } else {
-                        $quote->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $quote->uuid;
+                        $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     }
-                    $quote->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $quote->uuid;
+                    $quote->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$quote->uuid;
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
 
@@ -137,13 +137,12 @@ class InslyDetailRepository extends BaseRepository
                         //     $route = '';
                 }
 
-
-                if (!$quote->isEmpty() && $validateAll) {
+                if (! $quote->isEmpty() && $validateAll) {
                     foreach ($quote as $item) {
                         if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
-                            $item->link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $item->uuid;
+                            $item->link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$item->uuid;
                         } else {
-                            $item->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $item->uuid;
+                            $item->link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$item->uuid;
                         }
                         $item->modelType = $quoteType;
                         $data[] = $item;
@@ -159,10 +158,10 @@ class InslyDetailRepository extends BaseRepository
 
                 $payLoad = $this->prePareData($policy, $quoteType);
 
-                info('InslyLead - Payload: ' . json_encode($payLoad));
+                info('InslyLead - Payload: '.json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
-                info('InslyLead - created Lead Id : ' . json_encode($id));
-                if (!empty($id)) {
+                info('InslyLead - created Lead Id : '.json_encode($id));
+                if (! empty($id)) {
                     $obj = $model::where('id', $id)->first();
                     switch (ucfirst($quoteType)) {
 
@@ -198,9 +197,9 @@ class InslyDetailRepository extends BaseRepository
                     }
                     $policy->moved_to_imcrm = true;
                     if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
-                        $policy->imcrm_link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $obj->uuid;
+                        $policy->imcrm_link = $appUrl.'/personal-quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     } else {
-                        $policy->imcrm_link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $obj->uuid;
+                        $policy->imcrm_link = $appUrl.'/quotes/'.strtolower($quoteType).'/'.$obj->uuid;
                     }
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
@@ -217,8 +216,6 @@ class InslyDetailRepository extends BaseRepository
         }
     }
 
-
-
     // payload
     private function prePareData($policy, $quoteType)
     {
@@ -230,8 +227,8 @@ class InslyDetailRepository extends BaseRepository
         if ($insurer == 'Tokio Marine Nichido') {
             $insurer = 'Tokio Marine & Nichido Fire Insurance Co';
         }
-        $insuredWith = InsuranceProviderRepository::where('code', 'like', '%' . $insurer . '%')
-            ->orWhere('text', 'like', '%' . $insurer . '%')->first();
+        $insuredWith = InsuranceProviderRepository::where('code', 'like', '%'.$insurer.'%')
+            ->orWhere('text', 'like', '%'.$insurer.'%')->first();
 
         // $dataArr['currently_insured_with'] = !empty($insuredWith) ? $insuredWith->id : null;
         // $dataArr['previousPolicyStartDate'] = $policy['policy']['start_date']->toDateTime()->format('Y-m-d') ?? null;
@@ -247,7 +244,7 @@ class InslyDetailRepository extends BaseRepository
 
         $premium = null;
         $data = $policy->toArray();
-        if (!empty($data['installments'])) {
+        if (! empty($data['installments'])) {
             $premium = collect($data['installments'])->sum('gross_premium');
         }
         $quoteTypeData = QuoteType::where('code', $quoteType)->first();
@@ -255,7 +252,7 @@ class InslyDetailRepository extends BaseRepository
         $resp = $capi->getUUID($quoteTypeData->id);
         if ($resp) {
             $dataArr['uuid'] = $resp->uuid;
-            $dataArr['code'] = $quoteTypeData->short_code . '-' . $resp->uuid;
+            $dataArr['code'] = $quoteTypeData->short_code.'-'.$resp->uuid;
         }
         $dataArr['premium'] = $premium;
         $dataArr['source'] = LeadSourceEnum::INSLY;

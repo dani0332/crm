@@ -22,8 +22,8 @@ return new class extends Migration
         ];
 
         foreach ($lobs as $item) {
-            Schema::table(strtolower($item) . '_quote_request_detail', function (Blueprint $table) use ($item) {
-                if (!Schema::hasColumn(strtolower($item) . '_quote_request_detail', 'insly_id')) {
+            Schema::table(strtolower($item).'_quote_request_detail', function (Blueprint $table) use ($item) {
+                if (! Schema::hasColumn(strtolower($item).'_quote_request_detail', 'insly_id')) {
                     $table->string('insly_id', 50)->nullable();
                 }
             });
@@ -31,7 +31,7 @@ return new class extends Migration
 
         if (Schema::hasTable('personal_quote_details')) {
             Schema::table('personal_quote_details', function ($table) {
-                if (!Schema::hasColumn('personal_quote_details', 'insly_id')) {
+                if (! Schema::hasColumn('personal_quote_details', 'insly_id')) {
                     $table->string('insly_id', 50)->nullable();
                 }
             });
@@ -53,7 +53,7 @@ return new class extends Migration
         ];
 
         foreach ($lobs as $item) {
-            Schema::table(strtolower($item) . '_quote_request_detail', function (Blueprint $table) {
+            Schema::table(strtolower($item).'_quote_request_detail', function (Blueprint $table) {
                 $table->dropColumn('insly_id');
             });
         }

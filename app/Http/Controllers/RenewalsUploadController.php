@@ -52,7 +52,7 @@ class RenewalsUploadController extends Controller
         return $result;
     }
 
-    /**       
+    /**
      * process upload and update import.
      *
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector

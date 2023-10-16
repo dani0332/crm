@@ -2,14 +2,11 @@
 
 namespace App\Repositories;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
-use App\Models\Customer;
-use App\Models\CustomerAdditionalContact;
 use App\Models\PersonalQuote;
 use App\Models\QuoteDocument;
 use App\Models\QuoteStatusLog;
@@ -17,7 +14,6 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class PersonalQuoteRepository extends BaseRepository
 {
