@@ -31,8 +31,6 @@ class InsuranceCompanyController extends Controller
     {
         if ($request->ajax()) {
             $data = InsuranceCompany::select('*')->where('is_deleted', 0)->orderBy('created_at', 'desc');
-            //dd($data);
-
             return Datatables::of($data)
                 ->addIndexColumn()
                 ->addColumn('action', function ($row) {
