@@ -236,7 +236,7 @@ class RenewalBatchReportService extends BaseService
         /**
          * query as per auth roles
          */
-        if (! $authUserIsAdvisor && ! (isset($filters->advisors) && count($filters->advisors) > 0)) {
+        if (! $authUserIsAdvisor && ! isset($filters->advisors) && ! isset($filters->subTeams) && ! isset($filters->teams)) {
             $query->addSelect(
                 DB::raw('count(DISTINCT car_quote_request.id) as total_allocated_leads'),
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
@@ -283,9 +283,27 @@ class RenewalBatchReportService extends BaseService
         }
 
         // advisor filter
-        if (isset($filters->advisors) && count($filters->advisors) > 0) {
-            $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($filters) {
-                $qry->whereIn('advisor_id', $filters->advisors);
+        if (!$authUserIsAdvisor &&
+            (isset($filters->advisors) && count($filters->advisors) > 0)
+            || (isset($filters->subTeams) && count($filters->subTeams) > 0)
+            || (isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts))
+            ) {
+
+            $advisorsFilter = (isset($filters->advisors) ? $filters->advisors : []);
+
+            if (isset($filters->subTeams) && count($filters->subTeams) > 0 && !isset($filters->advisors)) {
+                $subTeamsIds = $filters->subTeams;
+                $advisorsFilter = $this->getUsersBySubTeamIds($subTeamsIds)->pluck('id')->toArray();
+            }
+
+            if ( isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts) && !isset($filters->advisors))
+            {
+                $teamsIds = $filters->teams;
+                $advisorsFilter = $this->getUsersByTeamIds($teamsIds)->pluck('id')->toArray();
+            }
+
+            $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($advisorsFilter) {
+                $qry->whereIn('advisor_id', $advisorsFilter);
             });
 
             if ($authUserIsDeputyManager) {
@@ -296,7 +314,7 @@ class RenewalBatchReportService extends BaseService
 
             $userIdsString = ! empty($userIds) ? implode(',', $userIds) : '0';
 
-            $advisors = ! empty($filters->advisors) ? implode(',', $filters->advisors) : '0';
+            $advisors = ! empty($advisorsFilter) ? implode(',', $advisorsFilter) : '0';
 
             $query->addSelect(
                 DB::raw('SUM(IF(car_quote_request.advisor_id in ('.$advisors.'), 1, 0)) as total_allocated_leads'),
@@ -431,16 +449,16 @@ class RenewalBatchReportService extends BaseService
         );
 
         //teams filter
-        if (isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts)) {
-            $query->join('user_team', 'user_team.user_id', '=', 'users.id');
-            $teamsIds = $filters->teams;
-            $query->whereIn('user_team.team_id', $teamsIds);
-        }
+        // if (isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts)) {
+        //     $query->join('user_team', 'user_team.user_id', '=', 'users.id');
+        //     $teamsIds = $filters->teams;
+        //     $query->whereIn('user_team.team_id', $teamsIds);
+        // }
         // subteams filter
-        if (isset($filters->subTeams)) {
-            $subTeamsIds = $filters->subTeams;
-            $query->whereIn('users.sub_team_id', $subTeamsIds);
-        }
+        // if (isset($filters->subTeams)) {
+        //     $subTeamsIds = $filters->subTeams;
+        //     $query->whereIn('users.sub_team_id', $subTeamsIds);
+        // }
 
         $query->where('car_quote_request.created_at', '<=', $reportDateEnd);
 

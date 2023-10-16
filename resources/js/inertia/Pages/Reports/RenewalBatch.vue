@@ -304,6 +304,12 @@ function calculateValuesAndHighlight() {
 
             ).toFixed(2);
 
+            console.log(item.renewed_by_all_advisors);
+            console.log(item.total_allocated_leads_by_all_advisors);
+            console.log(item.renewed);
+            console.log(item.total_allocated_leads);
+            console.log("=========================")
+
             rawRetention = ((item.renewed_by_all_advisors / item.total_allocated_leads_by_all_advisors) * 100).toFixed(2);
 
         }
