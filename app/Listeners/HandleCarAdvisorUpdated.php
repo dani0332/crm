@@ -75,6 +75,8 @@ class HandleCarAdvisorUpdated
 
         $plans = $this->executePlansSelectionLogic($plans);
 
+        info('plans', $plans);
+
         // Determine the email template ID
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
 
