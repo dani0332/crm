@@ -19,6 +19,7 @@ services:
     restart: unless-stopped
   
 volumes:
+  logs:
   stglogs:
   devlogs:
   dev01logs:
