@@ -125,7 +125,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @param  Request  $request
+     * @param  Request  $requestvabovabovabovabo
      * @return \Illuminate\Http\JsonResponse
      */
     public function changeInsurer(ChangeInsurerRequest $request)
@@ -139,7 +139,7 @@ class CarQuoteController extends Controller
     {
         $response = CarQuoteRepository::updateCareQuotePlanDetails($request->validated());
 
-        return response()->json($response);
+        return redirect()->back(); //response()->json($response);
     }
 
     public function search(CarQuoteRequest $request)

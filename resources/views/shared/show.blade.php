@@ -339,7 +339,7 @@ use App\Enums\GenericRequestEnum;
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
-                                                {{ $record->$property ? 'Yes' : 'No' }}
+                                                {{ isset($record->$property) ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
                                                     @if($record->$property == GenericRequestEnum::MALE_SINGLE_VALUE) {{GenericRequestEnum::MALE_SINGLE}}
                                                     @elseif($record->$property == GenericRequestEnum::FEMALE_SINGLE_VALUE) {{GenericRequestEnum::FEMALE_SINGLE}}
@@ -484,7 +484,7 @@ use App\Enums\GenericRequestEnum;
 
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
-        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" />
+        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" :record="$record"/>
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />

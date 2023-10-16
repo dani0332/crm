@@ -29,6 +29,7 @@ class NotesForCustomerService extends BaseService
     {
         return NotesForCustomer::where(['quote_type_id' => $quoteTypeId, 'quote_id' => $quoteId])
             ->orderBy('updated_at', 'desc')
+            ->with('createdby:id,name')
             ->get();
     }
 

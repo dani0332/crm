@@ -141,6 +141,7 @@ class ActivitesController extends Controller
             QuoteTypeId::Travel,
             QuoteTypeId::Business,
             QuoteTypeId::Life,
+            QuoteTypeId::Car,
         ];
         if (isset($request->quoteType) && in_array($request->quoteType, $types)) {
             return redirect()->back();
