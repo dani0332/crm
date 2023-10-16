@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
-    Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 });
+Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
 Route::prefix('v1')->group(function () {
