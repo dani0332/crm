@@ -16,7 +16,6 @@ class AddEpCodeStatusColumnEmbeddedTransaction extends Migration
         Schema::table('embedded_transactions', function (Blueprint $table) {
             if (! Schema::hasColumn('embedded_transactions', 'embedded_transaction_status_code')) {
                 $table->string('embedded_transaction_status_code', 25);
-                $table->foreign('embedded_transaction_status_code')->references('code')->on('lookups')->cascadeOnUpdate();
             }
         });
     }
