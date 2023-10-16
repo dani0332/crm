@@ -32,7 +32,6 @@ class QuoteDocumentRequest extends FormRequest
      */
     public function rules()
     {
-        echo "Rules";
         $rules = [
             'file' => 'required|file',
             'document_type_code' => 'required|exists:document_types,code,is_active,1',
@@ -47,14 +46,12 @@ class QuoteDocumentRequest extends FormRequest
             }
         }
 
-        echo "request()->is_base_64 : " . request()->is_base_64;
         if (request()->is_base_64 == 1) {
             $rules['file'] = ['required', new ValidateBase64($this->documentType)];
         } else {
             $rules['file'] .= '|required|file';
         }
 
-        dd(request());
         return $rules;
 
     }

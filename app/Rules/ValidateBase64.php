@@ -9,15 +9,17 @@ use Illuminate\Translation\PotentiallyTranslatedString;
 
 class ValidateBase64 implements ValidationRule
 {
-    private $documentType;
     private $extensionErrorMessage;
     private $fileSizeErrorMessage;
+    private $accepted_files;
+    private $max_size;
 
     public function __construct($documentType)
     {
-        $this->documentType = $documentType;
+        $this->accepted_files=  data_get($documentType,'accepted_files', 'pdf');
         $this->extensionErrorMessage = 'The :attribute must be a file of type: ' . (str_replace('.', '', $documentType->accepted_files));
-        $this->fileSizeErrorMessage= "The :attribute must not be greater than ". $this->documentType->max_size * 1024 ." kilobytes";
+        $this->max_size= data_get($documentType,'max_size', 5);
+        $this->fileSizeErrorMessage= "The :attribute must not be greater than ". $this->max_size * 1024 ." kilobytes";
     }
 
     /**
@@ -30,11 +32,10 @@ class ValidateBase64 implements ValidationRule
         try {
             @list($extension,,,$image_size) = getBase64FileInfo($value);
 
-            $accepted_files = $this->documentType->accepted_files;
-            if (!str_contains($accepted_files, $extension)) {
+            if (!str_contains($this->accepted_files, $extension)) {
                 $fail($this->extensionErrorMessage);
             }
-            else if (($image_size / 1024) > ($this->documentType->max_size * 1024)){
+            else if (($image_size / 1024) > ($this->max_size * 1024)){
                 $fail($this->fileSizeErrorMessage);
             }
         } catch (Exception $exception) {
