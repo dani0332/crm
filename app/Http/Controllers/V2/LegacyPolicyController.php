@@ -35,7 +35,6 @@ class LegacyPolicyController extends Controller
     public function show($mongoId)
     {
         $policy = InslyDetailRepository::getBy('_id', $mongoId);
-        //dd($policy->toArray());
         return inertia('LegacyPolicy/Show', ['policy' => $policy]);
     }
 

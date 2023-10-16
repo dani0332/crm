@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\InslyDetail;
 use App\Models\QuoteType;
@@ -82,14 +83,16 @@ class InslyDetailRepository extends BaseRepository
 
             $data = [];
             $model = $this->getModelObject($quoteType);
-
-            // dd($model);
-            // dd($quoteType);
             if ($model) {
 
                 $quote = $model::where('policy_number', $policyNumber)->first();
 
                 if (!empty($quote) && $validateAll) {
+                    if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+                        $quote->link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $quote->uuid;
+                    } else {
+                        $quote->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $quote->uuid;
+                    }
                     $quote->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $quote->uuid;
                     $quote->modelType = $quoteType;
                     $data[] = $quote;
@@ -137,7 +140,11 @@ class InslyDetailRepository extends BaseRepository
 
                 if (!$quote->isEmpty() && $validateAll) {
                     foreach ($quote as $item) {
-                        $item->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $item->uuid;
+                        if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+                            $item->link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $item->uuid;
+                        } else {
+                            $item->link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $item->uuid;
+                        }
                         $item->modelType = $quoteType;
                         $data[] = $item;
                     }
@@ -152,9 +159,9 @@ class InslyDetailRepository extends BaseRepository
 
                 $payLoad = $this->prePareData($policy, $quoteType);
 
-                // dd($payLoad);
+                info('InslyLead - Payload: ' . json_encode($payLoad));
                 $id = $model::create($payLoad)->id;
-
+                info('InslyLead - created Lead Id : ' . json_encode($id));
                 if (!empty($id)) {
                     $obj = $model::where('id', $id)->first();
                     switch (ucfirst($quoteType)) {
@@ -190,7 +197,11 @@ class InslyDetailRepository extends BaseRepository
                             break;
                     }
                     $policy->moved_to_imcrm = true;
-                    $policy->imcrm_link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $obj->uuid;
+                    if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+                        $policy->imcrm_link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $obj->uuid;
+                    } else {
+                        $policy->imcrm_link = $appUrl . '/quotes/' . strtolower($quoteType) . '/' . $obj->uuid;
+                    }
                     $policy->moved_to_imcrm_date = date('Y-m-d H:i:s');
                     $policy->moved_to_imcrm_by = auth()->user()->name;
                     $policy->save();
@@ -248,6 +259,10 @@ class InslyDetailRepository extends BaseRepository
         }
         $dataArr['premium'] = $premium;
         $dataArr['source'] = LeadSourceEnum::INSLY;
+        if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
+            $dataArr['quote_type_id'] = $quoteTypeData->id;
+            $dataArr['is_ecommerce'] = false;
+        }
 
         return $dataArr;
     }

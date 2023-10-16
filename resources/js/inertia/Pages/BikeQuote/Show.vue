@@ -39,6 +39,15 @@ const permissionsEnum = page.props.permissionsEnum;
       <h2 class="text-xl font-semibold">Bike Detail</h2>
       <div class="flex gap-2">
         <Link
+          v-if="quote.quote_detail?.insly_id"
+          :href="`/legacy-policy/${quote.quote_detail?.insly_id}`"
+          preserve-scroll
+        >
+          <x-button size="sm" color="#ff5e00" tag="div">
+            View Legacy policy
+          </x-button>
+        </Link>
+        <Link
           v-if="can(permissionsEnum.BikeQuotesEdit)"
           :href="route('bike-quotes-edit', quote.uuid)"
         >
