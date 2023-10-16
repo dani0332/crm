@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\CarPlanType;
 use App\Enums\quoteTypeCode;
 use App\Enums\TiersEnum;
 use App\Events\CarQuoteAdvisorUpdated;
@@ -118,7 +119,11 @@ class HandleCarAdvisorUpdated
 
         // Check if there are any 'Comp' plans
         $compPlans = array_filter($plans, function ($plan) {
-            return $plan->repairType == 'Comp' && $plan->isRatingAvailable == true;
+            // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
+            return property_exists($plan, 'repairType') &&
+                   property_exists($plan, 'isRatingAvailable') &&
+                   $plan->repairType === CarPlanType::COMP &&
+                   $plan->isRatingAvailable === true;
         });
 
         if (count($compPlans) > 0) {
@@ -127,7 +132,7 @@ class HandleCarAdvisorUpdated
         } else {
             // If there are no 'Comp' plans, return the top 6 plans
             $filteredPlans = array_filter($plans, function ($plan) {
-                return $plan->repairType == 'TPL' && $plan->isRatingAvailable == true;
+                return $plan->repairType == CarPlanType::TPL && $plan->isRatingAvailable == true;
             });
 
             $top6Plans = array_slice($filteredPlans, 0, 6);
