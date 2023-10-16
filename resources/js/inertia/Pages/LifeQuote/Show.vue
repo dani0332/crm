@@ -20,9 +20,6 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
 });
 
 const rules = {
@@ -633,6 +630,8 @@ const onLeadStatus = () => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -776,6 +775,9 @@ const onLeadStatus = () => {
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
+
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

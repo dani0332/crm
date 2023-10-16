@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\EmbeddedProducDocumentRequest;
 use App\Http\Requests\EmbeddedProductRequest;
 use App\Repositories\EmbeddedProductRepository;
 
@@ -102,5 +103,17 @@ class EmbeddedProductController extends Controller
             'success' => true,
             'message' => 'Embedded Product status updated',
         ]);
+    }
+
+    public function sendDocument(EmbeddedProducDocumentRequest $request)
+    {
+        EmbeddedProductRepository::sendDocument($request->validated());
+
+        return redirect()->back()->with('success', 'Certificate send Successfully');
+    }
+
+    public function downloadDocument(EmbeddedProducDocumentRequest $request)
+    {
+        return EmbeddedProductRepository::downloadCertificate($request->validated());
     }
 }

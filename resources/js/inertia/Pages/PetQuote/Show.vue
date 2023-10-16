@@ -334,7 +334,6 @@ const onCreateDuplicate = isValid => {
     />
 
     <QuotePayments
-      v-if="isBetaUser"
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -366,6 +365,8 @@ const onCreateDuplicate = isValid => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <LeadHistory :quote="quote" />

@@ -17,10 +17,10 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
           <div class="col-auto mr-auto"></div>
           <span class="alert alert-success" id="quotePlansGenerateMsg" style="display: none">Copied</span>
           <div class="col-auto">
-           
+
           </div>
         </div>
-        
+
 
         <table id="dataTableCarEmbeddedProducts" class="table table-striped jambo_table datatable-car-embedded-products" style="width:100%">
           <thead>
@@ -74,7 +74,7 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
               <td>
                 <div>
                 <button class="btn btn-success btn-sm" disabled>
-                   Send Documents 
+                   Send Documents
                 </button>
                 <button class="btn btn-warning btn-sm" disabled>
                 Download Certificate
@@ -89,7 +89,7 @@ $websiteURL = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_I
           </tbody>
         </table>
         <span class="alert alert-success" id="payment-link-copy-msg" style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
-        
+
       </div>
     </div>
   </div>

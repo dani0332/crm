@@ -63,4 +63,9 @@ class PetQuote extends Model implements AuditableContract
             ],
         ];
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
