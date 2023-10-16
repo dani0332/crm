@@ -37,7 +37,7 @@ class CarEmailService extends BaseService
         foreach ($plans as $plan) {
             $insurerPlans[] = [
                 'carValue' => empty($plan->carValue) ? 'N/A' : $plan->carValue,
-                'excessAed' => empty($plan->excess) ? 'N/A' : $plan->excessAed,
+                'excessAed' => empty($plan->excess) ? 'N/A' : $plan->excess,
                 'repairType' => $this->getUpdateRepairType($plan->repairType, $plan->providerCode),
                 'discountPremium' => ! empty($plan->discountPremium) ? number_format($plan->discountPremium, 2) : '',
                 'planName' => $plan->name,
