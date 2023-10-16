@@ -16,7 +16,7 @@ class ValidateBase64 implements ValidationRule
 
     public function __construct($documentType)
     {
-        $this->accepted_files=  data_get($documentType,'accepted_files', 'pdf');
+        $this->accepted_files= 'pdf';
         $this->extensionErrorMessage = 'The :attribute must be a file of type: ' . (str_replace('.', '', $documentType->accepted_files));
         $this->max_size= data_get($documentType,'max_size', 5);
         $this->fileSizeErrorMessage= "The :attribute must not be greater than ". $this->max_size * 1024 ." kilobytes";
