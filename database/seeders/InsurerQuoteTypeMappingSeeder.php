@@ -30,6 +30,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
             InsuranceProvider::updateOrCreate(['code' => 'MTL'], ['text' => 'Metlife', 'text_lms' => 'Metlife']);
             InsuranceProvider::updateOrCreate(['code' => 'SAICO'], ['text' => 'Saico', 'text_lms' => 'Saico']);
             InsuranceProvider::updateOrCreate(['code' => 'NLGIC'], ['text' => 'NLGIC', 'text_lms' => 'NLGIC']);
+            InsuranceProvider::updateOrCreate(['code' => 'AFNIC'], ['text' => 'Al Fujairah National Insurance Company', 'text_lms' => 'Al Fujairah National Insurance Company']);
 
             $insurenceProviders = InsuranceProvider::get();
             $quoteTypes = QuoteTypeId::getOptions();
@@ -179,7 +180,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Oriental Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::OI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::GroupMedical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline,QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
@@ -271,6 +272,12 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
                     // NLGIC
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::NLGIC) {
                         if (in_array($quoteKey, [QuoteTypeId::GroupMedical])) {
+                            $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
+                        }
+                    }
+                    // AFNIC  Al Fujairah National Insurance Company
+                    if ($insurenceProvider['code'] == InsuranceProvidersEnum::AFNIC) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
