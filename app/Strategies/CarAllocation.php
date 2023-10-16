@@ -46,6 +46,11 @@ class CarAllocation implements Allocation
                 // Determine the final advisor for the lead based on tier, users, and rules
                 $advisorId = $this->finalizeAdvisors($lead, $tier, $availableUsers, $rules);
 
+                if($advisorId == $lead->advisor_id) {
+                    info('Advisor is same as previous advisor. Skipping for now.');
+                    return false;
+                }
+
                 if ($advisorId && $advisorId != 0) {
                     $this->assignLead($lead, $advisorId, $tier);
                 } else {
