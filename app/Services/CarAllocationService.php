@@ -444,6 +444,7 @@ class CarAllocationService extends AllocationService
 
         // Save the updated lead.
         $lead->save();
+
         return $lead;
     }
 
