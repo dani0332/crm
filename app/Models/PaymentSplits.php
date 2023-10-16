@@ -26,4 +26,9 @@ class PaymentSplits extends Model
     {
         return $this->belongsTo(PaymentMethod::class, 'payment_method', 'code');
     }
+
+    public function documents()
+    {
+        return $this->hasMany(QuoteDocument::class, 'payment_split_id', 'id');
+    }
 }

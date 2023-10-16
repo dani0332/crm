@@ -1631,7 +1631,8 @@ class CRUDController extends Controller
             return response()->json(['success' => false]);
         }
 
-       // dd($request->all());
+        //dd($request->all());
+
         $paymentInformation = [
             'total_price' => $request->total_price,
             'notes' => !empty($request->notes) ? $request->notes : null,
@@ -1676,7 +1677,23 @@ class CRUDController extends Controller
                 'due_date' => $request->split_payment_details['due_date'][$i],   
                 'payment_status_id' => PaymentStatusEnum::DRAFT,             
             ];
-            PaymentSplits::create($splitPaymentInformation);
+            
+            $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
+            
+            //add document references
+            if(isset($request->split_payment_details['document_detail'][$i]) 
+                && $paymentSplitRecord 
+                && count($request->split_payment_details['document_detail'][$i]) 
+                ){
+                foreach($request->split_payment_details['document_detail'][$i] as $document){
+                    $quoteDocumentRec = QuoteDocument::find($document['id']);
+                    $quoteDocumentRec = QuoteDocument::find($document['id']);
+                    if ($quoteDocumentRec){
+                        $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                        $quoteDocumentRec->save();
+                    }
+                }
+            }
         }
         //Add split payments ends
 

@@ -13,10 +13,12 @@ const props = defineProps({
   can: Object,
   paymentStatusEnum: Object,
   paymentTooltipEnum: Object,
+  paymentDocument: Object,
   quoteRequest: Object,
   paymentMethods: Array,
   quote: Object,
   quoteType: String,
+  storageUrl: String,
 });
 
 const createPaymentModal = ref(false);
@@ -27,6 +29,9 @@ const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref(false);
 const isExpandedSplitPayments = ref(false);
 const isPaymentCalculationError = ref(false);
+const isUploading = ref(false);
+const isFileError = ref(false);
+const fileErrorMessage = ref('');
 
 const discountValue = ref(0); // Initial discount value
 const totalPrice = ref(props.quoteRequest.premium); // Initial total price
@@ -40,6 +45,24 @@ const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
 
 const totalAmount = ref(props.quoteRequest.premium); // Initial total price
+
+
+const paymentTableHeaders = reactive({
+  columns:[
+    { text: 'Payment ID', value: 'cus', id:'cus', align: 'center' },
+    { text: 'Payment Ref ID', value: 'code' },
+    { text: 'Collection Date', value: 'collection_date' },
+    { text: 'Due Date', value: 'collection_date', sortable: true },
+    { text: 'Payment Method', value: 'payment_method.name' },
+    { text: 'Total Price', value: 'total_price' },
+    { text: 'Discount', value: 'discount_value' },
+    { text: 'Total Amount', value: 'total_amount' },
+    { text: 'Paid Amount', value: 'captured_amount' },
+    { text: 'Payment Status', value: 'payment_status.text' },
+    { text: 'Payment Allocation Status', value: 'payment_status_message' },
+    { text: 'Actions', value: 'actions', sortable: false },
+  ]
+});
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
@@ -119,36 +142,36 @@ const totalPayments = ref([
 const frequencyTypes = [
   { value: '', label: 'Select Frequency'},
   { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
-  { value: 'monthly', label: 'Monthly' },
-  { value: 'quarterly', label: 'Quarterly' },
-  { value: 'semi_annual', label: 'Semi Annual' },
-  { value: 'split_payments', label: 'Split Payments' },
-  { value: 'custom', label: 'Custom' },
+  { value: 'monthly', label: 'Monthly', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_MONTHLY },
+  { value: 'quarterly', label: 'Quarterly', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_QUARTERLY },
+  { value: 'semi_annual', label: 'Semi Annual', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_SEMI_ANNUAL },
+  { value: 'split_payments', label: 'Split Payments', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_SPLIT_PAYMENTS },
+  { value: 'custom', label: 'Custom', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_CUSTOM },
 ];
 
 const creditApprovalReasons = [
   { value: '', label: 'Approval Reason'},
-  { value: 'available_credit_balance', label: 'Available credit balance' },
-  { value: 'post_dated_cheque_payment', label: 'Post-dated cheque payment' },
-  { value: 'cheque_under_clearance', label: 'Cheque under clearance' },
-  { value: 'other_reasons', label: 'Other reasons' },  
+  { value: 'available_credit_balance', label: 'Available credit balance', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_AVAILABLE },
+  { value: 'post_dated_cheque_payment', label: 'Post-dated cheque payment', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_POSTDATED },
+  { value: 'cheque_under_clearance', label: 'Cheque under clearance', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_CLEARANCE },
+  { value: 'other_reasons', label: 'Other reasons', tooltip: props.paymentTooltipEnum.CREDIT_APPROVAL_LIST_REASON },  
 ];
 
 const discountTypes = [
   { value: '', label: 'Discount Type'},
-  { value: 'refer_a_friend', label: 'Refer a friend' },
-  { value: 'incentive_offset', label: 'Incentive offset' },
-  { value: 'managerial_approval_discount', label: 'Managerial approval discount' },
-  { value: 'employee_discount', label: 'Employee discount' },
-  { value: 'family_employee_discount', label: 'Family employee discount' }, 
+  { value: 'refer_a_friend', label: 'Refer a friend', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_REFER },
+  { value: 'incentive_offset', label: 'Incentive offset', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_INCENTIVE },
+  { value: 'managerial_approval_discount', label: 'Managerial approval discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_MANAGERIAL },
+  { value: 'employee_discount', label: 'Employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_EMPLOYEE },
+  { value: 'family_employee_discount', label: 'Family employee discount', tooltip: props.paymentTooltipEnum.DISCOUNT_TYPE_LIST_FAMILY }, 
 ];
 
 const discountReasons = [
   { value: '', label: 'Discount Reason'},
-  { value: 'promotional_campaign_discount', label: 'Promotional campaign discount' },
-  { value: 'loyalty_reward_discount', label: 'Loyalty reward discount' },
-  { value: 'competitive_pricing_discount', label: 'Competitive pricing discount' },
-  { value: 'custom_discount_reason', label: 'Custom discount reason' },  
+  { value: 'promotional_campaign_discount', label: 'Promotional campaign discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_PROMOTIONAL },
+  { value: 'loyalty_reward_discount', label: 'Loyalty reward discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_LOYALTY },
+  { value: 'competitive_pricing_discount', label: 'Competitive pricing discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_COMPETITIVE },
+  { value: 'custom_discount_reason', label: 'Custom discount reason', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_CUSTOM_REASON },  
 ];
 
 const handlePaymentOptions = () => {
@@ -240,15 +263,79 @@ const handleDiscountChange = () => {
   }  
 };
 
+const calculateDueDates = () => {
+  dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+  if(paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'upfront'){
+     //dueDateModels.value[1] = new Date();
+    for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+      dueDateModels.value[i] = paymentMethodsForm.collectionDate;
+    }
+  } else if(paymentMethodsForm.frequency === 'custom'){
+    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
+      dueDateModels.value[i] = '';
+    }
+  } else if(paymentMethodsForm.frequency === 'monthly'){
+    dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
+      const nextDueDate = new Date(dueDateModels.value[i - 1]);
+      nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+      nextDueDate.setDate(1);  // Set the day to 1st of the month
+      dueDateModels.value[i] = nextDueDate;     
+    }
+  } else if(paymentMethodsForm.frequency === 'quarterly'){
+    dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+    for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
+      const nextDueDate = new Date(dueDateModels.value[i - 1]);
+      if (i === 2) {
+        nextDueDate.setDate(nextDueDate.getDate() + 90);
+      } else if (i === 3) {
+        nextDueDate.setDate(nextDueDate.getDate() + 180);
+      } else if (i === 4) {
+        nextDueDate.setDate(nextDueDate.getDate() + 270);
+      }
+      dueDateModels.value[i] = nextDueDate;
+    }
+
+  } else if(paymentMethodsForm.frequency === 'semi_annual'){
+    dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+    const nextDueDate = new Date(dueDateModels.value[1]);
+    nextDueDate.setDate(nextDueDate.getDate() + 180);
+    dueDateModels.value[2] = nextDueDate;
+  }
+
+}
+
 const calculatePaymentBreakup = () => {
   var perInstallmentPrice = parseFloat((totalAmount.value/paymentMethodsForm.payment_no).toFixed(2));
-  dueDateModels.value[1] = new Date();
+  
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
     splitAmountModels.value[i] = perInstallmentPrice;
     if(i>1){
       paymentMethodsModels.value[i] = '';
     }    
   }
+  calculateDueDates();
+}
+
+const  formatDate = (date) =>  {
+    const parsedDate = new Date(date);
+    const day = parsedDate.getDate().toString().padStart(2, '0');
+    const month = (parsedDate.getMonth() + 1).toString().padStart(2, '0');
+    const year = parsedDate.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+const formatAmount = (amount) => {
+  const parsedAmount = parseFloat(amount);
+  if (isNaN(parsedAmount)) {
+    return "Invalid Amount";
+  }  
+  const formattedAmount = parsedAmount.toLocaleString("en-US", {
+    style: "decimal",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  return formattedAmount;
 }
 
 const handleFrequencyChange = () => {
@@ -417,6 +504,7 @@ const addPayment = isValid => {
     payment_type: paymentMethodsModels.value,
     due_date: dueDateModels.value,
     check_detail: checkDetailModels.value,
+    document_detail: fileUploadModels.value,
   };
 
   if (paymentMethodsForm.status === 'edit') {
@@ -466,7 +554,6 @@ const addPayment = isValid => {
       },
     });
 };
-
 const approvePayment = payment => {
   let data = {
     code: payment.code,
@@ -488,6 +575,83 @@ const approvePayment = payment => {
       }
     });
   }
+};
+
+const documentForm = useForm({
+  quote_id: props.quote.id || null,
+  quote_uuid: props.quote.code || null,
+  quote_type_id: null,
+  document_type_code: null,
+  file: null,
+});
+
+const deleteDocument = (docName,count) => {
+   router.post(
+    `/documents/delete`,
+    {
+      docName: docName,
+      quoteId: props.quote.id,
+    },
+    {
+      preserveScroll: true,
+      onFinish: () => {
+        isFileError.value = true;
+        fileErrorMessage.value = 'File deleted successfully';
+        fileUploadModels.value[count] = fileUploadModels.value[count].filter(item => item.doc_name !== docName);
+        console.log('azhar19=deleted');
+      },
+    },
+  );
+};
+
+const uploadDocument = (doc, files, count) => {
+  let url = '/quotes/car/documents/store'; 
+  if (files.length == 0) return;
+
+  if (!fileUploadModels.value[count]) {
+    fileUploadModels.value[count] = [];
+  }        
+
+  if (fileUploadModels.value[count] && fileUploadModels.value[count].some(file => file.original_name === files[0].file.name)) {    
+    isFileError.value = true;
+    fileErrorMessage.value = props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
+    console.log('File already exists');
+    return false;
+  }
+
+  isUploading.value = true;
+  documentForm
+    .transform(data => ({
+      ...data,
+      quote_type_id: doc.quote_type_id,
+      document_type_code: doc.code,
+      folder_path: doc.folder_path,
+      file: files[0].file,
+    }))
+    .post(url, {
+      preserveScroll: true,
+      preserveState: true,
+      onError: errors => {
+        documentForm.setError(errors.error);
+		console.log("errors");
+        console.log(errors);
+        notification.error({
+          title: 'File upload failed',
+          position: 'top',
+        });
+      },
+      onSuccess: (data) => {
+        fileUploadModels.value[count].push(data.props.quoteDocuments[0]);
+        console.log('azhar22='+JSON.stringify(fileUploadModels.value[count]));return;
+        /*notification.success({
+          title: 'File Uploaded',
+          position: 'top',
+        });*/
+      },
+      onFinish: () => {
+        isUploading.value = false;
+      },
+    });
 };
 
 const getPlanName = computed(() => {
@@ -517,14 +681,19 @@ const providerId = computed(() => {
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
-
-      <x-button
-        size="sm"
-        color="emerald"
-        @click="addPaymentModal"
-      >
-        Add Manual Payment
-      </x-button>
+      <x-tooltip>
+        <x-button
+          size="sm"
+          color="emerald"
+          @click="addPaymentModal"
+          :disabled="payments.length>0"
+        >
+          Add Manual Payment
+        </x-button>
+        <template #tooltip>
+            <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
+        </template>
+      </x-tooltip>
       <!-- HAFEEZ TEMPORARY <x-button
         v-if="!permissionEnum.ApprovePayments && permissionEnum.PaymentsCreate && quoteRequest.plan"
         size="sm"
@@ -534,16 +703,15 @@ const providerId = computed(() => {
         Add Payment
       </x-button> -->
     </div>
-    
-    <div class="vue3-easy-data-table tablefixed">
-      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell">
+    <div class="vue3-easy-data-table tablefixed custom-height">
+      <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height">
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
               <th><x-tooltip>
-                  Payment ID
+                  Payment No
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -551,7 +719,7 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Payment Ref ID
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_REF_ID }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_REF_ID }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -559,7 +727,7 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Collection Date
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTION_DATE }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTION_DATE }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -567,15 +735,15 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Due Date
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DUE_DATE }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DUE_DATE }}</span>
                   </template>
                 </x-tooltip>
               </th>
               <th>
                 <x-tooltip>
-                  Method
+                  Payment Method
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_METHOD }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -583,15 +751,15 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Total Price
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_PRICE }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_PRICE }}</span>
                   </template>
                 </x-tooltip>
               </th>
               <th>
                 <x-tooltip>
-                  Discount
+                  Discount Value
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DISCOUNT_VALUE }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_DISCOUNT_VALUE }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -599,15 +767,15 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Total Amount
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_AMOUNT }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_TOTAL_AMOUNT }}</span>
                   </template>
                 </x-tooltip>
               </th>
               <th>
                 <x-tooltip>
-                  Paid Amount
+                  Collected Amount
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTED_AMOUNT }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_COLLECTED_AMOUNT }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -615,7 +783,7 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Payment Status
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_STATUS }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_STATUS }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -623,15 +791,15 @@ const providerId = computed(() => {
                 <x-tooltip>
                   Payment Allocation Status
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS }}</span>
                   </template>
                 </x-tooltip>
               </th>
               <th>
                 <x-tooltip>
-                  Actions
+                  Action
                   <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ACTION }}</span>
+                      <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ACTION }}</span>
                   </template>
                 </x-tooltip>
               </th>
@@ -645,17 +813,17 @@ const providerId = computed(() => {
                   class="expand-pointer"
                   @click="isExpandedSplitPayments=!isExpandedSplitPayments"
                 >
-                  {{ isExpandedSplitPayments ? '-' : '+' }}
+                  {{ isExpandedSplitPayments ? '&and;' : '&or;' }}
                 </span>
               </td>
               <td>{{ item.code }}</td>             
-              <td>{{ item.collection_date }}</td>
-              <td>{{ item.collection_date }}</td>
+              <td>{{ formatDate(item.collection_date) }}</td>
+              <td>{{ formatDate(item.collection_date) }}</td>
               <td>{{ item.payment_method.name }}</td>
-              <td>{{ item.total_price }}</td>
-              <td>{{ item.discount_value }}</td>
-              <td>{{ item.total_amount }}</td>
-              <td>{{ item.captured_amount }}</td>
+              <td>{{ formatAmount(item.total_price) }}</td>
+              <td>{{ formatAmount(item.discount_value) }}</td>
+              <td>{{ formatAmount(item.total_amount) }}</td>
+              <td>{{ formatAmount(item.captured_amount) }}</td>
               <td>{{ item.payment_status.text }}</td>
               <td>{{ item.payment_status_message }}</td>             
               <td>
@@ -695,12 +863,12 @@ const providerId = computed(() => {
             <tr v-for="splitPayment in payments[0].payment_splits" :key="splitPayment.id">
               <td>{{ splitPayment.sr_no }}</td>
               <td></td>
-              <td>{{ splitPayment.due_date }}</td>
-              <td>{{ splitPayment.due_date }}</td>
+              <td>{{ formatDate(splitPayment.due_date) }}</td>
+              <td>{{ formatDate(splitPayment.due_date) }}</td>
               <td>{{ splitPayment.payment_method.name }}</td>
               <td></td>
               <td></td>
-              <td>{{ splitPayment.payment_amount }}</td>
+              <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
               <td></td>
               <td>{{ splitPayment.payment_status.text }}</td>
               <td></td>
@@ -709,6 +877,7 @@ const providerId = computed(() => {
           </template>
           </tbody>
         </table>
+        <div v-if="!payments.length>0" data-v-32683533="" class="vue3-easy-data-table__message">No Available Data</div>
       </div>
     </div>
     <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
@@ -960,8 +1129,13 @@ const providerId = computed(() => {
 					>
 					The system has detected a discrepancy. Before you hit 'Add Manual Payment,' please check the each payment transaction. If you spot any discrepancies, make the necessary adjustments. Once everything lines up, you're good to proceed.	
 				</x-alert>
-
-
+        <x-alert
+            v-if="isFileError"
+						color="error"
+						class="mb-5"						
+					>
+					{{ fileErrorMessage }}
+				</x-alert>
         <div class="w-full grid">
           <!-- Header -->
           <div class="flex w-full">
@@ -1040,7 +1214,7 @@ const providerId = computed(() => {
                 <p v-if="isPaymentMetodNotSelected[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 <x-input
                   class="w-full mt-2"
-                  v-if = "isCheckDetailsEnabled && count==1"
+                  v-if = "isCheckDetailsEnabled && (count==1 || paymentMethodsModels[count] === 'PDC')"
                   v-model="checkDetailModels[count]"
                   placeholder="Cheque Details"         
                 />
@@ -1059,22 +1233,43 @@ const providerId = computed(() => {
                   :rules="[rules.isRequired]"              
                 />  
               </div>
-              <div class="w-1/5 px-2">
-                <!--
+              <div class="w-1/5 px-2 mb-2">
                 <Dropzone
-                  :id="documentType.id"
-                  :accept="documentType.accepted_files"
-                  :max-files="documentType.max_files"
-                  :max-size="documentType.max_size"
-                  :loading="docForm.processing"
-                  @change="uploadFile(documentType, $event)"
+                  :id="paymentDocument.id"
+                  :accept="paymentDocument.accepted_files"
+                  :max-files="paymentDocument.max_files"
+                  :max-size="paymentDocument.max_size"
+                  :loading="documentForm.processing"
+                  @change="uploadDocument(paymentDocument, $event, count)"
                 />
-                -->
-                <x-input
-                  class="w-full"
-                  v-model="fileUploadModels[count]"
-                  placeholder="Upload Files"         
-                />
+                {{ console.log('azhar333='+JSON.stringify(fileUploadModels[count]))  }}
+                <div v-for="fileData in fileUploadModels[count]" :key="fileData.id">
+                  <span style="display: flex; align-items: center;">
+                    <a
+                      :key="fileData.id"
+                      :href="storageUrl + fileData.doc_url"
+                      target="_blank"
+                      class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                      style="flex: 1; text-decoration: none;"
+                    >
+                      {{ fileData.original_name }}
+                    </a>
+                    
+                    <span
+                      class="delete-pointer"
+                      @click="deleteDocument(fileData.doc_name, count)"
+                    >
+                    <x-tooltip>
+                      x
+                      <template #tooltip>
+                          <span>{{ paymentTooltipEnum.PAYMENT_ADD_DELETE_DOCUMENT }}</span>
+                      </template>
+                    </x-tooltip>
+                    </span>
+
+
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -1136,11 +1331,28 @@ const providerId = computed(() => {
   color: #333; /* Customize the close icon color */
 }
 
-.expand-pointer {
+.delete-pointer {
   cursor: pointer;
-  font-size: 35px;
-  padding-left: 30px;
+  padding-left: 5px;
   font-weight: bold;
 }
 
+.expand-pointer {
+  cursor: pointer;
+    font-size: 20px;
+    padding-left: 25px;
+    font-weight: bold;
+    color: #1d83bc;
+}
+
+.custom-tooltip-content {
+  max-width: 200px; /* Adjust the max-width as needed */
+  white-space: normal; /* Allow the text to wrap */
+  z-index: 999;
+  position: relative;
+  font-size: 10px;
+  }
+  .custom-height {
+    min-height: 160px;
+  }
 </style>

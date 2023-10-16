@@ -75,6 +75,8 @@ const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
+//console.log("hafeez"+JSON.stringify(page.props.documentTypes.find(item => item.code === "CPD")));
+
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
@@ -1743,11 +1745,14 @@ const loadEmailEvents = (email) => {
 		<PaymentTable 
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Car"
+			:quote="record"
 			:payments="payments"
+			:paymentDocument="page.props.documentTypes.find(item => item.code === 'CPD')"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
 		/>
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>

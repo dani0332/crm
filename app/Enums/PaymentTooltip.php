@@ -19,7 +19,10 @@ final class PaymentTooltip extends Enum
     const PAYMENT_MANAGEMENT_PAYMENT_STATUS = 'Tracks the progression of the payment. \'New\' indicates a fresh transaction, while \'Paid\' confirms the receipt of funds. Update this status as the payment process advances.';
     const PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS = 'Indicates whether this payment is allocated to a specific invoice. This ensures that there\'s a clear record of invoicing for this payment.';
     const PAYMENT_MANAGEMENT_ACTION = 'Here, you can manage the payment details.Use \'Edit\' to modify payment information, \'View\' to see the entire payment setup, and \'Copy Link\' to share a direct payment link for clients preferring card payments.';
-
+    const PAYMENT_MANAGEMENT_ADD_PAYMENT = 'Click this if you need to input a payment that was received outside our automated system. Ensure you have all necessary details and proofs when recording manually to maintain accuracy.';
+    
+    const PAYMENT_ADD_DUPLICATE_FILES = 'You are uploading a file with the same name as another one. To avoid confusion, please rename the file or ensure it\'s the correct one. This way, we\'ll maintain a tidy and efficient document management process.';
+    CONST PAYMENT_ADD_DELETE_DOCUMENT = 'Any uploaded documents cannot be deleted once the payment status marks as \'Paid\'.';
     //Main section
     const COLLECTION_DATE = 'The date when the payment is due or when it was collected. Ensure to update this date accurately to maintain proper payment records.';
     const TOTAL_PRICE = 'The entire amount due before any potential discounts. Remember, VAT is exempt for Life Insurance policies.';
@@ -52,6 +55,27 @@ final class PaymentTooltip extends Enum
     const FREQUENCY_LIST_SEMI_ANNUAL = 'This payment structure requires the customer to make payments twice a year. It breaks down the total amount into two equal parts, usually made every six months.';
     const FREQUENCY_LIST_SPLIT_PAYMENTS    = 'This allows the customer flexibility in settling the total amount. They can pay in multiple, divided amounts or use different payment methods for each portion. It\'s especially useful when coordinating payments from multiple sources or for larger amounts.';
     const FREQUENCY_LIST_CUSTOM   = 'Gain flexibility in settling the total amount. You can make payments in multiple, divided amounts using various payment terms and methods. Adjust the number of payments needed, ranging from 1 to 12, and customize due dates for each payment number to suit customers preferences';
+
+
+    // Credit approval dropdown list
+    const CREDIT_APPROVAL_LIST_AVAILABLE   = 'This indicates that the customer already has a credit balance with us, perhaps from overpayments or prior arrangements. This credit balance can be used against the current total amount due, thereby not requiring immediate additional payment.';
+    const CREDIT_APPROVAL_LIST_POSTDATED   = 'The customer has provided a cheque with a future date on it, indicating their commitment to pay on that specified date. As a result, the policy issuance can proceed, but the payment won\'t be collected until the cheque\'s date.';
+    const CREDIT_APPROVAL_LIST_CLEARANCE   = 'The customer has opted to pay via cheque, which has been submitted, but it\'s still in the banking process for clearance. This means the funds are yet to be officially transferred and reflected in our account.';
+    const CREDIT_APPROVAL_LIST_REASON   = 'This option allows for unique or specific situations not covered by the predefined reasons. If selected, you must provide a detailed explanation in the provided text area to ensure clarity and proper documentation.';
+
+    // Discount types dropdown list
+    const DISCOUNT_TYPE_LIST_REFER   = 'This discount is a thank-you gesture to customers who bring new clients to our business. By referring someone, they earn a reduction in their total amount.';
+    const DISCOUNT_TYPE_LIST_INCENTIVE   = 'This isn\'t a traditional discount. Instead, a portion or all of this amount can be adjusted against the advisor\'s incentives. It\'s a flexible way to balance between customer discounts and advisor incentives.';
+    const DISCOUNT_TYPE_LIST_MANAGERIAL   = 'This discount is not standardised and requires specific approval from the management. It\'s typically granted under unique circumstances or for special cases only.';
+    const DISCOUNT_TYPE_LIST_EMPLOYEE   = 'A special price reduction exclusive to InsuranceMarket.ae employees, recognizing their contributions and encouraging them to use our services.';
+    const DISCOUNT_TYPE_LIST_FAMILY   = 'This discount extends our appreciation to the families of our employees. Exclusive to family members of InsuranceMarket.ae staff, it provides a reduced rate on insurance premiums.';
+
+    // Discount reason dropdown list
+    const DISCOUNT_REASON_LIST_PROMOTIONAL   = 'Reserved STRICTLY for well-defined marketing campaigns. Every unplanned discount can reduce our revenue and brand value. Ensure that the campaign is currently active and authorized. Misuse or increased use may result in a review of your decisions with your line manager.';
+    const DISCOUNT_REASON_LIST_LOYALTY   = 'ONLY for our most loyal customers who\'ve shown continued trust over the years. Be cautious: frequent, undeserved discounts can affect our profitability and undervalue our services. Ensure this is backed by a substantial purchase history to validate the use of such a discount. No proof will result in a review with your manager.';
+    const DISCOUNT_REASON_LIST_COMPETITIVE   = 'Use SPARINGLY. While we want to stay competitive, undercutting without a strategic basis can harm our market position. Confirm that the competitor\'s offer is genuine and that our discount won\'t compromise our revenue and brand value.';
+    const DISCOUNT_REASON_LIST_CUSTOM_REASON   = 'This should be your LAST RESORT. Every custom discount impacts our earnings and requires rigorous justification and approvals from your line manager. You\'ll be held accountable for providing a detailed and valid reason. Incorrect selections will be subject to managerial review.';
+
 
     // Payments dropdown list
     const PAYMENT_LIST_BT   = 'This payment method involves the customer transferring funds directly from their bank account. It can be done electronically or through physical means such as cash or cheque deposits.';
