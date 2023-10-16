@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import PaymentTable from './Partials/PaymentTable.vue'
-import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import QuoteStatus from './../Partials/QuoteStatus.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
@@ -130,7 +130,7 @@ const carLostQuoteLogsTable = reactive({
 		{ text: 'Notes', value: 'notes' },
 		{ text: 'Lead Status', value: 'quote_status.text' },
 		{ text: 'Approval Status', value: 'status' },
-		{ text: 'Documents', value: 'documents' },		
+		{ text: 'Documents', value: 'documents' },
 	]
 })
 
@@ -174,7 +174,7 @@ const paymentDetailsTable = reactive({
       text: 'Reference',
       value: 'reference',
     },
-    
+
     {
       text: 'Action',
       value: 'action',
@@ -196,9 +196,9 @@ const availablePlansTable = reactive({
 		{ text: 'PAB cover', value: 'addons' },
 		{ text: 'Roadside assistance', value: 'roadSideAssistance' },
 		{ text: 'Oman cover TPL', value: 'omanCoverTPL' },
-		{ text: 'Actual Premium', value: 'actualPremium' },
-		{ text: 'Discounted Premium', value: 'discountPremium' },
-		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+		{ text: 'Actual Price', value: 'actualPremium' },
+		{ text: 'Discounted Price', value: 'discountPremium' },
+		{ text: 'Price with VAT.', value: 'premiumWithVat' },
 		{ text: 'Excess', value: 'excess' },
 		{ text: 'Action', value: 'action' },
 	]
@@ -321,7 +321,7 @@ const totalPriceVAT = computed(() => {
 					vat += parseInt(option.price) + option.vat;
 				}
 			})
-		})		
+		})
 	})
 	return vat;
 })
@@ -353,12 +353,12 @@ const leadStatusOptions = computed(() => {
 	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
 	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Object.values(page.props.leadStatuses);
 	const filteredLeadStatuses = statuses?.filter(status => {
-	  
+
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
 	}
 	// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
+	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
     return true;
   });
 
@@ -371,8 +371,8 @@ const leadStatusOptions = computed(() => {
 const leadStatusDisabled = computed(() => {
 	return (
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
-		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || 
-		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake && 
+		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate ||
+		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake &&
 		(!hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]))) ||
 		(!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
 	);
@@ -459,11 +459,13 @@ const modals = reactive({
   contactDeleteConfirm:false,
   activity:false,
   activityConfirm:false,
+  changeInsurer: false,
   notes:false,
   plan: false,
   docConfirm: false,
   createPlan:false,
   sendConfirm:false,
+  showEmailEventsModal: false
 });
 
 const confirmData = reactive({
@@ -735,10 +737,46 @@ const activityDeleteConfirmed = () => {
   );
 };
 
+const changeInsurerForm = useForm({
+	uuid: '',
+	plan_id: '',
+	provider_code: ''
+});
+
+const confirmChangeInsurer = (plan) => {
+	modals.changeInsurer = true;
+	changeInsurerForm.uuid = page.props.record.uuid;
+	changeInsurerForm.plan_id = plan.id;
+	changeInsurerForm.provider_code = plan.providerCode;
+}
+
+const onConfirmChangeInsurer = () => {
+	changeInsurerForm.post('change-insurer', {
+		preseveScroll: true,
+		preserveState: true,
+		onSuccess: () => {
+			notification.success({
+				title: 'Insurer Changed successfully',
+				position: 'top',
+			});
+		},
+		onError: (err) => {
+			notification.error({
+				title: 'Something went wrong',
+				position: 'top',
+			});
+			conslo.log(err);
+		},
+		onFinish: () => {
+			modals.changeInsurer = false;
+		},
+	})
+}
+
 const notesForm = useForm({
 
 	quote_id: page.props.record.id,
-	quote_type_id:page.props.quoteTypeId,	
+	quote_type_id:page.props.quoteTypeId,
 	quote_uuid: page.props.record.uuid,
 	customer_name: page.props.record.first_name,
 	customer_email: page.props.record.email,
@@ -746,7 +784,7 @@ const notesForm = useForm({
 	description:null,
 });
 
-const addNotes = () => {
+const addNotes = () => {quotes/car/change-insurer
   notesForm.reset();
   modals.notes = true;
 };
@@ -881,6 +919,18 @@ const confirmDeleteDoc = () => {
   );
 };
 
+const getAddonVat = (item) => {
+	let addonVat = 0;
+	item.addons.forEach(addon => {
+		addon.carAddonOption.forEach(option => {
+			if (option.isSelected && option.price != 0) {
+				addonVat += parseInt(option.price) + option.vat;
+			}
+		})
+	})
+	return addonVat;
+}
+
 const copyLink = () => {
 	copy(page.props.planURL);
 	if (copied)
@@ -916,7 +966,7 @@ const onLeadStatus = () => {
   );
 };
 const toggleLoader = ref(false);
- 
+
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
 
@@ -1052,6 +1102,7 @@ const emailsHeaders = ref([
   { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
+  {text: 'Actions', value: 'actions'}
 ]);
 const followUpActions = ref([]);
 const actionsHeaders = ref([
@@ -1068,21 +1119,33 @@ const getFollowUpsByQuote = () => {
 		axios
 			.get(`${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`)
 			.then(response => {
+        
 			let { status, emails, actions, id } = response.data.data;
-			if (status == 'PENDING' || status == 'IN_PROGRESS')
-				disableFollowUp.value = false;
-			else disableFollowUp.value = true;
-			followUpstatus.value = status;
-			followUpEmails.value = emails;
-			followUpActions.value = actions;
-			followUpId.value = id;
+
+      if(id) {
+          hideFollowUp.value = false;
+
+          if (status == 'PENDING' || status == 'IN_PROGRESS')  {        
+            disableFollowUp.value = false;
+          }				
+          else disableFollowUp.value = true;
+
+          followUpstatus.value = status;
+          followUpEmails.value = emails;
+          followUpActions.value = actions;
+          followUpId.value = id;
+        }
+        else
+        {
+          hideFollowUp.value = true;
+        }			
 			})
 			.catch(error => {
-				hideFollowUp.value = false;
+        hideFollowUp.value = true;
 			});
 	} catch (error) {
-		hideFollowUp.value = false;
-	}  
+		hideFollowUp.value = true;    
+	}
 };
 
 const closeModal = v => {
@@ -1090,9 +1153,61 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 onMounted(() => {
-	getFollowUpsByQuote()
+
+  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
+    getFollowUpsByQuote();
+  }
+	
 	// setLeadStatuses();
 });
+
+
+
+//activities
+const emailEventsTable = [
+  { text: 'Type', value: 'type' },
+  { text: 'Sub Type', value: 'sub_type' },
+  { text: 'DateTime', value: 'event_date' }
+];
+
+const emailEvents = ref([]);
+const loadingEmailEvents = ref(false);
+
+const loadEmailEvents = (email) => {
+
+  loadingEmailEvents.value = email.id;
+  let data = {
+        isInertial: true,
+        message_id: email.message_id,
+        customer_email: email.customer_email
+    };
+
+    axios
+	  		.post(`/followups/emails/events`, data)
+	  		.then(response => {
+          loadingEmailEvents.value = false;
+          if(response.data.length) {
+            modals.showEmailEventsModal = true;
+	  		    emailEvents.value = response.data;
+          }
+          else
+          {
+            notification.success({
+              title: 'Email Events not available.',
+              position: 'top',
+            });
+          }
+
+	  		})
+	  		.catch(error => {
+          loadingEmailEvents.value = false;
+          notification.error({
+            title: 'Something went wrong while fetching events.',
+            position: 'top',
+          });
+	  			modals.showEmailEventsModal = false;
+      });
+}
 
 </script>
 
@@ -1108,7 +1223,7 @@ onMounted(() => {
 			<div class="text-sm">
 				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">PREMIUM</dt>
+						<dt class="font-medium">PRICE</dt>
 						<dd>{{ record.premium ?? '' }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
@@ -1432,7 +1547,7 @@ onMounted(() => {
 						<dd>{{ record.previous_policy_expiry_date ?? '' }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Premium</dt>
+						<dt class="font-medium">Previous Policy Price</dt>
 						<dd>{{ record.previous_quote_policy_premium ?? '' }}</dd>
 					</div>
 					<template v-if="hasRole(rolesEnum.Admin)">
@@ -1444,7 +1559,7 @@ onMounted(() => {
 							<dt class="font-medium"></dt>
 							<dd></dd>
 						</div>
-					</template>					
+					</template>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">Policy Number</dt>
 						<dd>{{ record.policy_number }}</dd>
@@ -1477,10 +1592,10 @@ onMounted(() => {
 							placeholder="Lead Status"
 							class="w-full"
 						/>
-						
+
 						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved">
-							<x-input								
-								v-model="leadStatusForm.trans_code"								
+							<x-input
+								v-model="leadStatusForm.trans_code"
 								placeholder="TransApp Code is required"
 								class="w-full"
 								:rules="[rules.isRequired]"
@@ -1488,7 +1603,7 @@ onMounted(() => {
 							/>
 						</x-field>
 						<x-field label="Lost Reason" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost">
-							<x-select							
+							<x-select
 								v-model="leadStatusForm.lostReason"
 								:options="lostReasons?.map(item => ({
 									value: item.id,
@@ -1500,13 +1615,13 @@ onMounted(() => {
 							/>
 						</x-field>
 						<x-field label="Followup Date" v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-							<DatePicker								
+							<DatePicker
 								v-model="leadStatusForm.next_followup_date"
 								withTime
 								:rules="[isRequired]"
-								placeholder="Please select follow-up date & time" 
+								placeholder="Please select follow-up date & time"
 								:error="leadStatusForm.errors.next_followup_date"
-								class="w-full" 
+								class="w-full"
 							/>
 							<!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
@@ -1546,7 +1661,7 @@ onMounted(() => {
 							:error="leadStatusForm.errors.notes"
 							:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
 						/>
-					</x-field>					
+					</x-field>
 				</div>
 			</div>
 			<template v-if="isCarLostStatus(record.quote_status_id)">
@@ -1630,9 +1745,9 @@ onMounted(() => {
 						</x-field>
 					</div>
 				</div>
-			</template>			
+			</template>
 
-			<DataTable 
+			<DataTable
 				v-if="paymentEntityModel.car_lost_quote_logs.length > 0"
 				table-class-name="mt-5 tablefixed compact"
 				:headers="carLostQuoteLogsTable.columns"
@@ -1674,9 +1789,8 @@ onMounted(() => {
 			:quoteType="quoteType"
 			:quote="record"
 		/> -->
-    
+
 		<PaymentTable 
-			v-if="hasRole(rolesEnum.BetaUser)"
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -1688,7 +1802,7 @@ onMounted(() => {
 				<x-divider class="mb-4 mt-1" />
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-				<div class="w-full md:w-1/2">					
+				<div class="w-full md:w-1/2">
 					<x-field label="Cylinder" required>
 						<x-input
 							v-model="assumptionsForm.cylinder"
@@ -1778,7 +1892,7 @@ onMounted(() => {
 					<div class="flex flex-col gap-4">
 						<x-field label="Current Insurance" required>
 							<x-select
-								v-model="assumptionsForm.current_insurance_status"								
+								v-model="assumptionsForm.current_insurance_status"
 								:options="currentInsuranceOptions"
 								placeholder="Current Insurance"
 								class="w-full"
@@ -1825,7 +1939,7 @@ onMounted(() => {
           <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
         </h3>
         <div v-if="!hasRole(rolesEnum.PA)">
-          <x-tooltip v-if="hideFollowUp && hasRole(rolesEnum.CarAdvisor)">
+          <x-tooltip v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)">
             <x-button
               class="ml-2 mr-2"
               :disabled="disableFollowUp"
@@ -1867,7 +1981,7 @@ onMounted(() => {
           	<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id">
 				Send OCB Email to Customer
 			</x-button>
-					
+
 					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
@@ -1923,7 +2037,7 @@ onMounted(() => {
 					<template v-for="addon in addons" :key="addon">
 						<template v-for="option in addon.carAddonOption" :key="option">
 							<span v-if="addon.code">
-								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">									
+								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">
 									{{ addon.text }}: {{ option.value }} <br />
 								</template>
 							</span>
@@ -1957,7 +2071,7 @@ onMounted(() => {
 					{{ discountPremium ? parseFloat(discountPremium).toFixed(2) : '0.00' }}
 				</template>
 				<template #item-premiumWithVat="item">
-					{{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+					{{ parseFloat(item.discountPremium + item.vat + getAddonVat(item)).toFixed(2) }}
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
@@ -1968,7 +2082,7 @@ onMounted(() => {
 							Copy
 						</x-button>
 						<template v-if="item.actualPremium > 0 && item.id != record.plan_id">
-							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined>
+							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined @click="confirmChangeInsurer(item)">
 								Change Insurer
 							</x-button>
 						</template>
@@ -1976,7 +2090,32 @@ onMounted(() => {
 				</template>
 			</DataTable>
 
+			<x-modal v-model="modals.changeInsurer" show-close backdrop>
+				<template #header> Change Insurer </template>
+				<p>Are you sure to change insurer?</p>
+				<template #actions>
+				<div class="text-right space-x-4">
+					<x-button
+					size="sm"
+					ghost
+					@click.prevent="modals.changeInsurer = false"
+					>
+					Cancel
+					</x-button>
+					<x-button
+					size="sm"
+					color="error"
+					:loading="changeInsurerForm.processing"
+					@click.prevent="onConfirmChangeInsurer"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+      		</x-modal>
+
       <FollowUpReasons
+        v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
         :modelValue="showfollowup"
         @update:modelValue="value => closeModal(value)"
         :uuid="page.props.record.id"
@@ -1984,6 +2123,7 @@ onMounted(() => {
         :followUpId="followUpId"
 		:kyoEndPoint="kyoEndPoint"
       />
+
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
@@ -2041,11 +2181,31 @@ onMounted(() => {
         />
       </x-modal>
     </div>
+    
     <div
       class="p-4 rounded shadow mb-6 bg-white"
-      v-if="hasRole(rolesEnum.CarAdvisor)"
+      v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
     >
-      <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
+
+    <x-modal v-model="modals.showEmailEventsModal" size="lg" show-close backdrop>
+      <template #header> Email Events </template>
+      <DataTable
+        table-class-name="compact"
+        :headers="emailEventsTable"
+        :items="emailEvents"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="10"
+        :hide-footer="followUpEmails.length < 10"
+      >
+
+      </DataTable>
+
+    </x-modal>
+
+
+
+      <h3 class="font-semibold text-primary-800 text-lg mb-4">Auto Followup - Emails</h3>
       <DataTable
         table-class-name="tablefixed compact"
         :headers="emailsHeaders"
@@ -2055,13 +2215,25 @@ onMounted(() => {
         :rows-per-page="15"
         :hide-footer="followUpEmails.length < 15"
       >
+
+      <template #item-actions="item">
+          <div class="flex gap-2">
+            <x-button
+              size="xs"
+              color="primary"
+              outlined
+              :loading="loadingEmailEvents == item.id"
+              @click.prevent="loadEmailEvents(item)"
+            >
+              View Events
+            </x-button>
+
+          </div>
+        </template>
+
       </DataTable>
-    </div>
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-      v-if="hasRole(rolesEnum.CarAdvisor)"
-    >
-      <h3 class="font-semibold text-primary-800 text-lg mb-4">Actions</h3>
+
+      <h3 class="font-semibold text-primary-800 text-lg mt-5 mb-4">Auto Followup - Actions</h3>
       <DataTable
         table-class-name="tablefixed compact"
         :headers="actionsHeaders"
@@ -2072,8 +2244,9 @@ onMounted(() => {
         :hide-footer="followUpActions.length < 15"
       >
       </DataTable>
-    </div>
 
+    </div>
+    
 		<EmbeddedProducts
       	:data="embeddedProducts"
       	:link="record.uuid"
@@ -2178,7 +2351,7 @@ onMounted(() => {
 						</template>
 
 					</template>
-					
+
 				</div>
 			</div>
 			<DataTable
@@ -2272,11 +2445,11 @@ onMounted(() => {
 						class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
 					>
 						{{ quoteDocument.original_name || quoteDocument.doc_name }}
-					</a> 
+					</a>
 					</div>
 				</div>
     		</x-modal>
-		</div> 
+		</div>
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2328,7 +2501,7 @@ onMounted(() => {
 					</div>
 				</template>
 			</DataTable>
-		</div> 
+		</div>
 
 		<!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2392,7 +2565,7 @@ onMounted(() => {
 					</x-button>
 				</div>
 				</x-form>
-          </x-modal>		
+          </x-modal>
 		</div>  -->
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -2532,7 +2705,7 @@ onMounted(() => {
 				</div>
 				</x-form>
       		</x-modal>
-		</div> 
+		</div>
 		<customerAdditionalContacts
           quoteType="Car"
           :customerId="record.customer_id"
@@ -2540,9 +2713,9 @@ onMounted(() => {
           :contacts="customerAdditionInfoList"
           :quoteEmail="record.email"
           :quoteMobile="record.mobile_no"
-
+			:canDelete="false"
       />
-		
+
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 		<div>

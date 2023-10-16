@@ -18,6 +18,7 @@ class GenericPermissionSeeder extends Seeder
     public function run()
     {
         $permissions = [
+            ['name' => PermissionsEnum::PAUSE_AUTO_FOLLOWUPS],
             ['name' => PermissionsEnum::DATA_EXTRACTION],
             ['name' => PermissionsEnum::CAR_SOLD_LIST,            'role' => RolesEnum::MarketingOperations],
             ['name' => PermissionsEnum::CAR_UNCONTACTABLE_LIST,   'role' => RolesEnum::MarketingOperations],

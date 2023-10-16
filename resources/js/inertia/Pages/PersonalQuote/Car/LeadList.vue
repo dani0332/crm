@@ -85,22 +85,24 @@ const filteredTableHeader = computed(() => {
     return tableHeader;
   } else {
     // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
-    return tableHeader.filter(column => column.value !== 'source' && column.value !== 'assignment_type');
+    return tableHeader.filter(
+      column => column.value !== 'source' && column.value !== 'assignment_type',
+    );
   }
 });
 
 const advisorOptions = computed(() => {
-    let options = page.props.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
-    }));
+  let options = page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
 
-    options.push({
-        value: '',
-        label: 'UnAssigned'
-    })
+  options.push({
+    value: '',
+    label: 'UnAssigned',
+  });
 
-    return options;
+  return options;
 });
 
 const leadStatuses = computed(() => {
@@ -328,13 +330,14 @@ onMounted(() => {
     <div class="flex justify-between items-center flex-wrap gap-4">
       <h2 class="text-xl font-semibold">Lead List</h2>
 
-      <LeadAssignedWidget v-if="hasRole(rolesEnum.CarAdvisor)"
-            :todayAutoCount="todayAutoCount"
-            :todayManualCount="todayManualCount"
-            :yesterdayAutoCount="yesterdayAutoCount"
-            :yesterdayManualCount="yesterdayManualCount"
-            :userMaxCap="userMaxCap"
-            />
+      <LeadAssignedWidget
+        v-if="hasRole(rolesEnum.CarAdvisor)"
+        :todayAutoCount="todayAutoCount"
+        :todayManualCount="todayManualCount"
+        :yesterdayAutoCount="yesterdayAutoCount"
+        :yesterdayManualCount="yesterdayManualCount"
+        :userMaxCap="userMaxCap"
+      />
 
       <div class="space-x-3">
         <x-button
@@ -509,13 +512,14 @@ onMounted(() => {
           :options="advisorOptions"
         />
 
-        <x-select v-if="!hasRole(rolesEnum.CarAdvisor)"
-            v-model="filters.assignment_type"
-            label="Assignment Type"
-            name="assignment_type"
-            :options="assignmentTypeOptions"
-            placeholder="Please select assignment type"
-            class="w-full"
+        <x-select
+          v-if="!hasRole(rolesEnum.CarAdvisor)"
+          v-model="filters.assignment_type"
+          label="Assignment Type"
+          name="assignment_type"
+          :options="assignmentTypeOptions"
+          placeholder="Please select assignment type"
+          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -564,17 +568,6 @@ onMounted(() => {
                 class="flex-1 w-auto"
                 :rules="[rules.isRequired]"
               />
-              <!-- <x-select
-                            v-model="assignForm.assignment_type"
-                            label="Assignment Type"
-                            :options="[
-                                { value: 'With-Email', label: 'With Email' },
-                                { value: 'Without-Email', label: 'Without Email' },
-                            ]"
-                            placeholder="Select Subteam"
-                            class="flex-1 w-auto"
-                            :rules="[rules.isRequired]"
-                        /> -->
               <div class="mb-3 md:pt-6">
                 <x-button
                   color="orange"

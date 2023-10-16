@@ -15,7 +15,7 @@ const quotePlansTable = reactive({
 		{ text: 'Provider Name', value: 'providerName' },
 		{ text: 'Plan Name', value: 'name' },
 		{ text: 'Repair Type', value: 'repairType' },
-		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+		{ text: 'Price with VAT.', value: 'premiumWithVat' },
 	]
 });
 
@@ -97,6 +97,18 @@ const preventExponent = (event) =>{
       event.preventDefault();
     }
 }
+
+const getAddonVat = (item) => {
+	let addonVat = 0;
+	item.addons.forEach(addon => {
+		addon.carAddonOption.forEach(option => {
+			if (option.isSelected && option.price != 0) {
+				addonVat += parseInt(option.price) + option.vat;
+			}
+		})
+	})
+	return addonVat;
+}
 </script>
 <template>
   <x-form @submit="creatQuotePlan" :auto-focus="false">
@@ -132,13 +144,13 @@ const preventExponent = (event) =>{
     </div>
     <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
       <div class="w-full md:w-1/3">
-        <x-field label="Premium without vat" required>  
+        <x-field label="Price without vat" required>  
         <x-input
         v-model="addPlanForm.actual_premium"
         :rules="[isRequired]"
         class="w-full"
         type="number"
-        placeholder="Enter Premium without vat"
+        placeholder="Enter Price without vat"
         @keydown = "preventExponent"
         />
         </x-field>
@@ -195,7 +207,7 @@ const preventExponent = (event) =>{
   hide-rows-per-page
   hide-footer>
     <template #item-premiumWithVat="item">
-      {{ parseFloat(item.discountPremium + item.vat + totalPriceVAT).toFixed(2) }}
+      {{ parseFloat(item.discountPremium + item.vat + getAddonVat(item)).toFixed(2) }}
     </template>
   </DataTable>
 </template>

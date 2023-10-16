@@ -480,6 +480,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
+
+    Route::post('followups/emails/events', [\App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])

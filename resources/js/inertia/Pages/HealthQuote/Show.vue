@@ -925,6 +925,89 @@ const activityDeleteConfirmed = () => {
   );
 };
 
+// additional contact
+
+const additionalContactTable = [
+  { text: 'Type', value: 'key' },
+  { text: 'Value', value: 'value' },
+  { text: 'Created At', value: 'created_at' },
+  { text: 'Action', value: 'action' },
+];
+
+const additionalContact = useForm({
+  id: null,
+  additional_contact_type: null,
+  additional_contact_val: null,
+  quote_id: page.props.quote.id,
+  customer_id: page.props.quote.customer_id,
+  quote_type: 'health',
+});
+
+const onAdditionalContactSubmit = isValid => {
+  if (!isValid) return;
+  additionalContact
+    .transform(data => ({
+      ...data,
+      isInertia: true,
+    }))
+    .post(`/customer-additional-contact/add`, {
+      preserveScroll: true,
+      onError: errors => {
+        notification.error({
+          title: errors.error || 'Data not saved',
+          position: 'top',
+        });
+      },
+      onSuccess: () => {
+        additionalContact.reset();
+        notification.success({
+          title: 'Additional Contact Added',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        modals.addContact = false;
+      },
+    });
+};
+
+const additionalContactPrimary = data => {
+  modals.contactPrimaryConfirm = true;
+  confirmData.contactPrimary = data;
+};
+
+const additionalContactPrimaryConfirmed = () => {
+  const isEmail = confirmData.contactPrimary.key === 'email';
+  router.post(
+    `/customer-additional-contact/${
+      isEmail ? confirmData.contactPrimary.id : 0
+    }/make-primary`,
+    {
+      isInertia: true,
+      quote_id: page.props.quote.id,
+      key: confirmData.contactPrimary.key,
+      value: confirmData.contactPrimary.value,
+      quote_type: 'health',
+    },
+    {
+      preserveScroll: true,
+      onBefore: () => {
+        contactLoader.value = true;
+      },
+      onSuccess: () => {
+        notification.success({
+          title: 'Primary Contact Updated',
+          position: 'top',
+        });
+      },
+      onFinish: () => {
+        contactLoader.value = false;
+        modals.contactPrimaryConfirm = false;
+      },
+    },
+  );
+};
+
 // history data
 const historyData = ref(null);
 
@@ -2189,15 +2272,119 @@ onMounted(() => {
       </x-modal>
     </div>
 
-      <customerAdditionalContacts
-          quoteType="Health"
-          :customerId="quote.customer_id"
-          :quoteId="quote.id"
-          :contacts="customerAdditionalContacts"
-          :quoteEmail="quote.email"
-          :quoteMobile="quote.mobile_no"
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Customer Additional Contacts
+          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+        </h3>
+        <x-button
+          size="sm"
+          color="orange"
+          @click.prevent="
+            additionalContact.reset();
+            modals.addContact = true;
+          "
+        >
+          Add Additional Contacts
+        </x-button>
+      </div>
 
-      />
+      <DataTable
+        table-class-name="compact"
+        :headers="additionalContactTable"
+        :items="customerAdditionalContacts || []"
+        border-cell
+        hide-rows-per-page
+        hide-footer
+      >
+        <template #item-key="{ key }">
+          <span v-if="key === 'email'"> Email Address </span>
+          <span v-else> Mobile Number </span>
+        </template>
+        <template #item-action="item">
+          <x-button
+            size="xs"
+            color="emerald"
+            outlined
+            @click.prevent="additionalContactPrimary(item)"
+          >
+            Make Primary
+          </x-button>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+        <template #header> Add Additional Contacts </template>
+
+        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+          <div class="grid gap-4">
+            <x-select
+              v-model="additionalContact.additional_contact_type"
+              label="Type"
+              :options="[
+                { value: 'email', label: 'Email' },
+                { value: 'mobile_no', label: 'Mobile Number' },
+              ]"
+              :rules="[isRequired]"
+              placeholder="Select Type"
+              class="w-full"
+            />
+
+            <x-input
+              v-model="additionalContact.additional_contact_val"
+              label="Value"
+              :rules="[
+                isRequired,
+                additionalContact.additional_contact_type === 'email'
+                  ? isEmail
+                  : isNumber,
+              ]"
+              class="w-full"
+            />
+          </div>
+
+          <div class="text-right space-x-4 mt-12">
+            <x-button size="sm" @click.prevent="modals.addContact = false">
+              Cancel
+            </x-button>
+
+            <x-button
+              size="sm"
+              color="emerald"
+              :loading="additionalContact.processing"
+              type="submit"
+            >
+              Save
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
+
+      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+        <template #header> Primary Additional Contact </template>
+        <p>Are you sure you want to make this information as Primary?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+              size="sm"
+              ghost
+              @click.prevent="modals.contactPrimaryConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+              size="sm"
+              color="emerald"
+              @click.prevent="additionalContactPrimaryConfirmed"
+              :loading="contactLoader"
+            >
+              Confirm
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

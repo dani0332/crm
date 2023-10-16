@@ -145,6 +145,7 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
                 WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
                 WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                'cpip.code as plan_provider_code',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -1015,6 +1016,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            // "callSource" => "imcrm"
         ];
 
         if ($isDisabledEnabled) {
@@ -1539,7 +1541,7 @@ class CarQuoteService extends BaseService
             'vehicle_type_id' => 'required',
             'car_make_id' => 'required', // ID
             'car_model_id' => 'required', // ID
-            'currently_insured_with_id' => 'required|string',
+            'currently_insured_with' => 'required|string',
         ];
     }
 

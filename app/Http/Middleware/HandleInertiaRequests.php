@@ -66,6 +66,7 @@ class HandleInertiaRequests extends Middleware
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.MIX_PUSHER_APP_KEY'),
+            'epLink' => env('EMBEDDED_PAYMENT_LINK'),
         ];
     }
 

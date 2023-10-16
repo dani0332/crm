@@ -28,6 +28,8 @@ use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarQuote;
+use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
@@ -182,7 +184,8 @@ class CRUDController extends Controller
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
-            if (isset($upcomingBatch->deadline->deadline_date) &&
+            if (
+                isset($upcomingBatch->deadline->deadline_date) &&
                 auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]) &&
                 UserRepository::isUserMemberOfTeam(auth()->user()->id, [CarTeamType::BDM, CarTeamType::SBDM, CarTeamType::RENEWALS])
             ) {
@@ -282,7 +285,6 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
-            // dd($advisors);
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
                 'advisors' => $advisors,
@@ -824,7 +826,6 @@ class CRUDController extends Controller
 
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
-            //dd($embeddedProducts);
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
             return inertia('HealthQuote/Show', [
@@ -965,7 +966,7 @@ class CRUDController extends Controller
         } else {
             if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
-                if (Auth::user()->hasRole(RolesEnum::CarManager)) {
+                if (Auth::user()->hasRole(RolesEnum::CarManager) && ! $request->isDisbaled) {
                     $validateArray['renewal_batch'] = 'required';
                 }
             } else {
@@ -1234,7 +1235,6 @@ class CRUDController extends Controller
 
     public function manualLeadAssign(Request $request)
     {
-        // dd($request->all());
         $isValidRequest = $this->crudService->validateRequest($request->modelType, $request);
         if ($isValidRequest != 'true') {
             return redirect()->back()->with('error', $isValidRequest);
@@ -1324,6 +1324,28 @@ class CRUDController extends Controller
             if ($request->leadStatus == QuoteStatusEnum::TransactionApproved || $request->leadStatus == QuoteStatusEnum::PolicyIssued) {
                 // MS: dispatch sib work flow
                 SyncSIBContactJob::dispatch($lead);
+
+                // Ep send documents
+                $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($request->modelType));
+                $epTransaction = EmbeddedTransaction::where([
+                    ['quote_type_id',   $quoteTypeId],
+                    ['quote_request_id', $request->leadId],
+                    ['is_selected', 1],
+                ])->whereIn('payment_status_id', [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])->get();
+
+                if ($epTransaction->isNotEmpty()) {
+                    foreach ($epTransaction as $item) {
+
+                        $product_id = $item->product_id;
+                        $embedded_product_id = EmbeddedProductOption::find($product_id)->embedded_product_id;
+                        // EP Send documents
+                        $data = [];
+                        $data['quoteId'] = $request->leadId;
+                        $data['modelType'] = $request->modelType;
+                        $data['epId'] = $embedded_product_id;
+                        EmbeddedProductRepository::sendDocument($data);
+                    }
+                }
             }
             if (
                 $request->leadStatus == QuoteStatusEnum::FollowupCall ||
@@ -1768,14 +1790,14 @@ class CRUDController extends Controller
 
     public function cancelPayment(Request $request)
     {
-        return $this->healthQuoteService->cancelPayment($request);
+        return $this->crudService->cancelPayment($request);
     }
 
     public function toggleEmbeddedProduct(Request $request)
     {
         $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($this->genericModel->modelType));
 
-        return $this->healthQuoteService->toggleSelection($request, $quoteTypeId);
+        return $this->crudService->toggleSelection($request, $quoteTypeId);
     }
 
     /**
