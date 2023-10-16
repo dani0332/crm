@@ -32,38 +32,38 @@ class ApiController extends Controller
     public function assignLeads(Request $request)
     {
         try {
-                // IP Address of the caller
-                $ipAddress = $request->ip();
-                info("IP Address: $ipAddress");
-                // Request URL
-                $url = $request->fullUrl();
-                info("Request URL: $url");
-                // User-Agent header
-                $userAgent = $request->header('User-Agent');
-                info("User-Agent: $userAgent");
-                info('API assignLeads called with request params as : '.json_encode($request->all()));
+            // IP Address of the caller
+            $ipAddress = $request->ip();
+            info("IP Address: $ipAddress");
+            // Request URL
+            $url = $request->fullUrl();
+            info("Request URL: $url");
+            // User-Agent header
+            $userAgent = $request->header('User-Agent');
+            info("User-Agent: $userAgent");
+            info('API assignLeads called with request params as : '.json_encode($request->all()));
 
-                if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
+            if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
 
-                    $allocationType = $request->input('quoteTypeId');
-                    $allocationId = $request->input('quoteUUID');
+                $allocationType = $request->input('quoteTypeId');
+                $allocationId = $request->input('quoteUUID');
 
-                    info('------ Lead allocation started for lead : '.$allocationId.' ------');
+                info('------ Lead allocation started for lead : '.$allocationId.' ------');
 
-                    info('API endpoint is called for quote uuid: '.$allocationId.' with quote type id: '.$allocationType);
+                info('API endpoint is called for quote uuid: '.$allocationId.' with quote type id: '.$allocationType);
 
-                    $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
+                $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
 
-                    $allocationStrategy->executeSteps();
+                $allocationStrategy->executeSteps();
 
-                    info('------ Lead allocation ended for lead : '.$allocationId.' ------');
+                info('------ Lead allocation ended for lead : '.$allocationId.' ------');
 
-                    return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
-                } else {
-                    info('------ Lead allocation ended for lead with Required parameters missing ------');
+                return response()->json(['message' => 'Quote allocation completed successfully!'], 200);
+            } else {
+                info('------ Lead allocation ended for lead with Required parameters missing ------');
 
-                    return response()->json(['error' => 'Required parameters missing'], 400);
-                }
+                return response()->json(['error' => 'Required parameters missing'], 400);
+            }
         } catch (\Exception $e) {
             info('------ Lead allocation ended for lead with An error occurred ------');
 
