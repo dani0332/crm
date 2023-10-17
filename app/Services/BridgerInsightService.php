@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Enums\CustomerTypeEnum;
+use App\Models\KycLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use Config;
 use Exception;
 use Illuminate\Support\Facades\Log;
@@ -133,6 +135,19 @@ class BridgerInsightService
                         }
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
+                            // AML Log data inserted into kyc_logs just for BridgerInsight
+                            Log::info('Bridger Insight Service - KYC Log data inserted');
+                            KycLog::insert([
+                                'quote_request_id' => $quoteId,
+                                'quote_type_id' => $quoteTypeId,
+                                'results' => isset($getDecodeContents->Records) ? json_encode($getDecodeContents->Records) : [],
+                                'results_found' => isset($getDecodeContents->Records) ? count($getDecodeContents->Records) : 0,
+                                'created_at' => Carbon::now(),
+                                'input' => $customerOrEntityName,
+                                'match_found' => $getDecodeContents->Records ? 1 : 0,
+                                'search_type' => $customerType
+                            ]);
+
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                             AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
                         }
