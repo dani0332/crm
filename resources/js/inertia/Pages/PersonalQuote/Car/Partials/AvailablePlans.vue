@@ -50,19 +50,8 @@ const insurerAvailableTrimsOptions = computed(() => {
 
 const toggleLoader = ref(false);
 const toggleManualLoader = ref(false);
-const planAddons = computed(() => {
-	return props.plan.addons.map(addon => {
-		return addon.carAddonOption.map(option => {
-			return {
-				addonId: addon.id,
-				addonOptionId: option.id,
-				price: option.price,
-				vat: option.vat,
-				isSelected: option.isSelected,
-			};
-		});
-	});
-});
+
+console.log('props.plan', props.plan);
 
 const planForm = useForm({
 	car_quote_uuid: usePage().props.record.uuid,
@@ -70,7 +59,7 @@ const planForm = useForm({
 	actual_premium: props.plan.actualPremium,
 	discounted_premium: props.plan.discountPremium,
 	premium_vat: props.vat ? props.vat : 0,
-	car_value: props.record.car_value,
+	car_value: props.record.carValue,
 	excess: props.plan.excess || 0,
 	is_disabled: props.plan.isDisabled,
 	is_create: 0,

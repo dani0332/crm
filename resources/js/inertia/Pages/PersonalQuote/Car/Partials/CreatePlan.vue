@@ -92,11 +92,19 @@ const creatQuotePlan = isValid => {
   });
 };
 
-const preventExponent = (event) =>{
-  if (event.key === 'e' || event.key === 'E') {
-      event.preventDefault();
-    }
-}
+const validateDecimal = event => {
+	if (
+		event.key === '.' ||
+		event.key === 'Backspace' ||
+		event.key === 'Delete'
+	) {
+		return;
+	}
+	const regex = /^\d+(\.\d{0,2})?$/;
+	if (!regex.test(event.key)) {
+		event.preventDefault();
+	}
+};
 
 const getAddonVat = (item) => {
 	let addonVat = 0;
@@ -149,9 +157,8 @@ const getAddonVat = (item) => {
         v-model="addPlanForm.actual_premium"
         :rules="[isRequired]"
         class="w-full"
-        type="number"
         placeholder="Enter Price without vat"
-        @keydown = "preventExponent"
+        @keydown="validateDecimal"
         />
         </x-field>
       </div>
@@ -161,9 +168,8 @@ const getAddonVat = (item) => {
         v-model="addPlanForm.car_value"
         :rules="[isRequired]"
         class="w-full"
-        type="number"
         placeholder="Enter Car value"
-        @keydown = "preventExponent"
+        @keydown="validateDecimal"
         />
         </x-field>
       </div>
@@ -173,9 +179,8 @@ const getAddonVat = (item) => {
         v-model="addPlanForm.excess"
         :rules="[isRequired]"
         class="w-full"
-        type="number"
         placeholder="Enter excess"
-        @keydown = "preventExponent"
+        @keydown="validateDecimal"
         />
         </x-field>
       </div>
