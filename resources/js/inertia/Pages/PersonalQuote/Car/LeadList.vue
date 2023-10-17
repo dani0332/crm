@@ -72,10 +72,10 @@ const advisorOptions = computed(() => {
         label: advisor.name,
     }));
 
-    options.push({
-        value: 'null',
-        label: 'UnAssigned'
-    })
+    // options.push({
+    //     value: 'null',
+    //     label: 'UnAssigned'
+    // })
 
     return options;
 });
