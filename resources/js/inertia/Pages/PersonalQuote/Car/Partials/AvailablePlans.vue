@@ -51,15 +51,13 @@ const insurerAvailableTrimsOptions = computed(() => {
 const toggleLoader = ref(false);
 const toggleManualLoader = ref(false);
 
-console.log('props.plan', props.plan);
-
 const planForm = useForm({
 	car_quote_uuid: usePage().props.record.uuid,
 	car_plan_id: props.plan.id,
 	actual_premium: props.plan.actualPremium,
 	discounted_premium: props.plan.discountPremium,
 	premium_vat: props.vat ? props.vat : 0,
-	car_value: props.record.carValue,
+	car_value: props.plan.carValue,
 	excess: props.plan.excess || 0,
 	is_disabled: props.plan.isDisabled,
 	is_create: 0,
