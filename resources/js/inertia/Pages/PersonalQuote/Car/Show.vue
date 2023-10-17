@@ -1404,7 +1404,7 @@ const loadEmailEvents = (email) => {
 					</div>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">EMIRATE OF REGISTRATION</dt>
-						<dd>{{ record.dob }}</dd>
+						<dd>{{ record.emirate_of_registration_id_text }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">TYPE OF CAR INSURANCE</dt>
@@ -2365,7 +2365,7 @@ const loadEmailEvents = (email) => {
 				hide-footer
 			>
 				<template #item-document_name_text="item">
-					<Link :href="storageUrl + item.doc_url">{{ item.document_name_text }}</Link>
+					<a  target="_blank" :href="storageUrl + item.doc_url">{{ item.document_name_text }}</a>
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
