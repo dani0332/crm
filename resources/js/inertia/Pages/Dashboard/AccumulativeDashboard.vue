@@ -39,6 +39,9 @@ const LeadRcdSummary = ref([]);
 const UnassignedLeadRcdSummary = ref([]);
 const revivalLeadsCountChart = ref([]);
 const columnChartData = ref([]);
+const loader = reactive({
+  bar: false,
+});
 
 const tableHeader = ref([
   { text: 'LEAD SOURCE', value: 'source' },
@@ -127,6 +130,7 @@ function createLeadCountByAdvisor() {
 }
 
 function getDataForAdvisor() {
+  loader.bar = true;
   axios
     .post('/get-team-conversion-stats', {
       range: filters.range.join(','),
@@ -145,6 +149,9 @@ function getDataForAdvisor() {
     })
     .catch(error => {
       console.log(error);
+    })
+    .finally(() => {
+      loader.bar = false;
     });
 }
 
@@ -162,7 +169,11 @@ const setInitialState = () => {
 };
 
 onMounted(() => {
-  filters.range = [new Date().toDateString(), new Date().toDateString()];
+  let date = new Date();
+  filters.range = [
+    date.toISOString().split('T')[0],
+    date.toISOString().split('T')[0],
+  ];
   setInitialState();
 });
 
@@ -279,6 +290,7 @@ onUnmounted(() => (isActive.value = false));
           }))
         "
         @update:model-value="getDataForAdvisor()"
+        :loading="loader.bar"
       />
     </x-field>
     <ChartsColumn
