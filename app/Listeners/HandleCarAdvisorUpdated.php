@@ -48,7 +48,7 @@ class HandleCarAdvisorUpdated
 
         info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
-        SendOCBIntroEmailJob::dispatch($lead, $previousAdvisor)->onQueue('renewals');
+        SendOCBIntroEmailJob::dispatch($lead->uuid, $previousAdvisor)->onQueue('renewals');
 
         info('SMS sending code reached');
 
