@@ -22,6 +22,7 @@ const props = defineProps({
 });
 
 const createPaymentModal = ref(false);
+const viewPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
@@ -38,31 +39,16 @@ const totalPrice = ref(props.quoteRequest.premium); // Initial total price
 const paymentTypesFiltered = ref([]);
 
 const isPaymentMetodNotSelected = ref([]);
+const isDocumentNotUploaded = ref([]);
 const paymentMethodsModels = ref([]);
 const splitAmountModels = ref([]);
 const dueDateModels = ref([]);
 const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
+const readOnlyPayments = ref([]);
 
 const totalAmount = ref(props.quoteRequest.premium); // Initial total price
 
-
-const paymentTableHeaders = reactive({
-  columns:[
-    { text: 'Payment ID', value: 'cus', id:'cus', align: 'center' },
-    { text: 'Payment Ref ID', value: 'code' },
-    { text: 'Collection Date', value: 'collection_date' },
-    { text: 'Due Date', value: 'collection_date', sortable: true },
-    { text: 'Payment Method', value: 'payment_method.name' },
-    { text: 'Total Price', value: 'total_price' },
-    { text: 'Discount', value: 'discount_value' },
-    { text: 'Total Amount', value: 'total_amount' },
-    { text: 'Paid Amount', value: 'captured_amount' },
-    { text: 'Payment Status', value: 'payment_status.text' },
-    { text: 'Payment Allocation Status', value: 'payment_status_message' },
-    { text: 'Actions', value: 'actions', sortable: false },
-  ]
-});
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
@@ -111,19 +97,31 @@ const rules = {
 
 const validatePaymentOption = () => {  
       var totalSplitAmount = 0;
+      var issueFound = false;
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         totalSplitAmount = (parseFloat(totalSplitAmount) + parseFloat(splitAmountModels.value[i]));       
         const validationResult = rules.notEmptyOrZero(paymentMethodsModels.value[i]);
         isPaymentMetodNotSelected.value[i] = false;
         if (validationResult !== true) {          
           isPaymentMetodNotSelected.value[i] = true;        
-          return true;
+          //return true;
+          issueFound = true;
         }
       }
       if(totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)){
         isPaymentCalculationError.value = true;
-        return true;
+        issueFound = true;
       }
+
+      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+        if (paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' ) {
+          isDocumentNotUploaded.value[i] = true;
+          issueFound = true;
+        }
+      }
+    if(issueFound){
+      return true;
+    }
     return false;
   }
 
@@ -236,7 +234,11 @@ const resetDiscount = () => {
 };
 
 const handleDiscountChange = () => {
-  discountValue.value = 0;
+  
+  if( paymentMethodsForm.status === 'create' ){
+    discountValue.value = 0;
+  }
+
   isDiscountReasonEnabled.value = false;
   if(paymentMethodsForm.discount === ''){
     isDiscountEnabled.value = false;    
@@ -255,27 +257,27 @@ const handleDiscountChange = () => {
   }
 
   if(paymentMethodsForm.discount === 'employee_discount'){
-    discountValue.value = totalPrice.value * (12.5 / 100).toFixed(2); // for car
+    discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
   }
 
   if(paymentMethodsForm.discount === 'family_employee_discount'){
-    discountValue.value = totalPrice.value * (7.5 / 100).toFixed(2); // for car
+    discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
   }  
 };
 
 const calculateDueDates = () => {
-  dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+  dueDateModels.value[1] = paymentMethodsForm.collection_date;
   if(paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'upfront'){
      //dueDateModels.value[1] = new Date();
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
-      dueDateModels.value[i] = paymentMethodsForm.collectionDate;
+      dueDateModels.value[i] = paymentMethodsForm.collection_date;
     }
   } else if(paymentMethodsForm.frequency === 'custom'){
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
       dueDateModels.value[i] = '';
     }
   } else if(paymentMethodsForm.frequency === 'monthly'){
-    dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+    dueDateModels.value[1] = paymentMethodsForm.collection_date;
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
       const nextDueDate = new Date(dueDateModels.value[i - 1]);
       nextDueDate.setMonth(nextDueDate.getMonth() + 1);
@@ -283,7 +285,7 @@ const calculateDueDates = () => {
       dueDateModels.value[i] = nextDueDate;     
     }
   } else if(paymentMethodsForm.frequency === 'quarterly'){
-    dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+    dueDateModels.value[1] = paymentMethodsForm.collection_date;
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
       const nextDueDate = new Date(dueDateModels.value[i - 1]);
       if (i === 2) {
@@ -297,7 +299,7 @@ const calculateDueDates = () => {
     }
 
   } else if(paymentMethodsForm.frequency === 'semi_annual'){
-    dueDateModels.value[1] = paymentMethodsForm.collectionDate;
+    dueDateModels.value[1] = paymentMethodsForm.collection_date;
     const nextDueDate = new Date(dueDateModels.value[1]);
     nextDueDate.setDate(nextDueDate.getDate() + 180);
     dueDateModels.value[2] = nextDueDate;
@@ -438,7 +440,7 @@ const addPaymentModal = () => {
   paymentMethodsForm.paymentCode = '';
 
   paymentMethodsForm.status = 'create';
-  paymentMethodsForm.collectionDate = new Date();
+  paymentMethodsForm.collection_date = new Date();
   paymentMethodsForm
   createPaymentModal.value = true;
   paymentMethodsForm.payment_no = '1';
@@ -449,14 +451,118 @@ const addPaymentModal = () => {
   calculatePaymentBreakup();
 };
 
+
+const viewPayment = (payment,sr_no) => {
+  paymentMethodsForm.reset();
+  paymentMethodsForm.insurance_provider_id= payment.insurance_provider_id;
+  paymentMethodsForm.collection_type= payment.collection_type;  
+  paymentMethodsForm.payment_no= payment.total_payments;
+  paymentMethodsForm.frequency= payment.frequency;
+  paymentMethodsForm.credit_approval= payment.credit_approval;
+  paymentMethodsForm.discount= payment.discount;
+  paymentMethodsForm.discount_reason= payment.discount_reason;
+  paymentMethodsForm.custom_reason= payment.custom_reason;  
+  paymentMethodsForm.notes= payment.notes;
+  paymentMethodsForm.total_amount= payment.total_amount; // after discount calculation
+  paymentMethodsForm.total_price= payment.total_price;
+  paymentMethodsForm.collection_date= payment.collection_date;
+  discountValue.value = payment.discount_value; // discount amount
+
+  //console.log('azhar20='+payment.discount_value);
+  //console.log('azha221='+JSON.stringify(payment.payment_splits));
+  handleCollectionTypeChange();
+  handleFrequencyChange();
+  handleApprovalReasonChange();
+  handleDiscountChange();
+  calculateTotalAmount();
+  
+  for(let i=1; i<=payment.total_payments; i++){
+    if(payment.payment_splits[i-1].payment_status_id===10) { // 10 = Paid
+      readOnlyPayments.value[i] = true;
+    } else {
+      readOnlyPayments.value[i] = true;
+    }
+    
+    paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
+    splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
+    dueDateModels.value[i] = payment.payment_splits[i-1].due_date;
+
+    if(payment.payment_splits[i-1].payment_method.code === 'CHQ' || payment.payment_splits[i-1].payment_method.code === 'PDC'){
+      isCheckDetailsEnabled.value = true;
+      checkDetailModels.value[i] = payment.payment_splits[i-1].check_detail;
+    }
+    
+    
+    
+    if(payment.payment_splits[i-1].documents.length>0){
+      for(let doc in payment.payment_splits[i-1].documents){
+        if (!fileUploadModels.value[i]) {
+          fileUploadModels.value[i] = [];
+        }            
+        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]);        
+        
+      }
+    }
+  }  
+  viewPaymentModal.value = true;
+
+}
+
+
+
 const editPaymentModal = payment => {
   paymentMethodsForm.reset();
   paymentMethodsForm.status = 'edit';
-  paymentMethodsForm.payment_method = payment.payment_method.code;
-  paymentMethodsForm.collection_type = payment.collection_type;
-  paymentMethodsForm.amount = payment.captured_amount;
-  paymentMethodsForm.payment_reference = payment.reference;
-  paymentMethodsForm.paymentCode = payment.code;
+  paymentMethodsForm.insurance_provider_id= payment.insurance_provider_id;
+  paymentMethodsForm.collection_type= payment.collection_type;  
+  paymentMethodsForm.payment_no= payment.total_payments;
+  paymentMethodsForm.frequency= payment.frequency;
+  paymentMethodsForm.credit_approval= payment.credit_approval;
+  paymentMethodsForm.discount= payment.discount;
+  paymentMethodsForm.discount_reason= payment.discount_reason;
+  paymentMethodsForm.custom_reason= payment.custom_reason;  
+  paymentMethodsForm.notes= payment.notes;
+  paymentMethodsForm.total_amount= payment.total_amount; // after discount calculation
+  paymentMethodsForm.total_price= payment.total_price;
+  paymentMethodsForm.collection_date= payment.collection_date;
+  discountValue.value = payment.discount_value; // discount amount
+
+  //console.log('azhar20='+payment.discount_value);
+  //console.log('azha221='+JSON.stringify(payment.payment_splits));
+  handleCollectionTypeChange();
+  handleFrequencyChange();
+  handleApprovalReasonChange();
+  handleDiscountChange();
+  calculateTotalAmount();
+  
+  for(let i=1; i<=payment.total_payments; i++){
+    if(payment.payment_splits[i-1].payment_status_id===10) { // 10 = Paid
+      readOnlyPayments.value[i] = true;
+    } else {
+      readOnlyPayments.value[i] = true;
+    }
+    
+    paymentMethodsModels.value[i] = payment.payment_splits[i-1].payment_method.code;
+    splitAmountModels.value[i] = payment.payment_splits[i-1].payment_amount;
+    dueDateModels.value[i] = payment.payment_splits[i-1].due_date;
+
+    if(payment.payment_splits[i-1].payment_method.code === 'CHQ' || payment.payment_splits[i-1].payment_method.code === 'PDC'){
+      isCheckDetailsEnabled.value = true;
+      checkDetailModels.value[i] = payment.payment_splits[i-1].check_detail;
+    }
+    
+    
+    
+    if(payment.payment_splits[i-1].documents.length>0){
+      for(let doc in payment.payment_splits[i-1].documents){
+        if (!fileUploadModels.value[i]) {
+          fileUploadModels.value[i] = [];
+        }            
+        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]);        
+        
+      }
+    }
+  }  
   createPaymentModal.value = true;
 };
 
@@ -472,6 +578,17 @@ const paymentMethodsForm = useForm({
 const addPayment = isValid => {
   if (!isValid) return;
   if (validatePaymentOption()) return;  
+  //define main payment method
+  let mainPaymentMethod = 'CR';  
+  if(paymentMethodsForm.frequency === 'custom' || paymentMethodsForm.frequency === 'monthly'
+    || paymentMethodsForm.frequency === 'quarterly' || paymentMethodsForm.frequency === 'semi_annual'
+   ){
+    mainPaymentMethod = 'PP';
+  } else if(paymentMethodsForm.frequency === 'split_payments'){
+    mainPaymentMethod = 'MP';
+  } else if(paymentMethodsForm.frequency === 'upfront'){
+    mainPaymentMethod = 'UP';
+  }
 
   let data = {
     captured_amount: paymentMethodsForm.amount,
@@ -481,7 +598,7 @@ const addPayment = isValid => {
     plan_id: props.quoteRequest.plan.id,
     insurance_provider_id: providerId.value,
     collection_type: paymentMethodsForm.collection_type,
-    payment_methods: 'CHQ',
+    payment_methods: mainPaymentMethod,
     reference: paymentMethodsForm.payment_reference,
     payment_no: paymentMethodsForm.payment_no,
     frequency: paymentMethodsForm.frequency,
@@ -489,11 +606,11 @@ const addPayment = isValid => {
     discount: paymentMethodsForm.discount,
     discount_reason: paymentMethodsForm.discount_reason,
     custom_reason: paymentMethodsForm.custom_reason,
-    collection_date: paymentMethodsForm.collectionDate,
+    collection_date: paymentMethodsForm.collection_date,
     notes: paymentMethodsForm.notes,
     total_amount: totalAmount.value, // after discount calculation
     total_price: totalPrice.value, 
-    collection_date: paymentMethodsForm.collectionDate,
+    collection_date: paymentMethodsForm.collection_date,
     discount_value: discountValue.value, // discount amount
     isInertia: true,
   };
@@ -808,7 +925,7 @@ const providerId = computed(() => {
           
           <tbody class="vue3-easy-data-table__body">
             <tr v-for="item in payments" :key="item.code">
-              <td>
+              <td class="text-center">
                 <span
                   class="expand-pointer"
                   @click="isExpandedSplitPayments=!isExpandedSplitPayments"
@@ -861,7 +978,7 @@ const providerId = computed(() => {
             </tr>
             <template v-if="isExpandedSplitPayments">
             <tr v-for="splitPayment in payments[0].payment_splits" :key="splitPayment.id">
-              <td>{{ splitPayment.sr_no }}</td>
+              <td class="text-center">{{ splitPayment.sr_no }}</td>
               <td></td>
               <td>{{ formatDate(splitPayment.due_date) }}</td>
               <td>{{ formatDate(splitPayment.due_date) }}</td>
@@ -872,7 +989,7 @@ const providerId = computed(() => {
               <td></td>
               <td>{{ splitPayment.payment_status.text }}</td>
               <td></td>
-              <td><x-button size="xs" color="primary" outlined >View</x-button></td>
+              <td><x-button size="xs" color="primary" @click="viewPayment(payments[0],splitPayment.sr_no)" outlined >View</x-button></td>
             </tr>
           </template>
           </tbody>
@@ -896,7 +1013,7 @@ const providerId = computed(() => {
             <x-field label="COLLECTION DATE" class="w-full" required>
               <DatePicker
                   name="collection_date"
-                  v-model="paymentMethodsForm.collectionDate"
+                  v-model="paymentMethodsForm.collection_date"
                   :rules="[rules.isRequired]"                  
               />           
             </x-field>
@@ -1116,10 +1233,7 @@ const providerId = computed(() => {
                   <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
               </template>
             </x-tooltip>
-          </template>
-
-
-          
+          </template>          
         </div>
         <x-divider class="mb-4 mt-10" />
         <x-alert
@@ -1193,7 +1307,12 @@ const providerId = computed(() => {
           
           <!-- Fields -->
           <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count">
-            <div class="flex w-full custombreak">
+            <div :class="[
+              'flex',
+              'w-full',
+              'custombreak',
+              { 'disabled-div':  paymentMethodsForm.status == 'edit' }
+            ]" >
               <div class="w-1/6 px-2 text-center">{{ count }}</div>
               <div class="w-1/5 px-2">
                 <select
@@ -1242,6 +1361,7 @@ const providerId = computed(() => {
                   :loading="documentForm.processing"
                   @change="uploadDocument(paymentDocument, $event, count)"
                 />
+                <p v-if="isDocumentNotUploaded[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 {{ console.log('azhar333='+JSON.stringify(fileUploadModels[count]))  }}
                 <div v-for="fileData in fileUploadModels[count]" :key="fileData.id">
                   <span style="display: flex; align-items: center;">
@@ -1298,8 +1418,428 @@ const providerId = computed(() => {
         "
       >
         <x-button color="emerald" type="submit">
-          {{ paymentMethodsForm.status == 'create' ? 'Add Manual' : 'Update' }}
-          Payment
+          {{ paymentMethodsForm.status == 'create' ? 'Add Manual Payment' : 'Update' }}          
+        </x-button>
+      </div>
+      </x-form>
+    </x-modal>
+
+
+    <x-modal v-model="viewPaymentModal" size="xl" show-close backdrop>
+      <template #header>
+        <span class="text-primary-800 font-semibold">
+          View Payment
+        </span>
+      </template>
+      <x-form @submit="addPayment" :auto-focus="false">
+        <div class="w-full grid md:grid-cols-2 gap-5">
+          <x-tooltip>
+            <x-field class="w-full" >
+              <label for="collection-date" class="font-weight-bold"><strong>COLLECTION DATE:</strong></label>
+              <span id="collection-date" class="pl-4">{{ formatDate(paymentMethodsForm.collection_date) }}</span>              
+            </x-field>
+            <template #tooltip>
+               <span>{{ paymentTooltipEnum.COLLECTION_DATE }}</span>
+            </template>
+          </x-tooltip>
+          <x-tooltip>
+            <x-field label="TOTAL PRICE" class="w-full">
+              <x-input
+                  class="w-full"
+                  :value="totalPrice"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+               <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
+            </template>
+          </x-tooltip>         
+          <x-tooltip>
+            <x-field label="COLLECTED BY" class="w-full" required>
+            <select
+                class="custom-select"
+                v-model="paymentMethodsForm.collection_type"
+                :options="collectionTypes"
+                :rules="[rules.isRequired]"
+                @change="handleCollectionTypeChange"
+                >
+                <template v-for="option in collectionTypes" :key="option.value">
+                    <option :value="option.value" :title="option.tooltip" >{{ option.label }}</option>                
+                </template>
+            </select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.COLLECTED_BY }}</span>
+            </template>
+          </x-tooltip>
+
+          <x-tooltip>
+            <x-field label="PROVIDER NAME" class="w-full">
+              <x-input
+                  class="w-full"
+                  :value="providerName"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
+            </template>    
+          </x-tooltip>
+          
+          <x-tooltip>
+            <x-field label="FREQUENCY" class="w-full" required>              
+              <select
+                  class="custom-select"
+                  v-model="paymentMethodsForm.frequency"
+                  :options="frequencyTypes"
+                  :rules="[rules.isRequired]"
+                  @change="handleFrequencyChange"
+                  >
+                  <template v-for="option in frequencyTypes" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                  </template>
+              </select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.FREQUENCY }}</span>
+            </template>
+          </x-tooltip>
+
+          <x-tooltip>
+            <x-field label="PLAN NAME" class="w-full">
+              <x-input
+                  class="w-full"
+                  :value="getPlanName"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PLAN_NAME }}</span>
+            </template>
+          </x-tooltip>  
+
+          <x-tooltip>
+            <x-field label="PAYMENT NO" class="w-full" required>              
+              <select
+                  class="custom-select"
+                  v-model="paymentMethodsForm.payment_no"
+                  :options="totalPayments"
+                  :rules="[rules.isRequired]"
+                  :disabled="!isPaymentNoEnabled"
+                  @change="calculatePaymentBreakup(paymentMethodsForm.payment_no)"
+                  >
+                  <template v-for="option in totalPayments" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                  </template>
+              </select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_NO }}</span>
+            </template>
+          </x-tooltip>
+          
+          <x-tooltip>
+            <x-field label="PAYMENT STATUS" class="w-full">
+              <x-input
+                  class="w-full"
+                  value="NEW"
+                  :disabled="true"
+                />
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
+            </template>
+          </x-tooltip>
+          
+          <x-tooltip>
+            <x-field label="CREDIT APPROVAL" class="w-full">              
+              <div class="custom-dropdown">
+                <span v-if="paymentMethodsForm.credit_approval!=''" class="close-icon"  @mousedown.stop="resetCreditApproval()">
+                &#10006; 
+              </span>
+              <select
+                  class="custom-select"
+                  v-model="paymentMethodsForm.credit_approval"
+                  :options="creditApprovalReasons"
+                  @change="handleApprovalReasonChange"
+                  >
+                  <template v-for="option in creditApprovalReasons" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">
+                        {{ option.label }}                        
+                      </option>                
+                  </template>
+              </select>              
+            </div>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.CREDIT_APPROVAL }}</span>
+            </template>
+          </x-tooltip>          
+          <x-field v-if="isCustomReasonEnabled" label="CUSTOM REASON" class="w-full">
+            <x-input
+                class="w-full"
+                v-model="paymentMethodsForm.custom_reason"                  
+              />
+          </x-field>
+          <x-tooltip>
+            <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)" class="w-full">
+              <div class="custom-dropdown">
+                <span v-if="paymentMethodsForm.discount!=''" class="close-icon"  @mousedown.stop="resetDiscount()">
+                &#10006; 
+              </span> 
+              <select
+                  class="custom-select"
+                  v-model="paymentMethodsForm.discount"
+                  :options="discountTypes"
+                  @change="handleDiscountChange"
+                  >
+                  <template v-for="option in discountTypes" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">
+                        {{ option.label }}                        
+                      </option>                
+                  </template>
+              </select>
+              </div>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+            </template>
+          </x-tooltip>
+
+          <x-tooltip v-if="isDiscountReasonEnabled">
+            <x-field label="DISCOUNT REASON" class="w-full" required>              
+              <select
+                  class="custom-select"
+                  v-model="paymentMethodsForm.discount_reason"
+                  :options="discountReasons"
+                  :rules="[rules.isRequired]"                  
+                  >
+                  <template v-for="option in discountReasons" :key="option.value">
+                      <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
+                  </template>
+              </select>
+            </x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_NO }}</span>
+            </template>
+          </x-tooltip>
+
+          <template v-if="isDiscountEnabled">
+            <x-tooltip>
+              <x-field label="DISCOUNT VALUE" class="w-full">
+                <x-input
+                    class="w-full"
+                    v-model="discountValue"
+                    name="discount_value"
+                    :rules="[rules.amount]"
+                    @keyup="calculateTotalAmount()"                    
+                />                
+                <p v-if="discountError" class="text-sm text-red-500 dark:text-red-400 mt-1">{{ discountError }}</p>
+              </x-field>
+              
+              <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
+              </template>
+            </x-tooltip>
+            
+            <x-tooltip>
+              <x-field label="TOTAL AMOUNT" class="w-full">
+                <x-input
+                    class="w-full"
+                    :value="totalAmount"
+                    :disabled="true"
+                  />
+              </x-field>
+              <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
+              </template>
+            </x-tooltip>
+          </template>          
+        </div>
+        <x-divider class="mb-4 mt-10" />
+        <x-alert
+            v-if="isPaymentCalculationError"
+						color="error"
+						class="mb-5"						
+					>
+					The system has detected a discrepancy. Before you hit 'Add Manual Payment,' please check the each payment transaction. If you spot any discrepancies, make the necessary adjustments. Once everything lines up, you're good to proceed.	
+				</x-alert>
+        <x-alert
+            v-if="isFileError"
+						color="error"
+						class="mb-5"						
+					>
+					{{ fileErrorMessage }}
+				</x-alert>
+        <div class="w-full grid">
+          <!-- Header -->
+          <div class="flex w-full">
+            <div class="w-1/6 px-2 text-center">
+              <x-tooltip>
+                <span class="text-sm text-primary-800 font-semibold">
+                  PAYMENT NO *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_NO_2 }}</span>
+                </template>
+              </x-tooltip>              
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-sm text-primary-800 font-semibold">
+                  PAYMENT METHOD *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.PAYMENT_METHOD }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-sm text-primary-800 font-semibold">
+                  TOTAL AMOUNT *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.TOTAL_AMOUNT }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-sm text-primary-800 font-semibold">
+                  DUE DATE *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.DUE_DATE }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+            <div class="w-1/5 px-2">
+              <x-tooltip>
+                <span class="text-sm text-primary-800 font-semibold">
+                  DOCUMENTS *
+                </span>
+                <template #tooltip>
+                  <span>{{ paymentTooltipEnum.DOCUMENTS }}</span>
+                </template>
+              </x-tooltip>
+            </div>
+          </div>
+          
+          <!-- Fields -->
+          <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count">
+            <div :class="[
+              'flex',
+              'w-full',
+              'custombreak',
+              { 'disabled-div':  paymentMethodsForm.status == 'edit' }
+            ]" >
+              <div class="w-1/6 px-2 text-center">{{ count }}</div>
+              <div class="w-1/5 px-2">
+                <select
+                  class="w-full custom-select"
+                  v-model="paymentMethodsModels[count]"
+                  :options="handlePaymentTypes(count)"
+                  @change="handlePaymentOptions()"
+                >
+                  <!-- Use the title attribute to set the tooltip text -->
+                  <option
+                    v-for="option in handlePaymentTypes(count)"
+                    :key="option.value"
+                    :value="option.value"
+                    :title="option.tooltip"
+                    :disabled="option.value === 'CC' && isCCDisabled"
+                  >{{ option.label }}</option>
+                </select>
+                <p v-if="isPaymentMetodNotSelected[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
+                <x-input
+                  class="w-full mt-2"
+                  v-if = "isCheckDetailsEnabled && (count==1 || paymentMethodsModels[count] === 'PDC')"
+                  v-model="checkDetailModels[count]"
+                  placeholder="Cheque Details"         
+                />
+              </div>
+              <div class="w-1/5 px-2">
+                <x-input
+                  v-model="splitAmountModels[count]"
+                  class="w-full"
+                  :rules="[rules.isRequired]"              
+                />
+              </div>
+              <div class="w-1/5 px-2">
+                <DatePicker
+                  v-model="dueDateModels[count]"
+                  class="w-full"
+                  :rules="[rules.isRequired]"              
+                />  
+              </div>
+              <div class="w-1/5 px-2 mb-2">
+                <Dropzone
+                  :id="paymentDocument.id"
+                  :accept="paymentDocument.accepted_files"
+                  :max-files="paymentDocument.max_files"
+                  :max-size="paymentDocument.max_size"
+                  :loading="documentForm.processing"
+                  @change="uploadDocument(paymentDocument, $event, count)"
+                />
+                <p v-if="isDocumentNotUploaded[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
+                {{ console.log('azhar333='+JSON.stringify(fileUploadModels[count]))  }}
+                <div v-for="fileData in fileUploadModels[count]" :key="fileData.id">
+                  <span style="display: flex; align-items: center;">
+                    <a
+                      :key="fileData.id"
+                      :href="storageUrl + fileData.doc_url"
+                      target="_blank"
+                      class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                      style="flex: 1; text-decoration: none;"
+                    >
+                      {{ fileData.original_name }}
+                    </a>
+                    
+                    <span
+                      class="delete-pointer"
+                      @click="deleteDocument(fileData.doc_name, count)"
+                    >
+                    <x-tooltip>
+                      x
+                      <template #tooltip>
+                          <span>{{ paymentTooltipEnum.PAYMENT_ADD_DELETE_DOCUMENT }}</span>
+                      </template>
+                    </x-tooltip>
+                    </span>
+
+
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          
+      </div>
+  
+      <x-divider class="mb-4 mt-1" />
+
+      <div class="w-full grid">
+        <x-field label="NOTES">
+          <x-input
+            class="w-full"
+            v-model="paymentMethodsForm.notes"          
+          />
+        </x-field>
+      </div>
+
+      <x-divider class="mb-4 mt-1" />
+ 
+      <div
+        class="w-full md:col-span-2 flex justify-end"
+        v-if="
+          paymentMethodsForm.status == 'create' ||
+          paymentMethodsForm.status == 'edit'
+        "
+      >
+        <x-button color="emerald" type="submit">
+          {{ paymentMethodsForm.status == 'create' ? 'Add Manual Payment' : 'Update' }}          
         </x-button>
       </div>
       </x-form>
@@ -1307,6 +1847,11 @@ const providerId = computed(() => {
   </div>
 </template>
 <style scoped>
+
+.disabled-div {
+  pointer-events: none; /* Disable interactions with the div */
+  opacity: 0.3; /* Optionally reduce the opacity to visually indicate it's disabled */  
+}
 /* Add your beautiful styling here */
 .custom-select {
   /* Example styles */
@@ -1338,9 +1883,8 @@ const providerId = computed(() => {
 }
 
 .expand-pointer {
-  cursor: pointer;
+    cursor: pointer;
     font-size: 20px;
-    padding-left: 25px;
     font-weight: bold;
     color: #1d83bc;
 }
@@ -1350,7 +1894,8 @@ const providerId = computed(() => {
   white-space: normal; /* Allow the text to wrap */
   z-index: 999;
   position: relative;
-  font-size: 10px;
+  font-size: 12px;
+  text-transform: none;
   }
   .custom-height {
     min-height: 160px;

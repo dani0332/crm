@@ -466,7 +466,8 @@ class CarQuoteService extends BaseService
 
     public function getEntityPlain($id)
     {
-        return CarQuote::where('id', $id)->with(['payments.paymentSplits','payments.paymentSplits.paymentStatus','payments.paymentSplits.paymentMethod'])->first();
+        return CarQuote::where('id', $id)->with(['payments.paymentSplits','payments.paymentSplits.paymentStatus'
+        ,'payments.paymentSplits.paymentMethod','payments.paymentSplits.documents'])->first();
     }
 
     public function fillModelProperties()
