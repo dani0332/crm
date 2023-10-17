@@ -68,7 +68,8 @@ defineProps({
 	lostApproveReasons: Array,
 	lostRejectReasons: Array,
 	leadDocsStoragePath: String,
-	kyoEndPoint: String
+	kyoEndPoint: String,
+	carLostChangeStatus: Boolean,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -88,7 +89,6 @@ const isCarLostStatus = (statusId) => {
 const prepareDate = (date) => {
 	return date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1];
 }
-
 const leadStatusForm = useForm({
 	modelType: 'Car',
 	leadId: page.props.record.id,
@@ -100,16 +100,14 @@ const leadStatusForm = useForm({
 	lostReason: page.props.record.lost_reason_id || null,
 	next_followup_date: page.props.record.next_followup_date ? prepareDate(page.props.record.next_followup_date) : null,
 	tier_id : page.props.record.tier_id || null,
-	lost_approval_status: '',
-	approve_reason_id: '',
-	reject_reason_id: '',
+	lost_approval_status: page.props.paymentEntityModel.car_lost_quote_log?.status != '' ? page.props.paymentEntityModel.car_lost_quote_log?.status : '',
+	approve_reason_id: page.props.paymentEntityModel.car_lost_quote_log?.reason_id || page.props.lostApproveReasons[0]?.id,
+	reject_reason_id: page.props.paymentEntityModel.car_lost_quote_log?.reason_id || page.props.lostRejectReasons[0]?.id,
 	lost_notes: page.props.paymentEntityModel.car_lost_quote_log?.notes || '',
 	mo_proof_document: null,
 	proof_document: null,
 	car_lost_quote_log_id: page.props.paymentEntityModel.car_lost_quote_log?.id || 0
 });
-
-
 
 const leadApprovalStatusOptions = computed(() => {
 	let arr = [];
@@ -120,6 +118,7 @@ const leadApprovalStatusOptions = computed(() => {
 	arr.push({ value: page.props.genericRequestEnum.APPROVED, label: page.props.genericRequestEnum.APPROVED })
 	arr.push({ value: page.props.genericRequestEnum.REJECTED, label: page.props.genericRequestEnum.REJECTED })
 
+	// arr.unshift({ value: '', label: 'Select Status' });
 	return arr;
 });
 
@@ -273,19 +272,9 @@ const emailStatusTable = reactive({
 	]
 })
 
-const customerAdditionalContactsTable = reactive({
-	columns: [
-		{ text: 'Type', value: 'key' },
-		{ text: 'Value', value: 'value' },
-		{ text: 'Created At', value: 'created_at' },
-		{text: 'Action', value: 'action' },
-	]
-})
-
 // history data
 const historyData = ref(null);
 const historyLoading = ref(false);
-
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
@@ -362,10 +351,13 @@ const leadStatusOptions = computed(() => {
     return true;
   });
 
-  return filteredLeadStatuses.map(status => ({
+  let options = filteredLeadStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
+
+  options.unshift({ value: '', label: 'Select Status' });
+  return options;
 });
 
 const leadStatusDisabled = computed(() => {
@@ -1208,7 +1200,6 @@ const loadEmailEvents = (email) => {
 	  			modals.showEmailEventsModal = false;
       });
 }
-
 </script>
 
 <template>
@@ -1592,7 +1583,6 @@ const loadEmailEvents = (email) => {
 							placeholder="Lead Status"
 							class="w-full"
 						/>
-
 						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved">
 							<x-input
 								v-model="leadStatusForm.trans_code"
@@ -1636,7 +1626,6 @@ const loadEmailEvents = (email) => {
 							v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
 							v-model="leadStatusForm.tier_id"
 							label="Tier"
-
 							:options="[
 							{ value: null, label: 'Select Tier' },
 								...tiers?.map(item => ({
@@ -1647,26 +1636,31 @@ const loadEmailEvents = (email) => {
 							placeholder="Please Select Tier"
 							class="w-full"
 							:error="leadStatusForm.errors.tier_id"
+						/>
+						<x-field label="Notes" :required="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
+							<x-textarea
+								v-model="leadStatusForm.notes"
+								type="text"
+								placeholder="Lead Notes"
+								class="w-full"
+								:rules="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer ? [isRequired] : []"
+								:error="leadStatusForm.errors.notes"
+								:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
 							/>
+						</x-field>
+						<x-field label="Car Sold / Uncontactable Proof" v-if="leadStatusForm.leadStatus == quoteStatusEnum.CarSold || leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable">
+							<input
+								@input="leadStatusForm.proof_document = $event.target.files[0]"
+								type="file"
+								:disabled="isCarLostStatus(record.quote_status_id) && !carLostChangeStatus"
+								placeholder="Car Sold / Uncontactable Proof"
+								class="form-control w-full"
+							/>
+						</x-field>
 					</div>
 				</div>
-				<div class="w-full md:w-50">
-					<x-field label="Notes" :required="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-						<x-textarea
-							v-model="leadStatusForm.notes"
-							type="text"
-							placeholder="Lead Notes"
-							class="w-full"
-							:rules="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer ? [isRequired] : []"
-							:error="leadStatusForm.errors.notes"
-							:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
-						/>
-					</x-field>
-				</div>
-			</div>
-			<template v-if="isCarLostStatus(record.quote_status_id)">
-				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
-					<div class="w-full md:w-50">
+				<div class="w-full md:w-50" v-if="isCarLostStatus(record.quote_status_id)">
+					<div class="flex flex-col gap-4">
 						<x-field required label="Approval Status">
 							<x-select
 								v-model="leadStatusForm.lost_approval_status"
@@ -1677,8 +1671,7 @@ const loadEmailEvents = (email) => {
 								:rules="[isRequired]"
 							/>
 						</x-field>
-					</div>
-					<div class="w-full md:w-50">
+
 						<x-field required label="Approval Reasons" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.APPROVED">
 							<x-select
 								v-model="leadStatusForm.approve_reason_id"
@@ -1705,50 +1698,32 @@ const loadEmailEvents = (email) => {
 								:rules="[isRequired]"
 							/>
 						</x-field>
-					</div>
+						<template v-if="[genericRequestEnum.APPROVED, genericRequestEnum.REJECTED].includes(leadStatusForm.lost_approval_status)">
+							<x-field label="Notes">
+								<x-textarea
+									v-model="leadStatusForm.lost_notes"
+									:disabled="!allowQuoteLogAction"
+									placeholder="Notes"
+									class="w-full"									
+								/>
+							</x-field>
+							<x-field required label="Car Sold / Uncontactable Proof">
+								<input
+									@input="leadStatusForm.mo_proof_document = $event.target.files[0]"
+									type="file"
+									:disabled="!allowQuoteLogAction"
+									placeholder="Car Sold / Uncontactable Proof"
+									class="w-full"
+									:rules="[isRequired]"
+								/>
+							</x-field>
+						</template>						
+					</div>					
 				</div>
-				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
-					<div class="w-full md:w-50">
-						<x-field required label="Notes">
-							<x-textarea
-								v-model="leadStatusForm.lost_notes"
-								:disabled="!allowQuoteLogAction"
-								placeholder="Notes"
-								class="w-full"
-								:rules="[isRequired]"
-							/>
-						</x-field>
-					</div>
-					<div class="w-full md:w-50">
-						<x-field required label="Car Sold / Uncontactable Proof" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.APPROVED">
-							<x-input
-								v-model="leadStatusForm.mo_proof_document"
-								type="file"
-								:disabled="!allowQuoteLogAction"
-								placeholder="Car Sold / Uncontactable Proof"
-								class="w-full"
-								:rules="[isRequired]"
-							/>
-						</x-field>
-					</div>
-				</div>
-				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4" v-if="leadStatusForm.leadStatus == quoteStatusEnum.CarSold || leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable">
-					<div class="w-full md:w-50">
-						<x-field label="Car Sold / Uncontactable Proof">
-							<x-input
-								v-model="leadStatusForm.proof_document"
-								type="file"
-								:disabled="isCarLostStatus(record.quote_status_id) && !carLostChangeStatus"
-								placeholder="Car Sold / Uncontactable Proof"
-								class="w-full"
-							/>
-						</x-field>
-					</div>
-				</div>
-			</template>
+			</div>
 
 			<DataTable
-				v-if="paymentEntityModel.car_lost_quote_logs.length > 0"
+				v-if="paymentEntityModel.car_lost_quote_logs?.length > 0"
 				table-class-name="mt-5 tablefixed compact"
 				:headers="carLostQuoteLogsTable.columns"
 				:items="paymentEntityModel.car_lost_quote_logs || []"
@@ -1762,7 +1737,7 @@ const loadEmailEvents = (email) => {
 				</template>
 				<template #item-documents="item">
 					<template v-for="doc in item.documents" :key="doc">
-						<p><Link target="_blank" :href="leadDocsStoragePath + doc.path">Document</Link></p>
+						<p class="my-2"><a class="underline" target="_blank" :href="leadDocsStoragePath + doc.path">Document</a></p>
 					</template>
 				</template>
 			</DataTable>
