@@ -32,15 +32,7 @@ class ApiController extends Controller
     public function assignLeads(Request $request)
     {
         try {
-            // IP Address of the caller
-            $ipAddress = $request->ip();
-            info("IP Address: $ipAddress");
-            // Request URL
-            $url = $request->fullUrl();
-            info("Request URL: $url");
-            // User-Agent header
-            $userAgent = $request->header('User-Agent');
-            info("User-Agent: $userAgent");
+
             info('API assignLeads called with request params as : '.json_encode($request->all()));
 
             if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
