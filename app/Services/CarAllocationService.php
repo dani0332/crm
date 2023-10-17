@@ -547,48 +547,6 @@ class CarAllocationService extends AllocationService
         }
     }
 
-    private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
-    {
-        $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        $emailData = (object) [
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerEmail' => $carQuote->email,
-            'mobilePhone' => $advisor->mobile_no,
-            'whatsAppNumber' => str_replace('+', '', $advisor->mobile_no),
-            'landLine' => $advisor->landline_no,
-            'advisorEmail' => $advisor->email,
-            'advisorName' => $advisor->name,
-            'documentUrl' => [$documentUrl],
-            'carQuoteId' => $carQuote->code,
-            'vehicleName' => $this->getVehicleName($carQuote),
-            'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-            'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => ! empty($previousAdvisor),
-        ];
-
-        return $emailData;
-    }
-
-    public function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
-    {
-        $advisor = User::where('id', $carQuote->advisor_id)->first();
-
-        $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
-        if ($carQuote->tier_id == $tierRId) {
-            $emailData->isRenewal = true;
-            $emailData->policyNumber = $carQuote->previous_quote_policy_number;
-            $emailData->renewalDueDate = $carQuote->previous_policy_expiry_date;
-
-        }
-
-        return $emailData;
-    }
-
     public function updateLeadTier($lead, $tier): void
     {
         info('login users not found for selected lead so will try to assign only tier for lead : '.$lead->uuid);

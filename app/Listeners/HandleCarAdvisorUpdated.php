@@ -2,11 +2,10 @@
 
 namespace App\Listeners;
 
-use App\Enums\CarPlanType;
-use App\Enums\quoteTypeCode;
-use App\Enums\TiersEnum;
+
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\IntroEmailJob;
+use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
 use App\Models\Tier;
 use App\Models\User;
@@ -45,13 +44,18 @@ class HandleCarAdvisorUpdated
         info('inside handle car update advisor');
 
         $lead = $event->lead;
+
         $oldAdvisorId = $event->oldAdvisorId;
 
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
 
-        $this->triggerCarQuoteEmail($lead, $previousAdvisor);
+        info('about to trigger intro email job for lead uuid : '.$lead->uuid . ' and previous advisor id : '.$oldAdvisorId);
+
+        SendOCBIntroEmailJob::dispatch($lead, $previousAdvisor)->onQueue('renewals');
 
         info('SMS sending code reached');
+
+        //buildSMS($lead);
 
     }
     public function buildSMS($lead)
@@ -63,82 +67,5 @@ class HandleCarAdvisorUpdated
         $this->smsService->sendSMS($clientNumber, $content, $customer);
 
         info('inside after build sms');
-    }
-
-    public function triggerCarQuoteEmail($lead, $previousAdvisor)
-    {
-        // Initialize email data and retrieve Tier R information
-        $emailData = '';
-        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-
-        // Retrieve plans with available ratings for the given lead
-        $plans = $this->httpService->getPlans($lead->uuid, true, false, false);
-
-        $plans = $this->executePlansSelectionLogic($plans);
-
-        info('plans', $plans);
-
-        // Determine the email template ID
-        $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
-
-        // Build email data
-        $emailData = $this->buildEmailData($lead, $plans, $previousAdvisor, $tierR->id);
-
-        // Dispatch an email job to send the email
-        IntroEmailJob::dispatch(quoteTypeCode::Car, $emailTemplateId, $emailData, 'lms-intro-email');
-    }
-
-    private function getEmailTemplateId($lead, $plans, $tierR)
-    {
-        if (count($plans) == 0) {
-            // No plans with available ratings, send a specific email template
-            return $lead->tier_id == $tierR->id ? 492 : 494;
-        } else {
-            // Plans with available ratings exist, send a different email template
-            return $lead->tier_id == $tierR->id ? 491 : 493;
-        }
-    }
-
-    private function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
-    {
-        if (count($plans) == 0) {
-            // No plans with available ratings, build email data for the specific case
-            return $this->carEmailService->buildNoPlansEmailData($lead, $previousAdvisor, $tierRId);
-        } else {
-            // Plans with available ratings exist, build email data for the different case
-            return $this->carEmailService->buildPlansEmailData($lead, $plans, $previousAdvisor, $tierRId);
-        }
-    }
-
-    public function executePlansSelectionLogic(array $plans): array
-    {
-        // Sort plans from lowest to highest by discount premium
-        usort($plans, function ($a, $b) {
-            return $a->discountPremium <=> $b->discountPremium;
-        });
-
-        // Check if there are any 'Comp' plans
-        $compPlans = array_filter($plans, function ($plan) {
-            // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
-            return property_exists($plan, 'repairType') &&
-                   property_exists($plan, 'isRatingAvailable') &&
-                   ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
-                   $plan->isRatingAvailable === true;
-        });
-
-        if (count($compPlans) > 0) {
-            // If 'Comp' plans exist, return the top 6 'Comp' plans
-            $top6Plans = array_slice($compPlans, 0, 6);
-        } else {
-            // If there are no 'Comp' plans, return the top 6 plans
-            $filteredPlans = array_filter($plans, function ($plan) {
-                return $plan->repairType == CarPlanType::TPL && $plan->isRatingAvailable == true;
-            });
-
-            $top6Plans = array_slice($filteredPlans, 0, 6);
-        }
-
-        // return $top6Plans if $top6Plans is not empty otherwise return $plans
-        return ! empty($top6Plans) ? $top6Plans : [];
     }
 }
