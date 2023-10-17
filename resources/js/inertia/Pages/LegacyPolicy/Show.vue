@@ -62,19 +62,31 @@ const data = ref([]);
 
 const dynamicTableHeader = computed(() => {
   const defaultTableHeader = [
-    { text: 'Id', value: 'id' },
-    { text: 'Ref-ID', value: 'uuid' },
-    { text: 'Customer name', value: 'name' },
-    { text: 'Make', value: 'make' },
-    { text: 'Model', value: 'model' },
-    { text: 'Model Year', value: 'model_Year' },
-    { text: 'Destination', value: 'destination' },
-    { text: 'Salary band', value: 'salary_band' },
-    { text: 'Landlord or Tenant', value: 'landlord_or_tenant' },
-    { text: 'Apartment or Villa', value: 'apartment_or_villa' },
-    { text: 'Breed', value: 'breed' },
-    { text: 'Type of Insurance', value: 'business_type_of_insurance.code' },
-    { text: 'Advisor', value: 'advisor' },
+    { text: 'Id', value: 'id', key: 'id' },
+    { text: 'Ref-ID', value: 'uuid', key: 'uuid' },
+    { text: 'Customer name', value: 'name', key: 'name' },
+    { text: 'Make', value: 'make', key: 'make' },
+    { text: 'Model', value: 'model', key: 'model' },
+    { text: 'Model Year', value: 'model_Year', key: 'model_Year' },
+    { text: 'Destination', value: 'destination', key: 'destination' },
+    { text: 'Salary band', value: 'salary_band', key: 'salary_band' },
+    {
+      text: 'Landlord or Tenant',
+      value: 'landlord_or_tenant',
+      key: 'landlord_or_tenant',
+    },
+    {
+      text: 'Apartment or Villa',
+      value: 'apartment_or_villa',
+      key: 'apartment_or_villa',
+    },
+    { text: 'Breed', value: 'breed', key: 'breed' },
+    {
+      text: 'Type of Insurance',
+      value: 'type_of_insurance',
+      key: 'business_type_of_insurance',
+    },
+    { text: 'Advisor', value: 'advisor_name', key: 'advisor' },
   ];
   console.log(props.policy.quoteType);
 
@@ -82,12 +94,12 @@ const dynamicTableHeader = computed(() => {
   if (props.policy.quoteType === 'Car') {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'destination' &&
-        column.value !== 'salary_band' &&
-        column.value !== 'landlord_or_tenant' &&
-        column.value !== 'apartment_or_villa' &&
-        column.value !== 'breed' &&
-        column.value !== 'business_type_of_insurance.code',
+        column.key !== 'destination' &&
+        column.key !== 'salary_band' &&
+        column.key !== 'landlord_or_tenant' &&
+        column.key !== 'apartment_or_villa' &&
+        column.key !== 'breed' &&
+        column.key !== 'business_type_of_insurance',
     );
   }
 
@@ -95,14 +107,14 @@ const dynamicTableHeader = computed(() => {
   if (props.policy.quoteType === 'Travel') {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'model_Year' &&
-        column.value !== 'salary_band' &&
-        column.value !== 'landlord_or_tenant' &&
-        column.value !== 'apartment_or_villa' &&
-        column.value !== 'breed' &&
-        column.value !== 'business_type_of_insurance.code' &&
-        column.value !== 'make' &&
-        column.value !== 'model',
+        column.key !== 'model_Year' &&
+        column.key !== 'salary_band' &&
+        column.key !== 'landlord_or_tenant' &&
+        column.key !== 'apartment_or_villa' &&
+        column.key !== 'breed' &&
+        column.key !== 'business_type_of_insurance' &&
+        column.key !== 'make' &&
+        column.key !== 'model',
     );
   }
 
@@ -110,14 +122,14 @@ const dynamicTableHeader = computed(() => {
   if (props.policy.quoteType === 'Health') {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'destination' &&
-        column.value !== 'model_Year' &&
-        column.value !== 'landlord_or_tenant' &&
-        column.value !== 'apartment_or_villa' &&
-        column.value !== 'breed' &&
-        column.value !== 'business_type_of_insurance.code' &&
-        column.value !== 'make' &&
-        column.value !== 'model',
+        column.key !== 'destination' &&
+        column.key !== 'model_Year' &&
+        column.key !== 'landlord_or_tenant' &&
+        column.key !== 'apartment_or_villa' &&
+        column.key !== 'breed' &&
+        column.key !== 'business_type_of_insurance' &&
+        column.key !== 'make' &&
+        column.key !== 'model',
     );
   }
 
@@ -125,14 +137,14 @@ const dynamicTableHeader = computed(() => {
   if (props.policy.quoteType === 'Home') {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'destination' &&
-        column.value !== 'salary_band' &&
-        column.value !== 'model_Year' &&
-        column.value !== 'advisor' &&
-        column.value !== 'breed' &&
-        column.value !== 'business_type_of_insurance.code' &&
-        column.value !== 'make' &&
-        column.value !== 'model',
+        column.key !== 'destination' &&
+        column.key !== 'salary_band' &&
+        column.key !== 'model_Year' &&
+        column.key !== 'advisor' &&
+        column.key !== 'breed' &&
+        column.key !== 'business_type_of_insurance' &&
+        column.key !== 'make' &&
+        column.key !== 'model',
     );
   }
 
@@ -140,14 +152,14 @@ const dynamicTableHeader = computed(() => {
   if (props.policy.quoteType === 'Pet') {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'destination' &&
-        column.value !== 'salary_band' &&
-        column.value !== 'landlord_or_tenant' &&
-        column.value !== 'apartment_or_villa' &&
-        column.value !== 'model' &&
-        column.value !== 'business_type_of_insurance.code' &&
-        column.value !== 'model_Year' &&
-        column.value !== 'make',
+        column.key !== 'destination' &&
+        column.key !== 'salary_band' &&
+        column.key !== 'landlord_or_tenant' &&
+        column.key !== 'apartment_or_villa' &&
+        column.key !== 'model' &&
+        column.key !== 'business_type_of_insurance' &&
+        column.key !== 'model_Year' &&
+        column.key !== 'make',
     );
   }
 
@@ -155,12 +167,12 @@ const dynamicTableHeader = computed(() => {
   if (props.policy.quoteType === 'Cycle' || props.policy.quoteType === 'Bike') {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'destination' &&
-        column.value !== 'salary_band' &&
-        column.value !== 'landlord_or_tenant' &&
-        column.value !== 'apartment_or_villa' &&
-        column.value !== 'breed' &&
-        column.value !== 'business_type_of_insurance.code',
+        column.key !== 'destination' &&
+        column.key !== 'salary_band' &&
+        column.key !== 'landlord_or_tenant' &&
+        column.key !== 'apartment_or_villa' &&
+        column.key !== 'breed' &&
+        column.key !== 'business_type_of_insurance',
     );
   }
 
@@ -171,14 +183,14 @@ const dynamicTableHeader = computed(() => {
   ) {
     return defaultTableHeader.filter(
       column =>
-        column.value !== 'destination' &&
-        column.value !== 'salary_band' &&
-        column.value !== 'landlord_or_tenant' &&
-        column.value !== 'apartment_or_villa' &&
-        column.value !== 'breed' &&
-        column.value !== 'model' &&
-        column.value !== 'model_Year' &&
-        column.value !== 'make',
+        column.key !== 'destination' &&
+        column.key !== 'salary_band' &&
+        column.key !== 'landlord_or_tenant' &&
+        column.key !== 'apartment_or_villa' &&
+        column.key !== 'breed' &&
+        column.key !== 'model' &&
+        column.key !== 'model_Year' &&
+        column.key !== 'make',
     );
   }
   return defaultTableHeader;
@@ -458,9 +470,6 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
           <Link :href="`${link}`" class="text-primary-500 hover:underline">
             {{ code }}
           </Link>
-        </template>
-        <template #item-advisor="{ advisor }">
-          {{ advisor?.name }}
         </template>
         <template #item-name="{ first_name, last_name }">
           {{ first_name + ' ' + last_name }}

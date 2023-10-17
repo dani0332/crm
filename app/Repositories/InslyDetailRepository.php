@@ -8,6 +8,7 @@ use App\Enums\QuoteTypes;
 use App\Models\InslyDetail;
 use App\Models\QuoteType;
 use App\Services\CapiRequestService;
+use App\Services\RenewalsUploadService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
@@ -112,34 +113,26 @@ class InslyDetailRepository extends BaseRepository
                     return $query->whereBetween('captured_at', [$dateFrom, $dateTo]);
                 })->where('email', $email)->get();
 
-                switch (ucfirst($quoteType)) {
-
-                    case QuoteTypes::BUSINESS->value:
-                        $quote->load('businessTypeOfInsurance', 'advisor:id,name');
-                        break;
-                    case QuoteTypes::CAR->value:
-                        $quote->load('advisor:id,name');
-                        break;
-                        // case QuoteTypes::LIFE->value:
-                        //     break;
-                        // case QuoteTypes::HOME->value:
-                        //     break;
-                        // case QuoteTypes::TRAVEL->value:
-                        //     break;
-                        // case QuoteTypes::PET->value:
-                        // case QuoteTypes::BIKE->value:
-                        // case QuoteTypes::CYCLE->value:
-                        // case QuoteTypes::YACHT->value:
-                        //     break;
-                        // case QuoteTypes::HEALTH->value:
-                        //     break;
-                        // default:
-                        //     $route = '';
-                }
-
                 // quote against email and in between two month of payment captured
                 if (!$quote->isEmpty() && $validateAll) {
                     foreach ($quote as $item) {
+
+                        $item->advisor_name =  $item->advisor->name ?? null;
+
+                        if (ucfirst($quoteType) == QuoteTypes::CAR->value) {
+                            $item->make =  $item->carMake->text ?? null;
+                            $item->model =  $item->carModel->text ?? null;
+                        }
+                        if (ucfirst($quoteType) == QuoteTypes::BUSINESS->value) {
+                            $item->type_of_insurance =  $item->businessTypeOfInsurance->code ?? null;
+                        }
+                        if (ucfirst($quoteType) == QuoteTypes::HOME->value) {
+                            $item->apartment_or_villa =  $item->accommodationType->text ?? null;
+                            $item->landlord_or_tenant =  $item->possessionType->text ?? null;
+                        }
+                        if (ucfirst($quoteType) == QuoteTypes::PET->value) {
+                            $item->breed =  $item->petQuote->breed_of_pet1 ?? null;
+                        }
                         if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
                             $item->link = $appUrl . '/personal-quotes/' . strtolower($quoteType) . '/' . $item->uuid;
                         } else {
@@ -148,7 +141,6 @@ class InslyDetailRepository extends BaseRepository
                         $item->modelType = $quoteType;
                         $data[] = $item;
                     }
-
                     return [
                         'status' => 200,
                         'message' => '',
@@ -250,6 +242,9 @@ class InslyDetailRepository extends BaseRepository
             $premium = collect($data['installments'])->sum('gross_premium');
         }
         $quoteTypeData = QuoteType::where('code', $quoteType)->first();
+        $customer = $this->getCustomer($dataArr);
+
+        $dataArr['customer_id'] = $customer->id ?? "";
         $capi = new CapiRequestService();
         $resp = $capi->getUUID($quoteTypeData->id);
         if ($resp) {
