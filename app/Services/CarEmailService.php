@@ -21,7 +21,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -29,7 +29,7 @@ class CarEmailService extends BaseService
         $emailTemplateId = $this->getEmailTemplateId($lead, $plans, $tierR);
 
         // Build email data
-        $emailData = $this->buildEmailData($lead, $plans, $$this->previousAdvisor, $tierR->id);
+        $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
 
         info('Inside car check for sending email');
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
