@@ -63,7 +63,7 @@
                         </form>
                     </div>
                 </li>
-                <li>
+                {{-- <li>
                     <div @if(Auth::user() && Auth::user()->status != "1") style="display: none;" @endif class="status-div"
                         id="online-status-div">
                         <span>
@@ -113,7 +113,7 @@
                             <div></div>
                         </div>
                     </div>
-                </li>
+                </li> --}}
 
             </ul>
         </nav>

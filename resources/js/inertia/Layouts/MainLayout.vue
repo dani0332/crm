@@ -230,7 +230,7 @@ const onLogout = () => {
             </div>
 
             <div class="flex gap-3 items-center">
-              <UserStatus />
+              <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">

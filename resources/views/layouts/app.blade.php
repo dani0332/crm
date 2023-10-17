@@ -224,7 +224,7 @@
                     .find("td:first")
                     .each(function () {
                         if ($(this).text() == data.userId) {
-                           changeAvailiblity(data, this);
+                           //changeAvailiblity(data, this);
                            $.toast({
                                 content: data.userName + data.message,
                             });
@@ -236,30 +236,30 @@
                     .find("td:first")
                     .each(function () {
                         if ($(this).text() == data.userId) {
-                           changeAvailiblity(data, this);
+                           //changeAvailiblity(data, this);
                            $.toast({
                                 content: data.userName + data.message,
                             });
                         }
                     });
             }
-            if(userId == data.userId){
-                $('#online-status-div').hide();
-                $('#offline-status-div').hide();
-                $('#unavailable-status-div').hide();
-                if(data.status == 1) {
-                    $('#online-status-div').show();
-                }
-                if(data.status == 2)  {
-                    $('#offline-status-div').show();
-                }
-                if(data.status != 1 && data.status != 2 ) {
-                    $('#unavailable-status-div').show();
-                }
-                $.toast({
-                        content: 'Your' + data.message,
-                    });
-            }
+            // if(userId == data.userId){
+            //     $('#online-status-div').hide();
+            //     $('#offline-status-div').hide();
+            //     $('#unavailable-status-div').hide();
+            //     if(data.status == 1) {
+            //         $('#online-status-div').show();
+            //     }
+            //     if(data.status == 2)  {
+            //         $('#offline-status-div').show();
+            //     }
+            //     if(data.status != 1 && data.status != 2 ) {
+            //         $('#unavailable-status-div').show();
+            //     }
+            //     $.toast({
+            //             content: 'Your' + data.message,
+            //         });
+            // }
         });
 
         var config = {

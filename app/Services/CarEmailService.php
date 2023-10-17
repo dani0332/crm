@@ -58,7 +58,7 @@ class CarEmailService extends BaseService
         $insurerPlans = [];
         foreach ($plans as $plan) {
             $insurerPlans[] = [
-                'carValue' => empty($plan->carValue) ? 'N/A' : $plan->carValue, // if repair type is tpl then it will always be N/A
+                'carValue' => $plan->repairType == CarPlanType::TPL ? 'N/A' : (empty($plan->carValue) ? 'N/A' : $plan->carValue),
                 'excessAed' => empty($plan->excess) ? 'N/A' : $plan->excess,
                 'repairType' => $this->getUpdateRepairType($plan->repairType, $plan->providerCode),
                 'discountPremium' => ! empty($plan->discountPremium) ? number_format($plan->discountPremium, 2) : '',
@@ -99,6 +99,7 @@ class CarEmailService extends BaseService
             'advisorName' => $advisor->name,
             'documentUrl' => [$documentUrl],
             'carQuoteId' => $carQuote->code,
+            'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
             'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
@@ -136,11 +137,22 @@ class CarEmailService extends BaseService
 
     private function getPlanBenefits($plan)
     {
-        $planAddons = [];
+        $planAddons = []; // Initialize an empty array to store plan addons.
+
         foreach ($plan->addons as $addon) {
-            $planAddons[] = [
-                'value' => $addon->text,
-            ];
+            // Initialize a flag to determine if this addon should be included.
+            $shouldInclude = array_reduce($addon->carAddonOption, function ($carry, $option) {
+                // Check if any option is selected; return true if found.
+                return $carry || $option->isSelected;
+            }, false);
+
+            // If at least one option was selected, include this addon in the benefits.
+            if ($shouldInclude) {
+                $planAddons[] = [
+                    'name' => $addon->name,
+                    'value' => $addon->value,
+                ];
+            }
         }
 
         return $planAddons;
