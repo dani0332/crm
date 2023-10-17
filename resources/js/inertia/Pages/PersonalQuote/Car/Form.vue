@@ -332,8 +332,8 @@ const setCarMake = (id) => {
 						:hasError="quoteForm.errors.year_of_manufacture" />
 				</x-field>
 
-				<x-field label="CAR VALUE" required>
-					<x-input v-if="isEdit" v-model="quoteForm.car_value" class="w-full" type="text" :rules="[isRequired]"  :error="quoteForm.errors.car_value" @keydown="validateDecimal"/>
+				<x-field label="CAR VALUE" required v-if="isEdit">
+					<x-input v-model="quoteForm.car_value" class="w-full" type="text" :rules="[isRequired]"  :error="quoteForm.errors.car_value" @keydown="validateDecimal"/>
 				</x-field>
 
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
