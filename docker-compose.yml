@@ -14,11 +14,15 @@ services:
     ports:
       - "${WEB_PORT}:443"
     volumes:
-      #- /home/azureuser/imcrm/${LOGS}:/app/log
+      - /home/azureuser/imcrm/${LOGS}:/var/www/storage/logs
       - .:/var/www/html
     restart: unless-stopped
   
 volumes:
   logs:
+  stglogs:
   devlogs:
-  stglogs:  
+  dev01logs:
+  dev02logs:
+  uatlogs:
+  testlogs:

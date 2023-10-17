@@ -10,7 +10,7 @@ URLs:
 - [Live](https://imcrm.alfred.ae/)
 - [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
-- [DEV](https://imccrmdev.alfred.ae) [DEV1](https://imccrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
+- [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
@@ -61,4 +61,4 @@ To run Cypress tests on local machine:
 - Run cypress runner using command ```yarn cypress open```
 - Select e2e tests and then any browser i.e. chrome. 
 - Try running your desired test. 
-- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran. 
+- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran.

@@ -38,6 +38,7 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
+    paymentLink:String
 });
 
 const page = usePage();
@@ -74,9 +75,6 @@ const modals = reactive({
   createPlan: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
   planFilters: false,
 });
 
@@ -118,10 +116,6 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const confirmData = reactive({
-  contactPrimary: null,
-});
-
 const cleanObj = obj => useCleanObj(obj);
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
@@ -132,7 +126,6 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   selectedPlans = ref([]),
   exportLoader = ref(false),
   toggleLoader = ref(false),
-  contactLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
 
@@ -501,59 +494,59 @@ const planClicked = plan => {
 };
 
 const onExportPlans = () => {
-    if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
-        notification.error({
-            title: 'Please select 3 to 5 plans to download PDF.',
-            position: 'top',
-        });
-        return;
-    }
-    exportLoader.value = true;
-    const planIds = selectedPlans.value.map(p => {
-        return p.id;
+  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+    notification.error({
+      title: 'Please select 3 to 5 plans to download PDF.',
+      position: 'top',
     });
+    return;
+  }
+  exportLoader.value = true;
+  const planIds = selectedPlans.value.map(p => {
+    return p.id;
+  });
 
-    let addOns = {};
+  let addOns = {};
 
-    selectedPlans.value.map(plan => {
-        let copayIdToBeAdded = plan.selectedCopayId;
-        plan.coPayments.forEach(element => {
-            if (element.id == copayIdToBeAdded) {
-                addOns[plan.id] = {coPayment:element};
-            }
-        });
+  selectedPlans.value.map(plan => {
+    let copayIdToBeAdded = plan.selectedCopayId;
+    plan.coPayments.forEach(element => {
+      if (element.id == copayIdToBeAdded) {
+        addOns[plan.id] = { coPayment: element };
+      }
     });
+  });
 
-    axios
-        .post(
-            '/api/v1/quotes/health/export-plans-pdf',
-            {
-                plan_ids: planIds,
-                quote_uuid: page.props.quote.uuid,
-                addons: addOns,
-            },
-            {
-                responseType: 'json',
-            },
-        )
-        .then(response => {
-            const link = document.createElement('a');
-            let fileName = response.data.name;
-            link.href = response.data.data;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            notification.success({
-                title: 'Plans Exported',
-                position: 'top',
-            });
-        })
-        .catch(error => {
-            console.log(error);
-        })
-        .finally(() => {
-            exportLoader.value = false;
-        });
+  axios
+    .post(
+      '/api/v1/quotes/health/export-plans-pdf',
+      {
+        plan_ids: planIds,
+        quote_uuid: page.props.quote.uuid,
+        addons: addOns,
+      },
+      {
+        responseType: 'json',
+      },
+    )
+    .then(response => {
+      const link = document.createElement('a');
+      let fileName = response.data.name;
+      link.href = response.data.data;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      notification.success({
+        title: 'Plans Exported',
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      console.log(error);
+    })
+    .finally(() => {
+      exportLoader.value = false;
+    });
 };
 
 const onTogglePlans = toggle => {
@@ -720,36 +713,43 @@ const isMounted = ref(false);
 const selectedCoPay = reactive({
   id: null,
   premium: null,
+  vat: null,
   planId: null,
 });
 
 const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
+  let smallestCopayVAT = 0;
   plansData.value.forEach(element => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
-        smallestCopayValue = value.premium;
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat)
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
-        smallestCopayValue = value.premium;
+        smallestCopayValue = Number(value.premium);
+        smallestCopayVAT = Number(value.vat);
         defaultCopayId = value.healthPlanCoPaymentId;
       }
     });
 
     if (isMounted.value && selectedCoPay.planId == element.id) {
       element.actualPremium = selectedCoPay.premium;
+      element.vat = selectedCoPay.vat;
       element.selectedCopayId = selectedCoPay.id;
     } else {
       element.selectedCopayId = defaultCopayId;
       element.actualPremium = smallestCopayValue;
+      element.vat = smallestCopayVAT;
     }
   });
 };
 
 const onSelectedCopay = data => {
   selectedCoPay.id = data.id;
-  selectedCoPay.premium = data.premium;
+  selectedCoPay.premium = Number(data.premium);
+  selectedCoPay.vat = Number(data.vat);
   selectedCoPay.planId = data.planId;
   getSmallestCopayRateAsDefaultValue();
 };
@@ -1697,7 +1697,6 @@ onMounted(() => {
     </div>
 
     <PaymentTable
-      v-if="isBetaUser"
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
@@ -1906,8 +1905,8 @@ onMounted(() => {
             </x-tag>
           </div>
         </template>
-        <template #item-total="{ actualPremium, policyFee, basmah }">
-          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0)) }}
+        <template #item-total="{ actualPremium, policyFee, basmah, vat }">
+          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat) }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
@@ -2044,11 +2043,13 @@ onMounted(() => {
         </div>
       </x-modal>
     </div>
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :paymentLink="paymentLink"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2337,7 +2338,7 @@ onMounted(() => {
                 isRequired,
                 additionalContact.additional_contact_type === 'email'
                   ? isEmail
-                  : isMobileNo,
+                  : isNumber,
               ]"
               class="w-full"
             />
