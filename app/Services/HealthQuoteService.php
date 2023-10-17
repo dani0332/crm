@@ -110,7 +110,8 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
-            'ihp.code as plan_provider_code'
+            'ihp.code as plan_provider_code',
+            'hqr.health_plan_co_payment_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -1137,7 +1138,14 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
+                        if ($plan['ratesPerCopay']) {
+                            foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
+                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'];
+                                }
+                            }
+                        }
+                        $response['priceWithVAT'] = ($response['priceWithVAT'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
