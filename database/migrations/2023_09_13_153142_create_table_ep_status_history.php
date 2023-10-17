@@ -17,11 +17,7 @@ class CreateTableEpStatusHistory extends Migration
             Schema::create('embedded_status_history', function (Blueprint $table) {
                 $table->id();
                 $table->string('embedded_transaction_code', 25);
-                $table->foreign('embedded_transaction_code')->references('code')->on('embedded_transactions')
-                    ->cascadeOnUpdate();
                 $table->string('embedded_transaction_status_code', 20);
-                $table->foreign('embedded_transaction_status_code')->references('code')->on('lookups')
-                    ->cascadeOnUpdate();
                 $table->dateTime('created_at')->index()->useCurrent();
                 $table->dateTime('updated_at')->useCurrent();
             });
