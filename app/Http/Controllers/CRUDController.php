@@ -580,7 +580,7 @@ class CRUDController extends Controller
             ])->first())) {
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
-            $paymentEntityModel->load(['plan.insuranceProvider', 'carLostQuoteLog', 'carLostQuoteLogs']);
+            $paymentEntityModel->load(['plan.insuranceProvider']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
             // return view('shared.show', compact([
