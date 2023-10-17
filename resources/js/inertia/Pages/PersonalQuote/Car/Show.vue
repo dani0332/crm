@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import PaymentTable from './Partials/PaymentTable.vue'
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import QuoteStatus from './../Partials/QuoteStatus.vue';
+import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 
 defineProps({
@@ -70,6 +70,8 @@ defineProps({
 	leadDocsStoragePath: String,
 	kyoEndPoint: String,
 	carLostChangeStatus: Boolean,
+	isTierRAssigned: Boolean,
+	tiersExceptTierR: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -78,6 +80,9 @@ const showfollowup = ref(false);
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
@@ -1210,6 +1215,12 @@ const loadEmailEvents = (email) => {
 		</div>
 		<x-divider class="my-4" />
 
+		<AssignTier
+			v-if="!can(permissionEnum.ApprovePayments) && hasRole(rolesEnum.LeadPool) && isTierRAssigned"
+			:quote="record"
+			:tiers="tiersExceptTierR"
+		/>
+
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="text-sm">
 				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -1739,6 +1750,9 @@ const loadEmailEvents = (email) => {
 					<template v-for="doc in item.documents" :key="doc">
 						<p class="my-2"><a class="underline" target="_blank" :href="leadDocsStoragePath + doc.path">Document</a></p>
 					</template>
+				</template>
+				<template #item-created_at="item">
+					{{ dateFormat(item.created_at) }}
 				</template>
 			</DataTable>
 
