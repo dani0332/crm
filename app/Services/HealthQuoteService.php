@@ -1138,17 +1138,15 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        if ($plan['ratesPerCopay'])
-                        {
-                            foreach($plan['ratesPerCopay'] as $ratePerCopay)
-                            {
-                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id)
-                                {
-                                    $response['priceWithVAT'] = (float)$ratePerCopay['premium'] + (float)$ratePerCopay['vat'];
+                        if ($plan['ratesPerCopay']) {
+                            foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
+                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'];
                                 }
                             }
                         }
-                        $response['priceWithVAT'] = ($response['priceWithVAT']?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0);                        if (isset($plan['benefits'], $plan['benefits']['feature'])) {
+                        $response['priceWithVAT'] = ($response['priceWithVAT'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0);
+                        if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
                                     $response['network'] = $value['value'];
