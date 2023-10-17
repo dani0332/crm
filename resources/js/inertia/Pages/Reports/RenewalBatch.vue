@@ -516,7 +516,7 @@ watch(
 <template>
     <div>
 
-        <Head title="Advisor Conversion Report" />
+        <Head title="Renewal Batches Report" />
         <h1 class="text-2xl font-bold text-center text-primary-500 mb-4">
             Renewal Batches Report
         </h1>

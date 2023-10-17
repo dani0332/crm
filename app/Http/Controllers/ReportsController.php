@@ -103,7 +103,7 @@ class ReportsController extends Controller
 
         $usersReportToLoggedInUser = $this->walkTree(auth()->user()->id);
 
-        $advisorIdsByTeam = array_intersect($teamUsers, $usersReportToLoggedInUser);
+        $advisorIdsByTeam = array_unique(array_merge($teamUsers, $usersReportToLoggedInUser));
 
         // subteams
 

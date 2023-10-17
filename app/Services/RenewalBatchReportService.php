@@ -302,12 +302,16 @@ class RenewalBatchReportService extends BaseService
                 $advisorsFilter = $this->getUsersByTeamIds($teamsIds)->pluck('id')->toArray();
             }
 
-            $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($advisorsFilter) {
-                $qry->whereIn('advisor_id', $advisorsFilter);
-            });
-
             if ($authUserIsDeputyManager) {
                 $userIds = $this->deputyManagerWalkTree($authUserId);
+            } else if ($authUserIsCEO || $authUserIsAccounts) {
+                // get instance of crud service with the help of app service container
+                $crudService = app()->make(CRUDService::class);
+                // get car advisors
+                $carAdvisors = $crudService->getAdvisorsByModelType(strtolower(quoteTypeCode::Car));
+                $userIds = $carAdvisors
+                    ->map(fn ($users) => $users->id)
+                    ->toArray();
             } else {
                 $userIds = $this->walkTree($authUserId);
             }
