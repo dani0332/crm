@@ -56,7 +56,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 // Retrieve plans with available ratings for the given lead
                 $plans = $httpService->getPlans($lead->uuid, false, false, false);
 
-                $responseCode = $carEmailService->sendCarOCBIntroEmail($lead, $emailData, $tierR, $plans, $this->previousAdvisorId);
+                $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR);
 
                 if (in_array($responseCode, [200, 201])) {
                     info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
