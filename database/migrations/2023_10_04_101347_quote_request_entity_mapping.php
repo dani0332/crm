@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('quote_type_id');
             $table->foreign('quote_type_id')->references('id')->on('quote_type');
             $table->integer('quote_request_id');
-            $table->bigInteger('entity_id');
+            $table->bigInteger('entity_id')->unsigned();
             $table->foreign('entity_id')->references('id')->on('entities');
             $table->string('entity_type_code')->nullable();
             $table->timestamps();
