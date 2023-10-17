@@ -283,28 +283,27 @@ class RenewalBatchReportService extends BaseService
         }
 
         // advisor filter
-        if (!$authUserIsAdvisor &&
+        if (! $authUserIsAdvisor &&
             (isset($filters->advisors) && count($filters->advisors) > 0)
             || (isset($filters->subTeams) && count($filters->subTeams) > 0)
             || (isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts))
-            ) {
+        ) {
 
             $advisorsFilter = (isset($filters->advisors) ? $filters->advisors : []);
 
-            if (isset($filters->subTeams) && count($filters->subTeams) > 0 && !isset($filters->advisors)) {
+            if (isset($filters->subTeams) && count($filters->subTeams) > 0 && ! isset($filters->advisors)) {
                 $subTeamsIds = $filters->subTeams;
                 $advisorsFilter = $this->getUsersBySubTeamIds($subTeamsIds)->pluck('id')->toArray();
             }
 
-            if ( isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts) && !isset($filters->advisors))
-            {
+            if (isset($filters->teams) && ($authUserIsCEO || $authUserIsAccounts) && ! isset($filters->advisors)) {
                 $teamsIds = $filters->teams;
                 $advisorsFilter = $this->getUsersByTeamIds($teamsIds)->pluck('id')->toArray();
             }
 
             if ($authUserIsDeputyManager) {
                 $userIds = $this->deputyManagerWalkTree($authUserId);
-            } else if ($authUserIsCEO || $authUserIsAccounts) {
+            } elseif ($authUserIsCEO || $authUserIsAccounts) {
                 // get instance of crud service with the help of app service container
                 $crudService = app()->make(CRUDService::class);
                 // get car advisors
