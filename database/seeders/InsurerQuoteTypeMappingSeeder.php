@@ -31,7 +31,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
             InsuranceProvider::updateOrCreate(['code' => 'SAICO'], ['text' => 'Saico', 'text_lms' => 'Saico']);
             InsuranceProvider::updateOrCreate(['code' => 'NLGIC'], ['text' => 'NLGIC', 'text_lms' => 'NLGIC']);
             InsuranceProvider::updateOrCreate(['code' => 'AFNIC'], ['text' => 'Al Fujairah National Insurance Company', 'text_lms' => 'Al Fujairah National Insurance Company']);
-
+            InsuranceProvider::updateOrCreate(['code' => 'ALJALIL'], ['text' => 'Al Wathba National Insurance Company', 'text_lms' => 'Al Wathba National Insurance Company']);
             $insurenceProviders = InsuranceProvider::get();
             $quoteTypes = QuoteTypeId::getOptions();
 
