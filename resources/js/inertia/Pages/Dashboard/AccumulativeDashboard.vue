@@ -278,7 +278,7 @@ onUnmounted(() => (isActive.value = false));
   </div>
 
   <div>
-    <x-field label="Teams" class="w-64 ml-auto">
+    <x-field label="Teams" class="w-64">
       <ComboBox
         v-model="filters.teamFilter"
         name="team_name"
