@@ -2,12 +2,9 @@
 
 namespace App\Listeners;
 
-
 use App\Events\CarQuoteAdvisorUpdated;
-use App\Jobs\IntroEmailJob;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
-use App\Models\Tier;
 use App\Models\User;
 use App\Services\CarAllocationService;
 use App\Services\CarEmailService;
@@ -49,7 +46,7 @@ class HandleCarAdvisorUpdated
 
         $previousAdvisor = User::where('id', $oldAdvisorId)->first();
 
-        info('about to trigger intro email job for lead uuid : '.$lead->uuid . ' and previous advisor id : '.$oldAdvisorId);
+        info('about to trigger intro email job for lead uuid : '.$lead->uuid.' and previous advisor id : '.$oldAdvisorId);
 
         SendOCBIntroEmailJob::dispatch($lead, $previousAdvisor)->onQueue('renewals');
 

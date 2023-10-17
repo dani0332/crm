@@ -14,7 +14,6 @@ use Carbon\Carbon;
 
 class CarEmailService extends BaseService
 {
-
     protected $sendEmailCustomerService;
 
     public function __construct(SendEmailCustomerService $sendEmailCustomerService)

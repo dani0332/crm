@@ -43,11 +43,11 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
 
-            if(!$lead) {
+            if (! $lead) {
                 Log::info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
+
                 return;
-            }
-            else {
+            } else {
                 // Initialize email data and retrieve Tier R information
                 $emailData = '';
 
