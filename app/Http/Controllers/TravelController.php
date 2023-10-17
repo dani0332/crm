@@ -290,8 +290,8 @@ class TravelController extends Controller
     public function edit($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        if($record == null){
-            abort_if(! $record, 404);
+        if (! $record) {
+            return abort(404);
         }
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $fieldsToUpdate = $this->travelQuoteService->getFieldsToUpdate('skipProperties');

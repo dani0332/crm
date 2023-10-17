@@ -180,7 +180,7 @@ class InsurerQuoteTypeMappingSeeder extends Seeder
 
                     // Oriental Insurance
                     if ($insurenceProvider['code'] == InsuranceProvidersEnum::OI) {
-                        if (in_array($quoteKey, [QuoteTypeId::Corpline,QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::GroupMedical])) {
+                        if (in_array($quoteKey, [QuoteTypeId::Corpline, QuoteTypeId::Car, QuoteTypeId::Bike, QuoteTypeId::GroupMedical])) {
                             $this->insertMappingRecords($quoteKey, $insurenceProvider['id']);
                         }
                     }
