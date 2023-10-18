@@ -67,14 +67,14 @@ class LeadAllocationService extends BaseService
                 't.name as teamName',
                 'u.name as userName',
             ])
-            ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-            ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
-            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
-            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
-            ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
-            ->groupBy('u.name', 'u.id', 'lead_allocation.id')
-            ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
-            ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
+                ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
+                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+                ->groupBy('u.name', 'u.id', 'lead_allocation.id')
+                ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
