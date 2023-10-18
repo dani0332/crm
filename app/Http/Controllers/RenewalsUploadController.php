@@ -358,7 +358,7 @@ class RenewalsUploadController extends Controller
 
     public function validationFailed($id)
     {
-         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
             ->with('renewalUploadLead')
             ->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])
             ->simplePaginate()->withQueryString();
