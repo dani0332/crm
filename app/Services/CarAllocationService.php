@@ -391,7 +391,7 @@ class CarAllocationService extends AllocationService
             ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
             ->distinct()
-            ->pluck('rule_lead_sources.user_id')
+            ->pluck('rule_users.user_id')
             ->toArray();
     }
 
