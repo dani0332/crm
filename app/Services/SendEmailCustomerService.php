@@ -428,9 +428,11 @@ class SendEmailCustomerService extends BaseService
         $dataArr = [
             'quoteUID' => $quoteUuid,
             'resend' => false,
-            'isReassigned' => $isReassignment,
-            'previousAdvisorId' => $previousAdvisorId,
         ];
+        if ($isReassignment) {
+            $dataArr['reassignment'] = true;
+            $dataArr['previousAdvisorId'] = $previousAdvisorId;
+        }
         $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
         if ($response && isset($response->status)) {
             $msg = '';

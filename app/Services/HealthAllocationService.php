@@ -120,6 +120,7 @@ class HealthAllocationService extends AllocationService
         $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
+        $lead->quote_updated_at = now();
         $lead->save();
         info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name);
 

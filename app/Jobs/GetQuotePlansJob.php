@@ -61,8 +61,6 @@ class GetQuotePlansJob implements ShouldQueue, StackableJob
 
                     return false;
                 }
-                $this->lead->quote_updated_at = Carbon::now();
-                $this->lead->save();
                 break;
             default:
                 break;
