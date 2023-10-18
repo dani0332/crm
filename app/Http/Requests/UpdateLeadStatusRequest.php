@@ -81,7 +81,7 @@ class UpdateLeadStatusRequest extends FormRequest
 
             //todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
             if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
-                $rules['lost_approval_status'] = 'required|in:' . GenericRequestEnum::APPROVED . ',' . GenericRequestEnum::REJECTED;
+                $rules['lost_approval_status'] = 'required|in:'.GenericRequestEnum::APPROVED.','.GenericRequestEnum::REJECTED;
                 $rules['approve_reason_id'] = 'required_without:reject_reason_id';
                 $rules['reject_reason_id'] = 'required_without:approve_reason_id';
             }

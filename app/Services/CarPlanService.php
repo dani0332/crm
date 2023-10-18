@@ -212,7 +212,7 @@ class CarPlanService extends BaseService
             'id',
             'text',
             'repair_type',
-            \DB::raw('IF(repair_type = "'.CarPlanType::COMP.'", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name')
+            \DB::raw('IF(repair_type = "'.CarPlanType::COMP.'", CONCAT(text, " (NON-AGENCY)"), CONCAT(text, " (", repair_type, ")")) as plan_name'),
         ])
             ->where('provider_id', $insuranceProviderId)
             ->whereNotIn('id', $quotePlanId)
