@@ -158,8 +158,7 @@ class CarEmailService extends BaseService
 
     private function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/providerCode='.$plan->providerCode.'%planId='.$plan->id;
-
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/?planId=' . $plan->id. '&providerCode='.$plan->providerCode;
         return $buyNowLink;
     }
 
