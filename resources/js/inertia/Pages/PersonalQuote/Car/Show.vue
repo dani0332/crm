@@ -1537,57 +1537,6 @@ const loadEmailEvents = (email) => {
         record.source == page.props.leadSourceEnum.INSLY"	  
       />
 
-		<!-- <div class="p-4 rounded shadow mb-6 bg-white">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">
-					Last Year's Policy Details
-				</h3>
-			</div>
-			<x-divider class="mb-4 mt-1" />
-			<div class="text-sm">
-				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Renewal Batch#</dt>
-						<dd>{{ record.renewal_batch }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Number</dt>
-						<dd>{{ record.previous_quote_policy_number ?? '' }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Expiry Date</dt>
-						<dd>{{ record.previous_policy_expiry_date ?? '' }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Price</dt>
-						<dd>{{ record.previous_quote_policy_premium ?? '' }}</dd>
-					</div>
-					<template v-if="hasRole(rolesEnum.Admin)">
-						<div class="grid sm:grid-cols-2">
-							<dt class="font-medium">Previous Import Code</dt>
-							<dd>{{ record.renewal_import_code }}</dd>
-						</div>
-						<div class="grid sm:grid-cols-2">
-							<dt class="font-medium"></dt>
-							<dd></dd>
-						</div>
-					</template>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Policy Number</dt>
-						<dd>{{ record.policy_number }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Renewal Expiry Date</dt>
-						<dd>{{ record.renewal_expiry_date }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Lost reason</dt>
-						<dd>{{ record.lost_reason }}</dd>
-					</div>
-				</dl>
-			</div>
-		</div> -->
-
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
 				<h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
