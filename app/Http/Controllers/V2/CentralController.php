@@ -100,7 +100,6 @@ class CentralController extends Controller
     }
 
     /**
-     * @param UpdateLastYearPolicyRequest $request
      * @return \Illuminate\Http\RedirectResponse
      */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
