@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
 use App\Enums\HealthTeamType;
@@ -60,7 +61,7 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.user_id as userId',
                 'lead_allocation.allocation_count',
                 'lead_allocation.max_capacity',
-                'lead_allocation.is_available',
+                'u.status as is_available',
                 'lead_allocation.last_allocated',
                 'st.name as teamName',
                 'u.name as userName',
@@ -171,6 +172,7 @@ class LeadAllocationService extends BaseService
                 if (str_starts_with($lead->code, 'CAR-')) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
+                $lead->assignment_type = $lead->advisor == null ? AssignmentTypeEnum::MANUAL_ASSIGNED : AssignmentTypeEnum::MANUAL_REASSIGNED;
                 $lead->advisor_id = $advisorId;
                 $lead->quote_updated_at = now();
 
@@ -180,7 +182,6 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-
                 DB::commit();
 
                 Haystack::build()
@@ -188,7 +189,7 @@ class LeadAllocationService extends BaseService
                     ->then(function () use ($lead) {
                         if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                             && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                            // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
                         }
                     })->dispatch();
@@ -878,7 +879,7 @@ class LeadAllocationService extends BaseService
         $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
-        if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
+        if ($endTimeForAllocation <= now()->toTimeString() && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
             info('updateAllocationStatusIfNeeded -- Inside reset case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
@@ -887,7 +888,7 @@ class LeadAllocationService extends BaseService
             $this->updateUserMaxCapacity();
         }
 
-        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
+        if ($carLeadAllocationSwitch == 0 && $carLeadAllocationStartTime <= now()->toTimeString()) {
             info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
@@ -923,7 +924,7 @@ class LeadAllocationService extends BaseService
         $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
         info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
-        if (now()->toTimeString() >= $totalResetTime) {
+        if ($totalResetTime <= now()->toTimeString()) {
             info('should total reset is true');
 
             return true;

@@ -1,0 +1,177 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\HealthTeamType;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\UserStatusEnum;
+use App\Jobs\CammyJob;
+use App\Jobs\GetQuotePlansJob;
+use App\Jobs\IntroEmailJob;
+use App\Mail\HealthAssignmentIssueEmail;
+use App\Models\HealthQuote;
+use App\Models\HealthQuoteRequestDetail;
+use App\Models\Team;
+use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
+
+class HealthAllocationService extends AllocationService
+{
+    public function fetchLead($quoteId)
+    {
+        $query = HealthQuote::where('uuid', $quoteId)
+            ->where('quote_status_id', QuoteStatusEnum::Qualified)
+            ->whereNotNull('health_quote_request.price_starting_from')
+            ->whereNull('health_quote_request.advisor_id');
+        info('query for health lead : '.$quoteId.' is : '.$query->toSql().' and bindings are : '.json_encode($query->getBindings()));
+
+        return $query->first();
+    }
+
+    public function fetchReAssignmentLead($advisorId)
+    {
+        $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
+        info('leads will be picked up in reassignment from : '.$from);
+
+        $leads = HealthQuote::whereBetween('created_at', [$from, now()])
+            ->whereNotNull('health_quote_request.price_starting_from')
+            ->where('health_quote_request.is_error_email_sent', false)
+            ->whereIn('quote_status_id', [QuoteStatusEnum::Quoted]);
+        if ($advisorId != 0) {
+            $leads->where('advisor_id', $advisorId);
+        } else {
+            // If advisor ID is not provided, get unavailable advisors and filter leads by them
+            $advisors = $this->getUnavailableAdvisor();
+            if (count($advisors) > 0) {
+                $advisorIds = $advisors->pluck('user_id');
+                info('Inside reassignment general run');
+                $leads->whereIn('advisor_id', $advisorIds);
+            }
+        }
+
+        return $leads->get();
+    }
+
+    public function assignTeamBasedOnPrice($lead)
+    {
+        info('Inside assignHealthTeamBasedOnStartingPrice for quote : '.$lead->uuid);
+
+        $priceStartingFrom = $lead->price_starting_from;
+
+        $healthTeam = Team::where('allocation_threshold_enabled', true)
+            ->where('min_price', '<=', $priceStartingFrom)
+            ->where('max_price', '>=', $priceStartingFrom)
+            ->first();
+
+        if ($healthTeam) {
+            info('assignHealthTeamBasedOnStartingPrice filtered team is : '.$healthTeam->name);
+            $lead->update([
+                'health_team_type' => $healthTeam->name,
+            ]);
+        } else {
+            info('assignHealthTeamBasedOnStartingPrice team not found against : '.$lead->uuid);
+            $lead->update([
+                'is_error_email_sent' => true,
+            ]);
+            Mail::send(new HealthAssignmentIssueEmail($lead->code, $priceStartingFrom));
+        }
+    }
+
+    public function fetchAvailableAdvisor($leadTeam, $isReassignmentJob)
+    {
+        $statusOrder = [
+            UserStatusEnum::ONLINE,
+            UserStatusEnum::OFFLINE,
+        ];
+
+        if (! $isReassignmentJob) {
+            $statusOrder[] = UserStatusEnum::UNAVAILABLE;
+        }
+
+        foreach ($statusOrder as $status) {
+            $eligibleUser = $this->getAdvisorByStatus($status, $leadTeam);
+            if ($eligibleUser) {
+                info('eligible user found for team : '.$leadTeam.' with status : '.$status.' and user id :'.$eligibleUser->user_id);
+
+                return User::where('id', $eligibleUser->user_id)->first();
+            }
+        }
+
+        return [];
+    }
+
+    public function getAdvisorByStatus($status, $leadTeam)
+    {
+        info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
+
+        return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('teams as t', 't.id', '=', 'users.sub_team_id')
+            ->where('users.status', $status)
+            ->where(function ($query) {
+                $query->whereRaw('la.allocation_count < la.max_capacity')
+                    ->orWhere('la.max_capacity', '=', -1);
+            })
+            ->where('t.name', $leadTeam)
+            ->orderBy('la.last_allocated', 'asc')->first();
+    }
+
+    public function assignLead($lead, $advisor, $assignmentType)
+    {
+        $previousAssignmentType = $lead->assignment_type;
+        $previousUserId = $lead->advisor_id;
+        $isReassignment = $previousUserId != null;
+        $lead->advisor_id = $advisor->id;
+        $lead->assignment_type = $assignmentType;
+        $lead->quote_updated_at = now();
+        $lead->save();
+        info('Lead Id '.$lead->uuid.' assigned to advisor : '.$advisor->name);
+
+        $previousAdvisorAssignedDate = $this->updateQuoteDetail($lead->id);
+
+        if ($lead->source != LeadSourceEnum::REFERRAL) {
+            info('lead source is not referral so about to update allocation record');
+            $assignmentType == AssignmentTypeEnum::SYSTEM_ASSIGNED ? $this->addAllocationCounts($advisor->id) : $this->adjustAllocationCounts($advisor->id, $lead, $previousUserId, $previousAdvisorAssignedDate, $previousAssignmentType);
+        }
+
+        Haystack::build()
+            ->addJob(new GetQuotePlansJob($lead))
+            ->then(function () use ($lead, $isReassignment, $previousUserId) {
+                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                    CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
+                }
+            })->dispatch();
+    }
+
+    public function updateQuoteDetail($leadId)
+    {
+        info('about to update car quote detail record for : '.$leadId);
+
+        $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
+        $oldAdvisorAssignedDate = '';
+
+        if ($quoteDetail) {
+            $oldAdvisorAssignedDate = $quoteDetail->advisor_assigned_date;
+            $this->updateExistingQuoteDetail($quoteDetail, $leadId);
+        } else {
+            $this->createNewQuoteDetail($leadId, HealthQuoteRequestDetail::class, 'health_quote_request_id');
+        }
+
+        return $oldAdvisorAssignedDate;
+    }
+
+    public function shouldProceed(): bool
+    {
+        $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
+        $end_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
+        $shouldProceed = now()->between($start_time, $end_time);
+
+        return $shouldProceed;
+    }
+}
