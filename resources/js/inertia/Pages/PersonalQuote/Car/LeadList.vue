@@ -1,4 +1,6 @@
 <script setup>
+import LeadAssignment from "../Partials/LeadAssignment.vue";
+
 defineProps({
   quotes: Object,
   advisors: Array,
@@ -16,7 +18,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const createLead = reactive({
     modal: false,
-    type: ''    
+    type: ''
 });
 
 const tableHeader = [
@@ -57,7 +59,7 @@ const tableHeader = [
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'QUOTE LINK', value: 'quote_link' },  
+  { text: 'QUOTE LINK', value: 'quote_link' },
 ];
 
 const ecommerceOptions = [
@@ -130,45 +132,34 @@ const paymentStatusOptions = computed(() => {
 });
 
 const filters = reactive({
-    code: '', 
-    first_name: '', 
-    last_name: '', 
-    email: '', 
-    mobile_no: '', 
-    quote_status_id: [], 
-    created_at: '', 
-    currently_insured_with: '', 
-    renewal_expiry_date: '', 
-    is_ecommerce: '', 
-    payment_status_id: '', 
-    renewal_batch: '', 
-    previous_quote_policy_number: '', 
-    car_type_insurance_id: '', 
-    vehicle_type_id: '', 
-    advisor_assigned_date: '', 
-    tier_id: [], 
-    quote_batch_id: [], 
-    advisor_id: [], 
-    advisor_assigned_date_end: '', 
-    renewal_expiry_date_end: '', 
-    created_at_end: '', 
+    code: '',
+    first_name: '',
+    last_name: '',
+    email: '',
+    mobile_no: '',
+    quote_status_id: [],
+    created_at: '',
+    currently_insured_with: '',
+    renewal_expiry_date: '',
+    is_ecommerce: '',
+    payment_status_id: '',
+    renewal_batch: '',
+    previous_quote_policy_number: '',
+    car_type_insurance_id: '',
+    vehicle_type_id: '',
+    advisor_assigned_date: '',
+    tier_id: [],
+    quote_batch_id: [],
+    advisor_id: [],
+    advisor_assigned_date_end: '',
+    renewal_expiry_date_end: '',
+    created_at_end: '',
     page: 1,
 });
 
 const loader = reactive({
     table: false,
     export: false,
-});
-
-const assignForm = useForm({
-    assign_team: null,
-    assigned_to_id_new: null,
-    assignment_type: 'With-Email',
-    modelType: 'Car',
-    selectTmLeadId: '',
-    isManagerOrDeputy: 1,
-    isLeadPool: null,
-    isManualAllocationAllowed: 1,
 });
 
 const quotesSelected = ref([]);
@@ -211,31 +202,9 @@ function onSubmit(isValid) {
   }
 }
 
-function onAssignLead(isValid) {
-  if (isValid) {
-    const selected = quotesSelected.value.map(e => e.id);
-    const url =
-      assignForm.assign_team === 'Wow-Call'
-        ? '/quotes/wcuAssign'
-        : '/quotes/car/manualLeadAssign';
-    assignForm
-      .transform(data => ({
-        ...data,
-        selectTmLeadId: `${selected}`,
-      }))
-      .post(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          quotesSelected.value = [];
-          notification.success({
-            title: 'Car Leads Assigned',
-            position: 'top',
-          });
-        },
-      });
-  }
-}
+const onLeadAssigned = () => {
+    quotesSelected.value = [];
+};
 
 const fixedValue = numberString => {
   const number = parseFloat(numberString);
@@ -430,7 +399,7 @@ onMounted(() => {
                     :options="carTypeInsurances"
                     placeholder="Please select an option"
                     class="w-full"
-                />                
+                />
                 <x-input
                     v-model="filters.renewal_batch"
                     type="number"
@@ -503,48 +472,15 @@ onMounted(() => {
                 </div>
             </div>
         </x-form>
+
         <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
             <div v-if="quotesSelected.length > 0" class="mb-4">
-                <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-                    <div class="row">
-                        <h2 class="text-xl font-semibold mb-5">Assign Lead</h2>
-                    </div>
-                    <x-form @submit="onAssignLead" :auto-focus="false">
-                        <div class="w-full flex flex-col md:flex-row gap-4">
-                        
-                        <ComboBox
-                            :single="true"
-                            v-model="assignForm.assigned_to_id_new"
-                            label="Assign Advisor"
-                            :options="advisorOptions"
-                            placeholder="Select Advisor"
-                            class="flex-1 w-auto"
-                            :rules="[rules.isRequired]"
-                        />
-                        <!-- <x-select
-                            v-model="assignForm.assignment_type"
-                            label="Assignment Type"
-                            :options="[
-                                { value: 'With-Email', label: 'With Email' },
-                                { value: 'Without-Email', label: 'Without Email' },
-                            ]"
-                            placeholder="Select Subteam"
-                            class="flex-1 w-auto"
-                            :rules="[rules.isRequired]"
-                        /> -->
-                        <div class="mb-3 md:pt-6">
-                            <x-button
-                            color="orange"
-                            size="sm"
-                            type="submit"
-                            :loading="assignForm.processing"
-                            >
-                            Assign
-                            </x-button>
-                        </div>
-                        </div>
-                    </x-form>
-                </div>
+                <LeadAssignment
+                    :selected="quotesSelected.map(e => e.id)"
+                    :advisors="advisorOptions"
+                    quoteType="Car"
+                    @success="onLeadAssigned"
+                />
             </div>
         </Transition>
 

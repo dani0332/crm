@@ -1307,7 +1307,7 @@ class CarQuoteService extends BaseService
 
                 $emailData = (object) [
                     'customerEmail' => $lead->email,
-                    'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
+                    'documentUrl' => [$documentUrl], // this will be replaced with a generic URL once document upload section is done
                     'clientFullName' => $lead->first_name.' '.$lead->last_name,
                     'advisorName' => $currentAdvisor->name,
                     'landLine' => $currentAdvisor->landline_no,
