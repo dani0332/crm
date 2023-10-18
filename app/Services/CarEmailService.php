@@ -148,8 +148,7 @@ class CarEmailService extends BaseService
             // If at least one option was selected, include this addon in the benefits.
             if ($shouldInclude) {
                 $planAddons[] = [
-                    'name' => $addon->name,
-                    'value' => $addon->value,
+                    'value' => $addon->text,
                 ];
             }
         }
