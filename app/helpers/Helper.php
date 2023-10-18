@@ -457,7 +457,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com'];
+        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
     }
 }
 

@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
+use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
@@ -27,6 +28,7 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
@@ -348,6 +350,9 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+
+            $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -603,7 +608,7 @@ class CRUDController extends Controller
             ])->first())) {
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
-            $paymentEntityModel->load(['plan.insuranceProvider', 'carLostQuoteLog', 'carLostQuoteLogs']);
+            $paymentEntityModel->load(['plan.insuranceProvider']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
             // return view('shared.show', compact([
@@ -624,6 +629,7 @@ class CRUDController extends Controller
             $leadSourceEnum = LeadSourceEnum::asArray();
             $paymentStatusEnum = PaymentStatusEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
+            $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
             $quoteDocuments = array_values($quoteDocuments->toArray());
@@ -647,6 +653,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
+                'carPlanTypeEnum',
             ]));
         }
 
@@ -937,6 +944,9 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+
+            $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -966,9 +976,7 @@ class CRUDController extends Controller
         } else {
             if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
-                if (Auth::user()->hasRole(RolesEnum::CarManager) && ! $request->isDisbaled) {
-                    $validateArray['renewal_batch'] = 'required';
-                }
+
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
                 $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
@@ -1808,5 +1816,10 @@ class CRUDController extends Controller
      */
     public function destroy()
     {
+    }
+
+    private function getCarMakeDropdown()
+    {
+        return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
 }

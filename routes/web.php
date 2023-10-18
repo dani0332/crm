@@ -460,7 +460,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
 
-    Route::post('insurer-logs', [AuditableController::class, 'apiLogsComponent']);
+    Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/commercial-car-model-by-id', [AjaxController::class, 'commercialCarModelBasedOnCarMakeId']);
@@ -477,6 +477,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
     Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
+
+    Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);

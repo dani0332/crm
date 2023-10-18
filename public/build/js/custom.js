@@ -105,9 +105,13 @@ function init_sidebar() {
     // toggle small or large menu
     $MENU_TOGGLE.on('click', function () {
         if ($BODY.hasClass('nav-md')) {
+            $('.sidebar-expand-logo').addClass('d-none');
+            $('.sidebar-collapse-logo').removeClass('d-none');
             $SIDEBAR_MENU.find('li.active ul').hide();
             $SIDEBAR_MENU.find('li.active').addClass('active-sm').removeClass('active');
         } else {
+            $('.sidebar-expand-logo').removeClass('d-none');
+            $('.sidebar-collapse-logo').addClass('d-none');
             $SIDEBAR_MENU.find('li.active-sm ul').show();
             $SIDEBAR_MENU.find('li.active-sm').addClass('active').removeClass('active-sm');
         }
