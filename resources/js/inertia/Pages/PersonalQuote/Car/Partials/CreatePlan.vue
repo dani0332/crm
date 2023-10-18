@@ -35,7 +35,7 @@ const totalPriceVAT = computed(() => {
 					vat += option.price + option.vat;
 				}
 			})
-		})		
+		})
 	})
 	return vat;
 })
@@ -70,7 +70,7 @@ const setCarPlans = () => {
     .then(({ data }) => {
       insuranceProviderPlanOptions.value = data.map(plan => ({
         value: plan.id,
-        label: plan.text,
+        label: plan.plan_name,
       }));
       page.processing = false;
     })
@@ -137,7 +137,7 @@ const getAddonVat = (item) => {
       </div>
       <div class="w-full md:w-1/2">
         <div class="flex flex-col gap-4">
-          <x-field label="Plan" required>  
+          <x-field label="Plan" required>
           <x-select
             v-model="addPlanForm.car_plan_id"
             :rules="[isRequired]"
@@ -152,7 +152,7 @@ const getAddonVat = (item) => {
     </div>
     <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
       <div class="w-full md:w-1/3">
-        <x-field label="Price without vat" required>  
+        <x-field label="Price without vat" required>
         <x-input
         v-model="addPlanForm.actual_premium"
         :rules="[isRequired]"
@@ -163,7 +163,7 @@ const getAddonVat = (item) => {
         </x-field>
       </div>
       <div class="w-full md:w-1/3">
-        <x-field label="Car value" required>  
+        <x-field label="Car value" required>
         <x-input
         v-model="addPlanForm.car_value"
         :rules="[isRequired]"
@@ -174,7 +174,7 @@ const getAddonVat = (item) => {
         </x-field>
       </div>
       <div class="w-full md:w-1/3">
-        <x-field label="Excess" required>  
+        <x-field label="Excess" required>
         <x-input
         v-model="addPlanForm.excess"
         :rules="[isRequired]"
