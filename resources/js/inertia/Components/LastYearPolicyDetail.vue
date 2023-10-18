@@ -15,7 +15,7 @@ const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
 
-const isEdit = computed(() => {
+const allowEdit = computed(() => {
   
  if( (props.quote.renewal_batch === '' || props.quote.renewal_batch == null)
   && props.canAddBatchNumber == true) return true;
@@ -51,8 +51,6 @@ function onSubmit(isValid) {
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-console.log('isEdit: ', isEdit.value + ":" + props.quote.renewal_batch + "::" + props.canAddBatchNumber + ":::d" + props.canAddBatchNumber);
- 
 </script>
 
 <template>
@@ -114,18 +112,18 @@ console.log('isEdit: ', isEdit.value + ":" + props.quote.renewal_batch + "::" + 
           </div>
         </div>
       </div>
-      <div class="flex justify-between gap-3 items-center">
+      <div class="flex justify-between gap-3 items-center" v-if="canAddBatchNumber">
         <x-field label="Renewal batch" required>
           <x-input
             v-model="policyForm.renewal_batch"
             type="tel"
             class="w-full md:w-64"
             :rules="[isRequired]"
-            :disabled="!isEdit"
+            :disabled="!allowEdit"
             :error="policyForm.errors.renewal_batch"
           />
         </x-field>
-        <x-button v-if="isEdit" color="primary" type="submit">
+        <x-button v-if="allowEdit" color="primary" type="submit">
           Update
         </x-button>
       </div>

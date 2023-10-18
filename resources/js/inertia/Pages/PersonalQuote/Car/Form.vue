@@ -208,9 +208,9 @@ const setCarMake = (id) => {
 			<h2 class="text-xl font-semibold">
 				{{ isEdit ? 'Edit' : 'Create' }} Car
 			</h2>
-			<div class="alert" v-if="isEdit && hasRole(rolesEnum.CarManager)">
+			<!-- <div class="alert" v-if="isEdit && hasRole(rolesEnum.CarManager)">
 				Only Renewal Batch # field will be updated
-			</div>
+			</div> -->
 			<div>
 				<Link :href="route('car.index')">
 				<x-button size="sm" color="#1d83bc" tag="div"> Car List </x-button>
@@ -228,7 +228,7 @@ const setCarMake = (id) => {
 					</ul>
 				</x-alert>
 
-				<x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
+				<!-- <x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
 					<x-input 
 						v-model="quoteForm.renewal_batch" 
 						:rules="isDisbaled ? [] : (hasRole(rolesEnum.CarManager) ? [isRequired] : [])"
@@ -236,7 +236,7 @@ const setCarMake = (id) => {
 						:error="quoteForm.errors.renewal_batch"
 						:disabled="isDisbaled"
 						/>
-				</x-field>
+				</x-field> -->
 
 				<x-field label="FIRST NAME" required>
 					<x-input v-model="quoteForm.first_name" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.first_name" />
