@@ -71,7 +71,8 @@ defineProps({
 	kyoEndPoint: String,
 	carLostChangeStatus: Boolean,
 	isTierRAssigned: Boolean,
-	tiersExceptTierR: Array
+	tiersExceptTierR: Array,
+	leadSourceEnum: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1527,7 +1528,16 @@ const loadEmailEvents = (email) => {
 				</div>
 			</x-form>
 		</x-modal>
-		<div class="p-4 rounded shadow mb-6 bg-white">
+
+		<LastYearPolicyDetail
+		:canAddBatchNumber="true"
+      :quote="record"
+	  
+		v-if="record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
+        record.source == page.props.leadSourceEnum.INSLY"	  
+      />
+
+		<!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
 				<h3 class="font-semibold text-primary-800 text-lg">
 					Last Year's Policy Details
@@ -1576,7 +1586,7 @@ const loadEmailEvents = (email) => {
 					</div>
 				</dl>
 			</div>
-		</div>
+		</div> -->
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>

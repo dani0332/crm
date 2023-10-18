@@ -97,6 +97,7 @@ class CarQuoteService extends BaseService
                 'ch.TEXT AS claim_history_id_text',
                 'cqr.advisor_id',
                 'u.name AS advisor_id_text',
+                'pra.name AS previous_advisor_id_text',
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
                 'cqr.plan_id',
@@ -156,6 +157,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
