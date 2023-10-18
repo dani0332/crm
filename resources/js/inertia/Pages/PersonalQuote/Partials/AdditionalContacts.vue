@@ -11,6 +11,7 @@ const modals = reactive({
   addContact: false,
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
+  customerAlreadyPrimaryConfirm: false
 });
 
 const confirmDeleteData = reactive({
@@ -22,6 +23,7 @@ const confirmData = reactive({
 });
 
 const contactLoader = ref(false);
+const EmailCheckLoader = ref(false);
 
 function addContactModal() {
   contactForm.key = '';
@@ -84,7 +86,7 @@ const onAdditionalContactSubmit = isValid => {
         });
       },
       onError: err => {
-        notification.error({ title: err.error, position: 'top' });
+        notification.error({ title: err.error ?? err.value, position: 'top' });
       },
       onFinish: () => {},
     },
@@ -115,6 +117,30 @@ const additionalContactDeleteConfirmed = () => {
     },
   );
 };
+
+const customerAlreadyPrimaryCheck = async () => {
+    let data = {
+        isInertial: true,
+        key: confirmData.contactPrimary.key,
+        value: confirmData.contactPrimary.value
+    };
+
+    EmailCheckLoader.value = true;
+
+    axios.post('/customer-primary-email-check', data)
+        .then(res => {
+            if( res.data.response === true){
+                modals.contactPrimaryConfirm = false;
+                modals.customerAlreadyPrimaryConfirm = true;
+            } else {
+                additionalContactPrimaryConfirmed();
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
+
 const additionalContactPrimaryConfirmed = () => {
   const url = `/personal-quotes/${page.props.quote.id}/change-primary-contact`;
 
@@ -123,9 +149,12 @@ const additionalContactPrimaryConfirmed = () => {
     {
       isInertia: true,
       quote_id: page.props.quote.id,
+      quote_type: 'personal',
       key: confirmData.contactPrimary.key,
       value: confirmData.contactPrimary.value,
-      quote_type: 'personal',
+      quote_customer_id: page.props.quote.customer_id,
+      quote_primary_email_address: page.props.quote.email,
+      quote_primary_mobile_no: page.props.quote.mobile_no
     },
     {
       preserveScroll: true,
@@ -139,8 +168,17 @@ const additionalContactPrimaryConfirmed = () => {
         });
       },
       onFinish: () => {
-        contactLoader.value = false;
-        modals.contactPrimaryConfirm = false;
+          contactLoader.value = false;
+          EmailCheckLoader.value = false;
+          modals.contactPrimaryConfirm = false;
+          modals.customerAlreadyPrimaryConfirm = false;
+      },
+      onError: err => {
+          const firstError = Object.values(err)[0];
+          notification.error({
+              title: firstError,
+              position: 'top',
+          });
       },
     },
   );
@@ -297,13 +335,41 @@ const additionalContact = computed(() => {
           <x-button
             size="sm"
             color="emerald"
-            @click.prevent="additionalContactPrimaryConfirmed"
-            :loading="contactLoader"
+            :loading="EmailCheckLoader"
+            @click.prevent="customerAlreadyPrimaryCheck"
           >
             Confirm
           </x-button>
         </div>
       </template>
     </x-modal>
+
+      <x-modal v-model="modals.customerAlreadyPrimaryConfirm" show-close backdrop>
+          <template #header> Alert: Primary Contact Update </template>
+          <p>You are about to set this "email" as the primary contact for this lead.
+              This action will add this lead to the list of other existing leads associated with the same email.
+          </p>
+          <br>
+          <p>Are you sure you want to continue?</p>
+          <template #actions>
+              <div class="text-right space-x-4">
+                  <x-button
+                      size="sm"
+                      ghost
+                      @click.prevent="modals.customerAlreadyPrimaryConfirm = false"
+                  >
+                      Cancel
+                  </x-button>
+                  <x-button
+                      size="sm"
+                      color="emerald"
+                      @click.prevent="additionalContactPrimaryConfirmed"
+                      :loading="contactLoader"
+                  >
+                      Continue
+                  </x-button>
+              </div>
+          </template>
+      </x-modal>
   </div>
 </template>

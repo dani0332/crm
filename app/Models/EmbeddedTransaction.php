@@ -23,4 +23,8 @@ class EmbeddedTransaction extends Model
     {
         return $this->belongsTo(EmbeddedProductOption::class, 'product_id', 'id');
     }
+    public function payments()
+    {
+        return $this->morphMany(Payment::class, 'paymentable');
+    }
 }
