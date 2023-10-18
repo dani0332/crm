@@ -387,7 +387,8 @@ class CarAllocationService extends AllocationService
     {
         // Join the RuleLeadSource table with the Rules table where the rule is active (is_active = 1).
         // Select distinct user IDs associated with these rules and convert the result to an array.
-        return RuleLeadSource::join('rules', 'rule_lead_sources.rule_id', 'rules.id')
+            return Rule::join('rule_details', 'rule_details.rule_id', 'rules.id')
+            ->join('rule_users', 'rule_users.rule_id', 'rules.id')
             ->where('rules.is_active', 1)
             ->distinct()
             ->pluck('rule_lead_sources.user_id')

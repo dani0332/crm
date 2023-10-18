@@ -1105,8 +1105,7 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        $trigger = $isReassignment ? 'reassign' : 'intro';
-                        CammyJob::dispatch($lead, $trigger)->delay(now()->addSeconds(15));
+                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
