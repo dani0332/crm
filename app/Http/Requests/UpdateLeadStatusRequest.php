@@ -81,6 +81,13 @@ class UpdateLeadStatusRequest extends FormRequest
             if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
                 $rules['proof_document'] = 'required';
             }
+
+            //todo: lost_approval_status should be required, and can be approved or rejected also reason_id should be required
+            if (auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
+                $rules['lost_approval_status'] = 'required|in:'.GenericRequestEnum::APPROVED.','.GenericRequestEnum::REJECTED;
+                $rules['approve_reason_id'] = 'required_without:reject_reason_id';
+                $rules['reject_reason_id'] = 'required_without:approve_reason_id';
+            }
         }
 
         if (request()->leadStatus == QuoteStatusEnum::Lost) {

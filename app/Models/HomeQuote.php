@@ -38,11 +38,6 @@ class HomeQuote extends Model implements AuditableContract
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id');
     }
 
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class, 'customer_id');
-    }
-
     public function homeQuoteRequestDetail()
     {
         return $this->hasOne(HomeQuoteRequestDetail::class, 'home_quote_request_id', 'id');
@@ -61,6 +56,11 @@ class HomeQuote extends Model implements AuditableContract
     public function advisor()
     {
         return $this->belongsTo(User::class, 'advisor_id')->select(['id', 'email', 'name']);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function payments()

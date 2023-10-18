@@ -425,6 +425,7 @@ if (! function_exists('newUi')) {
     {
         return [
             quoteTypeCode::Health,
+            quoteTypeCode::Car,
             quoteTypeCode::Travel,
             quoteTypeCode::Home,
             quoteTypeCode::Life,
@@ -434,7 +435,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
             quoteTypeCode::Yacht,
-            quoteTypeCode::Aml
+            quoteTypeCode::Aml,
         ];
     }
 }
@@ -456,7 +457,7 @@ if (! function_exists('createCdnUrl')) {
 if (! function_exists('getAutomationUser')) {
     function getAutomationUser(): array
     {
-        return ['im.automation4@gmail.com'];
+        return ['im.automation4@gmail.com', 'muhammad.abdullah@insurancemarket.ae'];
     }
 }
 

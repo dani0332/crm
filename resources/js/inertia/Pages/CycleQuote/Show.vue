@@ -114,7 +114,7 @@ const emiratesOptions = computed(() => {
     }));
 });
 const isProfileUpdateAllow = computed(() => {
-    return !hasAnyRole([
+    return hasAnyRole([
         page.props.rolesEnum.PA,
         page.props.rolesEnum.OE,
         page.props.rolesEnum.NRA
@@ -753,8 +753,6 @@ const linkEntity = () => {
           </dl>
       </x-modal>
 
-      <AdditionalContacts :quote="quote" :quote-type="quoteType" />
-
       <MemberDetails
           :quote="quote"
           :membersDetails="membersDetails"
@@ -762,6 +760,8 @@ const linkEntity = () => {
           :memberRelations="memberRelations"
           :quote_type=quoteType
       />
+
+      <AdditionalContacts :quote="quote" :quote-type="quoteType" />
 
     <QuoteActivities
       :can="can"
@@ -806,6 +806,8 @@ const linkEntity = () => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

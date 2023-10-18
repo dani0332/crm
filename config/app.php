@@ -164,7 +164,7 @@ return [
         Illuminate\View\ViewServiceProvider::class,
         Laravel\Socialite\SocialiteServiceProvider::class,
         App\Providers\RepositoryServiceProvider::class,
-
+        App\Providers\PostMarkServiceProvider::class,
         /*
          * Package Service Providers...
          */
@@ -245,7 +245,9 @@ return [
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'LookUpModel' => App\helpers\LookUpModelHelper::class,
         'KenService' => \App\Services\KenService::class,
+        'MarshallService' => \App\Services\MarshallService::class,
         'CapiService' => \App\Services\CapiService::class,
+        'PostMark' => \App\Facades\PostMark::class,
     ],
 
 ];

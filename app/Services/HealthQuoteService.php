@@ -129,7 +129,9 @@ class HealthQuoteService extends BaseService
             'ent.company_address',
             'qrem.entity_type_code',
             'ent.industry_type_code',
-            'ent.emirate_of_registration_id'
+            'ent.emirate_of_registration_id',
+            'ihp.code as plan_provider_code',
+            'hqr.health_plan_co_payment_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -142,6 +144,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('users as wcu', 'wcu.id', '=', 'hqr.wcu_id')
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
+            ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+            ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
@@ -1160,7 +1164,14 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
+                        if ($plan['ratesPerCopay']) {
+                            foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
+                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'];
+                                }
+                            }
+                        }
+                        $response['priceWithVAT'] = ($response['priceWithVAT'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
@@ -1344,4 +1355,5 @@ class HealthQuoteService extends BaseService
             return $response;
         }
     }
+
 }

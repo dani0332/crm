@@ -86,7 +86,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('login');
 });
-if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV') == EnvEnum::UAT || config('constants.APP_ENV') == 'dev02') {
+if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV') == EnvEnum::UAT || config('constants.APP_ENV') == EnvEnum::DEVELOPMENT) {
     Route::middleware('throttle:50,10')->group(function () {
         Route::get('/alternate-login', [LoginController::class, 'index'])->name('alternate-login');
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
@@ -163,6 +163,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('legacy-policy', LegacyPolicyController::class);
     Route::post('legacy-policy/move-to-imcrm', [LegacyPolicyController::class, 'moveToImcrm']);
     Route::post('embedded-products/upload-document', [EmbeddedProductController::class, 'uploadDocument'])->name('embedded-products.upload-document');
+    Route::post('embedded-products/send-document', [EmbeddedProductController::class, 'sendDocument'])->name('embedded-products.send-document');
+    Route::post('embedded-products/download-document', [EmbeddedProductController::class, 'downloadDocument'])->name('embedded-products.download-document');
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 
     Route::get('/clear-cache', function () {
@@ -210,6 +212,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/customer-additional-contact/{id}/delete', [CustomerController::class, 'deleteAdditionalContact']);
     Route::post('/customer-additional-contact/{id}/make-primary', [CustomerController::class, 'makeAdditionalContactPrimary']);
     Route::post('/customer-additional-contact/add', [CustomerController::class, 'addAdditionalContact']);
+    Route::post('/customer-primary-email-check', [CustomerController::class, 'customerAlreadyEmailExistCheck']);
 
     Route::resource('lead-allocation', LeadAllocationController::class);
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
@@ -280,6 +283,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('car', CRUDController::class);
         Route::get('health-cards', [HealthQuoteController::class, 'cardsView'])->name('health.cards');
         Route::get('health-export', [CRUDController::class, 'exportHealthLeads'])->name('health.export');
+        Route::get('car-export', [CRUDController::class, 'exportCarLeads'])->name('car.export');
 
         Route::get('home-cards', [CRUDController::class, 'cardsViewHome'])->name('home-cardView');
         Route::resource('home', CRUDController::class);
@@ -294,6 +298,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
         Route::post('update', [CRUDController::class, 'update'])->name('updateQuote');
+        Route::post('cancel-payment', [CRUDController::class, 'cancelPayment'])->name('cancelPayment');
         Route::post('createDuplicate', [CentralController::class, 'createDuplicate'])->name('createDuplicate');
         Route::post('{quoteType}/leadAssign', [CentralController::class, 'manualLeadAssign'])->name('manual-lead-assignment');
 
@@ -324,6 +329,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/{quoteUuId}/send-email-one-click-buy', [CRUDController::class, 'sendEmailOneClickBuy'])->name('sendEmailOneClickBuy');
         Route::post('update-customer-profile', [CentralController::class, 'updateCustomerProfileDetails'])->name('update-customer-profile');
+        Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
 
         if (! in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
@@ -451,7 +457,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
 
-    Route::post('insurer-logs', [AuditableController::class, 'apiLogsComponent']);
+    Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/commercial-car-model-by-id', [AjaxController::class, 'commercialCarModelBasedOnCarMakeId']);
@@ -471,6 +477,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);
+
+    Route::post('followups/emails/events', [\App\Http\Controllers\V2\FollowupController::class, 'getEmailEvents']);
 });
 
 Route::POST('/sendBulkWelcomeEmails', [BulkEmailProcessController::class, 'ProcessBulkWelcomeEmails'])

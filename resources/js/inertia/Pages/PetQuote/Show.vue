@@ -779,6 +779,8 @@ const linkEntity = () => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <LeadHistory :quote="quote" />

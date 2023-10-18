@@ -702,6 +702,8 @@ const linkEntity = () => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
