@@ -311,6 +311,12 @@ const moveToImcrm = async policyNumber => {
             title="CUSTOMER" 
           />
           <LegacyCard  
+            v-if="policy.policy && Object.keys(policy.policy).length > 0" 
+            :legacy="policy.policy" 
+            type="single" 
+            title="POLICY" 
+          />
+          <LegacyCard  
             v-if="policy.quote && Object.keys(policy.quote).length > 0" 
             :legacy="policy.quote" 
             type="single" 

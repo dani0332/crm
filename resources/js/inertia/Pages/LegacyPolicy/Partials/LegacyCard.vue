@@ -38,7 +38,7 @@ const formatLabel = (inputString) => {
       </table>
   </template>
   <template v-if="type == 'multiple'">  
-    <template v-if="legacy.length>0" >
+    <template v-if="Object.keys(legacy).length>0" >
       <div v-for="(mainRecord, index) in legacy" :key="index">
         <table>
           <tbody>
