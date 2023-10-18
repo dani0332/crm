@@ -12,7 +12,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\IntroEmailJob;
 use App\Models\ApplicationStorage;
-use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Payment;
@@ -196,7 +195,7 @@ class CarQuoteService extends BaseService
             'vehicleTypeId' => $request->vehicle_type_id,
             'trim' => $request->trim,
             'premium' => $request->premium,
-            'carMakeId' => CarMake::where('code', $request->car_make_id)->first() ? CarMake::where('code', $request->car_make_id)->first()->id : null, // ID
+            'carMakeId' => $request->car_make_id,
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
