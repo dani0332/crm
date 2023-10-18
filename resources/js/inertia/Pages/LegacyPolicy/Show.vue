@@ -308,37 +308,39 @@ const moveToImcrm = async policyNumber => {
             v-if="policy.customer && Object.keys(policy.customer).length > 0" 
             :legacy="policy.customer" 
             type="single" 
-            title="CUSTOMER" 
+            title="CUSTOMER"
+            :policy="policy"
           />
-          <LegacyCard  
-            v-if="policy.policy && Object.keys(policy.policy).length > 0" 
-            :legacy="policy.policy" 
-            type="single" 
-            title="POLICY" 
-          />
+          
           <LegacyCard  
             v-if="policy.quote && Object.keys(policy.quote).length > 0" 
             :legacy="policy.quote" 
             type="single" 
-            title="QUOTE" 
+            title="QUOTE"
+            :policy="policy"
           />        
           <LegacyCard  
             v-if="policy.renewal && Object.keys(policy.renewal).length > 0" 
             :legacy="policy.renewal" 
             type="single" 
-            title="RENEWAL" 
+            title="RENEWAL"
+            :policy="policy" 
           />
           <LegacyCard  
             v-if="policy.claims && Object.keys(policy.claims).length > 0" 
             :legacy="policy.claims" 
             type="single" 
             title="CLAIM" 
+            :policy="policy"
           />        
           <LegacyCard 
             v-if="policy.objects && Object.keys(policy.objects).length > 0"
             :legacy="policy.objects" 
             type="multiple" 
-            title="OBJECT" />
+            title="OBJECT"
+            :policy="policy"
+             />
+
       </div>
     </template>    
   </div>
@@ -405,10 +407,10 @@ const moveToImcrm = async policyNumber => {
 .scrollable-container {
   max-height: 400px;
   overflow-y: auto; 
-  display: flex;
-  flex-wrap: wrap;
+  display: flex;  
   gap: 20px; 
 }
+
 .custom-table {
    padding-right: 20px;
 }
