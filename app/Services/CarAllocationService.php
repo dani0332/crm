@@ -512,23 +512,6 @@ class CarAllocationService extends AllocationService
         return $leads->get();
     }
 
-    public function getUnavailableAdvisor()
-    {
-        // Query to fetch unavailable advisors
-        $query = LeadAllocation::with('leadAllocationUser')
-            ->whereHas('leadAllocationUser', function ($query) {
-                $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
-            })
-            ->where(function ($query) {
-                // Filter by allocation count and max capacity
-                $query->whereRaw('allocation_count < max_capacity')
-                    ->orWhere('max_capacity', -1);
-            })
-            ->orderBy('last_allocated');
-
-        return $query->get();
-    }
-
     public function shouldProceed(): bool
     {
         $start_time = Carbon::createFromFormat('H:i', $this->getAppStorageValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));

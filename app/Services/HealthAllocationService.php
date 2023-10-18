@@ -45,6 +45,14 @@ class HealthAllocationService extends AllocationService
             ->whereIn('quote_status_id', [QuoteStatusEnum::Quoted]);
         if ($advisorId != 0) {
             $leads->where('advisor_id', $advisorId);
+        } else {
+            // If advisor ID is not provided, get unavailable advisors and filter leads by them
+            $advisors = $this->getUnavailableAdvisor();
+            if (count($advisors) > 0) {
+                $advisorIds = $advisors->pluck('user_id');
+                info('Inside reassignment general run');
+                $leads->whereIn('advisor_id', $advisorIds);
+            }
         }
 
         return $leads->get();

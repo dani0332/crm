@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
@@ -266,6 +267,23 @@ class AllocationService
         $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
 
         return ['auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0, 'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0];
+    }
+
+    public function getUnavailableAdvisor()
+    {
+        // Query to fetch unavailable advisors
+        $query = LeadAllocation::with('leadAllocationUser')
+            ->whereHas('leadAllocationUser', function ($query) {
+                $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
+            })
+            ->where(function ($query) {
+                // Filter by allocation count and max capacity
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->orderBy('last_allocated');
+
+        return $query->get();
     }
 
 }
