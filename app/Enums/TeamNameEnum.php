@@ -11,4 +11,7 @@ final class TeamNameEnum extends Enum
     public const CAR = 'Car';
     public const ORGANIC = 'Organic';
     public const PCP = 'PCP';
+    public const EBP = 'EBP';
+    public const RM_NB = 'RM-NB';
+    public const RM_SPEED = 'RM-SPEED';
 }
