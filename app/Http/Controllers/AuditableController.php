@@ -53,7 +53,7 @@ class AuditableController extends Controller
         if ($request->auditableType == CarQuote::class) {
             $uuid = CarQuote::where('id', $request->auditableId)->value('uuid');
 
-            return InsurerRequestResponse::with('carQuotePlanDetails')
+            return InsurerRequestResponse::with('insuranceProvider')
                 ->select('*')
                 ->where('insurer_request_response.quote_uuid', $uuid)
                 ->orderByDesc('insurer_request_response.created_at')
