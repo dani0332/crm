@@ -31,7 +31,6 @@ class SendOCBIntroEmailJob implements ShouldQueue
     {
         $this->quoteUuid = $quoteUuid;
         $this->previousAdvisorId = $previousAdvisorId;
-        $this->onQueue('lms');
     }
 
     /**
