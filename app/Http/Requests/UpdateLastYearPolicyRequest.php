@@ -22,9 +22,9 @@ class UpdateLastYearPolicyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'modelType' => 'required',
-            'quoteId' => 'required',
-            'renewalBatch' => 'required',
+            'model_type' => 'required',
+            'quote_id' => 'required',
+            'renewal_batch' => 'required',
         ];
     }
 }

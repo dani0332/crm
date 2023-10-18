@@ -27,7 +27,7 @@ const { isRequired } = useRules();
 const policyForm = useForm({
   model: props.model,
   renewal_batch: props?.quote?.renewal_batch || null,
-  modelType: props?.modelType,
+  model_type: props?.modelType,
   quote_id: props?.quote.id,
 });
 
@@ -35,9 +35,9 @@ function onSubmit(isValid) {
   if (isValid) {
     policyForm
       .transform(data => ({
-        renewalBatch: data.renewal_batch,
-        modelType: data.modelType,
-        quoteId: data.quote_id,
+        renewal_batch: data.renewal_batch,
+        model_type: data.model_type,
+        quote_id: data.quote_id,
         isInertia: true,
       }))
       .post(`/quotes/update-last-year-policy`, {

@@ -22,7 +22,7 @@ use Maatwebsite\Excel\Facades\Excel;
 class CentralController extends Controller
 {
     use GenericQueriesAllLobs;
-    
+
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -99,19 +99,24 @@ class CentralController extends Controller
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
     }
 
+    /**
+     * @param UpdateLastYearPolicyRequest $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
         $validatedRequest = $request->validated();
 
-        $quoteModel = $this->getQuoteObject($validatedRequest['modelType'], $validatedRequest['quoteId']);
+        $quoteModel = $this->getQuoteObject($validatedRequest['model_type'], $validatedRequest['quote_id']);
 
         if (! $quoteModel) {
-            return redirect()->back()->with('success', 'Error Updating Policy Details.');
+            return redirect()->back()->with('error', 'Error Updating Policy Details.');
         }
+
         $quoteModel->update([
-            'renewal_batch' => $request->renewalBatch,
+            'renewal_batch' => $request->renewal_batch,
         ]);
 
-        return redirect()->back()->with('success', 'Last Yeat Policy Detail has been updated.');
+        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
 }
