@@ -946,9 +946,7 @@ class CRUDController extends Controller
         } else {
             if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
-                if (Auth::user()->hasRole(RolesEnum::CarManager) && ! $request->isDisbaled) {
-                    $validateArray['renewal_batch'] = 'required';
-                }
+
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
                 $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
