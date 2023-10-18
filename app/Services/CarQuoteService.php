@@ -12,7 +12,6 @@ use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
 use App\Jobs\IntroEmailJob;
 use App\Models\ApplicationStorage;
-use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Payment;
