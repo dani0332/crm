@@ -5,11 +5,13 @@ namespace App\Services;
 use App\Enums\AssignmentTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceTypes;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Jobs\CammyJob;
+use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -34,6 +36,7 @@ use DB;
 use Hidehalo\Nanoid\Client;
 use Illuminate\Http\Request;
 use PDF;
+use Sammyjo20\LaravelHaystack\Models\Haystack;
 
 class HealthQuoteService extends BaseService
 {
@@ -1098,10 +1101,15 @@ class HealthQuoteService extends BaseService
 
             $lead->save();
 
-            if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
-                IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
-            }
+            Haystack::build()
+            ->addJob(new GetQuotePlansJob($lead))
+            ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
+                if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
+                    $trigger = $isReassignment ? 'reassign' : 'intro';
+                    CammyJob::dispatch($lead, $trigger, $previousAdvisorId)->delay(now()->addSeconds(15));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                }
+            })->dispatch();
         }
 
         return [];
@@ -1524,7 +1532,7 @@ class HealthQuoteService extends BaseService
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
             CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
-            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+            IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
         }
     }
 

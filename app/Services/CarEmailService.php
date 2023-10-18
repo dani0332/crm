@@ -31,7 +31,6 @@ class CarEmailService extends BaseService
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
 
-        info('Inside car check for sending email');
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
 
         return $responseCode;

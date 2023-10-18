@@ -117,6 +117,7 @@ class HealthAllocationService extends AllocationService
     {
         $previousAssignmentType = $lead->assignment_type;
         $previousUserId = $lead->advisor_id;
+        $isReassignment = $previousUserId != null;
         $lead->advisor_id = $advisor->id;
         $lead->assignment_type = $assignmentType;
         $lead->save();
@@ -131,11 +132,11 @@ class HealthAllocationService extends AllocationService
 
         Haystack::build()
             ->addJob(new GetQuotePlansJob($lead))
-            ->then(function () use ($lead) {
+            ->then(function ($isReassignment, $previousUserId) use ($lead) {
                 if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                     && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
                     CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousUserId, $isReassignment)->delay(now()->addSeconds(15));
                 }
             })->dispatch();
     }

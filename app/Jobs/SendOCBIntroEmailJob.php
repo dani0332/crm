@@ -22,8 +22,8 @@ class SendOCBIntroEmailJob implements ShouldQueue
     public $tries = 3;
     public $timeout = 15;
     public $backoff = 300;
-    public $quoteUuid;
-    public $previousAdvisorId;
+    private $quoteUuid;
+    private $previousAdvisorId;
     /**
      * Create a new job instance.
      */
@@ -42,14 +42,11 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
 
-            if (! $lead) {
-                Log::info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
+            if (!$lead) {
+                info('SendOCBIntroEmailJob - Lead not found for uuid: ' . $this->quoteUuid);
 
                 return;
             } else {
-                // Initialize email data and retrieve Tier R information
-                $emailData = '';
-
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
                 // Retrieve plans with available ratings for the given lead
@@ -58,14 +55,13 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisorId);
 
                 if (in_array($responseCode, [200, 201])) {
-                    info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
+                    info('SendOCBIntroEmailJob - OCB INTRO Email Sent: ' . $responseCode . ' Customer Email Address: ' . $lead->email . ' Quote UuId: ' . $this->quoteUuid);
                 } else {
-                    Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
+                    Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: ' . $responseCode . ' Customer EmailAddress:' . $lead->email);
                 }
             }
-
         } catch (Exception $e) {
-            Log::info('SendOCBIntroEmailJob - Error: '.$e->getMessage());
+            info('SendOCBIntroEmailJob - Error: ' . $e->getMessage() . ' with stack trace: ' . $e->getTraceAsString());
         }
     }
 }

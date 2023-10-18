@@ -423,11 +423,13 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendRMIntroEmail($quoteUuid)
+    public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
     {
         $dataArr = [
             'quoteUID' => $quoteUuid,
             'resend' => false,
+            'isReassigned' => $isReassignment,
+            'previousAdvisorId' => $previousAdvisorId,
         ];
         $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
         if ($response && isset($response->status)) {
