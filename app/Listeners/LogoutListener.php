@@ -24,6 +24,7 @@ class LogoutListener
      */
     public function handle(Logout $event)
     {
-        info("User with ID: {$event->user->id} and email : {$event->user->email } logged out.");
+        // Causing Sentry Error, disabling for now
+        // info("User with ID: {$event->user->id} and email : {$event->user->email } logged out.");
     }
 }
