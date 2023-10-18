@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\InslyDetail;
@@ -253,6 +254,7 @@ class InslyDetailRepository extends BaseRepository
         }
         $dataArr['premium'] = $premium;
         $dataArr['source'] = LeadSourceEnum::INSLY;
+        $dataArr['quote_status_id'] = QuoteStatusEnum::NewLead;
         if (in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht, quoteTypeCode::Jetski])) {
             $dataArr['quote_type_id'] = $quoteTypeData->id;
             $dataArr['is_ecommerce'] = false;
