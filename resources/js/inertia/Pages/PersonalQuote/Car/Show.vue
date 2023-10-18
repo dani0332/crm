@@ -42,7 +42,6 @@ defineProps({
 	can: Object,
 	paymentMethods: Array,
 	sendPolicy: Boolean,
-	//
 	isPlanUpdateActive: Boolean,
 	yearsOfManufacture: Array,
 	access: Object,
@@ -72,7 +71,8 @@ defineProps({
 	carLostChangeStatus: Boolean,
 	isTierRAssigned: Boolean,
 	tiersExceptTierR: Array,
-	leadSourceEnum: Array
+	leadSourceEnum: Array,
+    carPlanTypeEnum: Object
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -187,8 +187,15 @@ const paymentDetailsTable = reactive({
   ],
 });
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+const halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 const selectedPlans = ref([]);
 const selectedPlan = ref({});
+
+function repairTypeCheck(repairType) {
+    return (repairType.repairType === page.props.carPlanTypeEnum.COMP) ?
+        (coreInsurer.includes(repairType.providerCode) ? 'Premium workshop' :
+            halfLiveInsurer.includes(repairType.providerCode) ? 'Non-Agency workshop' : 'NON-AGENCY') : repairType.repairType;
+};
 
 const availablePlansTable = reactive({
 	columns: [
@@ -1117,15 +1124,15 @@ const getFollowUpsByQuote = () => {
 		axios
 			.get(`${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`)
 			.then(response => {
-        
+
 			let { status, emails, actions, id } = response.data.data;
 
       if(id) {
           hideFollowUp.value = false;
 
-          if (status == 'PENDING' || status == 'IN_PROGRESS')  {        
+          if (status == 'PENDING' || status == 'IN_PROGRESS')  {
             disableFollowUp.value = false;
-          }				
+          }
           else disableFollowUp.value = true;
 
           followUpstatus.value = status;
@@ -1136,13 +1143,13 @@ const getFollowUpsByQuote = () => {
         else
         {
           hideFollowUp.value = true;
-        }			
+        }
 			})
 			.catch(error => {
         hideFollowUp.value = true;
 			});
 	} catch (error) {
-		hideFollowUp.value = true;    
+		hideFollowUp.value = true;
 	}
 };
 
@@ -1155,7 +1162,7 @@ onMounted(() => {
   if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
     getFollowUpsByQuote();
   }
-	
+
 	// setLeadStatuses();
 });
 
@@ -1534,7 +1541,7 @@ const loadEmailEvents = (email) => {
       :quote="record"
 		modelType="Car"
 		v-if="record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
-        record.source == page.props.leadSourceEnum.INSLY"	  
+        record.source == page.props.leadSourceEnum.INSLY"
       />
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -1674,7 +1681,7 @@ const loadEmailEvents = (email) => {
 									v-model="leadStatusForm.lost_notes"
 									:disabled="!allowQuoteLogAction"
 									placeholder="Notes"
-									class="w-full"									
+									class="w-full"
 								/>
 							</x-field>
 							<x-field required label="Car Sold / Uncontactable Proof">
@@ -1687,8 +1694,8 @@ const loadEmailEvents = (email) => {
 									:rules="[isRequired]"
 								/>
 							</x-field>
-						</template>						
-					</div>					
+						</template>
+					</div>
 				</div>
 			</div>
 
@@ -1738,7 +1745,7 @@ const loadEmailEvents = (email) => {
 			:quote="record"
 		/> -->
 
-		<PaymentTable 
+		<PaymentTable
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -1968,6 +1975,9 @@ const loadEmailEvents = (email) => {
 				<template #item-name="item">
 					<span class="text-primary-600 cursor-pointer" @click.prevent="selectPlan(item)">{{ item.name }}</span>
 				</template>
+                <template #item-repairType="repairType">
+                    <span>{{ repairTypeCheck(repairType) }}</span>
+                </template>
 				<template #item-benefits="{ benefits }">
 					<!-- <span>{{ benefits.feature }}</span> -->
 					<template v-for="feature in benefits.feature" :key="feature">
@@ -2129,7 +2139,7 @@ const loadEmailEvents = (email) => {
         />
       </x-modal>
     </div>
-    
+
     <div
       class="p-4 rounded shadow mb-6 bg-white"
       v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
@@ -2194,7 +2204,7 @@ const loadEmailEvents = (email) => {
       </DataTable>
 
     </div>
-    
+
 		<EmbeddedProducts
       	:data="embeddedProducts"
       	:link="record.uuid"
