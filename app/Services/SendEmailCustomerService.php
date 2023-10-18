@@ -430,7 +430,7 @@ class SendEmailCustomerService extends BaseService
             'resend' => false,
         ];
         if ($isReassignment) {
-            $dataArr['reassignment'] = true;
+            $dataArr['isReassigned'] = true;
             $dataArr['previousAdvisorId'] = $previousAdvisorId;
         }
         info('Params for intro email are : '.json_encode($dataArr));
