@@ -208,7 +208,7 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
+            // $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         // Getting the data for grid based on the model type
@@ -299,7 +299,7 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
+            // $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $customTitles = $dropdownSource = [];
@@ -470,7 +470,7 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getRenewalAdvisorsByModelType($this->genericModel->modelType);
         } elseif (Auth::user()->isNewBusinessManager() || Auth::user()->isNewBusinessAdvisor()) {
             $isNewBusinessUser = true;
-            $this->crudService->fillNewBusinessData($this->genericModel);
+            // $this->crudService->fillNewBusinessData($this->genericModel);
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
