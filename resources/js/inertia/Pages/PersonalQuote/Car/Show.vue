@@ -42,7 +42,6 @@ defineProps({
 	can: Object,
 	paymentMethods: Array,
 	sendPolicy: Boolean,
-	//
 	isPlanUpdateActive: Boolean,
 	yearsOfManufacture: Array,
 	access: Object,
@@ -71,7 +70,9 @@ defineProps({
 	kyoEndPoint: String,
 	carLostChangeStatus: Boolean,
 	isTierRAssigned: Boolean,
-	tiersExceptTierR: Array
+	tiersExceptTierR: Array,
+	leadSourceEnum: Array,
+    carPlanTypeEnum: Object
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -186,8 +187,15 @@ const paymentDetailsTable = reactive({
   ],
 });
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+const halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 const selectedPlans = ref([]);
 const selectedPlan = ref({});
+
+function repairTypeCheck(repairType) {
+    return (repairType.repairType === page.props.carPlanTypeEnum.COMP) ?
+        (coreInsurer.includes(repairType.providerCode) ? 'Premium workshop' :
+            halfLiveInsurer.includes(repairType.providerCode) ? 'Non-Agency workshop' : 'NON-AGENCY') : repairType.repairType;
+};
 
 const availablePlansTable = reactive({
 	columns: [
@@ -1116,15 +1124,15 @@ const getFollowUpsByQuote = () => {
 		axios
 			.get(`${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`)
 			.then(response => {
-        
+
 			let { status, emails, actions, id } = response.data.data;
 
       if(id) {
           hideFollowUp.value = false;
 
-          if (status == 'PENDING' || status == 'IN_PROGRESS')  {        
+          if (status == 'PENDING' || status == 'IN_PROGRESS')  {
             disableFollowUp.value = false;
-          }				
+          }
           else disableFollowUp.value = true;
 
           followUpstatus.value = status;
@@ -1135,13 +1143,13 @@ const getFollowUpsByQuote = () => {
         else
         {
           hideFollowUp.value = true;
-        }			
+        }
 			})
 			.catch(error => {
         hideFollowUp.value = true;
 			});
 	} catch (error) {
-		hideFollowUp.value = true;    
+		hideFollowUp.value = true;
 	}
 };
 
@@ -1154,7 +1162,7 @@ onMounted(() => {
   if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
     getFollowUpsByQuote();
   }
-	
+
 	// setLeadStatuses();
 });
 
@@ -1527,56 +1535,14 @@ const loadEmailEvents = (email) => {
 				</div>
 			</x-form>
 		</x-modal>
-		<div class="p-4 rounded shadow mb-6 bg-white">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="font-semibold text-primary-800 text-lg">
-					Last Year's Policy Details
-				</h3>
-			</div>
-			<x-divider class="mb-4 mt-1" />
-			<div class="text-sm">
-				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Renewal Batch#</dt>
-						<dd>{{ record.renewal_batch }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Number</dt>
-						<dd>{{ record.previous_quote_policy_number ?? '' }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Expiry Date</dt>
-						<dd>{{ record.previous_policy_expiry_date ?? '' }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Price</dt>
-						<dd>{{ record.previous_quote_policy_premium ?? '' }}</dd>
-					</div>
-					<template v-if="hasRole(rolesEnum.Admin)">
-						<div class="grid sm:grid-cols-2">
-							<dt class="font-medium">Previous Import Code</dt>
-							<dd>{{ record.renewal_import_code }}</dd>
-						</div>
-						<div class="grid sm:grid-cols-2">
-							<dt class="font-medium"></dt>
-							<dd></dd>
-						</div>
-					</template>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Policy Number</dt>
-						<dd>{{ record.policy_number }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Renewal Expiry Date</dt>
-						<dd>{{ record.renewal_expiry_date }}</dd>
-					</div>
-					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Lost reason</dt>
-						<dd>{{ record.lost_reason }}</dd>
-					</div>
-				</dl>
-			</div>
-		</div>
+
+		<LastYearPolicyDetail
+		:canAddBatchNumber="hasRole(rolesEnum.CarManager)"
+      :quote="record"
+		modelType="Car"
+		v-if="record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
+        record.source == page.props.leadSourceEnum.INSLY"
+      />
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
@@ -1715,7 +1681,7 @@ const loadEmailEvents = (email) => {
 									v-model="leadStatusForm.lost_notes"
 									:disabled="!allowQuoteLogAction"
 									placeholder="Notes"
-									class="w-full"									
+									class="w-full"
 								/>
 							</x-field>
 							<x-field required label="Car Sold / Uncontactable Proof">
@@ -1728,8 +1694,8 @@ const loadEmailEvents = (email) => {
 									:rules="[isRequired]"
 								/>
 							</x-field>
-						</template>						
-					</div>					
+						</template>
+					</div>
 				</div>
 			</div>
 
@@ -1779,7 +1745,7 @@ const loadEmailEvents = (email) => {
 			:quote="record"
 		/> -->
 
-		<PaymentTable 
+		<PaymentTable
 			:payments="payments"
 			:quoteRequest="paymentEntityModel"
 			:paymentStatusEnum="paymentStatusEnum"
@@ -2009,6 +1975,9 @@ const loadEmailEvents = (email) => {
 				<template #item-name="item">
 					<span class="text-primary-600 cursor-pointer" @click.prevent="selectPlan(item)">{{ item.name }}</span>
 				</template>
+                <template #item-repairType="repairType">
+                    <span>{{ repairTypeCheck(repairType) }}</span>
+                </template>
 				<template #item-benefits="{ benefits }">
 					<!-- <span>{{ benefits.feature }}</span> -->
 					<template v-for="feature in benefits.feature" :key="feature">
@@ -2170,7 +2139,7 @@ const loadEmailEvents = (email) => {
         />
       </x-modal>
     </div>
-    
+
     <div
       class="p-4 rounded shadow mb-6 bg-white"
       v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
@@ -2235,7 +2204,7 @@ const loadEmailEvents = (email) => {
       </DataTable>
 
     </div>
-    
+
 		<EmbeddedProducts
       	:data="embeddedProducts"
       	:link="record.uuid"
