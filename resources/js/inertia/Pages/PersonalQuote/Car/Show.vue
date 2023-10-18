@@ -1530,9 +1530,9 @@ const loadEmailEvents = (email) => {
 		</x-modal>
 
 		<LastYearPolicyDetail
-		:canAddBatchNumber="true"
+		:canAddBatchNumber="hasRole(rolesEnum.CarManager)"
       :quote="record"
-	  
+		modelType="Car"
 		v-if="record.source == page.props.leadSourceEnum.RENEWAL_UPLOAD ||
         record.source == page.props.leadSourceEnum.INSLY"	  
       />

@@ -36,7 +36,7 @@ function onSubmit(isValid) {
     policyForm
       .transform(data => ({
         renewalBatch: data.renewal_batch,
-        modelType: "Car",
+        modelType: data.modelType,
         quoteId: data.quote_id,
         isInertia: true,
       }))
