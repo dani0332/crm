@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 class FollowupController extends Controller
 {
-    function getEmailEvents(EmailEventsRequest $request)
+    public function getEmailEvents(EmailEventsRequest $request)
     {
         $response = DynamoDb::table('kazuya-email-content-stage')
             ->setKeyConditionExpression('#recipientEmail = :recipientEmail')
@@ -23,11 +23,12 @@ class FollowupController extends Controller
 
         $events = [];
 
-        if($response->get('Items'))
-        {
-            foreach ($response->get('Items') as $item)
-            {
-                $events[] = ['type' => $item['messageSubType']['S'], 'event_date' => Carbon::createFromTimestamp(substr($item['eventOccurredAt']['N'], 0, 10))->format('d-M-Y H:i:s')];
+        if ($response->get('Items')) {
+            foreach ($response->get('Items') as $item) {
+                $events[] = [
+                    'type' => $item['messageType']['S'],
+                    'sub_type' => $item['messageSubType']['S'],
+                    'event_date' => Carbon::createFromTimestamp(substr($item['eventOccurredAt']['N'], 0, 10))->format('d-M-Y H:i:s')];
             }
         }
 

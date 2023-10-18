@@ -1,9 +1,9 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import PaymentTable from './../../../Components/PaymentTable.vue';
-import LazyAvailablePlan from './../Partials/AvailablePlans.vue';
+import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import QuoteStatus from './../Partials/QuoteStatus.vue';
+import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 
 defineProps({
@@ -69,17 +69,21 @@ defineProps({
 	lostRejectReasons: Array,
 	leadDocsStoragePath: String,
 	kyoEndPoint: String,
-	paymentTooltipEnum: Object,	
+	carLostChangeStatus: Boolean,
+	isTierRAssigned: Boolean,
+	tiersExceptTierR: Array,
+	paymentTooltipEnum: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
 
-//console.log("hafeez"+JSON.stringify(page.props.documentTypes.find(item => item.code === "CPD")));
-
 const permissionEnum = page.props.permissionsEnum;
 const rolesEnum = page.props.rolesEnum;
 
+const dateFormat = date => {
+  return useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value;
+};
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
@@ -91,7 +95,6 @@ const isCarLostStatus = (statusId) => {
 const prepareDate = (date) => {
 	return date.split(' ')[0].split('-').reverse().join('-') + 'T' + date.split(' ')[1];
 }
-
 const leadStatusForm = useForm({
 	modelType: 'Car',
 	leadId: page.props.record.id,
@@ -103,16 +106,14 @@ const leadStatusForm = useForm({
 	lostReason: page.props.record.lost_reason_id || null,
 	next_followup_date: page.props.record.next_followup_date ? prepareDate(page.props.record.next_followup_date) : null,
 	tier_id : page.props.record.tier_id || null,
-	lost_approval_status: '',
-	approve_reason_id: '',
-	reject_reason_id: '',
+	lost_approval_status: page.props.paymentEntityModel.car_lost_quote_log?.status != '' ? page.props.paymentEntityModel.car_lost_quote_log?.status : '',
+	approve_reason_id: page.props.paymentEntityModel.car_lost_quote_log?.reason_id || page.props.lostApproveReasons[0]?.id,
+	reject_reason_id: page.props.paymentEntityModel.car_lost_quote_log?.reason_id || page.props.lostRejectReasons[0]?.id,
 	lost_notes: page.props.paymentEntityModel.car_lost_quote_log?.notes || '',
 	mo_proof_document: null,
 	proof_document: null,
 	car_lost_quote_log_id: page.props.paymentEntityModel.car_lost_quote_log?.id || 0
 });
-
-
 
 const leadApprovalStatusOptions = computed(() => {
 	let arr = [];
@@ -123,6 +124,7 @@ const leadApprovalStatusOptions = computed(() => {
 	arr.push({ value: page.props.genericRequestEnum.APPROVED, label: page.props.genericRequestEnum.APPROVED })
 	arr.push({ value: page.props.genericRequestEnum.REJECTED, label: page.props.genericRequestEnum.REJECTED })
 
+	// arr.unshift({ value: '', label: 'Select Status' });
 	return arr;
 });
 
@@ -133,7 +135,7 @@ const carLostQuoteLogsTable = reactive({
 		{ text: 'Notes', value: 'notes' },
 		{ text: 'Lead Status', value: 'quote_status.text' },
 		{ text: 'Approval Status', value: 'status' },
-		{ text: 'Documents', value: 'documents' },		
+		{ text: 'Documents', value: 'documents' },
 	]
 })
 
@@ -177,7 +179,7 @@ const paymentDetailsTable = reactive({
       text: 'Reference',
       value: 'reference',
     },
-    
+
     {
       text: 'Action',
       value: 'action',
@@ -199,9 +201,9 @@ const availablePlansTable = reactive({
 		{ text: 'PAB cover', value: 'addons' },
 		{ text: 'Roadside assistance', value: 'roadSideAssistance' },
 		{ text: 'Oman cover TPL', value: 'omanCoverTPL' },
-		{ text: 'Actual Premium', value: 'actualPremium' },
-		{ text: 'Discounted Premium', value: 'discountPremium' },
-		{ text: 'Premium with VAT.', value: 'premiumWithVat' },
+		{ text: 'Actual Price', value: 'actualPremium' },
+		{ text: 'Discounted Price', value: 'discountPremium' },
+		{ text: 'Price with VAT.', value: 'premiumWithVat' },
 		{ text: 'Excess', value: 'excess' },
 		{ text: 'Action', value: 'action' },
 	]
@@ -276,19 +278,9 @@ const emailStatusTable = reactive({
 	]
 })
 
-const customerAdditionalContactsTable = reactive({
-	columns: [
-		{ text: 'Type', value: 'key' },
-		{ text: 'Value', value: 'value' },
-		{ text: 'Created At', value: 'created_at' },
-		{text: 'Action', value: 'action' },
-	]
-})
-
 // history data
 const historyData = ref(null);
 const historyLoading = ref(false);
-
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
@@ -324,7 +316,7 @@ const totalPriceVAT = computed(() => {
 					vat += parseInt(option.price) + option.vat;
 				}
 			})
-		})		
+		})
 	})
 	return vat;
 })
@@ -356,26 +348,29 @@ const leadStatusOptions = computed(() => {
 	const renewal_upload = page.props.leadSourceEnum.RENEWAL_UPLOAD;
 	const statuses = Array.isArray(page.props.leadStatuses) ? page.props.leadStatuses : Object.values(page.props.leadStatuses);
 	const filteredLeadStatuses = statuses?.filter(status => {
-	  
+
 	if ((!isLeadPool && [9, 35].includes(status.id)) || (!isPA && status.id === 15) || ((renewal_batch === '' || previous_quote_policy_number === '' || source != renewal_upload) && status.id === 17)) {
 		return false;
 	}
 	// if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
-	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true; 
+	// else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
     return true;
   });
 
-  return filteredLeadStatuses.map(status => ({
+  let options = filteredLeadStatuses.map(status => ({
     value: status.id,
     label: status.text,
   }));
+
+  options.unshift({ value: '', label: 'Select Status' });
+  return options;
 });
 
 const leadStatusDisabled = computed(() => {
 	return (
 		page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
-		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || 
-		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake && 
+		(page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate ||
+		page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake &&
 		(!hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin]))) ||
 		(!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
 	);
@@ -462,6 +457,7 @@ const modals = reactive({
   contactDeleteConfirm:false,
   activity:false,
   activityConfirm:false,
+  changeInsurer: false,
   notes:false,
   plan: false,
   docConfirm: false,
@@ -739,10 +735,46 @@ const activityDeleteConfirmed = () => {
   );
 };
 
+const changeInsurerForm = useForm({
+	uuid: '',
+	plan_id: '',
+	provider_code: ''
+});
+
+const confirmChangeInsurer = (plan) => {
+	modals.changeInsurer = true;
+	changeInsurerForm.uuid = page.props.record.uuid;
+	changeInsurerForm.plan_id = plan.id;
+	changeInsurerForm.provider_code = plan.providerCode;
+}
+
+const onConfirmChangeInsurer = () => {
+	changeInsurerForm.post('change-insurer', {
+		preseveScroll: true,
+		preserveState: true,
+		onSuccess: () => {
+			notification.success({
+				title: 'Insurer Changed successfully',
+				position: 'top',
+			});
+		},
+		onError: (err) => {
+			notification.error({
+				title: 'Something went wrong',
+				position: 'top',
+			});
+			conslo.log(err);
+		},
+		onFinish: () => {
+			modals.changeInsurer = false;
+		},
+	})
+}
+
 const notesForm = useForm({
 
 	quote_id: page.props.record.id,
-	quote_type_id:page.props.quoteTypeId,	
+	quote_type_id:page.props.quoteTypeId,
 	quote_uuid: page.props.record.uuid,
 	customer_name: page.props.record.first_name,
 	customer_email: page.props.record.email,
@@ -750,7 +782,7 @@ const notesForm = useForm({
 	description:null,
 });
 
-const addNotes = () => {
+const addNotes = () => {quotes/car/change-insurer
   notesForm.reset();
   modals.notes = true;
 };
@@ -932,7 +964,7 @@ const onLeadStatus = () => {
   );
 };
 const toggleLoader = ref(false);
- 
+
 const onTogglePlans = toggle => {
   toggleLoader.value = true;
 
@@ -1085,21 +1117,33 @@ const getFollowUpsByQuote = () => {
 		axios
 			.get(`${page.props.kyoEndPoint}/followups/car/${page.props.record.uuid}`)
 			.then(response => {
+        
 			let { status, emails, actions, id } = response.data.data;
-			if (status == 'PENDING' || status == 'IN_PROGRESS')
-				disableFollowUp.value = false;
-			else disableFollowUp.value = true;
-			followUpstatus.value = status;
-			followUpEmails.value = emails;
-			followUpActions.value = actions;
-			followUpId.value = id;
+
+      if(id) {
+          hideFollowUp.value = false;
+
+          if (status == 'PENDING' || status == 'IN_PROGRESS')  {        
+            disableFollowUp.value = false;
+          }				
+          else disableFollowUp.value = true;
+
+          followUpstatus.value = status;
+          followUpEmails.value = emails;
+          followUpActions.value = actions;
+          followUpId.value = id;
+        }
+        else
+        {
+          hideFollowUp.value = true;
+        }			
 			})
 			.catch(error => {
-				hideFollowUp.value = false;
+        hideFollowUp.value = true;
 			});
 	} catch (error) {
-		hideFollowUp.value = false;
-	}  
+		hideFollowUp.value = true;    
+	}
 };
 
 const closeModal = v => {
@@ -1107,7 +1151,11 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 onMounted(() => {
-	getFollowUpsByQuote()
+
+  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
+    getFollowUpsByQuote();
+  }
+	
 	// setLeadStatuses();
 });
 
@@ -1115,7 +1163,8 @@ onMounted(() => {
 
 //activities
 const emailEventsTable = [
-  { text: 'Event Type', value: 'type' },
+  { text: 'Type', value: 'type' },
+  { text: 'Sub Type', value: 'sub_type' },
   { text: 'DateTime', value: 'event_date' }
 ];
 
@@ -1138,7 +1187,7 @@ const loadEmailEvents = (email) => {
           if(response.data.length) {
             modals.showEmailEventsModal = true;
 	  		    emailEvents.value = response.data;
-          } 
+          }
           else
           {
             notification.success({
@@ -1146,7 +1195,7 @@ const loadEmailEvents = (email) => {
               position: 'top',
             });
           }
-          
+
 	  		})
 	  		.catch(error => {
           loadingEmailEvents.value = false;
@@ -1157,7 +1206,6 @@ const loadEmailEvents = (email) => {
 	  			modals.showEmailEventsModal = false;
       });
 }
-
 </script>
 
 <template>
@@ -1168,11 +1216,17 @@ const loadEmailEvents = (email) => {
 		</div>
 		<x-divider class="my-4" />
 
+		<AssignTier
+			v-if="!can(permissionEnum.ApprovePayments) && hasRole(rolesEnum.LeadPool) && isTierRAssigned"
+			:quote="record"
+			:tiers="tiersExceptTierR"
+		/>
+
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="text-sm">
 				<dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">PREMIUM</dt>
+						<dt class="font-medium">PRICE</dt>
 						<dd>{{ record.premium ?? '' }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
@@ -1353,7 +1407,7 @@ const loadEmailEvents = (email) => {
 					</div>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">EMIRATE OF REGISTRATION</dt>
-						<dd>{{ record.dob }}</dd>
+						<dd>{{ record.emirate_of_registration_id_text }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">TYPE OF CAR INSURANCE</dt>
@@ -1496,7 +1550,7 @@ const loadEmailEvents = (email) => {
 						<dd>{{ record.previous_policy_expiry_date ?? '' }}</dd>
 					</div>
 					<div class="grid sm:grid-cols-2">
-						<dt class="font-medium">Previous Policy Premium</dt>
+						<dt class="font-medium">Previous Policy Price</dt>
 						<dd>{{ record.previous_quote_policy_premium ?? '' }}</dd>
 					</div>
 					<template v-if="hasRole(rolesEnum.Admin)">
@@ -1508,7 +1562,7 @@ const loadEmailEvents = (email) => {
 							<dt class="font-medium"></dt>
 							<dd></dd>
 						</div>
-					</template>					
+					</template>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">Policy Number</dt>
 						<dd>{{ record.policy_number }}</dd>
@@ -1533,8 +1587,6 @@ const loadEmailEvents = (email) => {
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
 				<div class="w-full md:w-50">
 					<div class="flex flex-col gap-4">
-						
-						<!-- HAFEEZ TEMPORARY 
 						<x-select
 							v-model="leadStatusForm.leadStatus"
 							label="Status"
@@ -1543,11 +1595,9 @@ const loadEmailEvents = (email) => {
 							placeholder="Lead Status"
 							class="w-full"
 						/>
-						-->
-						
 						<x-field label="TransApp Code" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved">
-							<x-input								
-								v-model="leadStatusForm.trans_code"								
+							<x-input
+								v-model="leadStatusForm.trans_code"
 								placeholder="TransApp Code is required"
 								class="w-full"
 								:rules="[rules.isRequired]"
@@ -1555,7 +1605,7 @@ const loadEmailEvents = (email) => {
 							/>
 						</x-field>
 						<x-field label="Lost Reason" required v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost">
-							<x-select							
+							<x-select
 								v-model="leadStatusForm.lostReason"
 								:options="lostReasons?.map(item => ({
 									value: item.id,
@@ -1567,13 +1617,13 @@ const loadEmailEvents = (email) => {
 							/>
 						</x-field>
 						<x-field label="Followup Date" v-if="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-							<DatePicker								
+							<DatePicker
 								v-model="leadStatusForm.next_followup_date"
 								withTime
 								:rules="[isRequired]"
-								placeholder="Please select follow-up date & time" 
+								placeholder="Please select follow-up date & time"
 								:error="leadStatusForm.errors.next_followup_date"
-								class="w-full" 
+								class="w-full"
 							/>
 							<!-- <x-input
 								v-model="leadStatusForm.next_followup_date"
@@ -1588,7 +1638,6 @@ const loadEmailEvents = (email) => {
 							v-if="leadStatusForm.leadStatus == quoteStatusEnum.IMRenewal"
 							v-model="leadStatusForm.tier_id"
 							label="Tier"
-
 							:options="[
 							{ value: null, label: 'Select Tier' },
 								...tiers?.map(item => ({
@@ -1599,26 +1648,31 @@ const loadEmailEvents = (email) => {
 							placeholder="Please Select Tier"
 							class="w-full"
 							:error="leadStatusForm.errors.tier_id"
+						/>
+						<x-field label="Notes" :required="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
+							<x-textarea
+								v-model="leadStatusForm.notes"
+								type="text"
+								placeholder="Lead Notes"
+								class="w-full"
+								:rules="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer ? [isRequired] : []"
+								:error="leadStatusForm.errors.notes"
+								:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
 							/>
+						</x-field>
+						<x-field label="Car Sold / Uncontactable Proof" v-if="leadStatusForm.leadStatus == quoteStatusEnum.CarSold || leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable">
+							<input
+								@input="leadStatusForm.proof_document = $event.target.files[0]"
+								type="file"
+								:disabled="isCarLostStatus(record.quote_status_id) && !carLostChangeStatus"
+								placeholder="Car Sold / Uncontactable Proof"
+								class="form-control w-full"
+							/>
+						</x-field>
 					</div>
 				</div>
-				<div class="w-full md:w-50">
-					<x-field label="Notes" :required="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer">
-						<x-textarea
-							v-model="leadStatusForm.notes"
-							type="text"
-							placeholder="Lead Notes"
-							class="w-full"
-							:rules="leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall || leadStatusForm.leadStatus == quoteStatusEnum.Interested || leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer ? [isRequired] : []"
-							:error="leadStatusForm.errors.notes"
-							:disabled="record.quote_status_id == quoteStatusEnum.TransactionApproved || isCarLostStatus(record.quote_status_id)"
-						/>
-					</x-field>					
-				</div>
-			</div>
-			<template v-if="isCarLostStatus(record.quote_status_id)">
-				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
-					<div class="w-full md:w-50">
+				<div class="w-full md:w-50" v-if="isCarLostStatus(record.quote_status_id)">
+					<div class="flex flex-col gap-4">
 						<x-field required label="Approval Status">
 							<x-select
 								v-model="leadStatusForm.lost_approval_status"
@@ -1629,8 +1683,7 @@ const loadEmailEvents = (email) => {
 								:rules="[isRequired]"
 							/>
 						</x-field>
-					</div>
-					<div class="w-full md:w-50">
+
 						<x-field required label="Approval Reasons" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.APPROVED">
 							<x-select
 								v-model="leadStatusForm.approve_reason_id"
@@ -1657,50 +1710,32 @@ const loadEmailEvents = (email) => {
 								:rules="[isRequired]"
 							/>
 						</x-field>
-					</div>
+						<template v-if="[genericRequestEnum.APPROVED, genericRequestEnum.REJECTED].includes(leadStatusForm.lost_approval_status)">
+							<x-field label="Notes">
+								<x-textarea
+									v-model="leadStatusForm.lost_notes"
+									:disabled="!allowQuoteLogAction"
+									placeholder="Notes"
+									class="w-full"									
+								/>
+							</x-field>
+							<x-field required label="Car Sold / Uncontactable Proof">
+								<input
+									@input="leadStatusForm.mo_proof_document = $event.target.files[0]"
+									type="file"
+									:disabled="!allowQuoteLogAction"
+									placeholder="Car Sold / Uncontactable Proof"
+									class="w-full"
+									:rules="[isRequired]"
+								/>
+							</x-field>
+						</template>						
+					</div>					
 				</div>
-				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4">
-					<div class="w-full md:w-50">
-						<x-field required label="Notes">
-							<x-textarea
-								v-model="leadStatusForm.lost_notes"
-								:disabled="!allowQuoteLogAction"
-								placeholder="Notes"
-								class="w-full"
-								:rules="[isRequired]"
-							/>
-						</x-field>
-					</div>
-					<div class="w-full md:w-50">
-						<x-field required label="Car Sold / Uncontactable Proof" v-if="leadStatusForm.lost_approval_status == genericRequestEnum.APPROVED">
-							<x-input
-								v-model="leadStatusForm.mo_proof_document"
-								type="file"
-								:disabled="!allowQuoteLogAction"
-								placeholder="Car Sold / Uncontactable Proof"
-								class="w-full"
-								:rules="[isRequired]"
-							/>
-						</x-field>
-					</div>
-				</div>
-				<div class="flex flex-wrap md:flex-nowrap gap-6 w-full mt-4" v-if="leadStatusForm.leadStatus == quoteStatusEnum.CarSold || leadStatusForm.leadStatus == quoteStatusEnum.Uncontactable">
-					<div class="w-full md:w-50">
-						<x-field label="Car Sold / Uncontactable Proof">
-							<x-input
-								v-model="leadStatusForm.proof_document"
-								type="file"
-								:disabled="isCarLostStatus(record.quote_status_id) && !carLostChangeStatus"
-								placeholder="Car Sold / Uncontactable Proof"
-								class="w-full"
-							/>
-						</x-field>
-					</div>
-				</div>
-			</template>			
+			</div>
 
-			<DataTable 
-				v-if="paymentEntityModel.car_lost_quote_logs.length > 0"
+			<DataTable
+				v-if="paymentEntityModel.car_lost_quote_logs?.length > 0"
 				table-class-name="mt-5 tablefixed compact"
 				:headers="carLostQuoteLogsTable.columns"
 				:items="paymentEntityModel.car_lost_quote_logs || []"
@@ -1714,8 +1749,11 @@ const loadEmailEvents = (email) => {
 				</template>
 				<template #item-documents="item">
 					<template v-for="doc in item.documents" :key="doc">
-						<p><Link target="_blank" :href="leadDocsStoragePath + doc.path">Document</Link></p>
+						<p class="my-2"><a class="underline" target="_blank" :href="leadDocsStoragePath + doc.path">Document</a></p>
 					</template>
+				</template>
+				<template #item-created_at="item">
+					{{ dateFormat(item.created_at) }}
 				</template>
 			</DataTable>
 
@@ -1734,16 +1772,8 @@ const loadEmailEvents = (email) => {
 				</x-button>
 			</div>
     	</div>
-		<!-- <QuoteStatus
-			:quoteStatuses="leadStatuses"
-			:lostReasons="lostReasons"
-			:quoteStatusEnum="quoteStatusEnum"
-			:quoteType="quoteType"
-			:quote="record"
-		/> -->
-    
+	
 		<PaymentTable 
-			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Car"
 			:quote="record"
 			:payments="payments"
@@ -1754,13 +1784,14 @@ const loadEmailEvents = (email) => {
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
 		/>
+
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div>
 				<h3 class="font-semibold text-primary-800 text-lg">Assumptions</h3>
 				<x-divider class="mb-4 mt-1" />
 			</div>
 			<div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-				<div class="w-full md:w-1/2">					
+				<div class="w-full md:w-1/2">
 					<x-field label="Cylinder" required>
 						<x-input
 							v-model="assumptionsForm.cylinder"
@@ -1850,7 +1881,7 @@ const loadEmailEvents = (email) => {
 					<div class="flex flex-col gap-4">
 						<x-field label="Current Insurance" required>
 							<x-select
-								v-model="assumptionsForm.current_insurance_status"								
+								v-model="assumptionsForm.current_insurance_status"
 								:options="currentInsuranceOptions"
 								placeholder="Current Insurance"
 								class="w-full"
@@ -1897,7 +1928,7 @@ const loadEmailEvents = (email) => {
           <x-tag size="sm">{{ availablePlansItems.length || 0 }}</x-tag>
         </h3>
         <div v-if="!hasRole(rolesEnum.PA)">
-          <x-tooltip v-if="hideFollowUp && hasRole(rolesEnum.CarAdvisor)">
+          <x-tooltip v-if="!hideFollowUp && can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)">
             <x-button
               class="ml-2 mr-2"
               :disabled="disableFollowUp"
@@ -1939,7 +1970,7 @@ const loadEmailEvents = (email) => {
           	<x-button @click.prevent="modals.sendConfirm = true" size="sm" color="orange" class="mr-2" :disabled="record.advisor_id != $page.props.auth.user.id">
 				Send OCB Email to Customer
 			</x-button>
-					
+
 					<x-button @click.prevent="modals.createPlan = true" size="sm" color="orange" class="mr-2" v-if="(access.carManagerCanEdit || access.carAdvisorCanEdit) && can(permissionEnum.CarQuotesPlansCreate)">
 						Add Plan
 					</x-button>
@@ -1995,7 +2026,7 @@ const loadEmailEvents = (email) => {
 					<template v-for="addon in addons" :key="addon">
 						<template v-for="option in addon.carAddonOption" :key="option">
 							<span v-if="addon.code">
-								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">									
+								<template v-if="addon.code.toLowerCase() === carPlanAddonsCodeEnum.DRIVER_COVER.toLowerCase() || addon.code.toLowerCase() === carPlanAddonsCodeEnum.PASSENGER_COVER.toLowerCase()">
 									{{ addon.text }}: {{ option.value }} <br />
 								</template>
 							</span>
@@ -2040,7 +2071,7 @@ const loadEmailEvents = (email) => {
 							Copy
 						</x-button>
 						<template v-if="item.actualPremium > 0 && item.id != record.plan_id">
-							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined>
+							<x-button v-if="access.carAdvisorCanEditPaymentCancelledRefund || access.carAdvisorCanEditInsurer || access.carManagerCanEditInsurer" size="xs" color="error" outlined @click="confirmChangeInsurer(item)">
 								Change Insurer
 							</x-button>
 						</template>
@@ -2048,7 +2079,32 @@ const loadEmailEvents = (email) => {
 				</template>
 			</DataTable>
 
+			<x-modal v-model="modals.changeInsurer" show-close backdrop>
+				<template #header> Change Insurer </template>
+				<p>Are you sure to change insurer?</p>
+				<template #actions>
+				<div class="text-right space-x-4">
+					<x-button
+					size="sm"
+					ghost
+					@click.prevent="modals.changeInsurer = false"
+					>
+					Cancel
+					</x-button>
+					<x-button
+					size="sm"
+					color="error"
+					:loading="changeInsurerForm.processing"
+					@click.prevent="onConfirmChangeInsurer"
+					>
+					Delete
+					</x-button>
+				</div>
+				</template>
+      		</x-modal>
+
       <FollowUpReasons
+        v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
         :modelValue="showfollowup"
         @update:modelValue="value => closeModal(value)"
         :uuid="page.props.record.id"
@@ -2056,6 +2112,7 @@ const loadEmailEvents = (email) => {
         :followUpId="followUpId"
 		:kyoEndPoint="kyoEndPoint"
       />
+
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>
           {{ selectedPlan.providerName }} - {{ selectedPlan.name }}
@@ -2113,9 +2170,10 @@ const loadEmailEvents = (email) => {
         />
       </x-modal>
     </div>
+    
     <div
       class="p-4 rounded shadow mb-6 bg-white"
-      v-if="hasRole(rolesEnum.CarAdvisor)"
+      v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
     >
 
     <x-modal v-model="modals.showEmailEventsModal" size="lg" show-close backdrop>
@@ -2125,18 +2183,18 @@ const loadEmailEvents = (email) => {
         :headers="emailEventsTable"
         :items="emailEvents"
         border-cell
-        hide-rows-per-page       
+        hide-rows-per-page
         :rows-per-page="10"
-        :hide-footer="followUpEmails.length < 10" 
+        :hide-footer="followUpEmails.length < 10"
       >
-        
+
       </DataTable>
-      
+
     </x-modal>
 
-  
 
-      <h3 class="font-semibold text-primary-800 text-lg mb-4">Emails</h3>
+
+      <h3 class="font-semibold text-primary-800 text-lg mb-4">Auto Followup - Emails</h3>
       <DataTable
         table-class-name="tablefixed compact"
         :headers="emailsHeaders"
@@ -2158,17 +2216,13 @@ const loadEmailEvents = (email) => {
             >
               View Events
             </x-button>
-            
+
           </div>
         </template>
 
       </DataTable>
-    </div>
-    <div
-      class="p-4 rounded shadow mb-6 bg-white"
-      v-if="hasRole(rolesEnum.CarAdvisor)"
-    >
-      <h3 class="font-semibold text-primary-800 text-lg mb-4">Actions</h3>
+
+      <h3 class="font-semibold text-primary-800 text-lg mt-5 mb-4">Auto Followup - Actions</h3>
       <DataTable
         table-class-name="tablefixed compact"
         :headers="actionsHeaders"
@@ -2179,8 +2233,9 @@ const loadEmailEvents = (email) => {
         :hide-footer="followUpActions.length < 15"
       >
       </DataTable>
-    </div>
 
+    </div>
+    
 		<EmbeddedProducts
       	:data="embeddedProducts"
       	:link="record.uuid"
@@ -2285,7 +2340,7 @@ const loadEmailEvents = (email) => {
 						</template>
 
 					</template>
-					
+
 				</div>
 			</div>
 			<DataTable
@@ -2299,7 +2354,7 @@ const loadEmailEvents = (email) => {
 				hide-footer
 			>
 				<template #item-document_name_text="item">
-					<Link :href="storageUrl + item.doc_url">{{ item.document_name_text }}</Link>
+					<a  target="_blank" :href="storageUrl + item.doc_url">{{ item.document_name_text }}</a>
 				</template>
 				<template #item-action="item">
 					<div class="flex gap-2">
@@ -2379,11 +2434,11 @@ const loadEmailEvents = (email) => {
 						class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
 					>
 						{{ quoteDocument.original_name || quoteDocument.doc_name }}
-					</a> 
+					</a>
 					</div>
 				</div>
     		</x-modal>
-		</div> 
+		</div>
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2435,7 +2490,7 @@ const loadEmailEvents = (email) => {
 					</div>
 				</template>
 			</DataTable>
-		</div> 
+		</div>
 
 		<!-- <div class="p-4 rounded shadow mb-6 bg-white">
 			<div class="flex justify-between items-center mb-4">
@@ -2499,7 +2554,7 @@ const loadEmailEvents = (email) => {
 					</x-button>
 				</div>
 				</x-form>
-          </x-modal>		
+          </x-modal>
 		</div>  -->
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
@@ -2639,7 +2694,7 @@ const loadEmailEvents = (email) => {
 				</div>
 				</x-form>
       		</x-modal>
-		</div> 
+		</div>
 		<customerAdditionalContacts
           quoteType="Car"
           :customerId="record.customer_id"
@@ -2647,9 +2702,9 @@ const loadEmailEvents = (email) => {
           :contacts="customerAdditionInfoList"
           :quoteEmail="record.email"
           :quoteMobile="record.mobile_no"
-
+			:canDelete="false"
       />
-		
+
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
 		<div>

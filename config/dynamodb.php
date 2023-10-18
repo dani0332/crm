@@ -1,4 +1,5 @@
 <?php
+
 return [
 
     'default' => env('DYNAMODB_CONNECTION', 'aws'),
@@ -12,7 +13,7 @@ return [
             ],
             'region' => env('AWS_REGION'),
             'debug' => env('DYNAMODB_DEBUG'),
-        ]
+        ],
     ],
 
 ];

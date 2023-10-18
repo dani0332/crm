@@ -12,16 +12,12 @@ use App\Jobs\CammyJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\EmbeddedProductOption;
-use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
 use App\Models\HealthQuote;
 use App\Models\HealthQuotePlan;
 use App\Models\HealthQuoteRequestDetail;
 use App\Models\InsuranceProvider;
-use App\Models\PaymentAction;
-use App\Models\QuoteType;
 use App\Models\Team;
 use App\Models\User;
 use App\Traits\AddPremiumAllLobs;
@@ -114,6 +110,8 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
+            'ihp.code as plan_provider_code',
+            'hqr.health_plan_co_payment_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -126,6 +124,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
             ->leftJoin('users as wcu', 'wcu.id', '=', 'hqr.wcu_id')
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
+            ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')
+            ->leftJoin('insurance_provider as ihp', 'ihp.id', '=', 'hp.provider_id')
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id');
@@ -1138,7 +1138,14 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        $response['priceWithVAT'] = ($plan['actualPremium'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0) + ($plan['vat'] ?? 0);
+                        if ($plan['ratesPerCopay']) {
+                            foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
+                                if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
+                                    $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'];
+                                }
+                            }
+                        }
+                        $response['priceWithVAT'] = ($response['priceWithVAT'] ?? 0) + ($plan['basmah'] ?? 0) + ($plan['policyFee'] ?? 0);
                         if (isset($plan['benefits'], $plan['benefits']['feature'])) {
                             foreach ($plan['benefits']['feature'] as $value) {
                                 if ($value['code'] == GenericRequestEnum::TPA_Code) {
@@ -1323,98 +1330,4 @@ class HealthQuoteService extends BaseService
         }
     }
 
-    public function cancelPayment($request)
-    {
-        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
-        $type = QuoteType::where('code', $request->modelType)->first();
-        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
-            ->where('quote_type_id', $type->id)
-            ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->first();
-        if (isset($embededTransaction->payments[0])) {
-            $payment = $embededTransaction->payments[0];
-            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-            if ($maxAmount >= $request->amount) {
-                $paymentAction = new PaymentAction();
-                $paymentAction->payment_code = $payment->code; //$embededTransaction->code;
-                $paymentAction->is_fulfilled = 0;
-                $paymentAction->action_type = 'REFUND';
-                $paymentAction->reason = $request->reason;
-                $paymentAction->amount = $request->amount;
-                $paymentAction->created_by = auth()->user()->email;
-
-                $paymentAction->save();
-                $data = [
-                    'uuid' => $request->uuid,
-                    'type_id' => $type->id,
-                    'code' => $payment->code,
-
-                ];
-                $processResponse = $this->processCancelPayment($data);
-
-                return response($processResponse, 403);
-            } else {
-                return response(['should not be maximum'], 403);
-            }
-        }
-
-        return response(['Payment not exist'], 403);
-
-    }
-    public function toggleSelection($data, $quoteTypeId)
-    {
-        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/toggle-embedded-product';
-        $apiToken = config('constants.KEN_API_TOKEN');
-        $apiTimeout = config('constants.KEN_API_TIMEOUT');
-        $apiUserName = config('constants.KEN_API_USER');
-        $apiPassword = config('constants.KEN_API_PWD');
-
-        $toggleData = [
-            'quoteUid' => $data->quote_uuid,
-            'quoteTypeId' => $quoteTypeId,
-            'epOptionId' => $data->id,
-        ];
-
-        $apiCreds = [
-            'apiEndPoint' => $apiEndPoint,
-            'apiToken' => $apiToken,
-            'apiTimeout' => $apiTimeout,
-            'apiUserName' => $apiUserName,
-            'apiPassword' => $apiPassword,
-        ];
-
-        $response = $this->httpService->processRequest($toggleData, $apiCreds);
-
-        return $response;
-    }
-    public function processCancelPayment($data)
-    {
-        $apiEndPoint = config('constants.MARSHALL_API_ENDPOINT').'/payment/checkout/cancel';
-        $apiToken = config('constants.MARSHALL_API_TOKEN');
-        $apiTimeout = config('constants.MARSHALL_API_TIMEOUT');
-        $apiUserName = config('constants.MARSHALL_API_USER');
-        $apiPassword = config('constants.MARSHALL_API_PWD');
-
-        $carPlanData = [
-            'quoteUID' => $data['uuid'],
-            'quoteTypeId' => $data['type_id'],
-            'payments' => [
-                [
-                    'codeRef' => $data['code'],
-                ],
-            ],
-        ];
-
-        $apiCreds = [
-            'apiEndPoint' => $apiEndPoint,
-            'apiToken' => $apiToken,
-            'apiTimeout' => $apiTimeout,
-            'apiUserName' => $apiUserName,
-            'apiPassword' => $apiPassword,
-        ];
-
-        $response = $this->httpService->processRequest($carPlanData, $apiCreds);
-
-        return $response;
-    }
 }

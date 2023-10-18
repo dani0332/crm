@@ -23,7 +23,7 @@ class EmailEventsRequest extends FormRequest
     {
         return [
             'message_id' => 'required',
-            'customer_email' => 'required'
+            'customer_email' => 'required',
         ];
     }
 }

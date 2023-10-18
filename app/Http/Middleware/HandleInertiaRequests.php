@@ -64,6 +64,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'epLink' => env('EMBEDDED_PAYMENT_LINK'),
         ];
     }
 

@@ -50,4 +50,5 @@ final class InsuranceProvidersEnum extends Enum
     public const MTL = 'MTL';
     public const SAICO = 'SAICO';
     public const NLGIC = 'NLGIC';
+    public const AFNIC = 'AFNIC';
 }

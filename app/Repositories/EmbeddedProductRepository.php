@@ -5,7 +5,7 @@ namespace App\Repositories;
 use App\Enums\EpCategoryEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Facades\PostMark;
+use App\Jobs\SendEPDocumentsJob;
 use App\Models\EmbeddedProduct;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericDocument;
@@ -117,7 +117,6 @@ class EmbeddedProductRepository extends BaseRepository
         $premium = '';
         $optionsIds = [];
         if ($ep->prices) {
-            $premium = $ep->prices->sum('price');
             $optionsIds = $ep->prices->pluck('id');
         }
 
@@ -133,6 +132,7 @@ class EmbeddedProductRepository extends BaseRepository
         $certificate_number = '';
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
+            $premium = $transaction[0]['price_with_vat'];
         }
         $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
@@ -248,13 +248,11 @@ class EmbeddedProductRepository extends BaseRepository
 
                         $fileInfo = new finfo(FILEINFO_MIME_TYPE);
 
-                        $exploded = explode('/', $path);
-
                         $file = file_get_contents($pwDoc);
                         $mimeType = $fileInfo->buffer($file);
                         $attachments[] = [
                             'Content' => base64_encode(file_get_contents($pwDoc)),
-                            'Name' => end($exploded),
+                            'Name' => $ep->display_name.'- Policy Wordings.pdf',
                             'ContentType' => $mimeType,
                         ];
                     }
@@ -266,7 +264,6 @@ class EmbeddedProductRepository extends BaseRepository
         $optionsIds = [];
         $premium = '';
         if ($ep->prices) {
-            $premium = $ep->prices->sum('price');
             $optionsIds = $ep->prices->pluck('id');
         }
         $quoteObject = $this->getQuoteObject($modelType, $quoteId);
@@ -292,6 +289,7 @@ class EmbeddedProductRepository extends BaseRepository
         $certificate_number = '';
         if ($transaction->isNotEmpty()) {
             $certificate_number = $transaction[0]['certificate_number'];
+            $premium = $transaction[0]['price_with_vat'];
         }
         $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
         $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
@@ -312,7 +310,6 @@ class EmbeddedProductRepository extends BaseRepository
             'From' => config('constants.MA_FROM_EMAIL'),
             'ReplyTo' => isset($advisorData['email']) ? $advisorData['email'] : null,
             'To' => $quoteObject->email,
-            // 'To' => 'nouman.hussain@insurancemarket.ae',
             'Tag' => '',
             'TemplateAlias' => 'embedded-products-payment-auth',
             'Attachments' => isset($attachments) ? $attachments : null,
@@ -324,11 +321,11 @@ class EmbeddedProductRepository extends BaseRepository
                     'productDescription' => $product_description,
                     'advisor' => (object) $advisorData,
                 ],
-                'subject' => 'Thank you for your purchase of '.$product_name.' with Alfred - < '.$short_code.'-'.$quoteObject->code.' >',
+                'subject' => 'Thank you for your purchase of '.$product_name.' with InsuranceMarket.ae - '.$short_code.'-'.$quoteObject->code,
             ],
             'MessageStream' => config('constants.MA_POSTMARK_STREAM'),
         ], JSON_UNESCAPED_SLASHES);
 
-        return PostMark::sendEmail($body);
+        SendEPDocumentsJob::dispatch($body);
     }
 }

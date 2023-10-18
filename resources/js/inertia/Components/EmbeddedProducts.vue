@@ -2,6 +2,7 @@
 const notification = useNotifications('toast');
 import { XButton } from '@indielayer/ui';
 
+const page = usePage();
 const props = defineProps({
   data: {
     type: Array,
@@ -36,9 +37,11 @@ const modals = reactive({
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
+    console.log('item',item);
   paymentForm.reset();
   paymentForm.embedded_id = item.id;
-  paymentForm.quote_id = usePage().props.quote.id;
+  paymentForm.quote_id = props.quote.id;
+  paymentForm.uuid = props.quote.uuid;
   modals.cancelPayment = true;
 };
 const paymentForm = useForm({
@@ -158,7 +161,7 @@ const checkTransactionExist = item => {
       var timeStart = new Date(transaction.created_at);
       var timeEnd = new Date();
       var hourDiff = timeEnd - timeStart;
-      if (transaction.payment_status_id == 6 && hourDiff <= 172800000) {
+      if ((transaction.payment_status_id == 6 || transaction.payment_status_id == 4) && hourDiff <= 172800000) {
         return false;
       }
     }
@@ -169,8 +172,8 @@ const checkTransactionExist = item => {
 const { copy, copied } = useClipboard();
 
 const onCopyText = () => {
-  let ep_code = selectedEp.value[0];
-  let paymentLink = props.paymentLink + '?code=' + ep_code + '&quoteTypeId=20';
+
+let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'/payment?planId='+props.quote.plan_id+'&providerCode='+props.quote.plan_provider_code;
   copy(paymentLink);
   if (copied)
     notification.success({
@@ -188,18 +191,19 @@ const paymentStatus = id => {
 const toggleProduct = (ep, event) => {
   let id = ep.id;
   if (event.target.checked) {
-    selectedEp.value.push(ep.transactions[0]?.code);
+    selectedEp.value.push(id);
   } else {
-    var index = selectedEp.value.indexOf(ep.embedded_product_id);
+    var index =  selectedEp.value.indexOf(id);
     if (index !== -1) {
-      selectedEp.value.splice(ep.transactions[0].code, 1);
+      selectedEp.value.splice(id, 1);
     }
   }
-  let data = { quote_uuid: usePage().props.quote.uuid, id: id,modelType:props.modelType };
+  let data = { quote_uuid: props.quote.uuid, id: id,modelType:props.modelType };
   let requestUrl = '/quotes/' + props.modelType + '/toggle-product';
   axios
     .post(requestUrl, data)
     .then(res => {
+        console.log('res',res);
       notification.success('Updated');
     })
     .catch(err => {
@@ -262,41 +266,33 @@ const hasAnyRole = roles => useHasAnyRole(roles);
         {{ short_code + '-' + props.code }}
       </template>
 
-      <template #item-prices="{ prices }">
-        <div v-if="prices.length > 1" class="flex gap-3">
-          <x-tooltip
-            v-for="item in prices"
-            :key="'price_' + item.id"
-            position="bottom"
-          >
-            <x-tag color="primary">
-              {{ (parseFloat(item.price) + (item.price * 5) / 100).toFixed(2) }}
+      <template #item-prices="{prices}">
+
+        <div v-if="prices.length > 0" class="flex gap-3">
+
+
+            <x-tag color="primary" v-for="priceItem  in prices">
+                <x-checkbox
+
+                    v-if="priceItem.transactions[0]?.is_selected == '1'"
+                    @change="toggleProduct(priceItem, $event)"
+                    :model-value="true"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+
+                />
+                <x-checkbox
+
+                    v-else
+                    @change="toggleProduct(priceItem, $event)"
+                    color="primary"
+                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+                />
+              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
             </x-tag>
-            <template #tooltip>{{ item.variant }} </template>
-          </x-tooltip>
+
         </div>
 
-        <div v-else>
-          <x-tag color="primary">
-            <x-checkbox
-              v-if="prices[0].transactions[0]?.is_selected == '1'"
-              @change="toggleProduct(prices[0], $event)"
-              :model-value="true"
-              color="primary"
-            />
-            <x-checkbox
-              v-if="prices[0].transactions[0]?.is_selected == '0'"
-              @change="toggleProduct(prices[0], $event)"
-              color="primary"
-            />
-            {{
-              (
-                parseFloat(prices[0]?.price) +
-                (prices[0]?.price * 5) / 100
-              ).toFixed(2)
-            }}
-          </x-tag>
-        </div>
       </template>
 
       <template #item-ep_status="{ ep_status }"> N/A </template>

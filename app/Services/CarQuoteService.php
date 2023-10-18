@@ -142,7 +142,8 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier'
+                'cqr.car_value_tier',
+                'cpip.code as plan_provider_code'
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -791,7 +792,7 @@ class CarQuoteService extends BaseService
                 if ($request[$item] == 'null') {
                     $this->query->whereNull($item);
                 } elseif ($item == 'advisor_id' && is_array($request[$item]) && ! empty($request[$item])) {
-                    if ($request[$item][0] == 'null') {
+                    if ($request[$item][0] == 'null' || $request[$item][0] == null) {
                         $this->query->whereNull('cqr.advisor_id');
                     } else {
                         $this->query->whereIn('cqr.advisor_id', $request[$item]);
@@ -1008,6 +1009,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            // "callSource" => "imcrm"
         ];
 
         if ($isDisabledEnabled) {
@@ -1597,7 +1599,7 @@ class CarQuoteService extends BaseService
             'vehicle_type_id' => 'required',
             'car_make_id' => 'required', // ID
             'car_model_id' => 'required', // ID
-            'currently_insured_with_id' => 'required|string',
+            'currently_insured_with' => 'required|string',
         ];
     }
 
@@ -1642,4 +1644,5 @@ class CarQuoteService extends BaseService
 
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
     }
+
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\GenericRequestEnum;
 use App\Models\Customer;
 use App\Models\CustomerAdditionalContact;
 
@@ -108,6 +109,37 @@ class CustomerService extends BaseService
         }
 
         return $additionalContacts;
+    }
+
+    public function checkAdditionalEmailExist($quoteObject, $newAdditionalEmail)
+    {
+        $newAdditionalEmail = strtolower($newAdditionalEmail);
+        $customer = $this->getCustomerByEmail($newAdditionalEmail);
+        $additionalEmail = CustomerAdditionalContact::where(['key' => GenericRequestEnum::EMAIL, 'value' => $newAdditionalEmail])
+            ->first();
+
+        if ($newAdditionalEmail == strtolower($quoteObject->email)
+            || $customer && $newAdditionalEmail == strtolower($customer->email)
+            || $additionalEmail && $newAdditionalEmail == strtolower($additionalEmail->value)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public function checkAdditionalMobileNoExist($quoteObject, $newAdditionalMobileNo)
+    {
+        $customer = $this->getUniqueCustomerByMobileNo($newAdditionalMobileNo);
+        $additionalMobileNo = CustomerAdditionalContact::where(['key' => GenericRequestEnum::MOBILE_NO, 'value' => $newAdditionalMobileNo])
+            ->first();
+
+        if ($newAdditionalMobileNo == $quoteObject->mobile_no
+        || $customer && $newAdditionalMobileNo == $customer->mobile_no
+        || $additionalMobileNo && $newAdditionalMobileNo == $additionalMobileNo->value) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function getAdditionalContactByKey($customerId, $key)

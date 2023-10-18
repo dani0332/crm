@@ -13,19 +13,8 @@ const props = defineProps({
 });
 
 const notification = useToast();
-
-const genderText = v => {
-	return props.genders[v];
-};
-
-const ipmiBenefits = reactive({
-	region: '',
-	insurance: '',
-	payment: '',
-	network: '',
-	healthCare: false,
-	motherBaby: false,
-});
+const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
+const halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 
 const ancillaryExcessOptions = computed(() => {
 	let arr = [];
@@ -61,19 +50,6 @@ const insurerAvailableTrimsOptions = computed(() => {
 
 const toggleLoader = ref(false);
 const toggleManualLoader = ref(false);
-const planAddons = computed(() => {
-	return props.plan.addons.map(addon => {
-		return addon.carAddonOption.map(option => {
-			return {
-				addonId: addon.id,
-				addonOptionId: option.id,
-				price: option.price,
-				vat: option.vat,
-				isSelected: option.isSelected,
-			};
-		});
-	});
-});
 
 const planForm = useForm({
 	car_quote_uuid: usePage().props.record.uuid,
@@ -81,7 +57,7 @@ const planForm = useForm({
 	actual_premium: props.plan.actualPremium,
 	discounted_premium: props.plan.discountPremium,
 	premium_vat: props.vat ? props.vat : 0,
-	car_value: props.record.car_value,
+	car_value: props.plan.carValue,
 	excess: props.plan.excess || 0,
 	is_disabled: props.plan.isDisabled,
 	is_create: 0,
@@ -92,6 +68,14 @@ const planForm = useForm({
 	ancillary_excess: props.plan.ancillaryExcess,
 	current_url: usePage().url,
 });
+
+watch(
+	() => planForm.actual_premium, 
+	() => {
+		planForm.discounted_premium = planForm.actual_premium
+	},
+	{ immediate: true }
+)
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY').value;
 const tabs = ref([
@@ -110,7 +94,7 @@ const onTogglePlans = () => {
 		.post('/quotes/car/manual-plan-toggle', {
 			modelType: 'Car',
 			planIds: [props.plan.id],
-			quote_uuid: usePage().props.record.uuid,
+			car_quote_uuid: usePage().props.record.uuid,
 			toggle: planForm.is_disabled,
 		})
 		.then(response => {
@@ -138,7 +122,7 @@ const onUpdatePlan = () => {
 
 	if (planForm.discounted_premium > planForm.actual_premium) {
 		notification.error({
-	      	title: 'Discounted premium cannot be greater than Actual Premium',
+	      	title: 'Discounted Price must be lower than Actual Price',
 	      	position: 'top',
 	    });
 		return;
@@ -232,7 +216,7 @@ const onToggleManual = () => {
 							<dd>
 								{{
 									props.plan.repairType && props.plan.repairType == 'COMP'
-									? 'NON-AGENCY'
+									? (coreInsurer.includes(props.plan.providerCode) ? 'Premium workshop' : (halfLiveInsurer.includes(props.plan.providerCode) ? 'Non-Agency workshop' : 'NON-AGENCY'))
 									: props.plan.repairType
 								}}
 							</dd>
@@ -242,12 +226,12 @@ const onToggleManual = () => {
 							<x-input v-model="planForm.insurer_quote_no" :disabled="!planForm.is_manual_update" maxlength="50" size="sm" />
 						</div>
 						<div class="grid sm:grid-cols-2">
-							<dt class="mt-2">Actual Premium:</dt>
+							<dt class="mt-2">Actual Price:</dt>
 							<x-input v-model="planForm.actual_premium" :disabled="!planForm.is_manual_update" size="sm"
 								@keydown="validateDecimal" />
 						</div>
 						<div class="grid sm:grid-cols-2">
-							<dt class="mt-2">Discounted Premium:</dt>
+							<dt class="mt-2">Discounted Price:</dt>
 							<x-input v-model="planForm.discounted_premium" size="sm" @keydown="validateDecimal" />
 						</div>
 						<div class="grid sm:grid-cols-2">
@@ -288,7 +272,7 @@ const onToggleManual = () => {
 					</dl>
 					<dl class="grid md:grid-cols-2 gap-x-6 border-top pl-4">
 						<div class="grid sm:grid-cols-2">
-							<dt class="font-bold">Total Premium with VAT:</dt>
+							<dt class="font-bold">Total Price with VAT:</dt>
 							<dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
 						</div>
 						<div class="flex justify-end">
@@ -329,7 +313,7 @@ const onToggleManual = () => {
 						</template>
 						<x-divider class="mb-3 mt-3" />
 						<div class="grid sm:grid-cols-4">
-							<dt class="font-bold">Total Premium with VAT:</dt>
+							<dt class="font-bold">Total Price with VAT:</dt>
 							<dd>AED: {{ totalPremiumWithVat.toFixed(2) }}</dd>
 						</div>
 						<div class="flex justify-end">
