@@ -42,8 +42,8 @@ class SendOCBIntroEmailJob implements ShouldQueue
 
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
 
-            if (!$lead) {
-                info('SendOCBIntroEmailJob - Lead not found for uuid: ' . $this->quoteUuid);
+            if (! $lead) {
+                info('SendOCBIntroEmailJob - Lead not found for uuid: '.$this->quoteUuid);
 
                 return;
             } else {
@@ -55,13 +55,13 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisorId);
 
                 if (in_array($responseCode, [200, 201])) {
-                    info('SendOCBIntroEmailJob - OCB INTRO Email Sent: ' . $responseCode . ' Customer Email Address: ' . $lead->email . ' Quote UuId: ' . $this->quoteUuid);
+                    info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
                 } else {
-                    Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: ' . $responseCode . ' Customer EmailAddress:' . $lead->email);
+                    Log::error('SendOCBIntroEmailJob - OCB INTRO Email Not Sent: '.$responseCode.' Customer EmailAddress:'.$lead->email);
                 }
             }
         } catch (Exception $e) {
-            info('SendOCBIntroEmailJob - Error: ' . $e->getMessage() . ' with stack trace: ' . $e->getTraceAsString());
+            info('SendOCBIntroEmailJob - Error: '.$e->getMessage().' with stack trace: '.$e->getTraceAsString());
         }
     }
 }

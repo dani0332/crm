@@ -326,7 +326,7 @@ class CRUDService extends BaseService
                 if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
                     CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
                     IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false)
-                    ->delay(now()->addSeconds(3));
+                        ->delay(now()->addSeconds(3));
                 } else {
                     SyncSIBContactJob::dispatch($entity);
                 }
