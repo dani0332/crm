@@ -12,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
@@ -63,18 +64,22 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.max_capacity',
                 'u.status as is_available',
                 'lead_allocation.last_allocated',
-                'st.name as teamName',
+                't.name as teamName',
                 'u.name as userName',
             ])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
-                ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
-                ->whereNotNull('u.sub_team_id')
-                ->where('t.name', '=', quoteTypeCode::Health);
+                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+                ->groupBy('u.name', 'u.id', 'lead_allocation.id')
+                ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
             }
+            //dd($query->toSql());
 
             return $query->get();
         } catch (\Exception $e) {
