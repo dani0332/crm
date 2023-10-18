@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\QuoteTypeShortCode;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
