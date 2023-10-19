@@ -407,3 +407,7 @@ border-primary animate-spin;
   border-color: rgb(28, 124, 178) transparent transparent transparent;
   transform: rotate(90deg);
 }
+
+.x-popover-container.max-h-72 {
+  @apply !max-h-48;
+}

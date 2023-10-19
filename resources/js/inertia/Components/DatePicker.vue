@@ -61,8 +61,9 @@ const selectedData = computed({
     :disabled="props.disabled"
     utc="preserve"
     :is-24="false"
+    text-input
   >
-    <template #dp-input="{ value, onClear }">
+    <template #dp-input="{ value, onClear, onInput, onBlur }">
       <x-input
         type="text"
         :value="value"
@@ -71,8 +72,9 @@ const selectedData = computed({
         :disabled="props.disabled"
         class="w-full"
         :rules="value ? [] : props.rules"
-        readonly
         :error="props.customError ? props.customError : ''"
+        @update:modelValue="onInput"
+        @blur="onBlur"
       />
       <div
         v-if="!props.disabled"
@@ -97,13 +99,13 @@ const selectedData = computed({
 
         <svg
           v-else
-          @click="onClear"
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
           stroke-width="1.5"
           stroke="currentColor"
           class="w-4 h-4"
+          @click="onClear"
         >
           <path
             stroke-linecap="round"
