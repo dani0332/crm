@@ -15,6 +15,7 @@ use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
@@ -1439,7 +1440,7 @@ class HealthQuoteService extends BaseService
 
     public function cancelPayment($request)
     {
-        $embeddedProductOptionsIds = EmbeddedTransaction::where('embedded_product_id', $request->embedded_id)->pluck('id');
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
         $type = QuoteType::where('code', $request->modelType)->first();
         $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
             ->where('quote_type_id', $type->id)
