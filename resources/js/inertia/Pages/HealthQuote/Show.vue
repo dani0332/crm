@@ -38,6 +38,7 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
+    paymentLink:String
 });
 
 const page = usePage();
@@ -74,9 +75,6 @@ const modals = reactive({
   createPlan: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
   planFilters: false,
 });
 
@@ -118,10 +116,6 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const confirmData = reactive({
-  contactPrimary: null,
-});
-
 const cleanObj = obj => useCleanObj(obj);
 
 const assignSubteam = ref(page.props.quote.health_team_type || ''),
@@ -132,7 +126,6 @@ const assignSubteam = ref(page.props.quote.health_team_type || ''),
   selectedPlans = ref([]),
   exportLoader = ref(false),
   toggleLoader = ref(false),
-  contactLoader = ref(false),
   historyLoading = ref(false),
   isDisabled = ref(false);
 
@@ -2050,11 +2043,13 @@ onMounted(() => {
         </div>
       </x-modal>
     </div>
-
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
+      :paymentLink="paymentLink"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2343,7 +2338,7 @@ onMounted(() => {
                 isRequired,
                 additionalContact.additional_contact_type === 'email'
                   ? isEmail
-                  : isMobileNo,
+                  : isNumber,
               ]"
               class="w-full"
             />

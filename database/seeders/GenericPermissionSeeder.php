@@ -18,13 +18,13 @@ class GenericPermissionSeeder extends Seeder
     public function run()
     {
         $permissions = [
+            ['name' => PermissionsEnum::PAUSE_AUTO_FOLLOWUPS],
             ['name' => PermissionsEnum::DATA_EXTRACTION],
             ['name' => PermissionsEnum::CAR_SOLD_LIST,            'role' => RolesEnum::MarketingOperations],
             ['name' => PermissionsEnum::CAR_UNCONTACTABLE_LIST,   'role' => RolesEnum::MarketingOperations],
         ];
 
         foreach ($permissions as $permission) {
-
             $permissionRecord = Permission::where('name', $permission['name'])->first();
 
             if (! $permissionRecord) {
@@ -35,7 +35,6 @@ class GenericPermissionSeeder extends Seeder
             }
 
             if (! empty($permission['role'])) {
-
                 $role = Role::where('name', $permission['role'])->first();
 
                 if (! $role) {

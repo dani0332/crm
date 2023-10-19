@@ -350,6 +350,7 @@ const onCreateDuplicate = isValid => {
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
+      :quoteStatusEnum="quoteStatusEnum"
     />
 
     <QuoteDocuments
@@ -365,6 +366,8 @@ const onCreateDuplicate = isValid => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <LeadHistory :quote="quote" />

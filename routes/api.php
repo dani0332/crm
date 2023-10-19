@@ -3,6 +3,7 @@
 use App\Http\Controllers\API\ApiController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
+use App\Http\Controllers\V2\EmbeddedProductController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\V1\CarQuoteController;
 
@@ -20,7 +21,7 @@ use App\Http\Controllers\API\V1\CarQuoteController;
 Route::middleware(['basicAuth'])->group(function () {
     Route::post('/alfred/signupLink', [ApiController::class, 'fetchSignupUrl']);
 });
-
+Route::post('/imcrm/assign-quote', [ApiController::class, 'assignLeads']);
 Route::post('/imcrm/sib-health-callback', [ApiController::class, 'sibHealthQuoteCallBack']);
 
 Route::prefix('v1')->group(function () {
@@ -42,4 +43,5 @@ Route::prefix('v1')->group(function () {
     Route::post('quotes/send-ocb-email', [GenericLobController::class, 'getQuoteForOCBEmail'])->name('getQuoteForOCBEmail');
 
     Route::get('quotes/car/{uuid}', [CarQuoteController::class, 'show']);
+    Route::post('quotes/send-ep-certificate', [EmbeddedProductController::class, 'sendDocument'])->name('sendDocument');
 });

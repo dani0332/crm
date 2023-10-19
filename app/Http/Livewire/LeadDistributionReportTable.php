@@ -88,15 +88,15 @@ class LeadDistributionReportTable extends DataTableComponent
             ->whereNotIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->select(DB::raw('(
 
-            (SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
-            + SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+            (SUM(CASE WHEN car_quote_request.assignment_type in (1,2) AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
+            + SUM(CASE WHEN car_quote_request.assignment_type in (3,4) AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END)
             + SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END))) AS received_leads,
 
             SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) AS lead_created, COUNT(*) AS total_leads,
 
-            SUM(CASE WHEN car_quote_request.auto_assigned = 1 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned,
+            SUM(CASE WHEN car_quote_request.assignment_type in (1,2) AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS auto_assigned,
 
-            SUM(CASE WHEN car_quote_request.auto_assigned = 0 AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned,
+            SUM(CASE WHEN car_quote_request.assignment_type in (3,4) AND car_quote_request.advisor_id IS NOT NULL THEN 1 ELSE 0 END) AS manually_assigned,
 
             SUM(CASE WHEN car_quote_request.advisor_id IS NULL THEN 1 ELSE 0 END) AS unassigned_leads'), 'tiers.name AS tier_name')
             ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
