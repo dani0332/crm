@@ -162,7 +162,8 @@ const validateDecimal = event => {
 	if (
 		event.key === '.' ||
 		event.key === 'Backspace' ||
-		event.key === 'Delete'
+		event.key === 'Delete' ||
+		(event.ctrlKey && (event.key === 'c' || event.key === 'C' || event.key === 'v' || event.key === 'V'))
 	) {
 		return;
 	}
