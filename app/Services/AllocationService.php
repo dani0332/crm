@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -237,6 +239,8 @@ class AllocationService
             ->first();
 
         $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
             ->where('advisor_id', $userId)->get();
 
@@ -254,6 +258,8 @@ class AllocationService
         $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
             ->where('advisor_id', $userId)->get();
 
@@ -268,6 +274,8 @@ class AllocationService
         $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->whereBetween('health_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
             ->where('advisor_id', $userId)->get();
 
