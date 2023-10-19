@@ -61,6 +61,27 @@ trait GenericQueriesAllLobs
     }
 
     /**
+     * @param $quoteType
+     * @param $id
+     * @param $column
+     * @return false|mixed
+     */
+    public function getQuoteObjectBy($quoteType, $id, $column = 'id')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $quote = $model::where($column, $id)->first();
+
+        return (isset($quote->id)) ? $quote : false;
+    }
+
+    /**
      * get Quote Request Member Detail by Quote Type e.g health, travel etc
      *
      * @return false|mixed
