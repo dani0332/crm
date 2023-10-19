@@ -348,7 +348,7 @@ onMounted(() => {
           ]"
           class="w-full"
         />
-        <x-select v-if="!hasRole(rolesEnum.CarAdvisor)"
+        <x-select v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
             v-model="filters.assignment_type"
             label="Assignment Type"
             name="assignment_type"

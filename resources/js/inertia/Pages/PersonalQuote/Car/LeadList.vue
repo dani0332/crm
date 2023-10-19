@@ -298,6 +298,14 @@ onMounted(() => {
     <Head title="View Car" />
     <div class="flex justify-between items-center flex-wrap gap-4">
       <h2 class="text-xl font-semibold">Lead List</h2>
+      <LeadAssignedWidget
+        v-if="hasRole(rolesEnum.CarAdvisor)"
+        :todayAutoCount="todayAutoCount"
+        :todayManualCount="todayManualCount"
+        :yesterdayAutoCount="yesterdayAutoCount"
+        :yesterdayManualCount="yesterdayManualCount"
+        :userMaxCap="userMaxCap"
+      />
         <!-- <Link :href="route('car.create')"> -->
             <x-button size="sm" color="#ff5e00" tag="div" @click="createLead.modal = true"> Create Lead </x-button>
         <!-- </Link> -->
@@ -461,6 +469,14 @@ onMounted(() => {
                     name="advisor_id"
                     placeholder="Please select Advisor"
                     :options="advisorOptions"
+                />
+                <x-select v-if="true || !hasRole(rolesEnum.CarAdvisor)"
+                    v-model="filters.assignment_type"
+                    label="Assignment Type"
+                    name="assignment_type"
+                    :options="assignmentTypeOptions"
+                    placeholder="Please select assignment type"
+                    class="w-full"
                 />
             </div>
             <div class="flex justify-between gap-3 mb-4 mt-1">
