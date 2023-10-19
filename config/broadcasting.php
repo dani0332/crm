@@ -29,15 +29,17 @@ return [
     */
 
     'connections' => [
+        // config/broadcasting.php
 
         'pusher' => [
             'driver' => 'pusher',
-            'key' => env('PUSHER_APP_KEY'),
-            'secret' => env('PUSHER_APP_SECRET'),
-            'app_id' => env('PUSHER_APP_ID'),
+            'key' => env('MIX_PUSHER_APP_KEY'),
+            'secret' => env('MIX_PUSHER_APP_SECRET'),
+            'app_id' => env('MIX_PUSHER_APP_ID'),
             'options' => [
-                'cluster' => env('PUSHER_APP_CLUSTER'),
-                'useTLS' => true,
+                'cluster' => 'ap1',
+                'useTLS' => false,
+                'encrypted' => false,
             ],
         ],
 

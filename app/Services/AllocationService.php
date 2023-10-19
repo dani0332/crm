@@ -1,0 +1,305 @@
+<?php
+
+namespace App\Services;
+
+use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\UserStatusEnum;
+use App\Models\ApplicationStorage;
+use App\Models\CarQuote;
+use App\Models\HealthQuote;
+use App\Models\LeadAllocation;
+use App\Models\Tier;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class AllocationService
+{
+    public function getAppStorageValueByKey($keyName)
+    {
+        $query = ApplicationStorage::select('value')
+            ->where('key_name', $keyName)
+            ->first();
+
+        if (! $query) {
+            return false;
+        }
+
+        return $query->value;
+    }
+
+    public function getTierById($tierId)
+    {
+        return Tier::where('id', $tierId)->first();
+    }
+
+    public function updateLeadAllocationCounts($userId): void
+    {
+        $timestamp = Carbon::now()->timestamp;
+
+        DB::table('lead_allocation')
+            ->where('user_id', $userId)
+            ->update([
+                'allocation_count' => DB::raw('allocation_count + 1'),
+                'auto_assignment_count' => DB::raw('auto_assignment_count + 1'),
+                'last_allocated' => $timestamp,
+                'updated_at' => now(),
+            ]);
+    }
+
+    public function getValuation($carModelDetailId, $yearOfManufacture)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-vehicle-value';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+
+        $client = new \GuzzleHttp\Client();
+        $request = $client->post(
+            $apiEndPoint,
+            [
+                'headers' => ['Content-Type' => 'application/json', 'Accept' => 'application/json', 'x-api-token' => $apiToken],
+                'body' => json_encode([
+                    'carModelDetailId' => $carModelDetailId,
+                    'yearOfManufacture' => $yearOfManufacture,
+                ]),
+                'timeout' => $apiTimeout,
+            ]
+        );
+
+        $getStatusCode = $request->getStatusCode();
+
+        if ($getStatusCode == 200) {
+            $getContents = $request->getBody();
+            $getdecodeContents = json_decode($getContents);
+
+            return $getdecodeContents;
+        } else {
+            info(' call to ken api failed for getting car valuation ');
+
+            return 'API failed';
+        }
+    }
+
+    public function getLeadAllocationRecordByUserId($userId)
+    {
+        try {
+            $leadAllocation = LeadAllocation::where('user_id', $userId)->first();
+
+            return $leadAllocation;
+        } catch (\Exception $e) {
+            Log::error($e->getMessage());
+        }
+    }
+
+    public function addAllocationCounts($userId)
+    {
+        $allocationRecord = $this->getLeadAllocationRecordByUserId($userId);
+        $allocationRecord->auto_assignment_count = $allocationRecord->auto_assignment_count + 1;
+        $allocationRecord->allocation_count = $allocationRecord->allocation_count + 1;
+        $allocationRecord->updated_at = now();
+        $allocationRecord->last_allocated = now()->timestamp;
+        $allocationRecord->save();
+
+    }
+
+    public function updateExistingQuoteDetail($quoteDetail, $uuid): void
+    {
+        $quoteDetail->advisor_assigned_date = now();
+        $quoteDetail->advisor_assigned_by_id = auth()->id();
+        $quoteDetail->save();
+
+        info('Quote detail update for lead : '.$uuid);
+    }
+
+    public function createNewQuoteDetail($leadId, $quoteModel, $keyColumn): void
+    {
+        $quoteModel::create([
+            $keyColumn => $leadId,
+            'advisor_assigned_date' => now(),
+            'advisor_assigned_by_id' => auth()->id(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        info('Quote request detail record not found, creating new entry');
+    }
+
+    public function getAssignmentTypeText($assignmentType)
+    {
+        $assignmentText = '';
+        switch ($assignmentType) {
+            case 1:
+                $assignmentText = 'System Assigned';
+                break;
+            case 2:
+                $assignmentText = 'System ReAssigned';
+                break;
+            case 3:
+                $assignmentText = 'Manual Assigned';
+                break;
+            case 4:
+                $assignmentText = 'Manual ReAssigned';
+                break;
+            default:
+                break;
+        }
+
+        return $assignmentText;
+    }
+
+    public function adjustAllocationCounts($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    {
+        // Check if $lead or $newAdvisorId is not provided
+        if ($lead === null || $newAdvisorId === null) {
+            return;
+        }
+
+        info('Previous assignment type is : '.$previousAssignmentType);
+
+        //Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+
+        // Get the allocation record for the new advisor
+        $newAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($newAdvisorId);
+
+        // Update allocation counts for the new advisor
+        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
+
+        // Get the allocation record for the previous advisor (if applicable)
+        if ($previousAdvisorId !== null) {
+            $previousAdvisorAllocationRecord = $this->getLeadAllocationRecordByUserId($previousAdvisorId);
+
+            // Update allocation counts for the previous advisor (if applicable)
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+        }
+    }
+
+    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
+    {
+        if ($advisorAllocationRecord === null || $lead === null) {
+            return;
+        }
+
+        // Determine if the lead was system-assigned or manually assigned
+        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
+
+        // Update allocation counts based on assignment type
+        if ($isSystemAssigned) {
+            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
+        } else {
+            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
+        }
+
+        // Increment the total allocation count and update timestamps
+        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
+        $advisorAllocationRecord->last_allocated = now()->timestamp;
+        $advisorAllocationRecord->updated_at = now();
+
+        // Save the updated allocation record
+        $advisorAllocationRecord->save();
+    }
+
+    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
+    {
+        // Check if there is a previous advisor and the lead assignment date is today
+        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
+            if ($previousAdvisorAllocationRecord !== null) {
+
+                // Determine if the previous assignment was system-assigned
+                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
+
+                info('Previous assignment type was either system assigned or system reassigned : '.$isSystemAssigned);
+
+                // Update allocation counts based on assignment type (if applicable)
+                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
+                    info('About to deduct from auto assignment count for previous advisor');
+                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+                } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                    info('About to deduct from manual assignment count for previous advisor');
+                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+                }
+
+                // Decrement the total allocation count (if it's greater than 0) and update timestamps
+                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
+                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+                    $previousAdvisorAllocationRecord->updated_at = now();
+                }
+
+                // Save the updated allocation record
+                $previousAdvisorAllocationRecord->save();
+            }
+        }
+    }
+
+    public function getTodayCounts($userId)
+    {
+        $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
+            ->first();
+
+        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
+            ->where('advisor_id', $userId)->get();
+
+        $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
+        $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
+
+        return [
+            'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
+            'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
+            'max_capacity' => $allocationCount->max_capacity];
+    }
+
+    public function getYesterdayCounts($userId)
+    {
+        $yesterdayStart = Carbon::yesterday()->setTime(12, 30, 0)->toDateTimeString();
+        $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
+        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdayStart, $yesterdayEnd])
+            ->where('advisor_id', $userId)->get();
+
+        $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
+        $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
+
+        return ['auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0, 'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0];
+    }
+
+    public function getHealthYesterdayCounts($userId)
+    {
+        $yesterdayStart = Carbon::yesterday()->setTime(12, 30, 0)->toDateTimeString();
+        $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
+        $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('health_quote_request_detail.advisor_assigned_date', [$yesterdayStart, $yesterdayEnd])
+            ->where('advisor_id', $userId)->get();
+
+        $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
+        $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
+
+        return ['auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0, 'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0];
+    }
+
+    public function getUnavailableAdvisor()
+    {
+        // Query to fetch unavailable advisors
+        $query = LeadAllocation::with('leadAllocationUser')
+            ->whereHas('leadAllocationUser', function ($query) {
+                $query->whereIn('status', [UserStatusEnum::UNAVAILABLE, UserStatusEnum::LEAVE, UserStatusEnum::SICK]);
+            })
+            ->where(function ($query) {
+                // Filter by allocation count and max capacity
+                $query->whereRaw('allocation_count < max_capacity')
+                    ->orWhere('max_capacity', -1);
+            })
+            ->orderBy('last_allocated');
+
+        return $query->get();
+    }
+
+}

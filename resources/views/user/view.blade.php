@@ -81,7 +81,7 @@
                         </div>
                     </div>
                 </form>
-                <table class="table table-striped jambo_table user-data-table" style="width:100%">
+                <table class="table table-striped jambo_table user-data-table table-responsive" style="width:100%">
                     <thead>
                         <tr>
                             <th style="width: 100px !important">id</th>

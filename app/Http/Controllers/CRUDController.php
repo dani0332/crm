@@ -6,6 +6,7 @@ use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
+use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
@@ -27,13 +28,13 @@ use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\UpdateLeadStatusRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SyncSIBContactJob;
+use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
-use App\Models\LeadAllocation;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -47,6 +48,7 @@ use App\Repositories\LookupRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
+use App\Services\AllocationService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarQuoteService;
@@ -100,6 +102,7 @@ class CRUDController extends Controller
     protected $sendEmailCustomerService;
     protected $quoteDocumentService;
     protected $emailDataService;
+    protected $allocationService;
 
     use GenericQueriesAllLobs;
 
@@ -126,6 +129,7 @@ class CRUDController extends Controller
         SendEmailCustomerService $sendEmailCustomerService,
         QuoteDocumentService $quoteDocumentService,
         EmailDataService $emailDataService,
+        AllocationService $allocationService,
     ) {
         $this->genericModel = new GenericModel();
         $this->healthQuoteService = $healthService;
@@ -149,6 +153,7 @@ class CRUDController extends Controller
         $this->sendEmailCustomerService = $sendEmailCustomerService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->emailDataService = $emailDataService;
+        $this->allocationService = $allocationService;
         $this->setModelType($request);
         $this->fillModelByModelType(ucwords($this->genericModel->modelType), $request);
     }
@@ -164,6 +169,20 @@ class CRUDController extends Controller
         $isNewBusinessUser = false;
         $isManualAllocationAllowed = false;
         $showDeadlineAlert = false;
+        $userMaxCap = 0;
+        $todayAutoCount = 0;
+        $todayManualCount = 0;
+        $yesterdayAutoCount = 0;
+        $yesterdayManualCount = 0;
+
+        $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
+        $userMaxCap = $todaysAllocationData['max_capacity'];
+        $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
+        $todayManualCount = $todaysAllocationData['manual_assignment_count'];
+        $yesterdayAllocationData = $this->allocationService->getYesterdayCounts(auth()->user()->id);
+        $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
+        $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
+
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car)) {
             $upcomingBatch = RenewalBatchRepository::getUpcomingBatch(QuoteStatusEnum::Uncontactable);
 
@@ -187,13 +206,7 @@ class CRUDController extends Controller
             $isManualAllocationAllowed = Auth::user()->isAdmin() ? true : $isManager;
         }
         $isCarLeadAllocationOn = $this->applicationStorageService->getValueByKey('CAR_LEAD_ALLOCATION_MASTER_SWITCH');
-        $userMaxCap = 0;
-        $todayAssignmentCount = 0;
-        if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Car) && auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
-            $advisorAllocationRecord = LeadAllocation::where('user_id', auth()->user()->id)->first();
-            $userMaxCap = $advisorAllocationRecord->max_capacity == -1 ? 'No Limit' : ($advisorAllocationRecord->max_capacity ?? 0);
-            $todayAssignmentCount = ''.($advisorAllocationRecord->auto_assignment_count ?? 0).' / '.$advisorAllocationRecord->manual_assignment_count ?? 0 .'';
-        }
+
         $tiers = Tier::where('is_active', 1)->get();
         //Checking if the loggedIn user is Renewal User
         $isRenewalUser = Auth::user()->isRenewalUser();
@@ -237,10 +250,23 @@ class CRUDController extends Controller
 
             $quote_status = $dropdownSource['quote_status_id'];
 
+            $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
+            $userMaxCap = $todaysAllocationData['max_capacity'];
+            $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
+            $todayManualCount = $todaysAllocationData['manual_assignment_count'];
+            $yesterdayAllocationData = $this->allocationService->getHealthYesterdayCounts(auth()->user()->id);
+            $yesterdayAutoCount = $yesterdayAllocationData['auto_assignment_count'];
+            $yesterdayManualCount = $yesterdayAllocationData['manual_assignment_count'];
+
             return inertia('HealthQuote/Index', [
                 'quotes' => $gridData,
                 'leadStatuses' => $quote_status,
                 'advisors' => $advisors,
+                'userMaxCap' => $userMaxCap,
+                'todayAutoCount' => $todayAutoCount,
+                'todayManualCount' => $todayManualCount,
+                'yesterdayAutoCount' => $yesterdayAutoCount,
+                'yesterdayManualCount' => $yesterdayManualCount,
             ]);
         }
 
@@ -267,7 +293,10 @@ class CRUDController extends Controller
                 'dropdownSource' => $dropdownSource,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'userMaxCap' => $userMaxCap,
-                'todayAssignmentCount' => $todayAssignmentCount,
+                'todayAutoCount' => $todayAutoCount,
+                'todayManualCount' => $todayManualCount,
+                'yesterdayAutoCount' => $yesterdayAutoCount,
+                'yesterdayManualCount' => $yesterdayManualCount,
             ]);
         }
 
@@ -321,6 +350,9 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+
+            $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+
             return inertia('PersonalQuote/Car/Form', [
                 'dropdownSource' => $dropdownSource,
                 'model' => json_encode($model->properties),
@@ -576,7 +608,7 @@ class CRUDController extends Controller
             ])->first())) {
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
-            $paymentEntityModel->load(['plan.insuranceProvider', 'carLostQuoteLog', 'carLostQuoteLogs']);
+            $paymentEntityModel->load(['plan.insuranceProvider']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
             // return view('shared.show', compact([
@@ -597,6 +629,7 @@ class CRUDController extends Controller
             $leadSourceEnum = LeadSourceEnum::asArray();
             $paymentStatusEnum = PaymentStatusEnum::asArray();
             $genericRequestEnum = GenericRequestEnum::asArray();
+            $carPlanTypeEnum = CarPlanType::asArray();
             $docUploadURL = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$record->uuid.'/thankyou';
             $documentTypes = $this->quoteDocumentService->getQuoteDocumentsForUpload(QuoteTypeId::Car);
             $quoteDocuments = array_values($quoteDocuments->toArray());
@@ -620,6 +653,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
+                'carPlanTypeEnum',
             ]));
         }
 
@@ -910,6 +944,9 @@ class CRUDController extends Controller
         }
 
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
+
+            $dropdownSource['car_make_id'] = $this->getCarMakeDropdown();
+
             return inertia('PersonalQuote/Car/Form', [
                 'quote' => $record,
                 'homePossessionTypeEnum' => HomePossessionType::asArray(),
@@ -939,9 +976,7 @@ class CRUDController extends Controller
         } else {
             if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
-                if (Auth::user()->hasRole(RolesEnum::CarManager) && ! $request->isDisbaled) {
-                    $validateArray['renewal_batch'] = 'required';
-                }
+
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
                 $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
@@ -1781,5 +1816,10 @@ class CRUDController extends Controller
      */
     public function destroy()
     {
+    }
+
+    private function getCarMakeDropdown()
+    {
+        return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
 }
