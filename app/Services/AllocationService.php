@@ -255,7 +255,7 @@ class AllocationService
 
     public function getYesterdayCounts($userId)
     {
-        $yesterdayStart = Carbon::yesterday()->setTime(12, 30, 0)->toDateTimeString();
+        $yesterdayStart = Carbon::yesterday()->startOfDay()->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
@@ -271,7 +271,7 @@ class AllocationService
 
     public function getHealthYesterdayCounts($userId)
     {
-        $yesterdayStart = Carbon::yesterday()->setTime(12, 30, 0)->toDateTimeString();
+        $yesterdayStart = Carbon::yesterday()->startOfDay()->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
