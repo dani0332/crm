@@ -139,11 +139,11 @@
                         leadAllocationDataTable.draw();
                         return false;
                     }else{
-                        var aid = $(this).next().find('input').attr('data-aid');
+                        var userId = $(this).next().find('input').attr('data-userId');
                         var id = $(this).next().find('input').attr('data-id');
                         var data = {
                             'max_cap': maxCap,
-                            'aid': aid,
+                            'userId': userId,
                             'id': id,
                             'team_type' : 'health',
                             '_token': $('meta[name="csrf-token"]').attr('content')
