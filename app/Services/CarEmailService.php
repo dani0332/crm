@@ -88,6 +88,9 @@ class CarEmailService extends BaseService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         $whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace('+', '', $advisor->mobile_no) : '';
         $whatsAppNumber = str_replace(' ', '', $whatsAppNumber);
+        if (strpos($whatsAppNumber, '971') === false) {
+            $whatsAppNumber = '971'.$whatsAppNumber;
+        }
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
