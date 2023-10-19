@@ -72,7 +72,7 @@ class CarQuote extends BaseModel
 
     public function customer()
     {
-        return $this->hasOne(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 
     public function nationality()
@@ -148,7 +148,7 @@ class CarQuote extends BaseModel
 
     public function customer_id()
     {
-        return $this->hasOne(Customer::class, 'id', 'customer_id');
+        return $this->belongsTo(Customer::class);
     }
 
     public function nationality_id()

@@ -296,4 +296,9 @@ class CustomerController extends Controller
             'message' => 'Contact added successfully.',
         ]]);
     }
+
+    public function customerAlreadyEmailExistCheck(Request $request)
+    {
+        return response()->json(['response' => (bool) $this->customerService->getCustomerByEmail($request->value)]);
+    }
 }

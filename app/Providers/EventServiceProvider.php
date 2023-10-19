@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Events\CarQuoteAdvisorUpdated;
+use App\Listeners\HandleCarAdvisorUpdated;
 use App\Listeners\LoginListener;
 use App\Listeners\LogoutListener;
 use App\Models\RenewalBatch;
@@ -22,6 +24,9 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         Registered::class => [
             SendEmailVerificationNotification::class,
+        ],
+        CarQuoteAdvisorUpdated::class => [
+            HandleCarAdvisorUpdated::class,
         ],
         Login::class => [
             LoginListener::class,

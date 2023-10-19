@@ -14,7 +14,7 @@ final class InsuranceProvidersEnum extends Enum
     public const ADNIC = 'ADNIC';
     public const ADNT = 'ADNT';
     public const AIG = 'AIG';
-    public const ALJALIL = 'Al Jalil';
+    public const ALJALIL = 'ALJALIL';
     public const ALNC = 'ALNC';
     public const AMJ = 'AMJ';
     public const AXA = 'AXA';
@@ -50,4 +50,5 @@ final class InsuranceProvidersEnum extends Enum
     public const MTL = 'MTL';
     public const SAICO = 'SAICO';
     public const NLGIC = 'NLGIC';
+    public const AFNIC = 'AFNIC';
 }
