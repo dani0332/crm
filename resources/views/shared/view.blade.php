@@ -106,6 +106,7 @@ use App\Repositories\UserRepository;
             '{{ Auth::user()->hasRole(RolesEnum::CarAdvisor) }}') {
             skipPropertiesArray.push('source');
             skipPropertiesArray.push('lost_reason');
+            skipPropertiesArray.push('assignment_type');
         }
         if (model.modelType == '{{ quoteTypeCode::Car }}' &&
             '{{ Auth::user()->hasRole(RolesEnum::CarManager) }}') {
@@ -619,6 +620,7 @@ use App\Repositories\UserRepository;
                     if ($model->modelType == quoteTypeCode::Car && Auth::user()->hasRole(RolesEnum::CarAdvisor)) {
                     $skipProperties[] = 'source';
                     $skipProperties[] = 'lost_reason';
+                    $skipProperties[] = 'assignment_type';
                     }
                     @endphp
 
@@ -713,16 +715,6 @@ use App\Repositories\UserRepository;
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            @if (strtolower($model->modelType) == strtolower(quoteTypeCode::Car))
-                                            <div class="col-md-2 col-sm-2">
-                                                <label style="margin-left: 8px;font-size: 16px;font-weight: bolder;">Assignment Type</label>
-                                                <span class='required' style="margin-left:10px;">*</span>
-                                                <select class="form-control" id="manual_assignment_email_flag" name="assignment_type">
-                                                    <option value="{{ GenericRequestEnum::ASSIGN_WITHOUT_EMAIL }}">Without Email</option>
-                                                    <option value="{{ GenericRequestEnum::ASSIGN_WITH_EMAIL }}">With Email</option>
-                                                </select>
-                                            </div>
-                                            @endif
                                             <div class="col-md-2 col-sm-2">
                                                 <button type="submit" id="tmLeadsAssignToUser" name="tmLeadsAssignToUser" style="margin-top:34px;" class="btn btn-warning btn-sm">Assign</button>
                                             </div>
@@ -765,6 +757,7 @@ use App\Repositories\UserRepository;
                                 // MS: Hide columns for car_advisor - part3
                                 $skipProperties['list'] = $skipProperties['list'] . ',source';
                                 $skipProperties['list'] = $skipProperties['list'] . ',lost_reason';
+                                $skipProperties['list'] = $skipProperties['list'] . ',assignment_type';
                                 @endphp
                                 @endif
                                 @foreach ($model->properties as $property => $value)

@@ -56,6 +56,7 @@ const tableHeader = [
 const filters = reactive({
   advisorAssignedDates: [],
   tiers: [],
+  assignmentTypes: 'All',
   teams: [],
   isCommercial: 'All',
   page: 1,
@@ -192,6 +193,18 @@ onMounted(() => {
             { value: 'All', label: 'All' },
             { value: true, label: 'Yes' },
             { value: false, label: 'No' },
+          ]"
+        />
+        <x-select
+          v-model="filters.assignmentTypes"
+          label="Assignment Type"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: 1, label: 'System Assigned' },
+            { value: 2, label: 'System ReAssigned' },
+            { value: 3, label: 'Manual Assigned' },
+            { value: 4, label: 'Manual ReAssigned' },
           ]"
         />
       </div>
