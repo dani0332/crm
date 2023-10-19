@@ -3,11 +3,19 @@ defineProps({
   quotes: Object,
   leadStatuses: Array,
   advisors: Array,
+  userMaxCap: Number,
+  todayAutoCount: Number,
+  todayManualCount: Number,
+  yesterdayAutoCount: Number,
+  yesterdayManualCount: Number,
 });
 
 const page = usePage();
 const notification = useToast();
 const params = useUrlSearchParams('history');
+const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
 
 const loader = reactive({
   table: false,
@@ -35,7 +43,7 @@ const tableHeader = [
   { text: 'LAST NAME', value: 'last_name' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
-  { text: 'WC ADVISOR', value: 'wcu_id_text' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'HEALTH TEAM TYPE', value: 'health_team_type' },
@@ -51,6 +59,16 @@ const tableHeader = [
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
 ];
+
+const filteredTableHeader = computed(() => {
+  if (!hasRole(rolesEnum.EBPAdvisor) && !hasRole(rolesEnum.RMNB) && !hasRole(rolesEnum.RMSpeed)) {
+    // If the user does not have the "CarAdvisor" role, include all columns
+    return tableHeader;
+  } else {
+    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
+    return tableHeader.filter(column => column.value !== 'source' && column.value !== 'assignment_type');
+  }
+});
 
 const filters = reactive({
   code: '',
@@ -76,6 +94,14 @@ const subTeamOptions = [
   { value: 'Wow-Call', label: 'Wow-Call' },
   { value: 'No-Type', label: 'No-Type' },
 ];
+
+const assignmentTypeOptions = [
+    { value: '', label: 'Please select is assignment type' },
+    { value: 1, label: 'System Assigned' },
+    { value: 2, label: 'System ReAssigned' },
+    { value: 3, label: 'Manual Assigned' },
+    { value: 4, label: 'Manual ReAssigned' },
+]
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
@@ -200,6 +226,13 @@ onMounted(() => {
     <Head title="Health List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
+      <LeadAssignedWidget v-if="hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
+            :todayAutoCount="todayAutoCount"
+            :todayManualCount="todayManualCount"
+            :yesterdayAutoCount="yesterdayAutoCount"
+            :yesterdayManualCount="yesterdayManualCount"
+            :userMaxCap="userMaxCap"
+            />
       <div class="space-x-3">
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -315,6 +348,14 @@ onMounted(() => {
           ]"
           class="w-full"
         />
+        <x-select v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
+            v-model="filters.assignment_type"
+            label="Assignment Type"
+            name="assignment_type"
+            :options="assignmentTypeOptions"
+            placeholder="Please select assignment type"
+            class="w-full"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
@@ -392,7 +433,7 @@ onMounted(() => {
       v-model:items-selected="quotesSelected"
       table-class-name="tablefixed"
       :loading="loader.table"
-      :headers="tableHeader"
+      :headers="filteredTableHeader"
       :items="quotes.data || []"
       border-cell
       hide-rows-per-page
