@@ -241,14 +241,13 @@ const availablePlansTable = reactive({
     { text: 'Insurer Quote No.', value: 'insurerQuoteNo' },
     { text: 'TPL Limit', value: 'benefits' },
     { text: 'Car Trim', value: 'insurerTrimText' },
+    { text: 'PAB cover', value: 'addons' },
+    { text: 'Roadside assistance', value: 'roadSideAssistance' },
     { text: 'Actual Price', value: 'actualPremium' },
     { text: 'Discounted Price', value: 'discountPremium' },
     { text: 'Price with VAT.', value: 'premiumWithVat' },
     { text: 'Excess', value: 'excess' },
-    { text: 'PAB cover', value: 'addons' },
-    { text: 'Roadside assistance', value: 'roadSideAssistance' },
     { text: 'Oman cover TPL', value: 'omanCoverTPL' },
-
     { text: 'Action', value: 'action' },
   ],
 });
