@@ -57,7 +57,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
-  advisor: Array,
+  advisor: Object,
   carMakeText: String,
   carModelText: String,
   embeddedProducts: Array,
@@ -70,7 +70,7 @@ defineProps({
   carLostChangeStatus: Boolean,
   isTierRAssigned: Boolean,
   tiersExceptTierR: Array,
-  leadSourceEnum: Array,
+  leadSourceEnum: Object,
   carPlanTypeEnum: Object,
 });
 const page = usePage();
