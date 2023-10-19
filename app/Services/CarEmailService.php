@@ -146,7 +146,7 @@ class CarEmailService extends BaseService
             }, false);
 
             // If at least one option was selected, include this addon in the benefits.
-            if ($shouldInclude) {
+            if ($shouldInclude && $addon->text !== 'Priority repair, 12 free car washes, VIP lane for RTA testing and more with AG cars') {
                 $planAddons[] = [
                     'value' => $addon->text,
                 ];
