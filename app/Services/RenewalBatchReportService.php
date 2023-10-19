@@ -130,12 +130,12 @@ class RenewalBatchReportService extends BaseService
         $batches = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id');
 
-        if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
-            && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
-            $batches = $batches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
-                $qry->where('advisor_id', $authUserId);
-            });
-        }
+        // if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
+        //     && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
+        //     $batches = $batches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
+        //         $qry->where('advisor_id', $authUserId);
+        //     });
+        // }
 
         $batches = $batches->orderBy('id')
             ->get()
@@ -194,12 +194,12 @@ class RenewalBatchReportService extends BaseService
          * get batches
          */
         $renewalBatches = RenewalBatch::select('name');
-        if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
-            && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
-            $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
-                $qry->where('advisor_id', $authUserId);
-            });
-        }
+        // if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
+        //     && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
+        //     $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
+        //         $qry->where('advisor_id', $authUserId);
+        //     });
+        // }
         /**
          * Get volume and value segment advisors list
          */
@@ -224,6 +224,15 @@ class RenewalBatchReportService extends BaseService
         // to be used in case of car advisor role
         $combinedSegmentUserIds = array_unique(array_merge($volumeSegmentAdvisorsId, $valueSegmentAdvisorsId));
         $combinedSegmentUserIdsString = ! empty($combinedSegmentUserIds) ? implode(',', $combinedSegmentUserIds) : '0';
+
+        /**
+         * for bdm team as they don't have value and volume segment
+         */
+        $bdmTeamId = Team::where('name', 'BDM')->select('id')->first()->id;
+        if (in_array($bdmTeamId, $authUserTeamsIds)) {
+            $combinedSegmentUserIds = $this->getUsersByTeamIds([$bdmTeamId])->pluck('id')->toArray();
+            $combinedSegmentUserIdsString = ! empty($combinedSegmentUserIds) ? implode(',', $combinedSegmentUserIds) : '0';
+        }
 
         // date filter
         if (isset($filters->reportDate)) {
@@ -405,8 +414,7 @@ class RenewalBatchReportService extends BaseService
             }
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         } elseif (! isset($filters->advisors) && $authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager) {
-            $query->whereIn('car_quote_request.advisor_id', $combinedSegmentUserIds);
-            // $query->where('car_quote_request.advisor_id', $authUserId);
+            $query->whereIn('car_quote_request.advisor_id', array_merge([$authUserId], $combinedSegmentUserIds));
         }
 
         // batch no filter
