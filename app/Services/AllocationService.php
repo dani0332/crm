@@ -253,6 +253,26 @@ class AllocationService
             'max_capacity' => $allocationCount->max_capacity];
     }
 
+    public function getHealthTodaysCount($userId)
+    {
+        $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
+            ->first();
+
+        $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request_id.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('health_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
+            ->where('advisor_id', $userId)->get();
+
+        $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
+        $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
+
+        return [
+            'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
+            'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
+            'max_capacity' => $allocationCount->max_capacity];
+    }
+
     public function getYesterdayCounts($userId)
     {
         $yesterdayStart = Carbon::yesterday()->startOfDay()->toDateTimeString();
