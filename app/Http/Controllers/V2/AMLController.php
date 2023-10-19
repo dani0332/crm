@@ -11,7 +11,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
-use App\Jobs\AMLEmailsJob;
+use App\Jobs\BridgerAMLJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
 use App\Models\BusinessCoverType;
@@ -303,7 +303,7 @@ class AMLController extends Controller
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    AMLEmailsJob::dispatch(
+                    BridgerAMLJob::dispatch(
                         $bridgerAPIToken,
                         $memberDetail,
                         $quoteRequestId,
@@ -332,11 +332,11 @@ class AMLController extends Controller
 
                 // Bridger Insight API Call for Entity
                 $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort . '-' . $entityId];
-                AMLEmailsJob::dispatch($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity)
+                BridgerAMLJob::dispatch($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity)
                     ->delay(now()->addSeconds(5));
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    AMLEmailsJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual)
+                    BridgerAMLJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual)
                         ->delay(now()->addSeconds(5));
                 }
             }
