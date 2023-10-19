@@ -318,7 +318,7 @@ onMounted(() => {
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
-        <ComboBox
+        <ComboBox  v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
