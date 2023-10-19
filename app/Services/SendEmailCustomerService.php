@@ -401,7 +401,6 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            info('sendLMSIntroEmail ---- body :  '.json_encode($body));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
