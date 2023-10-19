@@ -419,8 +419,7 @@ class RenewalBatchReportService extends BaseService
         }
 
         // segment wise advisors filter
-        if (!isset($filters->segment) || $filters->segment === 'all')
-        {
+        if (! isset($filters->segment) || $filters->segment === 'all') {
             $query->addSelect(
                 DB::raw('SUM(CASE WHEN car_quote_request.payment_status_id in ('.PaymentStatusEnum::CAPTURED.', '.PaymentStatusEnum::PARTIAL_CAPTURED.')
                 and car_quote_request.advisor_id in ('.$volumeSegmentAdvisorsIdString.')
