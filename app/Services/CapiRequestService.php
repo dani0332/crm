@@ -42,6 +42,7 @@ class CapiRequestService
                     $carQuote->car_model_detail_id = $data['trim'];
                     $carQuote->car_value_tier = $data['carValueTier'];
                     $carQuote->auto_assigned = null;
+                    $carQuote->assignment_type = null;
                     $carQuote->save();
 
                     if ($carQuote->advisor_id != null) {

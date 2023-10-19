@@ -324,18 +324,19 @@ class CRUDService extends BaseService
                 && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
             ) {
                 if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
-                    // CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                    CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false)
+                        ->delay(now()->addSeconds(3));
                 } else {
                     SyncSIBContactJob::dispatch($entity);
                 }
 
-                // if (
-                //     $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-                //     || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-                // ) {
-                //     CammyJob::dispatch($entity, 'unsub');
-                // }
+                if (
+                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                ) {
+                    CammyJob::dispatch($entity, 'unsub');
+                }
             }
 
             QuoteStatusLog::create([
@@ -361,7 +362,7 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
+            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {

@@ -201,7 +201,7 @@ const onLogout = () => {
           class="sticky top-0 z-20 flex h-16 w-full shrink-0 items-center border-b bg-white"
         >
           <div
-            class="flex items-center justify-end w-full px-2 sm:px-4 md:px-6 lg:px-8"
+            class="flex items-center justify-between w-full px-2 sm:px-4 md:px-6 lg:px-8"
           >
             <div>
               <button
@@ -225,8 +225,12 @@ const onLogout = () => {
                   ></path>
                 </svg>
               </button>
+
+              <div id="headerportal"></div>
             </div>
-            <div>
+
+            <div class="flex gap-3 items-center">
+              <!-- <UserStatus /> -->
               <x-popover align="right" block>
                 <x-button size="sm" ghost>
                   <div class="flex gap-3 items-center">
