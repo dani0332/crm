@@ -41,7 +41,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Bus;
 
 class AMLController extends Controller
 {
@@ -305,9 +304,14 @@ class AMLController extends Controller
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    $amlJobs[] = new AMLEmailsJob($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                    AMLEmailsJob::dispatch(
+                        $bridgerAPIToken,
+                        $memberDetail,
+                        $quoteRequestId,
+                        $quoteTypeId,
+                        CustomerTypeEnum::Individual)
+                    ->delay(now()->addSeconds(5));
                 }
-                Bus::chain($amlJobs)->onQueue('aml')->dispatch();
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -329,13 +333,13 @@ class AMLController extends Controller
 
                 // Bridger Insight API Call for Entity
                 $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort . '-' . $entityId];
-                $amlJobs[] = new AMLEmailsJob($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity);
+                AMLEmailsJob::dispatch($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity)
+                    ->delay(now()->addSeconds(5));
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    $amlJobs[] = new AMLEmailsJob($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual);
+                    AMLEmailsJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual)
+                        ->delay(now()->addSeconds(5));
                 }
-                \Log::info('Bridger Insight - Bus chain call for dispatch jobs');
-                Bus::chain($amlJobs)->onQueue('aml')->dispatch();
             }
 
             return redirect()->back();
