@@ -57,8 +57,8 @@ use App\Http\Controllers\V2\ActivityController;
 use App\Http\Controllers\V2\AMLController as V2AMLController;
 use App\Http\Controllers\V2\AmtController as V2AmtController;
 use App\Http\Controllers\V2\BikeQuoteController;
-use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CarQuoteController;
+use App\Http\Controllers\V2\CarRevivalQuoteController;
 use App\Http\Controllers\V2\CentralController;
 use App\Http\Controllers\V2\CycleQuoteController;
 use App\Http\Controllers\V2\EmbeddedProductController;
@@ -309,7 +309,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('business', BusinessQuoteController::class);
         }
         Route::resource('travel', CRUDController::class);
-        if (!in_array(quoteTypeCode::Pet, newUi())) {
+        if (! in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('pet', CRUDController::class);
         }
         Route::post('save', [CRUDController::class, 'store'])->name('saveQuote');
@@ -347,7 +347,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('{quoteType}/export-health-pdf', [CRUDController::class, 'exportHealthPdf'])->name('exportHealthPdf');
         Route::post('{quoteType}/toggle-product', [CRUDController::class, 'toggleEmbeddedProduct'])->name('toggleEmbeddedProduct');
 
-        if (!in_array(quoteTypeCode::Life, newUi())) {
+        if (! in_array(quoteTypeCode::Life, newUi())) {
             Route::resource('life', CRUDController::class);
         }
 

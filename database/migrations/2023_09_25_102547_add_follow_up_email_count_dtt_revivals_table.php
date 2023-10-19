@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('dtt_revivals', function (Blueprint $table) {
-            if (!Schema::hasColumn('dtt_revivals', 'follow_up_email_count')) {
+            if (! Schema::hasColumn('dtt_revivals', 'follow_up_email_count')) {
                 $table->integer('follow_up_email_count')
                     ->default(0)
                     ->after('is_assigned');

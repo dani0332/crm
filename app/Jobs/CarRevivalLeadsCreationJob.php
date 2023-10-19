@@ -15,14 +15,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use PDO;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
 
 class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 {
-    use Stackable, Dispatchable, InteractsWithQueue, Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, Stackable;
     use GenericQueriesAllLobs;
 
     public $tries = 3;
@@ -66,7 +65,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'claimHistoryId' => $this->lead->claim_history_id,
             'hasNcdSupportingDocuments' => $this->lead->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false,
             'additionalNotes' => $this->lead->additional_notes,
-            'carValue' => (int)$this->lead->car_value,
+            'carValue' => (int) $this->lead->car_value,
             'carValueTier' => $this->lead->car_value_tier,
             'seatCapacity' => $this->lead->seat_capacity,
             'cylinder' => $this->lead->cylinder,
@@ -81,31 +80,31 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
-        info('CarRevivalLeadsCreationJob - Parent Lead Id  ' . $this->lead->id);
+        info('CarRevivalLeadsCreationJob - Parent Lead Id  '.$this->lead->id);
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
-            info('CarRevivalLeadsCreationJob - Lead Created -' . $capiResponse->quoteUID . ' - CAPI Response:');
+        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
+            info('CarRevivalLeadsCreationJob - Lead Created -'.$capiResponse->quoteUID.' - CAPI Response:');
             // $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
             $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
             // Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
             // dispatch(new SendOCBEmailJob($capiResponse->quoteUID, 1));
 
-            $customerName = $carQuote->first_name . ' ' . $carQuote->last_name;
+            $customerName = $carQuote->first_name.' '.$carQuote->last_name;
             $emailData = (object) [
                 'quoteId' => $carQuote->id,
                 'templateId' => 296,
                 'customerName' => $customerName,
                 'customerEmail' => $carQuote->email,
-                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
-                'subject' => $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code
+                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+                'subject' => $customerName."'s".' Car Insurance with Alfred '.$carQuote->code,
             ];
             $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'send-digital-transformation-email');
 
             if ($response == 201) {
 
-                info('CarRevivalLeadsCreationJob - UUID - ' . $emailData->customerEmail . ' - Email Sent');
+                info('CarRevivalLeadsCreationJob - UUID - '.$emailData->customerEmail.' - Email Sent');
 
                 DttRevival::create([
                     'quote_type_id' => QuoteTypes::CAR->id(),
@@ -114,17 +113,17 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'email_sent' => true,
                 ]);
 
-                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -' . $capiResponse->quoteUID);
+                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
 
                 CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
-                info('CarRevivalLeadsCreationJob- is_revived updated -' . $this->lead->id);
+                info('CarRevivalLeadsCreationJob- is_revived updated -'.$this->lead->id);
             } else {
-                info('CarRevivalLeadsCreationJob- email is not sent -' . $emailData->customerEmail);
+                info('CarRevivalLeadsCreationJob- email is not sent -'.$emailData->customerEmail);
             }
         } else {
 
-            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response' . json_encode($capiResponse));
+            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));
         }
     }
 
@@ -143,6 +142,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
 
     public function failed(Throwable $exception)
     {
-        info('CarRevivalLeadsCreationJob -: ' . $this->lead->id . ' Error: ' . $exception->getMessage());
+        info('CarRevivalLeadsCreationJob -: '.$this->lead->id.' Error: '.$exception->getMessage());
     }
 }

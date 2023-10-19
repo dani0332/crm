@@ -55,7 +55,7 @@ class DttFollowUp extends Command
             foreach ($unreplied as $item) {
                 $created_at = $item->created_at;
                 $lead = CarQuote::where('uuid', $item->uuid)->first();
-                if (!empty($created_at) && !in_array($lead->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])) {
+                if (! empty($created_at) && ! in_array($lead->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])) {
 
                     $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                     $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
@@ -67,34 +67,34 @@ class DttFollowUp extends Command
                     $data['id'] = $item->id;
                     $data['quoteId'] = $lead->id;
                     $data['quoteCdbId'] = $lead->code;
-                    $data['customerName'] = $lead->first_name . ' ' . $lead->last_name;
-                    $data['buttonUrl'] = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $lead->uuid;
+                    $data['customerName'] = $lead->first_name.' '.$lead->last_name;
+                    $data['buttonUrl'] = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$lead->uuid;
                     $data['customerEmail'] = $lead->email;
                     // $data['customerEmail'] = 'nouman.hussain@insurancemarket.ae';
 
                     if ($today->eq($afterTwoDays)) {
                         $data['templateId'] = 296;
-                        $data['subject'] = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                        $data['subject'] = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                         $leads[] = (object) $data;
                     }
                     if ($today->eq($afterSevenDays)) {
                         $data['templateId'] = 296;
-                        $data['subject'] = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
-                        $leads[] = (object)  $data;
+                        $data['subject'] = 'Reminder: Purchase Your Motor Policy '.$lead->code;
+                        $leads[] = (object) $data;
                     }
                     if ($today->eq($aftertThirteenDays)) {
                         $data['templateId'] = 296;
-                        $data['subject'] = 'Friendly Reminder: Secure Your Motor Policy Today ' . $lead->code;
-                        $leads[] = (object)  $data;
+                        $data['subject'] = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
+                        $leads[] = (object) $data;
                     }
                     if ($today->eq($afterTwentyDays)) {
                         $data['templateId'] = 296;
-                        $data['subject'] = 'Gentle Reminder: Secure Your Motor Policy Today ' . $lead->code;
-                        $leads[] = (object)  $data;
+                        $data['subject'] = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
+                        $leads[] = (object) $data;
                     }
                     if ($today->eq($afterTwentyeightDays)) {
                         $data['templateId'] = 296;
-                        $data['subject'] = 'Final Reminder: Secure Your Motor Policy Now ' . $lead->code;
+                        $data['subject'] = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                         $leads[] = (object) $data;
                     }
                 }
@@ -111,13 +111,13 @@ class DttFollowUp extends Command
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' all jobs completed successfully ------');
+                        info('------'.$logPrefix.' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' one of batch is failed.------');
+                        info('------'.$logPrefix.' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' everything done ------');
+                        info('------'.$logPrefix.' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -126,7 +126,7 @@ class DttFollowUp extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : ' . $exception->getMessage());
+            info('DTT Exception : '.$exception->getMessage());
         }
     }
 }

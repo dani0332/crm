@@ -86,7 +86,7 @@ class Dtt extends Command
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
 
-                if (!$isTierR) {
+                if (! $isTierR) {
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
@@ -98,13 +98,13 @@ class Dtt extends Command
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' all jobs completed successfully ------');
+                        info('------'.$logPrefix.' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' one of batch is failed.------');
+                        info('------'.$logPrefix.' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' everything done ------');
+                        info('------'.$logPrefix.' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -113,7 +113,7 @@ class Dtt extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : ' . $exception->getMessage());
+            info('DTT Exception : '.$exception->getMessage());
         }
     }
 }

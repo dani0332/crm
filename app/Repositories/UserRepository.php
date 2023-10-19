@@ -21,11 +21,11 @@ class UserRepository extends BaseRepository
         $advisorType = strtoupper(explode('/', request()->path())[1]);
 
         if (auth()->user()->isRenewalUser() || auth()->user()->isRenewalManager() || auth()->user()->isRenewalAdvisor()) {
-            $advisorType = $advisorType . '_RENEWAL';
+            $advisorType = $advisorType.'_RENEWAL';
         }
 
         if (auth()->user()->isNewBusinessManager() || auth()->user()->isNewBusinessAdvisor()) {
-            $advisorType = $advisorType . '_NEW_BUSINESS_';
+            $advisorType = $advisorType.'_NEW_BUSINESS_';
         }
 
         $query = $this->join('model_has_roles as mr', 'mr.model_id', '=', 'users.id')
@@ -38,7 +38,7 @@ class UserRepository extends BaseRepository
                     'r.name',
                     [
                         RolesEnum::CarAdvisor,
-                        RolesEnum::CarDeputyManager
+                        RolesEnum::CarDeputyManager,
                     ]
                 );
 
@@ -62,10 +62,10 @@ class UserRepository extends BaseRepository
 
             default:
                 $query->whereIn('r.name', [
-                    strtoupper($advisorType) . '_ADVISOR',
-                    strtoupper($advisorType) . '_RENEWAL_ADVISOR',
-                    strtoupper($advisorType) . '_NEW_BUSINESS_ADVISOR',
-                    strtoupper($advisorType) . '_DEPUTY_MANAGER',
+                    strtoupper($advisorType).'_ADVISOR',
+                    strtoupper($advisorType).'_RENEWAL_ADVISOR',
+                    strtoupper($advisorType).'_NEW_BUSINESS_ADVISOR',
+                    strtoupper($advisorType).'_DEPUTY_MANAGER',
                 ]);
         }
 
@@ -75,11 +75,11 @@ class UserRepository extends BaseRepository
     public function fetchGetPersonalQuoteAdvisors($modelType)
     {
         if ($modelType == QuoteTypes::PET->value) {
-            $roles = [strtoupper($modelType) . '_ADVISOR', strtoupper($modelType) . '_RENEWAL_ADVISOR', strtoupper($modelType) . '_NEW_BUSINESS_ADVISOR'];
+            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_RENEWAL_ADVISOR', strtoupper($modelType).'_NEW_BUSINESS_ADVISOR'];
         } elseif ($modelType == QuoteTypes::CAR->value) {
-            $roles = [strtoupper($modelType) . '_ADVISOR', strtoupper($modelType) . '_DEPUTY_MANAGER'];
+            $roles = [strtoupper($modelType).'_ADVISOR', strtoupper($modelType).'_DEPUTY_MANAGER'];
         } else {
-            $roles = [strtoupper($modelType) . '_ADVISOR'];
+            $roles = [strtoupper($modelType).'_ADVISOR'];
         }
 
         return $this->with(['roles' => fn ($q) => $q->whereIn('name', $roles)])
@@ -94,7 +94,7 @@ class UserRepository extends BaseRepository
      */
     public function fetchIsUserMemberofTeam($userId, $teamName)
     {
-        $teamName = (!is_array($teamName)) ? [$teamName] : $teamName;
+        $teamName = (! is_array($teamName)) ? [$teamName] : $teamName;
 
         $teams = Team::whereIn('name', $teamName)->get();
 

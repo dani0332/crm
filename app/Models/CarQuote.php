@@ -44,12 +44,12 @@ class CarQuote extends BaseModel
 
     public function getFullNameAttribute()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function fullName()
     {
-        return $this->first_name . ' ' . $this->last_name;
+        return $this->first_name.' '.$this->last_name;
     }
 
     public function uaeLicenseHeldFor()
@@ -359,7 +359,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('pa')) {
-                if (!array_key_exists('pa_id', $filters)) {
+                if (! array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -378,7 +378,7 @@ class CarQuote extends BaseModel
             }
 
             if (Auth::user()->hasRole('payment')) {
-                if (!array_key_exists('pa_id', $filters)) {
+                if (! array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
@@ -394,7 +394,7 @@ class CarQuote extends BaseModel
             } //invoicing
 
             if (Auth::user()->hasRole('invoicing')) {
-                if (!array_key_exists('pa_id', $filters)) {
+                if (! array_key_exists('pa_id', $filters)) {
                     return [];
                 } else {
                     $valuesIn = [];
