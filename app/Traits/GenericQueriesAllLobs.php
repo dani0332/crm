@@ -61,9 +61,6 @@ trait GenericQueriesAllLobs
     }
 
     /**
-     * @param $quoteType
-     * @param $id
-     * @param $column
      * @return false|mixed
      */
     public function getQuoteObjectBy($quoteType, $id, $column = 'id')
