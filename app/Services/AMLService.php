@@ -162,9 +162,10 @@ class AMLService
     public static function sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode)
     {
         $emailSystem = Config::get('constants.emailL_sys');
-        $errorEmailRecipients = explode(',', Config::get('constants.ERROR_EMAIL_RECIPIENTS'));
+        $errorEmailRecipients = ['bilal.saeed@insurancemarket.ae']; //explode(',', Config::get('constants.ERROR_EMAIL_RECIPIENTS'));
 
         $subject = $emailSystem.' BRIDGER SEARCH API ERROR | '.\Request::url().' | '.date(Config::get('constants.DB_DATE_FORMAT_MATCH'));
+        \Log::info('Bridger Insight Service - Mail Service Call for : Error Email Send to Engineering Team');
         MailService::sendEmail('AmlErrorMail', [
             'amlUrl' => $amlQuoteUrl,
             'emailAmlData' => $amlDataForEmail,
@@ -182,9 +183,11 @@ class AMLService
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
             ->whereIn('roles.name', [RolesEnum::COMPLIANCE])->get();
 
-        foreach ($recipients as $recipient) {
-            $emailRecipients[] = $recipient->user_email;
-        }
+//        foreach ($recipients as $recipient) {
+//            $emailRecipients[] = $recipient->user_email;
+//        }
+
+        $emailRecipients = ['bilal.saeed@insurancemarket.ae'];
 
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS_AML');
@@ -195,7 +198,7 @@ class AMLService
             $fromName = Config::get('constants.MAIL_FROM_NAME');
             $emailSubject = $emailSystem .' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
-
+        \Log::info('Bridger Insight Service - Mail Service Call for : Email Send to Compliance Team');
         Mail::send(
             ['html' => 'AmlComplianceMail'],
             [

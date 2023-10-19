@@ -126,6 +126,7 @@ class BridgerInsightService
                         $amlDataForEmail .= $key.': '.$value;
                         $amlDataForEmail .= '<pre>';
                     }
+                    Log::info('Bridger Insight Service - Error Email Send to Engineering Team');
                     AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
