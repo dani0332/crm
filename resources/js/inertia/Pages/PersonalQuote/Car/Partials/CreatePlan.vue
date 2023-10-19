@@ -172,7 +172,7 @@ const getAddonVat = item => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Enter Price without vat"
-            @keydown="validateDecimal"
+            type="number"
           />
         </x-field>
       </div>
@@ -183,7 +183,7 @@ const getAddonVat = item => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Enter Car value"
-            @keydown="validateDecimal"
+            type="number"
           />
         </x-field>
       </div>
@@ -194,7 +194,7 @@ const getAddonVat = item => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Enter excess"
-            @keydown="validateDecimal"
+            type="number"
           />
         </x-field>
       </div>
