@@ -1,5 +1,4 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
 import PaymentTable from './Partials/PaymentTable.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -8,7 +7,7 @@ import FollowUpReasons from './Partials/FollowUpReasons.vue';
 
 defineProps({
   quote: Object,
-  leadStatuses: Array, //
+  leadStatuses: Array,
   ecomDetails: Object,
   membersDetail: Array,
   memberCategories: Array,
@@ -16,7 +15,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: Array, //
+  listQuotePlans: Array,
   quoteDocuments: Array,
   documentTypes: Object,
   cdnPath: String,
@@ -2495,9 +2494,9 @@ const loadEmailEvents = email => {
           :record="record"
           :insuranceProviders="insuranceProviders"
           :listQuotePlans="listQuotePlans"
-          @success="onCreatePlan"
-          @error="onPlanError"
         />
+        <!-- missing @success="onCreatePlan"
+         missing @error="onPlanError" -->
       </x-modal>
     </div>
 
