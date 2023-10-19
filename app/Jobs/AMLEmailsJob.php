@@ -14,12 +14,14 @@ class AMLEmailsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $payload;
-    protected $quoteRequestID;
-    protected $quoteTypeID;
-    protected $customerType;
-    protected $bridgerAPIToken;
-    protected $bridgerInsightService;
+    public $tries = 2;
+    public $timeout = 40;
+    public $backoff = 360;
+    private $payload;
+    private $quoteRequestID;
+    private $quoteTypeID;
+    private $customerType;
+    private $bridgerAPIToken;
 
     /**
      * Create a new job instance.
@@ -31,22 +33,18 @@ class AMLEmailsJob implements ShouldQueue
         $this->quoteRequestID = $quoteRequestID;
         $this->quoteTypeID = $quoteTypeID;
         $this->customerType = $customerType;
-        $this->bridgerInsightService = new BridgerInsightService();
     }
 
     /**
      * Execute the job.
      */
-    public function handle(): void
+    public function handle(BridgerInsightService $bridgerInsightService): void
     {
         try {
-            info('Bridger Insight Service - AML Check with Code '.$this->payload['code'].' - Data : '.json_encode($this->payload));
-            $this->bridgerInsightService->searchAMLResult($this->bridgerAPIToken, $this->payload, $this->quoteRequestID, $this->quoteTypeID, $this->customerType);
-
+            info('BridgerAMLJob - AML Check with Code '.$this->payload['code'].' - Data : '.json_encode($this->payload));
+            $bridgerInsightService->searchAMLResult($this->bridgerAPIToken, $this->payload, $this->quoteRequestID, $this->quoteTypeID, $this->customerType);
         } catch (\Exception $exception) {
-            info('complete exception :  '.json_encode($exception));
-            info('Bridger Insight Service Job is timed out now at: '.now());
-            info('Exception: '.$exception->getMessage());
+            info('BridgerAMLJob Exception: '.$exception->getMessage());
             Log::error($exception);
         }
     }
