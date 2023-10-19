@@ -14,7 +14,10 @@ class Tier extends Model implements AuditableContract
     protected $table = 'tiers';
     protected $fillable = ['name', 'min_price', 'max_price', 'is_tpl', 'is_active', 'cost_per_lead', 'is_auto_assignment_enabled'];
 
-    public function scopeWithActive($query)
+    /**
+     * @return $query
+     */
+    public function scopeActive($query)
     {
         return $query->where('is_active', 1);
     }

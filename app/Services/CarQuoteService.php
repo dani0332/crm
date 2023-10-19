@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
@@ -10,16 +10,12 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
-use App\Jobs\IntroEmailJob;
-use App\Models\ApplicationStorage;
-use App\Models\CarMake;
 use App\Models\CarQuote;
 use App\Models\CarQuoteRequestDetail;
 use App\Models\Payment;
 use App\Models\QuoteBatches;
 use App\Models\QuoteViewCount;
 use App\Models\Tier;
-use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use App\Traits\TeamHierarchyTrait;
 use Carbon\Carbon;
@@ -97,6 +93,7 @@ class CarQuoteService extends BaseService
                 'ch.TEXT AS claim_history_id_text',
                 'cqr.advisor_id',
                 'u.name AS advisor_id_text',
+                'pra.name AS previous_advisor_id_text',
                 'cqr.payment_status_id',
                 'ps.text AS payment_status_id_text',
                 'cqr.plan_id',
@@ -142,7 +139,13 @@ class CarQuoteService extends BaseService
                 't.cost_per_lead as cost_per_lead',
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
-                'cqr.car_value_tier'
+                'cqr.car_value_tier',
+                DB::raw('(CASE
+                WHEN cqr.assignment_type = 1 THEN "System Assigned"
+                WHEN cqr.assignment_type = 2 THEN "System ReAssigned"
+                WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
+                WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
+                'cpip.code as plan_provider_code',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -155,6 +158,7 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_type_insurance as cti', 'cti.id', '=', 'cqr.car_type_insurance_id')
             ->leftJoin('claim_history as ch', 'ch.id', '=', 'cqr.claim_history_id')
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->leftJoin('users as pra', 'pra.id', '=', 'cqr.previous_advisor_id')
             ->leftJoin('car_plan as cp', 'cp.id', '=', 'cqr.plan_id')
             ->leftJoin('insurance_provider as cpip', 'cpip.id', '=', 'cp.provider_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'cqr.payment_status_id')
@@ -195,7 +199,7 @@ class CarQuoteService extends BaseService
             'vehicleTypeId' => $request->vehicle_type_id,
             'trim' => $request->trim,
             'premium' => $request->premium,
-            'carMakeId' => CarMake::where('code', $request->car_make_id)->first() ? CarMake::where('code', $request->car_make_id)->first()->id : null, // ID
+            'carMakeId' => $request->car_make_id,
             'carModelId' => $request->car_model_id, // ID
             'currentlyInsuredWith' => $request->currently_insured_with,
             'source' => config('constants.SOURCE_NAME'),
@@ -214,131 +218,120 @@ class CarQuoteService extends BaseService
     {
         $carQuote = CarQuote::where('uuid', $id)->first();
 
-        if (Auth::user()->hasRole(RolesEnum::CarManager)) {
-            $carQuote->renewal_batch = $request->renewal_batch;
-            $carQuote->updated_by = auth()->user()->email;
+        $oldCarValue = $carQuote->car_value;
+        info('Update triggered from IMCRM for Car Quote request with uuid : ' . $carQuote->code);
 
+        if ($request->first_name) {
+            $carQuote->first_name = $request->first_name;
+        }
+        if ($request->last_name) {
+            $carQuote->last_name = $request->last_name;
+        }
+        if ($request->dob) {
+            $carQuote->dob = $request->dob;
+        }
+        if ($request->nationality_id) {
+            $carQuote->nationality_id = $request->nationality_id;
+        }
+        if ($request->uae_license_held_for_id) {
+            $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
+        }
+        if ($request->back_home_license_held_for_id) {
+            $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
+        }
+        if ($request->year_of_manufacture) {
+            $carQuote->year_of_manufacture = $request->year_of_manufacture;
+        }
+        if ($request->emirate_of_registration_id) {
+            $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
+        }
+        if ($request->car_type_insurance_id) {
+            $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
+        }
+        if ($request->claim_history_id) {
+            $carQuote->claim_history_id = $request->claim_history_id;
+        }
+        if ($request->has_ncd_supporting_documents) {
+            $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
+        }
+        if ($request->premium) {
+            $carQuote->premium = $request->premium;
+        }
+        if ($request->car_value) {
+            $carQuote->car_value = $request->car_value;
+        }
+        if ($request->seat_capacity) {
+            $carQuote->seat_capacity = $request->seat_capacity;
+        }
+        if ($request->cylinder) {
+            $carQuote->cylinder = $request->cylinder;
+        }
+        if ($request->vehicle_type_id) {
+            $carQuote->vehicle_type_id = $request->vehicle_type_id;
+        }
+        if ($request->additional_notes) {
+            $carQuote->additional_notes = $request->additional_notes;
+        }
+        if ($request->car_make_id) {
+            $carQuote->car_make_id = $request->car_make_id;
+        }
+        if ($request->car_model_id) {
+            $carQuote->car_model_id = $request->car_model_id;
+        }
+        if ($request->currently_insured_with) {
+            $carQuote->currently_insured_with = $request->currently_insured_with;
+        }
+        $carQuote->quote_updated_at = Carbon::now();
+        $carQuote->is_quote_locked = true;
+        if ($request->trim) {
+            $carQuote->car_model_detail_id = $request->trim;
+        }
+        if ($request->policy_start_date) {
+            $carQuote->policy_start_date = $request->policy_start_date;
+        }
+        if ($request->renewal_batch) {
+            $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
+        }
+        if ($request->previous_quote_policy_number) {
+            $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
+        }
+        if ($request->previous_policy_expiry_date) {
+            $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
+            $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
+        }
+
+        if ($request->car_value_tier) {
+            info('Car value at enquiry is about to change from : ' . $carQuote->car_value_tier . ' to : ' . $request->car_value_tier . ' for lead : ' . $carQuote->code);
+
+            $carQuote->car_value_tier = $request->car_value_tier;
+
+            $originalValue = $carQuote->car_value; // taking backup of original car_value
+
+            $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
+
+            $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
+
+            $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
+
+            info('After car value tier update the new selected tier is : ' . $selectedTier->name . ' for lead : ' . $carQuote->code);
+
+            $carQuote->tier_id = $selectedTier->id;
+            $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
+
+            info('Car tier and cost per lead updated after value change for lead : ' . $carQuote->code);
+        }
+
+        $carQuote->updated_by = auth()->user()->email;
+        $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
+
+        if ($deleteValuationResponse) {
             $carQuote->save();
 
             if (isset($request->return_to_view)) {
                 return redirect('quote/car/' . $carQuote->id)->with('success', 'Car Quote has been updated');
             }
         } else {
-            $oldCarValue = $carQuote->car_value;
-            info('Update triggered from IMCRM for Car Quote request with uuid : ' . $carQuote->code);
-
-            if ($request->first_name) {
-                $carQuote->first_name = $request->first_name;
-            }
-            if ($request->last_name) {
-                $carQuote->last_name = $request->last_name;
-            }
-            if ($request->dob) {
-                $carQuote->dob = $request->dob;
-            }
-            if ($request->nationality_id) {
-                $carQuote->nationality_id = $request->nationality_id;
-            }
-            if ($request->uae_license_held_for_id) {
-                $carQuote->uae_license_held_for_id = $request->uae_license_held_for_id;
-            }
-            if ($request->back_home_license_held_for_id) {
-                $carQuote->back_home_license_held_for_id = $request->back_home_license_held_for_id;
-            }
-            if ($request->year_of_manufacture) {
-                $carQuote->year_of_manufacture = $request->year_of_manufacture;
-            }
-            if ($request->emirate_of_registration_id) {
-                $carQuote->emirate_of_registration_id = $request->emirate_of_registration_id;
-            }
-            if ($request->car_type_insurance_id) {
-                $carQuote->car_type_insurance_id = $request->car_type_insurance_id;
-            }
-            if ($request->claim_history_id) {
-                $carQuote->claim_history_id = $request->claim_history_id;
-            }
-            if ($request->has_ncd_supporting_documents) {
-                $carQuote->has_ncd_supporting_documents = $request->has_ncd_supporting_documents == GenericRequestEnum::Yes ? true : false;
-            }
-            if ($request->premium) {
-                $carQuote->premium = $request->premium;
-            }
-            if ($request->car_value) {
-                $carQuote->car_value = $request->car_value;
-            }
-            if ($request->seat_capacity) {
-                $carQuote->seat_capacity = $request->seat_capacity;
-            }
-            if ($request->cylinder) {
-                $carQuote->cylinder = $request->cylinder;
-            }
-            if ($request->vehicle_type_id) {
-                $carQuote->vehicle_type_id = $request->vehicle_type_id;
-            }
-            if ($request->additional_notes) {
-                $carQuote->additional_notes = $request->additional_notes;
-            }
-            if ($request->car_make_id) {
-                $carQuote->car_make_id = $request->car_make_id;
-            }
-            if ($request->car_model_id) {
-                $carQuote->car_model_id = $request->car_model_id;
-            }
-            if ($request->currently_insured_with) {
-                $carQuote->currently_insured_with = $request->currently_insured_with;
-            }
-            $carQuote->quote_updated_at = Carbon::now();
-            $carQuote->is_quote_locked = true;
-            if ($request->trim) {
-                $carQuote->car_model_detail_id = $request->trim;
-            }
-            if ($request->policy_start_date) {
-                $carQuote->policy_start_date = $request->policy_start_date;
-            }
-            if ($request->renewal_batch) {
-                $carQuote->renewal_batch = isset($request->renewal_batch) ? $request->renewal_batch : null;
-            }
-            if ($request->previous_quote_policy_number) {
-                $carQuote->previous_quote_policy_number = isset($request->previous_quote_policy_number) ? $request->previous_quote_policy_number : null;
-            }
-            if ($request->previous_policy_expiry_date) {
-                $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-                $carQuote->previous_policy_expiry_date = isset($request->previous_policy_expiry_date) ? Carbon::parse($request->previous_policy_expiry_date)->format($dateFormat) : null;
-            }
-
-            if ($request->car_value_tier) {
-                info('Car value at enquiry is about to change from : ' . $carQuote->car_value_tier . ' to : ' . $request->car_value_tier . ' for lead : ' . $carQuote->code);
-
-                $carQuote->car_value_tier = $request->car_value_tier;
-
-                $originalValue = $carQuote->car_value; // taking backup of original car_value
-
-                $carQuote->car_value = $request->car_value_tier; // adding value tier because tier function uses car_value
-
-                $selectedTier = $this->leadAllocationService->getTierForValue($carQuote);
-
-                $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
-
-                info('After car value tier update the new selected tier is : ' . $selectedTier->name . ' for lead : ' . $carQuote->code);
-
-                $carQuote->tier_id = $selectedTier->id;
-                $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-
-                info('Car tier and cost per lead updated after value change for lead : ' . $carQuote->code);
-            }
-
-            $carQuote->updated_by = auth()->user()->email;
-            $deleteValuationResponse = $this->deleteValuationAPI($oldCarValue, $request->car_value, $carQuote->uuid);
-
-            if ($deleteValuationResponse) {
-                $carQuote->save();
-
-                if (isset($request->return_to_view)) {
-                    return redirect('quote/car/' . $carQuote->id)->with('success', 'Car Quote has been updated');
-                }
-            } else {
-                return false;
-            }
+            return false;
         }
     }
 
@@ -509,6 +502,7 @@ class CarQuoteService extends BaseService
             'payment_status_id' => 'select|title|ss:7',
             'is_ecommerce' => '|static|title|ss:8|Yes,No',
             'tier_id' => 'select|title|multiple|ss:10',
+            'assignment_type' => 'input|title|none',
             'visit_count' => 'readonly|none',
             'next_followup_date' => 'input|date|title|range',
             'updated_at' => 'input|date|title',
@@ -698,6 +692,9 @@ class CarQuoteService extends BaseService
             case 'show_renewal_upload_leads':
                 $title = 'Show Renewal Upload';
                 break;
+            case 'assignment_type':
+                $title = 'Assignment Type';
+                break;
             default:
                 break;
         }
@@ -747,80 +744,82 @@ class CarQuoteService extends BaseService
     {
         $searchProperties = $model->searchProperties;
 
-        if ($request->ajax()) {
-            $this->addLeadViewEligibilityCheck();
+        // if ($request->ajax()) {
+        $this->addLeadViewEligibilityCheck();
 
-            if (
-                empty($request->email) && empty($request->code) && empty($request->first_name) &&
-                empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
-            ) {
-                $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
-            }
+        if (
+            empty($request->email) && empty($request->code) && empty($request->first_name) &&
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+        ) {
+            $this->query->whereNotIn('cqr.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate]);
+        }
 
-            if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
-                $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
-                $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
-            }
-            if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
-                $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
-                $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
-            }
-            if (isset($request->next_followup_date) && $request->next_followup_date != '') {
-                $dateFrom = $this->parseDate($request['next_followup_date'], true);
-                $dateTo = $this->parseDate($request['next_followup_date_end'], false);
-                $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
-            }
-            if (
-                in_array('created_at', $searchProperties)
-                && isset($request->created_at) && $request->created_at != ''
-                && empty($request->email)
-                && empty($request->code)
-                && empty($request->renewal_batch)
-                && empty($request->quote_batch_id)
-            ) {
-                $dateFrom = $this->parseDate($request['created_at'], true);
-                $dateTo = $this->parseDate($request['created_at_end'], false);
-                $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
-            }
+        if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
+            $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
+            $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+        }
+        if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
+            $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
+            $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
+        }
+        if (isset($request->next_followup_date) && $request->next_followup_date != '') {
+            $dateFrom = $this->parseDate($request['next_followup_date'], true);
+            $dateTo = $this->parseDate($request['next_followup_date_end'], false);
+            $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+        }
+        if (
+            in_array('created_at', $searchProperties)
+            && isset($request->created_at) && $request->created_at != ''
+            && empty($request->email)
+            && empty($request->code)
+            && empty($request->renewal_batch)
+            && empty($request->quote_batch_id)
+        ) {
+            $dateFrom = $this->parseDate($request['created_at'], true);
+            $dateTo = $this->parseDate($request['created_at_end'], false);
+            $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
+        }
 
-            foreach ($searchProperties as $item) {
-                if (!empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
-                    if ($request[$item] == 'null') {
-                        $this->query->whereNull($item);
-                    } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        if ($request[$item][0] == 'null') {
-                            $this->query->whereNull('cqr.advisor_id');
-                        } else {
-                            $this->query->whereIn('cqr.advisor_id', $request[$item]);
-                        }
-                    } elseif ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        $this->query->whereIn('cqr.quote_status_id', $request[$item]);
-                    } elseif ($item == 'tier_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        $this->query->whereIn('cqr.tier_id', $request[$item]);
-                    } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && !empty($request[$item])) {
-                        $this->query->whereIn('qb.id', $request[$item]);
+        foreach ($searchProperties as $item) {
+            if (!empty($request[$item]) && $item != 'created_at' && $item != 'renewal_expiry_date' && $item != 'advisor_assigned_date') {
+                if ($request[$item] == 'null') {
+                    $this->query->whereNull($item);
+                } elseif ($item == 'advisor_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    if ($request[$item][0] == null) {
+                        $this->query->whereNull('cqr.advisor_id');
                     } else {
-                        $searchedValue = preg_match("/\b" . 'Yes' . "\b/i", $request[$item]) || preg_match("/\b" . 'No' . "\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
-                        if ($item == 'policy_number') {
-                            $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
-                        } elseif ($item == 'show_renewal_upload_leads') {
-                            if ($request[$item] == 'Yes') {
-                                $this->query->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD);
-                            } else {
-                                $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
-                            }
+                        $this->query->whereIn('cqr.advisor_id', $request[$item]);
+                    }
+                } elseif ($item == 'quote_status_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->whereIn('cqr.quote_status_id', $request[$item]);
+                } elseif ($item == 'assignment_type' && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->where('cqr.assignment_type', $request[$item]);
+                } elseif ($item == 'tier_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->whereIn('cqr.tier_id', $request[$item]);
+                } elseif ($item == 'quote_batch_id' && is_array($request[$item]) && !empty($request[$item])) {
+                    $this->query->whereIn('qb.id', $request[$item]);
+                } else {
+                    $searchedValue = preg_match("/\b" . 'Yes' . "\b/i", $request[$item]) || preg_match("/\b" . 'No' . "\b/i", $request[$item]) ? ($request[$item] == 'Yes' ? 1 : 0) : $request[$item];
+                    if ($item == 'policy_number') {
+                        $this->query->where('cqr.previous_quote_policy_number', $searchedValue);
+                    } elseif ($item == 'show_renewal_upload_leads') {
+                        if ($request[$item] == 'Yes') {
+                            $this->query->where('cqr.source', LeadSourceEnum::RENEWAL_UPLOAD);
                         } else {
-                            if ($item == 'email' && $searchedValue == '0') {
-                                continue;
-                            }
-                            $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
+                            $this->query->where('cqr.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD);
                         }
+                    } else {
+                        if ($item == 'email' && $searchedValue == '0') {
+                            continue;
+                        }
+                        $this->query->where($this->getQuerySuffix($item) . '.' . $item, $searchedValue);
                     }
                 }
             }
         }
+        // }
 
         $column = $request->get('order') != null ? $request->get('order')[0]['column'] : '';
         $direction = $request->get('order') != null ? $request->get('order')[0]['dir'] : '';
@@ -969,7 +968,7 @@ class CarQuoteService extends BaseService
 
     public function fillModelSearchProperties()
     {
-        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads'];
+        $searchProperties = ['code', 'first_name', 'last_name', 'email', 'mobile_no', 'quote_status_id', 'created_at', 'currently_insured_with', 'renewal_expiry_date', 'is_ecommerce', 'payment_status_id', 'renewal_batch', 'previous_quote_policy_number', 'car_type_insurance_id', 'vehicle_type_id', 'advisor_assigned_date', 'tier_id', 'quote_batch_id', 'advisor_id', 'show_renewal_upload_leads', 'assignment_type'];
 
         return $searchProperties;
     }
@@ -1007,6 +1006,7 @@ class CarQuoteService extends BaseService
                 'field' => 'isRenewalSort',
                 'value' => $isRenewalSort,
             ]],
+            // "callSource" => "imcrm"
         ];
 
         if ($isDisabledEnabled) {
@@ -1065,6 +1065,8 @@ class CarQuoteService extends BaseService
             ->select(
                 'car_addon.text AS car_addon_text',
                 'car_addon_option.value AS car_addon_option_value',
+                'car_addon_option.price AS car_addon_option_price',
+                // 'car_addon_option.vat AS car_addon_option_vat',
                 'car_quote_request_addon.price AS car_quote_request_addon_price',
                 'car_addon.type AS car_addon_type'
             )
@@ -1264,11 +1266,15 @@ class CarQuoteService extends BaseService
         foreach ($this->getLeadIdsToProcessFromRequest($request) as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
+            $oldAssignmentType = $lead->assignment_type;
+
             $isReassignment = $lead->advisor_id != null ? true : false; // checking if the advisor is already assigned or not for reassignment email template
 
             $previousAdvisorId = $lead->advisor_id; // saving previous advisor before updating the new to update the counts
 
             $lead->advisor_id = $userId;
+
+            $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
             $quoteBatch = QuoteBatches::latest()->first();
 
@@ -1286,38 +1292,13 @@ class CarQuoteService extends BaseService
 
             info('Assigned Date and id are update in details table for lead : ' . $lead->uuid);
 
-            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate); // update new and previous (if applicable) advisor counts in lead allocation table
+            $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
             $this->updateExistingQuoteViewCount($userId, $lead->id); // update existing record of quote view count if exists and reset count to zero
 
             $lead->auto_assigned = false;
 
             $lead->save();
-
-            if (isset($request->assignment_type) && $request->assignment_type == GenericRequestEnum::ASSIGN_WITH_EMAIL) {
-                info('Inside sending email for manual assignment');
-
-                $currentAdvisor = User::where('id', $userId)->first();
-
-                $documentUrl = ApplicationStorage::where('key_name', ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL)->first()->value;
-
-                $emailData = (object) [
-                    'customerEmail' => $lead->email,
-                    'documentUrl' => [$documentUrl], // this will be replace with a generic URL once document upload section is done
-                    'clientFullName' => $lead->first_name . ' ' . $lead->last_name,
-                    'advisorName' => $currentAdvisor->name,
-                    'landLine' => $currentAdvisor->landline_no,
-                    'mobilePhone' => $currentAdvisor->mobile_no,
-                    'advisorEmail' => $currentAdvisor->email,
-                    'carQuoteId' => $lead->code,
-                    'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $lead->uuid,
-                ];
-
-                $emailTemplateIdReassign = (int) $this->applicationStorageService->getValueByKey('LMS_REASSIGN_EMAIL_TEMPLATE_ID');
-                $emailTemplateIIntro = (int) $this->applicationStorageService->getValueByKey('LMS_INTRO_EMAIL_TEMPLATE_ID');
-
-                IntroEmailJob::dispatch(quoteTypeCode::Car, $isReassignment ? $emailTemplateIdReassign : $emailTemplateIIntro, $emailData, 'send-lms-reassignment-email');
-            }
         }
 
         return [];
@@ -1372,50 +1353,6 @@ class CarQuoteService extends BaseService
         return $leadIds;
     }
 
-    public function addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate)
-    {
-        info('lead current advisor_id is : ' . json_encode($previousAdvisorId) . ' and lead created date is : ' . $lead->created_at);
-        $shouldUpdateAllocationRecord = $userId != $previousAdvisorId;
-        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($userId);
-        $previousAdvisorAllocationRecord = null;
-        if ($previousAdvisorId != null) {
-            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
-        }
-        if ($shouldUpdateAllocationRecord) {
-            info('new advisor (' . $userId . ')  manual count before update is : ' . $newAdvisorAllocationRecord->manual_assignment_count . ' and auto assignment count is : ' . $newAdvisorAllocationRecord->auto_assignment_count);
-            $newAdvisorAllocationRecord->manual_assignment_count = $newAdvisorAllocationRecord->manual_assignment_count + 1;
-            $newAdvisorAllocationRecord->allocation_count = $newAdvisorAllocationRecord->allocation_count + 1;
-            $newAdvisorAllocationRecord->updated_at = now();
-            $newAdvisorAllocationRecord->save();
-        }
-        info('new advisor after update is : ' . json_encode($newAdvisorAllocationRecord));
-        if ($previousAdvisorId != null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) { // will remove manual count from previous advisor lead is from current day only
-            if ($lead->auto_assigned || $lead->auto_assigned == null) {
-                if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('previous advisor (' . $userId . ')  auto assignment count is : ' . $previousAdvisorAllocationRecord->auto_assignment_count);
-                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                }
-            } else {
-                if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('previous advisor (' . $userId . ')  manual count before update is : ' . $previousAdvisorAllocationRecord->manual_assignment_count);
-                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
-                }
-            }
-            if ($previousAdvisorAllocationRecord != null && $previousAdvisorAllocationRecord->allocation_count > 0) { // will reduce count for previous advisor if the count is greater than 0 to avoid going in -1
-                info('previous advisor (' . $userId . ')  allocation_count count before update is : ' . $previousAdvisorAllocationRecord->allocation_count);
-                $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
-                $previousAdvisorAllocationRecord->updated_at = now();
-                $previousAdvisorAllocationRecord->save();
-                info('previous advisor after update is : ' . json_encode($previousAdvisorAllocationRecord));
-            }
-        }
-        info('new advisor alloc. count :' . $newAdvisorAllocationRecord->allocation_count . ', manual count :' . $newAdvisorAllocationRecord->manual_assignment_count . ', auto count :' . $newAdvisorAllocationRecord->auto_assignment_count);
-        if ($previousAdvisorAllocationRecord != null) {
-            info('previous advisor alloc. count :' . $previousAdvisorAllocationRecord->allocation_count . ', manual count :' . $previousAdvisorAllocationRecord->manual_assignment_count . ', auto count :' . $previousAdvisorAllocationRecord->auto_assignment_count);
-        }
-        info('assignment count update for userId : ' . $userId . ', and lead code :  ' . $lead->code);
-    }
-
     public function getEntityPlainByUUID($uuid)
     {
         return CarQuote::where('uuid', $uuid)->first();
@@ -1454,7 +1391,7 @@ class CarQuoteService extends BaseService
         $apiUserName = config('constants.KEN_API_USER');
         $apiPassword = config('constants.KEN_API_PWD');
         if ($request->planIds) {
-            $data = is_array($request->planIds) ? $request->planIds : explode(',', $request->planIds);
+            $data = $request->planIds;
             $isDisabled = $request->toggle;
             $plansArray = [];
             for ($i = 0; $i < count($data); $i++) {
@@ -1575,6 +1512,30 @@ class CarQuoteService extends BaseService
         }
     }
 
+    public function getValidationArray(): array
+    {
+        return [
+            'first_name' => 'required|string',
+            'last_name' => 'required|string',
+            'dob' => 'required',
+            'nationality_id' => 'required',
+            'uae_license_held_for_id' => 'required',
+            'back_home_license_held_for_id' => 'nullable',
+            'year_of_manufacture' => 'required',
+            'emirate_of_registration_id' => 'required',
+            'car_type_insurance_id' => 'required',
+            'claim_history_id' => 'required',
+            'additional_notes' => 'nullable',
+            'car_value_tier' => 'required',
+            'seat_capacity' => 'required',
+            'cylinder' => 'required|string',
+            'vehicle_type_id' => 'required',
+            'car_make_id' => 'required', // ID
+            'car_model_id' => 'required', // ID
+            'currently_insured_with' => 'required|string',
+        ];
+    }
+
     /**
      * @return bool[]
      */
@@ -1615,5 +1576,92 @@ class CarQuoteService extends BaseService
         }
 
         return [$allowQuoteLogAction, $carLostChangeStatus, $statuses];
+    }
+
+    public function addManualAllocationCountAndUpdate($newAdvisorId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType)
+    {
+        // Check if $lead or $newAdvisorId is not provided
+        if ($lead === null || $newAdvisorId === null) {
+            return;
+        }
+
+        info('Previous assignment type is : ' . $previousAssignmentType);
+
+        //Constants for system assigned types
+        $systemAssignedTypes = [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED];
+
+        // Get the allocation record for the new advisor
+        $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
+
+        // Update allocation counts for the new advisor only if its different from previous advisor
+        if ($newAdvisorId !== $previousAdvisorId) {
+            // Update allocation counts for the new advisor (if applicable)
+            $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
+        }
+
+        // Get the allocation record for the previous advisor (if applicable)
+        if ($previousAdvisorId !== null) {
+            $previousAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($previousAdvisorId);
+
+            // Update allocation counts for the previous advisor (if applicable)
+            $this->updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes);
+        }
+    }
+
+    private function updateAllocationCountsForNewAdvisor($advisorAllocationRecord, $lead, $systemAssignedTypes)
+    {
+        if ($advisorAllocationRecord === null || $lead === null) {
+            return;
+        }
+
+        // Determine if the lead was system-assigned or manually assigned
+        $isSystemAssigned = in_array($lead->assignment_type, $systemAssignedTypes);
+
+        // Update allocation counts based on assignment type
+        if ($isSystemAssigned) {
+            $advisorAllocationRecord->auto_assignment_count = $advisorAllocationRecord->auto_assignment_count + 1;
+        } else {
+            $advisorAllocationRecord->manual_assignment_count = $advisorAllocationRecord->manual_assignment_count + 1;
+        }
+
+        // Increment the total allocation count and update timestamps
+        $advisorAllocationRecord->allocation_count = $advisorAllocationRecord->allocation_count + 1;
+        $advisorAllocationRecord->last_allocated = now()->timestamp;
+        $advisorAllocationRecord->updated_at = now();
+
+        // Save the updated allocation record
+        $advisorAllocationRecord->save();
+    }
+
+    private function updateAllocationCountsForPreviousAdvisor($previousAdvisorId, $oldAdvisorAssignedDate, $previousAssignmentType, $previousAdvisorAllocationRecord, $systemAssignedTypes)
+    {
+        // Check if there is a previous advisor and the lead assignment date is today
+        if ($previousAdvisorId !== null && Carbon::parse($oldAdvisorAssignedDate)->startOfDay() == now()->startOfDay()) {
+            if ($previousAdvisorAllocationRecord !== null) {
+
+                // Determine if the previous assignment was system-assigned
+                $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
+
+                info('Previous assignment type was either system assigned or system reassigned : ' . $isSystemAssigned);
+
+                // Update allocation counts based on assignment type (if applicable)
+                if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
+                    info('About to deduct from auto assignment count for previous advisor');
+                    $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
+                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                    info('About to deduct from manual assignment count for previous advisor');
+                    $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
+                }
+
+                // Decrement the total allocation count (if it's greater than 0) and update timestamps
+                if ($previousAdvisorAllocationRecord->allocation_count > 0) {
+                    $previousAdvisorAllocationRecord->allocation_count = $previousAdvisorAllocationRecord->allocation_count - 1;
+                    $previousAdvisorAllocationRecord->updated_at = now();
+                }
+
+                // Save the updated allocation record
+                $previousAdvisorAllocationRecord->save();
+            }
+        }
     }
 }

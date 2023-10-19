@@ -2,6 +2,7 @@
 
 namespace App\Console;
 
+use App\Console\Commands\UpdateHealthStatus;
 use App\Jobs\CarLost\CarSoldResubmissions;
 use App\Jobs\CarLost\UnconSubmissionReminder;
 use Illuminate\Console\Scheduling\Schedule;
@@ -15,9 +16,14 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\LeadAllocation::class,
         Commands\AddBatchNumber::class,
         Commands\Dtt::class,
+        Commands\TierAssignment::class,
+        Commands\UpdateUserStatus::class,
+        Commands\QuoteAllocation::class,
+        Commands\LeadsReassignment::class,
+        Commands\ResetLeadAllocationCounts::class,
+        Commands\UpdateHealthStatus::class,
     ];
 
     /**
@@ -28,7 +34,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         $schedule
-            ->command('LeadAllocation:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
+            ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
         $schedule->command('Dtt')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(1);
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('9:00');
@@ -47,13 +53,18 @@ class Kernel extends ConsoleKernel
             ->at('9:00');
 
         $schedule
-            ->command('TierAssignment:cron')->everyTwoMinutes()->onOneServer()->withoutOverlapping(1);
-
-        $schedule
             ->command('AddBatchNumber:cron')->timezone('Asia/Dubai')->weeklyOn(1, '0:00')->onOneServer()->withoutOverlapping(1);
 
         $schedule
-            ->command('telescope:prune --hours=48')->daily()->onOneServer()->withoutOverlapping(1);
+            ->command(UpdateHealthStatus::class)->timezone('Asia/Dubai')->dailyAt('01:00')->onOneServer()->withoutOverlapping(1);
+
+        $schedule
+            ->command('QuoteAllocation:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+
+        $schedule
+            ->command('LeadsReassignment:cron')->everyFiveMinutes()->onOneServer()->withoutOverlapping(1);
+
+        $schedule->command('ResetLeadAllocationCounts:cron')->timezone('Asia/Dubai')->dailyAt('23:59')->onOneServer()->withoutOverlapping(1);
     }
 
     /**

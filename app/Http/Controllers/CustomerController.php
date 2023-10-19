@@ -125,7 +125,7 @@ class CustomerController extends Controller
         $customer->save();
 
         if ($sendWelcomeEmail && config('constants.ENABLE_TRANSAPP_WE') == '1' && ! $customer->is_we_sent) {
-            dispatch(new MAWelcomeJob($customer, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
+            dispatch(new MAWelcomeJob($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'CUSTOMER_UPDATE', 'customer-update-myalfred-we'));
         }
 
         return redirect('customer/'.$customer->uuid)->with('success', 'Customer information has been updated.');
@@ -295,5 +295,10 @@ class CustomerController extends Controller
         return response()->json(['data' => [
             'message' => 'Contact added successfully.',
         ]]);
+    }
+
+    public function customerAlreadyEmailExistCheck(Request $request)
+    {
+        return response()->json(['response' => (bool) $this->customerService->getCustomerByEmail($request->value)]);
     }
 }
