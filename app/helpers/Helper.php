@@ -500,10 +500,10 @@ if (! function_exists('getBase64FileInfo')) {
     function getBase64FileInfo($base64File)
     {
         $fileSize = strlen($base64File);
-        @list($type, $file_data) = explode(';', $base64File);
-        @list(, $file_data) = explode(',', $file_data);
-        @list(, $fileMimeType) = explode(':', $type);
-        @list(, $extension) = explode('/', $fileMimeType);
+        @[$type, $file_data] = explode(';', $base64File);
+        @[, $file_data] = explode(',', $file_data);
+        @[, $fileMimeType] = explode(':', $type);
+        @[, $extension] = explode('/', $fileMimeType);
 
         return [$extension, $fileMimeType, $file_data, $fileSize];
     }

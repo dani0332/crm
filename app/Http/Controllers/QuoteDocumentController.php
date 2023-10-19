@@ -98,10 +98,10 @@ class QuoteDocumentController extends Controller
 
     public function store(Request $request, $quoteType)
     {
-        echo "<pre>";
-        print ("Inside equest");
+        echo '<pre>';
+        echo 'Inside equest';
         print_r($request);
-        die();
+        exit();
         if (! $request->hasFile('file') ||
             ! ($quote = $this->getQuoteObject($quoteType, $request->quote_id))
         ) {

@@ -40,9 +40,9 @@ class QuoteDocumentRequest extends FormRequest
             'is_base_64' => 'nullable',
         ];
 
-        if (!empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
+        if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
             if (request()->is_base_64 != 1) {
-                $rules['file'] = 'mimes:' . (str_replace('.', '', $this->documentType->accepted_files)) . '|max:' . ($this->documentType->max_size * 1024);
+                $rules['file'] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
             }
         }
 
@@ -63,21 +63,21 @@ class QuoteDocumentRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             //check for quote records if exists
-            if (!$quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
+            if (! $quote = $this->getQuoteObject(request()->quoteType, request()->quote_uuid)) {
                 $validator->errors()->add('type', 'Invalid quote type or uuid provided');
             }
 
             /**
              * documents can be attached to a member for health quote type
              */
-            if (ucfirst(request()->quoteType) == quoteTypeCode::Health && isset($quote->id) && !empty(request()->member_detail_id)) {
+            if (ucfirst(request()->quoteType) == quoteTypeCode::Health && isset($quote->id) && ! empty(request()->member_detail_id)) {
                 //check for quote records if exists
-                if (!$quote->members()->where('id', request()->member_detail_id)->first()) {
+                if (! $quote->members()->where('id', request()->member_detail_id)->first()) {
                     $validator->errors()->add('member_detail_id', 'Invalid member detail id provided');
                 }
             }
 
-            if (ucfirst(request()->quoteType) != quoteTypeCode::Health && !empty(request()->member_detail_id)) {
+            if (ucfirst(request()->quoteType) != quoteTypeCode::Health && ! empty(request()->member_detail_id)) {
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
@@ -88,7 +88,7 @@ class QuoteDocumentRequest extends FormRequest
 
             //check for maximum number of files uploaded against selected quote and document type
             if ($this->documentType && $quote && $quote->documents->where('document_type_code', request()->document_type_code)->count() >= $this->documentType->max_files) {
-                $validator->errors()->add('file', 'You can only upload a maximum of ' . $this->documentType->max_files . ' files');
+                $validator->errors()->add('file', 'You can only upload a maximum of '.$this->documentType->max_files.' files');
             }
         });
     }

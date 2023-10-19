@@ -60,7 +60,7 @@ class QuoteDocumentController extends Controller
     {
         $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
-        $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file  : $request->file('file'), $request->validated(), $quote);
+        $document = $this->quoteDocumentService->uploadQuoteDocument(data_get($request, 'is_base_64', 0) == 1 ? $request->file : $request->file('file'), $request->validated(), $quote);
 
         return new QuoteDocumentResource($document);
     }
