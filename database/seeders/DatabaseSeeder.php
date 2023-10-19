@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             MemberRelationsSeeder::class,
             GenericPermissionSeeder::class,
             AddApiLogViewToPermssion::class,
+            UpdateCustomerToHealthAndTravelMemberDetails::class
         ]);
     }
 }
