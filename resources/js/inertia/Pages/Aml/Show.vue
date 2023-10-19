@@ -86,7 +86,7 @@ const tableHeader = [
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Screenshot</dt>
             <dd>
-              <img :src="aml.screenshot" alt="IMCRM" class="w-auto" />
+              <img v-if="aml.screenshot" :src="aml.screenshot" alt="IMCRM" class="w-auto" />
             </dd>
           </div>
         </dl>
