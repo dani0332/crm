@@ -21,18 +21,22 @@ class IntroEmailJob implements ShouldQueue
     private $emailTemplateId = null;
     private $emailData = null;
     private $tag = null;
+    private $previousAdvisorId = null;
+    private $isReassignment = false;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($quoteType, $emailTemplateId, $emailData, $tag)
+    public function __construct($quoteType, $emailTemplateId, $emailData, $tag, $previousAdvisorId, $isReassignment)
     {
         $this->quoteType = $quoteType;
         $this->emailTemplateId = $emailTemplateId;
         $this->emailData = $emailData;
         $this->tag = $tag;
+        $this->previousAdvisorId = $previousAdvisorId;
+        $this->isReassignment = $isReassignment;
     }
 
     /**
@@ -49,10 +53,11 @@ class IntroEmailJob implements ShouldQueue
         }
         switch ($this->quoteType) {
             case quoteTypeCode::Car:
-                $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'send-lms-intro-email');
+                info('Inside car check for sending email');
+                $sendEmailCustomerService->sendLMSIntroEmail($this->emailTemplateId, $this->emailData, 'lms-intro-email');
                 break;
             case quoteTypeCode::Health:
-                $sendEmailCustomerService->sendRMIntroEmail($this->emailData);
+                $sendEmailCustomerService->sendRMIntroEmail($this->emailData, $this->previousAdvisorId, $this->isReassignment);
                 break;
             default:
                 break;

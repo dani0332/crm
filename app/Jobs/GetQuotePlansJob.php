@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\QuoteTypeShortCode;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -51,12 +50,21 @@ class GetQuotePlansJob implements ShouldQueue, StackableJob
 
         switch ($quoteTypeCode) {
             case QuoteTypeShortCode::HEA:
-                $healthQuoteService->getQuotePlans($this->lead->uuid);
-                $this->lead->quote_updated_at = Carbon::now();
-                $this->lead->save();
+                $statusCode = $healthQuoteService->getQuotePlans($this->lead->uuid);
+                if (! isset($statusCode)) {
+                    info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
+
+                    return false;
+                } elseif (is_string($statusCode)) {
+                    info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
+
+                    return false;
+                }
                 break;
             default:
                 break;
         }
+
+        return true;
     }
 }
