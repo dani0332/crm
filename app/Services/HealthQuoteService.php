@@ -15,7 +15,6 @@ use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
-use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
