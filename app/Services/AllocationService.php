@@ -214,7 +214,7 @@ class AllocationService
                 if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('About to deduct from auto assignment count for previous advisor');
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif (!$isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
                     info('About to deduct from manual assignment count for previous advisor');
                     $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
                 }
