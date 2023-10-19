@@ -29,6 +29,7 @@ class HealthAllocationService extends AllocationService
             ->where('quote_status_id', QuoteStatusEnum::Qualified)
             ->whereNotNull('health_quote_request.price_starting_from')
             ->whereNull('health_quote_request.advisor_id');
+
         return $query->first();
     }
 

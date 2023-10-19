@@ -42,6 +42,7 @@ class CarAllocationService extends AllocationService
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
+
         // Retrieve the first matching car lead from the query or return null if none is found.
         return $query->first();
     }
