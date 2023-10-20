@@ -96,7 +96,7 @@ class QuoteAllocation extends Command
         $conditions = $config['conditions'];
         $processedRecords = 0;
         $quoteModel::whereNull($allocationKey)
-            ->whereBetween('created_at', [now()->startOfDay()->toDateTimeString(), $to])
+            ->whereBetween('created_at', [now()->subMonth()->startOfDay()->toDateTimeString(), $to])
             ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {
