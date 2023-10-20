@@ -37,6 +37,7 @@ class CammyJob implements ShouldQueue
      */
     public function handle(CammyService $cammyService)
     {
-        return $cammyService->sync($this->lead, $this->trigger);
+        return true;
+        //return $cammyService->sync($this->lead, $this->trigger);
     }
 }
