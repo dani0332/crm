@@ -484,15 +484,46 @@ const currentInsuranceOptions = computed(() => {
   ];
 });
 
+const dateToYMD = date => {
+  if (date) {
+    const [day, month, year] = date.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return '';
+};
+
 const policyDetailsState = reactive({
   isEditing: false,
 });
+
+const planQuoteInsurerNumber = computed(() => {
+  let obj = page.props.listQuotePlans.filter(
+    item => item.id == page.props.record.plan_id,
+  );
+  return obj[0]?.insurerQuoteNo;
+});
+const vatAmount = computed(() => {
+  return (page.props.record.premium * 0.05).toFixed(2);
+});
+
+const priceWithoutVat = computed(() => {
+  return page.props.record.premium - vatAmount.value;
+});
+
 const policyDetailsForm = useForm({
   quote_policy_number: page.props.record.policy_number || null,
-  quote_policy_issuance_date: page.props.record.policy_issuance_date || null,
-  quote_policy_start_date: page.props.record.policy_start_date || null,
-  quote_policy_expiry_date: page.props.record.renewal_expiry_date || null,
+
+  quote_policy_issuance_date:
+    dateToYMD(page.props.record.policy_issuance_date) || '',
+  quote_policy_price_vat_notapplicable: null,
+  quote_policy_price_vat_applicable: priceWithoutVat || '',
+  quote_policy_vat_total_amount: vatAmount.value || null,
+  quote_policy_start_date: dateToYMD(page.props.record.policy_start_date) || '',
+  quote_policy_expiry_date:
+    dateToYMD(page.props.record.renewal_expiry_date) || '',
   quote_premium: page.props.record.premium || null,
+  quote_plan_insurer_quote_number: planQuoteInsurerNumber.value || null,
+  quote_policy_issuance_status: null,
   modelType: 'Car',
   quote_id: page.props.record.id,
 });
@@ -2591,21 +2622,45 @@ const loadEmailEvents = email => {
         <div class="w-full md:w-1/2">
           <DatePicker
             v-model="policyDetailsForm.quote_policy_issuance_date"
-            name="quote_policy_issuance_date"
-            label="Issuance Date"
-            placeholder="Issuance Date"
+            :disabled="!policyDetailsState.isEditing"
+            :rules="[isRequired]"
+            type="date"
+            label="ISSUANCE DATE"
+            class="w-full"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-textarea
+            v-model="policyDetailsForm.quote_policy_price_vat_notapplicable"
+            type="text"
+            label="Price (VAT NOT APPLICABLE)"
+            placeholder="Price (VAT NOT APPLICABLE)"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <DatePicker
+            v-model="policyDetailsForm.quote_policy_start_date"
+            type="date"
+            label="Start Date"
+            placeholder="Start Date"
             class="w-full"
             :disabled="!policyDetailsState.isEditing"
           />
         </div>
       </div>
+
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
         <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_start_date"
+          <x-textarea
+            v-model="policyDetailsForm.quote_policy_price_vat_applicable"
             type="text"
-            label="Policy Start Date"
-            placeholder="Policy Start Date"
+            label="Price (VAT APPLICABLE)"
+            placeholder="Price (VAT APPLICABLE)"
             class="w-full"
             :disabled="!policyDetailsState.isEditing"
           />
@@ -2613,7 +2668,7 @@ const loadEmailEvents = email => {
         <div class="w-full md:w-1/2">
           <DatePicker
             v-model="policyDetailsForm.quote_policy_expiry_date"
-            type="text"
+            type="date"
             label="Expiry Date"
             placeholder="Expiry Date"
             class="w-full"
@@ -2621,17 +2676,57 @@ const loadEmailEvents = email => {
           />
         </div>
       </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-textarea
+            v-model="policyDetailsForm.quote_policy_vat_total_amount"
+            type="text"
+            label="Total VAT Amount"
+            placeholder="Total VAT Amount"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
         <div class="w-full md:w-1/2">
           <x-input
             v-model="policyDetailsForm.quote_premium"
             type="number"
-            label="Price"
+            label="Price with VAT"
             placeholder="Price"
             class="w-full"
             :disabled="!policyDetailsState.isEditing"
           />
         </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
+        <div class="w-full md:w-1/2">
+          <x-input
+            v-model="policyDetailsForm.quote_plan_insurer_quote_number"
+            type="number"
+            label="Insurer Quote Number"
+            placeholder="Insurer Quote Number"
+            class="w-full"
+            :disabled="!policyDetailsState.isEditing"
+          />
+        </div>
+        <div class="w-full md:w-1/2">
+          <x-select
+            v-model="policyDetailsForm.quote_policy_issuance_status"
+            class="w-full"
+            label="Issuance Status"
+            placeholder="Select any option"
+            :disabled="!policyDetailsState.isEditing"
+            :options="[
+              { value: 'All', label: 'All' },
+              { value: true, label: 'Yes' },
+              { value: false, label: 'No' },
+            ]"
+          />
+        </div>
+      </div>
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+        <div class="w-full md:w-1/2"></div>
         <div class="w-full md:w-1/2" />
       </div>
       <div
