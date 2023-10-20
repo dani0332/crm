@@ -426,14 +426,13 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
-  return (
-    page.props.record.quote_status_id ==
-      page.props.quoteStatusEnum.TransactionApproved ||
-    page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate ||
-    (page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake &&
-      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) ||
-    (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
-  );
+
+return (
+  ((page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
+  ( page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake)
+  &&
+      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) || (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction))
+);
 });
 
 const assumptionState = reactive({
