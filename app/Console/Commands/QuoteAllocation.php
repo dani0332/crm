@@ -53,7 +53,7 @@ class QuoteAllocation extends Command
         $allocationStartDate = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS);
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(7)->toDateTimeString();
-            $chunkSize = 50;
+            $chunkSize = 500;
             $linesOfBusiness = [
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
