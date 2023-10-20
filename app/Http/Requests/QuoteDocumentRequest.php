@@ -41,7 +41,7 @@ class QuoteDocumentRequest extends FormRequest
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
-            if (!(request()->is_base_64)) {
+            if (! (request()->is_base_64)) {
                 $rules['file'] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
             }
         }
