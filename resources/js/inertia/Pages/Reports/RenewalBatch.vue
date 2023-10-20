@@ -381,14 +381,11 @@ function calculateValuesAndHighlight() {
         avgImRetentionArr[monthName].push(imRetention == 'NaN' ? parseFloat('0.00') : parseFloat(imRetention));
         avgRawRetentionArr[monthName].push(rawRetention == 'NaN' ? parseFloat('0.00') : parseFloat(rawRetention));
 
-        if(!page.props.filterOptions.isMCR){
+        if (!page.props.filterOptions.isMCR) {
             page.props.renewalBatchesList.forEach(batch => {
-                batch.slabs.forEach(slab => {
-
-                    batch.teams.forEach(team => {
-                        let teamName = team.name;
-
-                        if (teamName.includes('BDM')) {
+                if (batch.name == item.renewal_batch) {
+                    batch.slabs.forEach(slab => {
+                        if (page.props.filterOptions.isBDM) {
                             let slabId = slab.pivot.slab_id;
                             let slabMax = slab.pivot.max;
                             let slabMin = slab.pivot.min;
@@ -404,7 +401,7 @@ function calculateValuesAndHighlight() {
                             }
 
                         }
-                        else if (teamName.includes('volume') || teamName.includes('value')) {
+                        else if (page.props.filterOptions.isRenewals) {
                             let slabId = slab.pivot.slab_id;
                             let slabMax = slab.pivot.max;
                             let slabMin = slab.pivot.min;
@@ -422,9 +419,9 @@ function calculateValuesAndHighlight() {
                                 item.advisorRetentionClass = "text-red-500";
                             }
                         }
-                    });
 
-                })
+                    })
+                }
             });
         }
     });
@@ -440,7 +437,6 @@ function calculateValuesAndHighlight() {
 
 
 onMounted(() => {
-
     if (page.props.defaultFilters && !params['page']) {
         filters.reportDate =
             page.props.defaultFilters.reportDate;
