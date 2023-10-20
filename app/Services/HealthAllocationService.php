@@ -8,6 +8,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
@@ -110,12 +111,16 @@ class HealthAllocationService extends AllocationService
         info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
 
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->join('teams as t', 't.id', '=', 'users.sub_team_id')
             ->where('users.status', $status)
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')
                     ->orWhere('la.max_capacity', '=', -1);
             })
+            ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+            ->where('users.is_active', true)
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
     }
