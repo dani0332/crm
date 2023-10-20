@@ -173,7 +173,7 @@ const getAddonVat = item => {
             class="w-full"
             placeholder="Enter Price without vat"
             type="number"
-            step="0.01"
+            step="any"
           />
         </x-field>
       </div>
@@ -185,7 +185,7 @@ const getAddonVat = item => {
             class="w-full"
             placeholder="Enter Car value"
             type="number"
-            step="0.01"
+            step="any"
           />
         </x-field>
       </div>
@@ -197,7 +197,7 @@ const getAddonVat = item => {
             class="w-full"
             placeholder="Enter excess"
             type="number"
-            step="0.01"
+            step="any"
           />
         </x-field>
       </div>
