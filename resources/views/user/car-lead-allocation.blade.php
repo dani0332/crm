@@ -259,7 +259,7 @@ use App\Enums\RolesEnum;
                             });
                     }
                 });
-
+                @if(auth()->user()->hasAnyRole([RolesEnum::LeadPool]))
                 $('body').on('dblclick', 'table:first td.td-max-cap', function() {
                         var maxCapValue = parseInt($(this).text());
                         if(maxCapValue !== NaN){
@@ -302,6 +302,8 @@ use App\Enums\RolesEnum;
                             }
                         });
                     });
+                @endif
+
         });
         function changeAvailabilityInputs(ischecked){
             $inputs = $('.chk');
