@@ -189,6 +189,17 @@ const addPayment = isValid => {
     });
 };
 
+const captureApprovePaymentModal = ref(false);
+
+const captureApprovePaymentForm = useForm({
+  paymentCode: '',
+});
+const captureApprovePayment = item => {
+  captureApprovePaymentModal.value = true;
+
+  captureApprovePaymentForm.paymentCode = item.payment_methods_code;
+};
+
 const approvePayment = payment => {
   let data = {
     code: payment.code,
@@ -320,9 +331,24 @@ const providerId = computed(() => {
               size="xs"
               color="primary"
               outlined
-              @click="approvePayment(item)"
+              @click="captureApprovePayment(item)"
             >
               Approve
+            </x-button>
+            <x-button
+              v-if="
+                item.payment_methods_code === 'CC' &&
+                ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(
+                  item.payment_status_id,
+                ) &&
+                !hasRole(rolesEnum.PA)
+              "
+              size="xs"
+              color="primary"
+              outlined
+              @click="captureApprovePayment(item)"
+            >
+              Capture
             </x-button>
           </template>
           <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
@@ -333,6 +359,19 @@ const providerId = computed(() => {
         </div>
       </template>
     </DataTable>
+
+    <x-modal v-model="captureApprovePaymentModal" size="lg" show-close backdrop>
+      <span class="text-primary-800 font-semibold">
+        {{
+          captureApprovePaymentForm.paymentCode === 'CC'
+            ? 'Capture Payment'
+            : 'Approve Payment'
+        }}
+      </span>
+      <div class="w-full grid md:grid-cols-2 gap-5">
+        <x-button color="primary" type="submit"> Create </x-button>
+      </div>
+    </x-modal>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">
