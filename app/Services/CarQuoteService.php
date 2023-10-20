@@ -1447,7 +1447,8 @@ class CarQuoteService extends BaseService
             return ['error' => 'Quote plans not available'];
         }
 
-        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote = $this->getQuoteObjectBy($quoteType, $data['quote_uuid'], 'uuid');
+
         $quote->load(['carMake', 'carModel', 'advisor' => function ($q) {
             $q->select('id', 'email', 'mobile_no', 'name', 'landline_no');
         }, 'customer']);

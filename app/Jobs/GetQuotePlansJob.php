@@ -9,13 +9,13 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
 class GetQuotePlansJob implements ShouldQueue, StackableJob
 {
-    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
     public $timeout = 30;
@@ -40,31 +40,30 @@ class GetQuotePlansJob implements ShouldQueue, StackableJob
      */
     public function handle(HealthQuoteService $healthQuoteService)
     {
-        if (! $this->lead) {
-            return false;
+        if ($this->lead && $this->getQuoteCodeType($this->lead)) {
+            $quoteTypeCode = $this->getQuoteCodeType($this->lead);
+
+            switch ($quoteTypeCode) {
+                case QuoteTypeShortCode::HEA:
+                    $statusCode = $healthQuoteService->getQuotePlans($this->lead->uuid);
+                    if (! isset($statusCode)) {
+                        info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
+
+                        return false;
+                    } elseif (is_string($statusCode)) {
+                        info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
+
+                        return false;
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
-        $quoteTypeCode = $this->getQuoteCodeType($this->lead);
-        if (! $quoteTypeCode) {
-            return false;
-        }
+    }
 
-        switch ($quoteTypeCode) {
-            case QuoteTypeShortCode::HEA:
-                $statusCode = $healthQuoteService->getQuotePlans($this->lead->uuid);
-                if (! isset($statusCode)) {
-                    info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
-
-                    return false;
-                } elseif (is_string($statusCode)) {
-                    info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
-
-                    return false;
-                }
-                break;
-            default:
-                break;
-        }
-
-        return true;
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->lead->id))->dontRelease()];
     }
 }
