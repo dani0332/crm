@@ -68,6 +68,10 @@ class RenewalBatchReportService extends BaseService
     public function getFilterOptions()
     {
         $authUserTeams = null;
+        $isBDM = false;
+        $isMCR = false;
+        $isRenewals = false;
+
         $authUserId = auth()->user()->id;
 
         /**
@@ -150,12 +154,30 @@ class RenewalBatchReportService extends BaseService
             })
             ->toArray();
 
+        $bdmTeamId = Team::where('name', TeamNameEnum::BDM)->select('id')->first()->id;
+        if (in_array($bdmTeamId, $authUserTeamsIds)) {
+            $isBDM = true;
+        }
+
+        $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->select('id')->first()->id;
+        if (in_array($corpTeamId, $authUserTeamsIds)) {
+            $isMCR = true;
+        }
+
+        $renewalsTeamId = Team::where('name', TeamNameEnum::RENEWALS)->select('id')->first()->id;
+        if (in_array($renewalsTeamId, $authUserTeamsIds)) {
+            $isRenewals = true;
+        }
+
         return [
             'advisors' => $carAdvisors,
             'segments' => $segments,
             'subTeams' => $authUserSubTeams,
             'teams' => $authUserTeams,
             'batches' => $batches,
+            'isBDM' => $isBDM,
+            'isMCR' => $isMCR,
+            'isRenewals' => $isRenewals,
         ];
     }
 

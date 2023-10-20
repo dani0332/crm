@@ -381,50 +381,52 @@ function calculateValuesAndHighlight() {
         avgImRetentionArr[monthName].push(imRetention == 'NaN' ? parseFloat('0.00') : parseFloat(imRetention));
         avgRawRetentionArr[monthName].push(rawRetention == 'NaN' ? parseFloat('0.00') : parseFloat(rawRetention));
 
-        page.props.renewalBatchesList.forEach(batch => {
-            batch.slabs.forEach(slab => {
+        if(!page.props.filterOptions.isMCR){
+            page.props.renewalBatchesList.forEach(batch => {
+                batch.slabs.forEach(slab => {
 
-                batch.teams.forEach(team => {
-                    let teamName = team.name;
+                    batch.teams.forEach(team => {
+                        let teamName = team.name;
 
-                    if (teamName.includes('BDM')) {
-                        let slabId = slab.pivot.slab_id;
-                        let slabMax = slab.pivot.max;
-                        let slabMin = slab.pivot.min;
+                        if (teamName.includes('BDM')) {
+                            let slabId = slab.pivot.slab_id;
+                            let slabMax = slab.pivot.max;
+                            let slabMin = slab.pivot.min;
 
-                        if (slabId === 3 && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "text-green-500";
-                        }
-                        else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "text-amber-500";
-                        }
-                        else if (slabId === 1 && item.advisorRetention < slabMax) {
-                            item.advisorRetentionClass = "text-red-500";
-                        }
+                            if (slabId === 3 && item.advisorRetention > slabMin) {
+                                item.advisorRetentionClass = "text-green-500";
+                            }
+                            else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
+                                item.advisorRetentionClass = "text-amber-500";
+                            }
+                            else if (slabId === 1 && item.advisorRetention < slabMax) {
+                                item.advisorRetentionClass = "text-red-500";
+                            }
 
-                    }
-                    else if (teamName.includes('volume') || teamName.includes('value')) {
-                        let slabId = slab.pivot.slab_id;
-                        let slabMax = slab.pivot.max;
-                        let slabMin = slab.pivot.min;
+                        }
+                        else if (teamName.includes('volume') || teamName.includes('value')) {
+                            let slabId = slab.pivot.slab_id;
+                            let slabMax = slab.pivot.max;
+                            let slabMin = slab.pivot.min;
 
-                        if (slabId === 4 && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "text-green-500";
+                            if (slabId === 4 && item.advisorRetention > slabMin) {
+                                item.advisorRetentionClass = "text-green-500";
+                            }
+                            if (slabId === 3 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
+                                item.advisorRetentionClass = "text-amber-500";
+                            }
+                            else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
+                                item.advisorRetentionClass = "text-orange-500";
+                            }
+                            else if (slabId === 1 && item.advisorRetention < slabMax) {
+                                item.advisorRetentionClass = "text-red-500";
+                            }
                         }
-                        if (slabId === 3 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "text-amber-500";
-                        }
-                        else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
-                            item.advisorRetentionClass = "text-orange-500";
-                        }
-                        else if (slabId === 1 && item.advisorRetention < slabMax) {
-                            item.advisorRetentionClass = "text-red-500";
-                        }
-                    }
-                });
+                    });
 
-            })
-        });
+                })
+            });
+        }
     });
 
     monthlyIMAverages = calculateMonthlyAverages(avgImRetentionArr);
