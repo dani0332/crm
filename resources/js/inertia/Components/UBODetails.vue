@@ -20,6 +20,7 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const { isRequired } = useRules();
 const modals = reactive({
     ubo: false,
 });
@@ -41,6 +42,7 @@ const UBORelationOptions = computed(() => {
     }));
 });
 
+const isLoading = ref(false);
 const UBOActionEdit = ref(false);
 const UBODetailsTable = reactive({
     isLoading: false,
@@ -109,6 +111,7 @@ const onUBOSubmit = isValid => {
     UBOFieldReq.nationality = (UBOForm.nationality_id == null);
     UBOFieldReq.dob = (UBOForm.dob == null);
     if (!isValid) return;
+    isLoading.value = true;
 
     if (UBOActionEdit.value) {
         UBOForm.put(`/members/${UBOForm.id}`, {
@@ -122,6 +125,7 @@ const onUBOSubmit = isValid => {
             },
             onFinish: () => {
                 modals.UBO = false;
+                isLoading.value = false;
             },
         });
     } else {
@@ -135,10 +139,12 @@ const onUBOSubmit = isValid => {
             },
             onFinish: () => {
                 modals.UBO = false;
+                isLoading.value = false;
             },
         });
     }
 };
+
 const confirmDeleteData = reactive({
     UBO: null,
 });
@@ -174,7 +180,7 @@ const UBODeleteConfirmed = () => {
             </h3>
             <x-button
                 v-if="page.props.quote?.quote_request_entity_mapping?.entity_id ?? page.props.quote.entity_id"
-                @click.prevent="addUBOModal" size="sm" color="orange">
+                @click.prevent="addUBOModal" size="sm" color="orange" :loading="isLoading">
                 Add UBO
             </x-button>
         </div>
@@ -232,22 +238,26 @@ const UBODeleteConfirmed = () => {
                     <input type="hidden" :value="UBOForm.id" />
                     <x-input
                         v-model="UBOForm.first_name"
+                        :rules="[isRequired]"
                         label="Name"
                         placeholder="Name"
                     />
                     <x-select
                         v-model="UBOForm.relation_code"
+                        :rules="[isRequired]"
                         label="Owner / Partner"
                         :options="UBORelationOptions"
                         placeholder="Select Owner / Partner"
                         class="w-full"
                     />
                     <DatePicker
+                        :rules="[isRequired]"
                         v-model="UBOForm.dob"
                         label="DOB"
                         :hasError="UBOFieldReq.dob"
                     />
                     <ComboBox
+                        required
                         v-model="UBOForm.nationality_id"
                         label="Nationality"
                         :options="nationalitiesOptions"

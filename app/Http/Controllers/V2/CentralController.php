@@ -127,7 +127,7 @@ class CentralController extends Controller
 
         return redirect()->back();
     }
-    
+
     /**
      * @return \Illuminate\Http\RedirectResponse
      */

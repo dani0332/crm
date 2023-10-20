@@ -47,6 +47,7 @@ use App\Repositories\AuditRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
+use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
@@ -561,15 +562,15 @@ class CRUDController extends Controller
         $access = $this->carQuoteService->updatedAccessAgainstPaymentStatus($paymentEntityModel, $record);
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
+            $quote = $record;
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
-            $listQuotePlans = null;
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id);
             $vehicleTypes = $this->lookupService->getVehicleTypes();
             $trimList = $this->lookupService->getTrimListByCarModel($record->car_model_id);
             $yearsOfManufacture = $this->lookupService->getYearsOfManufacture();
-            $carMakeText = $record->car_make_id_text ? $record->car_make_id_text : '';
-            $carModelText = $record->car_model_id_text ? $record->car_model_id_text : '';
+            $carMakeText = $record->car_make_id_text ?? '';
+            $carModelText = $record->car_model_id_text ?? '';
             $this->carQuoteService->addOrUpdateQuoteViewCount($record);
 
             foreach ($payments as $payment) {
@@ -603,14 +604,6 @@ class CRUDController extends Controller
                 $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
             }
 
-            $daysAfterCapturedPayment = null;
-            if (($capturedPaymentDate = PaymentStatusLog::where([
-                'quote_type_id' => QuoteTypeId::Car,
-                'quote_request_id' => $record->id,
-                'current_payment_status_id' => PaymentStatusEnum::CAPTURED,
-            ])->first())) {
-                $daysAfterCapturedPayment = Carbon::now()->diffInDays(Carbon::parse($capturedPaymentDate->created_at));
-            }
             $paymentEntityModel->load(['plan.insuranceProvider']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
@@ -647,16 +640,24 @@ class CRUDController extends Controller
             $leadDocsStoragePath = createCdnUrl('');
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
+            $UBOsDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Car, CustomerTypeEnum::Entity);
+            $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+            $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+            $membersDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::CAR->id());
+            $customerTypeEnum = CustomerTypeEnum::asArray();
+            $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+            $nationalities = NationalityRepository::withActive()->get();
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
+                'record','quote', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
-                'carPlanTypeEnum',
+                'carPlanTypeEnum','UBORelations','UBOsDetails','emirates','customerTypeEnum','memberRelations','membersDetails','industryType','nationalities'
             ]));
         }
 

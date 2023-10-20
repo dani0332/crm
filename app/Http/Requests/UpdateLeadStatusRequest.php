@@ -138,6 +138,10 @@ class UpdateLeadStatusRequest extends FormRequest
                 $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
             }
 
+            if ($quoteObject->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
+            }
+
             if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
                 if( ($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
                     request()->leadStatus == QuoteStatusEnum::Qualified) {

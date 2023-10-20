@@ -2576,7 +2576,7 @@ onMounted(() => {
       :link="quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="quoteType"
+      :modelType="modelType"
       :paymentLink="paymentLink"
     />
 

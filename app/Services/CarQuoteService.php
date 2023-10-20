@@ -134,7 +134,7 @@ class CarQuoteService extends BaseService
                 'cqr.renewal_import_code',
                 'cqr.quote_link',
                 DB::raw('DATE_FORMAT(cqrd.advisor_assigned_date, "%d-%m-%Y %H:%i:%s") as advisor_assigned_date'),
-                DB::raw("DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(),dob)), '%Y') + 0 AS customer_age"),
+                DB::raw("DATE_FORMAT(FROM_DAYS(DATEDIFF(NOW(), cqr.dob)), '%Y') + 0 AS customer_age"),
                 'cqr.tier_id',
                 't.name as tier_id_text',
                 'qvc.visit_count as visit_count',
@@ -142,7 +142,12 @@ class CarQuoteService extends BaseService
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
-                DB::raw('IF(cqr.customer_id = cqr.customer_id, "'.CustomerTypeEnum::Individual.'", "'.CustomerTypeEnum::Entity.'") as customer_type'),
+                DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = '.QuoteTypeId::Car.' AND quote_request_id = cqr.id),
+                    "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+                as customer_type'),
                 'cpip.code as plan_provider_code',
                 DB::raw('(CASE
                 WHEN cqr.assignment_type = 1 THEN "System Assigned"
@@ -150,6 +155,18 @@ class CarQuoteService extends BaseService
                 WHEN cqr.assignment_type = 3 THEN "Manual Assigned"
                 WHEN cqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
                 'cpip.code as plan_provider_code',
+                'c.insured_first_name',
+                'c.insured_last_name',
+                'c.emirates_id_number',
+                'c.emirates_id_expiry_date',
+                'qrem.entity_id',
+                'ent.code as entity_code',
+                'ent.trade_license_no',
+                'ent.company_name',
+                'ent.company_address',
+                'qrem.entity_type_code',
+                'ent.industry_type_code',
+                'ent.emirate_of_registration_id',
             )
             ->leftJoin('nationality as n', 'n.id', '=', 'cqr.nationality_id')
             ->leftJoin('car_quote_request_detail as cqrd', 'cqrd.car_quote_request_id', '=', 'cqr.id')
@@ -171,6 +188,12 @@ class CarQuoteService extends BaseService
             ->leftJoin('car_model_detail as cmd', 'cmd.id', '=', 'cqr.car_model_detail_id')
             ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
+            ->leftJoin('customer as c','cqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'cqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id')
             ->leftJoin('quote_view_count as qvc', function ($join) {
                 $join->on('qvc.quote_id', 'cqr.id');
                 $join->where('qvc.quote_type_id', QuoteTypeId::Car);
