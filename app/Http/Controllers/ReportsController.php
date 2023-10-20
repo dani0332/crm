@@ -145,7 +145,7 @@ class ReportsController extends Controller
      */
     public function renderRenewalReport(Request $request, RenewalBatchReportService $renewalBatchReportService)
     {
-        $renewalBatches = RenewalBatch::with(['slabs' => function($qry) {
+        $renewalBatches = RenewalBatch::with(['slabs' => function ($qry) {
             $qry->orderBy('id', 'desc');
         }, 'teams' => function ($qry) {
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
