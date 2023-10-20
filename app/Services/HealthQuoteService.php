@@ -17,6 +17,8 @@ use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
+use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthPlan;
 use App\Models\HealthQuote;
@@ -1133,7 +1135,7 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
@@ -1270,7 +1272,7 @@ class HealthQuoteService extends BaseService
                         $response['paymentStatus'] = GenericRequestEnum::NotApplicable;
                         $response['paidAt'] = GenericRequestEnum::NotApplicable;
                         $response['planName'] = $plan['name'];
-                        if ($plan['ratesPerCopay']) {
+                        if (isset($plan['ratesPerCopay'])) {
                             foreach ($plan['ratesPerCopay'] as $ratePerCopay) {
                                 if ($ratePerCopay['healthPlanCoPaymentId'] == $data->health_plan_co_payment_id) {
                                     $response['priceWithVAT'] = (float) $ratePerCopay['premium'] + (float) $ratePerCopay['vat'];
@@ -1565,7 +1567,7 @@ class HealthQuoteService extends BaseService
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+            //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
         }
     }

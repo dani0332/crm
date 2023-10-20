@@ -43,8 +43,6 @@ class CarAllocationService extends AllocationService
             ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
 
-        info('Query for getting lead is : '.getQueryForLogWithBindings($query)); // calling generic function to print query with bindings
-
         // Retrieve the first matching car lead from the query or return null if none is found.
         return $query->first();
     }

@@ -44,7 +44,8 @@ defineProps({
   industryType: Object,
   UBORelations: Array,
   UBOsDetails: Array,
-  paymentLink:String
+  paymentLink: String,
+  quoteType: String,
 });
 
 const page = usePage();
@@ -760,7 +761,7 @@ const getSmallestCopayRateAsDefaultValue = () => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat)
+        smallestCopayVAT = Number(value.vat);
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
         smallestCopayValue = Number(value.premium);
@@ -1888,7 +1889,7 @@ onMounted(() => {
         </template>
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
-          <div class="grid md:grid-cols-2 gap-4">
+          <div class="grid md:grid-cols-2 gap-4 md:pb-16">
             <input type="hidden" :value="memberForm.id" />
               <x-input
                   v-model="memberForm.first_name"
@@ -1910,6 +1911,15 @@ onMounted(() => {
               :options="emiratesOptions"
               :rules="[isRequired]"
               placeholder="Select Emirate of Visa"
+              class="w-full"
+            />
+
+            <x-select
+              v-model="memberForm.member_category_id"
+              label="Member Category"
+              :options="memberCategoriesOptions"
+              :rules="[isRequired]"
+              placeholder="Select Member Category"
               class="w-full"
             />
 
@@ -1950,7 +1960,7 @@ onMounted(() => {
             />
           </div>
 
-          <div class="text-right space-x-4 mt-8">
+          <div class="flex justify-end gap-3">
             <x-button size="sm" @click.prevent="modals.member = false">
               Cancel
             </x-button>
@@ -1960,6 +1970,7 @@ onMounted(() => {
               color="emerald"
               :loading="memberForm.processing"
               type="submit"
+              class="px-6"
             >
               {{ memberActionEdit ? 'Update' : 'Save' }}
             </x-button>
@@ -2434,7 +2445,9 @@ onMounted(() => {
           </div>
         </template>
         <template #item-total="{ actualPremium, policyFee, basmah, vat }">
-          {{ fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat) }}
+          {{
+            fixedValue(actualPremium + (policyFee || 0) + (basmah || 0) + vat)
+          }}
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
