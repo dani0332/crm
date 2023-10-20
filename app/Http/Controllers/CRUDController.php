@@ -1740,15 +1740,59 @@ class CRUDController extends Controller
         return back()->with('success', 'Payment has been created');
     }
 
+    public function splitPaymentUpdate(Request $request)
+    {
+        //dd($request->all());
+        $successMessage='Payment Verified';
+        if($request->is_approved) {
+            $paymentInformation = [
+                'collection_amount' => $request->collection_amount,
+                'bank_reference_number' => $request->bank_reference_number,
+                'payment_status_id' => PaymentStatusEnum::PAID,
+                'updated_by' => $request->user()->id,
+            ];
+
+        } elseif($request->is_declined) {
+            $paymentInformation = [
+                'declined_reason_id' => $request->declined_reason,
+                'declined_custom_reason' => $request->declined_custom_reason,
+                'payment_status_id' => PaymentStatusEnum::DECLINED,
+                'updated_by' => $request->user()->id,
+            ];
+            $successMessage='Payment Declined';
+        }
+        PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
+        return back()->with('success', $successMessage);
+        
+       
+    }
+
     public function updatePayment(Request $request)
     {
+        //dd($request->all());
+       
         $paymentInformation = [
+            'total_price' => $request->total_price,
+            'notes' => !empty($request->notes) ? $request->notes : null,
+            'custom_reason' => !empty($request->custom_reason) ? $request->custom_reason : null,
+            'discount_reason' => $request->discount_reason,
+            'discount' => $request->discount,
+            'frequency' => $request->frequency,
+            'credit_approval' => $request->credit_approval,
+            'total_payments' => $request->payment_no,            
             'collection_type' => $request->collection_type,
-            'captured_amount' => $request->captured_amount,
+            'captured_amount' => $request->captured_amount, 
+            'total_amount' => $request->total_amount, //amount after discount
+            'collection_date' => $request->collection_date,
+            'discount_value' => $request->discount_value,
             'payment_methods_code' => $request->payment_methods,
-            'insurance_provider_id' => $request->insurance_provider_id,
+            'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
             'updated_by' => $request->user()->id,
         ];
+        
+        //dd($request->split_payment_details['document_detail']);
+       
+
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
         }
@@ -1757,6 +1801,70 @@ class CRUDController extends Controller
             return back()->with('message', 'Payment record not found');
         }
         $payment->update($paymentInformation);
+
+
+        //Add split payments start
+        $paymentSplits = PaymentSplits::with('documents')->where(['code'=>$request->paymentCode])->get(); 
+        $paymentSerialNo = [];
+        $splitPaymentDocumentIds = [];
+        if($paymentSplits){
+            foreach($paymentSplits as $paymentSplit){
+                if($paymentSplit->payment_status_id == PaymentStatusEnum::PAID) {
+                    $paymentSerialNo[] = $paymentSplit->sr_no;
+                    continue;
+                }
+                //dd($paymentSplit->documents()->count());
+                foreach($paymentSplit->documents as $document){
+                    $splitPaymentDocumentIds[$paymentSplit->sr_no][] = $document->id;
+                }
+                
+                $paymentSplit->documents()->delete();
+                $paymentSplit->delete();
+            }
+        }
+
+        for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
+            if(in_array($i, $paymentSerialNo)){
+                continue;
+            }
+            $splitPaymentInformation = [
+                'code' => $request->paymentCode,
+                'sr_no' => $i,
+                'payment_method' => $request->split_payment_details['payment_type'][$i],
+                'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
+                'payment_amount' => $request->split_payment_details['split_amount'][$i],
+                'due_date' => $request->split_payment_details['due_date'][$i],   
+                'payment_status_id' => PaymentStatusEnum::DRAFT,
+            ];
+            
+            $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
+            
+            //add document references
+            if(isset($request->split_payment_details['document_detail'][$i]) 
+                && $paymentSplitRecord 
+                && count($request->split_payment_details['document_detail'][$i]) 
+                ){
+                foreach($request->split_payment_details['document_detail'][$i] as $document){
+                    
+                    if( isset($splitPaymentDocumentIds[$i]) && in_array($document['id'], $splitPaymentDocumentIds[$i])){
+                        $quoteDocumentRec = QuoteDocument::withTrashed()->find($document['id']);
+                        if ($quoteDocumentRec){
+                            $quoteDocumentRec->restore();
+                            $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                            $quoteDocumentRec->save();
+                        }
+                        continue;
+                    }
+                    $quoteDocumentRec = QuoteDocument::find($document['id']);                    
+                    if ($quoteDocumentRec){
+                        $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                        $quoteDocumentRec->save();
+                    }
+                }
+            }
+        }
+        //Add split payments ends
+
 
         return back()->with('success', 'Payment has been updated');
     }

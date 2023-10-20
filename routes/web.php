@@ -179,6 +179,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     });
     Route::post('/payments/{quoteType}/store', [CRUDController::class, 'storePayment']);
     Route::post('/payments/{quoteType}/update', [CRUDController::class, 'updatePayment']);
+    Route::post('/payments/{quoteType}/split-update', [CRUDController::class, 'splitPaymentUpdate']);
 
     Route::post('/quotes/car/post-sage-data', [SageApi::class, 'processSagePost'])->name('post-sage-data');
     // Route::post('/quotes/car/post-sage-data', [\App\Http\Controllers\V2\CarQuoteController::class, 'processSagePost'])->name('post-sage-data');
