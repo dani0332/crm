@@ -1791,7 +1791,7 @@ class CRUDController extends Controller
         ];
         
         //dd($request->split_payment_details['document_detail']);
-       
+       //dd($request->split_payment_details['split_amount']);
 
         if ($request->reference) {
             $paymentInformation['reference'] = $request->reference;
@@ -1805,12 +1805,12 @@ class CRUDController extends Controller
 
         //Add split payments start
         $paymentSplits = PaymentSplits::with('documents')->where(['code'=>$request->paymentCode])->get(); 
-        $paymentSerialNo = [];
+        $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
         if($paymentSplits){
             foreach($paymentSplits as $paymentSplit){
                 if($paymentSplit->payment_status_id == PaymentStatusEnum::PAID) {
-                    $paymentSerialNo[] = $paymentSplit->sr_no;
+                    $paymentPaidSerialNo[] = $paymentSplit->sr_no;
                     continue;
                 }
                 //dd($paymentSplit->documents()->count());
@@ -1824,7 +1824,7 @@ class CRUDController extends Controller
         }
 
         for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
-            if(in_array($i, $paymentSerialNo)){
+            if(in_array($i, $paymentPaidSerialNo)){
                 continue;
             }
             $splitPaymentInformation = [

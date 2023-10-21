@@ -55,6 +55,8 @@ const readOnlyPayments = ref([]);
 
 const totalAmount = ref(props.quoteRequest.premium); // Initial total price
 
+const paidAmountSum = ref(0);
+const totalPaidAmount = ref(0);
 
 const calculateTotalAmount = () => {
   const discount = discountValue.value;
@@ -144,8 +146,14 @@ const validatePaymentOption = () => {
       }
       console.log('azhar22='+issueFound);
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
-        //isDocumentNotUploaded.value[i] = false;
-        if ( (paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ') ) {
+        isDocumentNotUploaded.value[i] = false;
+
+        console.log('azharLEN='+fileUploadModels.value[i]);
+
+        if ( (paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ') 
+        && (fileUploadModels.value[i]===undefined) 
+      
+        ) {
           isDocumentNotUploaded.value[i] = true;
           issueFound = true;
         }
@@ -168,7 +176,16 @@ const totalPayments = ref([
 
  const paymentTypes = ref(props.paymentMethods.filter(item => !['CR_FAYAZ', 'CR_HITESH', 'CR_MAHESH', 'CR'].includes(item.value)));
  paymentTypes.value.unshift({ value: '', label: 'Select Payment' });
-  
+ 
+
+const getPaymentTypeLabel = (code) => {
+  const paymentType = paymentTypes.value.find(item => item.value === code);
+  if (paymentType) {
+    return paymentType.label;
+  }
+  return '';
+};
+
 const frequencyTypes = [
   { value: '', label: 'Select Frequency'},
   { value: 'upfront', label: 'Upfront', tooltip: props.paymentTooltipEnum.FREQUENCY_LIST_UPFRONT },
@@ -221,7 +238,8 @@ const handleDeclinedReasonChange = () => {
   }
 };
 
-const handlePaymentOptions = () => {
+const handlePaymentOptions = (count) => {
+  isPaymentMetodNotSelected.value[count] = false;
   if( paymentMethodsModels.value[1] === 'CHQ' || paymentMethodsModels.value[1] === 'PDC' ) {
     isCheckDetailsEnabled.value = true;
   } else {
@@ -322,7 +340,13 @@ const calculateDueDates = () => {
   if(paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'upfront'){
      //dueDateModels.value[1] = new Date();
     for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+      
+      if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
+        continue;
+      }      
       dueDateModels.value[i] = paymentMethodsForm.collection_date;
+    
+    
     }
   } else if(paymentMethodsForm.frequency === 'custom'){
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
@@ -359,10 +383,18 @@ const calculateDueDates = () => {
 
 }
 
-const calculatePaymentBreakup = () => {
-  var perInstallmentPrice = parseFloat((totalAmount.value/paymentMethodsForm.payment_no).toFixed(2));
-  
+const calculatePaymentBreakup = () => {  
+
+  var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
+  console.log('azhar9991='+perInstallmentPrice);
+  if ( paymentMethodsForm.status === 'edit' && paymentMethodsForm.frequency != 'split_payments') {
+    ////splitAmountModels.value = [];
+  }
+
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+    if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
+      continue;
+    }
     splitAmountModels.value[i] = perInstallmentPrice;
     if(i>1){
       paymentMethodsModels.value[i] = '';
@@ -392,9 +424,10 @@ const formatAmount = (amount) => {
   return formattedAmount;
 }
 
-const handleFrequencyChange = () => {
+const handleFrequencyChange = (noPaymentUpdate=true) => {
   var resetPaymentMethod = false;
-  totalPayments.value = [];
+  totalPayments.value = []; 
+
   for (let i = 1; i <= 12; i++) { // Append 7 more values to totalPayments
     totalPayments.value.push({ value: i.toString(), label: i.toString() });
   }
@@ -414,7 +447,10 @@ const handleFrequencyChange = () => {
     calculatePaymentBreakup();
   } else if (paymentMethodsForm.frequency === 'split_payments') {
     isPaymentNoEnabled.value = true;
-    paymentMethodsForm.payment_no = '1';
+    if(noPaymentUpdate){
+      paymentMethodsForm.payment_no = '1';
+    }
+    //paymentMethodsForm.payment_no = '1';
     totalPayments.value.splice(-7);    
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;
@@ -545,17 +581,21 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   paymentMethodsForm.collection_date= payment.collection_date;
   discountValue.value = payment.discount_value; // discount amount
 
-  //console.log('azhar20='+payment.discount_value);
+  console.log('azhar20='+payment.total_payments);
   //console.log('azha221='+JSON.stringify(paymentMethodsForm));
   handleCollectionTypeChange();
-  handleFrequencyChange();
+  handleFrequencyChange(false);
   handleApprovalReasonChange();
   handleDiscountChange();
   calculateTotalAmount();
   
+  console.log('azhar200='+JSON.stringify(payment.payment_splits));
+
   for(let i=1; i<=payment.total_payments; i++){
     if(payment.payment_splits[i-1].payment_status_id===10) { // 10 = Paid
       readOnlyPayments.value[i] = true;
+      totalPaidAmount.value++;
+      paidAmountSum.value = parseFloat(paidAmountSum.value) + parseFloat(payment.payment_splits[i-1].payment_amount);
     } else {
       readOnlyPayments.value[i] = false;
     } 
@@ -580,7 +620,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
     }
   }
 
-  console.log('azhar523='+readOnlyPayments.value[1]);
+  console.log('azhar523='+paymentMethodsModels.value);
   createPaymentModal.value = true;
 };
 
@@ -1077,7 +1117,7 @@ const providerId = computed(() => {
     </div>
     <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
       <template #header>
-        <span class="text-primary-800 font-semibold">
+        <span class=" ">
           <template v-if="isViewEnabled">View Payment</template>
           <template v-else>
           {{
@@ -1362,7 +1402,7 @@ const providerId = computed(() => {
           <div class="flex w-full">
             <div class="w-1/6 px-2 text-center">
               <x-tooltip>
-                <span class="text-sm text-primary-800 font-semibold">
+                <span class="text-sm  ">
                   PAYMENT NO *
                 </span>
                 <template #tooltip>
@@ -1372,7 +1412,7 @@ const providerId = computed(() => {
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm text-primary-800 font-semibold">
+                <span class="text-sm  ">
                   PAYMENT METHOD *
                 </span>
                 <template #tooltip>
@@ -1382,7 +1422,7 @@ const providerId = computed(() => {
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm text-primary-800 font-semibold">
+                <span class="text-sm  ">
                   TOTAL AMOUNT *
                 </span>
                 <template #tooltip>
@@ -1392,7 +1432,7 @@ const providerId = computed(() => {
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm text-primary-800 font-semibold">
+                <span class="text-sm">
                   DUE DATE *
                 </span>
                 <template #tooltip>
@@ -1402,7 +1442,7 @@ const providerId = computed(() => {
             </div>
             <div class="w-1/5 px-2">
               <x-tooltip>
-                <span class="text-sm text-primary-800 font-semibold">
+                <span class="text-sm  ">
                   DOCUMENTS *
                 </span>
                 <template #tooltip>
@@ -1452,7 +1492,7 @@ const providerId = computed(() => {
               <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">                
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     CC PAYMENT STATUS INFO
                   </span>
                   <template #tooltip>
@@ -1462,7 +1502,7 @@ const providerId = computed(() => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     CC PAYMENT ID
                   </span>
                   <template #tooltip>
@@ -1472,7 +1512,7 @@ const providerId = computed(() => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     CC PAYMENT GATEWAY
                   </span>
                   <template #tooltip>
@@ -1482,7 +1522,7 @@ const providerId = computed(() => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     DIGITAL WALLET
                   </span>
                   <template #tooltip>
@@ -1504,7 +1544,7 @@ const providerId = computed(() => {
               <div class="w-1/6 px-2 text-center"></div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     SAGE RECIEPT ID
                   </span>
                   <template #tooltip>
@@ -1514,7 +1554,7 @@ const providerId = computed(() => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     PAYMENT STATUS
                   </span>
                   <template #tooltip>
@@ -1524,7 +1564,7 @@ const providerId = computed(() => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     PAYMENT INVOICE LINK STATUS
                   </span>
                   <template #tooltip>
@@ -1534,7 +1574,7 @@ const providerId = computed(() => {
               </div>
               <div class="w-1/5 px-2">
                 <x-tooltip>
-                  <span class="text-sm text-primary-800 font-semibold">
+                  <span class="text-sm  ">
                     COLLECTED AMOUNT
                   </span>
                   <template #tooltip>
@@ -1555,20 +1595,22 @@ const providerId = computed(() => {
 
           </template>
             <template v-else>
-              <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count">
+              {{ console.log('azhar6969='+parseInt(paymentMethodsForm.payment_no))}}
+              <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count" class="mb-2">
                 <div class="flex w-full custombreak" >
                   <div class="w-1/6 px-2 text-center">{{ count }}</div>
                   <div class="w-1/5 px-2">
                     <template v-if="readOnlyPayments[count]">
-                      {{ paymentMethodsModels[count] }}
+                      {{ getPaymentTypeLabel(paymentMethodsModels[count]) }}
                       <p>{{ checkDetailModels[count] }}</p>
                     </template>
                     <template v-else >
                       <select
+                        :class="{'custom-select-error': isPaymentMetodNotSelected[count]}"
                         class="w-full custom-select"
                         v-model="paymentMethodsModels[count]"
                         :options="handlePaymentTypes(count)"
-                        @change="handlePaymentOptions()"
+                        @change="handlePaymentOptions(count)"
                       >
                         <!-- Use the title attribute to set the tooltip text -->
                         <option
@@ -1660,9 +1702,14 @@ const providerId = computed(() => {
   
       <x-divider class="mb-4 mt-1" />
 
+      <div v-if="isViewEnabled" class="p-1 mb-2">
+        <h3 class="text-white">NOTES</h3>
+      </div>
+      
       <div class="w-full grid">
-        <x-field label="NOTES">
-          <span v-if="isFieldReadonly">{{ paymentMethodsForm.notes }}</span>
+        <x-field>
+          <label v-if="!isViewEnabled">NOTES</label>
+          <p v-if="isFieldReadonly">{{ paymentMethodsForm.notes }}</p>
           <x-input
             v-if="!isFieldReadonly"
             class="w-full"
@@ -1670,13 +1717,13 @@ const providerId = computed(() => {
           />
         </x-field>
       </div>
-
-
       <template v-if="isViewEnabled && isDeclineClicked">
-        <x-divider class="mb-4 mt-1" />
-        <x-field label="PAYMENT DECLINE"></x-field>    
+        <div class="p-1 mb-2">
+          <h3 class="text-white">PAYMENT DECLINE</h3>
+        </div>
+        <x-divider class="mb-4 mt-1" />        
         <div class="flex w-full" >
-              <div class="w-1/2 px-2">
+              <div class="px-2">
                 
                 <x-field label="DECLINE REASON" required>
                     <select                  
@@ -1692,7 +1739,7 @@ const providerId = computed(() => {
                   </select>
                 </x-field>
               </div>
-              <div v-if="isDeclineCustomReason" class="w-1/2 px-2">                
+              <div v-if="isDeclineCustomReason" class="px-2">                
                 <x-field label="CUSTOM REASON" required>
                 <x-input
                   class="w-full"
@@ -1706,14 +1753,16 @@ const providerId = computed(() => {
 
       <template v-if="isViewEnabled && isApproveClicked">
         <x-divider class="mb-4 mt-1" />
+        <div class="bg-primary p-1 mb-2">
+          <h3 class="text-white">PAYMENT VERIFICATION</h3>
+        </div>
         <x-alert
             v-if="isApprovePaymentError"
 						color="error"
 						class="mb-5"						
 					>
           The entered amount is smaller than the total amount
-				</x-alert>
-        <x-field label="PAYMENT VERIFICATION"></x-field>    
+				</x-alert>        
         <div class="flex w-full" >
               <div class="w-1/4 px-2">                
                 <x-tooltip>
@@ -1831,19 +1880,11 @@ const providerId = computed(() => {
   </div>
 </template>
 <style scoped>
-
 table th {
   min-width: 195px;
 }
-
-
-.disabled-div {
-  pointer-events: none; /* Disable interactions with the div */
-  opacity: 0.3; /* Optionally reduce the opacity to visually indicate it's disabled */  
-}
-/* Add your beautiful styling here */
+/* Add your custom styling here */
 .custom-select {
-  /* Example styles */
   border: 2px solid #e5e7eb;
   padding: 7px;
   border-radius: 5px;
@@ -1851,7 +1892,11 @@ table th {
   color: #333;
   font-size: 16px;
   width: 100%;  
-  /* You can customize these styles to your liking */
+  height: 40px;  
+}
+.custom-select-error {
+  border: 2px solid red; /* Add a red border for the error state */
+  outline: none; /* Remove the default blue outline */
 }
 .custom-dropdown {
   position: relative;
