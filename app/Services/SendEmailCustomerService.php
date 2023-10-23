@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\EnvEnum;
+use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
@@ -205,10 +206,12 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $ccAdditional[] = [
-                        'email' => $additionalContact->value,
-                        'name' => $emailData->customerName,
-                    ];
+                    if (! empty($additionalContact->value)) {
+                        $ccAdditional[] = [
+                            'email' => $additionalContact->value,
+                            'name' => $emailData->customerName,
+                        ];
+                    }
                 }
             }
 
@@ -357,7 +360,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-            info('sendLMSIntroEmail ---- emailAttachments : '.json_encode($emailAttachments));
+
             if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
@@ -379,10 +382,8 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            info('sendLMSIntroEmail ---- additional : '.json_encode($additionalBcc));
-            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
 
-            info('advisor custom email is : '.$advisorCustomEmail.' for lead : '.$emailData->carQuoteId);
+            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
 
             $body = json_encode([
                 'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
@@ -393,21 +394,13 @@ class SendEmailCustomerService extends BaseService
                 'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
                 'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
-                'params' => [
-                    'clientFullName' => $emailData->clientFullName,
-                    'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
-                    'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,
-                    'mobilePhone' => isset($emailData->mobilePhone) ? preg_replace('/\s+/', '', $emailData->mobilePhone) : null,
-                    'carQuoteId' => isset($emailData->carQuoteId) ? $emailData->carQuoteId : null,
-                    'quoteLink' => isset($emailData->quoteLink) ? $emailData->quoteLink : null,
-                ],
+                'params' => $emailData,
                 'tags' => [
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            info('sendLMSIntroEmail ---- body :  '.json_encode($body));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
@@ -420,6 +413,7 @@ class SendEmailCustomerService extends BaseService
             info('sendLMSIntroEmail ---- Request Sent');
             $responseCode = $clientRequest->getStatusCode();
             info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
+            info('sendLMSIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
@@ -428,5 +422,28 @@ class SendEmailCustomerService extends BaseService
         }
 
         return $responseCode;
+    }
+
+    public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
+    {
+        $dataArr = [
+            'quoteUID' => $quoteUuid,
+            'resend' => false,
+        ];
+        if ($isReassignment) {
+            $dataArr['isReassigned'] = true;
+            $dataArr['previousAdvisorId'] = $previousAdvisorId;
+        }
+        info('Params for intro email are : '.json_encode($dataArr));
+        $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
+        if ($response && isset($response->status)) {
+            $msg = '';
+            if (isset($response->msg)) {
+                $msg = $response->msg;
+            }
+            info('RM Intro Email Error for HEA-'.$quoteUuid.' - Response Code: '.$response->status.' - Message: '.$msg);
+        } elseif ($response && isset($response->message)) {
+            info('RM Intro Email Triggered to CAPI for HEA-'.$quoteUuid.' - Message: '.$response->message);
+        }
     }
 }

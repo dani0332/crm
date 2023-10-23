@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AssignmentTypeEnum;
 use App\Models\CarQuoteAdvisorToOE;
 use App\Models\User;
 use App\Services\BusinessQuoteService;
@@ -205,6 +206,7 @@ class LeadAssignmentController extends Controller
                 $entity->wcu_id = $userId;
             } else {
                 $entity->advisor_id = $userId;
+                $entity->assignment_type = AssignmentTypeEnum::MANUAL_ASSIGNED;
             }
             if ($type == 'car') {
                 $advisorOE = CarQuoteAdvisorToOE::where('advisor_id', $userId)->first();

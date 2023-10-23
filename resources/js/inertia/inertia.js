@@ -27,6 +27,7 @@ createInertiaApp({
       {
         // Remove Data Page for Protection
         document.querySelector('[data-page]')?.removeAttribute('data-page');
+        // console.log(props.initialPage.props);
       },
       render: () => h(App, props),
     })

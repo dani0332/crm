@@ -1007,7 +1007,7 @@ $readonlyFieldCss = isset($repairType) && $repairType == CarPlanType::TPL ? "poi
 								<td> </td>
 							</tr>
 						</table>
-						@if($createdAt!='')
+						@if(isset($createdAt))
 							<p>
 								<span style="float: right;"><strong>Created Date:</strong> {{ $createdAt }}</span><br>
 								@if($updatedAt!='')
