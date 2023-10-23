@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('sage_reciept_id', 500)->nullable();
             $table->string('cc_payment_id', 500)->nullable();
             $table->string('cc_payment_gateway', 500)->nullable();
+            $table->text('cc_payment_status_info')->nullable();
             $table->string('digital_wallet', 500)->nullable();
             $table->string('invoice_link_status', 500)->nullable();
             $table->timestamps();

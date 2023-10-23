@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import PaymentTable from './../../../Components/PaymentTable.vue';
+import PaymentTableNew from './../../../Components/PaymentTableNew.vue';
+import PaymentTable from './Partials/PaymentTable.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
@@ -1773,7 +1774,8 @@ const loadEmailEvents = (email) => {
 			</div>
     	</div>
 	
-		<PaymentTable 
+		<PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Car"
 			:quote="record"
 			:payments="payments"
@@ -1783,6 +1785,17 @@ const loadEmailEvents = (email) => {
 			:paymentTooltipEnum="paymentTooltipEnum"
 			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
 			:storageUrl="storageUrl"
+		/>
+		<PaymentTable
+			v-else
+			:payments="payments"
+			:quoteRequest="paymentEntityModel"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentMethods="
+				paymentMethods.map(pm => {
+				return { value: pm.code, label: pm.name };
+				})
+			"
 		/>
 
 		<div class="p-4 rounded shadow mb-6 bg-white">
