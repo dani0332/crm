@@ -142,7 +142,7 @@ class CarAllocationService extends AllocationService
 
         if ($teamName) {
             // Retrieve the user IDs associated with the specified team.
-            $tierUserIds = UserTeams::whereIn('team_id', function($query) use ($teamName) {
+            $tierUserIds = UserTeams::whereIn('team_id', function ($query) use ($teamName) {
                 // Subquery: Select the team ID for the given team name.
                 $query->select('id')
                     ->from('teams')
