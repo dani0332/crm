@@ -174,7 +174,6 @@ class TravelController extends Controller
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
-            'listQuotePlans' => $this->travelQuoteService->listQuotePlans($id),
             'activities' => $activities,
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,

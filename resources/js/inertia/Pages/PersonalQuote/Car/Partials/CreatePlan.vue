@@ -3,7 +3,7 @@ const notification = useNotifications('toast');
 const props = defineProps({
   record: Object,
   insuranceProviders: Array,
-  listQuotePlans: Object,
+  availablePlans: Array
 });
 
 const page = usePage();
@@ -21,18 +21,9 @@ const quotePlansTable = reactive({
   ],
 });
 
-const quotePlansTableData = computed(() => {
-  if (!Array.isArray(page.props.listQuotePlans)) {
-    return [];
-  }
-  return typeof page.props.listQuotePlans !== 'string'
-    ? page.props.listQuotePlans
-    : [];
-});
-
 const totalPriceVAT = computed(() => {
   let vat = 0;
-  quotePlansTableData?.value.forEach(item => {
+  props.availablePlans?.value.forEach(item => {
     item.addons.forEach(addon => {
       addon.carAddonOption.forEach(option => {
         if (option.isSelected && option.price != 0) {
@@ -61,6 +52,7 @@ const insuranceProviderOptions = computed(() => {
     value: provider.id,
     label: provider.text,
   }));
+
 });
 
 const insuranceProviderPlanOptions = ref([]);
@@ -75,7 +67,7 @@ const setCarPlans = () => {
     .then(({ data }) => {
       insuranceProviderPlanOptions.value = data.map(plan => ({
         value: plan.id,
-        label: plan.plan_name,
+        label: plan.text,
       }));
       page.processing = false;
     })
@@ -220,7 +212,7 @@ const getAddonVat = item => {
   <DataTable
     table-class-name="tablefixed compact"
     :headers="quotePlansTable.columns"
-    :items="quotePlansTableData || []"
+    :items="props.availablePlans || []"
     show-index
     border-cell
     fixed-checkbox

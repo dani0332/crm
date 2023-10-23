@@ -168,4 +168,29 @@ class CentralService
             }
         });
     }
+
+    public function loadAvailablePlans($type, $id)
+    {
+        $type = ucfirst($type);
+        switch ($type) {
+            case quoteTypeCode::Car:
+                return app(CarQuoteService::class)->getPlans($id);
+            case quoteTypeCode::Travel:
+                return app(TravelQuoteService::class)->listQuotePlans($id);
+            case quoteTypeCode::Health:
+                $listQuotePlans = [];
+                $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
+                if (isset($quotePlans->message) && $quotePlans->message != '') {
+                    $listQuotePlans = [];
+                } else {
+                    if (gettype($quotePlans) != 'string') {
+                        $listQuotePlans[] = $quotePlans->quote->plans;
+                    }
+                }
+
+                return $listQuotePlans;
+            default:
+                return [];
+        }
+    }
 }
