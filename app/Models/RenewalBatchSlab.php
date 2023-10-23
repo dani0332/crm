@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use OwenIt\Auditing\Auditable;
-use Illuminate\Database\Eloquent\Relations\Pivot;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\Pivot;
+use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class RenewalBatchSlab extends Pivot implements AuditableContract
@@ -18,7 +18,7 @@ class RenewalBatchSlab extends Pivot implements AuditableContract
                 Team::class,
                 'team_id',
                 'id',
-            'team'
-        );
+                'team'
+            );
     }
 }

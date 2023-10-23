@@ -104,7 +104,7 @@ class RenewalBatch extends Model implements AuditableContract
             'id',
             'slabs'
         )->using(RenewalBatchSlab::class)
-        ->withTimestamps()->withPivot('team_id', 'max', 'min');
+            ->withTimestamps()->withPivot('team_id', 'max', 'min');
     }
 
     /**
