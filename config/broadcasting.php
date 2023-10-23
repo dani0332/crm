@@ -37,7 +37,7 @@ return [
             'secret' => env('MIX_PUSHER_APP_SECRET'),
             'app_id' => env('MIX_PUSHER_APP_ID'),
             'options' => [
-                'cluster' => 'ap1',
+                'cluster' => env('MIX_PUSHER_APP_CLUSTER'),
                 'useTLS' => false,
                 'encrypted' => false,
             ],

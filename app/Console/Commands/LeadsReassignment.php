@@ -51,7 +51,7 @@ class LeadsReassignment extends Command
         $start_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_START_TIME));
         $end_time = Carbon::createFromFormat('H:i', $applicationStorageService->getValueByKey(ApplicationStorageEnums::REASSIGNMENT_END_TIME));
         $shouldProceed = now()->between($start_time, $end_time);
-        if ($shouldProceed && now()->isWeekday()) {
+        if ($shouldProceed && ! now()->isWeekend()) {
             dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), 0));
             dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), 0));
             info('------------------- Lead reassignment Command Finished for '.$currentIteration.' -------------------');
