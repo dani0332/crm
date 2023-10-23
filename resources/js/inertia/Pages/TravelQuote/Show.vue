@@ -774,7 +774,7 @@ onMounted(() => {
       <h2 class="text-xl font-semibold">Travel Detail</h2>
       <div class="flex gap-2">
         <Link
-          v-if="quote.insly_id"
+          v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >
@@ -1722,15 +1722,14 @@ onMounted(() => {
       </x-modal>
     </div>
 
-      <customerAdditionalContacts
-          quoteType="Travel"
-          :customerId="quote.customer_id"
-          :quoteId="quote.id"
-          :contacts="customerAdditionalContacts"
-          :quoteEmail="quote.email"
-          :quoteMobile="quote.mobile_no"
-
-      />
+    <customerAdditionalContacts
+      quoteType="Travel"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

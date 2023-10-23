@@ -1389,6 +1389,15 @@ const loadEmailEvents = email => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Car Details</h3>
         <div>
+          <Link
+            v-if="record?.insly_id"
+            :href="`/legacy-policy/${record.insly_id}`"
+            preserve-scroll
+          >
+            <x-button size="sm" color="#ff5e00" tag="div">
+              View Legacy policy
+            </x-button>
+          </Link>
           <template
             v-if="
               !can(permissionEnum.ApprovePayments) &&

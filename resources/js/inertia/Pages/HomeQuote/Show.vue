@@ -67,7 +67,6 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
   historyLoading = ref(false);
@@ -289,7 +288,7 @@ const policyDetails = useForm({
       <h2 class="text-xl font-semibold">Home Detail</h2>
       <div class="flex gap-2">
         <Link
-          v-if="quote.insly_id"
+          v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >

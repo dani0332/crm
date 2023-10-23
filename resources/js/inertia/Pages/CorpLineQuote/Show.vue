@@ -367,7 +367,7 @@ const onAssignLead = () => {
       <h2 class="text-xl font-semibold">Business Quote Detail</h2>
       <div class="flex gap-2">
         <Link
-          v-if="quote.insly_id"
+          v-if="quote?.insly_id"
           :href="`/legacy-policy/${quote.insly_id}`"
           preserve-scroll
         >
