@@ -151,6 +151,16 @@ class ReportsController extends Controller
             $qry->whereIn('name', RenewalBatch::RENEWAL_BATCH_TEAMS_LIST);
         }])->get();
 
+        $renewalBatches = $renewalBatches->map(function ($renewalBatch) {
+            $renewalBatch->slabs = $renewalBatch->slabs->map(function ($slab) {
+                $slab->team_name = $slab->pivot->team->name;
+
+                return $slab;
+            });
+
+            return $renewalBatch;
+        });
+
         return inertia('Reports/RenewalBatch', [
             'reportData' => $renewalBatchReportService->getReportData($request),
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
