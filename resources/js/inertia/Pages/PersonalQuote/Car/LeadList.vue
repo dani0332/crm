@@ -463,14 +463,14 @@ onMounted(() => {
                     class="w-full"
                     placeholder="Search by Previous Policy Number"
                 />
-                <ComboBox v-if="true || !hasRole(rolesEnum.CarAdvisor)"
+                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)"
                     v-model="filters.advisor_id"
                     label="Advisor"
                     name="advisor_id"
                     placeholder="Please select Advisor"
                     :options="advisorOptions"
                 />
-                <x-select v-if="true || !hasRole(rolesEnum.CarAdvisor)"
+                <x-select v-if="!hasRole(rolesEnum.CarAdvisor)"
                     v-model="filters.assignment_type"
                     label="Assignment Type"
                     name="assignment_type"

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\LeadSourceEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
@@ -214,7 +216,7 @@ class AllocationService
                 if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
                     info('About to deduct from auto assignment count for previous advisor');
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
-                } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
+                } elseif (! $isSystemAssigned && $previousAdvisorAllocationRecord->manual_assignment_count > 0) {
                     info('About to deduct from manual assignment count for previous advisor');
                     $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
                 }
@@ -236,17 +238,49 @@ class AllocationService
         $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
             ->first();
 
-        return ['auto_assignment_count' => $allocationCount->auto_assignment_count,
-            'manual_assignment_count' => $allocationCount->manual_assignment_count,
-            'max_capacity' => $allocationCount->max_capacity];
+        $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
+            ->where('advisor_id', $userId)->get();
+
+        $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
+        $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
+
+        return [
+            'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
+            'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
+    }
+
+    public function getHealthTodaysCount($userId)
+    {
+        $allocationCount = LeadAllocation::where('user_id', $userId)->select('auto_assignment_count', 'manual_assignment_count', 'max_capacity')
+            ->first();
+
+        $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('health_quote_request_detail.advisor_assigned_date', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()])
+            ->where('advisor_id', $userId)->get();
+
+        $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
+        $manualAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::MANUAL_ASSIGNED, AssignmentTypeEnum::MANUAL_REASSIGNED])->count();
+
+        return [
+            'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
+            'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
     }
 
     public function getYesterdayCounts($userId)
     {
-        $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
+        $yesterdayStart = Carbon::yesterday()->startOfDay()->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = CarQuote::join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', '=', 'car_quote_request.id')
-            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('car_quote_request_detail.advisor_assigned_date', [$yesterdayStart, $yesterdayEnd])
             ->where('advisor_id', $userId)->get();
 
         $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();
@@ -257,10 +291,12 @@ class AllocationService
 
     public function getHealthYesterdayCounts($userId)
     {
-        $yesterdaySixThirty = Carbon::yesterday()->setTime(12, 00, 0)->toDateTimeString();
+        $yesterdayStart = Carbon::yesterday()->startOfDay()->toDateTimeString();
         $yesterdayEnd = Carbon::yesterday()->endOfDay()->toDateTimeString();
         $leads = HealthQuote::join('health_quote_request_detail', 'health_quote_request_detail.health_quote_request_id', '=', 'health_quote_request.id')
-            ->whereBetween('health_quote_request_detail.advisor_assigned_date', [$yesterdaySixThirty, $yesterdayEnd])
+            ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereBetween('health_quote_request_detail.advisor_assigned_date', [$yesterdayStart, $yesterdayEnd])
             ->where('advisor_id', $userId)->get();
 
         $systemAssignedCount = $leads->whereIn('assignment_type', [AssignmentTypeEnum::SYSTEM_ASSIGNED, AssignmentTypeEnum::SYSTEM_REASSIGNED])->count();

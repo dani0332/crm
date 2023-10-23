@@ -249,7 +249,7 @@ class CRUDController extends Controller
 
             $quote_status = $dropdownSource['quote_status_id'];
 
-            $todaysAllocationData = $this->allocationService->getTodayCounts(auth()->user()->id);
+            $todaysAllocationData = $this->allocationService->getHealthTodaysCount(auth()->user()->id);
             $userMaxCap = $todaysAllocationData['max_capacity'];
             $todayAutoCount = $todaysAllocationData['auto_assignment_count'];
             $todayManualCount = $todaysAllocationData['manual_assignment_count'];

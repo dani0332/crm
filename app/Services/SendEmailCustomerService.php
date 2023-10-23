@@ -206,10 +206,12 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $ccAdditional[] = [
-                        'email' => $additionalContact->value,
-                        'name' => $emailData->customerName,
-                    ];
+                    if (! empty($additionalContact->value)) {
+                        $ccAdditional[] = [
+                            'email' => $additionalContact->value,
+                            'name' => $emailData->customerName,
+                        ];
+                    }
                 }
             }
 
@@ -398,7 +400,6 @@ class SendEmailCustomerService extends BaseService
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            info('sendLMSIntroEmail ---- body :  '.json_encode($body));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
