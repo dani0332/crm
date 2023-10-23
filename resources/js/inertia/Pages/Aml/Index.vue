@@ -8,6 +8,7 @@ defineProps({
 });
 
 const page = usePage();
+const notification = useToast();
 const loader = reactive({
   table: false,
   export: false,
@@ -58,13 +59,12 @@ function onReset() {
 }
 
 function onSubmit(isValid) {
+    if (!isValid) return;
 
-  if (isValid) {
     //remove empty fields
     Object.keys(filtersForm).forEach(
-      key => filtersForm[key] == '' && delete filtersForm[key],
+      key => filtersForm[key] === '' && delete filtersForm[key],
     );
-
     filtersForm.get(`/kyc/aml`, {
       preserveScroll: true,
       onBefore: () => {
@@ -78,8 +78,16 @@ function onSubmit(isValid) {
         loader.table = true;
       },
       onSuccess: () => (loader.table = false),
+        onError: (errors) => {
+            Object.keys(errors).forEach(function(key) {
+                notification.error({
+                    title: errors[key],
+                    position: 'top',
+                });
+            });
+            return false;
+        }
     });
-  }
 }
 
 function setQueryStringFilters() {
@@ -119,6 +127,7 @@ onMounted(() => {
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
         <x-select
           v-model="filtersForm.quoteType"
+          :rules="[isRequired]"
           label="Quote Type"
           placeholder=""
           :options="quoteTypeOptions.value"

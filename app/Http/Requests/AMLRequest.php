@@ -23,18 +23,25 @@ class AMLRequest extends FormRequest
      */
     public function rules()
     {
-        if ($this->ajax() && ! request()->get('onLoadCheck')) {
-            return [
-                'quoteType' => 'required',
-                'searchType' => 'nullable',
-                'searchField' => 'required_with:searchType',
-                'matchFound' => 'nullable',
-                'amlCreatedStartDate' => 'nullable|required_without:searchType',
-                'amlCreatedEndDate' => 'nullable|required_without:searchType',
-            ];
+        $rules = [
+            'quoteType' => 'nullable',
+            'searchType' => 'nullable',
+            'searchField' => 'nullable',
+            'matchFound' => 'nullable',
+            'amlCreatedStartDate' => 'nullable',
+            'amlCreatedEndDate' => 'nullable',
+        ];
+
+        if ($this->ajax() && ! request()->get('onLoadCheck') && !empty(request()->toArray())) {
+            $rules['quoteType'] = 'required';
+            $rules['searchType'] = 'nullable';
+            $rules['searchField'] = 'required_with:searchType';
+            $rules['matchFound'] = 'nullable';
+            $rules['amlCreatedStartDate'] = 'nullable|required_without:searchType';
+            $rules['amlCreatedEndDate'] = 'nullable|required_without:searchType';
         }
 
-        return [];
+        return $rules;
     }
 
     /**
