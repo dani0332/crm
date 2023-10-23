@@ -46,5 +46,9 @@ class AuthServiceProvider extends ServiceProvider
         Gate::define(PermissionsEnum::ViewTeamsFilters, function ($user) {
             return $user->hasAnyRole([RolesEnum::Admin, RolesEnum::CarManager]);
         });
+
+        Gate::define('viewWebSocketsDashboard', function ($user = null) {
+            return $user->hasAnyRole([RolesEnum::Admin, RolesEnum::Engineering]);
+        });
     }
 }

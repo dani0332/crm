@@ -280,7 +280,6 @@ const permissionsEnum = page.props.permissionsEnum;
     />
 
     <QuotePayments
-      v-if="isBetaUser"
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -317,6 +316,8 @@ const permissionsEnum = page.props.permissionsEnum;
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />

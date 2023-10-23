@@ -1,6 +1,6 @@
 <p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p>  
 
-## About Blanka - IMCRM 
+## About Blanka  - IMCRM 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
@@ -10,7 +10,7 @@ URLs:
 - [Live](https://imcrm.alfred.ae/)
 - [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
-- [DEV](https://imccrmdev.alfred.ae) [DEV1](https://imccrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
+- [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
@@ -61,4 +61,4 @@ To run Cypress tests on local machine:
 - Run cypress runner using command ```yarn cypress open```
 - Select e2e tests and then any browser i.e. chrome. 
 - Try running your desired test. 
-- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran. 
+- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran.
