@@ -1,10 +1,16 @@
 <script setup>
+import LeadAssignment from "../Partials/LeadAssignment.vue";
+
 defineProps({
   quotes: Object,
   advisors: Array,
   dropdownSource: Object,
   todayAssignmentCount: String,
-  userMaxCap: Number
+  userMaxCap: Number,
+  todayAutoCount: Number,
+  todayManualCount: Number,
+  yesterdayAutoCount: Number,
+  yesterdayManualCount: Number,
 });
 
 const page = usePage();
@@ -16,7 +22,7 @@ const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const createLead = reactive({
     modal: false,
-    type: ''    
+    type: ''
 });
 
 const tableHeader = [
@@ -51,124 +57,136 @@ const tableHeader = [
   { text: 'UPDATED BY', value: 'updated_by' },
   { text: 'ADDITIONAL NOTES', value: 'additional_notes' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
+  { text: 'ASSIGNMENT TYPE', value: 'assignment_type' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
   { text: 'RENEWAL EXPIRY DATE', value: 'renewal_expiry_date' },
   { text: 'IS GCC STANDARD', value: 'is_gcc_standard' },
   { text: 'IS VEHICLE MODIFIED', value: 'is_modified' },
   { text: 'PRICE', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
-  { text: 'QUOTE LINK', value: 'quote_link' },  
+  { text: 'QUOTE LINK', value: 'quote_link' },
 ];
 
 const ecommerceOptions = [
-    { value: '', label: 'Please select is ecommerce' },
-    { value: 'Yes', label: 'Yes' },
-    { value: 'No', label: 'No' },
-]
+  { value: '', label: 'Please select is ecommerce' },
+  { value: 'Yes', label: 'Yes' },
+  { value: 'No', label: 'No' },
+];
+
+const assignmentTypeOptions = [
+  { value: '', label: 'Please select is assignment type' },
+  { value: 1, label: 'System Assigned' },
+  { value: 2, label: 'System ReAssigned' },
+  { value: 3, label: 'Manual Assigned' },
+  { value: 4, label: 'Manual ReAssigned' },
+];
+
+const filteredTableHeader = computed(() => {
+  if (!hasRole(rolesEnum.CarAdvisor)) {
+    // If the user does not have the "CarAdvisor" role, include all columns
+    return tableHeader;
+  } else {
+    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
+    return tableHeader.filter(
+      column => column.value !== 'source' && column.value !== 'assignment_type',
+    );
+  }
+});
 
 const advisorOptions = computed(() => {
-    let options = page.props.advisors.map(advisor => ({
-        value: advisor.id,
-        label: advisor.name,
-    }));
+  let options = page.props.advisors.map(advisor => ({
+    value: advisor.id,
+    label: advisor.name,
+  }));
 
-    options.push({
-        value: 'null',
-        label: 'UnAssigned'
-    })
+  options.push({
+    value: '',
+    label: 'UnAssigned',
+  });
 
-    return options;
+  return options;
 });
 
 const leadStatuses = computed(() => {
-    return page.props.dropdownSource.quote_status_id.map(status => ({
-        value: status.id,
-        label: status.text,
-    }));
+  return page.props.dropdownSource.quote_status_id.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const leadTiers = computed(() => {
-    return page.props.dropdownSource.tier_id.map(tier => ({
-        value: tier.id,
-        label: tier.name,
-    }));
+  return page.props.dropdownSource.tier_id.map(tier => ({
+    value: tier.id,
+    label: tier.name,
+  }));
 });
 
 const vehicleTypes = computed(() => {
-    return page.props.dropdownSource.vehicle_type_id.map(type => ({
-        value: type.id,
-        label: type.text,
-    }));
+  return page.props.dropdownSource.vehicle_type_id.map(type => ({
+    value: type.id,
+    label: type.text,
+  }));
 });
 
 const carTypeInsurances = computed(() => {
-    return page.props.dropdownSource.car_type_insurance_id.map(carTypeInsurance => ({
-        value: carTypeInsurance.id,
-        label: carTypeInsurance.text,
-    }));
+  return page.props.dropdownSource.car_type_insurance_id.map(
+    carTypeInsurance => ({
+      value: carTypeInsurance.id,
+      label: carTypeInsurance.text,
+    }),
+  );
 });
 
 const providers = computed(() => {
-    return page.props.dropdownSource.car_plan_provider_id.map(provider => ({
-        value: provider.text,
-        label: provider.text,
-    }));
+  return page.props.dropdownSource.car_plan_provider_id.map(provider => ({
+    value: provider.text,
+    label: provider.text,
+  }));
 });
 
 const batchOptions = computed(() => {
-    return page.props.dropdownSource.quote_batch_id.map(batch => ({
-        value: batch.id,
-        label: batch.name,
-    }));
+  return page.props.dropdownSource.quote_batch_id.map(batch => ({
+    value: batch.id,
+    label: batch.name,
+  }));
 });
 
 const paymentStatusOptions = computed(() => {
-    return page.props.dropdownSource.payment_status_id.map(status => ({
-        value: status.id,
-        label: status.text,
-    }));
+  return page.props.dropdownSource.payment_status_id.map(status => ({
+    value: status.id,
+    label: status.text,
+  }));
 });
 
 const filters = reactive({
-    code: '', 
-    first_name: '', 
-    last_name: '', 
-    email: '', 
-    mobile_no: '', 
-    quote_status_id: [], 
-    created_at: '', 
-    currently_insured_with: '', 
-    renewal_expiry_date: '', 
-    is_ecommerce: '', 
-    payment_status_id: '', 
-    renewal_batch: '', 
-    previous_quote_policy_number: '', 
-    car_type_insurance_id: '', 
-    vehicle_type_id: '', 
-    advisor_assigned_date: '', 
-    tier_id: [], 
-    quote_batch_id: [], 
-    advisor_id: [], 
-    advisor_assigned_date_end: '', 
-    renewal_expiry_date_end: '', 
-    created_at_end: '', 
-    page: 1,
+  code: '',
+  first_name: '',
+  last_name: '',
+  email: '',
+  mobile_no: '',
+  quote_status_id: [],
+  created_at: '',
+  currently_insured_with: '',
+  renewal_expiry_date: '',
+  is_ecommerce: '',
+  payment_status_id: '',
+  renewal_batch: '',
+  previous_quote_policy_number: '',
+  car_type_insurance_id: '',
+  vehicle_type_id: '',
+  advisor_assigned_date: '',
+  tier_id: [],
+  quote_batch_id: [],
+  advisor_id: [],
+  advisor_assigned_date_end: '',
+  renewal_expiry_date_end: '',
+  created_at_end: '',
+  page: 1,
 });
 
 const loader = reactive({
-    table: false,
-    export: false,
-});
-
-const assignForm = useForm({
-    assign_team: null,
-    assigned_to_id_new: null,
-    assignment_type: 'With-Email',
-    modelType: 'Car',
-    selectTmLeadId: '',
-    isManagerOrDeputy: 1,
-    isLeadPool: null,
-    isManualAllocationAllowed: 1,
+  table: false,
+  export: false,
 });
 
 const quotesSelected = ref([]);
@@ -211,65 +229,46 @@ function onSubmit(isValid) {
   }
 }
 
-function onAssignLead(isValid) {
-  if (isValid) {
-    const selected = quotesSelected.value.map(e => e.id);
-    const url =
-      assignForm.assign_team === 'Wow-Call'
-        ? '/quotes/wcuAssign'
-        : '/quotes/car/manualLeadAssign';
-    assignForm
-      .transform(data => ({
-        ...data,
-        selectTmLeadId: `${selected}`,
-      }))
-      .post(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: () => {
-          quotesSelected.value = [];
-          notification.success({
-            title: 'Car Leads Assigned',
-            position: 'top',
-          });
-        },
-      });
-  }
-}
+const onLeadAssigned = () => {
+    quotesSelected.value = [];
+};
 
 const fixedValue = numberString => {
   const number = parseFloat(numberString);
   if (isNaN(number)) {
-    return "Invalid number";
+    return 'Invalid number';
   } else if (number === Math.floor(number)) {
-    return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");;
+    return number.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   } else {
-    return parseFloat(number.toFixed(2)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return parseFloat(number.toFixed(2)).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
   }
 };
 
 function onReset() {
-    router.visit(route('car.index'), {
-        method: 'get',
-        data: { page: 1 },
-        preserveScroll: true,
-        onBefore: () => (loader.table = true),
-        onSuccess: () => (loader.table = false),
-    });
+  router.visit(route('car.index'), {
+    method: 'get',
+    data: { page: 1 },
+    preserveScroll: true,
+    onBefore: () => (loader.table = true),
+    onSuccess: () => (loader.table = false),
+  });
 }
 
 const objToUrl = obj => {
-    Object.keys(obj).forEach(
-        key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
-    );
-    return Object.keys(obj)
-        .map(key => {
-            if (Array.isArray(obj[key])) {
-                return obj[key].map(value => `${key}[]=${value}`).join('&');
-            }
-            return `${key}=${obj[key]}`;
-        })
-        .join('&');
+  Object.keys(obj).forEach(
+    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
+  );
+  return Object.keys(obj)
+    .map(key => {
+      if (Array.isArray(obj[key])) {
+        return obj[key].map(value => `${key}[]=${value}`).join('&');
+      }
+      return `${key}=${obj[key]}`;
+    })
+    .join('&');
 };
 
 function setQueryStringFilters() {
@@ -283,36 +282,34 @@ function setQueryStringFilters() {
 }
 
 const onConfirmCreateLead = () => {
-    if (createLead.type === 'referral') {
-        router.get(route('car.create'));
-    }
-    createLead.modal = false;
-}
+  if (createLead.type === 'referral') {
+    router.get(route('car.create'));
+  }
+  createLead.modal = false;
+};
 
 onMounted(() => {
   setQueryStringFilters();
 });
-
 </script>
 
 <template>
-    <div>
-        <Head title="View Car" />
-        <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold">Lead List</h2>
-            <div v-if="hasRole(rolesEnum.CarAdvisor)">
-                Auto / Manual Assigned Leads ({{ todayAssignmentCount }}) , Max Cap ({{ userMaxCap }})
-            </div>
-            <div class="space-x-3">
-                <!-- <Link :href="route('health.cards')">
-                    <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
-                </Link> -->
-
-                <!-- <Link :href="route('car.create')"> -->
-                    <x-button size="sm" color="#ff5e00" tag="div" @click="createLead.modal = true"> Create Lead </x-button>
-                <!-- </Link> -->
-            </div>
-        </div>
+  <div>
+    <Head title="View Car" />
+    <div class="flex justify-between items-center flex-wrap gap-4">
+      <h2 class="text-xl font-semibold">Lead List</h2>
+      <LeadAssignedWidget
+        v-if="hasRole(rolesEnum.CarAdvisor)"
+        :todayAutoCount="todayAutoCount"
+        :todayManualCount="todayManualCount"
+        :yesterdayAutoCount="yesterdayAutoCount"
+        :yesterdayManualCount="yesterdayManualCount"
+        :userMaxCap="userMaxCap"
+      />
+        <!-- <Link :href="route('car.create')"> -->
+            <x-button size="sm" color="#ff5e00" tag="div" @click="createLead.modal = true"> Create Lead </x-button>
+        <!-- </Link> -->
+    </div>
         <x-divider class="my-4" />
         <x-form @submit="onSubmit" :auto-focus="false">
             <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -430,7 +427,7 @@ onMounted(() => {
                     :options="carTypeInsurances"
                     placeholder="Please select an option"
                     class="w-full"
-                />                
+                />
                 <x-input
                     v-model="filters.renewal_batch"
                     type="number"
@@ -466,12 +463,20 @@ onMounted(() => {
                     class="w-full"
                     placeholder="Search by Previous Policy Number"
                 />
-                <ComboBox v-if="true || !hasRole(rolesEnum.CarAdvisor)"
+                <ComboBox v-if="!hasRole(rolesEnum.CarAdvisor)"
                     v-model="filters.advisor_id"
                     label="Advisor"
                     name="advisor_id"
                     placeholder="Please select Advisor"
                     :options="advisorOptions"
+                />
+                <x-select v-if="!hasRole(rolesEnum.CarAdvisor)"
+                    v-model="filters.assignment_type"
+                    label="Assignment Type"
+                    name="assignment_type"
+                    :options="assignmentTypeOptions"
+                    placeholder="Please select assignment type"
+                    class="w-full"
                 />
             </div>
             <div class="flex justify-between gap-3 mb-4 mt-1">
@@ -503,149 +508,118 @@ onMounted(() => {
                 </div>
             </div>
         </x-form>
+
         <Transition name="fade" v-if="!hasRole(rolesEnum.CarAdvisor)">
             <div v-if="quotesSelected.length > 0" class="mb-4">
-                <div class="px-4 py-6 rounded shadow mb-4 bg-primary-50/50">
-                    <div class="row">
-                        <h2 class="text-xl font-semibold mb-5">Assign Lead</h2>
-                    </div>
-                    <x-form @submit="onAssignLead" :auto-focus="false">
-                        <div class="w-full flex flex-col md:flex-row gap-4">
-                        
-                        <ComboBox
-                            :single="true"
-                            v-model="assignForm.assigned_to_id_new"
-                            label="Assign Advisor"
-                            :options="advisorOptions"
-                            placeholder="Select Advisor"
-                            class="flex-1 w-auto"
-                            :rules="[rules.isRequired]"
-                        />
-                        <!-- <x-select
-                            v-model="assignForm.assignment_type"
-                            label="Assignment Type"
-                            :options="[
-                                { value: 'With-Email', label: 'With Email' },
-                                { value: 'Without-Email', label: 'Without Email' },
-                            ]"
-                            placeholder="Select Subteam"
-                            class="flex-1 w-auto"
-                            :rules="[rules.isRequired]"
-                        /> -->
-                        <div class="mb-3 md:pt-6">
-                            <x-button
-                            color="orange"
-                            size="sm"
-                            type="submit"
-                            :loading="assignForm.processing"
-                            >
-                            Assign
-                            </x-button>
-                        </div>
-                        </div>
-                    </x-form>
-                </div>
+                <LeadAssignment
+                    :selected="quotesSelected.map(e => e.id)"
+                    :advisors="advisorOptions"
+                    quoteType="Car"
+                    @success="onLeadAssigned"
+                />
             </div>
         </Transition>
-
-        <DataTable
-            v-model:items-selected="quotesSelected"
-            table-class-name="tablefixed"
-            :loading="loader.table"
-            :headers="tableHeader"
-            :items="quotes.data || []"
-            border-cell
-            hide-rows-per-page
-            hide-footer
-            fixed-checkbox
+    <x-divider class="my-4" />
+    <DataTable
+      v-model:items-selected="quotesSelected"
+      table-class-name="tablefixed"
+      :loading="loader.table"
+      :headers="filteredTableHeader"
+      :items="quotes.data || []"
+      border-cell
+      hide-rows-per-page
+      hide-footer
+      fixed-checkbox
+    >
+      <template #item-code="{ code, uuid }">
+        <Link
+          :href="route('car.show', uuid)"
+          class="text-primary-500 hover:underline"
         >
-            <template #item-code="{ code, uuid }">
-                <Link :href="route('car.show', uuid)" class="text-primary-500 hover:underline">
-                    {{ code }}
-                </Link>
-            </template>
-            <template #item-is_ecommerce="{ is_ecommerce }">
-                <div class="text-center">
-                    <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
-                        {{ is_ecommerce ? 'Yes' : 'No' }}
-                    </x-tag>
-                </div>
-            </template>
-            <template #item-is_gcc_standard="{ is_gcc_standard }">
-                <div class="text-center">
-                    <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
-                        {{ is_gcc_standard ? 'Yes' : 'No' }}
-                    </x-tag>
-                </div>
-            </template>
-            <template #item-is_modified="{ is_modified }">
-                <div class="text-center">
-                    <x-tag size="sm" :color="is_modified ? 'success' : 'error'">
-                        {{ is_modified ? 'Yes' : 'No' }}
-                    </x-tag>
-                </div>
-            </template>
-            <template #item-price_starting_from="item">
-                <p v-if="item.price_starting_from != null">{{ fixedValue(item.price_starting_from) }}</p>
-            </template>
+          {{ code }}
+        </Link>
+      </template>
+      <template #item-is_ecommerce="{ is_ecommerce }">
+        <div class="text-center">
+          <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
+            {{ is_ecommerce ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-is_gcc_standard="{ is_gcc_standard }">
+        <div class="text-center">
+          <x-tag size="sm" :color="is_gcc_standard ? 'success' : 'error'">
+            {{ is_gcc_standard ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-is_modified="{ is_modified }">
+        <div class="text-center">
+          <x-tag size="sm" :color="is_modified ? 'success' : 'error'">
+            {{ is_modified ? 'Yes' : 'No' }}
+          </x-tag>
+        </div>
+      </template>
+      <template #item-price_starting_from="item">
+        <p v-if="item.price_starting_from != null">
+          {{ fixedValue(item.price_starting_from) }}
+        </p>
+      </template>
 
-            <template #item-premium="item">
-                <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
-            </template>
-        </DataTable>
+      <template #item-premium="item">
+        <p v-if="item.premium != null">{{ fixedValue(item.premium) }}</p>
+      </template>
+    </DataTable>
 
-        <Pagination
-            :links="{
-                next: quotes.next_page_url,
-                prev: quotes.prev_page_url,
-                current: quotes.current_page,
-                from: quotes.from,
-                to: quotes.to,
-            }"
-        />
+    <Pagination
+      :links="{
+        next: quotes.next_page_url,
+        prev: quotes.prev_page_url,
+        current: quotes.current_page,
+        from: quotes.from,
+        to: quotes.to,
+      }"
+    />
 
-        <x-modal v-model="createLead.modal" size="lg" show-close backdrop>
-            <template #header>
-                <span class="text-primary-800 font-semibold">
-                    Create Lead
-                </span>
-            </template>
-            <x-form :auto-focus="false">
-                <div class="w-full grid md:grid-cols-2 gap-5">
-                    <p class="text-md font-bold text-gray-500">
-                        Select reason to create manual lead <span class="error">*</span>
-                    </p>
-                </div>
-                <div class="flex w-full flex-col gap-5 mt-4 mb-4">
-                    <x-radio
-                        v-model="createLead.type"
-                        value="referral"
-                        label="Referral"
-                    />
-                    <x-radio
-                        v-model="createLead.type"
-                        value="early_renewal"
-                        label="Early Renewal"
-                    />
-                    <x-radio
-                        v-model="createLead.type"
-                        value="payment_status"
-                        label="Payment Status"
-                    />
-
-                </div>
-                <x-divider class="my-4" />
-                <div class="flex justify-end gap-3 mb-4">
-                    <x-button
-                        size="md"
-                        color="emerald"
-                        type="button"
-                        @click.prevent="onConfirmCreateLead"
-                    >
-                    Confirm
-                    </x-button>
-                </div>
-            </x-form>
-        </x-modal>
-    </div>
+    <x-modal v-model="createLead.modal" size="lg" show-close backdrop>
+      <template #header>
+        <span class="text-primary-800 font-semibold"> Create Lead </span>
+      </template>
+      <x-form :auto-focus="false">
+        <div class="w-full grid md:grid-cols-2 gap-5">
+          <p class="text-md font-bold text-gray-500">
+            Select reason to create manual lead <span class="error">*</span>
+          </p>
+        </div>
+        <div class="flex w-full flex-col gap-5 mt-4 mb-4">
+          <x-radio
+            v-model="createLead.type"
+            value="referral"
+            label="Referral"
+          />
+          <x-radio
+            v-model="createLead.type"
+            value="early_renewal"
+            label="Early Renewal"
+          />
+          <x-radio
+            v-model="createLead.type"
+            value="payment_status"
+            label="Payment Status"
+          />
+        </div>
+        <x-divider class="my-4" />
+        <div class="flex justify-end gap-3 mb-4">
+          <x-button
+            size="md"
+            color="emerald"
+            type="button"
+            @click.prevent="onConfirmCreateLead"
+          >
+            Confirm
+          </x-button>
+        </div>
+      </x-form>
+    </x-modal>
+  </div>
 </template>

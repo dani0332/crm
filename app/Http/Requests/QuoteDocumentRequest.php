@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
+use App\Rules\ValidateBase64;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -36,13 +37,23 @@ class QuoteDocumentRequest extends FormRequest
             'document_type_code' => 'required|exists:document_types,code,is_active,1',
             'quote_uuid' => 'required',
             'member_detail_id' => 'nullable',
+            'is_base_64' => 'nullable',
         ];
 
         if (! empty(request()->document_type_code) && ($this->documentType = DocumentType::where('code', request()->document_type_code)->first())) {
-            $rules['file'] .= '|mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            if (! (request()->is_base_64)) {
+                $rules['file'] = 'mimes:'.(str_replace('.', '', $this->documentType->accepted_files)).'|max:'.($this->documentType->max_size * 1024);
+            }
+        }
+
+        if (request()->is_base_64) {
+            $rules['file'] = ['required', new ValidateBase64($this->documentType)];
+        } else {
+            $rules['file'] .= '|required|file';
         }
 
         return $rules;
+
     }
 
     /**

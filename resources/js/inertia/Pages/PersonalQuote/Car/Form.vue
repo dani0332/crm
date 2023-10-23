@@ -69,7 +69,8 @@ const quoteForm = useForm({
 	claim_history_id: props.quote?.claim_history_id || null,
 	seat_capacity: props.quote?.seat_capacity || '',
 	has_ncd_supporting_documents: props.quote?.has_ncd_supporting_documents || null,
-	car_value_tier: props.quote?.car_value_tier || ''
+	car_value_tier: props.quote?.car_value_tier || '',
+	car_value: props.quote?.car_value || ''
 });
 
 const isDisbaled = (!hasAnyRole([rolesEnum.CarManager, rolesEnum.Admin, rolesEnum.LeadPool])) || (!can(permissionEnum.RenewalBatchUpdate) && !!quoteForm.renewal_batch);
@@ -133,6 +134,20 @@ const getModelDetails = (onchange) => {
 		});
 }
 
+const validateDecimal = event => {
+	if (
+		event.key === '.' ||
+		event.key === 'Backspace' ||
+		event.key === 'Delete'
+	) {
+		return;
+	}
+	const regex = /^\d+(\.\d{0,2})?$/;
+	if (!regex.test(event.key)) {
+		event.preventDefault();
+	}
+};
+
 function onSubmit(isValid) {
 	if (quoteForm.nationality_id == null || quoteForm.currently_insured_with == null) {
 		isEmptyField.value = true;
@@ -193,9 +208,9 @@ const setCarMake = (id) => {
 			<h2 class="text-xl font-semibold">
 				{{ isEdit ? 'Edit' : 'Create' }} Car
 			</h2>
-			<div class="alert" v-if="isEdit && hasRole(rolesEnum.CarManager)">
+			<!-- <div class="alert" v-if="isEdit && hasRole(rolesEnum.CarManager)">
 				Only Renewal Batch # field will be updated
-			</div>
+			</div> -->
 			<div>
 				<Link :href="route('car.index')">
 				<x-button size="sm" color="#1d83bc" tag="div"> Car List </x-button>
@@ -213,7 +228,7 @@ const setCarMake = (id) => {
 					</ul>
 				</x-alert>
 
-				<x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
+				<!-- <x-field label="RENEWAL BATCH" v-if="isEdit" :required="isDisbaled ? false : hasRole(rolesEnum.CarManager)">
 					<x-input 
 						v-model="quoteForm.renewal_batch" 
 						:rules="isDisbaled ? [] : (hasRole(rolesEnum.CarManager) ? [isRequired] : [])"
@@ -221,7 +236,7 @@ const setCarMake = (id) => {
 						:error="quoteForm.errors.renewal_batch"
 						:disabled="isDisbaled"
 						/>
-				</x-field>
+				</x-field> -->
 
 				<x-field label="FIRST NAME" required>
 					<x-input v-model="quoteForm.first_name" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.first_name" />
@@ -241,7 +256,7 @@ const setCarMake = (id) => {
 				</x-field>
 
 				<x-field label="DATE OF BIRTH" required>
-					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" :disabled="isEdit" />
+					<DatePicker v-model="quoteForm.dob" :rules="[isRequired]" class="w-full" :error="quoteForm.errors.dob" />
 				</x-field>
 
 				<x-field label="NATIONALITY" required>
@@ -317,8 +332,12 @@ const setCarMake = (id) => {
 						:hasError="quoteForm.errors.year_of_manufacture" />
 				</x-field>
 
+				<x-field label="CAR VALUE" required v-if="isEdit">
+					<x-input v-model="quoteForm.car_value" class="w-full" type="text" :rules="[isRequired]"  :error="quoteForm.errors.car_value" @keydown="validateDecimal"/>
+				</x-field>
+
 				<x-field label="CAR VALUE (AT ENQUIRY)" required>
-					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="number" :rules="[isRequired]"  :error="quoteForm.errors.car_value_tier" :disabled="isEdit && !hasRole(rolesEnum.LeadPool)"/>
+					<x-input v-model="quoteForm.car_value_tier" class="w-full" type="text" :rules="[isRequired]" :error="quoteForm.errors.car_value_tier" @keydown="validateDecimal"/>
 				</x-field>
 
 				<x-field label="VEHICLE TYPE" required>

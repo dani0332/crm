@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
+use App\Events\UserStatusChanged;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -92,6 +93,12 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
     });
 }
+
+Route::get('test-broadcast', function () {
+    event(new UserStatusChanged(17, 1));
+
+    return 'Event has been sent!';
+});
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
@@ -455,7 +462,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('auditable', [AuditableController::class, 'loadAuditableComponent']);
     Route::post('auditlogs', [AuditableController::class, 'loadAuditLogs']);
 
-    Route::post('insurer-logs', [AuditableController::class, 'apiLogsComponent']);
+    Route::post('insurer-logs', [AuditableController::class, 'loadApiLogs']);
     Route::post('audits/get-quote-audits', [AuditableController::class, 'getQuoteAudits']);
     Route::get('/car-model-by-id', [AjaxController::class, 'carModelBasedOnCarMakeId']);
     Route::get('/commercial-car-model-by-id', [AjaxController::class, 'commercialCarModelBasedOnCarMakeId']);
@@ -472,6 +479,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('travelers', TravelMembersDetailController::class);
     Route::post('/health-plan-manual-update-process', [HealthQuoteController::class, 'healthPlanUpdateManualProcess']);
     Route::post('/health-plan-manual-create', [HealthQuoteController::class, 'healthPlanCreateQuote']);
+
+    Route::post('quotes/update-last-year-policy', [CentralController::class, 'updateLastYearPolicy'])->name('update-last-year-policy');
 
     //todo: commented for later use
     //Route::get('schedule-non-motor-aml', [RenewalsUploadController::class, 'scheduleNonMotorAml']);

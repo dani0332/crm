@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\AssignmentTypeEnum;
 use App\Enums\CarTypeOfInsuranceIdEnum;
 use App\Enums\DaysNameEnum;
 use App\Enums\HealthTeamType;
@@ -11,6 +12,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\RuleTypeEnum;
+use App\Enums\TeamNameEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
 use App\Jobs\IntroEmailJob;
@@ -60,20 +62,25 @@ class LeadAllocationService extends BaseService
                 'lead_allocation.user_id as userId',
                 'lead_allocation.allocation_count',
                 'lead_allocation.max_capacity',
-                'lead_allocation.is_available',
+                'u.status as is_available',
                 'lead_allocation.last_allocated',
-                'st.name as teamName',
+                't.name as teamName',
                 'u.name as userName',
             ])
                 ->join('users as u', 'lead_allocation.user_id', '=', 'u.id')
-                ->leftJoin('teams as t', 'u.team_id', '=', 't.id')
-                ->leftJoin('teams as st', 'st.id', '=', 'u.sub_team_id')
-                ->whereNotNull('u.sub_team_id')
-                ->where('t.name', '=', quoteTypeCode::Health);
+                ->join('user_team as ut', 'ut.user_id', '=', 'u.id')
+                ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'u.id')
+                ->join('roles as r', 'r.id', '=', 'mhr.role_id')
+                ->leftJoin('teams as t', 'ut.team_id', '=', 't.id')
+                ->groupBy('u.name', 'u.id', 'lead_allocation.id')
+                ->whereIn('t.name', [TeamNameEnum::EBP, TeamNameEnum::RM_NB, TeamNameEnum::RM_SPEED])
+                ->where('u.is_active', true)
+                ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor]);
 
             if (! auth()->user()->hasRole(RolesEnum::SuperManagerLeadAllocation)) {
                 $query = $query->where('u.manager_id', auth()->user()->id);
             }
+            //dd($query->toSql());
 
             return $query->get();
         } catch (\Exception $e) {
@@ -171,6 +178,7 @@ class LeadAllocationService extends BaseService
                 if (str_starts_with($lead->code, 'CAR-')) {
                     $lead->auto_assigned = $isManualAssignment ? false : true;
                 }
+                $lead->assignment_type = $lead->advisor == null ? AssignmentTypeEnum::MANUAL_ASSIGNED : AssignmentTypeEnum::MANUAL_REASSIGNED;
                 $lead->advisor_id = $advisorId;
                 $lead->quote_updated_at = now();
 
@@ -180,7 +188,6 @@ class LeadAllocationService extends BaseService
                     $this->updateLeadAllocationRecord($advisorId, $isManualAssignment);
                 }
                 $this->updateLeadDetailRecord($lead->id, $lead->uuid);
-
                 DB::commit();
 
                 Haystack::build()
@@ -188,7 +195,7 @@ class LeadAllocationService extends BaseService
                     ->then(function () use ($lead) {
                         if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
                             && $lead->quote_status_id == QuoteStatusEnum::Qualified) {
-                            // CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+                            //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(15));
                         }
                     })->dispatch();
@@ -878,7 +885,7 @@ class LeadAllocationService extends BaseService
         $carLeadAllocationStartTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_START_TIME');
         info('updateAllocationStatusIfNeeded -- current time is : '.now()->toTimeString().' , endTime is : '.$endTimeForAllocation.' , Switch is : '.$carLeadAllocationSwitch);
 
-        if (now()->toTimeString() >= $endTimeForAllocation && $carLeadAllocationSwitch == 1) {
+        if ($endTimeForAllocation <= now()->toTimeString() && $carLeadAllocationSwitch == 1) {
             // stopping car lead allocation if the end time for allocation is reached and allocation is still ON
             info('updateAllocationStatusIfNeeded -- Inside reset case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 0);
@@ -887,7 +894,7 @@ class LeadAllocationService extends BaseService
             $this->updateUserMaxCapacity();
         }
 
-        if ($carLeadAllocationSwitch == 0 && now()->toTimeString() >= $carLeadAllocationStartTime) {
+        if ($carLeadAllocationSwitch == 0 && $carLeadAllocationStartTime <= now()->toTimeString()) {
             info('updateAllocationStatusIfNeeded -- Inside start case');
             $this->updateAppStorageValueByKey('CAR_LEAD_ALLOCATION_JOB_SWITCH', 1);
         }
@@ -923,7 +930,7 @@ class LeadAllocationService extends BaseService
         $totalResetTime = $this->getAppStorageValueByKey('CAR_LEAD_ALLOCATION_TOTAL_RESET');
 
         info('time now is : '.now()->toTimeString().', total reset time is : '.$totalResetTime);
-        if (now()->toTimeString() >= $totalResetTime) {
+        if ($totalResetTime <= now()->toTimeString()) {
             info('should total reset is true');
 
             return true;

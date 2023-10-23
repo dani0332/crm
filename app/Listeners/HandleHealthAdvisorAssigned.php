@@ -2,11 +2,11 @@
 
 namespace App\Listeners;
 
-use App\Events\AdvisorAssigned;
+use App\Events\HealthAdvisorAssigned;
 use App\Services\HealthQuoteService;
 use Carbon\Carbon;
 
-class AdvisorAssignedListener
+class HandleHealthAdvisorAssigned
 {
     protected $healthQuoteService;
 
@@ -25,7 +25,7 @@ class AdvisorAssignedListener
      *
      * @return void
      */
-    public function handle(AdvisorAssigned $event)
+    public function handle(HealthAdvisorAssigned $event)
     {
         info('With in AdvisorAssignedListener');
         if ($event->lead) {

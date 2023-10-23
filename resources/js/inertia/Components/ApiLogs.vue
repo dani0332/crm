@@ -33,7 +33,7 @@ const apiLogs = reactive({
     { text: 'REF-ID', value: 'quote_uuid' },
     { text: 'Call Type', value: 'call_type' },
     { text: 'Status', value: 'status' },
-    { text: 'Provider Name', value: 'car_quote_plan_details.provider_name' },
+    { text: 'Provider Name', value: 'insurance_provider.text' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Action', value: 'action' },
   ],
@@ -142,7 +142,7 @@ const onLoadAuditLogData = async () => {
             </tr>
             <tr>
                 <td class="font-medium">Provider Name:</td>
-                <td>{{ selectedLog.car_quote_plan_details.provider_name }}</td>
+                <td>{{ selectedLog.insurance_provider.text }}</td>
             </tr>
             <tr>
                 <td class="font-medium" colspan="2">Request:</td>               

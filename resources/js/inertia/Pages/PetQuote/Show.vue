@@ -359,6 +359,7 @@ const onCreateDuplicate = isValid => {
       :quote-type="quoteType"
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
+      :quoteStatusEnum="quoteStatusEnum"
     />
 
     <QuoteDocuments

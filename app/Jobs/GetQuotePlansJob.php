@@ -5,18 +5,17 @@ namespace App\Jobs;
 use App\Enums\QuoteTypeShortCode;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 
 class GetQuotePlansJob implements ShouldQueue, StackableJob
 {
-    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, SerializesModels, Stackable;
+    use Dispatchable, GenericQueriesAllLobs, InteractsWithQueue, Queueable, Stackable;
 
     public $tries = 3;
     public $timeout = 30;
@@ -41,22 +40,30 @@ class GetQuotePlansJob implements ShouldQueue, StackableJob
      */
     public function handle(HealthQuoteService $healthQuoteService)
     {
-        if (! $this->lead) {
-            return false;
-        }
-        $quoteTypeCode = $this->getQuoteCodeType($this->lead);
-        if (! $quoteTypeCode) {
-            return false;
-        }
+        if ($this->lead && $this->getQuoteCodeType($this->lead)) {
+            $quoteTypeCode = $this->getQuoteCodeType($this->lead);
 
-        switch ($quoteTypeCode) {
-            case QuoteTypeShortCode::HEA:
-                $healthQuoteService->getQuotePlans($this->lead->uuid);
-                $this->lead->quote_updated_at = Carbon::now();
-                $this->lead->save();
-                break;
-            default:
-                break;
+            switch ($quoteTypeCode) {
+                case QuoteTypeShortCode::HEA:
+                    $statusCode = $healthQuoteService->getQuotePlans($this->lead->uuid);
+                    if (! isset($statusCode)) {
+                        info('GetQuotePlansJob - '.$this->lead->code.' - Failed - No Response from KEN');
+
+                        return false;
+                    } elseif (is_string($statusCode)) {
+                        info('GetQuotePlansJob - '.$this->lead->code.' - Failed - '.$statusCode);
+
+                        return false;
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping($this->lead->id))->dontRelease()];
     }
 }
