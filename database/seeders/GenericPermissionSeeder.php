@@ -25,7 +25,6 @@ class GenericPermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-
             $permissionRecord = Permission::where('name', $permission['name'])->first();
 
             if (! $permissionRecord) {
@@ -36,7 +35,6 @@ class GenericPermissionSeeder extends Seeder
             }
 
             if (! empty($permission['role'])) {
-
                 $role = Role::where('name', $permission['role'])->first();
 
                 if (! $role) {

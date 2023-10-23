@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth.user' => fn () => $request->user()
-                ? $request->user()->only('id', 'name', 'email', 'profile_photo_path')
+                ? $request->user()->only('id', 'name', 'email', 'profile_photo_path', 'status')
                 : null,
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
@@ -64,6 +64,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'appEnv' => config('constants.APP_ENV'),
+            'pusherKey' => config('constants.MIX_PUSHER_APP_KEY'),
             'epLink' => env('EMBEDDED_PAYMENT_LINK'),
         ];
     }

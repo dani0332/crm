@@ -2,6 +2,7 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
+use App\Events\UserStatusChanged;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -92,6 +93,12 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
     });
 }
+
+Route::get('test-broadcast', function () {
+    event(new UserStatusChanged(17, 1));
+
+    return 'Event has been sent!';
+});
 
 Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
