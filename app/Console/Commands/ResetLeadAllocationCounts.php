@@ -53,26 +53,26 @@ class ResetLeadAllocationCounts extends Command
         info('Scheduler has reset counts for every user');
 
         // Get the PCP team
-        $pcpTeam = Team::query()->where('name', TeamNameEnum::PCP)->first();
+        // $pcpTeam = Team::query()->where('name', TeamNameEnum::PCP)->first();
 
-        if ($pcpTeam) {
-            // Get the user IDs belonging to the PCP team
-            $pcpUserIds = UserTeams::query()->where('team_id', $pcpTeam->id)->pluck('user_id')->toArray();
+        // if ($pcpTeam) {
+        //     // Get the user IDs belonging to the PCP team
+        //     $pcpUserIds = UserTeams::query()->where('team_id', $pcpTeam->id)->pluck('user_id')->toArray();
 
-            // Reset max capacity for all users except those in the PCP team
-            LeadAllocation::query()->whereNotIn('user_id', $pcpUserIds)->update([
-                'max_capacity' => 50,
-            ]);
+        //     // Reset max capacity for all users except those in the PCP team
+        //     LeadAllocation::query()->whereNotIn('user_id', $pcpUserIds)->update([
+        //         'max_capacity' => 50,
+        //     ]);
 
-            info('Scheduler has reset max capacity for all users except PCP team members');
-        } else {
-            // Reset max capacity for all users
-            LeadAllocation::query()->update([
-                'max_capacity' => 50,
-            ]);
+        //     info('Scheduler has reset max capacity for all users except PCP team members');
+        // } else {
+        //     // Reset max capacity for all users
+        //     LeadAllocation::query()->update([
+        //         'max_capacity' => 50,
+        //     ]);
 
-            info('Scheduler has reset max capacity for all users');
-        }
+        //     info('Scheduler has reset max capacity for all users');
+        // }
 
         return 0;
     }
