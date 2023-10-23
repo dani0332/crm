@@ -154,7 +154,7 @@
     <script src="{{ asset('old/Toaster.js') }}"></script>
 
     @php
-    $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
+    $pusherAppKey = config('constants.VITE_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
     $appName = config('constants.APP_ENV');
     @endphp
