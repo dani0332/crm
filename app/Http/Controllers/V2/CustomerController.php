@@ -10,6 +10,7 @@ use App\Http\Requests\CustomerUploadRequest;
 use App\Jobs\MAWelcomeJob;
 use App\Repositories\CustomerRepository;
 use App\Repositories\NationalityRepository;
+use App\Services\BerlinService;
 use App\Services\SendEmailCustomerService;
 
 class CustomerController extends Controller
@@ -91,10 +92,10 @@ class CustomerController extends Controller
         return inertia('Customer/Upload');
     }
 
-    public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService)
+    public function processCustomerUpload(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService)
     {
         if ($customerUploadRequest->validated()) {
-            CustomerRepository::customerUploadRecordsCreate($customerUploadRequest, $sendEmailCustomerService);
+            CustomerRepository::customerUploadRecordsCreate($customerUploadRequest, $sendEmailCustomerService, $berlinService);
         }
 
         return redirect('customer-upload')->with('success', 'Upload customers records has been stored');

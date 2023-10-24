@@ -16,6 +16,7 @@ use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
+use App\Services\BerlinService;
 use App\Services\SendEmailCustomerService;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Enums\GenericRequestEnum;
@@ -216,20 +217,21 @@ class CustomerRepository extends BaseRepository
         return $additionalContacts;
     }
 
-    public function fetchCustomerUploadRecordsCreate(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService)
+    public function fetchCustomerUploadRecordsCreate(CustomerUploadRequest $customerUploadRequest, SendEmailCustomerService $sendEmailCustomerService, BerlinService $berlinService)
     {
         if ($customerUploadRequest->hasFile('file_name')) {
             return Excel::import(new CustomersImport(
                 $customerUploadRequest->myalfred_expiry_date,
                 $customerUploadRequest->cdb_id,
                 $customerUploadRequest->inviatation_email,
-                $sendEmailCustomerService
+                $sendEmailCustomerService,
+                $berlinService
             ), $customerUploadRequest->file('file_name'));
         }
 
         vAbort('Something went wrong while uploading');
     }
-    
+
     public function fetchReplicatePreviousAdditionalContacts($old_customer_id, $new_customer_id)
     {
         $customerPreviousContactInfo = CustomerAdditionalContact::where('customer_id', $old_customer_id)->get();
