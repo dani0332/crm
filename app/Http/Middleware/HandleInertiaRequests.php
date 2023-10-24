@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
+use App\Enums\QuoteIssuanceStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
@@ -60,10 +61,11 @@ class HandleInertiaRequests extends Middleware
             'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
+            'quoteIssuanceStatusEnum' => QuoteIssuanceStatusEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.MIX_PUSHER_APP_KEY'),
             'epLink' => env('EMBEDDED_PAYMENT_LINK'),
@@ -85,7 +87,7 @@ class HandleInertiaRequests extends Middleware
 
     protected function buildNavigation()
     {
-        if (! auth()->check()) {
+        if (!auth()->check()) {
             return redirect()->route('login');
         }
 

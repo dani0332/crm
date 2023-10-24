@@ -72,6 +72,7 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Array,
   carPlanTypeEnum: Object,
+  policyIssuanceStatus: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -2603,170 +2604,12 @@ const loadEmailEvents = email => {
       :modelType="quoteType"
     />
 
-    <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-textarea
-            v-model="policyDetailsForm.quote_policy_number"
-            type="text"
-            label="Policy Number"
-            placeholder="Policy Number"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_issuance_date"
-            :disabled="!policyDetailsState.isEditing"
-            :rules="[isRequired]"
-            type="date"
-            label="ISSUANCE DATE"
-            class="w-full"
-          />
-        </div>
-      </div>
-
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-textarea
-            v-model="policyDetailsForm.quote_policy_price_vat_notapplicable"
-            type="text"
-            label="Price (VAT NOT APPLICABLE)"
-            placeholder="Price (VAT NOT APPLICABLE)"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_start_date"
-            type="date"
-            label="Start Date"
-            placeholder="Start Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-textarea
-            v-model="policyDetailsForm.quote_policy_price_vat_applicable"
-            type="text"
-            label="Price (VAT APPLICABLE)"
-            placeholder="Price (VAT APPLICABLE)"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <DatePicker
-            v-model="policyDetailsForm.quote_policy_expiry_date"
-            type="date"
-            label="Expiry Date"
-            placeholder="Expiry Date"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-textarea
-            v-model="policyDetailsForm.quote_policy_vat_total_amount"
-            type="text"
-            label="Total VAT Amount"
-            placeholder="Total VAT Amount"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <x-input
-            v-model="policyDetailsForm.quote_premium"
-            type="number"
-            label="Price with VAT"
-            placeholder="Price"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full pb-5">
-        <div class="w-full md:w-1/2">
-          <x-input
-            v-model="policyDetailsForm.quote_plan_insurer_quote_number"
-            type="number"
-            label="Insurer Quote Number"
-            placeholder="Insurer Quote Number"
-            class="w-full"
-            :disabled="!policyDetailsState.isEditing"
-          />
-        </div>
-        <div class="w-full md:w-1/2">
-          <x-select
-            v-model="policyDetailsForm.quote_policy_issuance_status"
-            class="w-full"
-            label="Issuance Status"
-            placeholder="Select any option"
-            :disabled="!policyDetailsState.isEditing"
-            :options="[
-              { value: 'All', label: 'All' },
-              { value: true, label: 'Yes' },
-              { value: false, label: 'No' },
-            ]"
-          />
-        </div>
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2"></div>
-        <div class="w-full md:w-1/2" />
-      </div>
-      <div
-        class="flex justify-end"
-        v-if="
-          !hasRole(rolesEnum.PA) &&
-          record.quote_status_id == quoteStatusEnum.TransactionApproved
-        "
-      >
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4 mr-2"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="policyDetailsState.isEditing = false"
-        >
-          Cancel
-        </x-button>
-        <x-button
-          v-if="policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="policyDetailsForm.processing"
-          @click.prevent="onUpdatePolicyDetails"
-        >
-          Update
-        </x-button>
-        <x-button
-          v-if="!policyDetailsState.isEditing"
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          @click.prevent="policyDetailsState.isEditing = true"
-        >
-          Edit
-        </x-button>
-      </div>
-    </div>
+    <PolicyDetail
+      v-if="isQuoteDocumentEnabled"
+      :record="record"
+      :quoteStatusEnum="quoteStatusEnum"
+      :policyIssuanceStatus="policyIssuanceStatus"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
       <div class="flex justify-between items-center mb-4">

@@ -38,6 +38,7 @@ use App\Models\HealthPlanType;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
+use App\Models\PolicyIssuanceStatus;
 use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
@@ -644,6 +645,7 @@ class CRUDController extends Controller
             $leadDocsStoragePath = createCdnUrl('');
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
+            $policyIssuanceStatus = PolicyIssuanceStatus::active()->get();
 
             // dd($record);
             return inertia('PersonalQuote/Car/Show', compact([
@@ -654,7 +656,7 @@ class CRUDController extends Controller
                 'yearsOfManufacture', 'notesForCustomers', 'quoteType', 'quoteTypeId', 'trimList', 'autoAllocationDisabled', 'embeddedProducts', 'genericRequestEnum',
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
-                'carPlanTypeEnum',
+                'carPlanTypeEnum', 'policyIssuanceStatus',
             ]));
         }
 
@@ -1567,7 +1569,14 @@ class CRUDController extends Controller
             'policy_issuance_date' => Carbon::parse($request->quote_policy_issuance_date)->format('Y-m-d'),
             'policy_start_date' => Carbon::parse($request->quote_policy_start_date)->format('Y-m-d'),
             'renewal_expiry_date' => Carbon::parse($request->quote_policy_expiry_date)->format('Y-m-d'),
-            'premium' => $request->quote_premium,
+            'premium' => $request->quote_premium ?? "",
+            'price_vat_not_applicable' => $request->price_vat_notapplicable ?? "",
+            'price_without_vat' => $request->amount ?? "",
+            'price_with_vat' => $request->amount_with_vat ?? "",
+            'vat' => $request->vat ?? "",
+            'insurer_quote_number' => $request->quote_plan_insurer_quote_number ?? "",
+            'policy_issuance_status_id' => $request->quote_policy_issuance_status ?? "",
+            'policy_issuance_status_other' => $request->quote_policy_issuance_status_other ?? "",
         ]);
 
         return redirect()->back()->with('success', 'Quote Policy Detail has been updated.');
