@@ -97,11 +97,10 @@ class RenewalBatchReportService extends BaseService
             if ($authUserIsDeputyManager) {
                 $userIds = [];
                 $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
-                if (empty($userManagerIds))
-                {
+                if (empty($userManagerIds)) {
                     $userIds = $this->deputyManagerWalkTree($authUserId);
-                }else if (count($userManagerIds) > 0) {
-                    foreach($userManagerIds as $key => $value){
+                } elseif (count($userManagerIds) > 0) {
+                    foreach ($userManagerIds as $key => $value) {
                         $users = $this->walkTree($value);
                         $userIds = array_merge($userIds, $users);
                     }
@@ -375,11 +374,10 @@ class RenewalBatchReportService extends BaseService
                 $userIds = [];
                 if ($authUserIsDeputyManager) {
                     $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
-                    if (empty($userManagerIds))
-                    {
+                    if (empty($userManagerIds)) {
                         $userIds = $this->deputyManagerWalkTree($authUserId);
-                    }else if (count($userManagerIds) > 0) {
-                        foreach($userManagerIds as $key => $value){
+                    } elseif (count($userManagerIds) > 0) {
+                        foreach ($userManagerIds as $key => $value) {
                             $users = $this->walkTree($value);
                             $userIds = array_merge($userIds, $users);
                         }
@@ -467,11 +465,10 @@ class RenewalBatchReportService extends BaseService
             $userIds = [];
             if ($authUserIsDeputyManager) {
                 $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
-                if (empty($userManagerIds))
-                {
+                if (empty($userManagerIds)) {
                     $userIds = $this->deputyManagerWalkTree($authUserId);
-                }else if (count($userManagerIds) > 0) {
-                    foreach($userManagerIds as $key => $value){
+                } elseif (count($userManagerIds) > 0) {
+                    foreach ($userManagerIds as $key => $value) {
                         $users = $this->walkTree($value);
                         $userIds = array_merge($userIds, $users);
                     }
