@@ -1222,6 +1222,7 @@ class RenewalsUploadService
                 // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
 
+                dd($listQuotePlans);
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
@@ -1275,7 +1276,7 @@ class RenewalsUploadService
                         'quote_uuid' => $carQuote->uuid,
                     ];
 
-                    $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+                    $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $emailData->plans], 'isDataSorted' => true])));
 
                     if (isset($pdf['error'])) {
                         info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);

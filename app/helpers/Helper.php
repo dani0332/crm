@@ -517,3 +517,10 @@ if (! function_exists('getQueryForLogWithBindings')) {
         return vsprintf(str_replace('?', '%s', $addSlashes), $builder->getBindings());
     }
 }
+
+if (! function_exists('formatMobileNo')) {
+    function formatMobileNo($mobile)
+    {
+        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+    }
+}
