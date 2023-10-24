@@ -1219,13 +1219,14 @@ class RenewalsUploadService
 
             if ($carQuote->previous_quote_policy_number != null) {
 
+
                 // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
 
-                dd($listQuotePlans);
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
+                Log::info('Renewals OCB email plans fetched');
                 if (isset($carQuote->advisor_id)) {
                     $advisor = $this->userService->getUserById($carQuote->advisor_id);
                     $advisorName = $advisor->name;
@@ -1245,7 +1246,7 @@ class RenewalsUploadService
 
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-
+                Log::info('Renewals OCB Email email data created');
 
 //                $emailData = (object) [
 //                    'quoteTypeId' => QuoteTypeId::Car,
@@ -1647,6 +1648,7 @@ class RenewalsUploadService
 
     public function scheduleRenewalsOcbEmails($batch, RenewalsBatchEmails $renewalsBatchEmail)
     {
+
         $logPrefix = 'Renewals OCB email ';
 
         try {
