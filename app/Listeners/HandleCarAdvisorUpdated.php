@@ -43,7 +43,7 @@ class HandleCarAdvisorUpdated
 
         $lead = $event->lead;
 
-        if($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
             info('lead is source is renewal upload. Skipping intro email job');
             return;
         }
