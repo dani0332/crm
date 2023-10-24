@@ -14,4 +14,5 @@ final class TeamNameEnum extends Enum
     public const EBP = 'EBP';
     public const RM_NB = 'RM-NB';
     public const RM_SPEED = 'RM-SPEED';
+    public const MOTOR_CORPORATE_NB_COMMERCIAL = 'Motor Corporate - NB Commercial';
 }
