@@ -1243,7 +1243,7 @@ class RenewalsUploadService
                 $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
 
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
-                $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR);
+                $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
 
 //                $emailData = (object) [
