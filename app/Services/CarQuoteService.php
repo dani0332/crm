@@ -826,9 +826,9 @@ class CarQuoteService extends BaseService
         if ($column != '' && $column != 0 && $direction != '') {
             $columnName = $request->get('columns')[$column]['name'];
 
-            return $this->query->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
+            return $this->query->distinct()->orderBy($this->getSortingColumnNameWithPrefix($columnName), $direction);
         } else {
-            return $this->query->orderBy('cqr.created_at', 'DESC');
+            return $this->query->distinct()->orderBy('cqr.created_at', 'DESC');
         }
     }
 
