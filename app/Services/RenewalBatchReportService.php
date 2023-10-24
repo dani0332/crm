@@ -95,7 +95,17 @@ class RenewalBatchReportService extends BaseService
         // filteration of valid advisores based on roles
         if ($authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
             if ($authUserIsDeputyManager) {
-                $userIds = $this->deputyManagerWalkTree($authUserId);
+                $userIds = [];
+                $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
+                if (empty($userManagerIds))
+                {
+                    $userIds = $this->deputyManagerWalkTree($authUserId);
+                }else if (count($userManagerIds) > 0) {
+                    foreach($userManagerIds as $key => $value){
+                        $users = $this->walkTree($value);
+                        $userIds = array_merge($userIds, $users);
+                    }
+                }
             } else {
                 $userIds = $this->walkTree($authUserId);
             }
@@ -362,7 +372,19 @@ class RenewalBatchReportService extends BaseService
             }
 
             if ($authUserIsDeputyManager) {
-                $userIds = $this->deputyManagerWalkTree($authUserId);
+                $userIds = [];
+                if ($authUserIsDeputyManager) {
+                    $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
+                    if (empty($userManagerIds))
+                    {
+                        $userIds = $this->deputyManagerWalkTree($authUserId);
+                    }else if (count($userManagerIds) > 0) {
+                        foreach($userManagerIds as $key => $value){
+                            $users = $this->walkTree($value);
+                            $userIds = array_merge($userIds, $users);
+                        }
+                    }
+                }
             } elseif ($authUserIsCEO || $authUserIsAccounts) {
                 // get instance of crud service with the help of app service container
                 $crudService = app()->make(CRUDService::class);
@@ -442,8 +464,18 @@ class RenewalBatchReportService extends BaseService
 
             $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
         } elseif (! isset($filters->advisors) && $authUserIsDeputyManager || $authUserIsManager || $authUserIsRenewalsManager) {
+            $userIds = [];
             if ($authUserIsDeputyManager) {
-                $userIds = $this->deputyManagerWalkTree($authUserId);
+                $userManagerIds = $this->getUserManagers($authUserId)->pluck('id')->toArray();
+                if (empty($userManagerIds))
+                {
+                    $userIds = $this->deputyManagerWalkTree($authUserId);
+                }else if (count($userManagerIds) > 0) {
+                    foreach($userManagerIds as $key => $value){
+                        $users = $this->walkTree($value);
+                        $userIds = array_merge($userIds, $users);
+                    }
+                }
             } else {
                 $userIds = $this->walkTree($authUserId);
             }
