@@ -95,15 +95,11 @@ class CustomersImport implements OnEachRow
             $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email);
             info('CustomersImport responseExtend: '.$responseExtend);
 
-            $existingQuoteCustomer = QuoteCustomer::where(['customer_id' => $customerId, 'cdb_id' => $this->CDBId])->first();
-
-            if (! $existingQuoteCustomer) {
-                $newQuoteCustomer = new QuoteCustomer();
-                $newQuoteCustomer->cdb_id = $this->CDBId;
-                $newQuoteCustomer->customer_id = $customerId;
-                $newQuoteCustomer->save();
-                Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-ID ->'.$this->CDBId);
-            }
+            $newQuoteCustomer = new QuoteCustomer();
+            $newQuoteCustomer->cdb_id = $this->CDBId;
+            $newQuoteCustomer->customer_id = $customerId;
+            $newQuoteCustomer->save();
+            Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-ID ->'.$this->CDBId);
         }
     }
 }
