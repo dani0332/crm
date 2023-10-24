@@ -11,16 +11,18 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\User;
+use App\Services\CarQuoteService;
 use Carbon\Carbon;
-use \App\Services\CarQuoteService;
 
 class CarEmailService extends BaseService
 {
     protected $sendEmailCustomerService;
+    protected $carQuoteService;
 
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService)
+    public function __construct(SendEmailCustomerService $sendEmailCustomerService,CarQuoteService $carQuoteService)
     {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->carQuoteService = $carQuoteService;
     }
 
     public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId)
@@ -112,15 +114,13 @@ class CarEmailService extends BaseService
             'isReAssignment' => ! empty($previousAdvisor),
         ];
         $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
-        if (count($quotePlansCount) > 0) {
+        if ($quotePlansCount > 0) {
             info('Inside plans of count: ' . $carQuote->uuid .'    ');
             $pdfData = [
                 'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $carQuote->uuid,
             ];
-             $carQuoteService =  new CarQuoteService();
-
-            $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+            $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
                 info('Failed to generate PDF for UUID in car email service: ' . $carQuote->uuid . ' Error: ' . $pdf['error']);
             } else {
