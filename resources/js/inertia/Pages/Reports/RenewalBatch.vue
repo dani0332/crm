@@ -363,9 +363,10 @@ function calculateValuesAndHighlight() {
         item.monthlySum = monthlySum == 'NaN' ? '0.00' : monthlySum;
         item.rawRetention = rawRetention == 'NaN' ? '0.00' : rawRetention;
         item.rowSpan = currentRowSpan;
-        item.highlight = (advisorRetention < valueSegmentConversion) ||
-            (advisorRetention < volumeSegmentConversion) ||
-            (advisorRetention < imRetention);
+
+        item.highlight = (Number(advisorRetention) < Number(valueSegmentConversion)) ||
+            (Number(advisorRetention) < Number(volumeSegmentConversion)) ||
+            (Number(advisorRetention) < Number(imRetention));
 
         let year = useDateFormat(new Date(), 'YY').value
         let monthName = getMonthName(item.month) + "-" + year;
@@ -381,18 +382,14 @@ function calculateValuesAndHighlight() {
         avgImRetentionArr[monthName].push(imRetention == 'NaN' ? parseFloat('0.00') : parseFloat(imRetention));
         avgRawRetentionArr[monthName].push(rawRetention == 'NaN' ? parseFloat('0.00') : parseFloat(rawRetention));
 
-        console.log(item)
         if (!page.props.filterOptions.isMCR) {
             page.props.renewalBatchesList.forEach(batch => {
                 if (batch.name == item.renewal_batch) {
 
                     batch.slabs.forEach(slab => {
                         if (page.props.filterOptions.isBDM && !fontColorAssigned) {
-                            console.log("Auth is BDM")
                             let teamName = slab.team_name;
                                 if (teamName.includes('BDM')) {
-                                    console.log("Team is BDM")
-                                    console.log("Batch is "+ item.renewal_batch)
                                     let slabId = slab.pivot.slab_id;
                                     let slabMax = slab.pivot.max;
                                     let slabMin = slab.pivot.min;
@@ -400,29 +397,23 @@ function calculateValuesAndHighlight() {
                                     if (slabId === 3 && item.advisorRetention > slabMin) {
                                         item.advisorRetentionClass = "text-green-500";
                                         fontColorAssigned = true;
-                                        console.log("Font color is green")
                                         return;
                                     }
                                     else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
                                         item.advisorRetentionClass = "text-amber-500";
                                         fontColorAssigned = true;
-                                        console.log("Font color is amber")
                                         return;
                                     }
                                     else if (slabId === 1 && item.advisorRetention < slabMax) {
                                         item.advisorRetentionClass = "text-red-500";
                                         fontColorAssigned = true;
-                                        console.log("Font color is red")
                                         return;
                                     }
                                 }
                         }
                         else if (page.props.filterOptions.isRenewals && !fontColorAssigned) {
-                            console.log("Auth is Renewals")
                             let teamName = slab.team_name;
                             if (teamName.includes('Volume') || teamName.includes('Value')) {
-                                console.log("Team is Volume")
-                                console.log("Batch is " + item.renewal_batch)
                                 let slabId = slab.pivot.slab_id;
                                 let slabMax = slab.pivot.max;
                                 let slabMin = slab.pivot.min;
@@ -430,28 +421,21 @@ function calculateValuesAndHighlight() {
                                 if (slabId === 4 && item.advisorRetention > slabMin) {
                                     item.advisorRetentionClass = "text-green-500";
                                     fontColorAssigned = true;
-                                    console.log("Font color is green")
                                     return;
                                 }
                                 else if (slabId === 3 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
                                     item.advisorRetentionClass = "text-amber-500";
                                     fontColorAssigned = true;
-                                    console.log("Font color is amber")
-
                                     return;
                                 }
                                 else if (slabId === 2 && item.advisorRetention < slabMax && item.advisorRetention > slabMin) {
                                     item.advisorRetentionClass = "text-orange-500";
                                     fontColorAssigned = true;
-                                    console.log("Font color is orange")
-
                                     return;
                                 }
                                 else if (slabId === 1 && item.advisorRetention < slabMax) {
                                     item.advisorRetentionClass = "text-red-500";
                                     fontColorAssigned = true;
-                                    console.log("Font color is red")
-
                                     return;
                                 }
                             }
