@@ -179,6 +179,7 @@ const onUpdatePolicyDetails = () => {
           label="Price with VAT"
           placeholder="Price"
           class="w-full"
+          readonly
           :disabled="!policyDetailsState.isEditing"
         />
       </div>
