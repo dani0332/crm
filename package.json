@@ -2,7 +2,7 @@
     "type": "module",
     "private": true,
     "scripts": {
-        "dev": "doppler run -- vite",
+        "dev": "yarn && doppler run -- vite",
         "prod": "yarn && doppler run -- vite build"
     },
     "devDependencies": {
