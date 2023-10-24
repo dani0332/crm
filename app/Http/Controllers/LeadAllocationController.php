@@ -2,15 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\quoteTypeCode;
+use App\Enums\TeamTypeEnum;
+use App\Enums\UserStatusEnum;
+use App\Events\UserStatusChanged;
+use App\Jobs\ReAssignCarLeadsJob;
+use App\Jobs\ReAssignHealthLeadsJob;
 use App\Models\LeadAllocation;
+use App\Models\Team;
+use App\Models\User;
 use App\Services\ApplicationStorageService;
+use App\Services\CarAllocationService;
+use App\Services\HealthAllocationService;
 use App\Services\LeadAllocationService;
+use App\Traits\TeamHierarchyTrait;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class LeadAllocationController extends Controller
 {
+    use TeamHierarchyTrait;
+
     protected $leadAllocationService;
     protected $applicationStorageService;
 
@@ -120,7 +133,32 @@ class LeadAllocationController extends Controller
     public function updateAvailability(Request $request)
     {
         $updateLogString = '----- Update done successfully to change the';
-        $leadAllocationUser = LeadAllocation::where('user_id', $request->aid)->where('id', $request->id)->first();
+
+        $leadAllocationUser = LeadAllocation::where('user_id', $request->userId)->where('id', $request->id)->first();
+
+        if (isset($request->reason)) {
+
+            if ($request->reason != UserStatusEnum::OFFLINE && $request->reason != UserStatusEnum::ONLINE) {
+                $car = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first();
+                $health = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first();
+                if ($this->userHaveProduct($request->userId, $car->id)) {
+                    info('user belong to car so dispatching car reassignment job');
+                    dispatch(new ReAssignCarLeadsJob(app(CarAllocationService::class), $request->userId));
+                }
+                if ($this->userHaveProduct($request->userId, $health->id)) {
+                    info('user belong to health so dispatching health reassignment job');
+                    dispatch(new ReAssignHealthLeadsJob(app(HealthAllocationService::class), $request->userId));
+                }
+            }
+
+            $user = User::where('id', $request->userId)->first();
+            if ($user) {
+                $user->status = $request->reason;
+                info('user status is going to change on id : '.$user->id.' and status : '.$user->status);
+                event(new UserStatusChanged($user->id, $user->status, $user->name));
+                $user->save();
+            }
+        }
 
         if (isset($request->is_available)) {
             $updateLogString = $updateLogString.' is_available to : '.$request->is_available;

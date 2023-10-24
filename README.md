@@ -1,6 +1,6 @@
 <p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p>  
 
-## About Blanka - IMCRM 
+## About Blanka  - IMCRM 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
@@ -37,8 +37,8 @@ Once you have doppler CLI installed on your local machine, run the following com
 This repository use Laravel Mix to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
 - Run ```yarn``` so all the necassary packages are installed
-- Run ```yarn run prod``` to generate a production build
-- Run ```yarn watch``` to hot load the changes as you make them while development.
+- Run ```yarn prod``` to generate a production build
+- Run ```yarn dev``` to hot load the changes as you make them while development.
 
 **Redis Allocated DBs**
 - Prod - 15
