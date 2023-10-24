@@ -40,7 +40,7 @@ class CarAllocationService extends AllocationService
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
         $query = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL])
             ->where('is_renewal_tier_email_sent', 0);
 
         // Retrieve the first matching car lead from the query or return null if none is found.
@@ -131,20 +131,26 @@ class CarAllocationService extends AllocationService
      */
     public function executeRevivalCheck($leadSource, $tierUserIds): mixed
     {
+        $teamName = null;
+
+        // Determine the team name based on the lead source.
         if ($leadSource == LeadSourceEnum::REVIVAL_REPLIED) {
-            // if lead source is revival replied then we should only assign to organic advisors
-
-            // Retrieve the ID of Organic team.
-            $organicId = Team::whereIn('name', TeamNameEnum::ORGANIC)->select('id')->get();
-
-            // Retrieve the user IDs associated with organic team.
-            $organicUserIds = UserTeams::whereIn('team_id', $organicId)->select('user_id')->get();
-
-            // Getting common to get only organic advisors
-            $tierUserIds = array_intersect($tierUserIds, $organicUserIds);
+            $teamName = TeamNameEnum::ORGANIC; // Organic team for revival replied
+        } elseif ($leadSource == LeadSourceEnum::REVIVAL_PAID) {
+            $teamName = TeamNameEnum::MOTOR_CORPORATE_NB_COMMERCIAL; // Motor Corporate team for revival paid
         }
 
-        return $tierUserIds;
+        if ($teamName) {
+            // Retrieve the user IDs associated with the specified team.
+            $tierUserIds = UserTeams::whereIn('team_id', function ($query) use ($teamName) {
+                // Subquery: Select the team ID for the given team name.
+                $query->select('id')
+                    ->from('teams')
+                    ->where('name', $teamName);
+            })->select('user_id')->get();
+        }
+
+        return $tierUserIds ?? []; // Return the user IDs or an empty array if no team name is determined.
     }
 
     protected function getDeferredLeads(): mixed
@@ -484,7 +490,7 @@ class CarAllocationService extends AllocationService
 
         // Query to fetch leads
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD, LeadSourceEnum::REVIVAL])
             ->where('quote_status_id', QuoteStatusEnum::NewLead)
             ->where('is_renewal_tier_email_sent', 0);
 
