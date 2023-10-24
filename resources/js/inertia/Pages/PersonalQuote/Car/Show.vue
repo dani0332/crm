@@ -1500,7 +1500,7 @@ const loadEmailEvents = email => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRIM</dt>
-            <dd>{{ record.trim }}</dd>
+            <dd>{{ record.car_model_detail_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CAR MODEL YEAR</dt>
