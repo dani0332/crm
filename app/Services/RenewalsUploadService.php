@@ -1211,6 +1211,7 @@ class RenewalsUploadService
 
     public function renewalBatchEmailProcess($batch, RenewalsBatchEmails $renewalsBatchEmail, RenewalQuoteProcess $renewalQuoteProcess)
     {
+
         try {
             $carQuote = CarQuote::find($renewalQuoteProcess->quote_id);
 
@@ -1220,6 +1221,7 @@ class RenewalsUploadService
 
                 // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
+
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
@@ -1231,39 +1233,50 @@ class RenewalsUploadService
                     $advisorLandline = $advisor->landline_no;
                 }
 
+                $previousAdvisor = null;
+                if(!empty($carQuote->previous_advisor_id)){
+                    $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
+                }
+
                 // Send Email Data
                 $carMake = $this->lookupService->getCarMake($carQuote->car_make_id);
                 $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
-                $emailData = (object) [
-                    'quoteTypeId' => QuoteTypeId::Car,
-                    'quoteId' => $carQuote->id,
-                    'templateId' => $emailTemplateId,
-                    'quoteCdbId' => $carQuote->code,
-                    'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-                    'customerEmail' => $carQuote->email,
-                    'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
-                    'currentlyInsuredWith' => $carQuote->currently_insured_with,
-                    'carMake' => isset($carMake->text) ? $carMake->text : null,
-                    'carModel' => isset($carModel->text) ? $carModel->text : null,
-                    'carManufactureYear' => $carQuote->year_of_manufacture,
-                    'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
-                    'advisorName' => isset($advisorName) ? $advisorName : null,
-                    'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
-                    'advisorMobileNo' => isset($advisorMobile) ? $advisorMobile : null,
-                    'advisorLandlineNo' => isset($advisorLandline) ? $advisorLandline : null,
-                    'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-                    'listQuotePlans' => $listQuotePlans,
-                    'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
-                    'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
-                ];
 
-                if ($quotePlansCount > 0) {
+                $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+                $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR);
+
+
+//                $emailData = (object) [
+//                    'quoteTypeId' => QuoteTypeId::Car,
+//                    'quoteId' => $carQuote->id,
+//                    'templateId' => $emailTemplateId,
+//                    'quoteCdbId' => $carQuote->code,
+//                    'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+//                    'customerEmail' => $carQuote->email,
+//                    'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
+//                    'currentlyInsuredWith' => $carQuote->currently_insured_with,
+//                    'carMake' => isset($carMake->text) ? $carMake->text : null,
+//                    'carModel' => isset($carModel->text) ? $carModel->text : null,
+//                    'carManufactureYear' => $carQuote->year_of_manufacture,
+//                    'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
+//                    'advisorName' => isset($advisorName) ? $advisorName : null,
+//                    'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
+//                    'advisorMobileNo' => isset($advisorMobile) ? $advisorMobile : null,
+//                    'advisorLandlineNo' => isset($advisorLandline) ? $advisorLandline : null,
+//                    'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+//                    'listQuotePlans' => $listQuotePlans,
+//                    'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
+//                    'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
+//                ];
+
+                if (isset($emailData->plans) && is_array($emailData->plans) && $emailData->plans > 0) {
                     $pdfData = [
-                        'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
+                        'plan_ids' => collect($emailData->plans)->take(5)->pluck('id')->toArray(),
                         'quote_uuid' => $carQuote->uuid,
                     ];
 
                     $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
+
                     if (isset($pdf['error'])) {
                         info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
                     } else {
@@ -1272,7 +1285,7 @@ class RenewalsUploadService
                 }
 
                 info('Renewals OCB Email sending email to email: '.$carQuote->email);
-                $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+                $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
                 if ($responseCode == 201) {
                     Log::info('Renewals OCB Email sent to uuid: '.$carQuote->uuid.' ResponseCode: '.$responseCode);

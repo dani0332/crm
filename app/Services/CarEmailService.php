@@ -240,7 +240,7 @@ class CarEmailService extends BaseService
         }
     }
 
-    private function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
+    public function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
     {
         if (count($plans) == 0) {
             // No plans with available ratings, build email data for the specific case
