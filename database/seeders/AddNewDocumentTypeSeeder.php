@@ -21,7 +21,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'max_files' => 15,
                 'max_size' => 30,
                 'folder_path' => 'car',
-                'accepted_files' => '.xlsm,.xlsx,.pdf,.jpeg,.jpg',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
                 'quote_type_id' => 1,
                 'send_to_customer' => true,
                 'sort_order' => 4,

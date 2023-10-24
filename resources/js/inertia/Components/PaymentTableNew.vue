@@ -7,6 +7,7 @@ const rolesEnum = page.props.rolesEnum;
 
 const hasRole = role => useHasRole(role);
 const can = permission => useCan(permission);
+const hasAnyRole = roles => useHasAnyRole(roles);
 
 const props = defineProps({
   payments: Array,
@@ -81,6 +82,12 @@ const discountError = computed(() => {
   if (discountValue.value > 50 && paymentMethodsForm.discount === 'refer_a_friend') {
     return 'Discount should not exceed 50 AED';
   }
+  if(discountValue.value > totalAmount.value){
+    totalAmount.value = totalPrice.value;
+    calculatePaymentBreakup();
+    return 'Discount should not exceed total amount';
+  }
+
   return '';
 });
 
@@ -302,6 +309,7 @@ const handleDiscountChange = () => {
   
   if( paymentMethodsForm.status === 'create' ){
     discountValue.value = 0;
+    paymentMethodsForm.discount_reason = 'promotional_campaign_discount';
   }
 
   isDiscountReasonEnabled.value = false;
@@ -382,8 +390,8 @@ const calculatePaymentBreakup = () => {
 
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
   console.log('azhar9991='+perInstallmentPrice);
-  if ( paymentMethodsForm.status === 'edit' && paymentMethodsForm.frequency != 'split_payments') {
-    ////splitAmountModels.value = [];
+  if ( paymentMethodsForm.status === 'edit') {
+    splitAmountModels.value = [];
   }
 
   for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
@@ -513,6 +521,7 @@ const addPaymentModal = () => {
   checkDetailModels.value = [];   
   
   isPaymentCalculationError.value = false;
+  showDiscountOptions.value = true;
 
   if (totalPrice.value > 0) {
     totalAmount.value = totalPrice.value;
@@ -556,6 +565,9 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   paymentMethodsForm.status = 'edit';
   paymentMethodsForm.declined_reason = '1';
   isPaymentCalculationError.value = false;
+  isApproveClicked.value = false;
+  isFileError.value = false;
+  isApprovePaymentError.value = false;
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -655,7 +667,7 @@ const paymentMethodsForm = useForm({
 
 const validateViewPayment = () => {
   
-  if (parseFloat(splitAmountModels.value[splitPaymentNo.value]).toFixed(2) != parseFloat(paymentMethodsForm.collection_amount).toFixed(2)) {
+  if (parseFloat(splitAmountModels.value[splitPaymentNo.value]).toFixed(2) > parseFloat(paymentMethodsForm.collection_amount).toFixed(2)) {
      isApprovePaymentError.value = true;
     return true;
   }
@@ -878,12 +890,14 @@ const uploadDocument = (doc, files, count) => {
       preserveState: true,
       onError: errors => {
         documentForm.setError(errors.error);
-		console.log("errors");
+		    console.log("errors");
         console.log(errors);
+        
+        
         notification.error({
           title: 'File upload failed',
           position: 'top',
-        });
+        }); return;
       },
       onSuccess: (data) => {
         isDocumentNotUploaded.value[count] = false;
@@ -929,6 +943,7 @@ const providerId = computed(() => {
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-tooltip>
         <x-button
+          v-if="hasRole(rolesEnum.CarAdvisor)"
           size="sm"
           color="emerald"
           @click="addPaymentModal"
@@ -1075,32 +1090,9 @@ const providerId = computed(() => {
               <td>{{ item.payment_status_message }}</td>             
               <td>
                 <div class="flex gap-2">
-                <template v-if="!can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_method_code == 'CC' && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
-                        @click.prevent="generateCCLink(item.code)"
-                    >
-                        Copy Link
-                    </x-button>
-                    <x-button v-if="item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA) && can(permissionEnum.PaymentsEdit)"  size="xs" color="primary" outlined @click="editPaymentModal(item,0,0)">
+                <template v-if="hasRole(rolesEnum.CarAdvisor)">                    
+                    <x-button size="xs" color="primary" outlined @click="editPaymentModal(item,0,0)">
                         Edit
-                    </x-button>
-                </template>
-                <template v-if="can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_method_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
-                        @click="approvePayment(item)"
-                    >
-                        Approve
-                    </x-button>
-                </template>
-                <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
-                    <x-button size="xs" color="primary" outlined disabled>
-                        Approve
                     </x-button>
                 </template>
             </div>
@@ -1117,7 +1109,7 @@ const providerId = computed(() => {
               <td></td>
               <td></td>
               <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
-              <td></td>
+              <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
               <td>{{ splitPayment.payment_status.text }}</td>
               <td></td>
               <td><x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no)" outlined >View</x-button></td>
@@ -1313,7 +1305,7 @@ const providerId = computed(() => {
                 v-model="paymentMethodsForm.custom_reason"                  
               />
           </x-field>
-          <x-tooltip v-if="showDiscountOption">
+          <x-tooltip v-if="showDiscountOptions">
             <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)" class="w-full">
               <span v-if="isFieldReadonly">{{ discountTypes.find(item => item.value === paymentMethodsForm.discount).label }}</span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
@@ -1765,8 +1757,8 @@ const providerId = computed(() => {
 
       <template v-if="isViewEnabled && isApproveClicked">
         <x-divider class="mb-4 mt-1" />
-        <div class="bg-primary p-1 mb-2">
-          <h3 class="text-white">PAYMENT VERIFICATION</h3>
+        <div class="p-1 mb-2">
+          <h3>PAYMENT VERIFICATION</h3>
         </div>
         <x-alert
             v-if="isApprovePaymentError"
@@ -1843,7 +1835,7 @@ const providerId = computed(() => {
             </div>
           </template>          
           <template v-else >
-            <div class="w-full flex justify-end">
+            <div v-if="(splitPaymentRecord.payment_status_id!=10 && hasRole(rolesEnum.CarAdvisor))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
                 <x-button size="sm" @click="isDeclineClicked=!isDeclineClicked;isApproveClicked=false">
                   Cancel

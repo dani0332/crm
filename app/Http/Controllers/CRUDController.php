@@ -1701,7 +1701,7 @@ class CRUDController extends Controller
             $payment = Payment::create($paymentInformation);
 
             //Add split payments start        
-            $this->paymentSplitsRepository->addPaymentSplits($request);
+            $this->paymentSplitsRepository->addPaymentSplits($request,$paymentInformation['code']);
             //Add split payments ends
 
             $quoteModel->payments()->save($payment);

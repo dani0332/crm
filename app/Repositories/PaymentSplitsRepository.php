@@ -6,6 +6,8 @@ use App\Models\PaymentSplits;
 use App\Enums\PaymentStatusEnum;
 use App\Models\QuoteDocument;
 
+use App\Controllers\SageApi;
+
 class PaymentSplitsRepository
 {
     public static function getByCode($code)
@@ -15,32 +17,34 @@ class PaymentSplitsRepository
             ->get();
     }
 
-    public function addPaymentSplits($request)
+    public function addPaymentSplits($request,$quoteID)
     {
         for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
-            $splitPaymentInformation = [
-                'code' => $paymentInformation['code'],
-                'sr_no' => $i,
-                'payment_method' => $request->split_payment_details['payment_type'][$i],
-                'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
-                'payment_amount' => $request->split_payment_details['split_amount'][$i],
-                'due_date' => $request->split_payment_details['due_date'][$i],   
-                'payment_status_id' => PaymentStatusEnum::NEW,             
-            ];
-            
-            $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-            
-            //add document references
-            if(isset($request->split_payment_details['document_detail'][$i]) 
-                && $paymentSplitRecord 
-                && count($request->split_payment_details['document_detail'][$i]) 
-                ){
-                foreach($request->split_payment_details['document_detail'][$i] as $document){
-                    $quoteDocumentRec = QuoteDocument::find($document['id']);
-                    $quoteDocumentRec = QuoteDocument::find($document['id']);
-                    if ($quoteDocumentRec){
-                        $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
-                        $quoteDocumentRec->save();
+            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i]!=NULL) {
+                $splitPaymentInformation = [
+                    'code' => $quoteID,
+                    'sr_no' => $i,
+                    'payment_method' => $request->split_payment_details['payment_type'][$i],
+                    'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
+                    'payment_amount' => $request->split_payment_details['split_amount'][$i],
+                    'due_date' => $request->split_payment_details['due_date'][$i],   
+                    'payment_status_id' => PaymentStatusEnum::NEW,             
+                ];
+                
+                $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
+                
+                //add document references
+                if(isset($request->split_payment_details['document_detail'][$i]) 
+                    && $paymentSplitRecord 
+                    && count($request->split_payment_details['document_detail'][$i]) 
+                    ){
+                    foreach($request->split_payment_details['document_detail'][$i] as $document){
+                        $quoteDocumentRec = QuoteDocument::find($document['id']);
+                        $quoteDocumentRec = QuoteDocument::find($document['id']);
+                        if ($quoteDocumentRec){
+                            $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                            $quoteDocumentRec->save();
+                        }
                     }
                 }
             }
@@ -120,6 +124,17 @@ class PaymentSplitsRepository
                 'payment_status_id' => PaymentStatusEnum::PAID,
                 'updated_by' => $request->user()->id,
             ];
+            /*
+            $sageRequest->discount = floatval($request->discount);
+            $sageRequest->insurerInvoiceDate = date("Y-m-d", strtotime($request->insurerInvoiceDate));
+            $sageRequest->policyExpiryDate   = date("Ymd", strtotime($request->policyExpiryDate));
+            $sageRequest->premiumWithoutTax = floatval($request->premiumWithoutTax);
+            $sageRequest->premiumWithTax = floatval($request->premiumWithTax);
+            $sageRequest->vatOnCommission = floatval($request->vatOnCommission);
+            $sageRequest->commission = floatval($request->commission);
+            $sageRequest->commissionIncludingVat = floatval($request->commissionIncludingVat);  
+            $sageApi = new SageApi();
+            $sageApi->processSagePost($sageRequest);*/
 
         } elseif($request->is_declined) {
             $paymentInformation = [
