@@ -524,3 +524,16 @@ if (! function_exists('formatMobileNo')) {
         return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
     }
 }
+
+if (! function_exists('formatMobileNoDisplay')) {
+    function formatMobileNoDisplay($mobile) {
+        return preg_replace('/^(\d{3})(\d{3})(\d{4})$/', '$1 $2 $3', $mobile);
+    }
+}
+
+
+if (! function_exists('formatMobileNoDisplay')) {
+    function formatLandlineDisplay($landline) {
+        return preg_replace('/^(\d{2})(\d{3})(\d{4})$/', '$1 $2 $3', $landline);
+    }
+}
