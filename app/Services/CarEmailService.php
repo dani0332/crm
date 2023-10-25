@@ -86,13 +86,14 @@ class CarEmailService extends BaseService
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-
+        $whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
+        $whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
             'mobilePhone' => $advisor->mobile_no,
-            'whatsAppNumber' => ! empty($advisor->mobile_no) ? str_replace('+', '', $advisor->mobile_no) : '',
+            'whatsAppNumber' => $whatsAppNumber,
             'landLine' => $advisor->landline_no,
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,

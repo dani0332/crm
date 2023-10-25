@@ -50,10 +50,10 @@ class QuoteAllocation extends Command
 
         $quoteAllocationSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH);
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
-
+        $allocationStartDate = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS);
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(7)->toDateTimeString();
-            $chunkSize = 50;
+            $chunkSize = 500;
             $linesOfBusiness = [
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
@@ -79,7 +79,7 @@ class QuoteAllocation extends Command
             ];
 
             foreach ($linesOfBusiness as $quoteType => $config) {
-                $this->executeQuoteAllocation($quoteType, $config, $to, $chunkSize);
+                $this->executeQuoteAllocation($quoteType, $config, $to, $chunkSize, $allocationStartDate);
             }
 
         } else {
@@ -89,14 +89,14 @@ class QuoteAllocation extends Command
         info("------------------- Quote Allocation Command Finished for $currentIteration -------------------");
     }
 
-    public function executeQuoteAllocation($quoteType, $config, $to, $chunkSize)
+    public function executeQuoteAllocation($quoteType, $config, $to, $chunkSize, $allocationStartDate)
     {
         $quoteModel = $config['model'];
         $allocationKey = $config['allocationKey'];
         $conditions = $config['conditions'];
         $processedRecords = 0;
         $quoteModel::whereNull($allocationKey)
-            ->whereBetween('created_at', [now()->startOfDay()->toDateTimeString(), $to])
+            ->whereBetween('created_at', [$allocationStartDate, $to])
             ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {

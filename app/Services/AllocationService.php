@@ -250,7 +250,7 @@ class AllocationService
         return [
             'auto_assignment_count' => isset($systemAssignedCount) ? $systemAssignedCount : 0,
             'manual_assignment_count' => isset($manualAssignedCount) ? $manualAssignedCount : 0,
-            'max_capacity' => $allocationCount->max_capacity];
+            'max_capacity' => isset($allocationCount->max_capacity) ? $allocationCount->max_capacity : 0];
     }
 
     public function getHealthTodaysCount($userId)

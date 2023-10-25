@@ -28,7 +28,7 @@
 
     <!-- Custom styling plus plugins -->
     <!-- <link href="{{ asset('build/css/custom.min.css') }}" rel="stylesheet"> -->
-    <link href="{{ mix('build/css/style.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('old/style.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}"
@@ -151,17 +151,17 @@
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
     <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
-    <script src="{{ asset('build/js/Toaster.js') }}"></script>
+    <script src="{{ asset('old/Toaster.js') }}"></script>
 
     @php
-    $pusherAppKey = config('constants.MIX_PUSHER_APP_KEY');
+    $pusherAppKey = config('constants.VITE_PUSHER_APP_KEY');
     $userId = Auth::user()->id;
     $appName = config('constants.APP_ENV');
     @endphp
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
-    <script src="{{ asset('build/js/custom.js') }}"></script>
+    <script src="{{ asset('old/custom.js') }}"></script>
     <script>
         function getStatusText(statusId){
             var statusText = '';
@@ -350,9 +350,7 @@
             dt.ajax.reload();
         }
     </script>
-    <!-- <script src="{{ asset('build/js/customjs.js') }}"></script> -->
-    <script src="{{ mix('build/js/customjs.min.js') }}"></script>
-    <!-- <script src="{{ asset('build/js/tm_js.js') }}"></script> -->
+    <script src="{{ asset('old/customjs.min.js') }}"></script>
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
             if (exception == 'Unauthorized') {
