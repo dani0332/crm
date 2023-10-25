@@ -16,15 +16,13 @@ use Carbon\Carbon;
 class CarEmailService extends BaseService
 {
     protected $sendEmailCustomerService;
-    private $carQuoteService;
 
-    public function __construct(SendEmailCustomerService $sendEmailCustomerService,CarQuoteService $carQuoteService)
+    public function __construct(SendEmailCustomerService $sendEmailCustomerService)
     {
         $this->sendEmailCustomerService = $sendEmailCustomerService;
-        $this->carQuoteService = $carQuoteService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -33,6 +31,21 @@ class CarEmailService extends BaseService
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
+        $quotePlansCount = is_countable($plans) ? count($plans) : 0;
+        if ($quotePlansCount > 0) {
+            info('Inside plans of count: ' . $lead->uuid .'    ');
+            $pdfData = [
+                'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
+                'quote_uuid' => $lead->uuid,
+            ];
+            $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
+            if (isset($pdf['error'])) {
+                info('Failed to generate PDF for UUID in car email service: ' . $lead->uuid . ' Error: ' . $pdf['error']);
+            } else {
+                $emailData->pdfAttachment = (object)$pdf;
+                info('attaching pdf: ' . $lead->uuid .'    ');
+            }
+        }
 
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
 
@@ -72,7 +85,7 @@ class CarEmailService extends BaseService
             ];
         }
 
-        $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor,$plans);
+        $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
         $emailData->isReAssignment = ! empty($previousAdvisor);
@@ -88,7 +101,7 @@ class CarEmailService extends BaseService
         return $emailData;
     }
 
-    private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor,$listQuotePlans=[])
+    private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
@@ -114,20 +127,6 @@ class CarEmailService extends BaseService
             'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
             'isReAssignment' => ! empty($previousAdvisor),
         ];
-        $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
-        if ($quotePlansCount > 0) {
-            info('Inside plans of count: ' . $carQuote->uuid .'    ');
-            $pdfData = [
-                'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
-                'quote_uuid' => $carQuote->uuid,
-            ];
-            $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
-            if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in car email service: ' . $carQuote->uuid . ' Error: ' . $pdf['error']);
-            } else {
-                $emailData->pdfAttachment = (object)$pdf;
-            }
-        }
 
         return $emailData;
     }

@@ -6,6 +6,7 @@ use App\Enums\TiersEnum;
 use App\Models\CarQuote;
 use App\Models\Tier;
 use App\Services\CarEmailService;
+use App\Services\CarQuoteService;
 use App\Services\HttpRequestService;
 use Exception;
 use Illuminate\Bus\Queueable;
@@ -36,7 +37,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(HttpRequestService $httpService, CarEmailService $carEmailService): void
+    public function handle(HttpRequestService $httpService, CarEmailService $carEmailService, CarQuoteService $carQuoteService): void
     {
         try {
             $lead = CarQuote::where('uuid', $this->quoteUuid)->first();
@@ -51,7 +52,7 @@ class SendOCBIntroEmailJob implements ShouldQueue
                 // Retrieve plans with available ratings for the given lead
                 $plans = $httpService->getPlans($lead->uuid, false, false, false);
 
-                $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor);
+                $responseCode = $carEmailService->sendCarOCBIntroEmail($plans, $lead, $tierR, $this->previousAdvisor,$carQuoteService);
 
                 if (in_array($responseCode, [200, 201])) {
                     info('SendOCBIntroEmailJob - OCB INTRO Email Sent: '.$responseCode.' Customer Email Address: '.$lead->email.' Quote UuId: '.$this->quoteUuid);
