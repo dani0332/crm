@@ -20,5 +20,9 @@ class UpdateRenewalTemplateStorageSeeder extends Seeder
         if (($storage = ApplicationStorage::where('key_name', 'SIB_CAR_QUOTE_ONE_CLICK_BUY_MULTIPLE_PLAN_TEMPLATE')->first()) && ($storage->value != '491')) {
             $storage->update(['value' => '491']);
         }
+
+        if (($storage = ApplicationStorage::where('key_name', 'SIB_CAR_QUOTE_ONE_CLICK_BUY_ZERO_PLAN_TEMPLATE')->first()) && ($storage->value != '492')) {
+            $storage->update(['value' => '492']);
+        }
     }
 }
