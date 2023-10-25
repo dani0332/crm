@@ -1,9 +1,6 @@
 <script setup>
-import { onMounted } from 'vue';
-
 const props = defineProps({
   reportData: Object,
-  filterOptions: Object,
   defaultFilters: Object,
 });
 
@@ -23,30 +20,30 @@ const filters = reactive({
 });
 
 const leadSource = computed(() => {
-  return Object.keys(props.filterOptions.leadSource).map(key => ({
+  return Object.keys(props.defaultFilters.leadSource).map(key => ({
     value: key,
-    label: props.filterOptions.leadSource[key],
+    label: props.defaultFilters.leadSource[key],
   }));
 });
 
 const teams = computed(() => {
-  return Object.keys(props.filterOptions.teams).map(key => ({
+  return Object.keys(props.defaultFilters.teams).map(key => ({
     value: key,
-    label: props.filterOptions.teams[key],
+    label: props.defaultFilters.teams[key],
   }));
 });
 
 const tiers = computed(() => {
-  return Object.keys(props.filterOptions.tiers).map(key => ({
+  return Object.keys(props.defaultFilters.tiers).map(key => ({
     value: key,
-    label: props.filterOptions.tiers[key],
+    label: props.defaultFilters.tiers[key],
   }));
 });
 
 const paymentStatus = computed(() => {
-  return Object.keys(props.filterOptions.paymentStatus).map(key => ({
+  return Object.keys(props.defaultFilters.paymentStatus).map(key => ({
     value: key,
-    label: props.filterOptions.paymentStatus[key],
+    label: props.defaultFilters.paymentStatus[key],
   }));
 });
 

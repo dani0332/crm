@@ -7,14 +7,12 @@ use App\Models\User;
 use App\Services\AdvisorConversionReportService;
 use App\Services\AdvisorDistributionReportService;
 use App\Services\AdvisorPerformanceReportService;
-use App\Services\LeadListReportService;
 use App\Services\LeadDistributionReportService;
 use App\Services\RenewalBatchReportService;
 use App\Services\ReportService;
 use App\Traits\GetUserTreeTrait;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use App\Models\CarQuote;
 
 class ReportsController extends Controller
 {
@@ -78,14 +76,12 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderLeadListReport(Request $request, LeadListReportService $LeadServicesReportList)
+    public function renderLeadListReport(Request $request, ReportService $reportService)
     {
         return inertia('Reports/LeadListReport', [
-            'reportData' => $LeadServicesReportList->getReportData($request),
-            'filterOptions' => $LeadServicesReportList->getFilterOptions(),
-            'defaultFilters' => $LeadServicesReportList->getDefaultFilters(),
+            'reportData' => $reportService->getLeadsListReport($request),
+            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
         ]);
-        // return view('reports.lead-list-report');
     }
 
     public function fetchAdvisorListByTeam(Request $request)
