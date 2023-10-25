@@ -11,13 +11,12 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\User;
-use App\Services\CarQuoteService;
 use Carbon\Carbon;
 
 class CarEmailService extends BaseService
 {
     protected $sendEmailCustomerService;
-    protected $carQuoteService;
+    private $carQuoteService;
 
     public function __construct(SendEmailCustomerService $sendEmailCustomerService,CarQuoteService $carQuoteService)
     {
