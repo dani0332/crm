@@ -162,13 +162,6 @@ class SendEmailCustomerService extends BaseService
                 ]],
                 'templateId' => $emailTemplateId,
                 'params' => [
-                    'clientFullName' => $emailData->customerName,
-                    'vehicleName' => ($emailData->carMake ?? '') . (isset($carModel->carModel) ? (' '.$carModel->carModel) : '')  . (isset($carModel->yearOfManufacture) ? (' ' . $carModel->yearOfManufacture) : ''),
-                    'advisorEmail' => ($emailData->advisorEmailAddress ?? null),
-                    'yearOfManufacture' => ($emailData->carManufactureYear ?? null),
-                    'mobileNo' => ($emailData->advisorMobileNo ?? null),
-                    'landLine' => ($emailData->advisorLandlineNo ?? null),
-                    'plans' => ($emailData->listQuotePlans ?? null),
                     'customerName' => $emailData->customerName,
                     'customerEmail' => $emailData->customerEmail,
                     'signUpButtonUrl' => isset($emailData->signUpButtonUrl) ? $emailData->signUpButtonUrl : null,
