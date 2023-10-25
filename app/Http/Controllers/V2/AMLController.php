@@ -160,12 +160,16 @@ class AMLController extends Controller
     public function show(AML $aml)
     {
         $amlResults = json_decode($aml->results);
-
         $aml->quote_type_text = $aml->quotetype->text;
+
+        if(isset($amlResults[0]->Watchlist)) {
+            $amlResults = $amlResults[0]->Watchlist->Matches ?? [];
+        }
 
         return inertia('Aml/Show', [
             'amlResults' => $amlResults,
             'aml' => $aml,
+            'responseFrom' => 'bridger'
         ]);
     }
 
