@@ -1228,10 +1228,6 @@ class RenewalsUploadService
                 Log::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
                 if (isset($carQuote->advisor_id)) {
                     $advisor = $this->userService->getUserById($carQuote->advisor_id);
-                    $advisorName = $advisor->name;
-                    $advisorEmail = $advisor->email;
-                    $advisorMobile = $advisor->mobile_no;
-                    $advisorLandline = $advisor->landline_no;
                 }
 
                 $previousAdvisor = null;
@@ -1239,36 +1235,9 @@ class RenewalsUploadService
                     $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
                 }
 
-                // Send Email Data
-                $carMake = $this->lookupService->getCarMake($carQuote->car_make_id);
-                $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
-
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
                 Log::info('fn: renewalBatchEmailProcess Renewals OCB Email email data created');
-
-                //                $emailData = (object) [
-                //                    'quoteTypeId' => QuoteTypeId::Car,
-                //                    'quoteId' => $carQuote->id,
-                //                    'templateId' => $emailTemplateId,
-                //                    'quoteCdbId' => $carQuote->code,
-                //                    'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-                //                    'customerEmail' => $carQuote->email,
-                //                    'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
-                //                    'currentlyInsuredWith' => $carQuote->currently_insured_with,
-                //                    'carMake' => isset($carMake->text) ? $carMake->text : null,
-                //                    'carModel' => isset($carModel->text) ? $carModel->text : null,
-                //                    'carManufactureYear' => $carQuote->year_of_manufacture,
-                //                    'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
-                //                    'advisorName' => isset($advisorName) ? $advisorName : null,
-                //                    'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
-                //                    'advisorMobileNo' => isset($advisorMobile) ? $advisorMobile : null,
-                //                    'advisorLandlineNo' => isset($advisorLandline) ? $advisorLandline : null,
-                //                    'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-                //                    'listQuotePlans' => $listQuotePlans,
-                //                    'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
-                //                    'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
-                //                ];
 
                 if ($quotePlansCount > 0) {
                     $pdfData = [
@@ -1301,7 +1270,7 @@ class RenewalsUploadService
                 }
             }
 
-            //        $this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
+            //$this->updateRenewalEmailBatchStatus($batchEmailId, $isCompleted);
             Log::info('Renewals OCB Email completed for uuid: '.$carQuote->uuid);
         } catch (\Exception $exception) {
             Log::info('Renewals OCB Email failed error: '.$exception->getMessage());
