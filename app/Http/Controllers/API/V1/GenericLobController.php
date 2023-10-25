@@ -20,6 +20,7 @@ class GenericLobController extends Controller
     {
         $this->carQuoteService = $carQuoteService;
         $this->healthQuoteService = $healthQuoteService;
+        
     }
 
     /**
