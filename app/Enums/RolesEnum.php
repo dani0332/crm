@@ -50,7 +50,6 @@ final class RolesEnum extends Enum
     public const HomeRenewalManager = 'HOME_RENEWAL_MANAGER';
     public const LifeRenewalManager = 'LIFE_RENEWAL_MANAGER';
     public const GMRenewalManager = 'GM_RENEWAL_MANAGER';
-    public const HomeManager = 'HOME_MANAGER';
     public const CorpLineRenewalManager = 'CORPLINE_RENEWAL_MANAGER';
     public const PetRenewalManager = 'PET_RENEWAL_MANAGER';
     public const HealthNewBusinessManager = 'HEALTH_NEW_BUSINESS_MANAGER';

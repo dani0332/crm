@@ -129,7 +129,7 @@ const permissionsEnum = page.props.permissionsEnum;
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">UAE licence held for</dt>
-            <dd>{{ quote?.bike_quote?.uae_license_held_for.text }}</dd>
+            <dd>{{ quote?.bike_quote?.uae_license_held_for?.text }}</dd>
           </div>
 
           <div class="grid sm:grid-cols-2">
@@ -213,6 +213,7 @@ const permissionsEnum = page.props.permissionsEnum;
         quote.source == $page.props.leadSource.INSLY
       "
       :quote="quote"
+      modelType="Bike"
       :canAddBatchNumber="canAddBatchNumber"
     />
 

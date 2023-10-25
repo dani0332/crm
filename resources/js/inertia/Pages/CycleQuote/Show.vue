@@ -310,6 +310,7 @@ const permissionsEnum = page.props.permissionsEnum;
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
+      modelType="Cycle"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
     />

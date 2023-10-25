@@ -577,6 +577,7 @@ const onAssignLead = () => {
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
+      modelType="Business"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
     />

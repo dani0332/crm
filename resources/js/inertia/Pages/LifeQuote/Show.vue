@@ -520,6 +520,7 @@ const onLeadStatus = () => {
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
+      modelType="Life"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
     />
@@ -751,7 +752,6 @@ const onLeadStatus = () => {
       :contacts="customerAdditionalContacts"
       :quoteEmail="quote.email"
       :quoteMobile="quote.mobile_no"
-
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

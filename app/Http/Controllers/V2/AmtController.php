@@ -119,7 +119,7 @@ class AmtController extends Controller
             $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
         if (isset($request->first_name) && $request->first_name != '') {
-            $data->where('bqr.first_name', 'like', '%'.$request->first_name.'%');
+            $data->where('bqr.first_name', 'like', '%' . $request->first_name . '%');
         }
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
@@ -127,10 +127,10 @@ class AmtController extends Controller
             $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
-            $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
+            $data->where('bqr.last_name', 'like', '%' . $request->last_name . '%');
         }
         if (isset($request->email) && $request->email != '') {
-            $data->where('bqr.email', 'like', '%'.$request->email.'%');
+            $data->where('bqr.email', 'like', '%' . $request->email . '%');
         }
         if (isset($request->code) && $request->code != '') {
             $data->where('bqr.code', '=', $request->code);
@@ -218,10 +218,10 @@ class AmtController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
-            if (! isset($record->quoteUID)) {
+            if (!isset($record->quoteUID)) {
                 return redirect('medical/amt')->with('success', 'Lead has been stored');
             } else {
-                return redirect('medical/amt/'.$record->quoteUID)->with('success', 'Lead has been stored');
+                return redirect('medical/amt/' . $record->quoteUID)->with('success', 'Lead has been stored');
             }
         }
     }
@@ -240,7 +240,7 @@ class AmtController extends Controller
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
         ])->first();
-        abort_if(! $record, 404);
+        abort_if(!$record, 404);
 
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
@@ -283,7 +283,7 @@ class AmtController extends Controller
             ->select('gmt.text as text', 'gmt.id as id')
             ->first();
         $selectedGmType = '';
-        if (! is_null($GMType)) {
+        if (!is_null($GMType)) {
             $selectedGmType = $GMType->id;
         }
 
@@ -315,7 +315,7 @@ class AmtController extends Controller
         ]);
         $this->crudService->updateModelByType('business', $request, $id);
 
-        return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
+        return redirect('medical/amt/' . $id)->with('success', 'Lead has been updated');
     }
 
     public function cardsView(Request $request)

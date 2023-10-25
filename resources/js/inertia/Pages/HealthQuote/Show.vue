@@ -1404,6 +1404,7 @@ onMounted(() => {
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
+      modelType="Health"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
     />

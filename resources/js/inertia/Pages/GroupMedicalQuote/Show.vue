@@ -353,17 +353,16 @@ const historyDataTable = [
           </div>
         </dl>
       </div>
-
-      <LastYearPolicyDetail
-        v-if="
-          quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
-          quote.source == $page.props.leadSource.INSLY
-        "
-        :quote="quote"
-        :canAddBatchNumber="canAddBatchNumber"
-      />
     </div>
-
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Business"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+    />
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>

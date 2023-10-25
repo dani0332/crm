@@ -102,6 +102,7 @@ class BikeQuoteRepository extends BaseRepository
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'currentlyInsuredWith',
                 'payments' => function ($q) {
                     $q->with([

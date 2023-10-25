@@ -1033,6 +1033,7 @@ onMounted(() => {
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
+      modelType="Travel"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
     />
@@ -1701,15 +1702,14 @@ onMounted(() => {
       </x-modal>
     </div>
 
-      <customerAdditionalContacts
-          quoteType="Travel"
-          :customerId="quote.customer_id"
-          :quoteId="quote.id"
-          :contacts="customerAdditionalContacts"
-          :quoteEmail="quote.email"
-          :quoteMobile="quote.mobile_no"
-
-      />
+    <customerAdditionalContacts
+      quoteType="Travel"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

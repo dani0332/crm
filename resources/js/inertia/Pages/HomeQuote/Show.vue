@@ -68,7 +68,6 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-
 const contactLoader = ref(false),
   activityActionEdit = ref(false),
   historyLoading = ref(false);
@@ -495,6 +494,7 @@ const policyDetails = useForm({
         quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
         quote.source == $page.props.leadSource.INSLY
       "
+      modelType="Home"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
     />
