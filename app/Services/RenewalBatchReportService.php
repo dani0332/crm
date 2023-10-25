@@ -101,7 +101,7 @@ class RenewalBatchReportService extends BaseService
                     $userIds = $this->deputyManagerWalkTree($authUserId);
                 } elseif (count($userManagerIds) > 0) {
                     foreach ($userManagerIds as $key => $value) {
-                        $users = $this->walkTree($value);
+                        $users = $this->deputyWalkTreeMirrorForManager($value);
                         $userIds = array_merge($userIds, $users);
                     }
                 }
@@ -378,7 +378,7 @@ class RenewalBatchReportService extends BaseService
                         $userIds = $this->deputyManagerWalkTree($authUserId);
                     } elseif (count($userManagerIds) > 0) {
                         foreach ($userManagerIds as $key => $value) {
-                            $users = $this->walkTree($value);
+                            $users = $this->deputyWalkTreeMirrorForManager($value);
                             $userIds = array_merge($userIds, $users);
                         }
                     }
@@ -469,7 +469,7 @@ class RenewalBatchReportService extends BaseService
                     $userIds = $this->deputyManagerWalkTree($authUserId);
                 } elseif (count($userManagerIds) > 0) {
                     foreach ($userManagerIds as $key => $value) {
-                        $users = $this->walkTree($value);
+                        $users = $this->deputyWalkTreeMirrorForManager($value);
                         $userIds = array_merge($userIds, $users);
                     }
                 }
