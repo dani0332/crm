@@ -55,6 +55,10 @@ const fileUploadModels = ref([]);
 const checkDetailModels = ref([]);
 const readOnlyPayments = ref([]);
 const splitPaymentRecord = ref([]);
+const filesTest = ref([]);
+const currentFileIndex = ref(0);
+const zoomLevel = ref(1);
+const isGalleryModelOpen = ref(false);
 
 const totalAmount = ref(props.quoteRequest.premium); // Initial total price
 
@@ -72,6 +76,52 @@ const calculateTotalAmount = () => {
   }
   calculatePaymentBreakup();  
 }
+   
+  const openModal = () =>{
+    isGalleryModelOpen.value = true;
+  };
+  const nextFile = () => {
+    if (currentFileIndex.value < filesTest.value.length - 1) {
+      currentFileIndex.value++;
+    }      
+  };
+
+  const zoomIn = () => {
+    zoomLevel.value = Math.min(zoomLevel.value + 0.25, 3); 
+  };
+
+  const zoomOut = () => {
+    zoomLevel.value = Math.max(zoomLevel.value - 0.25, 0.25); 
+  };
+
+  const openInnerModal = (fileId) => {
+    filesTest.value = fileUploadModels.value.flat();
+
+    currentFileIndex.value = filesTest.value.findIndex(item => item.id === fileId);
+    isGalleryModelOpen.value = true;
+  };
+
+  const previousFile = () => {
+    if (currentFileIndex.value > 0) {
+      currentFileIndex.value--;
+    }      
+  };
+
+  const currentFile = computed(() => {
+    return filesTest.value[currentFileIndex.value];
+  });
+
+  const closeInnerModal = () => {
+    isGalleryModelOpen.value = false;      
+  };
+
+  const hasNextFile = computed(() => {
+    return currentFileIndex.value < filesTest.value.length - 1;
+  });
+
+  const hasPreviousFile = computed(() => {
+    return currentFileIndex.value > 0;
+  });
 
 const discountError = computed(() => {
   const regex = /^\d+(\.\d{1,2})?$/;
@@ -902,11 +952,8 @@ const uploadDocument = (doc, files, count) => {
       onSuccess: (data) => {
         isDocumentNotUploaded.value[count] = false;
         fileUploadModels.value[count].push(data.props.quoteDocuments[0]);
-        console.log('azhar22='+JSON.stringify(fileUploadModels.value[count]));return;
-        /*notification.success({
-          title: 'File Uploaded',
-          position: 'top',
-        });*/
+        console.log('azhar9999='+JSON.stringify(fileUploadModels.value));        
+        return;        
       },
       onFinish: () => {
         isUploading.value = false;
@@ -954,15 +1001,7 @@ const providerId = computed(() => {
         <template #tooltip>
             <span>{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_ADD_PAYMENT }}</span>
         </template>
-      </x-tooltip>
-      <!-- HAFEEZ TEMPORARY <x-button
-        v-if="!permissionEnum.ApprovePayments && permissionEnum.PaymentsCreate && quoteRequest.plan"
-        size="sm"
-        color="orange"
-        @click="addPaymentModal"
-      >
-        Add Payment
-      </x-button> -->
+      </x-tooltip>      
     </div>
     <div class="vue3-easy-data-table tablefixed custom-height">
       <div class="vue3-easy-data-table__main fixed-header hoverable border-cell custom-height">
@@ -1120,6 +1159,7 @@ const providerId = computed(() => {
         <div v-if="!payments.length>0" data-v-32683533="" class="vue3-easy-data-table__message">No Available Data</div>
       </div>
     </div>
+
     <x-modal v-model="createPaymentModal" size="xl" show-close backdrop>
       <template #header>
         <span class=" ">
@@ -1130,11 +1170,13 @@ const providerId = computed(() => {
               ? 'Add Manual Payment'
               : 'Update Payment'
           }}
-          </template>
+                
+        </template>
         </span>
-      </template>
+      </template>      
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">
+          
           <x-tooltip>
             <x-field label="COLLECTION DATE" class="w-full" required>
               <span v-if="isFieldReadonly">{{ formatDate(paymentMethodsForm.collection_date) }}</span>
@@ -1479,15 +1521,14 @@ const providerId = computed(() => {
               <div class="w-1/5 px-2">
                 <div v-for="fileData in fileUploadModels[splitPaymentNo]" :key="fileData.id">
                   <span style="display: flex; align-items: center;">
-                    <a
-                      :key="fileData.id"
-                      :href="storageUrl + fileData.doc_url"
-                      target="_blank"
-                      class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                      style="flex: 1; text-decoration: none;"
-                    >
-                      {{ fileData.original_name }}
-                    </a>
+                    <span 
+                          :key="fileData.id"
+                          class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
+                          style="flex: 1; text-decoration: none; cursor: pointer;"
+                          @click="openInnerModal(fileData.id)"
+                        >
+                          {{ fileData.original_name }}
+                      </span>
                   </span>
                 </div>
               </div>
@@ -1669,19 +1710,17 @@ const providerId = computed(() => {
                       v-if="!readOnlyPayments[count]"
                     />
                     <p v-if="isDocumentNotUploaded[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
-                    {{ console.log('azhar333='+JSON.stringify(fileUploadModels[count]))  }}
+                    
                     <div v-for="fileData in fileUploadModels[count]" :key="fileData.id">
-                      <span style="display: flex; align-items: center;">
-                        <a
+                      <span style="display: flex; align-items: center;">                        
+                      <span 
                           :key="fileData.id"
-                          :href="storageUrl + fileData.doc_url"
-                          target="_blank"
                           class="block px-2 py-1 border rounded mt-1 text-xs hover:text-primary-600 truncate"
-                          style="flex: 1; text-decoration: none;"
+                          style="flex: 1; text-decoration: none; cursor: pointer;"
+                          @click="openInnerModal(fileData.id)"
                         >
                           {{ fileData.original_name }}
-                        </a>
-                        
+                      </span>
                         <span
                           class="delete-pointer"
                           @click="deleteDocument(fileData.doc_name, count)"
@@ -1880,10 +1919,81 @@ const providerId = computed(() => {
         </div>
       </template>
       </x-form>
-    </x-modal>    
+
+    <div class="modal-overlay" v-if="isGalleryModelOpen">
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2 class="text-xl font-semibold">Document Viewer</h2>   
+          <x-button type="button" class="btn btn-primary" @click="closeInnerModal">Close</x-button>
+        </div>
+
+        <div class="modal-body">
+            
+          <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="text-center">
+          <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
+          <div class="mt-2">
+            <x-button type="button" color="gray" class="mr-2" @click="zoomIn">Zoom In</x-button>
+            <x-button type="button" color="gray" class="btn btn-secondary" @click="zoomOut">Zoom Out</x-button>
+          </div>
+        </div>
+            <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
+              <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="600px" />
+            </div>
+        </div>
+
+        <div class="modal-footer">
+          <x-button type="button" color="emerald" class="mr-2" @click="previousFile" :disabled="!hasPreviousFile">Previous</x-button>
+          <x-button type="button" color="emerald" class="btn btn-secondary" @click="nextFile" :disabled="!hasNextFile">Next</x-button>                        
+        </div>
+      </div>
+    </div>
+    </x-modal> 
+    
   </div>
 </template>
 <style scoped>
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 90%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1040;
+}
+/* Modal container */
+.modal-container {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%; 
+  background-color: #fff;
+  border-radius: 4px;
+  padding: 20px;
+  z-index: 1050;
+}
+/* Modal header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+/* Modal body */
+.modal-body {
+  padding: 20px 0;
+}
+/* Modal footer */
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+  border-top: 1px solid #eee;
+}
 table th {
   min-width: 195px;
 }
