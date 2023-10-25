@@ -11,6 +11,8 @@ class RenewalBatchSlab extends Pivot implements AuditableContract
 {
     use Auditable, HasFactory;
 
+    public $incrementing = true;
+
     public function team()
     {
         return $this
