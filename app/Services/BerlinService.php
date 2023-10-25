@@ -123,9 +123,9 @@ class BerlinService extends BaseService
 
         if ($hasToken) {
             $customerDataArr[$isToken ? 'token' : 'otp'] = $customer->code;
-        } else {
-            $customerDataArr['email'] = $customerEmail;
         }
+
+        $customerDataArr['email'] = $customerEmail;
 
         $customerDataJson = json_encode($customerDataArr);
         info('customerDataArr: ', $customerDataArr);
