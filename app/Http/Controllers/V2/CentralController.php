@@ -26,7 +26,7 @@ class CentralController extends Controller
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
 
-        if (! empty($response['errors'])) {
+        if (!empty($response['errors'])) {
             return redirect()->back()->withErrors($response['errors']);
         }
 
@@ -35,7 +35,7 @@ class CentralController extends Controller
 
     public function exportLeads(Request $request, $quoteType)
     {
-        if (! $quoteType) {
+        if (!$quoteType) {
             return abort(404);
         }
 
@@ -66,7 +66,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return Excel::download(new PersonalQuotesExport, $quoteType . '_leads.xlsx');
         }
 
         switch (ucfirst($quoteType)) {
@@ -87,7 +87,6 @@ class CentralController extends Controller
 
             default:
                 return false;
-
         }
     }
 
@@ -95,22 +94,24 @@ class CentralController extends Controller
     {
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
-        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
+        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType) . ' Leads has been Assigned');
     }
 
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
     {
-        $validatedRequest = $request->validated();
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        $quoteModel = $this->getQuoteObject($validatedRequest['modelType'], $validatedRequest['quoteId']);
-
-        if (! $quoteModel) {
-            return redirect()->back()->with('success', 'Error Updating Policy Details.');
+        if (!$quote) {
+            return redirect()->back()->with('error', 'Error Updating Policy Details.');
         }
-        $quoteModel->update([
-            'renewal_batch' => $request->renewalBatch,
+
+        $quote->update([
+            'renewal_batch' => $request->renewal_batch,
         ]);
 
-        return redirect()->back()->with('success', 'Last Yeat Policy Detail has been updated.');
+        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
 }

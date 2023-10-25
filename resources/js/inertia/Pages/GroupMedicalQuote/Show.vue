@@ -68,10 +68,13 @@ const onCreateDuplicate = isValid => {
     lob_team_sub_selection: leadDuplicateForm.lob_team_sub_selection,
   };
   axios
-    .post('/quotes/createDuplicate', data)
+    .post(route('createDuplicate'), data)
     .then(res => {
       modals.duplicate = false;
-      notification.success('Lead duplicated successfully');
+      notification.success({
+        title: 'Lead duplicated successfully',
+        position: 'top',
+      });
     })
     .catch(err => {
       notification.error('Something went wrong');
@@ -107,11 +110,15 @@ const onLeadStatus = () => {
     trans_code: leadStatusForm.trans_code,
     lostReason: leadStatusForm.lostReason,
   };
-
   axios
-    .post(`/quotes/Business/${page.props.quote.id}/update-lead-status`, data)
+    .post(
+      route('updateLeadStatus', {
+        QuoteUId: page.props.quote.id,
+        modelType: 'Business',
+      }),
+      data,
+    )
     .then(res => {
-      console.log(res);
       notification.success({
         title: 'Lead Status Updated',
         position: 'top',
@@ -125,7 +132,10 @@ const onLeadStatus = () => {
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=business&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'business',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -154,14 +164,14 @@ const historyDataTable = [
         >
           Duplicate Lead
         </x-button>
-        <Link href="/medical/amt" preserve-scroll>
+        <Link :href="route('amt.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div">
             Group Medical List
           </x-button>
         </Link>
         <Link
-          v-if="can(permissionsEnum.canEditQuote)"
-          :href="`${quote.uuid}/edit`"
+          v-if="!can(permissionsEnum.canEditQuote)"
+          :href="route('amt.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -305,6 +315,11 @@ const historyDataTable = [
           </div>
 
           <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">RENEWAL BATCH</dt>
+            <dd>{{ quote.renewal_batch }}</dd>
+          </div>
+
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">GENDER</dt>
             <dd>{{ genderText(quote.gender).value }}</dd>
           </div>
@@ -338,16 +353,16 @@ const historyDataTable = [
           </div>
         </dl>
       </div>
-    </div>
 
-    <LastYearPolicyDetail
-      v-if="
-        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
-        quote.source == $page.props.leadSource.INSLY
-      "
-      :quote="quote"
-      :canAddBatchNumber="canAddBatchNumber"
-    />
+      <LastYearPolicyDetail
+        v-if="
+          quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+          quote.source == $page.props.leadSource.INSLY
+        "
+        :quote="quote"
+        :canAddBatchNumber="canAddBatchNumber"
+      />
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -431,6 +446,8 @@ const historyDataTable = [
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

@@ -3,10 +3,12 @@
 namespace App\Http\Middleware;
 
 use App\Enums\LeadSourceEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Enums\TravelQuoteEnum;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 use Spatie\Navigation\Navigation;
@@ -46,22 +48,28 @@ class HandleInertiaRequests extends Middleware
             $roles = auth()->user()->getRoleNames()->toArray();
         }
 
-        return array_merge(parent::share($request), [
+        return [
+            ...parent::share($request),
             'auth.user' => fn () => $request->user()
-                ? $request->user()->only('id', 'name', 'email')
+                ? $request->user()->only('id', 'name', 'email', 'profile_photo_path', 'status')
                 : null,
             'auth.permissions' => fn () => $permissions,
             'auth.roles' => fn () => $roles,
             'sidebar' => fn () => $this->buildNavigation()->tree(),
             'permissionsEnum' => PermissionsEnum::asArray(),
             'rolesEnum' => RolesEnum::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
+            'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
             'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
-            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
-        ]);
+            'cdnPath' => config('constants.AZURE_IM_STORAGE_URL') . config('constants.AZURE_IM_STORAGE_CONTAINER') . '/',
+            'appEnv' => config('constants.APP_ENV'),
+            'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
+            'epLink' => env('EMBEDDED_PAYMENT_LINK'),
+        ];
     }
 
     protected function shareFlashData(Request $request)
@@ -79,7 +87,7 @@ class HandleInertiaRequests extends Middleware
 
     protected function buildNavigation()
     {
-        if (! auth()->check()) {
+        if (!auth()->check()) {
             return redirect()->route('login');
         }
 
@@ -124,6 +132,7 @@ class HandleInertiaRequests extends Middleware
             PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW,
             PermissionsEnum::UtmLeadsSalesReport,
+            PermissionsEnum::RENEWAL_BATCH_REPORT,
         ])) {
             $nav = $nav->add('Reports', '', function (Section $section) {
                 $section
@@ -131,7 +140,8 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_PERFORMANCE_REPORT_VIEW), 'Advisor Performance', route('advisor-performance-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 
@@ -245,6 +255,17 @@ class HandleInertiaRequests extends Middleware
                 $section
                     ->add('Valuation', '/valuation/calculatevaluation', fn ($s) => $s->attributes(['icon' => 'car']))
                     ->add('Vehicle Depreciation', '/valuation/vehicledepreciation', fn ($s) => $s->attributes(['icon' => 'car']));
+            });
+        }
+
+        if (auth()->user()->hasAnyPermission([
+            PermissionsEnum::CAR_SOLD_LIST,
+            PermissionsEnum::CAR_UNCONTACTABLE_LIST,
+        ])) {
+            $nav = $nav->add('Car Sold / Uncon', '', function (Section $section) {
+                $section
+                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_SOLD_LIST), 'Car Sold', '/quotes/car-sold', fn ($s) => $s->attributes(['icon' => 'car']))
+                    ->addIf(auth()->user()->hasPermissionTo(PermissionsEnum::CAR_UNCONTACTABLE_LIST), 'Car Uncontactable', '/quotes/car-uncontactable', fn ($s) => $s->attributes(['icon' => 'car']));
             });
         }
 
@@ -389,6 +410,9 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
+
+        $nav = $nav->addIf(auth()->user()->hasRole(RolesEnum::BetaUser), 'Legacy Policy', url('legacy-policy'));
+
         if (auth()->user()->can(PermissionsEnum::TeleMarketingList)) {
             $nav = $nav->add('Telemarketing', '', function (Section $section) {
                 $section
@@ -416,7 +440,7 @@ class HandleInertiaRequests extends Middleware
         if (auth()->user()->hasAnyPermission([
             PermissionsEnum::UsersList, PermissionsEnum::RoleList,
             PermissionsEnum::TeamsList, PermissionsEnum::COMMERCIAL_KEYWORDS,
-            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES,
+            PermissionsEnum::CONFIGURE_COMMERCIAL_VEHICLES, PermissionsEnum::RENEWAL_BATCHES_LIST,
         ])) {
             $nav = $nav->add('Admin', '', function (Section $section) {
                 $section
@@ -436,6 +460,12 @@ class HandleInertiaRequests extends Middleware
                         auth()->user()->can(PermissionsEnum::TeamsList),
                         'Teams',
                         url('generic/team'),
+                        fn ($s) => $s->attributes(['icon' => 'box'])
+                    )
+                    ->addIf(
+                        auth()->user()->can(PermissionsEnum::RENEWAL_BATCHES_LIST),
+                        'Renewal Batches',
+                        route('renewal-batches-list'),
                         fn ($s) => $s->attributes(['icon' => 'box'])
                     )
                     ->addIf(

@@ -5,24 +5,24 @@ namespace App\Models;
 use App\Enums\RolesEnum;
 use Auth;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
-use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements AuditableContract
 {
-    use HasApiTokens;
+    use Auditable;
     use HasFactory;
     use HasProfilePhoto;
-    use Notifiable;
     use HasRoles;
+    use Notifiable;
     use TwoFactorAuthenticatable;
-    use Auditable;
 
     /**
      * The attributes that are mass assignable.
@@ -33,6 +33,7 @@ class User extends Authenticatable implements AuditableContract
         'name',
         'email',
         'password',
+        'profile_photo_path',
     ];
 
     /**
@@ -262,5 +263,77 @@ class User extends Authenticatable implements AuditableContract
         } else {
             return User::where('name', 'System User')->first()->email;
         }
+    }
+
+    /**
+     * get renewal batches segment wise for a particularadvisors function
+     */
+    public function renewalBatch(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            RenewalBatch::class,
+            'renewal_batch_segment_user',
+            'advisor_id',
+            'renewal_batch_id',
+            'id',
+            'id',
+            'renewalBatch'
+        )->withTimestamps()->withPivot('segment_type');
+    }
+
+    /**
+     * get user all teams function
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Team::class,
+            'user_team',
+            'user_id',
+            'team_id',
+            'id',
+            'id',
+            'teams'
+        )->withTimestamps()->withPivot('manager_id');
+    }
+
+    /**
+     * @return mixed
+     */
+    public function scopeWithActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
+    /**
+     * get user all teams id function
+     *
+     * @param  int  $userId
+     */
+    public function getUserTeamsIds($userId): Collection
+    {
+        $userTeamIds = UserTeams::where('user_id', $userId)->get()->pluck('team_id');
+
+        return Team::whereIn('id', $userTeamIds)->get()->pluck('id');
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function managers()
+    {
+        return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')->select(['user_id', 'name', 'email']);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Sessions::class);
+
+    }
+
+    public function products()
+    {
+        return $this->hasMany(UserProducts::class);
+
     }
 }

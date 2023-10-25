@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Services\CapiRequestService;
 
 trait GenericQueriesAllLobs
@@ -25,6 +26,19 @@ trait GenericQueriesAllLobs
         }
     }
 
+    public function getModelObject($quoteType)
+    {
+        $nameSpace = '\\App\\Models\\';
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        return $model;
+
+    }
+
     /**
      * get quote object by quote type.
      *
@@ -42,6 +56,24 @@ trait GenericQueriesAllLobs
         }
 
         $quote = (is_numeric($id)) ? $model::find($id) : $model::where('uuid', $id)->first();
+
+        return (isset($quote->id)) ? $quote : false;
+    }
+
+    /**
+     * @return false|mixed
+     */
+    public function getQuoteObjectBy($quoteType, $id, $column = 'id')
+    {
+        $nameSpace = '\\App\\Models\\';
+
+        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+
+        if (! class_exists($model)) {
+            return false;
+        }
+
+        $quote = $model::where($column, $id)->first();
 
         return (isset($quote->id)) ? $quote : false;
     }
@@ -113,6 +145,29 @@ trait GenericQueriesAllLobs
                 $record->save();
             }
         }
+    }
+
+    public function inslyInsurances()
+    {
+        return [
+            QuoteTypes::BIKE->value => ['Bike insurance'],
+            QuoteTypes::BUSINESS->value => ['Business interruption insurance', 'Contractors all risks', 'Cyber liability', 'Directors and officers liability insurance',
+                'Engineering and plant insurance', 'Fidelity guarantee', 'Group life', 'Group medical insurance', 'Holiday homes',
+                'Livestock insurance', 'Machinery breakdown insurance', 'Marine cargo (individual shipment) insurance',
+                'Marine hull insurance', 'Medical malpractice insurance', 'Money insurance', 'Motor fleet',
+                'Open cover - marine cargo insurance', 'Professional indemnity insurance,Property insurance',
+                'Public liability insurance', 'Road transit (international)', 'Road transit (UAE only)',
+                'SME packaged insurance', 'Trade credit insurance', 'Workmens compensation insurance',
+            ],
+            QuoteTypes::CAR->value => ['Casco', 'Motor insurance - Comprehensive', 'Motor insurance - TPL'],
+            QuoteTypes::LIFE->value => ['Critical illness', 'Individual life insurance'],
+            QuoteTypes::HOME->value => ['Home insurance', 'Personal accident'],
+            QuoteTypes::TRAVEL->value => ['Inbound travel insurance', 'Outbound travel insurance'],
+            QuoteTypes::HEALTH->value => ['Individual or family medical'],
+            QuoteTypes::CYCLE->value => ['Pedal cycle insurance'],
+            QuoteTypes::PET->value => ['Pet insurance'],
+            QuoteTypes::YACHT->value => ['Yacht insurance'],
+        ];
     }
 
     public function getQuoteCodeType($lead)

@@ -16,11 +16,9 @@ class AddTravelFormOptimizationColumnsToTravelQouteRequestTable extends Migratio
         Schema::table('travel_quote_request', function (Blueprint $table) {
             if (! Schema::hasColumn('travel_quote_request', 'direction_code')) {
                 $table->string('direction_code', 20)->nullable();
-                $table->foreign('direction_code')->references('code')->on('lookups');
             }
             if (! Schema::hasColumn('travel_quote_request', 'coverage_code')) {
                 $table->string('coverage_code', 20)->nullable();
-                $table->foreign('coverage_code')->references('code')->on('lookups');
             }
             if (! Schema::hasColumn('travel_quote_request', 'start_date')) {
                 $table->date('start_date')->nullable();

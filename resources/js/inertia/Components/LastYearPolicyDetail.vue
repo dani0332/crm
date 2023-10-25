@@ -7,37 +7,38 @@ const props = defineProps({
     default: {},
   },
   canAddBatchNumber: Boolean,
+  modelType: String,
 });
 
 const dateFormat = date => {
   return date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 };
 
-const isEdit = computed(() => {
-  return props.quote.renewal_batch !== null &&
-    props.quote.renewal_batch !== '' &&
-    props.quote.renewal_batch !== undefined
-    ? true
-    : page.props.canAddBatchNumber == true
-    ? false
-    : true;
+const allowEdit = computed(() => {
+  if (
+    (props.quote.renewal_batch === '' || props.quote.renewal_batch == null) &&
+    props.canAddBatchNumber == true
+  )
+    return true;
+
+  return false;
 });
 const { isRequired } = useRules();
 
 const policyForm = useForm({
   model: props.model,
   renewal_batch: props?.quote?.renewal_batch || null,
-  modelType: page.props.modelType,
-  quote_id: page.props.quote.id,
+  model_type: props?.modelType,
+  quote_id: props?.quote.id,
 });
 
 function onSubmit(isValid) {
   if (isValid) {
     policyForm
       .transform(data => ({
-        renewalBatch: data.renewal_batch,
-        modelType: data.modelType,
-        quoteId: data.quote_id,
+        renewal_batch: data.renewal_batch,
+        model_type: data.model_type,
+        quote_id: data.quote_id,
         isInertia: true,
       }))
       .post(`/quotes/update-last-year-policy`, {
@@ -47,6 +48,9 @@ function onSubmit(isValid) {
       });
   }
 }
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
 </script>
 
 <template>
@@ -61,56 +65,67 @@ function onSubmit(isValid) {
         <div class="text-sm">
           <div class="grid md:grid-cols-2 gap-x-6 gap-y-4">
             <div class="grid sm:grid-cols-2">
+              <div class="font-medium">Renewal Batch#</div>
+              <div>{{ props?.quote?.renewal_batch }}</div>
+            </div>
+
+            <div class="grid sm:grid-cols-2">
               <div class="font-medium">Previous Policy Number</div>
               <div>{{ props?.quote?.previous_quote_policy_number }}</div>
             </div>
+
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Previous Policy Expiry Date</div>
-              <div>{{ dateFormat(quote?.previous_policy_expiry_date) }}</div>
+              <div>{{ props?.quote?.previous_policy_expiry_date }}</div>
             </div>
+
             <div class="grid sm:grid-cols-2">
-              <div class="font-medium">Previous Policy Price</div>
-              <div>{{ quote?.previous_quote_policy_premium }}</div>
+              <div class="font-medium">Previous Policy Premium</div>
+              <div>{{ props?.quote?.previous_quote_policy_premium }}</div>
             </div>
+
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Previous Policy Start Date</div>
-              <div>{{ dateFormat(quote?.policy_start_date) }}</div>
+              <div>{{ props?.quote?.policy_start_date }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Previous Advisor</div>
               <div>
-                {{ quote?.previous_advisor_id_text }}
+                {{ props?.quote?.previous_advisor_id_text }}
               </div>
             </div>
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Policy Number</div>
-              <div>{{ quote?.policy_number }}</div>
+              <div>{{ props?.quote?.policy_number }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Renewal Expiry Date</div>
-              <div>{{ dateFormat(quote?.renewal_expiry_date) }}</div>
+              <div>{{ props?.quote?.renewal_expiry_date }}</div>
             </div>
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Lost reason</div>
               <div>
-                {{ quote?.lost_reason }}
+                {{ props?.quote?.lost_reason }}
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div class="flex justify-between gap-3 items-center">
+      <div
+        class="flex justify-between gap-3 items-center"
+        v-if="canAddBatchNumber"
+      >
         <x-field label="Renewal batch" required>
           <x-input
             v-model="policyForm.renewal_batch"
             type="tel"
             class="w-full md:w-64"
             :rules="[isRequired]"
-            :disabled="isEdit"
+            :disabled="!allowEdit"
             :error="policyForm.errors.renewal_batch"
           />
         </x-field>
-        <x-button v-if="!isEdit" color="primary" type="submit">
+        <x-button v-if="allowEdit" color="primary" type="submit">
           Update
         </x-button>
       </div>

@@ -31,6 +31,12 @@ defineProps({
   fieldsToDisplay: Object,
   quotes: Array,
   message: String,
+  isBetaUser: Boolean,
+  payments: Array,
+  quoteRequest: Object,
+  permissions: Object,
+  paymentMethods: Object,
+  insuranceProviders: Array,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
 });
@@ -66,16 +72,11 @@ const confirmDeleteData = reactive({
   contact: null,
 });
 
-const confirmData = reactive({
-  contactPrimary: null,
-});
-
 const memberActionEdit = ref(false),
   activityActionEdit = ref(false),
   selectedPlan = ref(null),
   selectedPlansPdf = ref([]),
   exportLoader = ref(false),
-  contactLoader = ref(false),
   historyLoading = ref(false),
   lostReasonId = ref(
     page.props.lostReasons.find(
@@ -97,17 +98,10 @@ const openDuplicate = () => {
   modals.duplicate = true;
   leadDuplicateForm.reset();
 };
-
 const onCreateDuplicate = isValid => {
   if (!isValid) return;
-  leadDuplicateForm.post('/quotes/createDuplicate', {
+  leadDuplicateForm.post(route('createDuplicate'), {
     preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Quote duplicated successfully',
-        position: 'top',
-      });
-    },
     onFinish: () => {
       modals.duplicate = false;
     },
@@ -136,9 +130,6 @@ const modals = reactive({
   createPlan: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
   planDetails: false,
 });
 const travelFields = computed(() => {
@@ -178,17 +169,14 @@ const leadStatusOptions = computed(() => {
 
 const onLeadStatus = () => {
   leadStatusForm.post(
-    `/quotes/Travel/${page.props.quote.id}/update-lead-status`,
+    route('updateLeadStatus', {
+      modelType: 'Travel',
+      QuoteUId: page.props.quote.id,
+    }),
     {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
       },
     },
   );
@@ -238,8 +226,8 @@ const submitTraveler = isValid => {
 
 const addTravelMember = isValid => {
   if (!isValid) return;
-
-  travelerForm.post('/travelers', {
+  // '/travelers'
+  travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -278,8 +266,7 @@ const onEditTraveler = traveler => {
 
 const editTraveler = isValid => {
   if (!isValid) return;
-
-  travelerForm.put(`/travelers/${travelerForm.id}`, {
+  travelerForm.put(route('travelers.update', travelerForm.id), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -301,7 +288,7 @@ const editTraveler = isValid => {
 };
 
 const deleteTraveler = id => {
-  router.delete(`/travelers/${id}`, {
+  router.delete(route('travelers.destroy', id), {
     preserveScroll: true,
     onBefore: () => {
       travelerTable.processing = true;
@@ -594,10 +581,9 @@ const addActivity = () => {
   activityActionEdit.value = false;
   modals.activity = true;
 };
-
 const onActivityStatusUpdate = id => {
   activityForm.activity_id = id;
-  activityForm.post(`/activities/updateStatus`, {
+  activityForm.post(route('activities.updateStatus'), {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -644,7 +630,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/${activityForm.uuid}/update`, {
+    activityForm.post(route('activities.update.activity', activityForm.uuid), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -663,7 +649,7 @@ const onActivitySubmit = isValid => {
       ' ' +
       date.toTimeString().split(' ')[0];
     activityForm.due_date = date;
-    activityForm.post(`/activities/create-activity`, {
+    activityForm.post(route('activities.create.activity'), {
       preserveScroll: true,
       onSuccess: () => {
         notification.success({
@@ -685,7 +671,7 @@ const activityDelete = id => {
 
 const activityDeleteConfirmed = () => {
   router.post(
-    `/activities/${confirmDeleteData.activity}/delete`,
+    route('activities.destroy', confirmDeleteData.activity),
     {
       isInertia: true,
       quote_uuid: page.props.quote.uuid,
@@ -712,131 +698,15 @@ const advisorOptions = computed(() => {
   }));
 });
 
-// additional contact
-
-const additionalContactTable = [
-  { text: 'Type', value: 'key' },
-  { text: 'Value', value: 'value' },
-  { text: 'Created At', value: 'created_at' },
-  { text: 'Action', value: 'action' },
-];
-
-const additionalContact = useForm({
-  id: null,
-  additional_contact_type: null,
-  additional_contact_val: null,
-  quote_id: page.props.quote.id,
-  customer_id: page.props.quote.customer_id,
-  quote_type: 'travel',
-});
-
-const addAdditionalContact = () => {
-  additionalContact.additional_contact_type = null;
-  additionalContact.additional_contact_val = null;
-  modals.addContact = true;
-};
-
-const onAdditionalContactSubmit = isValid => {
-  if (!isValid) return;
-  additionalContact
-    .transform(data => ({
-      ...data,
-      isInertia: true,
-    }))
-    .post(`/customer-additional-contact/add`, {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Added',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        modals.addContact = false;
-      },
-      onError: err => {
-        const firstError = Object.values(err)[0];
-        notification.error({
-          title: firstError,
-          position: 'top',
-        });
-      },
-    });
-};
-
-const additionalContactDelete = id => {
-  modals.contactDeleteConfirm = true;
-  confirmDeleteData.contact = id;
-};
-
-const additionalContactDeleteConfirmed = () => {
-  router.post(
-    `/customer-additional-contact/${confirmDeleteData.contact}/delete`,
-    {
-      isInertia: true,
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.error({
-          title: 'Additional Contact Deleted',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactDeleteConfirm = false;
-      },
-    },
-  );
-};
-
-const additionalContactPrimary = data => {
-  modals.contactPrimaryConfirm = true;
-  confirmData.contactPrimary = data;
-};
-
-const additionalContactPrimaryConfirmed = () => {
-  const isEmail = confirmData.contactPrimary.key === 'email';
-  router.post(
-    `/customer-additional-contact/${
-      isEmail ? confirmData.contactPrimary.id : 0
-    }/make-primary`,
-    {
-      isInertia: true,
-      quote_id: page.props.quote.id,
-      key: confirmData.contactPrimary.key,
-      value: confirmData.contactPrimary.value,
-      quote_type: 'travel',
-    },
-    {
-      preserveScroll: true,
-      onBefore: () => {
-        contactLoader.value = true;
-      },
-      onSuccess: () => {
-        notification.success({
-          title: 'Additional Contact Primary',
-          position: 'top',
-        });
-      },
-      onFinish: () => {
-        contactLoader.value = false;
-        modals.contactPrimaryConfirm = false;
-      },
-    },
-  );
-};
-
 const historyData = ref(null);
 
 const onLoadHistoryData = async () => {
   historyLoading.value = true;
   const res = await fetch(
-    `/quotes/getLeadHistory?modelType=travel&recordId=${page.props.quote.id}`,
+    route('getLeadHistory', {
+      modelType: 'travel',
+      recordId: page.props.quote.id,
+    }),
   );
   const finalRes = await res.json();
   historyData.value = finalRes;
@@ -913,14 +783,13 @@ onMounted(() => {
         >
           Duplicate Lead
         </x-button>
-
-        <Link href="/quotes/travel" preserve-scroll>
+        <Link :href="route('travel.index')" preserve-scroll>
           <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
         </Link>
 
         <Link
           v-if="permissions.canEditQuote == true"
-          :href="`${quote.uuid}/edit`"
+          :href="route('travel.edit', quote.uuid)"
         >
           <x-button size="sm" tag="div">Edit</x-button>
         </Link>
@@ -931,30 +800,32 @@ onMounted(() => {
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
         <div class="grid gap-4">
-          <x-select
-            v-model="leadDuplicateForm.lob_team"
-            label="LOBs"
-            :options="
-              allowedDuplicateLOB.map(lob => ({
-                value: lob,
-                label: lob,
-              }))
-            "
-            :rules="[isRequired]"
-            placeholder="Select LOB For Duplication"
-            class="w-full"
-            multiple
-          />
-          <x-select
-            v-model="leadDuplicateForm.lob_team_sub_selection"
-            label="Reason"
-            :rules="[isRequired]"
-            class="w-full"
-            :options="[
-              { value: 'new_enquiry', label: 'New enquiry' },
-              { value: 'record_only', label: 'Record purposes only' },
-            ]"
-          />
+          <x-field label="LOBs" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team"
+              :options="
+                allowedDuplicateLOB.map(lob => ({
+                  value: lob,
+                  label: lob,
+                }))
+              "
+              :rules="[isRequired]"
+              placeholder="Select LOB For Duplication"
+              class="w-full"
+              multiple
+            />
+          </x-field>
+          <x-field label="Reason" required>
+            <x-select
+              v-model="leadDuplicateForm.lob_team_sub_selection"
+              :rules="[isRequired]"
+              class="w-full"
+              :options="[
+                { value: 'new_enquiry', label: 'New enquiry' },
+                { value: 'record_only', label: 'Record purposes only' },
+              ]"
+            />
+          </x-field>
 
           <x-button
             color="orange"
@@ -1012,12 +883,30 @@ onMounted(() => {
                 <template #tooltip> Traveling Where</template>
               </x-tooltip>
             </dt>
-            <dt class="font-medium uppercase">{{ quote.direction_code }}</dt>
+            <dt class="font-medium uppercase">
+              {{
+                quote.direction_code != null
+                  ? quote.direction_code
+                  : quote?.currently_located_in_id_text ==
+                      enums.travelQuoteEnum.LOCATION_UAE_TEXT &&
+                    quote?.region_cover_for_id !=
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_OUTBOUND
+                  : quote?.destination_id_text ==
+                      enums.travelQuoteEnum
+                        .LOCATION_UNITED_ARAB_EMIRATES_TEXT ||
+                    quote?.region_cover_for_id ==
+                      enums.travelQuoteEnum.REGION_COVER_ID_UAE
+                  ? enums.travelQuoteEnum.TRAVEL_UAE_INBOUND
+                  : ''
+              }}
+            </dt>
           </div>
 
           <div
             v-if="
-              enums.travelQuoteEnum.TravelUaeInbound == quote.direction_code
+              enums.travelQuoteEnum.TRAVEL_UAE_INBOUND ==
+                quote.direction_code || quote?.region_cover_for_id == 3
             "
             class="grid sm:grid-cols-2"
           >
@@ -1029,15 +918,16 @@ onMounted(() => {
               </label>
             </dt>
             <dt class="font-medium">
-              {{ quote.has_arrived_uae == 1 ? 'Yes' : 'No' }}
+              {{
+                quote.has_arrived_uae == 1 ||
+                quote.currently_located_in_id_text ==
+                  enums.travelQuoteEnum.LOCATION_UAE_TEXT
+                  ? 'Yes'
+                  : 'No'
+              }}
             </dt>
           </div>
-          <div
-            v-if="
-              enums.travelQuoteEnum.TravelUaeOutbound == quote.direction_code
-            "
-            class="grid sm:grid-cols-2"
-          >
+          <div v-else class="grid sm:grid-cols-2">
             <dt>
               <label
                 class="font-medium text-gray-800 text-sm decoration-dotted decoration-primary-700"
@@ -1046,7 +936,13 @@ onMounted(() => {
               </label>
             </dt>
             <dt class="font-medium">
-              {{ quote.has_arrived_destination == 1 ? 'Yes' : 'No' }}
+              {{
+                quote.has_arrived_destination == 1 ||
+                quote.currently_located_in_id_text ==
+                  enums.travelQuoteEnum.LOCATION_OUTSIDE_UAE
+                  ? 'Yes'
+                  : 'No'
+              }}
             </dt>
           </div>
           <div class="grid sm:grid-cols-2">
@@ -1103,7 +999,17 @@ onMounted(() => {
                 <template #tooltip> Travel Coverage</template>
               </x-tooltip>
             </dt>
-            <dt class="font-medium">{{ quote.coverage_code }}</dt>
+            <dt class="font-medium">
+              {{
+                quote.coverage_code != null
+                  ? quote.coverage_code
+                  : quote.days_cover_for <= 92
+                  ? enums.travelQuoteEnum.COVERAGE_CODE_SINGLE_TRIP
+                  : enums.travelQuoteEnum.COVERAGE_CODE_ANNUAL_TRIP +
+                    '/' +
+                    enums.travelQuoteEnum.COVERAGE_CODE_MULTI_TRIP
+              }}
+            </dt>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt>
@@ -1139,54 +1045,63 @@ onMounted(() => {
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="STATUS"
-              :options="leadStatusOptions"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="NOTES"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-            />
+            <x-field label="STATUS">
+              <x-select
+                v-model="leadStatusForm.leadStatus"
+                :options="leadStatusOptions"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+                placeholder="Lead Status"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="NOTES">
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :disabled="
+                  quote.quote_status_id ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+              />
+            </x-field>
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-input
+          <x-field
+            label="TRANSAPP CODE"
             v-if="
               leadStatusForm.leadStatus ==
               enums.quoteStatusEnum.TransactionApproved
             "
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-            "
-            v-model="leadStatusForm.trans_code"
-            label="TRANSAPP CODE"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-            v-model="leadStatusForm.lostReason"
+          >
+            <x-input
+              :disabled="
+                quote.quote_status_id ==
+                enums.quoteStatusEnum.TransactionApproved
+              "
+              v-model="leadStatusForm.trans_code"
+              placeholder="TransApp Code is required"
+              class="w-full"
+              :error="leadStatusForm.errors.trans_code"
+            />
+          </x-field>
+          <x-field
             label="LOST REASON"
-            :options="lostReasonsOptions"
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
+            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+          >
+            <x-select
+              v-model="leadStatusForm.lostReason"
+              :options="lostReasonsOptions"
+              placeholder="Lost Reason is required"
+              class="w-full"
+              :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
         </div>
       </div>
       <div class="flex justify-end">
@@ -1218,7 +1133,7 @@ onMounted(() => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAID AT</dt>
-            <dd>{{ dateFormat(ecomDetails.paidAt).value }}</dd>
+            <dd>{{ ecomDetails.paidAt }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">PAYMENT STATUS</dt>
@@ -1568,6 +1483,16 @@ onMounted(() => {
       </x-modal>
     </div>
 
+    <PaymentTable
+      :payments="payments"
+      :can="permissions"
+      :isBetaUser="isBetaUser"
+      :quoteRequest="quoteRequest"
+      :paymentMethods="paymentMethods"
+      :insuranceProviders="insuranceProviders"
+      :quote="quote"
+    />
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
@@ -1637,6 +1562,8 @@ onMounted(() => {
       :data="embeddedProducts"
       :link="ecomTravelInsuranceQuoteUrl + quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -1699,28 +1626,29 @@ onMounted(() => {
 
         <x-form @submit="onActivitySubmit" :auto-focus="false">
           <div class="grid gap-4">
-            <x-input
-              v-model="activityForm.title"
-              label="Title"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-
-            <x-textarea
-              v-model="activityForm.description"
-              label="Description"
-              :adjust-to-text="false"
-              class="w-full"
-            />
-
-            <x-select
-              v-model="activityForm.assignee_id"
-              label="Assignee"
-              :options="advisorOptions"
-              :rules="[isRequired]"
-              placeholder="Select Assignee"
-              class="w-full"
-            />
+            <x-field label="Title" required>
+              <x-input
+                v-model="activityForm.title"
+                :rules="[isRequired]"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Description">
+              <x-textarea
+                v-model="activityForm.description"
+                :adjust-to-text="false"
+                class="w-full"
+              />
+            </x-field>
+            <x-field label="Assignee" required>
+              <x-select
+                v-model="activityForm.assignee_id"
+                :options="advisorOptions"
+                :rules="[isRequired]"
+                placeholder="Select Assignee"
+                class="w-full"
+              />
+            </x-field>
 
             <DatePicker
               :format="format"
@@ -1773,154 +1701,15 @@ onMounted(() => {
       </x-modal>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Customer Additional Contacts
-          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-        </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="addAdditionalContact"
-        >
-          Add Additional Contacts
-        </x-button>
-      </div>
+      <customerAdditionalContacts
+          quoteType="Travel"
+          :customerId="quote.customer_id"
+          :quoteId="quote.id"
+          :contacts="customerAdditionalContacts"
+          :quoteEmail="quote.email"
+          :quoteMobile="quote.mobile_no"
 
-      <DataTable
-        table-class-name="compact"
-        :headers="additionalContactTable"
-        :items="customerAdditionalContacts || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-key="{ key }">
-          <span v-if="key === 'email'"> Email Address </span>
-          <span v-else> Mobile Number </span>
-        </template>
-        <template #item-action="item">
-          <div class="space-x-4">
-            <x-button
-              size="xs"
-              color="emerald"
-              outlined
-              @click.prevent="additionalContactPrimary(item)"
-            >
-              Make Primary
-            </x-button>
-            <x-button
-              size="xs"
-              color="error"
-              outlined
-              @click.prevent="additionalContactDelete(item.id)"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </DataTable>
-
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts </template>
-
-        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
-
-            <x-input
-              v-if="additionalContact.additional_contact_type === 'mobile_no'"
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[isRequired, isMobileNo]"
-              class="w-full"
-            />
-
-            <x-input
-              v-if="additionalContact.additional_contact_type === 'email'"
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[isRequired, isEmail]"
-              class="w-full"
-            />
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.addContact = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="additionalContact.processing"
-              type="submit"
-            >
-              Save
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.contactDeleteConfirm" show-close backdrop>
-        <template #header> Delete Additional Contact </template>
-        <p>Are you sure you want to delete this?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactDeleteConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="error"
-              @click.prevent="additionalContactDeleteConfirmed"
-              :loading="contactLoader"
-            >
-              Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact </template>
-        <p>Are you sure you want to make this information as Primary?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactPrimaryConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="additionalContactPrimaryConfirmed"
-              :loading="contactLoader"
-            >
-              Confirm
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
+      />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

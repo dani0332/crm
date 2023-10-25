@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class Team extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'teams';
 
@@ -50,5 +50,10 @@ class Team extends Model implements AuditableContract
     public function getIsActiveAttribute()
     {
         return $this->attributes['is_active'] == 1 ? 'True' : 'False';
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_team');
     }
 }

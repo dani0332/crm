@@ -129,12 +129,8 @@ class DashboardController extends Controller
             return in_array($item->id, $commonTeams);
         });
         $tiers = $this->tierService->getTPLTiers();
-        $commonTeam = 0;
-        if (count($commonTeams) > 0) {
-            $commonTeam = $commonTeams[0];
-        }
 
-        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'commonTeam', 'tiers'));
+        return view('dashboard.tpl_dashboard', compact('tplDashboardStats', 'teams', 'tiers'));
     }
 
     public function getTPLDashboardStats(Request $request): array
@@ -200,12 +196,9 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
-        if (isset($request->isCommercial) && $request->isCommercial == 'true') {
-            $records->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $records->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];
@@ -333,12 +326,9 @@ class DashboardController extends Controller
             $records = $this->applyFilter($records, 'car_quote_request.advisor_id', $request->userFilter, gettype($request->userFilter) == 'array' ? IMCRMSearchTypesEnum::MULTI_SEARCH : IMCRMSearchTypesEnum::EQUAL_SEARCH);
         }
 
-        if (isset($request->isCommercial) && $request->isCommercial == 'true') {
-            $records->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $records->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($request->isCommercial) && $request->isCommercial != 'All') {
+            $commecialValue = $request->isCommercial == 'true' ? true : false;
+            $records->where('car_model.is_commercial', '=', $commecialValue);
         }
 
         $labels = [];

@@ -191,7 +191,7 @@ class AmtController extends Controller
     {
         $businessInsuranceType = BusinessInsuranceType::select('id', 'text')->where('text', 'Group Medical')->get();
 
-        return inertia('GroupMedicalQuote/Create', [
+        return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => new BusinessQuote(),
         ]);
@@ -287,7 +287,7 @@ class AmtController extends Controller
             $selectedGmType = $GMType->id;
         }
 
-        return inertia('GroupMedicalQuote/Edit', [
+        return inertia('GroupMedicalQuote/Form', [
             'businessInsuranceType' => $businessInsuranceType,
             'quote' => $record,
             'gmTypes' => $gmTypes,

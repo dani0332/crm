@@ -12,6 +12,7 @@ final class RolesEnum extends Enum
     public const BusinessAdvisor = 'BUSINESS_ADVISOR';
     public const HealthAdvisor = 'HEALTH_ADVISOR';
     public const HomeAdvisor = 'HOME_ADVISOR';
+    public const HomeManager = 'HOME_MANAGER';
     public const LifeAdvisor = 'LIFE_ADVISOR';
     public const TravelAdvisor = 'TRAVEL_ADVISOR';
     public const TravelManager = 'TRAVEL_MANAGER';
@@ -94,5 +95,7 @@ final class RolesEnum extends Enum
     public const YachtManager = 'YACHT_MANAGER';
     public const JetskiAdvisor = 'JETSKI_ADVISOR';
     public const JetskiManager = 'JETSKI_MANAGER';
+    public const SeniorManagement = 'SENIOR_MANAGEMENT';
+    public const Accounts = 'ACCOUNTS';
     public const CallDesk = 'CALL_DESK';
 }

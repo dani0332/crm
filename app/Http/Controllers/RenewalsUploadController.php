@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\ProcessStatusCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypeShortCode;
 use App\Enums\RenewalProcessStatuses;
 use App\Enums\RenewalsUploadType;
@@ -13,11 +12,12 @@ use App\Enums\RolesEnum;
 use App\Enums\SkipPlansEnum;
 use App\Exports\RenewalFailedValidationExport;
 use App\Http\Requests\RenewalsUploadRequest;
+use App\Http\Requests\ScheduleRenewalsOcbRequest;
 use App\Imports\RenewalsImport;
 use App\Imports\RenewalsImportUpdate;
 use App\Jobs\Renewals\FetchRenewalsPlansJob;
-use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\RenewalsQuoteAmlJob;
+use App\Jobs\ScheduleRenewalOcbEmails;
 use App\Models\AML;
 use App\Models\CarQuote;
 use App\Models\QuoteType;
@@ -26,9 +26,7 @@ use App\Models\RenewalsBatchEmails;
 use App\Models\RenewalStatusProcess;
 use App\Models\RenewalsUploadLeads;
 use App\Services\RenewalsUploadService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
 use Yajra\Datatables\Datatables;
@@ -270,14 +268,20 @@ class RenewalsUploadController extends Controller
         if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
             return abort(403);
         }
-        $renewalQuotes = RenewalQuoteProcess::query()
+
+        $query = RenewalQuoteProcess::query()
             ->select('batch as renewal_batch')
             ->where([
                 'quote_type' => QuoteTypeShortCode::CAR,
                 'type' => RenewalsUploadType::UPDATE_LEADS,
-            ])
-            ->groupBy('batch');
-        $renewalQuotes = $renewalQuotes->simplePaginate();
+            ]);
+
+        if (! empty($request->batch)) {
+            $query->where('batch', $request->batch);
+        }
+
+        $renewalQuotes = $query->groupBy('batch')
+            ->simplePaginate();
 
         return inertia('Renewals/Batches', [
             'batches' => $renewalQuotes,
@@ -330,54 +334,41 @@ class RenewalsUploadController extends Controller
         ]);
     }
 
-    public function runBatchProcess($batch)
+    /**
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function scheduleRenewalsOcb(ScheduleRenewalsOcbRequest $request, $batch)
     {
-        if (! auth()->user()->hasAnyRole([RolesEnum::RenewalsManager, RolesEnum::Admin, RolesEnum::Engineering])) {
-            return abort(403);
-        }
+        $totalLeads = $this->renewalsUploadFileService->getPendingOcbLeadsTotal($batch);
 
-        $lastBatchProcess = RenewalsBatchEmails::where('batch', $batch)->orderBy('created_at', 'desc')->first();
+        $renewalBatchEmail = RenewalsBatchEmails::create([
+            'batch' => $batch,
+            'status' => ProcessStatusCode::PENDING,
+            'total_leads' => $totalLeads,
+            'total_sent' => 0,
+            'total_bounced' => 0,
+            'total_failed' => 0,
+            'created_by_id' => auth()->id(),
+        ]);
 
-        if ($lastBatchProcess && Carbon::now()->timezone(config('app.timezone'))->diffInMinutes($lastBatchProcess->created_at) <= 5) {
-            return redirect('renewals/batches/'.$batch)->with('error', 'Batch process is already created, next can be created after 5 minutes ');
-        }
-
-        Log::info('runBatchProcess START');
-        $batchLeads = $this->renewalsUploadFileService->getProcessLeadsToSendEmails($batch);
-        $batchLeadsCount = $batchLeads->count();
-        Log::info('batch: '.$batch.' batchLeadsCount: '.$batchLeadsCount);
-
-        if ($batchLeadsCount == 0) {
-            return redirect('renewals/batches/'.$batch)->with('success', 'No leads found for this batch');
-        }
-
-        $batchEmail = new RenewalsBatchEmails();
-        $batchEmail->batch = $batch;
-        $batchEmail->status = ProcessStatusCode::IN_PROGRESS;
-        $batchEmail->total_leads = $batchLeadsCount;
-        $batchEmail->total_sent = 0;
-        $batchEmail->total_bounced = 0;
-        $batchEmail->created_by_id = auth()->id();
-        $batchEmail->save();
-
-        foreach ($batchLeads as $key => $batchLead) {
-            $isCompleted = $batchLeadsCount - 1 == $key ? 1 : 0;
-            dispatch(new RenewalBatchEmailJob($batchLead->quote_id, $batchEmail->id, QuoteTypeId::Car, $isCompleted, $batch));
-            sleep(0.5);
-        }
-
-        Log::info('runBatchProcess END');
+        ScheduleRenewalOcbEmails::dispatch($batch, $renewalBatchEmail);
 
         return redirect('renewals/batches/'.$batch)->with('success', 'Batch has been created and emails are being sent');
     }
 
     public function validationFailed($id)
     {
-        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
+            ->with('renewalUploadLead')
+            ->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])
+            ->simplePaginate()->withQueryString();
 
         $batch_id = $id;
 
-        return view('renewals.validation_failed', compact('renewalLeads'), compact('batch_id'));
+        return inertia('Renewals/ValidationFailed', [
+            'renewalLeads' => $renewalLeads,
+            'batchId' => $batch_id,
+        ]);
     }
 
     public function downloadValidationFailed($id)
@@ -392,11 +383,14 @@ class RenewalsUploadController extends Controller
         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
             ->with('renewalUploadLead')
             ->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])
-            ->get();
+            ->simplePaginate()->withQueryString();
 
         $batch_id = $id;
 
-        return view('renewals.validation_passed', compact('renewalLeads'), compact('batch_id'));
+        return inertia('Renewals/ValidationPassed', [
+            'renewalLeads' => $renewalLeads,
+            'batchId' => $batch_id,
+        ]);
     }
 
     public function viewQuoteRedirect($renewalProcessId, $leadId)
@@ -470,4 +464,5 @@ class RenewalsUploadController extends Controller
 
         return redirect('/');
     }
+
 }

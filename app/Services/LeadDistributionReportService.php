@@ -112,12 +112,14 @@ class LeadDistributionReportService extends BaseService
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
 
-        if (isset($filters->isCommercial) && $filters->isCommercial == 'true') {
-            $query->where('car_make.is_commercial', '=', true)
-                ->where('car_model.is_commercial', '=', true);
-        } else {
-            $query->where('car_make.is_commercial', '=', false)
-                ->where('car_model.is_commercial', '=', false);
+        if (isset($filters->assignmentTypes) && $filters->assignmentTypes != 'All') {
+            info('assignment_type are : '.json_encode($filters->assignmentTypes));
+            $query->where('car_quote_request.assignment_type', $filters->assignmentTypes);
+        }
+
+        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
+            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
+            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
         }
 
         return $query;

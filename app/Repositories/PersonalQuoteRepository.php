@@ -101,18 +101,20 @@ class PersonalQuoteRepository extends BaseRepository
         return DB::transaction(function () use ($quoteId, $data) {
             $quote = $this->where('id', $quoteId)->firstOrFail();
 
-            $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'reference', 'payment_methods_code', 'insurance_provider_id', 'plan_id']);
+            $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code', 'insurance_provider_id']);
 
-            if ($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard) {
+            if ($data['payment_methods_code'] != PaymentMethodsEnum::CreditCard && $data['payment_methods_code'] != PaymentMethodsEnum::InsureNowPayLater) {
                 $paymentData['authorized_at'] = now();
             }
 
-            $paymentData['code'] = 'P-'.strtoupper(substr(uniqid(''), 0, 8));
-            $paymentData['payment_status_id'] = PaymentStatusEnum::PENDING;
+            $count = $quote->payments->count();
+            $paymentData['code'] = ($count > 0) ? $quote->code.'-'.$count : $quote->code;
+            $paymentData['payment_status_id'] = PaymentStatusEnum::DRAFT;
+
             $quote->payments()->create($paymentData);
 
             PaymentStatusLogRepository::create([
-                'current_payment_status_id' => PaymentStatusEnum::PENDING,
+                'current_payment_status_id' => PaymentStatusEnum::DRAFT,
                 'payment_code' => $paymentData['code'],
             ]);
 
@@ -128,7 +130,7 @@ class PersonalQuoteRepository extends BaseRepository
     public function fetchUpdatePayment($quoteId, $paymentCode, $data)
     {
         $payment = PaymentRepository::where('code', $paymentCode)->firstOrFail();
-        $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code']);
+        $paymentData = Arr::only($data, ['collection_type', 'captured_amount', 'payment_methods_code', 'insurance_provider_id']);
 
         if (! empty($data['reference'])) {
             $paymentData['reference'] = $data['reference'];
@@ -187,7 +189,6 @@ class PersonalQuoteRepository extends BaseRepository
             $quote = $this->findOrFail($quoteId);
             $updateData = [$data['key'] => $data['value']];
             $quote->update($updateData);
-            $quote->customer()->update($updateData);
 
             return true;
         });

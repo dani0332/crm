@@ -175,6 +175,7 @@
                 </ul>
                 <div class="clearfix"></div>
             </div>
+            <div class="col-md-12 col-sm-12">
             <div class="x_content">
                 <br />
                 @if (session()->has('success'))
@@ -184,9 +185,19 @@
                     {{ csrf_field() }}
                     @method('PUT')
                     <div class="item form-group">
+
+                            <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Avatar </label>
+                            <div class="col-md-6 col-sm-6 d-flex justify-content-center">
+                                <div class="nav-avatar nav-user-avatar">
+                                    <img src="{{$user->profile_photo_path != null?substr($user->profile_photo_path, 0, -6):'/image/alfred-theme.png'}}" alt="IMCRM" class="w-full" />
+                                </div>
+                        </div>
+
+                    </div>
+                    <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="name">Name <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="name" name="name" value="{{ $user->name }}" class="form-control">
+                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" class="form-control">
                             @if ($errors->has('name'))
                                 <span class="text-danger">{{ $errors->first('name') }}</span>
                             @endif
@@ -195,7 +206,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="email">Email <span class="required">*</span></label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="email" id="email" name="email" value="{{ $user->email }}" class="form-control">
+                            <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" class="form-control">
                             @if ($errors->has('email'))
                                 <span class="text-danger">{{ $errors->first('email') }}</span>
                             @endif
@@ -204,7 +215,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="mobile_no">Mobile Number</label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="mobile_no" name="mobile_no" value="{{ $user->mobile_no }}" class="form-control" pattern="^(?:\+971|00971|0)(?!2)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
+                            <input type="text" id="mobile_no" name="mobile_no" value="{{ old('mobile_no', $user->mobile_no) }}" class="form-control" pattern="^(?:\+971|00971|0)(?!2)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
                             @if ($errors->has('mobile_no'))
                                 <span class="text-danger">{{ $errors->first('mobile_no') }}</span>
                             @endif
@@ -213,7 +224,7 @@
                     <div class="item form-group">
                         <label class="col-form-label col-md-3 col-sm-3 label-align" for="landline_no">Landline Number</label>
                         <div class="col-md-6 col-sm-6">
-                            <input type="text" id="landline_no" name="landline_no" value="{{ $user->landline_no }}" class="form-control" pattern="^(?:\+971|00971|0)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
+                            <input type="text" id="landline_no" name="landline_no" value="{{ old('landline_no', $user->landline_no) }}" class="form-control" pattern="^(?:\+971|00971|0)((?:2|3|4|5|6|7|9|50|51|52|55|56)[0-9]{7,})$">
                             @if ($errors->has('landline_no'))
                                 <span class="text-danger">{{ $errors->first('landline_no') }}</span>
                             @endif
@@ -407,6 +418,7 @@
                         </div>
                     </div>
                 </form>
+            </div>
             </div>
         </div>
     </div>

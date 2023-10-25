@@ -2,11 +2,13 @@
 
 namespace App\Repositories;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
 use App\Traits\CentralTrait;
+use Illuminate\Support\Facades\DB;
 
 class CarQuoteRepository extends BaseRepository
 {
@@ -18,12 +20,55 @@ class CarQuoteRepository extends BaseRepository
     }
 
     /**
+     * @param $quoteStatusId (CarLost/Uncontactable)
+     * @return mixed
+     */
+    public function fetchGetLostQuotes($quoteStatusId)
+    {
+        $query = DB::table('car_quote_request as cqr')
+            ->select(DB::raw('cqr.*, clql.status as approval_status, u.email as advisor_email, clql.notes as mo_notes'))
+            ->join(DB::raw('(SELECT *
+             FROM   car_lost_quote_logs
+                    INNER JOIN (SELECT Max(`car_lost_quote_logs`.`id`) AS `id_latest`,
+                                `car_lost_quote_logs`.`car_quote_request_id` AS
+                                cqr_id
+                                FROM   `car_lost_quote_logs`
+                                GROUP  BY `car_lost_quote_logs`.`car_quote_request_id`
+                                )
+                    AS `latest_log`
+                    ON `latest_log`.`id_latest` = `car_lost_quote_logs`.`id`
+                    AND `latest_log`.`cqr_id` =
+                    `car_lost_quote_logs`.`car_quote_request_id`) clql
+        '), function ($join) {
+                $join->on('cqr.id', 'clql.car_quote_request_id');
+            })
+            ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
+            ->where('cqr.quote_status_id', $quoteStatusId);
+
+        if (! empty(request()->approval_status)) {
+            $query->where('clql.status', request()->approval_status);
+        }
+
+        if (! empty(request()->advisor_id)) {
+            $query->whereIn('cqr.advisor_id', request()->advisor_id);
+        }
+
+        if (! empty(request()->renewal_batch)) {
+            $query->where('cqr.renewal_batch', request()->renewal_batch);
+        }
+
+        return $query->orderBy(DB::raw(' IF (clql.status = "'.GenericRequestEnum::PENDING.'", 0, 1) '))
+            ->simplePaginate()->withQueryString();
+    }
+
+    /*
      * @return mixed
      */
     public function fetchGetData()
     {
         return $this->filter()->with(
-            ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id'])->orderBy('created_at', 'desc')->Paginate();
+            ['advisor', 'nationality', 'carMake', 'carModel', 'insuranceProvider', 'carQuoteRequestDetail', 'car_type_insurance_id']
+        )->orderBy('created_at', 'desc')->Paginate();
     }
 
     /**
@@ -53,5 +98,19 @@ class CarQuoteRepository extends BaseRepository
     public function fetchGetAdvisors()
     {
         return UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CAR->value);
+    }
+
+    public function fetchUpdateCareQuotePlanDetails($data)
+    {
+        $payLoad = [
+            'quoteUID' => $data['quote_uuid'],
+            'update' => true,
+        ];
+        $payLoad['plans'][] = (object) [
+            'planId' => (int) $data['plan_id'],
+            'isPayLaterActive' => true,
+        ];
+
+        return Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
     }
 }

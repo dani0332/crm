@@ -18,7 +18,7 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Row;
 
-class RenewalsImport implements OnEachRow, WithStartRow, WithValidation, SkipsOnFailure, WithChunkReading
+class RenewalsImport implements OnEachRow, SkipsOnFailure, WithChunkReading, WithStartRow, WithValidation
 {
     use Importable, SkipsFailures;
 

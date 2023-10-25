@@ -85,7 +85,7 @@ use App\Enums\LeadSourceEnum;
     <div class="row">
         <div class="col-md-12 col-sm-12 admin-detail">
             @if ($model->modelType == quoteTypeCode::Car)
-                <x-car-ecom-detail :record="$record" :carQuotePlanAddons="$carQuotePlanAddons" />
+                <x-car-ecom-detail :record="$record" :mainPayment="$mainPayment" :payments="$payments" :carQuotePlanAddons="$carQuotePlanAddons" />
             @endif
             <div class="x_panel">
                 <br />
@@ -340,7 +340,7 @@ use App\Enums\LeadSourceEnum;
                                             style="text-overflow: ellipsis;overflow: auto;white-space: nowrap;width: 495px;">
                                             <p class="label-align-center">
                                                 @if(str_contains($value, 'checkbox') || (str_contains($value, 'static') && str_contains(strtolower($value), 'yes')))
-                                                {{ $record->$property ? 'Yes' : 'No' }}
+                                                {{ isset($record->$property) ? 'Yes' : 'No' }}
                                                 @elseif( (str_contains($value, 'static') && !str_contains(strtolower($value), 'yes')))
                                                     @if($record->$property == GenericRequestEnum::MALE_SINGLE_VALUE) {{GenericRequestEnum::MALE_SINGLE}}
                                                     @elseif($record->$property == GenericRequestEnum::FEMALE_SINGLE_VALUE) {{GenericRequestEnum::FEMALE_SINGLE}}
@@ -408,7 +408,9 @@ use App\Enums\LeadSourceEnum;
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled"
-            :quoteTypeId="$quoteTypeId" :tiers="$tiers" />
+            :quoteTypeId="$quoteTypeId" :tiers="$tiers" :paymentEntityModel="@$paymentEntityModel" :lostRejectReasons="@$lostRejectReasons" :lostApproveReasons="@$lostApproveReasons"
+            :carLostChangeStatus="@$carLostChangeStatus" :allowQuoteLogAction="@$allowQuoteLogAction"
+        />
     @endif
     @if (count($allowedDuplicateLOB) > 0)
         <div class="modal fade" id="duplicateLeadModal" name="duplicateLeadModal" tabindex="-1" role="dialog"
@@ -478,14 +480,13 @@ use App\Enums\LeadSourceEnum;
             </div>
         </div>
 
-        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
         <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" />
-        @endif
+
         <x-car-quote-assumptions :record="$record" :vehicleTypes="$vehicleTypes" :access="$access" :yearsOfManufacture="$yearsOfManufacture" :trimList="$trimList" />
 
         <x-car-quote-plans :record="$record" :listQuotePlans="$listQuotePlans" :access="$access" :ecomUrl="$ecomCarInsuranceQuoteUrl . $record->uuid" :quoteType="$quoteType" :quoteTypeId="$quoteTypeId" :carMakeText="$carMakeText" :carModelText="$carModelText" :advisor="$advisor" :daysAfterCapturedPayment="$daysAfterCapturedPayment" />
 
-        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" />
+        <x-car-quote-ep :transactions="$embeddedProducts" :quoteCode="$record->code" :record="$record"/>
 
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
             <x-quote-policy :record="$record" :quoteType="$quoteType" />
@@ -496,6 +497,12 @@ use App\Enums\LeadSourceEnum;
         <x-notes-for-customer-modal :record="$record" :quoteTypeId="$quoteTypeId" />
     @endif
 
+@if ($model->modelType == quoteTypeCode::Life ||  $model->modelType == quoteTypeCode::Home ||  $model->modelType == quoteTypeCode::Business)
+    @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+        <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :insuranceProviders="$insuranceProviders" :modeltype="$model->modelType" />
+    @endif
+
+@endif
     @if ($model->modelType == quoteTypeCode::Travel)
         <div class="modal fade" id="quotePlanModal" name="quotePlanModal" tabindex="-1" role="dialog"
             aria-labelledby="quotePlanModalLabel" aria-hidden="true">
@@ -518,7 +525,10 @@ use App\Enums\LeadSourceEnum;
                 </div>
             </div>
         </div>
-        <x-travel-ecom-detail :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
+        @if(auth()->user()->hasRole(RolesEnum::BetaUser))
+            <x-payments-table :payments="$payments" :paymentMethods="$paymentMethods" :paymentPlainModel="$paymentEntityModel" :modeltype="$model->modelType" :insuranceProviders="$insuranceProviders" />
+        @endif
+        <x-travel-ecom-detail :payments="$payments" :mainPayment="$mainPayment"  :record="$record" :travelQuotePremium="$record->premium" :travelQuotePaidAt="$record->paid_at" :travelQuotePaymentStatus="$record->payment_status_id_text" :travelQuotePlanName="$record->plan_id_text" />
         <x-travel-quote-members-detail :members="$membersDetail" />
         <x-quote-policy :record="$record" :quoteType="$quoteType" />
         @if (isset($isQuoteDocumentEnabled) && $isQuoteDocumentEnabled)
@@ -603,6 +613,16 @@ use App\Enums\LeadSourceEnum;
             </button>
         </div>
     @endcan
+    @if ($model->modelType == quoteTypeCode::Car)
+    @can('api-logs-view')
+        <div id="apilogsdiv">
+            <button id='apilogsbtn' class="btn btn-warning btn-sm apilogsbtn" data-id="{{ $record->id }}"
+                data-model="App\Models\{{ $model_name }}">
+                View API Logs
+            </button>
+        </div>
+    @endcan
+    @endif
     <script>
         function toggleSubDropDown(el){
             var selectedLobs = $("#lob_team").val();

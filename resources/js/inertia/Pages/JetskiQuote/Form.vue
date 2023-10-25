@@ -1,6 +1,4 @@
 <script setup>
-const notification = useNotifications('toast');
-
 const props = defineProps({
   genderOptions: Object,
   nationalities: Object,
@@ -31,9 +29,10 @@ const quoteForm = useForm({
   claim_history: props.quote?.jetski_quote?.claim_history,
 });
 
-const { isRequired, isEmail } = useRules();
+const { isRequired, isEmail, isMobileNo } = useRules();
 
 const isEmptyField = ref(false);
+const editMode = computed(() => (props.quote ? true : false));
 function onSubmit(isValid) {
   if (quoteForm.nationality_id == null) {
     isEmptyField.value = true;
@@ -42,26 +41,15 @@ function onSubmit(isValid) {
   }
 
   if (isValid) {
-    let method = 'post';
-    let url = `/personal-quotes/jetski/`;
-    let title = 'Quote saved successfully';
-
-    if (props.quote) {
-      method = 'put';
-      url = url + props.quote.uuid;
-      title = 'Quote updated successfully';
-    }
+    let method = editMode.value ? 'put' : 'post';
+    let url = editMode.value
+      ? route('jetski-quotes-update', props.quote.uuid)
+      : route('jetski-quotes-store');
 
     quoteForm.clearErrors();
     quoteForm.submit(method, url, {
       onError: errors => {
         console.log(quoteForm.setError(errors));
-      },
-      onSuccess: () => {
-        notification.success({
-          title: title,
-          position: 'top',
-        });
       },
     });
   }
@@ -76,7 +64,7 @@ function onSubmit(isValid) {
         Jetski Quote <span v-if="quote">{{ quote?.uuid }}</span>
       </h2>
       <div>
-        <Link href="/personal-quotes/jetski">
+        <Link :href="route('jetski-quotes-list')">
           <x-button size="sm" color="#ff5e00"> Jetski Quotes List </x-button>
         </Link>
       </div>
@@ -88,137 +76,140 @@ function onSubmit(isValid) {
       </x-alert>
 
       <div class="grid sm:grid-cols-2 gap-4">
-        <x-input
-          v-model="quoteForm.first_name"
-          type="text"
-          label="First Name*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.first_name"
-        />
-
-        <x-input
-          v-model="quoteForm.last_name"
-          type="text"
-          label="Last Name*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.last_name"
-        />
-
-        <x-input
-          v-model="quoteForm.email"
-          type="email"
-          label="Email*"
-          :rules="[isRequired, isEmail]"
-          class="w-full"
-          :error="quoteForm.errors.email"
-        />
-
-        <x-input
-          v-model="quoteForm.mobile_no"
-          type="tel"
-          label="Phone Number*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.mobile_no"
-        />
-
-        <x-input
-          v-model="quoteForm.jetski_make"
-          type="text"
-          label="JetSki Make*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.jetski_make"
-        />
-
-        <x-input
-          v-model="quoteForm.jetski_model"
-          type="text"
-          label="JetSki Model*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.jetski_model"
-        />
-
-        <x-input
-          v-model="quoteForm.max_speed"
-          type="number"
-          label="Max Speed*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.max_speed"
-        />
-
-        <x-input
-          v-model="quoteForm.seat_capacity"
-          type="text"
-          label="Seating Capacity*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.seat_capacity"
-        />
-
-        <x-input
-          v-model="quoteForm.engine_power"
-          type="text"
-          label="Engine Power (hp)*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.engine_power"
-        />
-
-        <x-select
-          v-model="quoteForm.year_of_manufacture_id"
-          label="Year of manufacture*"
-          :rules="[isRequired]"
-          :options="
-            yearOfManufacture.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :error="quoteForm.errors.year_of_manufacture_id"
-        />
-
-        <x-select
-          v-model="quoteForm.jetski_material_id"
-          label="Material of Construction*"
-          :rules="[isRequired]"
-          :options="
-            jetski_materials.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :error="quoteForm.errors.jetski_material_id"
-        />
-
-        <x-select
-          v-model="quoteForm.jetski_use_id"
-          label="Jet SKI Use*"
-          :rules="[isRequired]"
-          :options="
-            jetski_uses.map(item => ({
-              value: item.id,
-              label: item.text,
-            }))
-          "
-          class="w-full"
-          :error="quoteForm.errors.jetski_use_id"
-        />
-
-        <x-input
-          v-model="quoteForm.claim_history"
-          type="text"
-          label="Claims Experience for past 5 years*"
-          :rules="[isRequired]"
-          class="w-full"
-          :error="quoteForm.errors.claim_history"
-        />
+        <x-field label="First Name" required>
+          <x-input
+            v-model="quoteForm.first_name"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.first_name"
+          />
+        </x-field>
+        <x-field label="Last Name" required>
+          <x-input
+            v-model="quoteForm.last_name"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.last_name"
+          />
+        </x-field>
+        <x-field label="Email" required>
+          <x-input
+            v-model="quoteForm.email"
+            type="email"
+            :rules="[isRequired, isEmail]"
+            class="w-full"
+            :disabled="editMode"
+            :error="quoteForm.errors.email"
+          />
+        </x-field>
+        <x-field label="Phone Number" required>
+          <x-input
+            v-model="quoteForm.mobile_no"
+            type="tel"
+            :rules="[isRequired, isMobileNo]"
+            class="w-full"
+            :error="quoteForm.errors.mobile_no"
+            :disabled="editMode"
+          />
+        </x-field>
+        <x-field label="JetSki Make" required>
+          <x-input
+            v-model="quoteForm.jetski_make"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.jetski_make"
+          />
+        </x-field>
+        <x-field label="JetSki Model" required>
+          <x-input
+            v-model="quoteForm.jetski_model"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.jetski_model"
+          />
+        </x-field>
+        <x-field label="Max Speed" required>
+          <x-input
+            v-model="quoteForm.max_speed"
+            type="number"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.max_speed"
+          />
+        </x-field>
+        <x-field label="Seating Capacity" required>
+          <x-input
+            v-model="quoteForm.seat_capacity"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.seat_capacity"
+          />
+        </x-field>
+        <x-field label="Engine Power (hp)" required>
+          <x-input
+            v-model="quoteForm.engine_power"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.engine_power"
+          />
+        </x-field>
+        <x-field label="Year of manufacture" required>
+          <x-select
+            v-model="quoteForm.year_of_manufacture_id"
+            :rules="[isRequired]"
+            :options="
+              yearOfManufacture.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            :error="quoteForm.errors.year_of_manufacture_id"
+          />
+        </x-field>
+        <x-field label="Material of Construction" required>
+          <x-select
+            v-model="quoteForm.jetski_material_id"
+            :rules="[isRequired]"
+            :options="
+              jetski_materials.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            :error="quoteForm.errors.jetski_material_id"
+          />
+        </x-field>
+        <x-field label="Jet SKI Use" required>
+          <x-select
+            v-model="quoteForm.jetski_use_id"
+            :rules="[isRequired]"
+            :options="
+              jetski_uses.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+            class="w-full"
+            :error="quoteForm.errors.jetski_use_id"
+          />
+        </x-field>
+        <x-field label="Claims Experience for past 5 years" required>
+          <x-input
+            v-model="quoteForm.claim_history"
+            type="text"
+            :rules="[isRequired]"
+            class="w-full"
+            :error="quoteForm.errors.claim_history"
+          />
+        </x-field>
       </div>
 
       <x-divider class="my-4" />
@@ -229,7 +220,7 @@ function onSubmit(isValid) {
           type="submit"
           :loading="quoteForm.processing"
         >
-          Save
+          {{ editMode ? 'Update' : 'Save' }}
         </x-button>
       </div>
     </x-form>

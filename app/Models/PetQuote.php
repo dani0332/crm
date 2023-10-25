@@ -9,7 +9,7 @@ use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
 class PetQuote extends Model implements AuditableContract
 {
-    use HasFactory, Auditable;
+    use Auditable, HasFactory;
 
     protected $table = 'pet_quote_request';
     protected $guarded = [];
@@ -62,5 +62,10 @@ class PetQuote extends Model implements AuditableContract
                 ['auditable_type' => PetQuote::class, 'key' => 'personal_quote_id'],
             ],
         ];
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

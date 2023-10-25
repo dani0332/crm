@@ -1,6 +1,7 @@
-const indielayer = require('@indielayer/ui/tailwind.preset');
+import indielayer from '@indielayer/ui/tailwind.preset';
+import forms from '@tailwindcss/forms'
 
-module.exports = {
+export default {
   presets: [indielayer()],
   content: [
     './resources/**/*.blade.php',
@@ -62,16 +63,16 @@ module.exports = {
           900: '#78350f',
         },
         error: {
-          50: '#ecfdf5',
-          100: '#d1fae5',
-          200: '#a7f3d0',
-          300: '#6ee7b7',
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          700: '#047857',
-          800: '#065f46',
-          900: '#064e3b',
+          50: 'rgb(252,242,242)',
+          100: 'rgb(248,229,229)',
+          200: 'rgb(242,199,199)',
+          300: 'rgb(235,164,164)',
+          400: 'rgb(224,88,88)',
+          500: '#DC2626',
+          600: 'rgb(209,36,36)',
+          700: 'rgb(191,33,33)',
+          800: 'rgb(143,25,25)',
+          900: 'rgb(120,21,21)',
         },
       },
       fontFamily: {
@@ -79,9 +80,9 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms')({
-      strategy: 'class',
-    }),
+  plugins: ['forms'
+    // require('@tailwindcss/forms')({
+    //   strategy: 'class',
+    // }),
   ],
 };
