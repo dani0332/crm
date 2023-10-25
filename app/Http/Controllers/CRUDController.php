@@ -620,10 +620,6 @@ class CRUDController extends Controller
             //     'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access',
             // ]));
 
-            if (gettype($listQuotePlans) == 'string') {
-                $listQuotePlans = [];
-            }
-
             $websiteURL = config('constants.AFIA_WEBSITE_DOMAIN');
             $carPlanFeaturesCodeEnum = CarPlanFeaturesCode::asArray();
             $carPlanExclusionsCodeEnum = CarPlanExclusionsCode::asArray();
