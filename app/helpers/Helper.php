@@ -525,15 +525,30 @@ if (! function_exists('formatMobileNo')) {
     }
 }
 
+if (! function_exists('removeCountryCode')) {
+    function removeCountryCode($mobile)
+    {
+        $mobile = preg_replace('/^\+971|0(?=\d{9})/', '', $mobile);
+
+        if (substr($mobile, 0, 1) !== '0') {
+            return '0' . $mobile;
+        }
+
+        return $mobile;
+    }
+}
+
 if (! function_exists('formatMobileNoDisplay')) {
     function formatMobileNoDisplay($mobile) {
+        $mobile = removeCountryCode($mobile);
         return preg_replace('/^(\d{3})(\d{3})(\d{4})$/', '$1 $2 $3', $mobile);
     }
 }
 
 
-if (! function_exists('formatMobileNoDisplay')) {
+if (! function_exists('formatLandlineDisplay')) {
     function formatLandlineDisplay($landline) {
+        $landline = removeCountryCode($landline);
         return preg_replace('/^(\d{2})(\d{3})(\d{4})$/', '$1 $2 $3', $landline);
     }
 }
