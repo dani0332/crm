@@ -37,9 +37,10 @@ class DatabaseSeeder extends Seeder
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
-            PaymentMethodsAddSeeder::class,
+            UpdateRenewalTemplateStorageSeeder::class,
+PaymentMethodsAddSeeder::class,
             AddNewDocumentTypeSeeder::class,
-            PaymentStatusAddSeeder::class,
-        ]);
+            PaymentStatusAddSeeder::class,        
+]);
     }
 }

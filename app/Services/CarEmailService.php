@@ -65,6 +65,7 @@ class CarEmailService extends BaseService
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
+                'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
@@ -86,15 +87,16 @@ class CarEmailService extends BaseService
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-        $whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
-        $whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
+        //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
+        //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
+        $whatsAppNumber = formatMobileNo($advisor->mobile_no);
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
-            'mobilePhone' => $advisor->mobile_no,
+            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'whatsAppNumber' => $whatsAppNumber,
-            'landLine' => $advisor->landline_no,
+            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,
             'documentUrl' => [$documentUrl],
@@ -240,7 +242,7 @@ class CarEmailService extends BaseService
         }
     }
 
-    private function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
+    public function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
     {
         if (count($plans) == 0) {
             // No plans with available ratings, build email data for the specific case
