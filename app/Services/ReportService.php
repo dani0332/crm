@@ -2,23 +2,22 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentStatusEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
-use App\Models\QuoteType;
 use App\Models\CarQuote;
-use App\Repositories\QuoteTypeRepository;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-
-use App\Traits\GetUserTreeTrait;
-use App\Traits\TeamHierarchyTrait;
-use App\Models\Team;
-use App\Models\Tier;
 use App\Models\LeadSource;
 use App\Models\PaymentStatus;
+use App\Models\QuoteType;
+use App\Models\Team;
+use App\Models\Tier;
+use App\Repositories\QuoteTypeRepository;
+use App\Traits\GetUserTreeTrait;
+use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReportService extends BaseService
 {
@@ -121,27 +120,28 @@ class ReportService extends BaseService
 
     }
 
-    public function getLeadsListReport($request){
+    public function getLeadsListReport($request)
+    {
         $query = CarQuote::query()
-        ->select(
-            'users.id as advisor_id',
-            'users.name as advisor',
-            'car_quote_request.uuid as uuid',
-            'tiers.name as tier',
-            'car_quote_request.source as source',
-            'car_quote_request.first_name as first_name',
-            'car_quote_request.device as device',
-            'car_quote_request.created_at as created_at',
-            'car_quote_request.updated_at as updated_at',
-            'car_quote_request.is_ecommerce as is_ecommerce',
-            'quote_status.text as quoteStatus',
-            'payment_status.text as payment_status_id',
-        )
-        ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
-        ->join('payment_status', 'payment_status.id', 'car_quote_request.payment_status_id')
-        ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
-        ->orderBy('car_quote_request.created_at', 'desc');
+            ->select(
+                'users.id as advisor_id',
+                'users.name as advisor',
+                'car_quote_request.uuid as uuid',
+                'tiers.name as tier',
+                'car_quote_request.source as source',
+                'car_quote_request.first_name as first_name',
+                'car_quote_request.device as device',
+                'car_quote_request.created_at as created_at',
+                'car_quote_request.updated_at as updated_at',
+                'car_quote_request.is_ecommerce as is_ecommerce',
+                'quote_status.text as quoteStatus',
+                'payment_status.text as payment_status_id',
+            )
+            ->join('users', 'users.id', 'car_quote_request.advisor_id')
+            ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+            ->join('payment_status', 'payment_status.id', 'car_quote_request.payment_status_id')
+            ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
+            ->orderBy('car_quote_request.created_at', 'desc');
 
         $filters = [
             'uuid' => $request->uuid,
@@ -153,13 +153,14 @@ class ReportService extends BaseService
             'paymentStatus' => $request->payment_status,
             'page' => $request->page,
         ];
-        
-        $query = $this->refineLeadsReportsWithFilters($query, $filters); 
-        
+
+        $query = $this->refineLeadsReportsWithFilters($query, $filters);
+
         return $query->simplePaginate(15)->withQueryString();
     }
 
-    public function refineLeadsReportsWithFilters($query, $filters){
+    public function refineLeadsReportsWithFilters($query, $filters)
+    {
         $filters = (object) $filters;
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
 
@@ -172,11 +173,11 @@ class ReportService extends BaseService
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-        
+
         $query->whereDate('car_quote_request.created_at', '>=', $startDate);
         $query->whereDate('car_quote_request.created_at', '<=', $endDate);
-        
-        if (isset($filters->uuid)  && is_string($filters->uuid)) {
+
+        if (isset($filters->uuid) && is_string($filters->uuid)) {
             $query->where('car_quote_request.uuid', $filters->uuid);
         }
 
@@ -221,8 +222,9 @@ class ReportService extends BaseService
         return $query;
     }
 
-    public function getDefaultFiltersForLeadsList(){
-       
+    public function getDefaultFiltersForLeadsList()
+    {
+
         $loginUserId = auth()->user()->id;
         $teamIds = $this->getUserTeams($loginUserId);
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
@@ -248,7 +250,7 @@ class ReportService extends BaseService
             ->keyBy('id')
             ->map(fn ($source) => $source->name)
             ->toArray();
-         $paymentStatus = PaymentStatus::query()
+        $paymentStatus = PaymentStatus::query()
             ->orderBy('text')
             ->where('is_active', 1)
             ->get()
