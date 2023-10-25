@@ -58,8 +58,6 @@ const onSubmit = isValid => {
       onBefore: () => (loaders.table = true),
       onFinish: () => (loaders.table = false),
     });
-  } else {
-    console.log('Invalid');
   }
 };
 
