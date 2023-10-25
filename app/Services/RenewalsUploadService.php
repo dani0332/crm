@@ -1226,7 +1226,7 @@ class RenewalsUploadService
                 $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
                 $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
-                Log::info('Renewals OCB email plans fetched');
+                Log::info('fn: renewalBatchEmailProcess Renewals OCB Email email template id: '.$emailTemplateId);
                 if (isset($carQuote->advisor_id)) {
                     $advisor = $this->userService->getUserById($carQuote->advisor_id);
                     $advisorName = $advisor->name;
@@ -1246,7 +1246,7 @@ class RenewalsUploadService
 
                 $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
-                Log::info('Renewals OCB Email email data created');
+                Log::info('fn: renewalBatchEmailProcess Renewals OCB Email email data created');
 
 //                $emailData = (object) [
 //                    'quoteTypeId' => QuoteTypeId::Car,
@@ -1271,13 +1271,15 @@ class RenewalsUploadService
 //                    'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
 //                ];
 
-                if (isset($emailData->plans) && is_array($emailData->plans) && $emailData->plans > 0) {
+                if ($quotePlansCount > 0) {
                     $pdfData = [
-                        'plan_ids' => collect($emailData->plans)->take(5)->pluck('id')->toArray(),
+                        'plan_ids' => collect($listQuotePlans)->take(5)->pluck('id')->toArray(),
                         'quote_uuid' => $carQuote->uuid,
                     ];
 
-                    $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $emailData->plans], 'isDataSorted' => true])));
+                    info('pdfData: '.json_encode($pdfData));
+
+                    $pdf = $this->carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $listQuotePlans], 'isDataSorted' => true])));
 
                     if (isset($pdf['error'])) {
                         info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
