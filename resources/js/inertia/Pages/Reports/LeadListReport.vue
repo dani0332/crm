@@ -53,7 +53,7 @@ const paymentStatus = computed(() => {
 const onSubmit = isValid => {
   if (isValid) {
     filters.page = 1;
-    router.visit(route('lead.list.report'), {
+    router.visit(route('lead-list-report'), {
       method: 'get',
       data: generateQueryString(filters),
       preserveState: true,
@@ -67,7 +67,7 @@ const onSubmit = isValid => {
 };
 
 function onReset() {
-  router.visit(route('lead.list.report'), {
+  router.visit(route('lead-list-report'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -79,23 +79,23 @@ function onReset() {
 const tableHeader = reactive([
   {
     text: 'LEAD CODE',
-    value: 'lead_code',
+    value: 'uuid',
   },
   {
     text: 'Name',
-    value: 'Name',
+    value: 'first_name',
   },
   {
     text: 'Lead Source',
-    value: 'lead_source',
+    value: 'source',
   },
   {
     text: 'Lead Status',
-    value: 'lead_status',
+    value: 'quoteStatus',
   },
   {
     text: 'Payment Status',
-    value: 'payment_status',
+    value: 'payment_status_id',
   },
   {
     text: 'IS ECOMMERCE',
@@ -103,7 +103,7 @@ const tableHeader = reactive([
   },
   {
     text: 'ASSIGNED TO',
-    value: 'assigned_to',
+    value: 'advisor',
   },
   {
     text: 'CREATED AT',
@@ -111,19 +111,17 @@ const tableHeader = reactive([
   },
   {
     text: 'LAST MODIFIED',
-    value: 'last_modified',
+    value: 'updated_at',
   },
   {
     text: 'TIER',
-    value: 'tire',
+    value: 'tier',
   },
   {
     text: 'RECEIVED FROM DEVICE',
-    value: 'recevied_form_device',
+    value: 'device',
   },
 ]);
-
-onMounted(() => console.log(props.reportData));
 </script>
 <template>
   <Head title="Lead List Report" />
@@ -134,7 +132,12 @@ onMounted(() => console.log(props.reportData));
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
       <x-field label="Search">
-        <x-input v-model="filters.uuid" type="tel" class="w-full" />
+        <x-input
+          v-model="filters.uuid"
+          type="text"
+          class="w-full"
+          placeholder="Search By Ref"
+        />
       </x-field>
       <x-field label="Advisor Assigned Date">
         <DatePicker
@@ -206,18 +209,24 @@ onMounted(() => console.log(props.reportData));
   </x-form>
   <DataTable
     class="mt-4"
-    table-class-name="tablefixed"
+    table-class-name=""
     :loading="loaders.table"
     :headers="tableHeader"
-    :items="[]"
+    :items="props.reportData.data || []"
     border-cell
-    :rows-per-page-message="'Records per page'"
-    :rows-items="[10, 25, 50, 100]"
-    :rows-per-page="100"
     :empty-message="'No Records Available'"
-    hide-footer
     :sort-by="'net_conversion'"
     :sort-type="'desc'"
+    hide-footer
   >
   </DataTable>
+  <Pagination
+    :links="{
+      next: props.reportData.next_page_url,
+      prev: props.reportData.prev_page_url,
+      current: props.reportData.current_page,
+      from: props.reportData.from,
+      to: props.reportData.to,
+    }"
+  />
 </template>

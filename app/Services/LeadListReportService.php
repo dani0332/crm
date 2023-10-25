@@ -26,69 +26,41 @@ class LeadListReportService extends BaseService
     public function getReportData($request)
     {
 
-        dd($request);
-        // CarQuote::query()->select('payment_status_id', 'quote_status_id')
-        // ->join('user', 'users.id')
-        // $query = CarQuote::query()
-        //     ->select(
-        //         'users.id as advisorId',
-        //         DB::raw('DATE_FORMAT(quote_batches.start_date, "%d-%m-%Y") as start_date'),
-        //         DB::raw('DATE_FORMAT(quote_batches.end_date, "%d-%m-%Y") as end_date'),
-        //         'quote_batches.name as batch_name',
-        //         'users.name as advisor_name',
-        //         'quote_batches.id as quote_batch_id',
-        //         DB::raw('SUM(CASE WHEN car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as total_leads'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::NewLead.' and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as new_leads'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::PriceTooHigh.', '.QuoteStatusEnum::PolicyPurchasedBeforeFirstCall.', '.QuoteStatusEnum::NotInterested.', '.QuoteStatusEnum::NotEligibleForInsurance.', '.QuoteStatusEnum::NotLookingForMotorInsurance.', '.QuoteStatusEnum::NonGccSpec.','.QuoteStatusEnum::AMLScreeningFailed.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as not_interested'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::NotContactablePe.', '.QuoteStatusEnum::FollowupCall.', '.QuoteStatusEnum::Interested.', '.QuoteStatusEnum::NoAnswer.', '.QuoteStatusEnum::Quoted.', '.QuoteStatusEnum::PaymentPending.','.QuoteStatusEnum::AMLScreeningCleared.','.QuoteStatusEnum::PendingQuote.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as in_progress'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.')  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as bad_leads'),
-        //         DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as sale_leads'),
-        //         DB::raw('SUM(CASE WHEN (car_quote_request.payment_status_id = "'.PaymentStatusEnum::CAPTURED.'"  OR car_quote_request.quote_status_id in ('.QuoteStatusEnum::TransactionApproved.','.QuoteStatusEnum::PolicyIssued.')) and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as created_sale_leads'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id = '.QuoteStatusEnum::IMRenewal.' THEN 1 ELSE 0 END)  and car_quote_request.source != "'.LeadSourceEnum::IMCRM.'" as afia_renewals_count'),
-        //         DB::raw('SUM(CASE WHEN car_quote_request.quote_status_id in ('.QuoteStatusEnum::Duplicate.','.QuoteStatusEnum::Fake.') and car_quote_request.source = "'.LeadSourceEnum::IMCRM.'" THEN 1 ELSE 0 END) as manual_created_bad_leads'),
-        //     )
-        //     ->join('users', 'users.id', 'car_quote_request.advisor_id')
-        //     ->join('quote_batches', 'quote_batches.id', 'car_quote_request.quote_batch_id')
-        //     ->join('car_quote_request_detail', 'car_quote_request_detail.car_quote_request_id', 'car_quote_request.id')
-        //     ->leftJoin('car_make', 'car_make.id', '=', 'car_quote_request.car_make_id')
-        //     ->leftJoin('car_model', 'car_model.id', '=', 'car_quote_request.car_model_id')
-        //     ->where('car_quote_request.source', '!=', LeadSourceEnum::RENEWAL_UPLOAD)
-        //     ->where('users.is_active', true)
-        //     ->groupBy('car_quote_request.advisor_id', 'car_quote_request.quote_batch_id')
-        //     ->orderBy('car_quote_request.quote_batch_id')->orderBy('users.email');
+        $query = CarQuote::query()
+        ->select(
+            'users.id as advisor_id',
+            'users.name as advisor',
+            'car_quote_request.uuid as uuid',
+            'tiers.name as tier',
+            'car_quote_request.source as source',
+            'car_quote_request.first_name as first_name',
+            'car_quote_request.device as device',
+            'car_quote_request.created_at as created_at',
+            'car_quote_request.updated_at as updated_at',
+            'car_quote_request.is_ecommerce as is_ecommerce',
+            'quote_status.text as quoteStatus',
+            'payment_status.text as payment_status_id',
+        )
+        ->join('users', 'users.id', 'car_quote_request.advisor_id')
+        ->join('tiers', 'tiers.id', 'car_quote_request.tier_id')
+        ->join('payment_status', 'payment_status.id', 'car_quote_request.payment_status_id')
+        ->join('quote_status', 'quote_status.id', 'car_quote_request.quote_status_id')
+        ->orderBy('car_quote_request.created_at', 'desc');
 
-        // if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
-        //     $userIds = $this->walkTree(auth()->user()->id);
-        //     $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
-        // }
-
-        // $filters = [
-        //     'uuid' => $request->uuid,
-        //     'advisorAssignedDates' => $request->advisorAssignedDates,
-        //     'tiersFilter' => $request->tiers,
-        //     'leadSourceFilter' => $request->leadSources,
-        //     'teamsFilter' => $request->teams,
-        //     'ecommerceFilter' => $request->is_ecommerce,
-        //     'advisorsFilter' => $request->advisors,
-        //     'advisorId' => $request->advisorId,
-        //     'page' => $request->page,
-        // ];
-
-        // $query = $this->applyFilters($query, $filters);
-
-        // $query = $query->get();
-
-        // // map operation to calculate gross and net conversions of records
-        // $extendedQuery = $query->map(function ($row) {
-        //     $netDenominator = $row->total_leads - $row->bad_leads;
-        //     $grossDenominator = $row->total_leads;
-        //     $row->net_conversion = (float) $netDenominator > 0 ? round(($row->sale_leads / $netDenominator) * 100, 2) : 0;
-        //     $row->gross_conversion = (float) $grossDenominator > 0 ? round(($row->sale_leads / $grossDenominator) * 100, 2) : 0;
-
-        //     return $row;
-        // });
-
+        $filters = [
+            'uuid' => $request->uuid,
+            'advisorAssignedDates' => $request->advisorAssignedDates,
+            'tiersFilter' => $request->tiers,
+            'leadSourceFilter' => $request->leadSources,
+            'teamsFilter' => $request->teams,
+            'ecommerceFilter' => $request->is_ecommerce,
+            'paymentStatus' => $request->payment_status,
+            'page' => $request->page,
+        ];
+        
+        $query = $this->applyFilters($query, $filters); 
+        
+        return $query->simplePaginate(15)->withQueryString();
         // return $extendedQuery;
 
     }
@@ -163,13 +135,19 @@ class LeadListReportService extends BaseService
 
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
-
-        $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
+        
+        $query->whereDate('car_quote_request.created_at', '>=', $startDate);
+        $query->whereDate('car_quote_request.created_at', '<=', $endDate);
+        
+        if (isset($filters->uuid)  && is_string($filters->uuid)) {
+            $query->where('car_quote_request.uuid', $filters->uuid);
+        }
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
             info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
+
         if (isset($filters->teams) && count($filters->teams) > 0) {
             info('teamsFilter are : '.json_encode($filters->teams));
             $value = $filters->teams;
@@ -183,9 +161,24 @@ class LeadListReportService extends BaseService
             });
         }
 
-        if (isset($filters->isCommercial) && $filters->isCommercial != 'All') {
-            $filters->isCommercial = $filters->isCommercial == 'true' ? true : false;
-            $query->where('car_model.is_commercial', '=', $filters->isCommercial);
+        if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
+            info('tiersFilter are : '.json_encode($filters->tiersFilter));
+            $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
+        }
+
+        if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
+            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
+            $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
+        }
+
+        if (isset($filters->paymentStatus) && count($filters->paymentStatus) > 0) {
+            info('paymentStatus are : '.json_encode($filters->paymentStatus));
+            $query->whereIn('car_quote_request.payment_status_id', $filters->paymentStatus);
+        }
+
+        if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
+            info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
+            $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
 
         return $query;
