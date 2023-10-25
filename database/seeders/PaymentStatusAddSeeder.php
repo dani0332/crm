@@ -17,8 +17,8 @@ class PaymentStatusAddSeeder extends Seeder
         if (! $recordExists) {            
             PaymentStatus::create([
                 'id' => '13',
-                'code' => 'new',
-                'text' => 'NEW',
+                'code' => 'disputed',
+                'text' => 'DISPUTED',
                 'sort_order' => '13',
                 'is_active' => true,
             ]);
@@ -28,8 +28,8 @@ class PaymentStatusAddSeeder extends Seeder
         if (! $recordExists) {            
             PaymentStatus::create([
                 'id' => '14',
-                'code' => 'overdue',
-                'text' => 'OVERDUE',
+                'code' => 'new',
+                'text' => 'NEW',
                 'sort_order' => '14',
                 'is_active' => true,
             ]);
@@ -39,8 +39,8 @@ class PaymentStatusAddSeeder extends Seeder
         if (! $recordExists) {            
             PaymentStatus::create([
                 'id' => '15',
-                'code' => 'credit_approved',
-                'text' => 'CREDIT_APPROVED',
+                'code' => 'overdue',
+                'text' => 'OVERDUE',
                 'sort_order' => '15',
                 'is_active' => true,
             ]);
@@ -50,8 +50,8 @@ class PaymentStatusAddSeeder extends Seeder
         if (! $recordExists) {            
             PaymentStatus::create([
                 'id' => '16',
-                'code' => 'disputed',
-                'text' => 'DISPUTED',
+                'code' => 'credit_approved',
+                'text' => 'CREDIT_APPROVED',
                 'sort_order' => '16',
                 'is_active' => true,
             ]);
