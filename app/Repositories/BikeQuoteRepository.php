@@ -44,10 +44,10 @@ class BikeQuoteRepository extends BaseRepository
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => URL::current(),
             'createdById' => auth()->user()->id,
-            'advisorId' => (!auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
-        info('bikeQuote:' . json_encode($quoteData));
+        info('bikeQuote:'.json_encode($quoteData));
 
         return Capi::request('/api/v1-save-personal-quote', 'post', $quoteData);
     }
@@ -123,7 +123,7 @@ class BikeQuoteRepository extends BaseRepository
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
-        $data = !empty($quote) ? $quote->toArray() : [];
+        $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
 
@@ -143,7 +143,7 @@ class BikeQuoteRepository extends BaseRepository
             ->when(\auth()->user()->hasRole(RolesEnum::BikeAdvisor), function ($query) {
                 $query->where('advisor_id', \auth()->user()->id);
             })
-            ->filter(!$forExport)
+            ->filter(! $forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
