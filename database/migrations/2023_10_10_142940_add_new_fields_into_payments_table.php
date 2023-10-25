@@ -17,23 +17,23 @@ class AddNewFieldsInToPaymentsTable extends Migration
         Schema::table('payments', function (Blueprint $table) {
            
             if (! Schema::hasColumn('payments', 'total_payments')) {
-                $table->string('total_payments', 30)->nullable();
+                $table->smallInteger('total_payments')->unsigned()->nullable();                
             }
 
             if (! Schema::hasColumn('payments', 'credit_approval')) {
-                $table->string('credit_approval', 30)->nullable();
+                $table->string('credit_approval', 128)->nullable();
             }
 
             if (! Schema::hasColumn('payments', 'frequency')) {
                 $table->string('frequency', 30)->nullable();
             }
 
-            if (! Schema::hasColumn('payments', 'discount')) {
-                $table->string('discount', 30)->nullable();
+            if (! Schema::hasColumn('payments', 'discount_type')) {
+                $table->string('discount_type', 128)->nullable();
             }
 
             if (! Schema::hasColumn('payments', 'discount_reason')) {
-                $table->string('discount_reason', 30)->nullable();
+                $table->string('discount_reason', 256)->nullable();
             }
 
             if (! Schema::hasColumn('payments', 'custom_reason')) {

@@ -638,11 +638,11 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   paymentMethodsForm.payment_no= payment.total_payments;
   paymentMethodsForm.frequency= payment.frequency;
   paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'none';
-  if (payment.discount=='' || payment.discount==null) {
+  if (payment.discount_type=='' || payment.discount_type==null) {
     showDiscountOptions.value = false;
   } else {
     showDiscountOptions.value = true;
-    paymentMethodsForm.discount= payment.discount;
+    paymentMethodsForm.discount= payment.discount_type;
     paymentMethodsForm.discount_reason = payment.discount_reason !== null ? payment.discount_reason : 'promotional_campaign_discount';    
   }
  
