@@ -1219,7 +1219,6 @@ class RenewalsUploadService
 
             if ($carQuote->previous_quote_policy_number != null) {
 
-
                 // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
                 $listQuotePlans = $this->carQuoteService->getPlans($carQuote->uuid, true, true);
 
@@ -1236,7 +1235,7 @@ class RenewalsUploadService
                 }
 
                 $previousAdvisor = null;
-                if(!empty($carQuote->previous_advisor_id)){
+                if (! empty($carQuote->previous_advisor_id)) {
                     $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
                 }
 
@@ -1248,28 +1247,28 @@ class RenewalsUploadService
                 $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
                 Log::info('fn: renewalBatchEmailProcess Renewals OCB Email email data created');
 
-//                $emailData = (object) [
-//                    'quoteTypeId' => QuoteTypeId::Car,
-//                    'quoteId' => $carQuote->id,
-//                    'templateId' => $emailTemplateId,
-//                    'quoteCdbId' => $carQuote->code,
-//                    'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-//                    'customerEmail' => $carQuote->email,
-//                    'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
-//                    'currentlyInsuredWith' => $carQuote->currently_insured_with,
-//                    'carMake' => isset($carMake->text) ? $carMake->text : null,
-//                    'carModel' => isset($carModel->text) ? $carModel->text : null,
-//                    'carManufactureYear' => $carQuote->year_of_manufacture,
-//                    'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
-//                    'advisorName' => isset($advisorName) ? $advisorName : null,
-//                    'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
-//                    'advisorMobileNo' => isset($advisorMobile) ? $advisorMobile : null,
-//                    'advisorLandlineNo' => isset($advisorLandline) ? $advisorLandline : null,
-//                    'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-//                    'listQuotePlans' => $listQuotePlans,
-//                    'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
-//                    'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
-//                ];
+                //                $emailData = (object) [
+                //                    'quoteTypeId' => QuoteTypeId::Car,
+                //                    'quoteId' => $carQuote->id,
+                //                    'templateId' => $emailTemplateId,
+                //                    'quoteCdbId' => $carQuote->code,
+                //                    'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+                //                    'customerEmail' => $carQuote->email,
+                //                    'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date,
+                //                    'currentlyInsuredWith' => $carQuote->currently_insured_with,
+                //                    'carMake' => isset($carMake->text) ? $carMake->text : null,
+                //                    'carModel' => isset($carModel->text) ? $carModel->text : null,
+                //                    'carManufactureYear' => $carQuote->year_of_manufacture,
+                //                    'previousPolicyNumber' => $carQuote->previous_quote_policy_number,
+                //                    'advisorName' => isset($advisorName) ? $advisorName : null,
+                //                    'advisorEmailAddress' => isset($advisorEmail) ? $advisorEmail : null,
+                //                    'advisorMobileNo' => isset($advisorMobile) ? $advisorMobile : null,
+                //                    'advisorLandlineNo' => isset($advisorLandline) ? $advisorLandline : null,
+                //                    'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+                //                    'listQuotePlans' => $listQuotePlans,
+                //                    'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
+                //                    'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
+                //                ];
 
                 if ($quotePlansCount > 0) {
                     $pdfData = [

@@ -65,7 +65,7 @@ class CarEmailService extends BaseService
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
-                'isRenewal' => ($plan->isRenewal ?? false)
+                'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
@@ -94,9 +94,9 @@ class CarEmailService extends BaseService
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
-            'mobilePhone' => (!empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
+            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'whatsAppNumber' => $whatsAppNumber,
-            'landLine' => (!empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
+            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,
             'documentUrl' => [$documentUrl],
