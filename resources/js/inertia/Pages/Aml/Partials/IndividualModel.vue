@@ -87,8 +87,10 @@ const submitQuoteUpdateForm = () => {
                 title: 'Quote is updated',
                 position: 'top',
             });
+
         },
         onFinish: () => {
+            location.reload();
         },
     });
 }

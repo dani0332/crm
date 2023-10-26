@@ -41,7 +41,7 @@ const modals = reactive({
 });
 
 const tableHeader = [
-    {text: 'Customer ID', value: 'customer_id'},
+    {text: 'Customer ID', value: 'customer_code'},
     {text: 'Customer Type', value: 'search_type' },
     {text: 'Insurance Type', value: 'insurance_type' },
     {text: 'Full Name', value: 'input'},
@@ -603,17 +603,14 @@ const dateToYear = date => {
                 hide-footer
                 fixed-checkbox
             >
-                <template #item-customer_id>
-                    {{ quoteRequest.customer_id }}
-                </template>
                 <template #item-insurance_type="{ quotetype }">
                     {{ quoteType.text }}
                 </template>
                 <template #item-full_name="{ EntityDetails }">
                     {{ EntityDetails.Name.Full ?? '' }}
                 </template>
-                <template #item-status="{ match_found }">
-                    {{ match_found > 0 ? 'Escalated' : 'Pass' }}
+                <template #item-status="{ match_found, decision }">
+                    {{ (match_found > 0 ) ? (decision === 'TrueMatchRejectRisk' ? 'Rejected' : 'Escalated') : 'Pass' }}
                 </template>
                 <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
                     <div class="space-x-4">

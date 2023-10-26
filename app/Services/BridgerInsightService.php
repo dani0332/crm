@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\KycLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
@@ -137,17 +139,29 @@ class BridgerInsightService
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             // AML Log data inserted into kyc_logs just for BridgerInsight
-                            Log::info('Bridger Insight Service - KYC Log data inserted');
-                            KycLog::insert([
+                            $kycLogDetails = [
                                 'quote_request_id' => $quoteId,
                                 'quote_type_id' => $quoteTypeId,
-                                'results' => isset($getDecodeContents->Records) ? json_encode($getDecodeContents->Records) : [],
+                                'results' => isset($getDecodeContents->Records) ? json_encode($getDecodeContents->Records) : json_encode([]),
                                 'results_found' => isset($getDecodeContents->Records[0]) ? count($getDecodeContents->Records[0]->Watchlist->Matches) : 0,
                                 'created_at' => Carbon::now(),
                                 'input' => $customerOrEntityName,
-                                'match_found' => $getDecodeContents->Records ? 1 : 0,
-                                'search_type' => $customerType
-                            ]);
+                                'match_found' => isset($getDecodeContents->Records) ? 1 : 0,
+                                'search_type' => $customerType,
+                                'customer_code' => $memberUboDetails['code']
+                            ];
+
+                            if (!isset($getDecodeContents->Records))
+                                $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
+
+                            KycLog::insert($kycLogDetails);
+                            Log::info('Bridger Insight Service - KYC Log data inserted');
+
+                            if (!isset($getDecodeContents->Records)) {
+                                $quoteDetails = AMLService::getQuoteDetails($quoteTypeId, $quoteId);
+                                $quoteDetails->update(['quote_status_id', QuoteStatusEnum::AMLScreeningCleared]);
+                                Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'. QuoteStatusEnum::AMLScreeningCleared);
+                            }
 
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
 //                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
