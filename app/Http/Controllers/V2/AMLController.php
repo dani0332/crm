@@ -170,10 +170,10 @@ class AMLController extends Controller
         if(isset($amlResults[0]->Watchlist)) {
             $responseFrom = 'Bridger';
             $amlResults = collect($amlResults[0]->Watchlist->Matches)->filter(function ($value){
+                $value->descision = 'unknown';
                 return $value->FalsePositive == false;
             })->values();
         }
-
         return inertia('Aml/Show', [
             'aml' => $aml,
             'amlResults' => $amlResults,
