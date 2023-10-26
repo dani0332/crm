@@ -2175,7 +2175,7 @@ const loadEmailEvents = email => {
             size="sm"
             color="orange"
             class="mr-2"
-            :disabled="record.advisor_id != $page.props.auth.user.id"
+            :disabled="true"
           >
             Send OCB Email to Customer
           </x-button>
