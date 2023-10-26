@@ -1762,15 +1762,15 @@ class CRUDController extends Controller
 
         $emailData =  (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-        
+        info('sendEmailOneClickBuy OCB email data built for quote uuid: ' . $request->quote_uuid);
 
         $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {
-
+            info('sendEmailOneClickBuy OCB email sent to customer for quote uuid: ' . $request->quote_uuid);
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-
+            Log::info('sendEmailOneClickBuy OCB email sending failed for quote uuid: ' . $request->quote_uuid . ' with error code: ' . $responseCode);
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: ' . $responseCode], 500);
         }
     }
