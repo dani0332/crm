@@ -10,7 +10,7 @@ const loaders = reactive({
 
 const filters = reactive({
   uuid: '',
-  advisorAssignedDates: [new Date(), new Date()],
+  advisorAssignedDates: props.defaultFilters.advisorAssignedDates,
   tiers: [],
   leadSources: [],
   teams: [],
