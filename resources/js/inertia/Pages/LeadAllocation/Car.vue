@@ -26,10 +26,18 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
+  isAutoAllocationWorking: {
+    type: Number,
+    default: 0,
+  },
+  isFIFO: {
+    type: Number,
+    default: 0,
+  },
 });
 
-const canManage = ref(true);
-const pickupSequence = ref(true);
+const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
+const pickupSequence = ref(props.isFIFO === 1 ? true : false);
 const autoRefresh = ref(false);
 
 const confirmModal = reactive({
@@ -131,6 +139,26 @@ const toggleOption = (value, type) => {
   confirmModal.title =
     type === 1 ? 'Car Lead Allocation' : 'CAR LEAD PICKUP FIFO';
   confirmModal.show = true;
+};
+
+const onUpdateConfirm = async () => {
+  confirmModal.loader = true;
+  const url =
+    confirmModal.type === 1
+      ? '/lead-allocation/toggle-car-lead-allocation-job-status'
+      : '/lead-allocation/toggle-car-lead-fetch-sequence';
+  await axios
+    .post(url)
+    .then(res => {
+      router.reload({
+        preserveScroll: true,
+        preserveState: true,
+      });
+    })
+    .finally(() => {
+      confirmModal.loader = false;
+      confirmModal.show = false;
+    });
 };
 
 const onToggleStatus = (status, id, userId) => {
@@ -388,7 +416,9 @@ onMounted(() => {
           <x-button size="sm" ghost @click.prevent="onConfirmClose(false)">
             Cancel
           </x-button>
-          <x-button size="sm" color="primary"> Yes </x-button>
+          <x-button size="sm" color="primary" @click.prevent="onUpdateConfirm">
+            Yes, confirmed!
+          </x-button>
         </div>
       </template>
     </x-modal>
