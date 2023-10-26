@@ -8,6 +8,8 @@ const loaders = reactive({
   table: false,
 });
 
+const { isRequired } = useRules();
+
 const filters = reactive({
   uuid: '',
   advisorAssignedDates: props.defaultFilters.advisorAssignedDates,
@@ -48,17 +50,16 @@ const paymentStatus = computed(() => {
 });
 
 const onSubmit = isValid => {
-  if (isValid) {
-    filters.page = 1;
-    router.visit(route('lead-list-report'), {
-      method: 'get',
-      data: generateQueryString(filters),
-      preserveState: true,
-      preserveScroll: true,
-      onBefore: () => (loaders.table = true),
-      onFinish: () => (loaders.table = false),
-    });
-  }
+  if (!isValid) return;
+  filters.page = 1;
+  router.visit(route('lead-list-report'), {
+    method: 'get',
+    data: generateQueryString(filters),
+    preserveState: true,
+    preserveScroll: true,
+    onBefore: () => (loaders.table = true),
+    onFinish: () => (loaders.table = false),
+  });
 };
 
 function onReset() {
@@ -131,10 +132,10 @@ const tableHeader = reactive([
           v-model="filters.uuid"
           type="text"
           class="w-full"
-          placeholder="Search By Ref"
+          placeholder="Search By Ref i.e CAR-12345678"
         />
       </x-field>
-      <x-field label="Advisor Assigned Date">
+      <x-field label="Advisor Assigned Date" required>
         <DatePicker
           v-model="filters.advisorAssignedDates"
           placeholder="Select Start & End Date"
@@ -142,6 +143,7 @@ const tableHeader = reactive([
           :max-range="92"
           size="sm"
           model-type="yyyy-MM-dd"
+          :rules="[isRequired]"
         />
       </x-field>
       <x-field label="Tiers">
@@ -214,6 +216,21 @@ const tableHeader = reactive([
     :sort-type="'desc'"
     hide-footer
   >
+    <template #item-uuid="{ uuid }">
+      <Link
+        :href="route('car.show', uuid)"
+        class="text-primary-500 hover:underline"
+      >
+        {{ uuid }}
+      </Link>
+    </template>
+    <template #item-is_ecommerce="{ is_ecommerce }">
+      <div class="text-center">
+        <x-tag size="sm" :color="is_ecommerce ? 'success' : 'error'">
+          {{ is_ecommerce ? 'Yes' : 'No' }}
+        </x-tag>
+      </div>
+    </template>
   </DataTable>
   <Pagination
     :links="{
