@@ -127,7 +127,7 @@ class BridgerInsightService
                         $amlDataForEmail .= '<pre>';
                     }
                     Log::info('Bridger Insight Service - Error Email Send to Engineering Team');
-                    AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
+//                    AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
                         // Send Email alert to Compliance team only
@@ -142,7 +142,7 @@ class BridgerInsightService
                                 'quote_request_id' => $quoteId,
                                 'quote_type_id' => $quoteTypeId,
                                 'results' => isset($getDecodeContents->Records) ? json_encode($getDecodeContents->Records) : [],
-                                'results_found' => isset($getDecodeContents->Records) ? count($getDecodeContents->Records) : 0,
+                                'results_found' => isset($getDecodeContents->Records[0]) ? count($getDecodeContents->Records[0]->Watchlist->Matches) : 0,
                                 'created_at' => Carbon::now(),
                                 'input' => $customerOrEntityName,
                                 'match_found' => $getDecodeContents->Records ? 1 : 0,
@@ -150,7 +150,7 @@ class BridgerInsightService
                             ]);
 
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
-                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
+//                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
                         }
                     }
                 }

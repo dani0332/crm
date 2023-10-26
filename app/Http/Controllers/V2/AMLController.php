@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -159,17 +160,27 @@ class AMLController extends Controller
      */
     public function show(AML $aml)
     {
+        $responseFrom = 'RYU';
         $amlResults = json_decode($aml->results);
         $aml->quote_type_text = $aml->quotetype->text;
+//        $quoteRequest = $this->getQuoteObjectBy($aml->quotetype->code, $aml->quote_request_id);
+//        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->firstOrFail();
+        $quoteStatusCodes = QuoteStatusEnum::asArray();
 
         if(isset($amlResults[0]->Watchlist)) {
-            $amlResults = $amlResults[0]->Watchlist->Matches ?? [];
+            $responseFrom = 'Bridger';
+            $amlResults = collect($amlResults[0]->Watchlist->Matches)->filter(function ($value){
+                return $value->FalsePositive == false;
+            })->values();
         }
 
         return inertia('Aml/Show', [
-            'amlResults' => $amlResults,
             'aml' => $aml,
-            'responseFrom' => 'bridger'
+            'amlResults' => $amlResults,
+            'responseFrom' => $responseFrom,
+            'quoteStatusCode' => $quoteStatusCodes
+//            'quoteRequest' => $quoteRequest,
+//            'customerDetails' => $customerDetails
         ]);
     }
 
@@ -178,10 +189,12 @@ class AMLController extends Controller
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
-        $amlRecordFetch = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId]);
+        $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId]);
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
+//        dd(json_decode($kycLogs[0]->results));
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
@@ -234,6 +247,7 @@ class AMLController extends Controller
             'nationalityList' => $nationalityList,
             'yearsList' => $yearsList,
             'isCompanySearchEnabled' => $isCompanySearchEnabled,
+            'customerDetails' => $customerDetails
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -247,6 +261,7 @@ class AMLController extends Controller
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
+        dd(\request()->toArray());
         $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType);
 
         if ($updateQuoteStatusResp == 'false') {

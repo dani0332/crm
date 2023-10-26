@@ -27,9 +27,11 @@ const props = defineProps({
     nationalityList: Array,
     yearsList: Array,
     isCompanySearchEnabled: {type: [Array, String]},
+    customerDetails: Object
 });
-
 const page = usePage();
+const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
 const loader = reactive({
     table: false,
 });
@@ -39,15 +41,19 @@ const modals = reactive({
 });
 
 const tableHeader = [
-    {text: 'AML Id', value: 'id'},
-    {text: 'Input', value: 'input'},
-    {text: 'Search Type', value: 'search_type'},
-    {text: 'Screenshot', value: 'screenshot'},
-    {text: 'Match Found', value: 'match_found'},
-    {text: 'Results Found', value: 'results_found'},
-    {text: 'Created At', value: 'created_at'},
-    {text: 'Updated At', value: 'updated_at'},
+    {text: 'Customer ID', value: 'customer_id'},
+    {text: 'Customer Type', value: 'search_type' },
+    {text: 'Insurance Type', value: 'insurance_type' },
+    {text: 'Full Name', value: 'input'},
+    {text: 'Nationality', value: 'nationality'},
+    {text: 'Date of Birth', value: 'date_of_birth'},
+    {text: 'Screening Date', value: 'created_at'},
+    {text: 'Status', value: 'status'},
 ];
+
+if (hasRole(rolesEnum.COMPLIANCE)) {
+    tableHeader.push({text: 'Action', value: 'action'});
+}
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 const quoteBusinessTypeCode = page.props.quoteBusinessTypeCode;
@@ -584,8 +590,9 @@ const dateToYear = date => {
 
         <div class="p-4 rounded shadow mb-6 bg-white">
             <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-                <h3 class="font-semibold text-primary-800 text-lg">KYC-AML Logs</h3>
+                <h3 class="font-semibold text-primary-800 text-lg">AML Status Logs</h3>
             </div>
+            <x-divider class="mb-4 mt-1" />
             <DataTable
                 table-class-name="tablefixed"
                 :headers="tableHeader"
@@ -596,20 +603,29 @@ const dateToYear = date => {
                 hide-footer
                 fixed-checkbox
             >
-                <template #item-id="{ id }">
-                    <Link
-                        :href="`/kyc/aml/${id}`"
-                        class="text-primary-500 hover:underline"
-                    >
-                        {{ id }}
-                    </Link>
+                <template #item-customer_id>
+                    {{ quoteRequest.customer_id }}
                 </template>
-
-                <template #item-screenshot="{ screenshot }">
-                    <img :src="screenshot" alt="IMCRM" class="w-6"/>
+                <template #item-insurance_type="{ quotetype }">
+                    {{ quoteType.text }}
                 </template>
-                <template #item-match_found="{ match_found }">
-                    <x-tag size="sm">{{ match_found > 0 ? 'True' : 'False' }}</x-tag>
+                <template #item-full_name="{ EntityDetails }">
+                    {{ EntityDetails.Name.Full ?? '' }}
+                </template>
+                <template #item-status="{ match_found }">
+                    {{ match_found > 0 ? 'Escalated' : 'Pass' }}
+                </template>
+                <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
+                    <div class="space-x-4">
+                        <x-button
+                            size="xs"
+                            color="orange"
+                            outlined
+                            :href="`/kyc/aml/${id}`"
+                        >
+                            View
+                        </x-button>
+                    </div>
                 </template>
             </DataTable>
         </div>
