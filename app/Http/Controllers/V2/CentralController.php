@@ -12,13 +12,16 @@ use App\Exports\TravelQuoteExport;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Services\CentralService;
+use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Maatwebsite\Excel\Facades\Excel;
 
 class CentralController extends Controller
 {
+    use GenericQueriesAllLobs;
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -84,7 +87,6 @@ class CentralController extends Controller
 
             default:
                 return false;
-
         }
     }
 
@@ -93,5 +95,23 @@ class CentralController extends Controller
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
         return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
+    }
+
+    /**
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function updateLastYearPolicy(UpdateLastYearPolicyRequest $request)
+    {
+        $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
+
+        if (! $quote) {
+            return redirect()->back()->with('error', 'Error Updating Policy Details.');
+        }
+
+        $quote->update([
+            'renewal_batch' => $request->renewal_batch,
+        ]);
+
+        return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
 }

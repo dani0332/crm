@@ -194,7 +194,7 @@ const approvePayment = payment => {
 </script>
 
 <template>
-  <div class="p-4 rounded shadow mb-6 bg-white" v-if="isBetaUser">
+  <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Payments <x-tag size="sm">{{ payments.length || 0 }}</x-tag>
@@ -279,7 +279,7 @@ const approvePayment = payment => {
           <x-input
             class="w-full"
             :rules="[rules.isRequired, rules.amount]"
-            label="Capture Amount*"
+            label="Price Including VAT*"
             v-model="paymentMethodsForm.amount"
           />
 

@@ -16,4 +16,9 @@ class InsurerRequestResponse extends Model
     {
         return $this->belongsTo(CarQuotePlanDetail::class, 'provider_id', 'id');
     }
+
+    public function insuranceProvider()
+    {
+        return $this->belongsTo(InsuranceProvider::class, 'provider_id', 'id');
+    }
 }

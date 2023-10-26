@@ -10,12 +10,14 @@ class BerlinService extends BaseService
     private $berlinEndpoint;
     private $berlinUserName;
     private $berlinAuthPassword;
+    private $customerService;
 
-    public function __construct()
+    public function __construct(CustomerService $customerService)
     {
         $this->berlinEndpoint = config('constants.BERLIN_API_ENDPOINT');
         $this->berlinUserName = config('constants.BERLIN_BASIC_AUTH_USER_NAME');
         $this->berlinAuthPassword = config('constants.BERLIN_BASIC_AUTH_PASSWORD');
+        $this->customerService = $customerService;
     }
 
     public function getCustomerInviteCode()
@@ -105,6 +107,10 @@ class BerlinService extends BaseService
         $customer = MyAlFredUser::select('signup_url', 'code')->where('customer_id', $customerId)->latest()->first();
 
         if (! $customer) {
+            $customer = $this->customerService->getCustomerById($customerId);
+        }
+
+        if (! $customer) {
             Log::error('Berlin Service - extendCustomerSubscription Error: MyAlFredUser not found - Customer ID: '.$customerId);
 
             return false;
@@ -117,9 +123,9 @@ class BerlinService extends BaseService
 
         if ($hasToken) {
             $customerDataArr[$isToken ? 'token' : 'otp'] = $customer->code;
-        } else {
-            $customerDataArr['email'] = $customerEmail;
         }
+
+        $customerDataArr['email'] = $customerEmail;
 
         $customerDataJson = json_encode($customerDataArr);
         info('customerDataArr: ', $customerDataArr);

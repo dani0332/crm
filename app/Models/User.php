@@ -11,7 +11,6 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Collection;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
-use Laravel\Sanctum\HasApiTokens;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 use Spatie\Permission\Traits\HasRoles;
@@ -19,7 +18,6 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements AuditableContract
 {
     use Auditable;
-    use HasApiTokens;
     use HasFactory;
     use HasProfilePhoto;
     use HasRoles;
@@ -35,7 +33,7 @@ class User extends Authenticatable implements AuditableContract
         'name',
         'email',
         'password',
-        'profile_photo_path'
+        'profile_photo_path',
     ];
 
     /**
@@ -300,10 +298,10 @@ class User extends Authenticatable implements AuditableContract
     }
 
     /**
-     * @param $query
      * @return mixed
      */
-    public function scopeWithActive($query) {
+    public function scopeWithActive($query)
+    {
         return $query->where('is_active', 1);
     }
 
@@ -325,5 +323,17 @@ class User extends Authenticatable implements AuditableContract
     public function managers()
     {
         return $this->belongsToMany(User::class, 'user_manager', 'user_id', 'manager_id')->select(['user_id', 'name', 'email']);
+    }
+
+    public function sessions()
+    {
+        return $this->hasMany(Sessions::class);
+
+    }
+
+    public function products()
+    {
+        return $this->hasMany(UserProducts::class);
+
     }
 }

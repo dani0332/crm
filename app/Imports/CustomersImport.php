@@ -5,6 +5,7 @@ namespace App\Imports;
 use App\Jobs\MAWelcomeJob;
 use App\Models\Customer;
 use App\Models\QuoteCustomer;
+use App\Services\BerlinService;
 use App\Services\CustomerService;
 use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\Log;
@@ -17,13 +18,20 @@ class CustomersImport implements OnEachRow
     public $CDBId;
     public $inviatationEmail;
     public $sendEmailCustomerService;
+    public $berlinService;
 
-    public function __construct($myalfredExpiryDate, $cdbId, $inviatationEmail, SendEmailCustomerService $sendEmailCustomerService)
-    {
+    public function __construct(
+        $myalfredExpiryDate,
+        $cdbId,
+        $inviatationEmail,
+        SendEmailCustomerService $sendEmailCustomerService,
+        BerlinService $berlinService,
+    ) {
         $this->myalfredExpiryDate = $myalfredExpiryDate;
         $this->CDBId = $cdbId;
         $this->inviatationEmail = $inviatationEmail;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->berlinService = $berlinService;
     }
 
     /**
@@ -80,18 +88,18 @@ class CustomersImport implements OnEachRow
             $customer = Customer::find($customerId);
             if ($this->inviatationEmail == 'on') {
                 if ($customer && $customer->is_we_sent == 0) {
-                    MAWelcomeJob::dispatch($customer, 'CORPORATE', 'corporate-myalfred-we');
+                    MAWelcomeJob::dispatch($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'CORPORATE', 'corporate-myalfred-we');
                 }
             }
 
-            $existingQuoteCustomer = QuoteCustomer::where([['customer_id', '=', $customerId], ['cdb_id', '=', $this->CDBId]])->get();
-            if (! $existingQuoteCustomer) {
-                $newQuoteCustomer = new QuoteCustomer();
-                $newQuoteCustomer->cdb_id = $this->CDBId;
-                $newQuoteCustomer->customer_id = $customerId;
-                $newQuoteCustomer->save();
-                Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-ID ->'.$this->CDBId);
-            }
+            $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email);
+            info('CustomersImport responseExtend: '.$responseExtend);
+
+            $newQuoteCustomer = new QuoteCustomer();
+            $newQuoteCustomer->cdb_id = $this->CDBId;
+            $newQuoteCustomer->customer_id = $customerId;
+            $newQuoteCustomer->save();
+            Log::info('Saved in quote customer with Customer Id-> '.$customerId.' , Ref-ID ->'.$this->CDBId);
         }
     }
 }

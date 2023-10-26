@@ -12,6 +12,7 @@ defineProps({
   lostReasons: Array,
   quoteStatusEnum: Object,
   embeddedProducts: Array,
+  canAddBatchNumber: Boolean,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -20,9 +21,6 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
-  addContact: false,
-  contactDeleteConfirm: false,
-  contactPrimaryConfirm: false,
 });
 
 const rules = {
@@ -501,10 +499,6 @@ const onLeadStatus = () => {
             <dd>{{ quote.renewal_expiry_date }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">RENEWAL BATCH</dt>
-            <dd>{{ quote.renewal_batch }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <div>
               <x-tooltip position="bottom">
                 <label
@@ -519,30 +513,17 @@ const onLeadStatus = () => {
           </div>
         </dl>
       </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">
-          Last Year's Policy Details
-        </h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
-          </div>
-
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-          </div>
-        </dl>
-      </div>
     </div>
+
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Life"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -624,6 +605,8 @@ const onLeadStatus = () => {
       :data="embeddedProducts"
       :link="quote.uuid"
       :code="quote.code"
+      :quote="quote"
+      :modelType="quoteType"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -767,6 +750,8 @@ const onLeadStatus = () => {
       :customerId="quote.customer_id"
       :quoteId="quote.id"
       :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
