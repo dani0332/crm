@@ -31,23 +31,6 @@ class VehicleDepreciationController extends Controller
      */
     public function index(Request $request)
     {
-        // if ($request->ajax()) {
-        //     $data = VehicleDepreciation::select('vehicle_depreciation.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
-        //         ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
-        //         ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
-        //         ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
-        //         ->orderBy('created_at', 'desc');
-        //     if (isset($request->carmake) && ! empty($request->carmake)) {
-        //         $data->where('car_make_id', $request->carmake);
-        //     }
-        //     if (isset($request->carmodel) && ! empty($request->carmodel)) {
-        //         $data->where('car_model_id', $request->carmodel);
-        //     }
-
-        //     return DataTables::of($data)
-        //         ->addIndexColumn()
-        //         ->make(true);
-        // }
         $data = VehicleDepreciation::select('vehicle_depreciation.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
                 ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
                 ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
