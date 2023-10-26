@@ -499,7 +499,7 @@ const onLoadAvailablePlansData = async () => {
     axios
         .post(url, data)
         .then(res => {
-            plansTable.data= res.data[0]
+            plansTable.data= res.data.length > 0 ? res?.data[0] : []
             getSmallestCopayRateAsDefaultValue();
         })
         .catch(err => {
