@@ -17,13 +17,17 @@ class CarLeadAllocationController extends Controller
     protected $teamService;
     protected $userService;
     protected $tierService;
-    public function __construct(CarLeadAllocationDashboardService $carLeadAllocationService, ApplicationStorageService $applicationStorageService,
-        CacheService $cacheService)
-    {
+
+    public function __construct(
+        CarLeadAllocationDashboardService $carLeadAllocationService,
+        ApplicationStorageService $applicationStorageService,
+        CacheService $cacheService
+    ) {
         $this->carLeadAllocationService = $carLeadAllocationService;
         $this->applicationStorageService = $applicationStorageService;
         $this->cacheService = $cacheService;
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -45,13 +49,25 @@ class CarLeadAllocationController extends Controller
                 $totalAssignedLeadCount = $totalAssignedLeadCount + $value->allocationCount;
                 $value->isAvailable == 1 ? $availableUsers++ : $unAvailableUsers++;
             }
-            if ($request->ajax()) {
-                return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
+            // if ($request->ajax()) {
+            //     return Datatables::of($data)
+            //         ->addIndexColumn()
+            //         ->make(true);
+            // }
 
-            return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount', 'todayTotalUnAssignedLeadCount']));
+            // return view('user.car-lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking', 'isRenewalLeadAllocationWorking', 'isFIFO', 'todayTotalLeadCount', 'todayTotalUnAssignedLeadCount']));
+
+            return inertia('LeadAllocation/Car', [
+                'totalAssignedLeadCount' => $totalAssignedLeadCount,
+                'availableUsers' => $availableUsers,
+                'unAvailableUsers' => $unAvailableUsers,
+                'isAutoAllocationWorking' => $isAutoAllocationWorking,
+                'isRenewalLeadAllocationWorking' => $isRenewalLeadAllocationWorking,
+                'isFIFO' => $isFIFO,
+                'todayTotalLeadCount' => $todayTotalLeadCount,
+                'todayTotalUnAssignedLeadCount' => $todayTotalUnAssignedLeadCount,
+                'data' => $data,
+            ]);
         } else {
             abort(403, 'Unauthorized action.');
         }
