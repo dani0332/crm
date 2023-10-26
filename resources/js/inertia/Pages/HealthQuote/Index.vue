@@ -61,11 +61,9 @@ const tableHeader = [
 ];
 
 const filteredTableHeader = computed(() => {
-  if (!hasRole(rolesEnum.EBPAdvisor) && !hasRole(rolesEnum.RMNB) && !hasRole(rolesEnum.RMSpeed)) {
-    // If the user does not have the "CarAdvisor" role, include all columns
+  if (!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])) {
     return tableHeader;
   } else {
-    // If the user has the "CarAdvisor" role, exclude "Lead Source" and "Assignment Type" columns
     return tableHeader.filter(column => column.value !== 'source' && column.value !== 'assignment_type');
   }
 });
@@ -320,7 +318,7 @@ onMounted(() => {
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
-        <ComboBox
+        <ComboBox  v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -348,7 +346,7 @@ onMounted(() => {
           ]"
           class="w-full"
         />
-        <x-select v-if="!hasRole(rolesEnum.CarAdvisor)"
+        <x-select v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
             v-model="filters.assignment_type"
             label="Assignment Type"
             name="assignment_type"

@@ -198,16 +198,18 @@ use App\Enums\RolesEnum;
         $(document).ready(function() {
 
             const refreshSwitch = document.getElementById('refresh-switch');
+            if(refreshSwitch &&  refreshSwitch.length > 0){
+                refreshSwitch.addEventListener('change', function() {
+                    if (refreshSwitch.checked) {
+                        enableRefresh();
+                    } else {
+                        disableRefresh();
+                    }
+                });
 
-            refreshSwitch.addEventListener('change', function() {
-                if (refreshSwitch.checked) {
-                    enableRefresh();
-                } else {
-                    disableRefresh();
-                }
-            });
+                enableRefresh();
+            }
 
-            enableRefresh();
 
             var isAutoAllocationWorking = JSON.parse('<?php echo json_encode($isAutoAllocationWorking); ?>');
             var indexLastColumn = $(".car_lead_allocation_table").find('tr')[0].cells.length-1;
@@ -257,7 +259,7 @@ use App\Enums\RolesEnum;
                             });
                     }
                 });
-
+                @if(auth()->user()->hasAnyRole([RolesEnum::LeadPool]))
                 $('body').on('dblclick', 'table:first td.td-max-cap', function() {
                         var maxCapValue = parseInt($(this).text());
                         if(maxCapValue !== NaN){
@@ -300,6 +302,8 @@ use App\Enums\RolesEnum;
                             }
                         });
                     });
+                @endif
+
         });
         function changeAvailabilityInputs(ischecked){
             $inputs = $('.chk');

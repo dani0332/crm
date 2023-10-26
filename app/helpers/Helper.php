@@ -496,11 +496,62 @@ if (! function_exists('checkPersonalQuotes')) {
     }
 }
 
+if (! function_exists('getBase64FileInfo')) {
+    function getBase64FileInfo($base64File)
+    {
+        $fileSize = strlen($base64File);
+        @[$type, $file_data] = explode(';', $base64File);
+        @[, $file_data] = explode(',', $file_data);
+        @[, $fileMimeType] = explode(':', $type);
+        @[, $extension] = explode('/', $fileMimeType);
+
+        return [$extension, $fileMimeType, $file_data, $fileSize];
+    }
+}
+
 if (! function_exists('getQueryForLogWithBindings')) {
     function getQueryForLogWithBindings(Builder $builder)
     {
         $addSlashes = str_replace('?', "'?'", $builder->toSql());
 
         return vsprintf(str_replace('?', '%s', $addSlashes), $builder->getBindings());
+    }
+}
+
+if (! function_exists('formatMobileNo')) {
+    function formatMobileNo($mobile)
+    {
+        return preg_replace('/^(?:\+?971|0)?/', '+971', str_replace(' ', '', $mobile));
+    }
+}
+
+if (! function_exists('removeCountryCode')) {
+    function removeCountryCode($mobile)
+    {
+        $mobile = preg_replace('/^\+971|0(?=\d{9})/', '', $mobile);
+
+        if (substr($mobile, 0, 1) !== '0') {
+            return '0'.$mobile;
+        }
+
+        return $mobile;
+    }
+}
+
+if (! function_exists('formatMobileNoDisplay')) {
+    function formatMobileNoDisplay($mobile)
+    {
+        $mobile = removeCountryCode($mobile);
+
+        return preg_replace('/^(\d{3})(\d{3})(\d{4})$/', '$1 $2 $3', $mobile);
+    }
+}
+
+if (! function_exists('formatLandlineDisplay')) {
+    function formatLandlineDisplay($landline)
+    {
+        $landline = removeCountryCode($landline);
+
+        return preg_replace('/^(\d{2})(\d{3})(\d{4})$/', '$1 $2 $3', $landline);
     }
 }
