@@ -196,7 +196,7 @@ class LeadAllocationController extends Controller
             $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $request->userId)->first();
             $leadAllocationObj->reset_cap = (int) $request->resetCap;
             $leadAllocationObj->save();
-            info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap. ' by user : '.auth()->user()->email);
+            info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap.' by user : '.auth()->user()->email);
         }
     }
 
