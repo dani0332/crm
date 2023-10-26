@@ -1,6 +1,4 @@
 <script setup>
-const notification = useToast();
-
 const props = defineProps({
   data: {
     type: Array,
@@ -162,7 +160,6 @@ const onUpdateConfirm = async () => {
 };
 
 const onToggleStatus = (status, id, userId) => {
-  console.log(status, id, userId);
   statusModal.data.id = id;
   statusModal.data.userId = userId;
   if (status) {
@@ -197,8 +194,13 @@ const onStatusSubmit = async () => {
     });
 };
 
-const onToggleResetCap = ({ id, active }) => {
-  console.log(id, active);
+const onToggleResetCap = async (active, userId) => {
+  loaders.table = true;
+  await axios
+    .post('/lead-allocation/toggle-reset-cap', { userId, resetCap: active })
+    .finally(() => {
+      loaders.table = false;
+    });
 };
 
 const onSubmitChanges = async () => {
@@ -213,16 +215,38 @@ const onSubmitChanges = async () => {
     });
   await axios
     .post('/lead-allocation/update-cap', { max_cap })
-    .then(res => {
+    .then(() => {
       router.get('/lead-allocation/car', {
-        replace: false,
+        replace: true,
         preserveScroll: true,
+        preserveState: true,
       });
     })
     .finally(() => {
       loaders.submit = false;
     });
 };
+
+async function fetchData() {
+  await router.reload({
+    replace: true,
+    preserveScroll: true,
+    preserveState: true,
+  });
+}
+
+const { pause, resume } = useTimeoutPoll(fetchData, 90000);
+
+watch(
+  () => autoRefresh.value,
+  () => {
+    if (autoRefresh.value) {
+      resume();
+    } else {
+      pause();
+    }
+  },
+);
 
 onMounted(() => {
   leadData.value = props.data.map(item => {
@@ -261,12 +285,7 @@ onMounted(() => {
       </div>
       <div class="flex gap-1">
         <h2 class="text-lg font-semibold">Auto Refresh :</h2>
-        <x-toggle
-          v-model="autoRefresh"
-          color="emerald"
-          size="lg"
-          @update:model-value="toggleOption($event, 3)"
-        />
+        <x-toggle v-model="autoRefresh" color="emerald" size="lg" />
       </div>
     </div>
     <x-divider class="my-4" />
@@ -361,12 +380,12 @@ onMounted(() => {
         </div>
       </template>
 
-      <template #item-reset_cap="{ reset_cap, id }">
+      <template #item-reset_cap="{ reset_cap, userId, id }">
         <div class="text-center">
           <ItemToggler
             :is-active="reset_cap"
             :id="id"
-            @toggle="onToggleResetCap"
+            @toggle="onToggleResetCap($event.active, userId)"
           />
         </div>
       </template>
@@ -428,11 +447,13 @@ onMounted(() => {
 <style>
 .labox {
   @apply rounded-lg bg-white shadow-md p-4 border-l-4 border-primary-500 text-center;
-  > h3 {
-    @apply text-lg font-semibold text-gray-500;
-  }
-  > p {
-    @apply text-2xl font-semibold my-1;
-  }
+}
+
+.labox h3 {
+  @apply text-lg font-semibold text-gray-500;
+}
+
+.labox p {
+  @apply text-2xl font-semibold my-1;
 }
 </style>
