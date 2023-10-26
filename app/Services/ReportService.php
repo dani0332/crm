@@ -174,7 +174,7 @@ class ReportService extends BaseService
         $endDate = isset($filters->advisorAssignedDates) ?
             Carbon::parse($filters->advisorAssignedDates[1])->endOfDay()->format($dateFormat) : Carbon::parse(now())->endOfDay()->format($dateFormat);
 
-        $query->whereBetween('car_quote_request.created_at',[$startDate, $endDate]);
+        $query->whereBetween('car_quote_request.created_at', [$startDate, $endDate]);
 
         if (isset($filters->uuid) && is_string($filters->uuid)) {
             $query->where('car_quote_request.uuid', $filters->uuid);
