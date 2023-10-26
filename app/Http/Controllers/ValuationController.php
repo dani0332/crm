@@ -23,7 +23,7 @@ class ValuationController extends Controller
 
         return inertia('Valuation/Car', [
             'carMakes' => $carMakes,
-            "kenPath" => config('constants.KEN_API_ENDPOINT')
+            'kenPath' => config('constants.KEN_API_ENDPOINT'),
         ]);
     }
 
