@@ -190,6 +190,16 @@ class LeadAllocationController extends Controller
         }
     }
 
+    public function updateResetCapSwitch(Request $request)
+    {
+        if (isset($request->resetCap)) {
+            $leadAllocationObj = LeadAllocation::with(['leadAllocationUser'])->where('user_id', $request->userId)->first();
+            $leadAllocationObj->reset_cap = (int) $request->resetCap;
+            $leadAllocationObj->save();
+            info('Updated reset cap flag of user : '.$leadAllocationObj->leadAllocationUser->email.' to '.(int) $request->resetCap. ' by user : '.auth()->user()->email);
+        }
+    }
+
     public function toggleLeadAllocationJobStatus()
     {
         $this->applicationStorageService->updateLeadAllocationJobStatus();
