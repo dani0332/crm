@@ -35,3 +35,12 @@
 .conversion_table td{
     text-align: center !important;
 }
+
+.sidebar-expand-logo {
+    width: 200px;
+}
+
+.sidebar-collapse-logo {
+    width: 34px;
+    margin-left: 5px;
+}

@@ -229,12 +229,13 @@ final class PermissionsEnum extends Enum
     public const CONFIGURE_COMMERCIAL_VEHICLES_CREATE = 'admin-configure-commerical-vehicles-create';
     public const CONFIGURE_COMMERCIAL_VEHICLES_STORE = 'admin-configure-commerical-vehicles-store';
     public const CONFIGURE_COMMERCIAL_VEHICLES_EDIT = 'admin-configure-commerical-vehicles-edit';
+    public const API_LOG_VIEW = 'api-logs-view';
     public const RENEWAL_BATCHES_CREATE = 'renewal-batches-create';
     public const RENEWAL_BATCHES_LIST = 'renewal-batches-list';
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
-    public const API_LOG_VIEW = 'api-logs-view';
-    public const LEGACY_INSTALLMENTS = 'legacy-installments';
+    public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
+public const LEGACY_INSTALLMENTS = 'legacy-installments';
     public const LEGACY_INVOICES = 'legacy-invoices';
     public const LEGACY_PAYMENTS = 'legacy-payments';
     public const LEGACY_OTHER_DETAILS = 'legacy-other-details';

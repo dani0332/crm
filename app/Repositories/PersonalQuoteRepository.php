@@ -189,7 +189,6 @@ class PersonalQuoteRepository extends BaseRepository
             $quote = $this->findOrFail($quoteId);
             $updateData = [$data['key'] => $data['value']];
             $quote->update($updateData);
-            $quote->customer()->update($updateData);
 
             return true;
         });

@@ -114,231 +114,221 @@ $halfLiveInsurer = ['SI', 'OI', 'Watania', 'DNIRC', 'NIA', 'UI', 'IHC', 'NT'];
 							<input type="hidden" id="car_quote_uuid" name="car_quote_uuid" value="{{$record->uuid}}">
 						</form>
 					@endif
-				<table id="dataTableCarQuotePlans" class="table table-striped jambo_table datatable-car-quote-plans"
-					style="table-layout: fixed;" style="width:100%">
-					<thead>
-						<tr>
-							<th> <input type="checkbox" id="flowcheckall" value="" /></th>
-							<th>Provider Name</th>
-							<th>Plan Name</th>
-							<th>Repair Type</th>
-							<th>Insurer Quote No.</th>
-							<th>TPL Limit</th>
-							<th>Car Trim</th>
-							<th>PAB cover</th>
-							<th>Roadside assistance</th>
-							<th>Oman cover TPL</th>
-							<th>Actual Price</th>
-							<th>Discounted Price</th>
-							<th>Price with VAT.</th>
-							<th>Excess</th>
-							<th>Action</th>
-						</tr>
-					</thead>
-					<tbody>
-						@foreach ($listQuotePlans as $key => $quotePlan)
-							@if(!isset($quotePlan->id))
-								@continue;
-							@endif
-						<tr>
-							<td>
-								<input type="checkbox" class="car_plans_checkbox" name="toggle_plans_checkbox"
-									value="{{$quotePlan->id}}" />
-							</td>
-							<td>{{ ucwords($quotePlan->providerName) }}
-								<br>
-								@isset($quotePlan->isDisabled)
-								@if($quotePlan->isDisabled)
-								<span class="badge badge-danger">Hidden</span>
+					<table id="dataTableCarQuotePlans" class="table table-striped jambo_table datatable-car-quote-plans"
+						style="table-layout: fixed;" style="width:100%">
+						<thead>
+							<tr>
+								<th> <input type="checkbox" id="flowcheckall" value="" /></th>
+								<th>Provider Name</th>
+								<th>Plan Name</th>
+								<th>Repair Type</th>
+								<th>Insurer Quote No.</th>
+								<th>TPL Limit</th>
+								<th>Car Trim</th>
+								<th>PAB cover</th>
+								<th>Roadside assistance</th>
+								<th>Oman cover TPL</th>
+								<th>Actual Price</th>
+								<th>Discounted Price</th>
+								<th>Price with VAT.</th>
+								<th>Excess</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+						<tbody>
+							@foreach ($listQuotePlans as $key => $quotePlan)
+								@if(!isset($quotePlan->id))
+									@continue;
 								@endif
-								@endisset
-								@isset($quotePlan->isRenewal)
-								@if($quotePlan->isRenewal)
-								<span class="badge badge-success">Renewal</span>
-								@endif
-								@endisset
-								@isset($quotePlan->isManualUpdate)
-								@if($quotePlan->isManualUpdate)
-								<span class="badge badge-primary">Manual</span>
-								@endif
-								@endisset
-							</td>
-							<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
-									data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{
-									ucwords($quotePlan->name) }}</a></td>
-							<td>{{ $quotePlan->repairType == CarPlanType::COMP ?
-									(in_array($quotePlan->providerCode, $coreInsurer) ? 'Premium workshop' : (in_array($quotePlan->providerCode, $halfLiveInsurer) ? 'Non-Agency workshop' : 'NON-AGENCY'))
-									 : $quotePlan->repairType
-								}}</td>
-							<td>
-								@isset($quotePlan->insurerQuoteNo)
-								{{ $quotePlan->insurerQuoteNo }}
-								@endisset
-							</td>
-							<td>
-								@foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
-								@if(isset($quotePlanFeatures->code))
-								@if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT ||
-								$quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)
-								{{ $quotePlanFeatures->value }}
-								@endif
-								@else
-								@if(strtolower($quotePlanFeatures->text) == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT_TEXT)
-								{{ $quotePlanFeatures->value }}
-								@endif
-								@endif
-								@endforeach
-							</td>
-							<td>{{ isset($quotePlan->insurerTrimText) ? $quotePlan->insurerTrimText : '' }}</td>
-							<td>
-								<table style="margin-left: -10px;margin-top: -10px !important;">
+							<tr>
+								<td>
+									<input type="checkbox" class="car_plans_checkbox" name="toggle_plans_checkbox"
+										value="{{$quotePlan->id}}" />
+								</td>
+								<td>{{ ucwords($quotePlan->providerName) }}
+									<br>
+									@isset($quotePlan->isDisabled)
+									@if($quotePlan->isDisabled)
+									<span class="badge badge-danger">Hidden</span>
+									@endif
+									@endisset
+									@isset($quotePlan->isRenewal)
+									@if($quotePlan->isRenewal)
+									<span class="badge badge-success">Renewal</span>
+									@endif
+									@endisset
+									@isset($quotePlan->isManualUpdate)
+									@if($quotePlan->isManualUpdate)
+									<span class="badge badge-primary">Manual</span>
+									@endif
+									@endisset
+								</td>
+								<td><a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
+										data-toggle="modal" data-target="#quotePlanModal" class="quotePlanModalPopup">{{
+										ucwords($quotePlan->name) }}</a></td>
+								<td>{{ $quotePlan->repairType == CarPlanType::COMP ?
+										(in_array($quotePlan->providerCode, $coreInsurer) ? 'Premium workshop' : (in_array($quotePlan->providerCode, $halfLiveInsurer) ? 'Non-Agency workshop' : 'NON-AGENCY'))
+										: $quotePlan->repairType
+									}}</td>
+								<td>
+									@isset($quotePlan->insurerQuoteNo)
+									{{ $quotePlan->insurerQuoteNo }}
+									@endisset
+								</td>
+								<td>
+									@foreach ($quotePlan->benefits->feature as $quotePlanFeatures)
+										@if(isset($quotePlanFeatures->code))
+											@if($quotePlanFeatures->code == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT ||
+												$quotePlanFeatures->code == CarPlanFeaturesCode::DAMAGE_LIMIT)
+												{{ $quotePlanFeatures->value }}
+											@endif
+										@else
+											@if(strtolower($quotePlanFeatures->text) == CarPlanFeaturesCode::TPL_DAMAGE_LIMIT_TEXT)
+											{{ $quotePlanFeatures->value }}
+											@endif
+										@endif
+									@endforeach
+								</td>
+								<td>{{ isset($quotePlan->insurerTrimText) ? $quotePlan->insurerTrimText : '' }}</td>
+								<td>
+									<table style="margin-left: -10px;margin-top: -10px !important;">
+										@php
+										$totalSelectedAddonsPriceWithVat = 0;
+										@endphp
+										@foreach ($quotePlan->addons as $quotePlanAddon)
+											@foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
+												<?php
+												if (isset($quotePlanOptions->isSelected)) {
+													if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
+														$totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
+													}
+												} else {
+													$totalSelectedAddonsPriceWithVat = 0;
+												}
+												?>
+												@if(isset($quotePlanAddon->code))
+													@if(strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::DRIVER_COVER)
+													||
+													strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::PASSENGER_COVER))
+													<tr style="background-color: transparent;">
+														<td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
+														<td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
+													</tr>
+													@endif
+												@elseif(strtolower($quotePlanAddon->text) == CarPlanAddonsCode::DRIVER_COVER_TEXT ||
+													strtolower($quotePlanAddon->text) == CarPlanAddonsCode::PASSENGER_COVER_TEXT)
+													<tr style="background-color: transparent;">
+														<td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
+														<td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
+													</tr>
+												@endif
+											@endforeach
+										@endforeach
+									</table>
+								</td>
+								<td>
+									<table style="margin-left: -10px;margin-top: -10px !important;">
+										@foreach ($quotePlan->benefits->roadSideAssistance as $quotePlanRsa)
+										<tr style="background-color: transparent;">
+											<td style="border-top: none !important;">{{ $quotePlanRsa->text }}:</td>
+											<td style="border-top: none !important;">{{ $quotePlanRsa->value }}</td>
+										</tr>
+										@endforeach
+									</table>
+								</td>
+								<td>
+									<table style="margin-left: -10px;margin-top: -10px !important;">
+										@foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
+											@if(isset($quotePlanExclusion->code))
+												@if(strtolower($quotePlanExclusion->code) ==
+												strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||
+												strtolower($quotePlanExclusion->code) ==
+												strtolower(CarPlanExclusionsCode::OMAN_COVER))
+												<tr style="background-color: transparent;">
+													<td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
+													<td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
+												</tr>
+												@endif
+											@endif
+										@endforeach
+										@foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
+											@if(isset($quotePlanInclusion->code) && (strtolower($quotePlanInclusion->code) ==
+												strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||
+												(strtolower($quotePlanInclusion->code) ==
+												strtolower(CarPlanExclusionsCode::OMAN_COVER))))
+												<tr style="background-color: transparent;">
+													<td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
+													<td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>
+												</tr>
+											@endif
+										@endforeach
+									</table>
+								</td>
+								<td>{{ $quotePlan->actualPremium ? number_format($quotePlan->actualPremium, 2) : '0.00' }}
+								</td>
+								<td>{{ $quotePlan->discountPremium ? number_format($quotePlan->discountPremium, 2) :
+									'0.00'}}</td>
+								<td>
 									@php
-									$totalSelectedAddonsPriceWithVat = 0;
+									$totalPremium = $quotePlan->discountPremium + $quotePlan->vat + $totalSelectedAddonsPriceWithVat;
 									@endphp
-									@foreach ($quotePlan->addons as $quotePlanAddon)
-									@foreach ($quotePlanAddon->carAddonOption as $quotePlanOptions)
-									<?php
-                                    if (isset($quotePlanOptions->isSelected)) {
-                                        if ($quotePlanOptions->isSelected == true && $quotePlanOptions->price != 0) {
-                                            $totalSelectedAddonsPriceWithVat += $quotePlanOptions->price + $quotePlanOptions->vat;
-                                        }
-                                    } else {
-                                        $totalSelectedAddonsPriceWithVat = 0;
-                                    }
-									?>
-									@if(isset($quotePlanAddon->code))
-									@if(strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::DRIVER_COVER)
-									||
-									strtolower($quotePlanAddon->code) == strtolower(CarPlanAddonsCode::PASSENGER_COVER))
-									<tr style="background-color: transparent;">
-										<td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
-										<td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
-									</tr>
+									{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
+								</td>
+								<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
+								<td>
+									<a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
+										data-toggle="modal" data-target="#quotePlanModal"
+										class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
+									@if($totalPremium > 0)
+										<button
+										class="btn btn-success btn-sm payment-link-copy"
+										data-planId="{{$quotePlan->id}}"
+										data-quoteUUId="{{$record->uuid}}"
+										data-providerCode="{{$quotePlan->providerCode}}"
+										data-websiteURL="{{$websiteURL}}"
+										>Copy</button>
 									@endif
-									@elseif(strtolower($quotePlanAddon->text) == CarPlanAddonsCode::DRIVER_COVER_TEXT ||
-									strtolower($quotePlanAddon->text) == CarPlanAddonsCode::PASSENGER_COVER_TEXT)
-									<tr style="background-color: transparent;">
-										<td style="border-top: none !important;">{{ $quotePlanAddon->text }}:</td>
-										<td style="border-top: none !important;">{{ $quotePlanOptions->value }}</td>
-									</tr>
-									@endif
-									@endforeach
-									@endforeach
-								</table>
-							</td>
-							<td>
-								<table style="margin-left: -10px;margin-top: -10px !important;">
-									@foreach ($quotePlan->benefits->roadSideAssistance as $quotePlanRsa)
-									<tr style="background-color: transparent;">
-										<td style="border-top: none !important;">{{ $quotePlanRsa->text }}:</td>
-										<td style="border-top: none !important;">{{ $quotePlanRsa->value }}</td>
-									</tr>
-									@endforeach
-								</table>
-							</td>
-							<td>
-								<table style="margin-left: -10px;margin-top: -10px !important;">
-									@foreach ($quotePlan->benefits->exclusion as $key => $quotePlanExclusion)
-									@if(isset($quotePlanExclusion->code))
-									@if(strtolower($quotePlanExclusion->code) ==
-									strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||
-									strtolower($quotePlanExclusion->code) ==
-									strtolower(CarPlanExclusionsCode::OMAN_COVER))
-									<tr style="background-color: transparent;">
-										<td style="border-top: none !important;">{{ $quotePlanExclusion->text }}:</td>
-										<td style="border-top: none !important;">{{ $quotePlanExclusion->value }}</td>
-									</tr>
-									@endif
-									@endif
-									@endforeach
-									@foreach ($quotePlan->benefits->inclusion as $key => $quotePlanInclusion)
-									@if(isset($quotePlanInclusion->code) && (strtolower($quotePlanInclusion->code) ==
-									strtolower(CarPlanExclusionsCode::TPL_OMAN_COVER) ||
-									(strtolower($quotePlanInclusion->code) ==
-									strtolower(CarPlanExclusionsCode::OMAN_COVER))))
-									<tr style="background-color: transparent;">
-										<td style="border-top: none !important;">{{ $quotePlanInclusion->text }}:</td>
-										<td style="border-top: none !important;">{{ $quotePlanInclusion->value }}</td>
-									</tr>
-									@endif
-									@endforeach
-								</table>
-							</td>
-							<td>{{ $quotePlan->actualPremium ? number_format($quotePlan->actualPremium, 2) : '0.00' }}
-							</td>
-							<td>{{ $quotePlan->discountPremium ? number_format($quotePlan->discountPremium, 2) :
-								'0.00'}}</td>
-							<td>
-								@php
-								$totalPremium = $quotePlan->discountPremium + $quotePlan->vat +
-								$totalSelectedAddonsPriceWithVat;
-								@endphp
-								{{ $totalPremium ? number_format($totalPremium, 2) : '0.00' }}
-							</td>
-							<td>{{ isset($quotePlan->excess) ? number_format($quotePlan->excess, 2) : '0.00' }}</td>
-							<td>
-                                <a href="#" planDetailUrl="{{ $record->uuid }}/plan_details/{{ $quotePlan->id }}"
-									data-toggle="modal" data-target="#quotePlanModal"
-									class="btn btn-warning btn-sm quotePlanModalPopup">View</a>
-                                @if($totalPremium > 0)
-                                    <button
-                                    class="btn btn-success btn-sm payment-link-copy"
-                                    data-planId="{{$quotePlan->id}}"
-                                    data-quoteUUId="{{$record->uuid}}"
-                                    data-providerCode="{{$quotePlan->providerCode}}"
-                                    data-websiteURL="{{$websiteURL}}"
-                                    >Copy</button>
-                                @endif
-								{{-- tabby--functionality hidden  --}}
-								{{-- @if($quotePlan->providerCode == InsuranceProvidersEnum::RSA)
-									<button
-									class="btn btn-success btn-sm enable-bnpl"
-									data-planId="{{$quotePlan->id}}"
-									data-quoteUUId="{{$record->uuid}}"
-									{{ (isset($quotePlan->isPayLaterActive) && $quotePlan->isPayLaterActive) ? 'disabled' : '' }}
-									>Enable BNPL</button>
-									@endif --}}
-                              
 
-                                @if($record->plan_id != $quotePlan->id &&  $quotePlan->actualPremium > 0)
-                                    @if(($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) )
-                                    <button class="btn btn-info btn-sm btn-change-insurer"
-                                            data-planId="{{$quotePlan->id}}"
-                                            data-uuid="{{$record->uuid}}"
-                                            data-providerCode="{{$quotePlan->providerCode}}"
-                                    >
-                                        Change Insurer
-                                    </button>
-                                    @endif
-                                @endif
-							</td>
-						</tr>
-						@endforeach
-					</tbody>
-				</table>
-                <span class="alert alert-success" id="payment-link-copy-msg"
-                style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
+									@if($record->plan_id != $quotePlan->id &&  $quotePlan->actualPremium > 0)
+										@if(($access['carAdvisorCanEditPaymentCancelledRefund'] || $access['carAdvisorCanEditInsurer'] || $access['carManagerCanEditInsurer']) )
+										<button class="btn btn-info btn-sm btn-change-insurer"
+												data-planId="{{$quotePlan->id}}"
+												data-uuid="{{$record->uuid}}"
+												data-providerCode="{{$quotePlan->providerCode}}"
+										>
+											Change Insurer
+										</button>
+										@endif
+									@endif
+
+								</td>
+							</tr>
+							@endforeach
+						</tbody>
+					</table>
+					<span class="alert alert-success" id="payment-link-copy-msg"
+					style="display: none;float:right;position: absolute;z-index: 1;top: -16px;right: 0;">Copied</span>
 				@else
-				<table id="datatable" class="table table-striped jambo_table" style="width:100%">
-					<thead>
-						<tr>
-							<th>Provider Name</th>
-							<th>Plan Name</th>
-							<th>Repair Type</th>
-							<th>Insurer Quote No.</th>
-							<th>TPL Limit</th>
-							<th>Car Trim</th>
-							<th>PAB cover</th>
-							<th>Roadside assistance</th>
-							<th>Oman cover TPL</th>
-							<th>Actual Price</th>
-							<th>Discounted Price</th>
-							<th>Price with VAT.</th>
-							<th>Excess</th>
-							<th>Action</th>
-						</tr>
-					</thead>
-				</table>
+					<table id="datatable" class="table table-striped jambo_table" style="width:100%">
+						<thead>
+							<tr>
+								<th>Provider Name</th>
+								<th>Plan Name</th>
+								<th>Repair Type</th>
+								<th>Insurer Quote No.</th>
+								<th>TPL Limit</th>
+								<th>Car Trim</th>
+								<th>PAB cover</th>
+								<th>Roadside assistance</th>
+								<th>Oman cover TPL</th>
+								<th>Actual Price</th>
+								<th>Discounted Price</th>
+								<th>Price with VAT.</th>
+								<th>Excess</th>
+								<th>Action</th>
+							</tr>
+						</thead>
+					</table>
 				@endif
 			</div>
 		</div>
