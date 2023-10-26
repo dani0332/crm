@@ -40,7 +40,7 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
-export const generateQueryString = filters =>
+export const useGenerateQueryString = filters =>
 {
   const query = {};
   Object.keys(filters).forEach(key =>

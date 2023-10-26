@@ -54,7 +54,7 @@ const onSubmit = isValid => {
   filters.page = 1;
   router.visit(route('lead-list-report'), {
     method: 'get',
-    data: generateQueryString(filters),
+    data: useGenerateQueryString(filters),
     preserveState: true,
     preserveScroll: true,
     onBefore: () => (loaders.table = true),
