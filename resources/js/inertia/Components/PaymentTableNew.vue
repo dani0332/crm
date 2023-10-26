@@ -573,11 +573,11 @@ const addPaymentModal = () => {
   isPaymentCalculationError.value = false;
   showDiscountOptions.value = true;
 
-  if (totalPrice.value > 0) {
+  if (totalPrice.value > 0 && props.quoteRequest.plan) {
     totalAmount.value = totalPrice.value;
   } else {
     notification.error({
-      title: 'This quote has no premium,select another quote',
+      title: 'This quote must have premium/price and plan to proceed,select another quote',
       position: 'top',
     });
     return;
@@ -1936,8 +1936,8 @@ const providerId = computed(() => {
           <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="text-center">
           <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
           <div class="mt-2">
-            <x-button type="button" color="gray" class="mr-2" @click="zoomIn">Zoom In</x-button>
-            <x-button type="button" color="gray" class="btn btn-secondary" @click="zoomOut">Zoom Out</x-button>
+            <x-button type="button" color="gray" class="mr-2 text-sm" @click="zoomIn">Zoom In</x-button>
+            <x-button type="button" color="gray" class="text-sm" @click="zoomOut">Zoom Out</x-button>
           </div>
         </div>
             <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
