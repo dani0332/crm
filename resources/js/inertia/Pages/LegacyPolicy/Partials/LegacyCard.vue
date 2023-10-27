@@ -8,7 +8,11 @@ const props = defineProps({
 });
 
 const skipFields = ['_id','email', 'phone', 'idcode', 'mobile_phone', 'profile_data','broker', 
-'customer','policy_no','policy_oid','insurer','start_date','end_date'];
+'name','policy_no','policy_oid','insurer','start_date','end_date'];
+
+if(props.title == 'CUSTOMER') {
+  skipFields.push('customer');
+}
 
 // Function to format the label
 const formatLabel = (inputString) => {
