@@ -278,6 +278,7 @@ onMounted(() => {
 
 <template>
   <div>
+    <UserStatus />
     <Head title="Car Lead Allocation" />
     <div class="flex justify-between items-center">
       <div class="flex gap-1"  v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.Engineering])">
@@ -341,6 +342,7 @@ onMounted(() => {
     </div>
 
     <DataTable
+        id="car-lead-allocation"
       table-class-name="compact"
       :loading="false"
       :headers="filteredTableHeader"
