@@ -76,6 +76,24 @@ const calculateTotalAmount = () => {
   }
   calculatePaymentBreakup();  
 }
+
+const { copy, copied } = useClipboard();
+const onCopyPaymentLink = (paymentLink,paymentStatus) => {
+  if (paymentStatus==props.paymentStatusEnum.PAID){
+    notification.error({
+        title: 'Payment already \'Paid\'; button deactivated for this transaction',
+        position: 'top',
+      });
+  } else {
+    copy(paymentLink);
+    if (copied)
+      notification.success({
+        title: 'Link copied to clipboard',
+        position: 'top',
+      });
+  }
+};
+
    
   const openModal = () =>{
     isGalleryModelOpen.value = true;
@@ -668,7 +686,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
 
   var isAnyPaid = false;
   for(let i=1; i<=payment.total_payments; i++){
-    if(payment.payment_splits[i-1].payment_status_id===10) { // 10 = Paid
+    if(payment.payment_splits[i-1].payment_status_id===props.paymentStatusEnum.PAID) { 
       readOnlyPayments.value[i] = true;
       totalPaidAmount.value++;
       paidAmountSum.value = parseFloat(paidAmountSum.value) + parseFloat(payment.payment_splits[i-1].payment_amount);
@@ -1155,7 +1173,12 @@ const providerId = computed(() => {
               <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
               <td>{{ splitPayment.payment_status.text }}</td>
               <td></td>
-              <td><x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no)" outlined >View</x-button></td>
+              <td>
+                <x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no)" outlined >View</x-button>
+                <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="onCopyPaymentLink(splitPayment.payment_link,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>
+
+              
+              </td>
             </tr>
           </template>
           </tbody>
@@ -1878,7 +1901,7 @@ const providerId = computed(() => {
             </div>
           </template>          
           <template v-else >
-            <div v-if="(splitPaymentRecord.payment_status_id!=10 && hasRole(rolesEnum.CarAdvisor))" class="w-full flex justify-end">
+            <div v-if="(splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && hasRole(rolesEnum.CarAdvisor))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
                 <x-button size="sm" @click="isDeclineClicked=!isDeclineClicked;isApproveClicked=false">
                   Cancel

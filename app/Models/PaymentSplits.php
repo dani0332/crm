@@ -12,7 +12,7 @@ class PaymentSplits extends Model
     protected $table = 'payment_splits';
     protected $fillable = ['code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount'
     , 'due_date', 'payment_status_id','collection_amount','bank_reference_number','decline_reason_id',
-    'decline_custom_reason','sage_reciept_id','digital_wallet'
+    'decline_custom_reason','sage_reciept_id','digital_wallet','payment_link','payment_link_created_at',
     ];
     
     public function payment()

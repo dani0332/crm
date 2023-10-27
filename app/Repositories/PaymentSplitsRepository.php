@@ -2,14 +2,21 @@
 
 namespace App\Repositories;
 
+use App\Enums\PaymentMethodsEnum;
+use App\Models\Payment;
 use App\Models\PaymentSplits;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Models\QuoteDocument;
+use App\Models\PersonalQuote;
 
 use App\Controllers\SageApi;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 
 class PaymentSplitsRepository
 {
+    use GenericQueriesAllLobs;
     public static function getByCode($code)
     {
         return PaymentSplits::with(['paymentStatus', 'paymentMethod'])
@@ -18,7 +25,7 @@ class PaymentSplitsRepository
     }
 
     public function addPaymentSplits($request,$quoteID)
-    {
+    {        
         for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i]!=NULL) {
                 $splitPaymentInformation = [
@@ -32,22 +39,84 @@ class PaymentSplitsRepository
                 ];
                 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-                
-                //add document references
-                if(isset($request->split_payment_details['document_detail'][$i]) 
-                    && $paymentSplitRecord 
-                    && count($request->split_payment_details['document_detail'][$i]) 
-                    ){
-                    foreach($request->split_payment_details['document_detail'][$i] as $document){
-                        $quoteDocumentRec = QuoteDocument::find($document['id']);
-                        $quoteDocumentRec = QuoteDocument::find($document['id']);
-                        if ($quoteDocumentRec){
-                            $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
-                            $quoteDocumentRec->save();
+                if($paymentSplitRecord){
+                    if( $paymentSplitRecord->payment_method=='CC' ){
+                        $this->generateSplitPaymentLink($quoteID,$paymentSplitRecord->id,$request->modelType,$request->quote_id);
+                    }
+                    //add document references
+                    if(isset($request->split_payment_details['document_detail'][$i]) 
+                        && $paymentSplitRecord 
+                        && count($request->split_payment_details['document_detail'][$i]) 
+                        ){
+                        foreach($request->split_payment_details['document_detail'][$i] as $document){
+                            $quoteDocumentRec = QuoteDocument::find($document['id']);
+                            $quoteDocumentRec = QuoteDocument::find($document['id']);
+                            if ($quoteDocumentRec){
+                                $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
+                                $quoteDocumentRec->save();
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+
+
+    public function generateSplitPaymentLink($code,$splitPaymentId,$modelType,$quoteId)
+    {
+        $payment = Payment::where('code', '=', $code)->first();
+        $splitPayment = PaymentSplits::where(['code'=>$code, 'id'=>$splitPaymentId])->first();        
+        //dd($payment);       
+        
+        
+        if (! $payment) {
+            return false;
+        }
+        if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
+            return;
+        } else {
+            $quoteModel = $this->getQuoteObject($modelType, $quoteId);
+            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($modelType));
+
+            $description = (get_class($quoteModel) == PersonalQuote::class) ? ($payment->personalPlan->text ?? '') : ($quoteModel->plan->text ?? '');
+
+            $paymentLink = config('constants.PAYMENT_REDIRECT_LINK');
+
+            $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
+
+            $paymentParams = [
+                'code' => $payment->code,
+                'quoteTypeId' => $quoteTypeId,
+            ];
+            $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
+
+            $invoiceRequestData = [
+                'firstName' => $quoteModel->first_name,
+                'lastName' => $quoteModel->last_name,
+                'email' => $quoteModel->email,
+                'emailSubject' => 'Payment Request',
+                'items' => [
+                    [
+                        'description' => $description,
+                        'totalPrice' => [
+                            'currencyCode' => 'AED',
+                            'value' => ceil($splitPayment->payment_amount * 100),
+                        ],
+                        'quantity' => 1,
+                    ],
+                ],
+                'total' => [
+                    'currencyCode' => 'AED',
+                    'value' => ceil($splitPayment->payment_amount * 100),
+                ],
+                'merchantOrderReference' => strtoupper($payment->code),
+            ];
+
+            $splitPayment->payment_link = $paymentLinkURL;
+            $splitPayment->payment_link_created_at=now();
+            $splitPayment->save();
+            return;
         }
     }
 
