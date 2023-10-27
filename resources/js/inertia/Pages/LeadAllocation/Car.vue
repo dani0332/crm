@@ -88,7 +88,6 @@ const tableHeader = ref([
   { text: 'Auto Assigned', value: 'autoAllocationCount' },
   { text: 'Max Cap Limit', value: 'maxCapacity' },
   { text: 'Status', value: 'isAvailable' },
-  { text: 'Last Login', value: 'lastLogin' },
   { text: 'Reset Cap', value: 'reset_cap' },
 ]);
 
