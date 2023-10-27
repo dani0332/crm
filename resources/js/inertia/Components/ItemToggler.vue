@@ -8,6 +8,10 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  size: {
+    type: String,
+    default: 'md',
+  },
 });
 
 const emit = defineEmits(['toggle']);
@@ -33,5 +37,10 @@ watch(
 </script>
 
 <template>
-  <x-toggle v-model="state" color="emerald" @update:model-value="onUpdate" />
+  <x-toggle
+    v-model="state"
+    color="emerald"
+    :size="size"
+    @update:model-value="onUpdate"
+  />
 </template>

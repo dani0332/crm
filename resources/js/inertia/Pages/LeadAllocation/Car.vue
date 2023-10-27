@@ -42,7 +42,6 @@ const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
 
-
 const confirmModal = reactive({
   show: false,
   title: '',
@@ -86,7 +85,7 @@ const statusText = statusId => {
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },
-  { text: 'Tiers', value: 'tiers', width: '250' },
+  { text: 'Tiers', value: 'tiers', width: '240' },
   { text: 'Quads', value: 'quads', sortable: true },
   { text: 'Tot. Assigned', value: 'allocationCount', sortable: true },
   { text: 'M. Assigned', value: 'manualAllocationCount', sortable: true },
@@ -99,25 +98,18 @@ const tableHeader = ref([
 
 const leadData = ref([{ id: 0, userId: 0, cap: 0, capEdit: false, status: 0 }]);
 
-const filteredTableHeader = computed(() => {
-  if (!hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])) {
-    return tableHeader.filter(
-      column => column.value !== 'reset_cap',
-    );
-  }
-  return tableHeader;
-});
-
 const currentRow = id => {
   const row = leadData?.value.find(item => item.id === id);
   return row?.capEdit;
 };
 
 const editCap = id => {
-    if(hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])){
-        const row = leadData?.value.find(item => item.id === id);
-        row.capEdit = true;
-    }
+  if (
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+  ) {
+    const row = leadData?.value.find(item => item.id === id);
+    row.capEdit = true;
+  }
 };
 
 const updateCap = (value, id) => {
@@ -265,6 +257,14 @@ watch(
 );
 
 onMounted(() => {
+  tableHeader.value = tableHeader.value.filter(column => {
+    if (
+      !hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+    ) {
+      return column.value !== 'reset_cap';
+    }
+    return column;
+  });
   leadData.value = props.data.map(item => {
     return {
       id: item.id,
@@ -282,7 +282,10 @@ onMounted(() => {
     <UserStatus />
     <Head title="Car Lead Allocation" />
     <div class="flex justify-between items-center">
-      <div class="flex gap-1"  v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.Engineering])">
+      <div
+        class="flex gap-1"
+        v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+      >
         <h2 class="text-lg font-semibold">Car Lead Allocation Management</h2>
         <x-toggle
           v-model="canManage"
@@ -291,7 +294,16 @@ onMounted(() => {
           @update:model-value="toggleOption($event, 1)"
         />
       </div>
-      <div class="flex gap-1" v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])">
+      <div
+        class="flex gap-1"
+        v-if="
+          hasAnyRole([
+            rolesEnum.Admin,
+            rolesEnum.LeadPool,
+            rolesEnum.Engineering,
+          ])
+        "
+      >
         <h2 class="text-lg font-semibold">Pickup Sequence : FIFO</h2>
         <x-toggle
           v-model="pickupSequence"
@@ -300,7 +312,16 @@ onMounted(() => {
           @update:model-value="toggleOption($event, 2)"
         />
       </div>
-      <div class="flex gap-1" v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])">
+      <div
+        class="flex gap-1"
+        v-if="
+          hasAnyRole([
+            rolesEnum.Admin,
+            rolesEnum.LeadPool,
+            rolesEnum.Engineering,
+          ])
+        "
+      >
         <h2 class="text-lg font-semibold">Auto Refresh :</h2>
         <x-toggle v-model="autoRefresh" color="emerald" size="lg" />
       </div>
@@ -343,19 +364,27 @@ onMounted(() => {
     </div>
 
     <DataTable
-        id="car-lead-allocation"
+      id="car-lead-allocation"
       table-class-name="compact"
-      :loading="false"
-      :headers="filteredTableHeader"
+      :loading="loaders.table"
+      :headers="tableHeader"
       :items="props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
-      :loader="loaders.table"
       border-cell
       hide-rows-per-page
       hide-footer
-      alternating
     >
+      <template #item-tiers="{ tiers }">
+        <div class="relative">
+          <x-tooltip position="right">
+            <p class="truncate w-60">
+              {{ tiers }}
+            </p>
+            <template #tooltip> {{ tiers }} </template>
+          </x-tooltip>
+        </div>
+      </template>
       <template #item-maxCapacity="{ maxCapacity, id }">
         <div v-if="!currentRow(id)" @click="editCap(id)">
           {{ maxCapacity }}
@@ -377,7 +406,7 @@ onMounted(() => {
       </template>
 
       <template #item-isAvailable="{ isAvailable, id, userId }">
-        <div class="text-center space-y-2">
+        <div class="flex flex-col gap-1.5 items-center">
           <x-tag
             size="xs"
             :color="
