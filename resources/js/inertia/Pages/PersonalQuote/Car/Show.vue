@@ -57,7 +57,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
-  advisor: Array,
+  advisor: Object,
   carMakeText: String,
   carModelText: String,
   embeddedProducts: Array,
@@ -70,7 +70,7 @@ defineProps({
   carLostChangeStatus: Boolean,
   isTierRAssigned: Boolean,
   tiersExceptTierR: Array,
-  leadSourceEnum: Array,
+  leadSourceEnum: Object,
   carPlanTypeEnum: Object,
 });
 const page = usePage();
@@ -1485,7 +1485,7 @@ const loadEmailEvents = email => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRIM</dt>
-            <dd>{{ record.trim }}</dd>
+            <dd>{{ record.car_model_detail_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CAR MODEL YEAR</dt>

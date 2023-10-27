@@ -90,10 +90,10 @@ return [
 
     'apps' => [
         [
-            'id' => env('MIX_PUSHER_APP_ID'),
+            'id' => env('VITE_PUSHER_APP_ID'),
             'name' => env('APP_NAME').'-'.env('APP_NAME'),
-            'key' => env('MIX_PUSHER_APP_KEY'),
-            'secret' => env('MIX_PUSHER_APP_SECRET'),
+            'key' => env('VITE_PUSHER_APP_KEY'),
+            'secret' => env('VITE_PUSHER_APP_SECRET'),
             'enable_client_messages' => false,
             'enable_statistics' => true,
         ],
