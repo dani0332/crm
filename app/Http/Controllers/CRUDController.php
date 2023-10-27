@@ -1762,6 +1762,8 @@ class CRUDController extends Controller
 
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
+        $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+        
         $emailData =  (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
         info('sendEmailOneClickBuy OCB email data built for quote uuid: ' . $request->quote_uuid);
