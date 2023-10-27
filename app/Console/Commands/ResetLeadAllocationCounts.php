@@ -2,10 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\TeamNameEnum;
 use App\Models\LeadAllocation;
-use App\Models\Team;
-use App\Models\UserTeams;
 use Illuminate\Console\Command;
 
 class ResetLeadAllocationCounts extends Command
