@@ -2486,6 +2486,7 @@ const loadEmailEvents = email => {
             ])
           "
           :totalSelectedAddonsPriceWithVat="totalPriceVAT"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
       <x-modal v-model="modals.sendConfirm" show-close backdrop>

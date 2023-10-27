@@ -10,6 +10,8 @@ const props = defineProps({
   genericRequestEnum: Object,
 });
 
+const emit = defineEmits(['onLoadAvailablePlansData']);
+
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
 const halfLiveInsurer = [
@@ -105,10 +107,7 @@ const onTogglePlans = () => {
         title: 'Plan has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-        preserveState: true,
-      });
+      emit("onLoadAvailablePlansData")
     })
     .catch(error => {
       notification.error({
@@ -156,6 +155,7 @@ const onUpdatePlan = () => {
           title: 'Plan updated successfully',
           position: 'top',
         });
+        emit("onLoadAvailablePlansData")
       },
     });
 };
