@@ -61,10 +61,12 @@ const tableHeader = [
 ];
 
 const filteredTableHeader = computed(() => {
-  if (!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])) {
+  if (!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])) {
     return tableHeader;
   } else {
-    return tableHeader.filter(column => column.value !== 'source' && column.value !== 'assignment_type');
+    return tableHeader.filter(
+      column => column.value !== 'source' && column.value !== 'assignment_type',
+    );
   }
 });
 
@@ -94,12 +96,12 @@ const subTeamOptions = [
 ];
 
 const assignmentTypeOptions = [
-    { value: '', label: 'Please select is assignment type' },
-    { value: 1, label: 'System Assigned' },
-    { value: 2, label: 'System ReAssigned' },
-    { value: 3, label: 'Manual Assigned' },
-    { value: 4, label: 'Manual ReAssigned' },
-]
+  { value: '', label: 'Please select is assignment type' },
+  { value: 1, label: 'System Assigned' },
+  { value: 2, label: 'System ReAssigned' },
+  { value: 3, label: 'Manual Assigned' },
+  { value: 4, label: 'Manual ReAssigned' },
+];
 
 const leadStatusOptions = computed(() => {
   return page.props.leadStatuses.map(status => ({
@@ -224,13 +226,14 @@ onMounted(() => {
     <Head title="Health List" />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Health List</h2>
-      <LeadAssignedWidget v-if="hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
-            :todayAutoCount="todayAutoCount"
-            :todayManualCount="todayManualCount"
-            :yesterdayAutoCount="yesterdayAutoCount"
-            :yesterdayManualCount="yesterdayManualCount"
-            :userMaxCap="userMaxCap"
-            />
+      <LeadAssignedWidget
+        v-if="hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+        :todayAutoCount="todayAutoCount"
+        :todayManualCount="todayManualCount"
+        :yesterdayAutoCount="yesterdayAutoCount"
+        :yesterdayManualCount="yesterdayManualCount"
+        :userMaxCap="userMaxCap"
+      />
       <div class="space-x-3">
         <Link :href="route('health.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
@@ -318,7 +321,8 @@ onMounted(() => {
           placeholder="Search by Lead Status"
           :options="leadStatusOptions"
         />
-        <ComboBox  v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
+        <ComboBox
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
           v-model="filters.advisors"
           label="Advisor"
           placeholder="Search by Advisor"
@@ -346,13 +350,14 @@ onMounted(() => {
           ]"
           class="w-full"
         />
-        <x-select v-if="!hasAnyRole([rolesEnum.RMAdvisor,rolesEnum.EBPAdvisor])"
-            v-model="filters.assignment_type"
-            label="Assignment Type"
-            name="assignment_type"
-            :options="assignmentTypeOptions"
-            placeholder="Please select assignment type"
-            class="w-full"
+        <x-select
+          v-if="!hasAnyRole([rolesEnum.RMAdvisor, rolesEnum.EBPAdvisor])"
+          v-model="filters.assignment_type"
+          label="Assignment Type"
+          name="assignment_type"
+          :options="assignmentTypeOptions"
+          placeholder="Please select assignment type"
+          class="w-full"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">

@@ -49,7 +49,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(User::class)->select(['id', 'email', 'name']);
     }
-
+    public function previousAdvisor()
+    {
+        return $this->belongsTo(User::class, 'previous_advisor_id', 'id');
+    }
     public function nationality()
     {
         return $this->belongsTo(Nationality::class);
@@ -79,12 +82,10 @@ class LifeQuote extends Model implements AuditableContract
     {
         return $this->belongsTo(LifeNumberOfYears::class, 'number_of_years_id', 'id');
     }
-
     public function maritalStatus()
     {
         return $this->belongsTo(MartialStatus::class, 'marital_status_id', 'id');
     }
-
     public function paymentStatus()
     {
         return $this->belongsTo(PaymentStatus::class, 'payment_status_id', 'id');
