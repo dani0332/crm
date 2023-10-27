@@ -86,7 +86,7 @@ class SendOCBEmailJob implements ShouldQueue
 
             $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
-            $emailData =  (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+            $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
 
             $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
