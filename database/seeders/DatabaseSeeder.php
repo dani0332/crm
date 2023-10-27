@@ -38,7 +38,7 @@ class DatabaseSeeder extends Seeder
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
             UpdateRenewalTemplateStorageSeeder::class,
-AddLegacyPaymentsPermssion::class,         
-]);
+            AddLegacyPaymentsPermssion::class,
+        ]);
     }
 }
