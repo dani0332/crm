@@ -37,6 +37,12 @@ class GoogleSocialiteController extends Controller
             return redirect()->route('login')->with('status', 'You are not authorized to login. Please contact admin.');
         }
 
+        if ( ! $requestingUser->is_active) {
+            auth()->logout();
+
+            return redirect()->route('login')->with('status', 'Email does not exist or is inactive.');
+        }
+
         $remember = in_array($requestingUser->email, getAutomationUser()) ? true : false;
         auth()->login($requestingUser, $remember);
         $lastUpdatedDate = Carbon::parse($requestingUser->google_photo_last_updated);
