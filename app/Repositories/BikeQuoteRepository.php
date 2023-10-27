@@ -104,6 +104,7 @@ class BikeQuoteRepository extends BaseRepository
                 'advisor',
                 'nationality',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'currentlyInsuredWith',
                 'payments' => function ($q) {
                     $q->with([
@@ -137,6 +138,10 @@ class BikeQuoteRepository extends BaseRepository
 
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);
 
+        $data = ! empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+
         return $quote;
     }
 
@@ -159,5 +164,4 @@ class BikeQuoteRepository extends BaseRepository
 
         return ($forExport) ? $query->get() : $query->simplePaginate();
     }
-
 }

@@ -14,6 +14,7 @@ defineProps({
   nationalities: Array,
   UBORelations: Array,
   UBOsDetails: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -320,32 +321,71 @@ const linkEntity = () => {
 </script>
 
 <template>
-    <div>
-        <Head title="Group Medical Lead Detail"/>
-        <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
-            <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
-            <div class="flex gap-2">
-                <x-button
-                    v-if="isDuplicateAllowed"
-                    size="sm"
-                    color="#ff5e00"
-                    @click.prevent="openDuplicate"
-                >
-                    Duplicate Lead
-                </x-button>
-                <Link :href="route('amt.index')" preserve-scroll>
-                    <x-button size="sm" color="primary" tag="div">
-                        Group Medical List
-                    </x-button>
-                </Link>
-                <Link
-                    v-if="!can(permissionsEnum.canEditQuote)"
-                    :href="route('amt.edit', quote.uuid)"
-                >
-                    <x-button size="sm" tag="div">Edit</x-button>
-                </Link>
-            </div>
+  <div>
+    <Head title="Group Medical Lead Detail" />
+    <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
+      <h2 class="text-xl font-semibold">Group Medical Lead Detail</h2>
+      <div class="flex gap-2">
+        <x-button
+          v-if="isDuplicateAllowed"
+          size="sm"
+          color="#ff5e00"
+          @click.prevent="openDuplicate"
+        >
+          Duplicate Lead
+        </x-button>
+        <Link :href="route('amt.index')" preserve-scroll>
+          <x-button size="sm" color="primary" tag="div">
+            Group Medical List
+          </x-button>
+        </Link>
+        <Link
+          v-if="!can(permissionsEnum.canEditQuote)"
+          :href="route('amt.edit', quote.uuid)"
+        >
+          <x-button size="sm" tag="div">Edit</x-button>
+        </Link>
+      </div>
+    </div>
+
+    <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
+      <template #header> Duplicate Lead </template>
+      <x-form @submit="onCreateDuplicate" :auto-focus="false">
+        <div class="grid gap-4">
+          <x-select
+            v-model="leadDuplicateForm.lob_team"
+            label="LOBs"
+            :options="
+              allowedDuplicateLOB.map(lob => ({
+                value: lob,
+                label: lob,
+              }))
+            "
+            :rules="[isRequired]"
+            placeholder="Select LOB For Duplication"
+            class="w-full"
+            multiple
+          />
+          <x-select
+            v-model="leadDuplicateForm.lob_team_sub_selection"
+            label="Reason"
+            :rules="[isRequired]"
+            class="w-full"
+            :options="[
+              { value: 'new_enquiry', label: 'New enquiry' },
+              { value: 'record_only', label: 'Record purposes only' },
+            ]"
+          />
+          <x-button
+            color="orange"
+            type="submit"
+            :loading="leadDuplicateForm.processing"
+          >
+            Create Duplicate
+          </x-button>
         </div>
+      </x-form>
+    </x-modal>
 
         <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
             <template #header> Duplicate Lead </template>
@@ -518,32 +558,7 @@ const linkEntity = () => {
                         <dt class="font-medium">PRICE</dt>
                         <dd>{{ quote.premium }}</dd>
                     </div>
-
                 </dl>
-        </div>
-
-        <div class="mt-6">
-          <h3 class="font-semibold text-primary-800">
-            Last Year's Policy Details
-          </h3>
-          <x-divider class="mb-4 mt-1" />
-        </div>
-
-        <div class="mt-6 text-sm">
-          <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
-              <dd>{{ quote.previous_quote_policy_number }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
-              <dd>{{ quote.previous_quote_policy_premium }}</dd>
-            </div>
-            <div class="grid sm:grid-cols-2">
-              <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-              <dd>{{ quote.previous_policy_expiry_date }}</dd>
-            </div>
-          </dl>
         </div>
       </div>
 
@@ -757,6 +772,15 @@ const linkEntity = () => {
           :contacts="customerAdditionalContacts"
           :quoteEmail="quote.email"
           :quoteMobile="quote.mobile_no"
+      />
+
+      <LastYearPolicyDetail
+        v-if="quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+          quote.source == $page.props.leadSource.INSLY
+          "
+        modelType="Business"
+        :quote="quote"
+        :canAddBatchNumber="canAddBatchNumber"
       />
 
       <div class="p-4 rounded shadow mb-6 bg-primary-50/25">

@@ -77,12 +77,13 @@ class YachtQuoteRepository extends BaseRepository
      */
     public function fetchGetBy($column, $value)
     {
-        return $this->byQuoteTypeId(QuoteTypes::YACHT->id())
+        $quote = $this->byQuoteTypeId(QuoteTypes::YACHT->id())
             ->where($column, $value)
             ->with([
                 'yachtQuote',
                 'advisor',
                 'quoteDetail.lostReason',
+                'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {
                     $q->with(['paymentStatus', 'personalPlan', 'paymentMethod']);
                 },
@@ -106,6 +107,12 @@ class YachtQuoteRepository extends BaseRepository
                 as customer_type')
             ])
             ->firstOrFail();
+
+        $data = !empty($quote) ? $quote->toArray() : [];
+        $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
+        $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+
+        return $quote;
     }
 
     /**

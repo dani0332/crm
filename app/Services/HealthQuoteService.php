@@ -89,7 +89,9 @@ class HealthQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'e.TEXT AS emirate_of_your_visa_id_text',
             'hqr.advisor_id',
+            'hqr.previous_advisor_id',
             'u.name as advisor_id_text',
+            'uadv.name AS previous_advisor_id_text',
             'hqrd.next_followup_date',
             'hqrd.transapp_code',
             'hqrd.notes',
@@ -157,6 +159,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('health_lead_type as lt', 'lt.id', '=', 'hqr.lead_type_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('users as wcu', 'wcu.id', '=', 'hqr.wcu_id')
             ->leftJoin('salary_band as sb', 'sb.id', '=', 'hqr.salary_band_id')
             ->leftJoin('health_plan as hp', 'hp.id', '=', 'hqr.plan_id')

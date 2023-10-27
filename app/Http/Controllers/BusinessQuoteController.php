@@ -249,6 +249,7 @@ class BusinessQuoteController extends Controller
             'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
         ]);
     }
 

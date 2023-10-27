@@ -64,6 +64,7 @@ class BusinessQuoteRepository extends BaseRepository
         $quote = $this->where($queryWhere)
             ->with([
                 'advisor',
+                'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
                 'customer',
                 'quoteRequestEntityMapping' => function($entityMapping) {

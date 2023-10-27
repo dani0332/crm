@@ -123,6 +123,8 @@ class PetQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'duplicateAllowedLobs' => $duplicateAllowedLobs,
+            'modelType' => QuoteTypes::PET,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::PetManager),
             'embeddedProducts' => $embeddedProducts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'membersDetails' => $membersDetail,

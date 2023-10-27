@@ -123,7 +123,9 @@ class JetskiQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
             'embeddedProducts' => $embeddedProducts,
-            'customerTypeEnum' => CustomerTypeEnum::asArray()
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'modelType' => QuoteTypes::JETSKI,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::JetskiManager),
         ]);
     }
 

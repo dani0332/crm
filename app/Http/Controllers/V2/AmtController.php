@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -244,6 +245,9 @@ class AmtController extends Controller
         ]);
 
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
+        $data = $record->toArray();
+        $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
+        $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -264,6 +268,8 @@ class AmtController extends Controller
             'typeCode' => quoteTypeCode::GroupMedical,
             'lostReasons' => $lostReasons,
             'quoteStatuses' => $quoteStatuses,
+            'modelType' => QuoteTypes::BUSINESS,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),

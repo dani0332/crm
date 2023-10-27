@@ -69,7 +69,14 @@ class SendOCBEmailJob implements ShouldQueue
             $carQuote = CarQuote::where('uuid', $this->quoteUuid)->firstOrFail();
             $listQuotePlans = $this->carQuoteService->getPlans($this->quoteUuid, true, true);
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
-            $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
+
+            if ($quotePlansCount == 1) {
+                $emailTemplateId = 398;
+            } elseif ($quotePlansCount > 1) {
+                $emailTemplateId = 401;
+            } else {
+                $emailTemplateId = 395;
+            }
 
             if (isset($carQuote->advisor_id)) {
                 $advisor = $this->userService->getUserById($carQuote->advisor_id);

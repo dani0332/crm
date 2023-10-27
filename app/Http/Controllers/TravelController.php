@@ -200,6 +200,7 @@ class TravelController extends Controller
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
             'embeddedProducts' => $embeddedProducts,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::TravelManager),
             'message' => session('message'),
             'quoteType' => QuoteTypes::TRAVEL,
             'permissions' => [

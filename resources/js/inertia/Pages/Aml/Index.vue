@@ -1,6 +1,6 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs/esm/index.js';
 
 defineProps({
   aml: Object,

@@ -7,8 +7,7 @@ const props = defineProps({
     default: {},
   },
   canAddBatchNumber: Boolean,
-  modelType: String
-
+  modelType: String,
 });
 
 const dateFormat = date => {
@@ -16,11 +15,13 @@ const dateFormat = date => {
 };
 
 const allowEdit = computed(() => {
-  
- if( (props.quote.renewal_batch === '' || props.quote.renewal_batch == null)
-  && props.canAddBatchNumber == true) return true;
+  if (
+    (props.quote.renewal_batch === '' || props.quote.renewal_batch == null) &&
+    props.canAddBatchNumber == true
+  )
+    return true;
 
- return false;
+  return false;
 });
 const { isRequired } = useRules();
 
@@ -50,7 +51,6 @@ function onSubmit(isValid) {
 
 const hasRole = role => useHasRole(role);
 const rolesEnum = page.props.rolesEnum;
-
 </script>
 
 <template>
@@ -64,7 +64,6 @@ const rolesEnum = page.props.rolesEnum;
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="text-sm">
           <div class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-
             <div class="grid sm:grid-cols-2">
               <div class="font-medium">Renewal Batch#</div>
               <div>{{ props?.quote?.renewal_batch }}</div>
@@ -112,7 +111,10 @@ const rolesEnum = page.props.rolesEnum;
           </div>
         </div>
       </div>
-      <div class="flex justify-between gap-3 items-center" v-if="canAddBatchNumber">
+      <div
+        class="flex justify-between gap-3 items-center"
+        v-if="canAddBatchNumber"
+      >
         <x-field label="Renewal batch" required>
           <x-input
             v-model="policyForm.renewal_batch"
