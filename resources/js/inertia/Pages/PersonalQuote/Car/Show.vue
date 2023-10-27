@@ -73,6 +73,7 @@ defineProps({
   leadSourceEnum: Array,
   carPlanTypeEnum: Object,
   policyIssuanceStatus: Array,
+  bPDetails: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -403,7 +404,11 @@ const leadStatusOptions = computed(() => {
     : Object.values(page.props.leadStatuses);
   const filteredLeadStatuses = statuses?.map(status => {
     if (
-      (!isLeadPool && [page.props.quoteStatusEnum.Fake, page.props.quoteStatusEnum.Duplicate].includes(status.id)) ||
+      (!isLeadPool &&
+        [
+          page.props.quoteStatusEnum.Fake,
+          page.props.quoteStatusEnum.Duplicate,
+        ].includes(status.id)) ||
       (!isPA && status.id === page.props.quoteStatusEnum.TransactionApproved) ||
       ((renewal_batch === '' ||
         previous_quote_policy_number === '' ||
@@ -413,7 +418,7 @@ const leadStatusOptions = computed(() => {
       return {
         value: status.id,
         label: status.text,
-        disabled: true
+        disabled: true,
       };
     }
     // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
@@ -428,13 +433,15 @@ const leadStatusOptions = computed(() => {
 });
 
 const leadStatusDisabled = computed(() => {
-
-return (
-  ((page.props.record.quote_status_id == page.props.quoteStatusEnum.TransactionApproved ||
-  ( page.props.record.quote_status_id == page.props.quoteStatusEnum.Duplicate || page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake)
-  &&
-      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) || (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction))
-);
+  return (
+    page.props.record.quote_status_id ==
+      page.props.quoteStatusEnum.TransactionApproved ||
+    ((page.props.record.quote_status_id ==
+      page.props.quoteStatusEnum.Duplicate ||
+      page.props.record.quote_status_id == page.props.quoteStatusEnum.Fake) &&
+      !hasAnyRole([rolesEnum.LeadPool, rolesEnum.Admin])) ||
+    (!page.props.carLostChangeStatus && !page.props.allowQuoteLogAction)
+  );
 });
 
 const assumptionState = reactive({
@@ -2757,6 +2764,15 @@ const loadEmailEvents = email => {
         </div>
       </x-modal>
     </div>
+
+    <BookPolicy
+      v-if="
+        !hasAnyRole([rolesEnum.PRODUCTION, rolesEnum.NRA, rolesEnum.FINANCE])
+      "
+      :quote="record"
+      :quoteType="quoteType"
+      :bPDetails="bPDetails"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
