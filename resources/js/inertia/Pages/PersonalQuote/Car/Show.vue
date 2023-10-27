@@ -57,7 +57,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
-  advisor: Array,
+  advisor: Object,
   carMakeText: String,
   carModelText: String,
   embeddedProducts: Array,
@@ -70,7 +70,7 @@ defineProps({
   carLostChangeStatus: Boolean,
   isTierRAssigned: Boolean,
   tiersExceptTierR: Array,
-  leadSourceEnum: Array,
+  leadSourceEnum: Object,
   carPlanTypeEnum: Object,
   policyIssuanceStatus: Array,
   bPDetails: Array,
@@ -2208,7 +2208,7 @@ const loadEmailEvents = email => {
             size="sm"
             color="orange"
             class="mr-2"
-            :disabled="record.advisor_id != $page.props.auth.user.id"
+            :disabled="true"
           >
             Send OCB Email to Customer
           </x-button>
