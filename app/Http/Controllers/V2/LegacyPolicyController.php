@@ -17,7 +17,7 @@ class LegacyPolicyController extends Controller
     public function index(Request $request)
     {
         $policies = [];
-        if (! empty($request->all())) {
+        if (!empty($request->all())) {
             $policies = InslyDetailRepository::getData();
         }
 
@@ -49,7 +49,7 @@ class LegacyPolicyController extends Controller
     {
         $expiryDate = now()->addMinutes(40);
         $fileName = $request->fileName;
-        $fileName = 'afia/2020_09/21/10037772/31948184.png'; //FILE EXISTS ON AWS SERVER
+        // $fileName = 'afia/2020_09/21/10037772/31948184.png'; //FILE EXISTS ON AWS SERVER
         $temporaryUrl = null;
         if (Storage::disk('s3')->has($fileName)) {
             $temporaryUrl = Storage::disk('s3')->temporaryUrl($fileName, $expiryDate);
