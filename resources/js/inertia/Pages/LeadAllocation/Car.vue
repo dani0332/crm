@@ -94,6 +94,7 @@ const tableHeader = ref([
   { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable' },
   { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
+  { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
 const leadData = ref([{ id: 0, userId: 0, cap: 0, capEdit: false, status: 0 }]);
