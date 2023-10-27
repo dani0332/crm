@@ -281,13 +281,13 @@ watch(
 );
 
 watch(
-    // if refresh is not zero then refresh page and set zero again
-    () => refreshGrid.value,
-    () => {
-        setTimeout(() => {
-            window.location.reload();
-        }, 2000);
-    },
+  // if refresh is not zero then refresh page and set zero again
+  () => refreshGrid.value,
+  () => {
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
+  },
 );
 
 onMounted(() => {
@@ -410,8 +410,10 @@ onMounted(() => {
     >
       <template #item-tiers="{ tiers }">
         <div class="relative">
-          <x-tooltip position="right">
-            <p class="truncate w-60">
+          <x-tooltip position="right" class="arrow-l-dark">
+            <p
+              class="truncate w-60 underline decoration-dotted decoration-primary-600"
+            >
               {{ tiers }}
             </p>
             <template #tooltip> {{ tiers }} </template>
