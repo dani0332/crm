@@ -38,8 +38,6 @@ class GoogleSocialiteController extends Controller
         }
 
         if ( ! $requestingUser->is_active) {
-            auth()->logout();
-
             return redirect()->route('login')->with('status', 'Email does not exist or is inactive.');
         }
 
