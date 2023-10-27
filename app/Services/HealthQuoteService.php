@@ -1080,7 +1080,7 @@ class HealthQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
-            $lead->health_team_type = $request->assign_team;
+            // $lead->health_team_type = $request->assign_team;
 
             $oldAssignmentType = $lead->assignment_type;
 
