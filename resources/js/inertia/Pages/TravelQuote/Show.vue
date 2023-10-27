@@ -236,6 +236,7 @@ const addTravelMember = isValid => {
         title: 'Traveler Added',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -275,6 +276,7 @@ const editTraveler = isValid => {
         title: 'Traveler Updated',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -297,6 +299,7 @@ const deleteTraveler = id => {
         title: 'Traveler Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.processing = false;

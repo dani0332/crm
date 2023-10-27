@@ -266,14 +266,14 @@ const providerId = computed(() => {
       <template #item-status_changed_at="item">
         {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
       </template>
-      
+
       <template #item-actions="item">
             <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
+                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
+                        size="xs"
+                        color="primary"
+                        outlined
                         @click.prevent="generateCCLink(item.code)"
                     >
                         Copy Link
@@ -283,10 +283,10 @@ const providerId = computed(() => {
                     </x-button>
                 </template>
                 <template v-if="can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
+                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
+                        size="xs"
+                        color="primary"
+                        outlined
                         @click="approvePayment(item)"
                     >
                         Approve

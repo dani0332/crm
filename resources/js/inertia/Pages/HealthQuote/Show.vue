@@ -303,6 +303,7 @@ const onLeadStatus = () => {
           title: 'Lead Status Updated',
           position: 'top',
         });
+
       },
     },
   );
@@ -399,6 +400,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
+        onLoadAvailablePlansData()
       },
       onFinish: () => {
         modals.member = false;
@@ -412,6 +414,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
+        onLoadAvailablePlansData()
       },
       onFinish: () => {
         modals.member = false;
@@ -433,6 +436,7 @@ const memberDeleteConfirmed = () => {
         title: 'Member Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       modals.memberConfirm = false;
@@ -1948,6 +1952,7 @@ onMounted(() => {
           :plan="selectedPlan"
           :genders="genderOptions"
           @copay-update="onSelectedCopay"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
 
