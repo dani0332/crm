@@ -94,14 +94,6 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
     });
 }
 
-Route::get('test-broadcast', function () {
-    event(new UserStatusChanged(17, 1));
-
-    return 'Event has been sent!';
-});
-
-Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
-
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 

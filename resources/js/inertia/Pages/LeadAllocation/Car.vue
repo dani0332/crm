@@ -1,4 +1,5 @@
 <script setup>
+const page = usePage();
 const props = defineProps({
   data: {
     type: Array,
@@ -37,6 +38,10 @@ const props = defineProps({
 const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
 const pickupSequence = ref(props.isFIFO === 1 ? true : false);
 const autoRefresh = ref(false);
+const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
+
 
 const confirmModal = reactive({
   show: false,
@@ -81,17 +86,26 @@ const statusText = statusId => {
 
 const tableHeader = ref([
   { text: 'Name', value: 'userName', sortable: true },
-  { text: 'Tiers', value: 'tiers' },
+  { text: 'Tiers', value: 'tiers', width: '250' },
   { text: 'Quads', value: 'quads', sortable: true },
-  { text: 'Total Assigned', value: 'allocationCount' },
-  { text: 'Manual Assigned', value: 'manualAllocationCount' },
-  { text: 'Auto Assigned', value: 'autoAllocationCount' },
-  { text: 'Max Cap Limit', value: 'maxCapacity' },
+  { text: 'Tot. Assigned', value: 'allocationCount', sortable: true },
+  { text: 'M. Assigned', value: 'manualAllocationCount', sortable: true },
+  { text: 'A. Assigned', value: 'autoAllocationCount', sortable: true },
+  { text: 'Cap Limit', value: 'maxCapacity', sortable: true },
   { text: 'Status', value: 'isAvailable' },
-  { text: 'Reset Cap', value: 'reset_cap' },
+  { text: 'Reset Cap', value: 'reset_cap', sortable: true, width: '100' },
 ]);
 
 const leadData = ref([{ id: 0, userId: 0, cap: 0, capEdit: false, status: 0 }]);
+
+const filteredTableHeader = computed(() => {
+  if (!hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])) {
+    return tableHeader.filter(
+      column => column.value !== 'reset_cap',
+    );
+  }
+  return tableHeader;
+});
 
 const currentRow = id => {
   const row = leadData?.value.find(item => item.id === id);
@@ -99,8 +113,10 @@ const currentRow = id => {
 };
 
 const editCap = id => {
-  const row = leadData?.value.find(item => item.id === id);
-  row.capEdit = true;
+    if(hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])){
+        const row = leadData?.value.find(item => item.id === id);
+        row.capEdit = true;
+    }
 };
 
 const updateCap = (value, id) => {
@@ -264,7 +280,7 @@ onMounted(() => {
   <div>
     <Head title="Car Lead Allocation" />
     <div class="flex justify-between items-center">
-      <div class="flex gap-1">
+      <div class="flex gap-1"  v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.Engineering])">
         <h2 class="text-lg font-semibold">Car Lead Allocation Management</h2>
         <x-toggle
           v-model="canManage"
@@ -273,7 +289,7 @@ onMounted(() => {
           @update:model-value="toggleOption($event, 1)"
         />
       </div>
-      <div class="flex gap-1">
+      <div class="flex gap-1" v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])">
         <h2 class="text-lg font-semibold">Pickup Sequence : FIFO</h2>
         <x-toggle
           v-model="pickupSequence"
@@ -282,7 +298,7 @@ onMounted(() => {
           @update:model-value="toggleOption($event, 2)"
         />
       </div>
-      <div class="flex gap-1">
+      <div class="flex gap-1" v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool, rolesEnum.Engineering])">
         <h2 class="text-lg font-semibold">Auto Refresh :</h2>
         <x-toggle v-model="autoRefresh" color="emerald" size="lg" />
       </div>
@@ -327,7 +343,7 @@ onMounted(() => {
     <DataTable
       table-class-name="compact"
       :loading="false"
-      :headers="tableHeader"
+      :headers="filteredTableHeader"
       :items="props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
