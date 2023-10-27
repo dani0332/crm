@@ -6,7 +6,6 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\InsuranceProvider;
 use App\Models\VehicleDepreciation;
-use DataTables;
 use Illuminate\Http\Request;
 
 class VehicleDepreciationController extends Controller
@@ -32,14 +31,14 @@ class VehicleDepreciationController extends Controller
     public function index(Request $request)
     {
         $data = VehicleDepreciation::select('vehicle_depreciation.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
-                ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
-                ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
-                ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
-                ->orderBy('created_at', 'desc')
-                ->simplePaginate(10)->withQueryString();
+            ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
+            ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
+            ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
+            ->orderBy('created_at', 'desc')
+            ->simplePaginate(10)->withQueryString();
 
         return inertia('VehicleDepreciation/Index', [
-            "data" => $data,
+            'data' => $data,
         ]);
     }
 
@@ -55,9 +54,9 @@ class VehicleDepreciationController extends Controller
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         return inertia('VehicleDepreciation/Form', [
-            "carmakes" => $carmakes,
-            "carmodels" => $carmodels,
-            "insuranceProviders" => $insuranceProviders,
+            'carmakes' => $carmakes,
+            'carmodels' => $carmodels,
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 
@@ -112,7 +111,6 @@ class VehicleDepreciationController extends Controller
         }
         $depreciation->save();
 
-
         return redirect(route('vehicledepreciation.index'))->with('success', 'Vechile Depreciation has been stored');
     }
 
@@ -124,16 +122,16 @@ class VehicleDepreciationController extends Controller
      */
     public function show(VehicleDepreciation $vehicledepreciation)
     {
-        $data = VehicleDepreciation::find($vehicledepreciation->id); 
+        $data = VehicleDepreciation::find($vehicledepreciation->id);
         $carMake = CarMake::where('id', '=', $data->car_make_id)->first();
         $carModel = CarModel::where('id', '=', $data->car_model_id)->first();
         $insuranceProvider = InsuranceProvider::where('id', '=', $data->insurance_provider_id)->first();
 
         return inertia('VehicleDepreciation/Show', [
-            "carmake" => $carMake,
-            "carmodel" => $carModel,
-            "insuranceProvider" => $insuranceProvider,
-            'vehicledepreciation' => $data->toArray()
+            'carmake' => $carMake,
+            'carmodel' => $carModel,
+            'insuranceProvider' => $insuranceProvider,
+            'vehicledepreciation' => $data->toArray(),
         ]);
     }
 
@@ -145,16 +143,16 @@ class VehicleDepreciationController extends Controller
      */
     public function edit(VehicleDepreciation $vehicledepreciation)
     {
-        $data = VehicleDepreciation::find($vehicledepreciation->id); 
+        $data = VehicleDepreciation::find($vehicledepreciation->id);
         $carMakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carModels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
         return inertia('VehicleDepreciation/Form', [
-            "carmakes" => $carMakes,
-            "carmodels" => $carModels,
-            "insuranceProviders" => $insuranceProviders,
-            'vehicledepreciation' => $data->toArray() 
+            'carmakes' => $carMakes,
+            'carmodels' => $carModels,
+            'insuranceProviders' => $insuranceProviders,
+            'vehicledepreciation' => $data->toArray(),
         ]);
     }
 
