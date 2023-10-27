@@ -2,7 +2,6 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
-use App\Events\UserStatusChanged;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
