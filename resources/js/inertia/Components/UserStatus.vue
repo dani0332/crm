@@ -64,7 +64,7 @@ onUnmounted(() => {
 
 <template>
   <div>
-    <x-badge
+   <!--  <x-badge
       :color="
         {
           1: 'success',
@@ -93,6 +93,6 @@ onUnmounted(() => {
         />
         <span class="text-sm font-medium">{{ statusText(currentStatus) }}</span>
       </x-tag>
-    </x-badge>
+    </x-badge> -->
   </div>
 </template>
