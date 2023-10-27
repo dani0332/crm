@@ -198,8 +198,6 @@ class HealthQuoteService extends BaseService
     {
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
         $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
             'email' => $request->email,
             'details' => $request->details,
             'mobileNo' => $request->mobile_no,
@@ -209,18 +207,22 @@ class HealthQuoteService extends BaseService
             'premium' => $request->premium,
             'leadTypeId' => $request->lead_type_id,
             'referenceUrl' => config('constants.APP_URL'),
-            'dob' => $request->dob,
-            'gender' => $request->gender,
             'is_ebp_renewal' => $request->is_ebp_renewal == 'on' ? true : false,
             'coverForId' => $request->cover_for_id,
-            'nationalityId' => $request->nationality_id,
             'hasDental' => $request->has_dental == 'on' ? true : false,
             'hasWorldwideCover' => $request->has_worldwide_cover == 'on' ? true : false,
             'hasHome' => $request->has_home == 'on' ? true : false,
+            'currentlyInsuredWithId' => $request->currently_insured_with_id,
+        ];
+        $dataArr['memberDetails'][] = [
+            'firstName' => $request->first_name,
+            'lastName' => $request->last_name,
+            'dob' => $request->dob,
+            'gender' => $request->gender,
+            'nationalityId' => $request->nationality_id,
             'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
             'salaryBandId' => $request->salary_band_id,
             'memberCategoryId' => $request->member_category_id,
-            'currentlyInsuredWithId' => $request->currently_insured_with_id,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -1080,7 +1082,9 @@ class HealthQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
-            $lead->health_team_type = $request->assign_team;
+            if (isset($request->assign_team) && $request->assign_team !== '') {
+                $lead->health_team_type = $request->assign_team;
+            }
 
             $oldAssignmentType = $lead->assignment_type;
 
