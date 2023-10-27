@@ -30,7 +30,7 @@ class TravelMemberDetailRequest extends FormRequest
             'first_name' => 'nullable',
             'relation_code' => 'nullable',
             'quote_request_id' => 'sometimes|required',
-            'customer_id' => 'required'
+            'customer_id' => 'required',
         ];
     }
 }

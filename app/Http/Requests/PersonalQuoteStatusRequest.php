@@ -60,7 +60,7 @@ class PersonalQuoteStatusRequest extends FormRequest
                 'insured_first_name',
                 'insured_last_name',
                 'emirates_id_number',
-                'emirates_id_expiry_date'
+                'emirates_id_expiry_date',
             ])->toArray();
 
             if (in_array(null, $customerProfileDetails) && request()->quote_status_id == QuoteStatusEnum::TransactionApproved) {

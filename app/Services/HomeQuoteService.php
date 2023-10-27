@@ -103,8 +103,8 @@ class HomeQuoteService extends BaseService
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
-            ->leftJoin('customer as c','hqr.customer_id', 'c.id')
-            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+            ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
             })

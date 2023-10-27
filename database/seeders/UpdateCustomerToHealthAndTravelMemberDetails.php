@@ -16,11 +16,12 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
      */
     public function run(): void
     {
-        HealthMemberDetail::whereNull(['customer_id', 'code'])->chunk(100, function ($healthMemberDetails){
+        HealthMemberDetail::whereNull(['customer_id', 'code'])->chunk(100, function ($healthMemberDetails) {
             foreach ($healthMemberDetails as $healthMemberDetail) {
 
-                if( !empty($healthMemberDetail->customer_id) && !empty($healthMemberDetail->code))
+                if (! empty($healthMemberDetail->customer_id) && ! empty($healthMemberDetail->code)) {
                     continue;
+                }
 
                 $healthQuoteLead = HealthQuote::where('id', $healthMemberDetail->health_quote_request_id)->first();
                 if (isset($healthQuoteLead->customer)) {
@@ -33,18 +34,19 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
                         $healthIterator++;
                         $healthMember->update([
                             'customer_id' => $healthQuoteLead->customer_id,
-                            'code' => CustomerTypeEnum::IndividualShort. '-' .$healthQuoteLead->customer_id. '-' . $healthIterator
+                            'code' => CustomerTypeEnum::IndividualShort.'-'.$healthQuoteLead->customer_id.'-'.$healthIterator,
                         ]);
                     }
                 }
             }
         });
 
-        TravelMemberDetail::whereNull(['customer_id', 'code'])->chunk(100, function ($travelMemberDetails){
+        TravelMemberDetail::whereNull(['customer_id', 'code'])->chunk(100, function ($travelMemberDetails) {
             foreach ($travelMemberDetails as $travelMemberDetail) {
 
-                if( !empty($travelMemberDetail->customer_id) && !empty($travelMemberDetail->code))
+                if (! empty($travelMemberDetail->customer_id) && ! empty($travelMemberDetail->code)) {
                     continue;
+                }
 
                 $travelQuoteLead = TravelQuote::where('id', $travelMemberDetail->travel_quote_request_id)->first();
                 if (isset($travelQuoteLead->customer)) {
@@ -57,7 +59,7 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
                         $travelIterator++;
                         $travelMember->update([
                             'customer_id' => $travelQuoteLead->customer_id,
-                            'code' => CustomerTypeEnum::IndividualShort. '-' . $travelQuoteLead->customer_id . '-' . $travelIterator
+                            'code' => CustomerTypeEnum::IndividualShort.'-'.$travelQuoteLead->customer_id.'-'.$travelIterator,
                         ]);
                     }
                 }

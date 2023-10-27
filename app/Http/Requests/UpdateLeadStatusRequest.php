@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Models\Customer;
-use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
+use App\Models\Customer;
 use App\Models\RenewalBatch;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -99,13 +99,13 @@ class UpdateLeadStatusRequest extends FormRequest
         }
 
         if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
-            if(in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
+            if (in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
                 $rules['next_followup_date'] = 'required|date_format:'.config('constants.DATETIME_DISPLAY_FORMAT').'|after_or_equal:'.date(config('constants.DATETIME_DISPLAY_FORMAT'));
                 $rules['notes'] = 'required';
             }
 
             if (request()->leadStatus == QuoteStatusEnum::IMRenewal) {
-                if (!isset(request()->tier_id)) {
+                if (! isset(request()->tier_id)) {
                     $rules['tier_id'] = 'required';
                 }
             }
@@ -123,7 +123,7 @@ class UpdateLeadStatusRequest extends FormRequest
 
             $quoteObject = $this->getQuoteObject(strtolower(request()->modelType), request()->leadId);
 
-            if(!$quoteObject) {
+            if (! $quoteObject) {
                 $validator->errors()->add('value', 'Lead not found please try again.');
             }
 
@@ -131,7 +131,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 'insured_first_name',
                 'insured_last_name',
                 'emirates_id_number',
-                'emirates_id_expiry_date'
+                'emirates_id_expiry_date',
             ])->toArray();
 
             if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
@@ -143,7 +143,7 @@ class UpdateLeadStatusRequest extends FormRequest
             }
 
             if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
-                if( ($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
+                if (($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
                     request()->leadStatus == QuoteStatusEnum::Qualified) {
                     $validator->errors()->add('value', 'Please select team type before moving to '.quoteStatusCode::QUALIFIED.' status');
                 }

@@ -93,9 +93,9 @@ class YachtQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-                'quoteRequestEntityMapping' => function($entityMapping) {
+                'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
-                }
+                },
             ])
             ->select([
                 $this->getTable().'.*',
@@ -104,11 +104,11 @@ class YachtQuoteRepository extends BaseRepository
                     FROM quote_request_entity_mapping
                     WHERE quote_type_id = '.QuoteTypeId::Yacht.' AND quote_request_id = '.$this->getTable().'.id),
                     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type')
+                as customer_type'),
             ])
             ->firstOrFail();
 
-        $data = !empty($quote) ? $quote->toArray() : [];
+        $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
 

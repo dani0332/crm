@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 class BridgerInsightService
 {
     use GenericQueriesAllLobs;
+
     private $bridgerEndPoint;
     private $bridgerClientID;
     private $bridgerUserName;
@@ -33,8 +34,8 @@ class BridgerInsightService
 
     public function getJWTToken()
     {
-        $tokenEndPoint = $this->bridgerEndPoint . '/api/Token/Issue';
-        $bridgerAuthBasic = base64_encode($this->bridgerClientID . '/' . $this->bridgerUserName . ':' . $this->bridgerPassword);
+        $tokenEndPoint = $this->bridgerEndPoint.'/api/Token/Issue';
+        $bridgerAuthBasic = base64_encode($this->bridgerClientID.'/'.$this->bridgerUserName.':'.$this->bridgerPassword);
         $bridgerClient = new \GuzzleHttp\Client();
         $_return = ['status' => true];
 
@@ -46,7 +47,7 @@ class BridgerInsightService
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
                         'Authorization' => 'Basic '.$bridgerAuthBasic,
-                    ]
+                    ],
                 ]
             );
             if ($tokenRequest->getStatusCode() == 200) {
@@ -71,14 +72,14 @@ class BridgerInsightService
         if ($bridgerAPIToken['status']) {
             $quoteId = $quoteRequestId;
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-            $amlQuoteUrl = Config::get('constants.APP_URL') . '/kyc/aml/' . $quoteTypeId . '/details/' . $quoteRequestId;
-            $bridgerEndPoint = $this->bridgerEndPoint . '/api/Lists/Search';
+            $amlQuoteUrl = Config::get('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+            $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
-            switch ($customerType){
+            switch ($customerType) {
                 case CustomerTypeEnum::Individual:
-                    $customerOrEntityName = $memberUboDetails['first_name']. ' ' . $memberUboDetails['last_name'];
+                    $customerOrEntityName = $memberUboDetails['first_name'].' '.$memberUboDetails['last_name'];
                     $amlSearchData = $this->getPayload(CustomerTypeEnum::Individual, $memberUboDetails, $getBasicConfiguration);
                     break;
 
@@ -113,7 +114,7 @@ class BridgerInsightService
 
                 // Checking if the API call successful
                 $apiSuccessCode = [201, 200];
-                if (!in_array($getStatusCode, $apiSuccessCode)) {
+                if (! in_array($getStatusCode, $apiSuccessCode)) {
                     // Send Error Email alert to Engineering Team
                     $amlDataForEmail =
                     $apiResponseMessage = '';
@@ -148,19 +149,20 @@ class BridgerInsightService
                                 'input' => $customerOrEntityName,
                                 'match_found' => isset($getDecodeContents->Records) ? 1 : 0,
                                 'search_type' => $customerType,
-                                'customer_code' => $memberUboDetails['code']
+                                'customer_code' => $memberUboDetails['code'],
                             ];
 
-                            if (!isset($getDecodeContents->Records))
+                            if (! isset($getDecodeContents->Records)) {
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
+                            }
 
                             KycLog::insert($kycLogDetails);
                             Log::info('Bridger Insight Service - KYC Log data inserted');
 
-                            if (!isset($getDecodeContents->Records)) {
+                            if (! isset($getDecodeContents->Records)) {
                                 $quoteDetails = AMLService::getQuoteDetails($quoteTypeId, $quoteId);
                                 $quoteDetails->update(['quote_status_id' => QuoteStatusEnum::AMLScreeningCleared]);
-                                Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'. QuoteStatusEnum::AMLScreeningCleared);
+                                Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                             }
 
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
@@ -182,18 +184,18 @@ class BridgerInsightService
                     'Division' => 'Default Division',
                     'EmailNotification' => false,
                     'Type' => 'Role',
-                    'RolesOrUsers' => ['Administrator']
+                    'RolesOrUsers' => ['Administrator'],
                 ],
                 'WriteResultsToDatabase' => false,
-                'PredefinedSearchName' => 'List Screening'
-            ]
+                'PredefinedSearchName' => 'List Screening',
+            ],
         ];
     }
 
     private function getPayload($customerType, $details, $basicConfig)
     {
         $payLoad = [];
-        switch ($customerType){
+        switch ($customerType) {
             case CustomerTypeEnum::Individual:
                 $dateOfBirth = explode('-', $details['dob']);
                 $payLoad = array_merge($basicConfig, [
@@ -202,18 +204,18 @@ class BridgerInsightService
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Individual,
-                                    'Name' => [ 'First' => $details['first_name'], 'Last' => $details['last_name']],
+                                    'Name' => ['First' => $details['first_name'], 'Last' => $details['last_name']],
                                     'AdditionalInfo' => [
-                                        ['Type' => 'DOB', 'Date' => [ 'Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]],
-                                        ['Type' => 'Citizenship', 'Value' => isset($details['nationality']) ? $details['nationality']['text'] : '' ]
+                                        ['Type' => 'DOB', 'Date' => ['Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]],
+                                        ['Type' => 'Citizenship', 'Value' => isset($details['nationality']) ? $details['nationality']['text'] : ''],
                                     ],
                                     'IDs' => [
-                                        ['Type' => 'Account', 'Number' => $details['code']]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
+                                        ['Type' => 'Account', 'Number' => $details['code']],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
                 ]);
 
                 break;
@@ -224,23 +226,22 @@ class BridgerInsightService
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Business,
-                                    'Name' => [ 'Full' => $details['company_name']],
-                                    "IDs" => [
-                                        [ 'Type' => 'Account', 'Number' => $details['code']]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
+                                    'Name' => ['Full' => $details['company_name']],
+                                    'IDs' => [
+                                        ['Type' => 'Account', 'Number' => $details['code']],
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
                 ]);
 
                 break;
 
-            default : return $payLoad;
+            default: return $payLoad;
         }
 
         return $payLoad;
     }
-
 
 }

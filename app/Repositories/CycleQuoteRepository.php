@@ -131,9 +131,9 @@ class CycleQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-                'quoteRequestEntityMapping' => function($entityMapping) {
+                'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
-                }
+                },
             ])
             ->select([
                 $this->getTable().'.*',
@@ -142,7 +142,7 @@ class CycleQuoteRepository extends BaseRepository
                     FROM quote_request_entity_mapping
                     WHERE quote_type_id = '.QuoteTypeId::Cycle.' AND quote_request_id = '.$this->getTable().'.id),
                     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type')
+                as customer_type'),
             ])
             ->firstOrFail();
         $quote->payments->each->setAppends(['allow', 'copy_link_button', 'edit_button', 'approve_button', 'approved_button']);

@@ -91,8 +91,8 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id')
-            ->leftJoin('customer as c','bqr.customer_id', 'c.id')
-            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+            ->leftJoin('customer as c', 'bqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Business));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'bqr.id');
             })

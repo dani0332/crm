@@ -32,7 +32,7 @@ class CustomerProfileRequest extends FormRequest
                 'insured_first_name' => 'required|max:200',
                 'insured_last_name' => 'required|max:200',
                 'emirates_id_number' => 'required',
-                'emirates_id_expiry_date' => 'required|after_or_equal:today|date_format:Y-m-d'
+                'emirates_id_expiry_date' => 'required|after_or_equal:today|date_format:Y-m-d',
             ]);
         }
 

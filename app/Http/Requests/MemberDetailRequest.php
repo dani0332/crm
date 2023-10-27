@@ -30,7 +30,7 @@ class MemberDetailRequest extends FormRequest
             'first_name' => 'nullable',
             'relation_code' => 'nullable',
             'quote_request_id' => 'sometimes|required',
-            'customer_id' => 'required'
+            'customer_id' => 'required',
         ];
 
         if (strtolower(request()->quote_type) == strtolower(quoteTypeCode::Health)) {
@@ -41,7 +41,6 @@ class MemberDetailRequest extends FormRequest
             $rules['salary_band_id'] = 'nullable';
             $rules['modelType'] = '';
         }
-
 
         return $rules;
     }

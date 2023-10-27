@@ -429,8 +429,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('link-entity-details', [V2AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
     });
 
-
-
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {
             Route::get('amt/cards', [V2AmtController::class, 'cardsView'])->name('amt.cardsView');

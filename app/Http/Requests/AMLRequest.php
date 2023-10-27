@@ -32,7 +32,7 @@ class AMLRequest extends FormRequest
             'amlCreatedEndDate' => 'nullable',
         ];
 
-        if ($this->ajax() && ! request()->get('onLoadCheck') && !empty(request()->toArray())) {
+        if ($this->ajax() && ! request()->get('onLoadCheck') && ! empty(request()->toArray())) {
             $rules['quoteType'] = 'required';
             $rules['searchType'] = 'nullable';
             $rules['searchField'] = 'required_with:searchType';

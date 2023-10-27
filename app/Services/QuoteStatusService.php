@@ -26,10 +26,10 @@ class QuoteStatusService
 
         if ($updateQuote->save()) {
 
-            if (!empty($request)) {
+            if (! empty($request)) {
                 KycLog::where('id', $request['aml_id'])->withTrashed()->update([
                     'decision' => $request['aml_decision'] ?? '',
-                    'notes' => trim($request['notes']) ?? ''
+                    'notes' => trim($request['notes']) ?? '',
                 ]);
             }
 

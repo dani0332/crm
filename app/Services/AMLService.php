@@ -32,7 +32,7 @@ class AMLService
             $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
         }
 
-        $dataMigrationDate = match ( (int) $quoteTypeId ) {
+        $dataMigrationDate = match ((int) $quoteTypeId) {
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
         };
 
@@ -69,11 +69,12 @@ class AMLService
             $checkAMLService = new CheckAmlService();
             $isDataMigrated = $checkAMLService->isDataMigrated($quoteTypeId, $quoteRequestId);
 
-            if(!$isDataMigrated)
+            if (! $isDataMigrated) {
                 $quoteRequestId = $checkAMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
+            }
         }
 
-        if($quoteTypeId == QuoteTypes::CAR->id()) {
+        if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $quoteRequestDetails = CarQuote::with([
                 'quoteStatus',
                 'paymentStatus',
@@ -84,7 +85,7 @@ class AMLService
                 'emirate',
                 'carTypeInsurance',
                 'claimHistory',
-                'nationality'
+                'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
@@ -93,7 +94,7 @@ class AMLService
                 'paymentStatus',
                 'customer',
                 'possessionType',
-                'accommodationType'
+                'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
@@ -104,7 +105,7 @@ class AMLService
                 'healthCoverFor',
                 'maritalStatus',
                 'emirate',
-                'nationality'
+                'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
@@ -118,7 +119,7 @@ class AMLService
                 'insuranceTenure',
                 'numberOfYears',
                 'currency',
-                'nationality'
+                'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
@@ -136,22 +137,22 @@ class AMLService
                 'customer',
                 'regionCoverFor',
                 'travelCoverFor',
-                'nationality'
+                'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            if($isDataMigrated) {
+            if ($isDataMigrated) {
                 $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
                     'petQuote',
                     'customer',
                     'quoteStatus',
-                    'paymentStatus'
+                    'paymentStatus',
                 ])->where('id', $quoteRequestId)->firstOrFail();
             } else {
                 $quoteRequestDetails = PetQuote::with([
                     'quoteStatus',
                     'paymentStatus',
-                    'customer'
+                    'customer',
                 ])->where('id', $quoteRequestId)->firstOrFail();
             }
         }
@@ -193,7 +194,7 @@ class AMLService
         } else {
             $fromEmail = Config::get('constants.MAIL_FROM_ADDRESS');
             $fromName = Config::get('constants.MAIL_FROM_NAME');
-            $emailSubject = $emailSystem .' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
+            $emailSubject = $emailSystem.' | IMCRM | New AML Matches Found for Ref-ID : '.$quoteRefId;
         }
         Mail::send(
             ['html' => 'AmlComplianceMail'],
@@ -216,19 +217,18 @@ class AMLService
         $customerChildDetails = [];
         $customerType = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
 
-        if($customerType == CustomerTypeEnum::IndividualShort) {
+        if ($customerType == CustomerTypeEnum::IndividualShort) {
 
             if ($quoteType->code == QuoteTypes::HEALTH->value) {
                 $customerChildDetails = HealthMemberDetail::with('nationality')->where([
-                    'health_quote_request_id' => $quoteRequestId
+                    'health_quote_request_id' => $quoteRequestId,
                 ])->get();
 
             } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
                 $customerChildDetails = TravelMemberDetail::with('nationality')->where([
-                    'travel_quote_request_id' => $quoteRequestId
+                    'travel_quote_request_id' => $quoteRequestId,
                 ])->get();
-            }
-            else {
+            } else {
                 $customerChildDetails = QuoteMemberDetailsRepository::with('nationality')->where([
                     'customer_type' => CustomerTypeEnum::Individual,
                     'quote_type_id' => $quoteType->id,

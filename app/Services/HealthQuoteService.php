@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\AssignmentTypeEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
@@ -167,8 +167,8 @@ class HealthQuoteService extends BaseService
             ->leftJoin('member_category as mc', 'mc.id', '=', 'hqr.member_category_id')
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
-            ->leftJoin('customer as c','hqr.customer_id', 'c.id')
-            ->leftJoin('quote_request_entity_mapping as qrem', function($entityMappingJoin){
+            ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
             })

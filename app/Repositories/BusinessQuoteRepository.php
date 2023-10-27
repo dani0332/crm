@@ -67,13 +67,13 @@ class BusinessQuoteRepository extends BaseRepository
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
                 'customer',
-                'quoteRequestEntityMapping' => function($entityMapping) {
+                'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
-                }
+                },
             ])
             ->select([
                 $this->getTable().'.*',
-                \DB::raw('("' . CustomerTypeEnum::Entity . '") as customer_type')
+                \DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
             ])
             ->firstOrFail();
 

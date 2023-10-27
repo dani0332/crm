@@ -121,9 +121,9 @@ class BikeQuoteRepository extends BaseRepository
                 'documents' => function ($q) {
                     $q->with('createdBy')->orderBy('created_at', 'desc');
                 },
-                'quoteRequestEntityMapping' => function($entityMapping) {
+                'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
-                }
+                },
             ])
             ->select([
                 $this->getTable().'.*',
@@ -132,7 +132,7 @@ class BikeQuoteRepository extends BaseRepository
                     FROM quote_request_entity_mapping
                     WHERE quote_type_id = '.QuoteTypeId::Bike.' AND quote_request_id = '.$this->getTable().'.id),
                     "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
-                as customer_type')
+                as customer_type'),
             ])
             ->firstOrFail();
 

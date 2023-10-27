@@ -17,7 +17,7 @@ class QuoteMemberDetailsRepository extends BaseRepository
         return $this->byQuoteTypeId($quoteTypeId)
             ->where([
                 $column => $value,
-                'customer_type' => $customerType
+                'customer_type' => $customerType,
             ])
             ->with([
                 'relation',

@@ -20,8 +20,8 @@ class TravelMembersDetailController extends Controller
     public function store(TravelMemberDetailRequest $request)
     {
         $travelMemberDetails = $request->validated();
-        if($request->customer_type == CustomerTypeEnum::Individual) {
-            if(!in_array('travel_quote_request_id', $request->validated())) {
+        if ($request->customer_type == CustomerTypeEnum::Individual) {
+            if (! in_array('travel_quote_request_id', $request->validated())) {
                 $travelMemberDetails = array_merge([
                     'travel_quote_request_id' => $request->quote_request_id,
                 ], $travelMemberDetails);
@@ -30,7 +30,7 @@ class TravelMembersDetailController extends Controller
 
             $travelMemberCount = TravelMemberDetail::where('customer_id', $travelMemberDetails['customer_id'])->count();
             TravelMemberDetail::create(array_merge($travelMemberDetails, [
-                'code' => CustomerTypeEnum::IndividualShort .'-'. $travelMemberDetails['customer_id'] .'-'. ++$travelMemberCount
+                'code' => CustomerTypeEnum::IndividualShort.'-'.$travelMemberDetails['customer_id'].'-'.++$travelMemberCount,
             ]));
 
             TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
@@ -39,7 +39,7 @@ class TravelMembersDetailController extends Controller
             $customerEntityId = $request->entity_id;
             $travelMemberDetails = array_merge($travelMemberDetails, [
                 'customer_entity_id' => $customerEntityId,
-                'customer_type' => CustomerTypeEnum::Entity
+                'customer_type' => CustomerTypeEnum::Entity,
             ]);
             unset($travelMemberDetails['customer_id']);
 
@@ -50,7 +50,7 @@ class TravelMembersDetailController extends Controller
 
             QuoteMemberDetail::updateOrCreate(array_merge($travelMemberDetails), [
                 'quote_type_id' => QuoteTypeId::Travel,
-                'code' => CustomerTypeEnum::EntityShort . '-' . $request->entity_id . '-' .(++$quoteMemberCount),
+                'code' => CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount),
             ]);
         }
 
@@ -79,10 +79,10 @@ class TravelMembersDetailController extends Controller
     public function update(TravelMemberDetailRequest $request, $id)
     {
         $travelMemberDetails = $request->validated();
-        if($request->customer_type == CustomerTypeEnum::Individual) {
-            if(!in_array('travel_quote_request_id', $request->validated())) {
+        if ($request->customer_type == CustomerTypeEnum::Individual) {
+            if (! in_array('travel_quote_request_id', $request->validated())) {
                 $travelMemberDetails = array_merge([
-                    'travel_quote_request_id' => $request->quote_request_id
+                    'travel_quote_request_id' => $request->quote_request_id,
                 ], $travelMemberDetails);
                 unset($travelMemberDetails['quote_request_id']);
             }
@@ -96,7 +96,7 @@ class TravelMembersDetailController extends Controller
             $customerEntityId = $request->entity_id;
             $travelMemberDetails = array_merge($travelMemberDetails, [
                 'customer_entity_id' => $customerEntityId,
-                'customer_type' => CustomerTypeEnum::Entity
+                'customer_type' => CustomerTypeEnum::Entity,
             ]);
 
             QuoteMemberDetail::findOrFail($id)->update(array_merge($travelMemberDetails, ['quote_type_id' => QuoteTypeId::Travel]));
