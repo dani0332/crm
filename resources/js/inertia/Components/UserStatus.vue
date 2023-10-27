@@ -28,26 +28,24 @@ const channel = pusher.subscribe(
 
 const listen = () => {
   channel.bind('user.status.changed', function (e) {
-    if (e?.userId == page.props.auth.user.id) {
-      currentStatus.value = e.status;
-      if(e.status == 1) {
+    currentStatus.value = e.status;
+    if(e.status == 1) {
         notification.success({
             title: e.userName + e.message,
             position: 'top',
         });
-      }
-      if(e.status == 2) {
+    }
+    if(e.status == 2) {
         notification.info({
             title: e.userName + e.message,
             position: 'top',
         });
-      }
-      if(e.status == 3) {
+    }
+    if(e.status == 3) {
         notification.error({
             title: e.userName + e.message,
             position: 'top',
         });
-      }
     }
   });
 };
