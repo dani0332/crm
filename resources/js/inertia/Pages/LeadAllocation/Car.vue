@@ -96,7 +96,17 @@ const tableHeader = ref([
   { text: 'Last Login', value: 'lastLogin', sortable: true, width: '100' },
 ]);
 
-const leadData = ref([{ id: 0, userId: 0, cap: 0, capEdit: false, status: 0 }]);
+const leadData = ref([
+  {
+    id: 0,
+    userId: 0,
+    cap: 0,
+    capEdit: false,
+    status: '1',
+    loading: false,
+    reset: false,
+  },
+]);
 
 const currentRow = id => {
   const row = leadData?.value.find(item => item.id === id);
@@ -179,9 +189,22 @@ const onToggleStatus = (status, id, userId) => {
   }
 };
 
+const onStatusModalClose = event => {
+  const item = leadData.value.find(item => item.id === statusModal.data.id);
+  if (!event) {
+    item.reset = true;
+    setTimeout(() => {
+      item.reset = false;
+    }, 300);
+    statusModal.show = false;
+  }
+};
+
 const onStatusSubmit = async () => {
   statusModal.loader = true;
-  loaders.table = true;
+  const item = leadData.value.find(item => item.id === statusModal.data.id);
+
+  item.loading = true;
   await axios
     .post('/lead-allocation/update-availability', {
       userId: statusModal.data.userId,
@@ -197,7 +220,7 @@ const onStatusSubmit = async () => {
     })
     .finally(() => {
       statusModal.loader = false;
-      loaders.table = false;
+      item.loading = false;
       statusModal.show = false;
     });
 };
@@ -366,7 +389,6 @@ onMounted(() => {
     <DataTable
       id="car-lead-allocation"
       table-class-name="compact"
-      :loading="loaders.table"
       :headers="tableHeader"
       :items="props.data || []"
       :sort-by="'userName'"
@@ -419,9 +441,11 @@ onMounted(() => {
           </x-tag>
 
           <ItemToggler
-            :is-active="isAvailable === '1' ? 1 : 0"
+            :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :disabled="!canManage"
             :id="id"
+            :loading="leadData.find(item => item.id === id)?.loading"
+            :refresh="leadData.find(item => item.id === id)?.reset"
             @toggle="onToggleStatus($event.active, id, userId)"
           />
         </div>
@@ -438,7 +462,12 @@ onMounted(() => {
       </template>
     </DataTable>
 
-    <x-modal v-model="statusModal.show" show-close backdrop>
+    <x-modal
+      v-model="statusModal.show"
+      show-close
+      backdrop
+      @update:model-value="onStatusModalClose($event)"
+    >
       <template #header> Select Reason of Unavailability </template>
       <x-select
         v-model="statusModal.data.reason"
@@ -454,7 +483,7 @@ onMounted(() => {
 
       <template #actions>
         <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="statusModal.show = false">
+          <x-button size="sm" ghost @click.prevent="onStatusModalClose(false)">
             Cancel
           </x-button>
           <x-button

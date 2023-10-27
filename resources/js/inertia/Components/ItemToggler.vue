@@ -12,6 +12,14 @@ const props = defineProps({
     type: String,
     default: 'md',
   },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  refresh: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['toggle']);
@@ -28,10 +36,17 @@ const onUpdate = () => {
 watch(
   () => props.isActive,
   () => {
-    state.value = props.isActive;
+    state.value = props.isActive == 1;
   },
   {
     immediate: true,
+  },
+);
+
+watch(
+  () => props.refresh,
+  () => {
+    state.value = props.isActive == 1;
   },
 );
 </script>
@@ -41,6 +56,7 @@ watch(
     v-model="state"
     color="emerald"
     :size="size"
+    :loading="loading"
     @update:model-value="onUpdate"
   />
 </template>
