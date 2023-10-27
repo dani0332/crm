@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\KycLog;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
@@ -9,7 +10,7 @@ use App\Traits\GenericQueriesAllLobs;
 class QuoteStatusService
 {
     use GenericQueriesAllLobs;
-    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType)
+    public function updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, $request = [])
     {
         $checkAMlService = new CheckAmlService();
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
@@ -24,6 +25,14 @@ class QuoteStatusService
         $updateQuote->quote_status_id = $quoteStatus->id;
 
         if ($updateQuote->save()) {
+
+            if (!empty($request)) {
+                KycLog::where('id', $request['aml_id'])->withTrashed()->update([
+                    'decision' => $request['aml_decision'] ?? '',
+                    'notes' => trim($request['notes']) ?? ''
+                ]);
+            }
+
             $clientFullName = $updateQuote->first_name.' '.$updateQuote->last_name;
 
             return [$quoteStatus->text, $updateQuote->code, $quoteType->text, $updateQuote->pa_id, $clientFullName];

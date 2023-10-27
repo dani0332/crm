@@ -129,7 +129,7 @@ class BridgerInsightService
                         $amlDataForEmail .= '<pre>';
                     }
                     Log::info('Bridger Insight Service - Error Email Send to Engineering Team');
-//                    AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
+                    AMLService::sendAMLErrorEmailtoEngTeam($amlQuoteUrl, $apiResponseMessage, $amlDataForEmail, $getStatusCode);
                 } else {
                     if ($getDecodeContents) {
                         // Send Email alert to Compliance team only
@@ -159,12 +159,12 @@ class BridgerInsightService
 
                             if (!isset($getDecodeContents->Records)) {
                                 $quoteDetails = AMLService::getQuoteDetails($quoteTypeId, $quoteId);
-                                $quoteDetails->update(['quote_status_id', QuoteStatusEnum::AMLScreeningCleared]);
+                                $quoteDetails->update(['quote_status_id' => QuoteStatusEnum::AMLScreeningCleared]);
                                 Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'. QuoteStatusEnum::AMLScreeningCleared);
                             }
 
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
-//                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
+                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
                         }
                     }
                 }

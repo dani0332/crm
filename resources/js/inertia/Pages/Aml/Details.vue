@@ -27,7 +27,8 @@ const props = defineProps({
     nationalityList: Array,
     yearsList: Array,
     isCompanySearchEnabled: {type: [Array, String]},
-    customerDetails: Object
+    customerDetails: Object,
+    amlDecisionStatusEnum: Object
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -610,7 +611,7 @@ const dateToYear = date => {
                     {{ EntityDetails.Name.Full ?? '' }}
                 </template>
                 <template #item-status="{ match_found, decision }">
-                    {{ (match_found > 0 ) ? (decision === 'TrueMatchRejectRisk' ? 'Rejected' : 'Escalated') : 'Pass' }}
+                    {{ (match_found > 0 ) ? (decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK ? amlDecisionStatusEnum.REJECTED : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS }}
                 </template>
                 <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
                     <div class="space-x-4">
