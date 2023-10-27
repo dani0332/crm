@@ -82,15 +82,15 @@ const setSelectedOption = (e, item) => {
   let index = amlResults.value.findIndex(
     x => x.EntityUniqueID == item.EntityUniqueID,
   );
-  if (index != -1) amlResults.value[index].descision = e;
+  if (index != -1) amlResults.value[index].decision = e;
 };
 
 const isTrue = computed(() => {
-  return amlResults.value.some(x => x.descision == 'true_match');
+  return amlResults.value.some(x => x.decision == 'TrueMatch');
 });
 
 const falsePositive = computed(() => {
-  return amlResults.value.every(x => x.descision == 'false_positive');
+  return amlResults.value.every(x => x.decision == 'FalsePositive');
 });
 </script>
 
@@ -183,11 +183,11 @@ const falsePositive = computed(() => {
       >
         <template #item-result="item">
           <x-select
-            :modelValue="item.descision"
+            :modelValue="item.decision"
             :options="[
-              { value: 'unknown', label: 'Unknown' },
-              { value: 'false_positive', label: 'False Positive' },
-              { value: 'true_match', label: 'True Match' },
+              { value: 'Unknown', label: 'Unknown' },
+              { value: 'FalsePositive', label: 'False Positive' },
+              { value: 'TrueMatch', label: 'True Match' },
             ]"
             placeholder="Select Result"
             class="w-full"

@@ -8,7 +8,9 @@ final class AMLDecisionStatusEnum extends Enum
     const PASS = 'Pass';
     const ESCALATED = 'Escalated';
     const REJECTED = 'Rejected';
+    const UNKNOWN = 'Unknown';
     const FALSE_POSITIVE = 'FalsePositive';
+    const TRUE_MATCH = 'TrueMatch';
     const TRUE_MATCH_ACCEPT_RISK = 'TrueMatchAcceptRisk';
     const TRUE_MATCH_REJECT_RISK = 'TrueMatchRejectRisk';
 }

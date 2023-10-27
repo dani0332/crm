@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
@@ -170,10 +171,11 @@ class AMLController extends Controller
         if(isset($amlResults[0]->Watchlist)) {
             $responseFrom = 'Bridger';
             $amlResults = collect($amlResults[0]->Watchlist->Matches)->filter(function ($value){
-                $value->descision = 'unknown';
+                $value->decision = (!$value->FalsePositive && !$value->TrueMatch) ? AMLDecisionStatusEnum::UNKNOWN : AMLDecisionStatusEnum::TRUE_MATCH;
                 return $value->FalsePositive == false;
             })->values();
         }
+
         return inertia('Aml/Show', [
             'aml' => $aml,
             'amlResults' => $amlResults,
