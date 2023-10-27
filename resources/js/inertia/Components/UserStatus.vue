@@ -16,6 +16,9 @@ const statusText = id => {
   return statuses[id];
 };
 
+const userStatus = useStorage('refresh-user-counts', 0);
+
+
 const options = {
   cluster: 'ap1',
   forceTLS: false,
@@ -47,6 +50,7 @@ const listen = () => {
             position: 'top',
         });
     }
+    userStatus.value = e.status;
   });
 };
 

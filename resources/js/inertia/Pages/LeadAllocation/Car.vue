@@ -1,5 +1,6 @@
 <script setup>
 const page = usePage();
+const refreshGrid = useStorage('refresh-user-counts');
 const props = defineProps({
   data: {
     type: Array,
@@ -277,6 +278,16 @@ watch(
       pause();
     }
   },
+);
+
+watch(
+    // if refresh is not zero then refresh page and set zero again
+    () => refreshGrid.value,
+    () => {
+        setTimeout(() => {
+            window.location.reload();
+        }, 2000);
+    },
 );
 
 onMounted(() => {
