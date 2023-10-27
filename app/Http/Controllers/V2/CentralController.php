@@ -22,7 +22,6 @@ use Maatwebsite\Excel\Facades\Excel;
 class CentralController extends Controller
 {
     use GenericQueriesAllLobs;
-
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -88,7 +87,6 @@ class CentralController extends Controller
 
             default:
                 return false;
-
         }
     }
 
