@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Http\Requests\CustomerUploadRequest;
@@ -17,12 +18,11 @@ use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\TravelQuote;
 use App\Services\BerlinService;
-use App\Services\SendEmailCustomerService;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Enums\GenericRequestEnum;
 use App\Services\CustomerService;
+use App\Services\SendEmailCustomerService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class CustomerRepository extends BaseRepository
 {
@@ -46,23 +46,25 @@ class CustomerRepository extends BaseRepository
         $filterType = request()->get('search_type');
         $filterColumns = ['email', 'first_name', 'entity_name', 'insured_first_name', 'mobile_no', 'uuid'];
 
-        if ( in_array($filterType, $filterColumns) && (!empty($filterType) && !empty($filterValue)) ) {
+        if (in_array($filterType, $filterColumns) && (! empty($filterType) && ! empty($filterValue))) {
 
             if ($filterType == 'entity_name') {
                 $entitiesIds = Entity::where('company_name', $filterValue)->pluck('id');
-                if ($entitiesIds->isEmpty())
+                if ($entitiesIds->isEmpty()) {
                     return $allQuotes;
+                }
             } else {
                 $customerIds = Customer::where($filterType, $filterValue)->pluck('id');
-                if ($customerIds->isEmpty())
+                if ($customerIds->isEmpty()) {
                     return $allQuotes;
+                }
             }
 
             $carQuotes = CarQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
@@ -70,15 +72,15 @@ class CustomerRepository extends BaseRepository
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Car.'" as quote_type_id'),
-                    \DB::raw("'' as business_type_of_insurance_id")
+                    \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
             $homeQuotes = HomeQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
@@ -86,15 +88,15 @@ class CustomerRepository extends BaseRepository
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Home.'" as quote_type_id'),
-                    \DB::raw("'' as business_type_of_insurance_id")
+                    \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
             $healthQuotes = HealthQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
@@ -102,15 +104,15 @@ class CustomerRepository extends BaseRepository
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Health.'" as quote_type_id'),
-                    \DB::raw("'' as business_type_of_insurance_id")
+                    \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
             $lifeQuotes = LifeQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
@@ -118,15 +120,15 @@ class CustomerRepository extends BaseRepository
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Life.'" as quote_type_id'),
-                    \DB::raw("'' as business_type_of_insurance_id")
+                    \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
             $businessQuotes = BusinessQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
@@ -138,10 +140,10 @@ class CustomerRepository extends BaseRepository
                 ->orderBy('created_at', 'desc');
 
             $travelQuotes = TravelQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
@@ -149,22 +151,22 @@ class CustomerRepository extends BaseRepository
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date',
                     \DB::raw('"'.QuoteTypeId::Travel.'" as quote_type_id'),
-                    \DB::raw("'' as business_type_of_insurance_id")
+                    \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 
             $personalQuotes = PersonalQuote::with(['advisor', 'customer'])
-                ->when(!empty($customerIds), function ($customer) use ($customerIds) {
+                ->when(! empty($customerIds), function ($customer) use ($customerIds) {
                     $customer->whereIn('customer_id', $customerIds);
                 })
-                ->when(!empty($entitiesIds), function ($entity) use ($entitiesIds) {
+                ->when(! empty($entitiesIds), function ($entity) use ($entitiesIds) {
                     $entity->whereHas('quoteRequestEntityMapping', function ($healthEntityMapping) use ($entitiesIds) {
                         $healthEntityMapping->whereIn('entity_id', $entitiesIds);
                     });
                 })
                 ->where('quote_status_id', QuoteStatusEnum::TransactionApproved)
                 ->select(['uuid', 'code', 'customer_id', 'policy_number', 'advisor_id', 'policy_start_date', 'renewal_expiry_date', 'quote_type_id',
-                    \DB::raw("'' as business_type_of_insurance_id")
+                    \DB::raw("'' as business_type_of_insurance_id"),
                 ])
                 ->orderBy('created_at', 'desc');
 

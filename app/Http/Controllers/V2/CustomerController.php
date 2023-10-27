@@ -26,7 +26,7 @@ class CustomerController extends Controller
         return inertia('Customer/Index', [
             'customers' => $customers,
             'userId' => auth()->id(),
-            'quoteTypes' => $quoteTypes
+            'quoteTypes' => $quoteTypes,
         ]);
     }
 
