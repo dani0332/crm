@@ -10,12 +10,10 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-
-        
+    {        
         Schema::table('quote_documents', function (Blueprint $table) {
             if (! Schema::hasColumn('quote_documents', 'payment_split_id')) {
-                $table->bigInteger('payment_split_id')->nullable()->default(null);
+                $table->unsignedBigInteger('payment_split_id')->nullable()->default(null);
                 $table->foreign('payment_split_id')->references('id')->on('payment_splits')->onDelete('no action');
             }
         });
