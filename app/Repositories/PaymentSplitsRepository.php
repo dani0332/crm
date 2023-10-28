@@ -189,6 +189,7 @@ class PaymentSplitsRepository
     public function updatePaymentStatus($request)
     {
         $successMessage='Payment Verified';
+        
         if($request->is_approved) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
@@ -196,6 +197,7 @@ class PaymentSplitsRepository
                 'payment_status_id' => PaymentStatusEnum::PAID,
                 'updated_by' => $request->user()->id,
             ];
+            PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
             /*
             $sageRequest->discount = floatval($request->discount);
             $sageRequest->insurerInvoiceDate = date("Y-m-d", strtotime($request->insurerInvoiceDate));
@@ -215,9 +217,22 @@ class PaymentSplitsRepository
                 'payment_status_id' => PaymentStatusEnum::DECLINED,
                 'updated_by' => $request->user()->id,
             ];
+            PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
             $successMessage='Payment Declined';
         }
-        PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
+
+        //Update parent payment status if all splits are paid
+        $paymentSplitRecord = PaymentSplits::with('payment')->find($request->splitPaymentId);
+        $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
+        if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments){
+            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);            
+        }
+        
+        //dd($paymentSplitRecord->payment->total_payments);
+
+
+
+        //PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
         return $successMessage;
     }
 }

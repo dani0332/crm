@@ -1689,7 +1689,7 @@ class CRUDController extends Controller
             return response()->json(['success' => false]);
         }
 
-if (auth()->user()->hasRole(RolesEnum::BetaUser)){
+        if (auth()->user()->hasRole(RolesEnum::BetaUser)){
 
             //dd($request->all());
 
@@ -1740,7 +1740,7 @@ if (auth()->user()->hasRole(RolesEnum::BetaUser)){
             $paymentLog->save();
             $quoteModel->quote_status_id = QuoteStatusEnum::PaymentPending;
             $quoteModel->save();
-            return back()->with('success', 'Payment has been created');
+            return back()->with('success', 'Payment Added');
         } else {
 
 
@@ -1822,7 +1822,7 @@ if (auth()->user()->hasRole(RolesEnum::BetaUser)){
             //Update split payments start
             $this->paymentSplitsRepository->updatePaymentSplits($request);
             
-            return back()->with('success', 'Payment updated');
+            return back()->with('success', 'Payment Updated');
         } else {
 
         $paymentInformation = [

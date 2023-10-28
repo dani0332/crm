@@ -41,6 +41,8 @@ const isDeclineClicked = ref(false);
 const isDeclineCustomReason = ref(false);
 const isApprovePaymentError = ref(false);
 const showDiscountOptions = ref(true);
+const isApprovedDocumentNotUploaded = ref(false);
+const approvedDocument = ref('');
 
 const discountValue = ref(0); // Initial discount value
 const totalPrice = ref(props.quoteRequest.premium); // Initial total price
@@ -636,6 +638,11 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   isApproveClicked.value = false;
   isFileError.value = false;
   isApprovePaymentError.value = false;
+  totalPaidAmount.value = 0;
+  isDeclineClicked.value = false;
+
+  isApprovedDocumentNotUploaded.value = false;
+  approvedDocument.value = '';
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -737,8 +744,7 @@ const paymentMethodsForm = useForm({
   status: 'create',
 });
 
-const validateViewPayment = () => {
-  
+const validateViewPayment = () => {  
   if (parseFloat(splitAmountModels.value[splitPaymentNo.value]).toFixed(2) > parseFloat(paymentMethodsForm.collection_amount).toFixed(2)) {
      isApprovePaymentError.value = true;
     return true;
@@ -746,11 +752,26 @@ const validateViewPayment = () => {
   return false;
 }
 
+const validateApprovedDocument = () => {  
+  if (paymentMethodsForm.collection_type==='insurer') {      
+      console.log('sssazhar1='+approvedDocument.value);
+      if (approvedDocument.value==='' ) {
+        console.log('sssazhar122='+approvedDocument.value);
+        isApprovedDocumentNotUploaded.value = true;
+        return true;
+      } else {
+        isApprovedDocumentNotUploaded.value = false;
+      }      
+    }
+    return false;
+}
+
 const addPayment = isValid => {
   if (!isValid) return;  
 
   if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment()) return;
+    if (validateApprovedDocument()) return;
   } else {
     if (validatePaymentOption()) return;  
   }
@@ -802,7 +823,7 @@ const addPayment = isValid => {
     document_detail: fileUploadModels.value,
   };
 
-  if (paymentMethodsForm.status === 'view') {
+  if (paymentMethodsForm.status === 'view') {    
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -820,10 +841,6 @@ const addPayment = isValid => {
       .post('/payments/Car/split-update', {
         preserveScroll: true,
         onSuccess: () => {
-          notification.success({
-            title: 'Payment Updated',
-            position: 'top',
-          });
           createPaymentModal.value = false;
         },
         onError: () => {
@@ -837,6 +854,13 @@ const addPayment = isValid => {
   }
 
   if (paymentMethodsForm.status === 'edit') {
+    if(totalPaidAmount.value == paymentMethodsForm.payment_no) {
+      notification.error({
+            title: 'No further actions allowed to paid payments',
+            position: 'top',
+          });
+      return false;
+    };
     let editData = {
       ...data,
       paymentCode: paymentMethodsForm.paymentCode,
@@ -846,10 +870,6 @@ const addPayment = isValid => {
       .post('/payments/Car/update', {
         preserveScroll: true,
         onSuccess: () => {
-          notification.success({
-            title: 'Payment Updated',
-            position: 'top',
-          });
           createPaymentModal.value = false;
         },
         onError: () => {
@@ -869,10 +889,6 @@ const addPayment = isValid => {
     .post('/payments/Car/store', {
       preserveScroll: true,
       onSuccess: () => {
-        notification.success({
-          title: 'Payment Added',
-          position: 'top',
-        });
         createPaymentModal.value = false;
       },
       onError: () => {
@@ -972,8 +988,17 @@ const uploadDocument = (doc, files, count) => {
         }); return;
       },
       onSuccess: (data) => {
+        
+        if (paymentMethodsForm.status === 'view') {
+          isApprovedDocumentNotUploaded.value = false;
+          approvedDocument.value = data.props.quoteDocuments[0];
+          console.log('approveddoc='+JSON.stringify(approvedDocument.value));        
+          return;
+        } 
+        
         isDocumentNotUploaded.value[count] = false;
         fileUploadModels.value[count].push(data.props.quoteDocuments[0]);
+
         console.log('azhar9999='+JSON.stringify(fileUploadModels.value));        
         return;        
       },
@@ -1009,7 +1034,7 @@ const providerId = computed(() => {
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
+      <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
       <x-tooltip>
         <x-button
           v-if="hasRole(rolesEnum.CarAdvisor)"
@@ -1195,7 +1220,7 @@ const providerId = computed(() => {
           {{
             paymentMethodsForm.status == 'create'
               ? 'Add Manual Payment'
-              : 'Update Payment'
+              : 'Edit Payment'
           }}
                 
         </template>
@@ -1821,10 +1846,15 @@ const providerId = computed(() => {
         </div>
       </template>
 
-      <template v-if="isViewEnabled && isApproveClicked">
+      <template v-if="isViewEnabled && isApproveClicked && paymentMethodsModels[splitPaymentNo]!='CC'">
         <x-divider class="mb-4 mt-1" />
         <div class="p-1 mb-2">
+          <x-tooltip>
           <h3>PAYMENT VERIFICATION</h3>
+          <template #tooltip>
+              <span>{{ paymentTooltipEnum.PAYMENT_VIEW_VERIFICATION_HEADER }}</span>
+          </template>
+        </x-tooltip>
         </div>
         <x-alert
             v-if="isApprovePaymentError"
@@ -1848,7 +1878,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </div>
-              <div class="w-1/4 px-2">
+              <div class="w-1/4 px-2" v-if="paymentMethodsModels[splitPaymentNo]=='BT' || paymentMethodsModels[splitPaymentNo]=='CHQ'">
                 <x-tooltip>
                   <x-field label="BANK REFERENCE NUMBER" required>
                   <x-input
@@ -1871,8 +1901,9 @@ const providerId = computed(() => {
                   :max-files="paymentDocument.max_files"
                   :max-size="paymentDocument.max_size"
                   :loading="documentForm.processing"
-                  @change="uploadDocument(paymentDocument, $event, count)"
+                  @change="uploadDocument(paymentDocument, $event, splitPaymentNo)"                  
                 />
+                <p v-if="isApprovedDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 </x-field>
                 <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
@@ -1917,7 +1948,7 @@ const providerId = computed(() => {
                   Decline
                 </x-button>
               </div>
-              <div v-if="!isDeclineClicked">
+              <div v-if="!isDeclineClicked && paymentMethodsModels[splitPaymentNo]!='CC'">
                 <x-button class="mr-2" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked">
                   Approve
                 </x-button>
