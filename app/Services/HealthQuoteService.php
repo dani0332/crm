@@ -224,8 +224,6 @@ class HealthQuoteService extends BaseService
     {
         $sourceName = $request->is_ebp_renewal == 'on' ? LeadSourceTypes::EBPRENEWALS : config('constants.SOURCE_NAME');
         $dataArr = [
-            'firstName' => $request->first_name,
-            'lastName' => $request->last_name,
             'email' => $request->email,
             'details' => $request->details,
             'mobileNo' => $request->mobile_no,
@@ -235,18 +233,22 @@ class HealthQuoteService extends BaseService
             'premium' => $request->premium,
             'leadTypeId' => $request->lead_type_id,
             'referenceUrl' => config('constants.APP_URL'),
-            'dob' => $request->dob,
-            'gender' => $request->gender,
             'is_ebp_renewal' => $request->is_ebp_renewal == 'on' ? true : false,
             'coverForId' => $request->cover_for_id,
-            'nationalityId' => $request->nationality_id,
             'hasDental' => $request->has_dental == 'on' ? true : false,
             'hasWorldwideCover' => $request->has_worldwide_cover == 'on' ? true : false,
             'hasHome' => $request->has_home == 'on' ? true : false,
+            'currentlyInsuredWithId' => $request->currently_insured_with_id,
+        ];
+        $dataArr['memberDetails'][] = [
+            'firstName' => $request->first_name,
+            'lastName' => $request->last_name,
+            'dob' => $request->dob,
+            'gender' => $request->gender,
+            'nationalityId' => $request->nationality_id,
             'emirateOfYourVisaId' => $request->emirate_of_your_visa_id,
             'salaryBandId' => $request->salary_band_id,
             'memberCategoryId' => $request->member_category_id,
-            'currentlyInsuredWithId' => $request->currently_insured_with_id,
         ];
         if (! Auth::user()->hasRole('ADMIN')) {
             $dataArr['advisorId'] = Auth::user()->id;
@@ -291,23 +293,23 @@ class HealthQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
 
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
         if (Auth::user()->isSpecificTeamAdvisor('Health') || Auth::user()->isSpecificTeamAdvisor('EBP') || Auth::user()->isSpecificTeamAdvisor('RM')) {
             // if user has advisor Role then fetch leads assigned to the user only
@@ -353,12 +355,12 @@ class HealthQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         // health_team_type filter
         if (isset($request->sub_team) && $request->sub_team != '') {
@@ -1106,7 +1108,9 @@ class HealthQuoteService extends BaseService
         foreach ($leadsIds as $leadId) {
             $lead = $this->getEntityPlain($leadId);
 
-            $lead->health_team_type = $request->assign_team;
+            if (isset($request->assign_team) && $request->assign_team !== '') {
+                $lead->health_team_type = $request->assign_team;
+            }
 
             $oldAssignmentType = $lead->assignment_type;
 
@@ -1162,11 +1166,8 @@ class HealthQuoteService extends BaseService
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
 
-        // Update allocation counts for the new advisor only if its different from previous advisor
-        if ($newAdvisorId !== $previousAdvisorId) {
-            // Update allocation counts for the new advisor (if applicable)
-            $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
-        }
+        // Update allocation counts for the new advisor (if applicable)
+        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
