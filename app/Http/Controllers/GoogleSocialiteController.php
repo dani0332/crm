@@ -37,7 +37,7 @@ class GoogleSocialiteController extends Controller
             return redirect()->route('login')->with('status', 'You are not authorized to login. Please contact admin.');
         }
 
-        if ( ! $requestingUser->is_active) {
+        if (! $requestingUser->is_active) {
             return redirect()->route('login')->with('status', 'Email does not exist or is inactive.');
         }
 

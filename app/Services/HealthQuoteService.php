@@ -1140,11 +1140,8 @@ class HealthQuoteService extends BaseService
         // Get the allocation record for the new advisor
         $newAdvisorAllocationRecord = $this->leadAllocationService->getLeadAllocationRecordByUserId($newAdvisorId);
 
-        // Update allocation counts for the new advisor only if its different from previous advisor
-        if ($newAdvisorId !== $previousAdvisorId) {
-            // Update allocation counts for the new advisor (if applicable)
-            $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
-        }
+        // Update allocation counts for the new advisor (if applicable)
+        $this->updateAllocationCountsForNewAdvisor($newAdvisorAllocationRecord, $lead, $systemAssignedTypes);
 
         // Get the allocation record for the previous advisor (if applicable)
         if ($previousAdvisorId !== null) {
