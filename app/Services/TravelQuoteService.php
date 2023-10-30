@@ -8,29 +8,35 @@ use App\Enums\quoteTypeCode;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Facades\Ken;
+use App\Models\InsuranceProvider;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\TravelQuotePlan;
 use App\Models\TravelQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
+use App\Traits\GenericQueriesAllLobs;
 use App\Traits\RolePermissionConditions;
 use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use PDF;
 
 class TravelQuoteService extends BaseService
 {
     protected $query;
     protected $leadAllocationService;
+    protected $httpService;
 
     use AddPremiumAllLobs;
+    use GenericQueriesAllLobs;
     use RolePermissionConditions;
 
-    public function __construct(LeadAllocationService $leadAllocationService)
+    public function __construct(LeadAllocationService $leadAllocationService, HttpRequestService $httpService)
     {
         $this->leadAllocationService = $leadAllocationService;
+        $this->httpService = $httpService;
         $this->query = DB::table('travel_quote_request as tqr')->select(
             'tqr.id',
             'tqr.uuid',
@@ -813,5 +819,69 @@ class TravelQuoteService extends BaseService
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
 
         return $travelQuotePlans;
+    }
+    public function updateManualPlansBulk($request)
+    {
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-travel-quote-plans';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+
+        if ($request->planIds) {
+            $data = $request->planIds;
+            $isDisabled = $request->toggle;
+            $plansArray = [];
+            for ($i = 0; $i < count($data); $i++) {
+                $apiArray = [
+                    'planId' => (int) $data[$i],
+                    'isHidden' => filter_var($isDisabled, FILTER_VALIDATE_BOOLEAN),
+                    'isManualUpdate' => false,
+                ];
+                array_push($plansArray, $apiArray);
+            }
+            $dataArray = [
+                'quoteUID' => $request->quote_uuid,
+                'isDisabled' => true,
+                'planId' => $plansArray[0]['planId'],
+
+            ];
+
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+
+            return $response;
+        }
+    }
+    public function exportPlansPdf($quoteType, $data, $quotePlans = null)
+    {
+        $planIds = $data['plan_ids'];
+        $addons = (isset($data['addons'])) ? $data['addons'] : null;
+
+        $quotePlans = $this->getQuotePlans($data['quote_uuid']);
+        if (! isset($quotePlans->quotes->plans)) {
+            return ['error' => 'Quote plans not available'];
+        }
+
+        $providerIds = collect($quotePlans->quotes->plans)->pluck('providerId')->toArray();
+        $providers = InsuranceProvider::whereIn('id', $providerIds)->get()->keyBy('id')->toArray();
+
+        $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+        $quote->load(['advisor' => function ($q) {
+            $q->select('id', 'email', 'mobile_no', 'name', 'landline_no', 'profile_photo_path');
+        }, 'customer']);
+        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
+            ->loadView('pdf.travel_quote_plans', compact('quotePlans', 'planIds', 'quote', 'addons', 'providers'));
+
+        // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
+        $pdfName = 'InsuranceMarket.ae™ Travel Insurance Comparison for '.$quote->first_name.' '.$quote->last_name.'.pdf';
+
+        return ['pdf' => $pdf, 'name' => $pdfName];
     }
 }

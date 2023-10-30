@@ -10,16 +10,19 @@ use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 use App\Services\CarQuoteService;
 use App\Services\HealthQuoteService;
+use App\Services\TravelQuoteService;
 
 class GenericLobController extends Controller
 {
     protected $carQuoteService;
     protected $healthQuoteService;
+    protected $travelQuoteService;
 
-    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
+    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService, TravelQuoteService $travelQuoteService)
     {
         $this->carQuoteService = $carQuoteService;
         $this->healthQuoteService = $healthQuoteService;
+        $this->travelQuoteService = $travelQuoteService;
     }
 
     /**
