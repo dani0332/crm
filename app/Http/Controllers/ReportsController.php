@@ -77,9 +77,12 @@ class ReportsController extends Controller
         ]);
     }
 
-    public function renderLeadListReport()
+    public function renderLeadListReport(Request $request, ReportService $reportService)
     {
-        return view('reports.lead-list-report');
+        return inertia('Reports/LeadListReport', [
+            'reportData' => $reportService->getLeadsListReport($request),
+            'defaultFilters' => $reportService->getDefaultFiltersForLeadsList(),
+        ]);
     }
 
     public function renderRevivalConversionReport(Request $request)

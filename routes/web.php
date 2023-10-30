@@ -266,7 +266,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
-    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])->name('lead-list-report');
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
@@ -410,8 +410,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // Route::resource('vehiclerange', VehicleRangeController::class);
         // Route::resource('vehiclevalue', VehicleValueController::class);
     });
-    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
-    Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);
+    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake'])->name('valuation.carmodels');
+    Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
 
     Route::group(['prefix' => 'claim'], function () {
         Route::resource('claims', ClaimController::class);
