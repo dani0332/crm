@@ -38,7 +38,7 @@ const props = defineProps({
 
 const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
 const pickupSequence = ref(props.isFIFO === 1 ? true : false);
-const autoRefresh = ref(false);
+const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -277,6 +277,9 @@ watch(
     } else {
       pause();
     }
+  },
+  {
+    immediate: true,
   },
 );
 
