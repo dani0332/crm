@@ -410,7 +410,7 @@ onMounted(() => {
     >
       <template #item-tiers="{ tiers }">
         <div class="relative">
-          <x-tooltip position="right" class="arrow-l-dark">
+          <x-tooltip position="top" class="arrow-l-dark">
             <p
               class="truncate w-60 underline decoration-dotted decoration-primary-600"
             >
@@ -454,6 +454,7 @@ onMounted(() => {
           </x-tag>
 
           <ItemToggler
+            v-if="hasAnyRole([rolesEnum.Admin,rolesEnum.LeadPool,rolesEnum.Engineering])"
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :disabled="!canManage"
             :id="id"
