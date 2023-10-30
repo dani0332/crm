@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\quoteBusinessTypeCode;
@@ -61,11 +62,12 @@ class HandleInertiaRequests extends Middleware
             'quoteTypeCodeEnum' => quoteTypeCode::asArray(),
             'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             'quoteBusinessTypeCode' => quoteBusinessTypeCode::asArray(),
+            'leadSource' => LeadSourceEnum::asArray(),
             'flash' => fn () => $this->shareFlashData($request),
             'baseUrl' => url('/'),
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
-            'pusherKey' => config('constants.MIX_PUSHER_APP_KEY'),
+            'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
             'epLink' => env('EMBEDDED_PAYMENT_LINK'),
         ];
     }
@@ -139,7 +141,8 @@ class HandleInertiaRequests extends Middleware
                     ->addIf(auth()->user()->can(PermissionsEnum::ADVISOR_DISTRIBUTION_REPORT_VIEW), 'Advisor Distribution', route('advisor-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::LEAD_DISTRIBUTION_REPORT_VIEW), 'Lead Distribution', route('lead-distribution-report-view', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
                     ->addIf(auth()->user()->can(PermissionsEnum::UtmLeadsSalesReport), 'UTM Report', route('utm-leads-sales-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
-                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Daily Renewal Report', route('renewal-batch-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']))
+                    ->addIf(auth()->user()->can(PermissionsEnum::RENEWAL_BATCH_REPORT), 'Lead List Report', route('lead-list-report', [], false), fn ($s) => $s->attributes(['icon' => 'bar']));
             });
         }
 

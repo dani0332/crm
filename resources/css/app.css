@@ -411,3 +411,15 @@ border-primary animate-spin;
 .x-popover-container.max-h-72 {
   @apply !max-h-48;
 }
+
+.arrow-l-dark .x-popover-container::after {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: 40%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(55 65 81) transparent transparent transparent;
+  transform: rotate(90deg);
+}

@@ -47,6 +47,8 @@ class BusinessQuoteService extends BaseService
                 'bti.TEXT AS business_type_of_insurance_id_text',
                 'bqr.advisor_id',
                 'u.name as advisor_id_text',
+                'bqr.previous_advisor_id',
+                'uadv.name AS previous_advisor_id_text',
                 'bqr.quote_status_id',
                 'qs.text as quote_status_id_text',
                 'bqr.premium',
@@ -73,6 +75,7 @@ class BusinessQuoteService extends BaseService
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'bqrd.lost_reason_id')
             ->leftJoin('users as u', 'u.id', '=', 'bqr.advisor_id')
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'bqr.previous_advisor_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'bqr.quote_status_id');
     }
 

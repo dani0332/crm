@@ -57,7 +57,7 @@ defineProps({
   planURL: String,
   storageUrl: String,
   insuranceProviders: Array,
-  advisor: Array,
+  advisor: Object,
   carMakeText: String,
   carModelText: String,
   embeddedProducts: Array,
@@ -70,7 +70,7 @@ defineProps({
   carLostChangeStatus: Boolean,
   isTierRAssigned: Boolean,
   tiersExceptTierR: Array,
-  leadSourceEnum: Array,
+  leadSourceEnum: Object,
   carPlanTypeEnum: Object,
 });
 const page = usePage();
@@ -400,29 +400,34 @@ const leadStatusOptions = computed(() => {
   const statuses = Array.isArray(page.props.leadStatuses)
     ? page.props.leadStatuses
     : Object.values(page.props.leadStatuses);
-  const filteredLeadStatuses = statuses?.filter(status => {
+  const filteredLeadStatuses = statuses?.map(status => {
     if (
-      (!isLeadPool && [9, 35].includes(status.id)) ||
-      (!isPA && status.id === 15) ||
+      (!isLeadPool &&
+        [
+          page.props.quoteStatusEnum.Fake,
+          page.props.quoteStatusEnum.Duplicate,
+        ].includes(status.id)) ||
+      (!isPA && status.id === page.props.quoteStatusEnum.TransactionApproved) ||
       ((renewal_batch === '' ||
         previous_quote_policy_number === '' ||
         source != renewal_upload) &&
-        status.id === 17)
+        status.id === page.props.quoteStatusEnum.Lost)
     ) {
-      return false;
+      return {
+        value: status.id,
+        label: status.text,
+        disabled: true,
+      };
     }
     // if (status.id == page.props.quoteStatusEnum.PolicyIssued && page.props.isQuoteDocumentEnabled) return true;
     // else if (status.id != page.props.quoteStatusEnum.PolicyIssued) return true;
-    return true;
+    return {
+      value: status.id,
+      label: status.text,
+    };
   });
 
-  let options = filteredLeadStatuses.map(status => ({
-    value: status.id,
-    label: status.text,
-  }));
-
-  options.unshift({ value: '', label: 'Select Status' });
-  return options;
+  return filteredLeadStatuses;
 });
 
 const leadStatusDisabled = computed(() => {
@@ -1495,7 +1500,7 @@ const loadEmailEvents = email => {
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRIM</dt>
-            <dd>{{ record.trim }}</dd>
+            <dd>{{ record.car_model_detail_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CAR MODEL YEAR</dt>

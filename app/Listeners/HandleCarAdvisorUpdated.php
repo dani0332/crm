@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Enums\LeadSourceEnum;
 use App\Events\CarQuoteAdvisorUpdated;
 use App\Jobs\SendOCBIntroEmailJob;
 use App\Models\Customer;
@@ -41,6 +42,12 @@ class HandleCarAdvisorUpdated
         info('inside handle car update advisor');
 
         $lead = $event->lead;
+
+        if ($lead->source == LeadSourceEnum::RENEWAL_UPLOAD) {
+            info('lead is source is renewal upload. Skipping intro email job');
+
+            return;
+        }
 
         $oldAdvisorId = $event->oldAdvisorId;
 

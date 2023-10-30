@@ -58,6 +58,8 @@ class TravelQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
             'u.name as advisor_id_text',
+            'tqr.previous_advisor_id',
+            'uadv.name AS previous_advisor_id_text',
             'tqr.payment_status_id',
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
@@ -99,6 +101,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'tqr.previous_advisor_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
