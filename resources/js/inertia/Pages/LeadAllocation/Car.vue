@@ -1,6 +1,8 @@
 <script setup>
 const page = usePage();
+
 const refreshGrid = useStorage('refresh-user-counts');
+
 const props = defineProps({
   data: {
     type: Array,
@@ -38,7 +40,7 @@ const props = defineProps({
 
 const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
 const pickupSequence = ref(props.isFIFO === 1 ? true : false);
-const autoRefresh = ref(false);
+const autoRefresh = ref(true);
 const hasRole = role => useHasRole(role);
 const hasAnyRole = role => useHasAnyRole(role);
 const rolesEnum = page.props.rolesEnum;
@@ -278,15 +280,26 @@ watch(
       pause();
     }
   },
+  {
+    immediate: true,
+  },
 );
 
 watch(
-  // if refresh is not zero then refresh page and set zero again
   () => refreshGrid.value,
   () => {
     setTimeout(() => {
-      window.location.reload();
-    }, 2000);
+      // router.reload({
+      //   replace: false,
+      //   preserveScroll: true,
+      //   preserveState: true,
+      // });
+      router.get('/lead-allocation/car', {
+        only: ['data'],
+        preserveScroll: true,
+        preserveState: true,
+      });
+    }, 1500);
   },
 );
 
@@ -404,13 +417,14 @@ onMounted(() => {
       :items="props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
+      :rows-per-page="-1"
       border-cell
       hide-rows-per-page
       hide-footer
     >
       <template #item-tiers="{ tiers }">
         <div class="relative">
-          <x-tooltip position="right" class="arrow-l-dark">
+          <x-tooltip position="top" class="arrow-l-dark">
             <p
               class="truncate w-60 underline decoration-dotted decoration-primary-600"
             >
@@ -454,6 +468,13 @@ onMounted(() => {
           </x-tag>
 
           <ItemToggler
+            v-if="
+              hasAnyRole([
+                rolesEnum.Admin,
+                rolesEnum.LeadPool,
+                rolesEnum.Engineering,
+              ])
+            "
             :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
             :disabled="!canManage"
             :id="id"
@@ -518,7 +539,10 @@ onMounted(() => {
       @update:model-value="onConfirmClose($event)"
     >
       <template #header> Status Change </template>
-      <p>Are you sure you want to change {{ confirmModal.title }} status?</p>
+      <p>
+        Are you sure you want to change
+        <strong>{{ confirmModal.title }}</strong> status?
+      </p>
       <template #actions>
         <div class="text-right space-x-4">
           <x-button size="sm" ghost @click.prevent="onConfirmClose(false)">
@@ -535,7 +559,7 @@ onMounted(() => {
 
 <style>
 .labox {
-  @apply rounded-lg bg-white shadow-md p-4 border-l-4 border-primary-500 text-center;
+  @apply rounded-lg bg-white shadow-md p-4 border-b-4 border-primary-500 text-center;
 }
 
 .labox h3 {
