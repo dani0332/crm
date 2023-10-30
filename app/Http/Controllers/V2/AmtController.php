@@ -8,6 +8,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
@@ -123,7 +124,7 @@ class AmtController extends Controller
         if (isset($request->created_at_start) && $request->created_at_start != '' && isset($request->created_at_end) && $request->created_at_end != '') {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $data->whereBetween(DB::raw('DATE(bqr.created_at)'), [$dateFrom, $dateTo]);
+            $data->whereBetween('bqr.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->last_name) && $request->last_name != '') {
             $data->where('bqr.last_name', 'like', '%'.$request->last_name.'%');
@@ -233,6 +234,7 @@ class AmtController extends Controller
     {
         $record = BusinessQuote::with(
             'advisor',
+            'previousAdvisor',
             'businessQuoteRequestDetail.lostReason'
         )->where([
             'uuid' => $id,
@@ -240,6 +242,9 @@ class AmtController extends Controller
         ])->first();
         abort_if(! $record, 404);
 
+        $data = $record->toArray();
+        $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
+        $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
@@ -254,6 +259,8 @@ class AmtController extends Controller
             'typeCode' => quoteTypeCode::GroupMedical,
             'lostReasons' => $lostReasons,
             'quoteStatuses' => $quoteStatuses,
+            'modelType' => QuoteTypes::BUSINESS,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::GMManager),
             'quoteStatusEnum' => QuoteStatusEnum::asArray(),
             'customerAdditionalContacts' => $customerAdditionalContacts,
         ]);
