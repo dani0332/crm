@@ -176,7 +176,7 @@ class CustomerRepository extends BaseRepository
                 ->union($travelQuotes)
                 ->union($homeQuotes)
                 ->union($businessQuotes)
-                ->union($carQuotes)->simplePaginate();
+                ->union($carQuotes)->simplePaginate()->withQueryString();
         }
 
         return $allQuotes;

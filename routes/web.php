@@ -10,6 +10,7 @@ use App\Http\Controllers\AllocationThresholdController;
 use App\Http\Controllers\AMLController;
 use App\Http\Controllers\AMTController;
 use App\Http\Controllers\AuditableController;
+use App\Http\Controllers\BulkEmailProcessController;
 use App\Http\Controllers\BusinessQuoteController;
 use App\Http\Controllers\CarLeadAllocationController;
 use App\Http\Controllers\ClaimController;
@@ -153,7 +154,11 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
             Route::resource('quotes/life', LifeQuoteController::class)->names(generateRouteNames('life-quotes'));
         }
 
-        Route::resource('customer', V2CustomerController::class)->names(generateRouteNames('customers'));
+        Route::get('customer', [V2CustomerController::class, 'index'])->name('customers-list');
+        Route::get('customer/{uuid}',[V2CustomerController::class, 'show'])->name('customers-show');
+        Route::get('customer/{uuid}/edit', [V2CustomerController::class, 'edit'])->name('customers-edit');
+        Route::put('customer/{uuid}', [V2CustomerController::class, 'update'])->name('customers-update');
+
         Route::get('quotes/car-sold', [\App\Http\Controllers\V2\CarQuoteController::class, 'getCarSoldQuotes'])->name('car-sold-list');
         Route::get('quotes/car-uncontactable', [\App\Http\Controllers\V2\CarQuoteController::class, 'getCarUncontactableQuotes'])->name('car-uncontactable-list');
 
