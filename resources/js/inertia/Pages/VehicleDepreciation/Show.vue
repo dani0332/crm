@@ -7,8 +7,8 @@ defineProps({
 });
 
 const page = usePage();
-const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 </script>
 <template>
   <Head title="Vehicle Depreciation Detail" />
