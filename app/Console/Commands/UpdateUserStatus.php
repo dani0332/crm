@@ -78,7 +78,7 @@ class UpdateUserStatus extends Command
 
                 $unAvailableTime = now()->subHours(2);
 
-                $offlineTime = now()->subMinutes(5);
+                $offlineTime = now()->subSeconds($userInactiveThreshold);
 
                 $newStatus = $currentUserStatus;
 

@@ -2,7 +2,6 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
-use App\Events\UserStatusChanged;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -95,14 +94,6 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
     });
 }
-
-Route::get('test-broadcast', function () {
-    event(new UserStatusChanged(17, 1));
-
-    return 'Event has been sent!';
-});
-
-Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
@@ -231,6 +222,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
+    Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
