@@ -4,7 +4,6 @@ namespace App\Traits;
 
 use App\Enums\FilterTypes;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 trait FilterCriteria
 {
