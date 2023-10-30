@@ -36,7 +36,7 @@ class Kernel extends ConsoleKernel
         $schedule
             ->command('UpdateUserStatus:cron')->everyMinute()->onOneServer()->withoutOverlapping(1);
 
-        $schedule->command('Dtt')->timezone('Asia/Dubai')->everyFifteenMinutes()->onOneServer()->withoutOverlapping(1);
+        $schedule->command('Dtt')->timezone('Asia/Dubai')->everyThirtyMinutes()->onOneServer()->withoutOverlapping(1);
         $schedule->command('Dtt:followup')->timezone('Asia/Dubai')->daily()->onOneServer()->withoutOverlapping(1)->at('9:00');
 
         //$schedule->job(new LeadAllocationJob)->everyMinute()->withoutOverlapping(1)->onOneServer();
@@ -74,7 +74,7 @@ class Kernel extends ConsoleKernel
      */
     protected function commands()
     {
-        $this->load(__DIR__.'/Commands');
+        $this->load(__DIR__ . '/Commands');
 
         require base_path('routes/console.php');
     }
