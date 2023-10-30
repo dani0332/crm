@@ -139,6 +139,7 @@ const travelFields = computed(() => {
     'previous_policy_expiry_date',
     'policy_start_date',
     'renewal_batch',
+    'transapp_code'
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -1073,7 +1074,7 @@ onMounted(() => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-field
+          <!-- <x-field
             label="TRANSAPP CODE"
             v-if="
               leadStatusForm.leadStatus ==
@@ -1090,7 +1091,7 @@ onMounted(() => {
               class="w-full"
               :error="leadStatusForm.errors.trans_code"
             />
-          </x-field>
+          </x-field> -->
           <x-field
             label="LOST REASON"
             v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"

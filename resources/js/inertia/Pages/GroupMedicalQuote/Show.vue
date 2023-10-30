@@ -263,10 +263,10 @@ const historyDataTable = [
             <dd>{{ quote.next_followup_date }}</dd>
           </div>
 
-          <div class="grid sm:grid-cols-2">
+          <!-- <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRANSAPP CODE</dt>
             <dd>{{ quote.transapp_code }}</dd>
-          </div>
+          </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">SOURCE</dt>
             <dd>{{ quote.source }}</dd>
@@ -394,7 +394,7 @@ const historyDataTable = [
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-input
+          <!-- <x-input
             v-if="
               leadStatusForm.leadStatus == quoteStatusEnum.TransactionApproved
             "
@@ -406,7 +406,7 @@ const historyDataTable = [
             placeholder="TransApp Code is required"
             class="w-full"
             :error="leadStatusForm.errors.trans_code"
-          />
+          /> -->
           <x-select
             v-if="leadStatusForm.leadStatus == quoteStatusEnum.Lost"
             v-model="leadStatusForm.lostReason"

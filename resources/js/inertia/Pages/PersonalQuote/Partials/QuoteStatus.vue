@@ -87,7 +87,7 @@ const allowStatusUpdate = computed(() => {
         </div>
       </div>
       <div class="w-full md:w-2/3">
-        <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.TransactionApproved">
+        <!-- <x-field label="TransApp Code" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.TransactionApproved">
           <x-input
             v-model="quoteStatusForm.transapp_code"
             placeholder="TransApp Code is required"
@@ -95,10 +95,10 @@ const allowStatusUpdate = computed(() => {
             :disabled="allowStatusUpdate"
             :error="quoteStatusForm.errors.transapp_code"
           />
-        </x-field>
+        </x-field> -->
         <x-field label="Lost Reason" required v-if="quoteStatusForm.quote_status_id == props.quoteStatusEnum.Lost">
-          <x-select            
-            v-model="quoteStatusForm.lost_reason_id"            
+          <x-select
+            v-model="quoteStatusForm.lost_reason_id"
             :options="
               lostReasons?.map(item => ({
                 value: item.id,

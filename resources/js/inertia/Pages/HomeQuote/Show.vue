@@ -516,7 +516,7 @@ const policyDetails = useForm({
                 class="w-full"
               />
             </x-field>
-            <x-field
+            <!-- <x-field
               label="TransApp Code"
               v-if="leadStatusForm.leadStatus == 15"
             >
@@ -526,7 +526,7 @@ const policyDetails = useForm({
                 class="w-full"
                 :error="leadStatusForm.errors.trans_code"
               />
-            </x-field>
+            </x-field> -->
             <x-field label="Lost Reason" v-if="leadStatusForm.leadStatus == 17">
               <x-select
                 v-model="leadStatusForm.lostReason"

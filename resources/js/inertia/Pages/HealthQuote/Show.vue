@@ -1298,10 +1298,10 @@ onMounted(() => {
             <dt class="font-medium">LOST REASON</dt>
             <dd>{{ quote.lost_reason }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
+          <!-- <div class="grid sm:grid-cols-2">
             <dt class="font-medium">TRANSAPP CODE</dt>
             <dd>{{ quote.transapp_code }}</dd>
-          </div>
+          </div> -->
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DEVICE</dt>
             <dd>{{ quote.device }}</dd>
@@ -1599,14 +1599,14 @@ onMounted(() => {
               placeholder="Lead Status"
               class="w-full"
             />
-            <x-input
+            <!-- <x-input
               v-if="leadStatusForm.leadStatus == 15"
               v-model="leadStatusForm.trans_code"
               label="TransApp Code"
               placeholder="TransApp Code is required"
               class="w-full"
               :error="leadStatusForm.errors.trans_code"
-            />
+            /> -->
             <x-select
               v-if="leadStatusForm.leadStatus == 17"
               v-model="leadStatusForm.lostReason"

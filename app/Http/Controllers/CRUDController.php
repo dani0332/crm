@@ -1323,11 +1323,11 @@ class CRUDController extends Controller
                 'lostReason' => 'required',
             ]);
         }
-        if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
-            $this->validate($request, [
-                'trans_code' => 'required',
-            ]);
-        }
+        // if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
+        //     $this->validate($request, [
+        //         'trans_code' => 'required',
+        //     ]);
+        // }
         // Car Quote: validate next_followup_date
         if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)) {
             $lead = $this->carQuoteService->getEntityPlain($request->leadId);

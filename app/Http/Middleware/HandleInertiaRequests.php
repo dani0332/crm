@@ -278,66 +278,66 @@ class HandleInertiaRequests extends Middleware
         //     });
         // }
 
-        if (auth()->user()->can(PermissionsEnum::TransAppList)) {
-            $nav = $nav->add('Trans App', '', function (Section $section) {
-                $section
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
-                        'Search Transaction',
-                        '/transapp/home',
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppCreate),
-                        'Create Transaction',
-                        '/transapp/transaction/create',
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppEdit),
-                        'Cancel & Re-Issue Transaction',
-                        '/transapp/re-issue-transaction',
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::TransAppEdit),
-                        'Cancel Transaction (without Re-Issue)',
-                        '/transapp/cancel-transaction',
-                        fn ($s) => $s->attributes(['icon' => 'box'])
-                    )
-                    ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']))
-                    ->addIf(
-                        auth()->user()->can(PermissionsEnum::CRMAdmin),
-                        'Admin',
-                        route('insurancecompany.index'),
-                        fn ($s) => $s
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::InsuranceCompanyList),
-                                'Insurance Companies',
-                                route('insurancecompany.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::ReasonList),
-                                'Reasons',
-                                route('reason.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::StatusList),
-                                'Status',
-                                route('status.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                            ->addIf(
-                                auth()->user()->can(PermissionsEnum::PaymentModeList),
-                                'Payment Modes',
-                                route('paymentmode.index'),
-                                fn ($s) => $s->attributes(['icon' => 'box'])
-                            )
-                    );
-            });
-        }
+        // if (auth()->user()->can(PermissionsEnum::TransAppList)) {
+        //     $nav = $nav->add('Trans App', '', function (Section $section) {
+        //         $section
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::TransAppCreate),
+        //                 'Search Transaction',
+        //                 '/transapp/home',
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::TransAppCreate),
+        //                 'Create Transaction',
+        //                 '/transapp/transaction/create',
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::TransAppEdit),
+        //                 'Cancel & Re-Issue Transaction',
+        //                 '/transapp/re-issue-transaction',
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::TransAppEdit),
+        //                 'Cancel Transaction (without Re-Issue)',
+        //                 '/transapp/cancel-transaction',
+        //                 fn ($s) => $s->attributes(['icon' => 'box'])
+        //             )
+        //             ->add('Transaction List', '/transapp/transaction', fn ($s) => $s->attributes(['icon' => 'box']))
+        //             ->addIf(
+        //                 auth()->user()->can(PermissionsEnum::CRMAdmin),
+        //                 'Admin',
+        //                 route('insurancecompany.index'),
+        //                 fn ($s) => $s
+        //                     ->addIf(
+        //                         auth()->user()->can(PermissionsEnum::InsuranceCompanyList),
+        //                         'Insurance Companies',
+        //                         route('insurancecompany.index'),
+        //                         fn ($s) => $s->attributes(['icon' => 'box'])
+        //                     )
+        //                     ->addIf(
+        //                         auth()->user()->can(PermissionsEnum::ReasonList),
+        //                         'Reasons',
+        //                         route('reason.index'),
+        //                         fn ($s) => $s->attributes(['icon' => 'box'])
+        //                     )
+        //                     ->addIf(
+        //                         auth()->user()->can(PermissionsEnum::StatusList),
+        //                         'Status',
+        //                         route('status.index'),
+        //                         fn ($s) => $s->attributes(['icon' => 'box'])
+        //                     )
+        //                     ->addIf(
+        //                         auth()->user()->can(PermissionsEnum::PaymentModeList),
+        //                         'Payment Modes',
+        //                         route('paymentmode.index'),
+        //                         fn ($s) => $s->attributes(['icon' => 'box'])
+        //                     )
+        //             );
+        //     });
+        // }
 
         if (auth()->user()->can(PermissionsEnum::CustomersList)) {
             $nav = $nav->add('Customers', '', function (Section $section) {

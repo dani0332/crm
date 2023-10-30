@@ -67,7 +67,7 @@ const tableHeader = [
   { text: 'CREATED DATE', value: 'created_at' },
   { text: 'LAST MODIFIED DATE', value: 'updated_at' },
   { text: 'DATE OF BIRTH', value: 'dob' },
-  { text: 'TRANSAPP CODE', value: 'transapp_code' },
+//   { text: 'TRANSAPP CODE', value: 'transapp_code' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'SOURCE', value: 'source' },
   { text: 'PRICE', value: 'premium' },

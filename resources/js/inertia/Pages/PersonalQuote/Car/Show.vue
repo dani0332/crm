@@ -1667,7 +1667,7 @@ const loadEmailEvents = email => {
               placeholder="Lead Status"
               class="w-full"
             />
-            <x-field
+            <!-- <x-field
               label="TransApp Code"
               required
               v-if="
@@ -1681,7 +1681,7 @@ const loadEmailEvents = email => {
                 :rules="[rules.isRequired]"
                 :error="leadStatusForm.errors.trans_code"
               />
-            </x-field>
+            </x-field> -->
             <x-field
               label="Lost Reason"
               required
