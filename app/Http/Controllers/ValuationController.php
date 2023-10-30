@@ -21,7 +21,10 @@ class ValuationController extends Controller
     {
         $carMakes = DB::table('car_make')->where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
 
-        return view('valuation.view', compact('carMakes'));
+        return inertia('Valuation/Car', [
+            'carMakes' => $carMakes,
+            'kenPath' => config('constants.KEN_API_ENDPOINT'),
+        ]);
     }
 
     public function carModelBasedOnCarMake(Request $request)
