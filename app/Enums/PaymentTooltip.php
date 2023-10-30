@@ -20,7 +20,8 @@ final class PaymentTooltip extends Enum
     const PAYMENT_MANAGEMENT_PAYMENT_ALLOCATION_STATUS = 'Indicates whether this payment is allocated to a specific invoice. This ensures that there\'s a clear record of invoicing for this payment.';
     const PAYMENT_MANAGEMENT_ACTION = 'Here, you can manage the payment details.Use \'Edit\' to modify payment information, \'View\' to see the entire payment setup, and \'Copy Link\' to share a direct payment link for clients preferring card payments.';
     const PAYMENT_MANAGEMENT_ADD_PAYMENT = 'Click this if you need to input a payment that was received outside our automated system. Ensure you have all necessary details and proofs when recording manually to maintain accuracy.';
-    
+    const PAYMENT_MANAGEMENT_ADD_PAYMENT_DIS = 'Payment already added; click \'Edit\' for changes.';
+
     const PAYMENT_ADD_DUPLICATE_FILES = 'You are uploading a file with the same name as another one. To avoid confusion, please rename the file or ensure it\'s the correct one. This way, we\'ll maintain a tidy and efficient document management process.';
     CONST PAYMENT_ADD_DELETE_DOCUMENT = 'Any uploaded documents cannot be deleted once the payment status marks as \'Paid\'.';
     //Main section
@@ -38,14 +39,25 @@ final class PaymentTooltip extends Enum
     const CREDIT_APPROVAL = 'This indicates a special payment arrangement where there isn\'t an immediate payment. Instead, the advisor seeks permission from higher-ups to issue the policy first, often due to specific circumstances or arrangements.
     ';
     const DISCOUNT_APPLICABLE = 'Is there a special discount? please specify its type here. Ensure that it has been approved before applying. If you\'re unclear about discounts, please contact your supervisor. ';
+    const DISCOUNT_APPLICABLE_VIEW = 'Is there a special discount applied? Check the specified type. Remember, any discounts should have prior approval. For clarity or if there are discrepancies with the discounts, consult your supervisor before making any decisions.';
+    
+    const DISCOUNT_REASON   = 'Please specify the primary reason for applying this discount. Be cautious: Any frequent or unwarranted discounts can impact our company\'s revenue and brand. Always ensure there\'s a valid justification before selecting a reason. Incorrect choices may come under managerial scrutiny and review.';
+    const DISCOUNT_VALUE   = 'Any reduction applied to the total price. Always ensure there\'s a valid reason for any discount given. It\'s the difference between the total price and the total amount that the client has to pay for.';
+    const TOTAL_AMOUNT_VIEW   = 'This is the final amount due from the client after subtracting discounts (if any) from the total price.';
     //Section 2    
     const PAYMENT_NO_2 = 'This refers to the sequence or installment number of the payment. It helps in tracking multiple payments for a lead.';
     const PAYMENT_METHOD = 'Select how the payment is being made. This could be through credit card, debit card, bank transfer, cheque, etc.';
     const TOTAL_AMOUNT = 'Input the final amount due, inclusive of VAT. However, remember that Life insurance policies are exempt from VAT.
     ';
     const DUE_DATE = 'Please specify the date by which the payment should be received. This helps in keeping track of timely collections.';
-    const DOCUMENTS = 'Either click to browse your computer or simply drag and drop the necessary files here. It\'s a quick way to attach your documents.
-    ';
+    const DOCUMENTS = 'Upload all relevant documents here. This can be proof of payment, discount approvals, credit approvals or related documents.';
+    const PAYMENT_METHOD_VIEW = 'Indicates how the payment was made. This could be via bank transfer, cheque, credit card, etc. Update this based on the client\'s chosen payment mode.';
+    const TOTAL_AMOUNT_SPLIT_VIEW = 'This is the final amount due from the client after subtracting discounts (if any) from the total price.';
+    const DUE_DATE_VIEW = 'The final date by which the payment should be received. It\'s essential for tracking overdue payments and managing collection efforts.';
+    const DOCUMENTS_VIEW = 'Review the uploaded documents in this section. They may include proof of payment, discount approvals, credit approvals, or other pertinent paperwork. Ensure all relevant documents are present for complete transparency.';
+    const CHECK_DETAILS = 'Enter the unique number found on the cheque. This is essential for tracking and verification purposes. Only fill this out if the payment method is \'cheque\'.';
+    const DOCUMENTS_UPLOAD = 'Either click to browse your computer or simply drag and drop the necessary files here. It\'s a quick way to attach your documents.';
+    CONST DOCUMENT_DELETE_ICON = 'Remove';
     // Collector dropdown list
     const COLLECTOR_LIST_BROKER    = 'Payment made directly to Insurancemarket.ae by the customer.';
     const COLLECTOR_LIST_INSURER   = 'Payment made directly to the insurer by the customer.';

@@ -1693,6 +1693,10 @@ class CRUDController extends Controller
 
             if(!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) return;
 
+            $masterPaymentStatus = PaymentStatusEnum::NEW;
+            if($request->payment_methods==PaymentMethodsEnum::CreditApproval){
+                $masterPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
+            }
             $paymentInformation = [
                 'total_price' => $request->total_price,
                 'notes' => !empty($request->notes) ? $request->notes : null,
@@ -1708,7 +1712,7 @@ class CRUDController extends Controller
                 'collection_date' => $request->collection_date,
                 'discount_value' => $request->discount_value,
                 'payment_methods_code' => $request->payment_methods,
-                'payment_status_id' => PaymentStatusEnum::NEW,
+                'payment_status_id' => $masterPaymentStatus,
                 'plan_id' => ! empty($request->plan_id) ? $request->plan_id : null,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'created_by' => $request->user()->id,
@@ -1810,14 +1814,20 @@ class CRUDController extends Controller
                 'payment_methods_code' => $request->payment_methods,
                 'insurance_provider_id' => ! empty($request->insurance_provider_id) ? $request->insurance_provider_id : null,
                 'updated_by' => $request->user()->id,
-            ];            
-     
+            ];           
+
             if ($request->reference) {
                 $paymentInformation['reference'] = $request->reference;
             }
             $payment = Payment::where('code', $request->paymentCode)->first();
             if (! $payment) {
                 return back()->with('message', 'Payment record not found');
+            }
+
+            if($request->payment_methods==PaymentMethodsEnum::CreditApproval ){
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::CREDIT_APPROVED;
+            } elseif($payment->payment_status_id==PaymentStatusEnum::CREDIT_APPROVED){
+                $paymentInformation['payment_status_id'] = PaymentStatusEnum::NEW;
             }
             $payment->update($paymentInformation);
 
