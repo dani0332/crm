@@ -196,6 +196,20 @@ const dynamicTableHeader = computed(() => {
   return defaultTableHeader;
 });
 
+const kycDetails = computed(() => {
+  return props.policy.customer?.profile_data?.map(item => {
+    if (item.title.includes('Profession or Job Title ')) {
+      return { ...item, title: 'KYC Requirement - Profession or Job Title' };
+    }
+    if (item.title.includes('Name of Organization ')) {
+      return { ...item, title: 'KYC Requirement - Name of Organization' };
+    }
+    if (item.title.includes('Exact Job Title')) {
+      return { ...item, title: 'KYC Requirement - Exact Job Title' };
+    }
+  });
+});
+
 const moveToImcrm = async (policyNumber, validateAll = true) => {
   try {
     const response = await axios.post('/legacy-policy/move-to-imcrm', {
@@ -366,19 +380,13 @@ const moveToImcrm = async (policyNumber, validateAll = true) => {
             <dt class="font-medium">Phone Number</dt>
             <dd>{{ policy.customer?.phone }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">
-              KYC Requirement - Profession or Job Title
-            </dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">KYC Requirement - Name of Organisation</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">KYC Requirement - Exact Job Title</dt>
-            <dd>{{ quote?.pet_quote?.policy_number }}</dd>
+          <div v-for="profile_data in kycDetails">
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">
+                {{ profile_data?.title }}
+              </dt>
+              <dd>{{ profile_data?.value }}</dd>
+            </div>
           </div>
         </dl>
       </div>
