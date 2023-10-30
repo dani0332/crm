@@ -1691,7 +1691,7 @@ class CRUDController extends Controller
 
         if (auth()->user()->hasRole(RolesEnum::BetaUser)){
 
-            //dd($request->all());
+            if(!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) return;
 
             $paymentInformation = [
                 'total_price' => $request->total_price,
@@ -1783,6 +1783,7 @@ class CRUDController extends Controller
     public function splitPaymentUpdate(Request $request)
     {
         //dd($request->all());
+        if(!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) return;
         $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
         return back()->with('success', $successMessage);
     }
@@ -1791,6 +1792,7 @@ class CRUDController extends Controller
     {
         
         if (auth()->user()->hasRole(RolesEnum::BetaUser)){
+            if(!(Auth::user()->hasRole(RolesEnum::CarAdvisor))) return;
             $paymentInformation = [
                 'total_price' => $request->total_price,
                 'notes' => !empty($request->notes) ? $request->notes : null,

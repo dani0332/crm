@@ -29,8 +29,10 @@ final class PaymentTooltip extends Enum
     const COLLECTED_BY = 'Who\'s collecting the payment? Choose between the Broker or the Insurer. If unsure, consult your supervisor.
 ';
     const PROVIDER_NAME = 'Which insurance company is this policy from? Find and select the name from our list.';
+    const PROVIDER_NAME_VIEW = 'Name of the insurance company this insurance policy will be issued from.';
     const FREQUENCY = 'How often is the payment made? Options might include once upfront, twice a year, and so on. This sets the payment schedule.';
     const PLAN_NAME = 'Every insurer has different plans. Input the specific one for this lead.';
+    const PLAN_NAME_VIEW = 'The plan name of the insurance policy to be issued by the insurance company.';
     const PAYMENT_NO = 'This refers to the sequence or installment number of the payment. It helps in tracking multiple payments for a lead.';
     const PAYMENT_STATUS = 'Tracks the progression of the payment. \'New\' indicates a fresh transaction, while \'Paid\' confirms the receipt of funds. Update this status as the payment process advances.';
     const CREDIT_APPROVAL = 'This indicates a special payment arrangement where there isn\'t an immediate payment. Instead, the advisor seeks permission from higher-ups to issue the policy first, often due to specific circumstances or arrangements.

@@ -662,7 +662,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   paymentMethodsForm.collection_type= payment.collection_type;  
   paymentMethodsForm.payment_no= payment.total_payments;
   paymentMethodsForm.frequency= payment.frequency;
-  paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'none';
+  paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';
   
   showDiscountOptions.value = true;
   paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';    
@@ -721,7 +721,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
       }
     }
   }
-
+  
   if (paymentMethodsForm.status == 'edit') {
     if ( isAnyPaid ) {
       isFieldReadonly.value = true;    
@@ -730,8 +730,9 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
     }
   }
   
-
+ 
   console.log('azhar523='+paymentMethodsModels.value);
+  
   createPaymentModal.value = true;
 };
 
@@ -1055,14 +1056,14 @@ const providerId = computed(() => {
         <table>
           <thead class="vue3-easy-data-table__header">
             <tr>
-              <th style="text-align: center;" ><x-tooltip>
+              <th style="text-align: center; width: 80px;" ><x-tooltip>
                   Payment No
                   <template #tooltip>
                       <span class="custom-tooltip-content">{{ paymentTooltipEnum.PAYMENT_MANAGEMENT_PAYMENT_NO }}</span>
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Payment Ref ID
                   <template #tooltip>
@@ -1070,7 +1071,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Collection Date
                   <template #tooltip>
@@ -1078,7 +1079,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Due Date
                   <template #tooltip>
@@ -1086,7 +1087,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Payment Method
                   <template #tooltip>
@@ -1094,7 +1095,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Total Price
                   <template #tooltip>
@@ -1102,7 +1103,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Discount Value
                   <template #tooltip>
@@ -1110,7 +1111,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Total Amount
                   <template #tooltip>
@@ -1118,7 +1119,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Collected Amount
                   <template #tooltip>
@@ -1126,7 +1127,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Payment Status
                   <template #tooltip>
@@ -1134,7 +1135,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th class="inner-th-class">
                 <x-tooltip>
                   Payment Allocation Status
                   <template #tooltip>
@@ -1142,7 +1143,7 @@ const providerId = computed(() => {
                   </template>
                 </x-tooltip>
               </th>
-              <th>
+              <th style="min-width: 200px;">
                 <x-tooltip>
                   Action
                   <template #tooltip>
@@ -1172,7 +1173,7 @@ const providerId = computed(() => {
               <td>{{ formatAmount(item.discount_value) }}</td>
               <td>{{ formatAmount(item.total_amount) }}</td>
               <td>{{ formatAmount(item.captured_amount) }}</td>
-              <td>{{ item.payment_status.text }}</td>
+              <td>{{ item.payment_status.text.toLowerCase() }}</td>
               <td>{{ item.payment_status_message }}</td>             
               <td>
                 <div class="flex gap-2">
@@ -1196,7 +1197,7 @@ const providerId = computed(() => {
               <td></td>
               <td>{{ formatAmount(splitPayment.payment_amount) }}</td>
               <td>{{ (splitPayment.collection_amount>0) ? formatAmount(splitPayment.collection_amount):'' }}</td>
-              <td>{{ splitPayment.payment_status.text }}</td>
+              <td>{{ splitPayment.payment_status.text.toLowerCase() }}</td>
               <td></td>
               <td>
                 <x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no)" outlined >View</x-button>
@@ -1289,7 +1290,8 @@ const providerId = computed(() => {
                 />
             </x-field>
             <template #tooltip>
-                <span>{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
+                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
+                <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
             </template>    
           </x-tooltip>
           
@@ -1325,13 +1327,14 @@ const providerId = computed(() => {
                 />
             </x-field>
             <template #tooltip>
-                <span>{{ paymentTooltipEnum.PLAN_NAME }}</span>
+                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>
+                <span v-else >{{ paymentTooltipEnum.PLAN_NAME }}</span>
             </template>
           </x-tooltip>  
 
           <x-tooltip>
             <x-field label="PAYMENT NO" class="w-full" required>
-              <span v-if="isFieldReadonly">{{ totalPayments.find(item => item.value === paymentMethodsForm.payment_no).label }}</span>              
+              <span v-if="isFieldReadonly">{{ paymentMethodsForm.payment_no }}</span>              
               <select
                   v-if="!isFieldReadonly"
                   class="custom-select"
@@ -1353,7 +1356,7 @@ const providerId = computed(() => {
           
           <x-tooltip>
             <x-field label="PAYMENT STATUS" class="w-full">
-              <span v-if="isFieldReadonly">{{ masterPaymentStatus }}</span>
+              <span v-if="isFieldReadonly">{{ masterPaymentStatus.toLowerCase() }}</span>
               <x-input
                   v-if="!isFieldReadonly"
                   class="w-full"
@@ -1366,9 +1369,9 @@ const providerId = computed(() => {
             </template>
           </x-tooltip>
           
-          <x-tooltip v-if="paymentMethodsForm.credit_approval!=='none'">
+          <x-tooltip>
             <x-field label="CREDIT APPROVAL" class="w-full">
-              <span v-if="isFieldReadonly">{{ creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval).label }}</span>
+              <span v-if="isFieldReadonly">{{ creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval)?.label || 'Approval Reason' }}</span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.credit_approval!=''" class="close-icon"  @mousedown.stop="resetCreditApproval()">
                 &#10006; 
@@ -1467,7 +1470,7 @@ const providerId = computed(() => {
             
             <x-tooltip v-if="isDiscountEnabled || isFieldReadonly">
               <x-field label="TOTAL AMOUNT" class="w-full">
-                <span v-if="isFieldReadonly">{{ totalAmount }}</span>
+                <span v-if="isFieldReadonly">{{ formatAmount(totalAmount) }}</span>
                 <x-input
                     v-if="!isFieldReadonly"
                     class="w-full"
@@ -1558,7 +1561,7 @@ const providerId = computed(() => {
               <div class="w-1/6 px-2 text-center">{{ splitPaymentNo }}</div>
 
               <div class="w-1/5 px-2">
-                  {{ paymentMethodsModels[splitPaymentNo] }}
+                  {{ getPaymentTypeLabel(paymentMethodsModels[splitPaymentNo]) }}
                   <p>{{ checkDetailModels[splitPaymentNo] }}</p>                    
               </div>
 
@@ -1632,10 +1635,10 @@ const providerId = computed(() => {
 
             <div class="flex w-full custombreak pt-1 pb-5" >
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_status_info !== null ? splitPaymentRecord.cc_payment_status_info : 'n/a' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : 'n/a' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : 'n/a' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : 'n/a' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_status_info !== null ? splitPaymentRecord.cc_payment_status_info : '' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : '' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : '' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : '' }}</div>
             </div> 
 
             <div class="flex w-full custombreak" >
@@ -1663,7 +1666,7 @@ const providerId = computed(() => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    PAYMENT INVOICE LINK STATUS
+                    PAYMENT ALLOCATION STATUS
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS }}</span>
@@ -1684,9 +1687,9 @@ const providerId = computed(() => {
 
             <div class="flex w-full custombreak pb-5" >
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : 'n/a' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_status.text }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.invoice_link_status !== null ? splitPaymentRecord.invoice_link_status : 'n/a' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : '' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_status.text.toLowerCase() }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.invoice_link_status !== null ? splitPaymentRecord.invoice_link_status : '' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? splitPaymentRecord.collection_amount : '0.00' }}</div>
             </div>            
 
@@ -2052,8 +2055,8 @@ const providerId = computed(() => {
   padding: 20px;
   border-top: 1px solid #eee;
 }
-table th {
-  min-width: 195px;
+.inner-th-class {
+  min-width: 160px;
 }
 /* Add your custom styling here */
 .custom-select {
