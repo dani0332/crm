@@ -14,6 +14,7 @@ defineProps({
 });
 
 const page = usePage();
+const { isRequired } = useRules();
 const notification = useToast();
 const params = useUrlSearchParams('history');
 const hasRole = role => useHasRole(role);
@@ -165,7 +166,7 @@ const filters = reactive({
   email: '',
   mobile_no: '',
   quote_status_id: [],
-  created_at: '',
+  created_at: page.props.createdAtStart,
   currently_insured_with: '',
   renewal_expiry_date: '',
   is_ecommerce: '',
@@ -180,7 +181,7 @@ const filters = reactive({
   advisor_id: [],
   advisor_assigned_date_end: '',
   renewal_expiry_date_end: '',
-  created_at_end: '',
+  created_at_end: page.props.createdAtEnd,
   page: 1,
 });
 
@@ -348,11 +349,13 @@ onMounted(() => {
                     v-model="filters.created_at"
                     name="created_at"
                     label="Created Date Start"
+                    :rules="[isRequired]"
                 />
                 <DatePicker
                     v-model="filters.created_at_end"
                     name="created_at_end"
                     label="Created Date End"
+                    :rules="[isRequired]"
                 />
                 <x-input
                     v-model="filters.email"
