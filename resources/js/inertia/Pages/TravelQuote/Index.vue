@@ -41,7 +41,9 @@ const filters = reactive({
   payment_status_id: '',
   page: 1,
   direction_code:'',
-  coverage_code:''
+  coverage_code:'',
+  previous_quote_policy_number: '',
+  renewal_batch: ''
 });
 
 const loader = reactive({
@@ -60,8 +62,8 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'code' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-    { text: 'Travel Type', value: 'direction_code' },
-    { text: 'Travel Coverage', value: 'coverage_code' },
+  { text: 'Travel Type', value: 'direction_code' },
+  { text: 'Travel Coverage', value: 'coverage_code' },
   { text: 'LEAD STATUS', value: 'quote_status_id_text' },
   { text: 'ADVISOR', value: 'advisor_id_text' },
   { text: 'CREATED DATE', value: 'created_at' },
@@ -77,6 +79,8 @@ const tableHeader = [
   { text: 'EXPIRY DATE', value: 'expiry_date' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
   { text: 'PAYMENT STATUS', value: 'payment_status_id_text' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const paymentStatusOptions = computed(() => {
@@ -361,13 +365,29 @@ onMounted(() => {
 
           />
         </x-field>
-          <x-field label="Travel Coverage" required>
-              <x-select
-                  v-model="filters.coverage_code"
-                  :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
-                  class="w-full"
-              />
-          </x-field>
+        <x-field label="Travel Coverage" required>
+          <x-select
+            v-model="filters.coverage_code"
+            :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
+            class="w-full"
+          />
+        </x-field>
+        <x-input
+            v-model="filters.previous_quote_policy_number"
+            type="text"
+            name="previous_quote_policy_number"
+            label="Previous Policy Number"
+            class="w-full"
+            placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+            v-model="filters.renewal_batch"
+            type="text"
+            name="renewal_batch"
+            label="Renewal Batch"
+            class="w-full"
+            placeholder="Search by Renewal Batch"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">
