@@ -26,7 +26,7 @@ class CentralController extends Controller
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
 
-        if (! empty($response['errors'])) {
+        if (!empty($response['errors'])) {
             return redirect()->back()->withErrors($response['errors']);
         }
 
@@ -35,7 +35,7 @@ class CentralController extends Controller
 
     public function exportLeads(Request $request, $quoteType)
     {
-        if (! $quoteType) {
+        if (!$quoteType) {
             return abort(404);
         }
 
@@ -66,7 +66,7 @@ class CentralController extends Controller
             QuoteTypes::CYCLE->value,
             QuoteTypes::JETSKI->value,
         ])) {
-            return Excel::download(new PersonalQuotesExport, $quoteType.'_leads.xlsx');
+            return Excel::download(new PersonalQuotesExport, $quoteType . '_leads.xlsx');
         }
 
         switch (ucfirst($quoteType)) {
@@ -94,7 +94,7 @@ class CentralController extends Controller
     {
         (new CentralService())->assignLeadToAdvisor($leadAssignRequest);
 
-        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType).' Leads has been Assigned');
+        return redirect()->back()->with('success', ucfirst($leadAssignRequest->modelType) . ' Leads has been Assigned');
     }
 
     /**
@@ -104,7 +104,7 @@ class CentralController extends Controller
     {
         $quote = $this->getQuoteObject($request->model_type, $request->quote_id);
 
-        if (! $quote) {
+        if (!$quote) {
             return redirect()->back()->with('error', 'Error Updating Policy Details.');
         }
 
@@ -113,5 +113,12 @@ class CentralController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+    }
+
+    public function updateBookingPolicy(Request $request)
+    {
+        dd($request->all());
+
+        return redirect()->back()->with('success', 'Booking Status has been updated.');
     }
 }

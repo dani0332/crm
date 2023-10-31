@@ -66,11 +66,14 @@ const policyDetailsForm = useForm({
 });
 
 const caculateVatAmount = () => {
-  if (policyDetailsForm.amount) {
+  if (policyDetailsForm.amount > 0) {
     let vat = policyDetailsForm.amount * (0.05).toFixed(2);
     policyDetailsForm.vat = vat.toFixed(2);
     policyDetailsForm.amount_with_vat =
       Number(vat) + Number(policyDetailsForm.amount);
+  } else {
+    policyDetailsForm.vat = '';
+    policyDetailsForm.amount_with_vat = '';
   }
 };
 
@@ -117,11 +120,13 @@ const onUpdatePolicyDetails = () => {
       <div class="w-full md:w-1/2">
         <x-textarea
           v-model="policyDetailsForm.price_vat_notapplicable"
-          type="text"
+          type="number"
           label="Price (VAT NOT APPLICABLE)"
           placeholder="Price (VAT NOT APPLICABLE)"
           class="w-full"
-          :disabled="!policyDetailsState.isEditing"
+          :disabled="
+            !policyDetailsState.isEditing || policyDetailsForm.amount > 0
+          "
         />
       </div>
       <div class="w-full md:w-1/2">
@@ -141,11 +146,14 @@ const onUpdatePolicyDetails = () => {
         <x-textarea
           v-model="policyDetailsForm.amount"
           @change="caculateVatAmount"
-          type="text"
+          type="number"
           label="Price (VAT APPLICABLE)"
           placeholder="Price (VAT APPLICABLE)"
           class="w-full"
-          :disabled="!policyDetailsState.isEditing"
+          :disabled="
+            !policyDetailsState.isEditing ||
+            policyDetailsForm.price_vat_notapplicable > 0
+          "
         />
       </div>
       <div class="w-full md:w-1/2">

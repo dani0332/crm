@@ -25,7 +25,12 @@ const bp = reactive({
 });
 
 const bpForm = useForm({
-  quote_policy_number: '',
+  insurer_invoice_date: '',
+  insurer_tax_invoice_number: '',
+  insurer_commmission_invoice_number: '',
+  commission_vat_not_applicable: '',
+  commission_vat_applicable: '',
+  commission_percentage: '',
 });
 const onUpdateBpDetails = () => {
   bpForm.post('/quotes/update-booking-policy', {
@@ -34,6 +39,21 @@ const onUpdateBpDetails = () => {
       policyDetailsState.isEditing = false;
     },
   });
+};
+
+console.log('quote' + JSON.stringify(props.quote));
+
+const notVatCommission = () => {};
+
+const vatCommission = () => {
+  if (bpForm.commission_vat_applicable > 0) {
+    bpForm.commission_percentage = (
+      (bpForm.commission_vat_applicable / props.quote?.price_without_vat) *
+      100
+    ).toFixed(2);
+  } else {
+    bpForm.commission_percentage = '';
+  }
 };
 </script>
 
@@ -60,7 +80,7 @@ const onUpdateBpDetails = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Transaction Payment Status</dt>
-          <dd>aaa</dd>
+          <dd>Not Paid</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Sub Class</dt>
@@ -86,7 +106,7 @@ const onUpdateBpDetails = () => {
           <dt class="font-medium">Insurer Tax Invoice Number</dt>
           <dd>
             <x-input
-              v-model="bp.insurer_invoice_date"
+              v-model="bpForm.insurer_tax_invoice_number"
               placeholder="Insurer Tax Invoice Number"
               class="w-full"
               :disabled="!bp.isEditing"
@@ -101,7 +121,7 @@ const onUpdateBpDetails = () => {
           <dt class="font-medium">Insurer Commmission Invoice Number</dt>
           <dd>
             <x-input
-              v-model="bp.insurer_commmission_invoice_number"
+              v-model="bpForm.insurer_commmission_invoice_number"
               placeholder="Insurer Tax Invoice Number"
               class="w-full"
               :disabled="!bp.isEditing"
@@ -110,11 +130,21 @@ const onUpdateBpDetails = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Commmission %</dt>
-          <dd>aaa</dd>
+          <dd>{{ bpForm.commission_percentage }}</dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Commmission (VAT NOT APPLICABLE)</dt>
-          <dd>aaa</dd>
+          <dd>
+            <x-input
+              v-model="bpForm.commission_vat_not_applicable"
+              @change="notVatCommission"
+              placeholder="Commmission VAT NOT APPLICABLE"
+              class="w-full"
+              :disabled="
+                !bp.isEditing || bpForm.commission_vat_applicable !== ''
+              "
+            />
+          </dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">VAT on commission</dt>
@@ -124,10 +154,13 @@ const onUpdateBpDetails = () => {
           <dt class="font-medium">Commmission VAT APPLICABLE</dt>
           <dd>
             <x-input
-              v-model="bp.commission_vat_applicable"
+              v-model="bpForm.commission_vat_applicable"
+              @change="vatCommission"
               placeholder="Commmission VAT APPLICABLE"
               class="w-full"
-              :disabled="!bp.isEditing"
+              :disabled="
+                !bp.isEditing || bpForm.commission_vat_not_applicable !== ''
+              "
             />
           </dd>
         </div>
