@@ -200,4 +200,11 @@ trait TeamHierarchyTrait
 
         return $users;
     }
+
+    public function userHaveProduct($userId, $productId)
+    {
+        $user = User::with('products')->where('id', $userId)->first();
+
+        return $user && $user->products->contains('product_id', $productId);
+    }
 }

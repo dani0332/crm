@@ -2,7 +2,10 @@
 
 namespace App\Jobs;
 
+use App\Enums\TiersEnum;
 use App\Models\CarQuote;
+use App\Models\Tier;
+use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
@@ -67,44 +70,25 @@ class SendOCBEmailJob implements ShouldQueue
 
         try {
             $carQuote = CarQuote::where('uuid', $this->quoteUuid)->firstOrFail();
+
             $listQuotePlans = $this->carQuoteService->getPlans($this->quoteUuid, true, true);
+
             $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+
             $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
-            if (isset($carQuote->advisor_id)) {
-                $advisor = $this->userService->getUserById($carQuote->advisor_id);
-                $advisorName = $advisor->name;
-                $advisorEmail = $advisor->email;
-                $advisorMobile = $advisor->mobile_no;
-                $advisorLandline = $advisor->landline_no;
+            $previousAdvisor = null;
+            if (! empty($carQuote->previous_advisor_id)) {
+                $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
             }
 
-            // Send Email Data
-            $carMake = $this->lookupService->getCarMake($carQuote->car_make_id);
-            $carModel = $this->lookupService->getCarModel($carQuote->car_model_id);
-            $emailData = (object) [
-                'quoteId' => $carQuote->id,
-                'templateId' => $emailTemplateId,
-                'quoteCdbId' => $carQuote->code,
-                'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
-                'customerEmail' => $carQuote->email,
-                'previousPolicyExpiryDate' => $carQuote->previous_policy_expiry_date ?? null,
-                'currentlyInsuredWith' => $carQuote->currently_insured_with,
-                'carMake' => $carMake->text ?? null,
-                'carModel' => isset($carModel->text) ? $carModel->text : null,
-                'carManufactureYear' => $carQuote->year_of_manufacture,
-                'previousPolicyNumber' => $carQuote->previous_quote_policy_number ?? null,
-                'advisorName' => $advisorName ?? null,
-                'advisorEmailAddress' => $advisorEmail ?? null,
-                'advisorMobileNo' => $advisorMobile ?? null,
-                'advisorLandlineNo' => $advisorLandline ?? null,
-                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-                'listQuotePlans' => $listQuotePlans,
-                'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$carQuote->uuid.'/'.'payment/?providerCode=',
-                'quotePlansCount' => $quotePlansCount ?? 0,
-            ];
+            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
-            $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+            $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+
+            $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+
+            $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
 
             if (in_array($responseCode, [200, 201])) {
                 Log::info('SendOCBEmailJob - OCB Email Sent: '.$responseCode.' Customer Email Address: '.$carQuote->email.' Quote UuId: '.$this->quoteUuid);

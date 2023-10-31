@@ -206,10 +206,12 @@ class SendEmailCustomerService extends BaseService
             if ($customer) {
                 $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
                 foreach ($additionalContacts as $additionalContact) {
-                    $ccAdditional[] = [
-                        'email' => $additionalContact->value,
-                        'name' => $emailData->customerName,
-                    ];
+                    if (! empty($additionalContact->value)) {
+                        $ccAdditional[] = [
+                            'email' => $additionalContact->value,
+                            'name' => $emailData->customerName,
+                        ];
+                    }
                 }
             }
 
@@ -235,6 +237,120 @@ class SendEmailCustomerService extends BaseService
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $quoteCdbId = isset($emailData->quoteCdbId) ? $emailData->quoteCdbId : null;
+            $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
+            info($responseDetail);
+            $response = json_encode($ex->getCode().' '.$ex->getMessage());
+            $isEmailSent = 0;
+        }
+
+        $this->emailActivityService->addEmailActivity($response, $isEmailSent, $emailData->customerEmail);
+
+        // addEmailStatus is for quote modules only
+        if (isset($messageId) && isset($emailData->quoteTypeId) && isset($emailData->quoteId)) {
+            // UpdateSendPolicySubjectJob::dispatch($emailData, $messageId)->delay(now()->addSeconds(7));
+        }
+
+        return $responseCode;
+    }
+
+    public function sendRenewalsOcbEmail($emailTemplateId, $emailData, $tag)
+    {
+        try {
+            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', emailData: '.json_encode($emailData).', tag: '.$tag);
+
+            $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
+
+            $headers = [
+                'Accept' => 'application/json',
+                'api-key' => $this->apiKey,
+                'Content-Type' => 'application/json',
+            ];
+
+            $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
+
+            if ($emailAttachments) {
+                $attachments = [];
+                foreach ($emailAttachments as $emailAttachment) {
+                    $attachments[] = [
+                        'url' => $emailAttachment,
+                        'name' => basename($emailAttachment),
+                    ];
+                }
+            }
+
+            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+                $attachments[] = [
+                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                    'name' => $emailData->pdfAttachment->name,
+                ];
+            }
+
+            $body = [
+                'sender' => [
+                    'email' => strstr($emailData->advisorEmail, '@', true).'@renewals.insurancemarket.ae',
+                    'name' => $emailData->advisorName,
+                ],
+                'to' => [[
+                    'email' => $emailData->customerEmail,
+                    'name' => $emailData->customerName,
+                ]],
+                'templateId' => $emailTemplateId,
+                'params' => $emailData,
+                'tags' => [
+                    $tag,
+                ],
+                'attachment' => isset($attachments) ? $attachments : null,
+            ];
+
+            $ccAdvisor = [];
+            if (isset($emailData->advisorEmail) && isset($emailData->advisorName)) {
+                $ccAdvisor = [[
+                    'email' => $emailData->advisorEmail,
+                    'name' => $emailData->advisorName,
+                ]];
+                $body['replyTo'] = [
+                    'email' => $emailData->advisorEmail,
+                    'name' => $emailData->advisorName,
+                ];
+            }
+
+            $customer = $this->customerService->getCustomerByEmail($emailData->customerEmail);
+            $ccAdditional = [];
+            if ($customer) {
+                $additionalContacts = $this->customerService->getAdditionalContactByKey($customer->id, 'email');
+                foreach ($additionalContacts as $additionalContact) {
+                    if (! empty($additionalContact->value)) {
+                        $ccAdditional[] = [
+                            'email' => $additionalContact->value,
+                            'name' => $emailData->customerName,
+                        ];
+                    }
+                }
+            }
+
+            $body['cc'] = array_merge($ccAdditional, $ccAdvisor);
+
+            $client = new \GuzzleHttp\Client();
+            $clientRequest = $client->post(
+                $this->url,
+                [
+                    'headers' => $headers,
+                    'body' => json_encode($body),
+                    'timeout' => 10000,
+                ]
+            );
+
+            $messageId = json_decode($clientRequest->getBody()->getContents())->messageId;
+            info('fn: sendRenewalsOcbEmail, email sending completed. messageId: '.$messageId);
+            $response = json_decode(json_encode($clientRequest->getStatusCode().' '.$clientRequest->getBody()->getContents()), true);
+            $responseCode = $clientRequest->getStatusCode();
+
+            if ($responseCode == 201) {
+                $isEmailSent = 1;
+            }
+        } catch (Exception $ex) {
+            $responseCode = $ex->getCode();
+            $quoteCdbId = isset($emailData->carQuoteId) ? $emailData->carQuoteId : null;
             $responseDetail = 'SIB Send Email: Code/Message: '.$responseCode.'/'.$ex->getMessage().' CustomerEmail: '.$emailData->customerEmail.' QuoteCdbId: '.$quoteCdbId.' Class: '.get_class();
             info($responseDetail);
             $response = json_encode($ex->getCode().' '.$ex->getMessage());
@@ -358,7 +474,7 @@ class SendEmailCustomerService extends BaseService
             ];
 
             $emailAttachments = isset($emailData->documentUrl) ? $emailData->documentUrl : null;
-            info('sendLMSIntroEmail ---- emailAttachments : '.json_encode($emailAttachments));
+
             if ($emailAttachments) {
                 $attachments = [];
                 foreach ($emailAttachments as $emailAttachment) {
@@ -380,10 +496,8 @@ class SendEmailCustomerService extends BaseService
                     'email' => $additionalContact,
                 ];
             }
-            info('sendLMSIntroEmail ---- additional : '.json_encode($additionalBcc));
-            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
 
-            info('advisor custom email is : '.$advisorCustomEmail.' for lead : '.$emailData->carQuoteId);
+            $advisorCustomEmail = strstr($emailData->advisorEmail, '@', true).'@notify.insurancemarket.ae';
 
             $body = json_encode([
                 'sender' => ['name' => $emailData->advisorName, 'email' => $advisorCustomEmail],
@@ -394,21 +508,13 @@ class SendEmailCustomerService extends BaseService
                 'replyTo' => ['name' => $emailData->advisorName, 'email' => $emailData->advisorEmail],
                 'bcc' => array_merge($bccAdditional, $bcc),
                 'templateId' => $emailTemplateId,
-                'params' => [
-                    'clientFullName' => $emailData->clientFullName,
-                    'advisorName' => isset($emailData->advisorName) ? $emailData->advisorName : null,
-                    'landLine' => isset($emailData->landLine) ? $emailData->landLine : null,
-                    'mobilePhone' => isset($emailData->mobilePhone) ? preg_replace('/\s+/', '', $emailData->mobilePhone) : null,
-                    'carQuoteId' => isset($emailData->carQuoteId) ? $emailData->carQuoteId : null,
-                    'quoteLink' => isset($emailData->quoteLink) ? $emailData->quoteLink : null,
-                ],
+                'params' => $emailData,
                 'tags' => [
                     $tag,
                 ],
                 'attachment' => isset($attachments) ? $attachments : null,
             ], JSON_UNESCAPED_SLASHES);
 
-            info('sendLMSIntroEmail ---- body :  '.json_encode($body));
             $client = new \GuzzleHttp\Client();
             $clientRequest = $client->post(
                 $this->url,
@@ -421,6 +527,7 @@ class SendEmailCustomerService extends BaseService
             info('sendLMSIntroEmail ---- Request Sent');
             $responseCode = $clientRequest->getStatusCode();
             info('sendLMSIntroEmail ---- Received Code : '.$responseCode);
+            info('sendLMSIntroEmail ---- response object : '.json_encode($clientRequest->getBody()->getContents()));
         } catch (Exception $ex) {
             $responseCode = $ex->getCode();
             $responseDetail = 'SIB Send sendLMSIntroEmail: Code/Message: '.$responseCode.'/'.$ex->getMessage();
@@ -431,12 +538,17 @@ class SendEmailCustomerService extends BaseService
         return $responseCode;
     }
 
-    public function sendRMIntroEmail($quoteUuid)
+    public function sendRMIntroEmail($quoteUuid, $previousAdvisorId, $isReassignment)
     {
         $dataArr = [
             'quoteUID' => $quoteUuid,
             'resend' => false,
         ];
+        if ($isReassignment) {
+            $dataArr['isReassigned'] = true;
+            $dataArr['previousAdvisorId'] = $previousAdvisorId;
+        }
+        info('Params for intro email are : '.json_encode($dataArr));
         $response = Capi::request('/api/v1-send-health-quote-plan-email', 'post', $dataArr);
         if ($response && isset($response->status)) {
             $msg = '';

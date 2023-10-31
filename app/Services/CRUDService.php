@@ -8,13 +8,19 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Facades\Ken;
+use App\Facades\Marshall;
 use App\Jobs\CammyJob;
 use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
+use App\Models\EmbeddedProductOption;
+use App\Models\EmbeddedTransaction;
 use App\Models\GenericModel;
+use App\Models\PaymentAction;
 use App\Models\QuoteStatusLog;
+use App\Models\QuoteType;
 use App\Models\User;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -318,18 +324,19 @@ class CRUDService extends BaseService
                 && in_array($entity->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])
             ) {
                 if ($request->leadStatus == QuoteStatusEnum::Qualified && $entity->advisor_id) {
-                    // CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
-                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email')->delay(now()->addSeconds(3));
+                    //CammyJob::dispatch($entity, 'intro')->delay(now()->addSeconds(3));
+                    IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $entity->uuid, 'send-rm-intro-email', null, false)
+                        ->delay(now()->addSeconds(3));
                 } else {
                     SyncSIBContactJob::dispatch($entity);
                 }
 
-                // if (
-                //     $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
-                //     || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
-                // ) {
-                //     CammyJob::dispatch($entity, 'unsub');
-                // }
+                if (
+                    $previousQuoteStatus == QuoteStatusEnum::FollowedUp && $request->leadStatus != QuoteStatusEnum::FollowedUp
+                    || $previousQuoteStatus == QuoteStatusEnum::ApplicationPending && $request->leadStatus != QuoteStatusEnum::ApplicationPending
+                ) {
+                    //CammyJob::dispatch($entity, 'unsub');
+                }
             }
 
             QuoteStatusLog::create([
@@ -355,7 +362,7 @@ class CRUDService extends BaseService
         if (strtolower($modelType) == strtolower(quoteTypeCode::Car)) {
             $query->whereIn('r.name', [RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Health)) {
-            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor, RolesEnum::HealthWCUAdvisor]);
+            $query->whereIn('r.name', [RolesEnum::RMAdvisor, RolesEnum::EBPAdvisor, RolesEnum::HealthRenewalAdvisor, RolesEnum::HealthNewBusinessAdvisor]);
         } elseif (strtolower($modelType) == strtolower(quoteTypeCode::Business)) {
             $query->whereIn('r.name', [RolesEnum::CorpLineAdvisor, RolesEnum::CorpLineRenewalAdvisor, RolesEnum::CorpLineNewBusinessAdvisor, RolesEnum::GMRenewalAdvisor, RolesEnum::GMNewBusinessAdvisor]);
         } else {
@@ -523,5 +530,70 @@ class CRUDService extends BaseService
         ];
 
         return $genderOptions;
+    }
+    public function toggleSelection($data, $quoteTypeId)
+    {
+        $toggleData = [
+            'quoteUid' => $data->quote_uuid,
+            'quoteTypeId' => $quoteTypeId,
+            'epOptionId' => $data->id,
+        ];
+
+        $response = Ken::request('/toggle-embedded-product', 'post', $toggleData);
+
+        return $response;
+    }
+    public function cancelPayment($request)
+    {
+        $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
+        $type = QuoteType::where('code', $request->modelType)->first();
+        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
+            ->where('quote_type_id', $type->id)
+            ->whereIn('product_id', $embeddedProductOptionsIds)
+            ->first();
+        if (isset($embededTransaction->payments[0])) {
+            $payment = $embededTransaction->payments[0];
+            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
+            if ($maxAmount >= $request->amount) {
+                $paymentAction = new PaymentAction();
+                $paymentAction->payment_code = $embededTransaction->code; //$embededTransaction->code;
+                $paymentAction->is_fulfilled = 0;
+                $paymentAction->action_type = 'REFUND';
+                $paymentAction->reason = $request->reason;
+                $paymentAction->amount = $request->amount;
+                $paymentAction->created_by = auth()->user()->email;
+
+                $paymentAction->save();
+                $data = [
+                    'uuid' => $request->uuid,
+                    'type_id' => $type->id,
+                    'code' => $embededTransaction->code,
+
+                ];
+                $processResponse = $this->processCancelPayment($data);
+
+                return response($processResponse, 403);
+            } else {
+                return response(['should not be maximum'], 403);
+            }
+        }
+
+        return response(['Payment not exist'], 403);
+    }
+    public function processCancelPayment($data)
+    {
+        $planData = [
+            'quoteUID' => $data['uuid'],
+            'quoteTypeId' => $data['type_id'],
+            'payments' => [
+                [
+                    'codeRef' => $data['code'],
+                ],
+            ],
+        ];
+
+        $response = Marshall::request('/payment/checkout/cancel', 'post', $planData);
+
+        return $response;
     }
 }

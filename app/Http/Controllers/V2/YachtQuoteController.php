@@ -112,6 +112,8 @@ class YachtQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'modelType' => QuoteTypes::YACHT,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::YachtManager),
             'embeddedProducts' => $embeddedProducts,
         ]);
     }
