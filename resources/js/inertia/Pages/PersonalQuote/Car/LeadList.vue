@@ -212,14 +212,15 @@ const rules = {
 function onSubmit(isValid) {
   if (isValid) {
     filters.page = 1;
-    Object.keys(filters).forEach(
+    let data = { ...filters };
+    Object.keys(data).forEach(
       key =>
-        (filters[key] === '' || filters[key].length === 0) &&
-        delete filters[key],
+        (data[key] === '' || data[key]?.length === 0) &&
+        delete data[key],
     );
     router.visit(route('car.index'), {
       method: 'get',
-      data: filters,
+      data: data,
       preserveState: true,
       preserveScroll: true,
       onBefore: () => (loader.table = true),
@@ -349,13 +350,13 @@ onMounted(() => {
                     v-model="filters.created_at"
                     name="created_at"
                     label="Created Date Start"
-                    :rules="[isRequired]"
+                    :rules="(filters.code !== '' || filters.email !== '') ? [] : [isRequired]"
                 />
                 <DatePicker
                     v-model="filters.created_at_end"
                     name="created_at_end"
                     label="Created Date End"
-                    :rules="[isRequired]"
+                    :rules="(filters.code !== '' || filters.email !== '') ? [] : [isRequired]"
                 />
                 <x-input
                     v-model="filters.email"
