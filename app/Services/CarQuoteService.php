@@ -765,17 +765,17 @@ class CarQuoteService extends BaseService
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
             $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
             $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (
             in_array('created_at', $searchProperties)

@@ -2208,7 +2208,7 @@ const loadEmailEvents = email => {
             size="sm"
             color="orange"
             class="mr-2"
-            :disabled="true"
+            :disabled="record.advisor_id != $page.props.auth.user.id"
           >
             Send OCB Email to Customer
           </x-button>
@@ -2464,7 +2464,7 @@ const loadEmailEvents = email => {
               :loading="changeInsurerForm.processing"
               @click.prevent="onConfirmChangeInsurer"
             >
-              Delete
+              Yes
             </x-button>
           </div>
         </template>
