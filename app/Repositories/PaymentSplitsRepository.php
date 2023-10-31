@@ -10,7 +10,9 @@ use App\Enums\QuoteTypeId;
 use App\Models\QuoteDocument;
 use App\Models\PersonalQuote;
 
-use App\Controllers\SageApi;
+use App\Http\Controllers\SageApi;
+use App\Services\SageApiService;
+use App\Factories\SagePayloadFactory;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
@@ -28,6 +30,10 @@ class PaymentSplitsRepository
     {        
         for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i]!=NULL) {
+                $childPaymentStatus = PaymentStatusEnum::NEW;
+                if($request->split_payment_details['payment_type'][$i]==PaymentMethodsEnum::BankTransfer){
+                    $childPaymentStatus = PaymentStatusEnum::PENDING;
+                }                
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $i,
@@ -35,7 +41,7 @@ class PaymentSplitsRepository
                     'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
                     'due_date' => $request->split_payment_details['due_date'][$i],   
-                    'payment_status_id' => PaymentStatusEnum::NEW,             
+                    'payment_status_id' =>  $childPaymentStatus,             
                 ];
                 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
@@ -147,6 +153,11 @@ class PaymentSplitsRepository
             }
 
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i]!=NULL) {
+                
+                $childPaymentStatus = PaymentStatusEnum::NEW;
+                if($request->split_payment_details['payment_type'][$i]==PaymentMethodsEnum::BankTransfer){
+                    $childPaymentStatus = PaymentStatusEnum::PENDING;
+                }                
                 $splitPaymentInformation = [
                     'code' => $request->paymentCode,
                     'sr_no' => $i,
@@ -154,7 +165,7 @@ class PaymentSplitsRepository
                     'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
                     'due_date' => $request->split_payment_details['due_date'][$i],   
-                    'payment_status_id' => PaymentStatusEnum::NEW,
+                    'payment_status_id' => $childPaymentStatus,
                 ];
                 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
@@ -197,18 +208,57 @@ class PaymentSplitsRepository
                 'payment_status_id' => PaymentStatusEnum::PAID,
                 'updated_by' => $request->user()->id,
             ];
-            PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-            /*
-            $sageRequest->discount = floatval($request->discount);
-            $sageRequest->insurerInvoiceDate = date("Y-m-d", strtotime($request->insurerInvoiceDate));
-            $sageRequest->policyExpiryDate   = date("Ymd", strtotime($request->policyExpiryDate));
-            $sageRequest->premiumWithoutTax = floatval($request->premiumWithoutTax);
-            $sageRequest->premiumWithTax = floatval($request->premiumWithTax);
-            $sageRequest->vatOnCommission = floatval($request->vatOnCommission);
-            $sageRequest->commission = floatval($request->commission);
-            $sageRequest->commissionIncludingVat = floatval($request->commissionIncludingVat);  
-            $sageApi = new SageApi();
-            $sageApi->processSagePost($sageRequest);*/
+            //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
+            
+            $splitPayment = PaymentSplits::find($request->splitPaymentId);
+            /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
+            $sageRequest = new \stdClass();
+            $sageRequest->discount = 0.00;
+            $sageRequest->insurerInvoiceDate = $splitPayment->due_date;
+            $sageRequest->policyExpiryDate   = $splitPayment->due_date;
+            $sageRequest->premiumWithoutTax = $request->collection_amount;
+            $sageRequest->premiumWithTax = $request->collection_amount;
+            $sageRequest->vatOnCommission = 0;
+            $sageRequest->commission = 0;
+            $sageRequest->commissionIncludingVat = 0;  
+            $sageRequest->invoicePaymentStatus = 'paid';
+            $sageRequest->insurerPremiumTaxInvoiceNumber='';
+            $sageApiService = new SageApiService();
+            $payLoadOptions = SagePayloadFactory::createPayload($sageRequest, $leadStatus);
+            $endPoint = $payLoadOptions['endPoint'];
+            $payLoad = $payLoadOptions['payload'];
+            $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
+            //$sageApi = new SageApi(new SageApiService());
+            //$sageResponse = $sageApi->processSagePost($sageRequest);            
+            */
+            $leadStatus = 'policy booked';            
+            $createPrepaymentReciept = [
+                "BatchRecordType" => "CA",
+                "ReceiptsAdjustments" => [
+                    [
+                        "BatchType" => "CA",
+                        "CustomerNumber" => "IC008",
+                        "BankReceiptAmount" => floatval($request->collection_amount),
+                        "CheckReceiptNumber" => "123456",
+                        "PaymentCode" => "BT",
+                        "ReceiptTransactionType" => "Prepayment",
+                        "AppliedReceiptsAdjustments" => [
+                            [
+                                "BatchType" => "CA",
+                                "CustomerNumber" => "IC008",
+                                "ReceiptTransactionType" => "Prepayment"
+                            ]
+                        ]
+                    ]
+                ]
+            ];
+            $sageApiService = new SageApiService();
+            $message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
+            $sageResponse = json_decode($message, true);
+            $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
+            $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
+            $splitPayment->update($paymentInformation);            
+            //dd($documentNumberForReciept);
 
         } elseif($request->is_declined) {
             $paymentInformation = [

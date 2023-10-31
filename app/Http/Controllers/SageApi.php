@@ -77,7 +77,9 @@ class SageApi extends Controller
         }
         $request->callExtra = FALSE;
         $message = $this->processRequest($request, $leadStatus);
-        return back()->with('message', $message.$messageFromAP);
+        
+        return $message;
+        ////return back()->with('message', $message.$messageFromAP);
     }
 
     private function processRequest($request, $leadStatus)

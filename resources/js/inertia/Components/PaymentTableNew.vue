@@ -27,7 +27,7 @@ const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
-const isCheckDetailsEnabled = ref(false);
+const isCheckDetailsEnabled = ref([]);
 const isExpandedSplitPayments = ref(false);
 const isPaymentCalculationError = ref(false);
 const isFieldReadonly = ref(false);
@@ -222,13 +222,12 @@ const validatePaymentOption = () => {
         isDocumentNotUploaded.value[i] = false;
 
         console.log('azharLEN='+fileUploadModels.value[i]);
-
         if ( (
           paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' || 
           paymentMethodsModels.value[i]=='CA' || paymentMethodsModels.value[i]=='PDC' || 
           paymentMethodsForm.discount !== ''   
           ) 
-        && (fileUploadModels.value[i]===undefined)       
+        && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)       
         ) {
           isDocumentNotUploaded.value[i] = true;
           issueFound = true;
@@ -334,10 +333,10 @@ const handleDeclinedReasonChange = () => {
 
 const handlePaymentOptions = (count) => {
   isPaymentMetodNotSelected.value[count] = false;
-  if( paymentMethodsModels.value[1] === 'CHQ' || paymentMethodsModels.value[1] === 'PDC' ) {
-    isCheckDetailsEnabled.value = true;
+  if( paymentMethodsModels.value[count] === 'CHQ' || paymentMethodsModels.value[count] === 'PDC' ) {
+    isCheckDetailsEnabled.value[count] = true;
   } else {
-    isCheckDetailsEnabled.value = false;
+    isCheckDetailsEnabled.value[count] = false;
   }
 }
 
@@ -570,6 +569,7 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     paymentMethodsForm.payment_no = '1';
   } else {
     paymentMethodsForm.payment_no = '1';
+    calculatePaymentBreakup();
   }
   if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod){
     paymentMethodsModels.value[1] = 'BT';
@@ -578,12 +578,13 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
 
 // Define a computed property to determine if 'insurer' should be disabled
 const isCCDisabled = computed(() => {
-  return (
-          paymentMethodsForm.frequency === 'monthly' || 
-          paymentMethodsForm.frequency === 'quarterly' || 
-          paymentMethodsForm.frequency === 'semi_annual'
-        
-          );
+  return;
+  /*return (
+    paymentMethodsForm.frequency === 'monthly' || 
+    paymentMethodsForm.frequency === 'quarterly' || 
+    paymentMethodsForm.frequency === 'semi_annual'
+  
+    );*/
 });
 
 const generateCCLink = async code => {
@@ -762,7 +763,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
     dueDateModels.value[i] = payment.payment_splits[i-1].due_date;
 
     if(payment.payment_splits[i-1].payment_method.code === 'CHQ' || payment.payment_splits[i-1].payment_method.code === 'PDC'){
-      isCheckDetailsEnabled.value = true;
+      isCheckDetailsEnabled.value[i] = true;
       checkDetailModels.value[i] = payment.payment_splits[i-1].check_detail;
     }
     if(payment.payment_splits[i-1].documents.length>0){
@@ -783,10 +784,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
       isFieldReadonly.value = false;      
     }
   }
-  
- 
   console.log('azhar523='+paymentMethodsModels.value);
-  
   createPaymentModal.value = true;
 };
 
@@ -822,14 +820,14 @@ const validateApprovedDocument = () => {
 }
 
 const addPayment = isValid => {
+  
   if (!isValid) return;  
-
   if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment()) return;
     if (validateApprovedDocument()) return;
   } else {
     if (validatePaymentOption()) return;  
-  }
+  }   
 
   //define main payment method
   let mainPaymentMethod = 'CR';
@@ -1795,7 +1793,7 @@ const providerId = computed(() => {
                        <x-tooltip>
                             <x-input
                             class="w-full mt-2"
-                            v-if = "isCheckDetailsEnabled && (count==1 || paymentMethodsModels[count] === 'PDC')"
+                            v-if = "isCheckDetailsEnabled[count] && (count==1 || paymentMethodsModels[count] === 'PDC')"
                             v-model="checkDetailModels[count]"
                             placeholder="Cheque Details"         
                           />
