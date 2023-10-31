@@ -417,7 +417,7 @@ onMounted(() => {
       :items="props.data || []"
       :sort-by="'userName'"
       :sort-type="'asc'"
-      :rows-per-page="-1"
+      :rows-per-page="999"
       border-cell
       hide-rows-per-page
       hide-footer
