@@ -42,6 +42,7 @@ const isDeclineCustomReason = ref(false);
 const isApprovePaymentError = ref(false);
 const showDiscountOptions = ref(true);
 const isApprovedDocumentNotUploaded = ref(false);
+const isMultipleDocumentEnabled = ref(true);
 const approvedDocument = ref('');
 
 const discountValue = ref(0); // Initial discount value
@@ -1001,6 +1002,78 @@ const deleteDocument = (docName,count) => {
   );
 };
 
+
+
+const uploadDocument = (doc, files, count) => {
+
+console.log('azhar1119='+JSON.stringify(files));
+
+let url = '/quotes/car/documents/store';
+if (files.length === 0) return;
+
+if (!fileUploadModels.value[count]) {
+  fileUploadModels.value[count] = [];
+}
+
+isUploading.value = true;
+
+// Loop through all the files and upload them one by one
+for (const file of files) {
+  const fileExists = fileUploadModels.value.flat().some((uploadedFile) => {
+    return uploadedFile.original_name === file.file.name;
+  });
+
+  if (fileExists) {
+    isFileError.value = true;
+    fileErrorMessage.value = props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
+    console.log('File already exists');
+    continue;
+  }
+
+  // Upload the file
+  documentForm
+    .transform((data) => ({
+      ...data,
+      quote_type_id: doc.quote_type_id,
+      document_type_code: doc.code,
+      folder_path: doc.folder_path,
+      file: file.file,
+    }))
+    .post(url, {
+      preserveScroll: true,
+      preserveState: true,
+      onError: (errors) => {
+        documentForm.setError(errors.error);
+        console.log('errors');
+        console.log(errors);
+
+        notification.error({
+          title: 'File upload failed',
+          position: 'top',
+        });
+      },
+      onSuccess: (data) => {
+        if (paymentMethodsForm.status === 'view') {
+          isApprovedDocumentNotUploaded.value = false;
+          approvedDocument.value = data.props.quoteDocuments[0];
+          console.log('approveddoc=' + JSON.stringify(approvedDocument.value));
+        } else {
+          isDocumentNotUploaded.value[count] = false;
+          fileUploadModels.value[count].push(data.props.quoteDocuments[0]);
+          console.log('azhar9999=' + JSON.stringify(fileUploadModels.value));
+        }
+      },
+    });
+}
+
+// Once all the files have been uploaded, set isUploading to false
+isUploading.value = false;
+};
+
+
+
+
+/*
 const uploadDocument = (doc, files, count) => {
   let url = '/quotes/car/documents/store'; 
   if (files.length == 0) return;
@@ -1060,7 +1133,7 @@ const uploadDocument = (doc, files, count) => {
       },
     });
 };
-
+*/
 const getPlanName = computed(() => {
   const plan = props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
@@ -1292,22 +1365,31 @@ const providerId = computed(() => {
       </template>      
       <x-form @submit="addPayment" :auto-focus="false">
         <div class="w-full grid md:grid-cols-2 gap-5">          
-          <x-tooltip>
-            <x-field label="COLLECTION DATE" class="w-full" required>
-              <span v-if="isFieldReadonly">{{ formatDate(paymentMethodsForm.collection_date) }}</span>
-              <DatePicker
-                  v-if="!isFieldReadonly"
-                  name="collection_date"
-                  v-model="paymentMethodsForm.collection_date"
-                  :rules="[rules.isRequired]"                  
+          <div>
+            <x-tooltip class="tooltip-display">
+                <x-field label="COLLECTION DATE" class="w-full" required></x-field>
+                <template style="max-width: 50px;" #tooltip>
+                  <span style="max-width: 50px;">{{ paymentTooltipEnum.COLLECTION_DATE }}</span>
+                </template>
+            </x-tooltip>
+            <x-field class="w-full">
+                <span v-if="isFieldReadonly">{{ formatDate(paymentMethodsForm.collection_date) }}</span>
+                <DatePicker
+                v-if="!isFieldReadonly"
+                name="collection_date"
+                v-model="paymentMethodsForm.collection_date"
+                :rules="[rules.isRequired]"
               />
             </x-field>
-            <template #tooltip>
-               <span>{{ paymentTooltipEnum.COLLECTION_DATE }}</span>
-            </template>
-          </x-tooltip>
+          </div>
+          <div>
           <x-tooltip>
-            <x-field label="TOTAL PRICE" class="w-full">              
+            <x-field label="TOTAL PRICE" class="w-full"></x-field>
+            <template #tooltip>
+               <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
+            </template>
+          </x-tooltip>           
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ totalPrice }}</span>              
               <x-input
                   v-if="!isFieldReadonly"
@@ -1315,13 +1397,16 @@ const providerId = computed(() => {
                   :value="totalPrice"
                   :disabled="true"
                 />
-            </x-field>
+            </x-field>            
+        </div>
+          <div>
+          <x-tooltip class="tooltip-display">
+            <x-field label="COLLECTED BY" class="w-full" required></x-field>
             <template #tooltip>
-               <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
+                <span>{{ paymentTooltipEnum.COLLECTED_BY }}</span>
             </template>
-          </x-tooltip>         
-          <x-tooltip>
-            <x-field label="COLLECTED BY" class="w-full" required>
+          </x-tooltip>
+          <x-field class="w-full">
             <span v-if="isFieldReadonly">{{ collectionTypes.find(item => item.value === paymentMethodsForm.collection_type).label }}</span>
             <select
                 v-if="!isFieldReadonly"
@@ -1336,13 +1421,16 @@ const providerId = computed(() => {
                 </template>
             </select>
             </x-field>
-            <template #tooltip>
-                <span>{{ paymentTooltipEnum.COLLECTED_BY }}</span>
-            </template>
-          </x-tooltip>
-
+          </div>
+          <div>
           <x-tooltip>
-            <x-field label="PROVIDER NAME" class="w-full">
+            <x-field label="PROVIDER NAME" class="w-full"></x-field>
+            <template #tooltip>
+                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
+                <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
+            </template>    
+          </x-tooltip>
+          <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ providerName }}</span>
               <x-input
                   v-if="!isFieldReadonly"
@@ -1351,14 +1439,16 @@ const providerId = computed(() => {
                   :disabled="true"
                 />
             </x-field>
+          </div>  
+
+          <div>
+          <x-tooltip class="tooltip-display">
+            <x-field label="FREQUENCY" class="w-full" required></x-field>
             <template #tooltip>
-                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
-                <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
-            </template>    
+                <span>{{ paymentTooltipEnum.FREQUENCY }}</span>
+            </template>
           </x-tooltip>
-          
-          <x-tooltip>
-            <x-field label="FREQUENCY" class="w-full" required>
+          <x-field class="w-full">  
               <span v-if="isFieldReadonly">{{ frequencyTypes.find(item => item.value === paymentMethodsForm.frequency).label }}</span>            
               <select
                   v-if="!isFieldReadonly"
@@ -1373,13 +1463,17 @@ const providerId = computed(() => {
                   </template>
               </select>
             </x-field>
-            <template #tooltip>
-                <span>{{ paymentTooltipEnum.FREQUENCY }}</span>
-            </template>
-          </x-tooltip>
+          </div>
 
+          <div>
           <x-tooltip>
-            <x-field label="PLAN NAME" class="w-full">
+            <x-field label="PLAN NAME" class="w-full"></x-field>
+            <template #tooltip>
+                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>
+                <span v-else >{{ paymentTooltipEnum.PLAN_NAME }}</span>
+            </template>
+          </x-tooltip>  
+          <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ getPlanName }}</span>
               <x-input
                   v-if="!isFieldReadonly"
@@ -1388,14 +1482,16 @@ const providerId = computed(() => {
                   :disabled="true"
                 />
             </x-field>
-            <template #tooltip>
-                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>
-                <span v-else >{{ paymentTooltipEnum.PLAN_NAME }}</span>
-            </template>
-          </x-tooltip>  
+          </div> 
 
-          <x-tooltip>
-            <x-field label="PAYMENT NO" class="w-full" required>
+          <div>
+          <x-tooltip class="tooltip-display">
+            <x-field label="PAYMENT NO" class="w-full" required></x-field>
+            <template #tooltip>
+                <span>{{ paymentTooltipEnum.PAYMENT_NO }}</span>
+            </template>
+          </x-tooltip>
+          <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ paymentMethodsForm.payment_no }}</span>              
               <select
                   v-if="!isFieldReadonly"
@@ -1411,13 +1507,15 @@ const providerId = computed(() => {
                   </template>
               </select>
             </x-field>
+           </div>
+          <div>
+          <x-tooltip>
+            <x-field label="PAYMENT STATUS" class="w-full"></x-field>
             <template #tooltip>
-                <span>{{ paymentTooltipEnum.PAYMENT_NO }}</span>
+                <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
             </template>
           </x-tooltip>
-          
-          <x-tooltip>
-            <x-field label="PAYMENT STATUS" class="w-full">
+          <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ formatString(masterPaymentStatus.toLowerCase()) }}</span>
               <x-input
                   v-if="!isFieldReadonly"
@@ -1426,13 +1524,16 @@ const providerId = computed(() => {
                   :disabled="true"
                 />
             </x-field>
+          </div>
+
+          <div>
+          <x-tooltip class="tooltip-display">
+            <x-field label="CREDIT APPROVAL" class="w-full"></x-field>
             <template #tooltip>
-                <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
+                <span>{{ paymentTooltipEnum.CREDIT_APPROVAL }}</span>
             </template>
-          </x-tooltip>
-          
-          <x-tooltip>
-            <x-field label="CREDIT APPROVAL" class="w-full">
+          </x-tooltip> 
+          <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval)?.label || 'Approval Reason' }}</span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.credit_approval!=''" class="close-icon"  @mousedown.stop="resetCreditApproval()">
@@ -1452,10 +1553,9 @@ const providerId = computed(() => {
               </select>              
             </div>
             </x-field>
-            <template #tooltip>
-                <span>{{ paymentTooltipEnum.CREDIT_APPROVAL }}</span>
-            </template>
-          </x-tooltip>          
+          </div>
+          
+          
           <x-field v-if="isCustomReasonEnabled" label="CUSTOM REASON" class="w-full">
             <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>
             <x-input
@@ -1463,14 +1563,21 @@ const providerId = computed(() => {
                 class="w-full"
                 v-model="paymentMethodsForm.custom_reason"                  
               />
-          </x-field>
-          <x-tooltip v-if="showDiscountOptions">
-            <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)" class="w-full">
-              <span v-if="isFieldReadonly">{{ discountTypes.find(item => item.value === paymentMethodsForm.discount).label }}</span>
+          </x-field>          
+          <div v-if="showDiscountOptions">
+            <x-tooltip>
+              <x-field label="DISCOUNT APPLICABLE (DISCOUNT TYPE)" class="w-full"></x-field>
+              <template #tooltip>
+                  <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>
+                  <span v-else >{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+              </template>
+            </x-tooltip>
+            <x-field class="w-full">
+            <span v-if="isFieldReadonly">{{ discountTypes.find(item => item.value === paymentMethodsForm.discount).label }}</span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.discount!=''" class="close-icon"  @mousedown.stop="resetDiscount()">
                 &#10006; 
-              </span> 
+                </span> 
               <select
                   class="custom-select"
                   v-model="paymentMethodsForm.discount"
@@ -1484,15 +1591,17 @@ const providerId = computed(() => {
                   </template>
               </select>
               </div>
-            </x-field>
+            </x-field>            
+          </div>
+          
+          <div v-if="isDiscountReasonEnabled">
+          <x-tooltip class="tooltip-display" >
+            <x-field label="DISCOUNT REASON" class="w-full" required></x-field>
             <template #tooltip>
-                <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>
-                <span v-else >{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+                <span>{{ paymentTooltipEnum.DISCOUNT_REASON }}</span>
             </template>
           </x-tooltip>
-
-          <x-tooltip v-if="isDiscountReasonEnabled">
-            <x-field label="DISCOUNT REASON" class="w-full" required>
+          <x-field class="w-full">
               <span v-if="isFieldReadonly">{{ discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).label }}</span>
               <select
                   v-if="!isFieldReadonly"
@@ -1507,14 +1616,17 @@ const providerId = computed(() => {
               </select>
               <p v-if="isDiscountReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
-            <template #tooltip>
-                <span>{{ paymentTooltipEnum.DISCOUNT_REASON }}</span>
-            </template>
-          </x-tooltip>
+          </div> 
 
-          
-            <x-tooltip v-if="isDiscountEnabled">
-              <x-field label="DISCOUNT VALUE" class="w-full" required>
+
+            <div v-if="isDiscountEnabled">
+              <x-tooltip>
+                <x-field label="DISCOUNT VALUE" class="w-full" required></x-field>
+                <template #tooltip>
+                    <span>{{ paymentTooltipEnum.DISCOUNT_VALUE }}</span>
+                </template>
+              </x-tooltip>
+              <x-field class="w-full">
                 <span v-if="isFieldReadonly">{{ discountValue }}</span>
                 <x-input
                     v-if="!isFieldReadonly"                  
@@ -1526,14 +1638,16 @@ const providerId = computed(() => {
                 />                
                 <p v-if="discountError" class="text-sm text-red-500 dark:text-red-400 mt-1">{{ discountError }}</p>
               </x-field>
-              
+            </div>            
+            
+            <div v-if="isDiscountEnabled || isFieldReadonly">
+            <x-tooltip class="tooltip-display" >
+              <x-field label="TOTAL AMOUNT" class="w-full"></x-field>
               <template #tooltip>
-                  <span>{{ paymentTooltipEnum.DISCOUNT_VALUE }}</span>
+                  <span>{{ paymentTooltipEnum.TOTAL_AMOUNT_VIEW }}</span>
               </template>
             </x-tooltip>
-            
-            <x-tooltip v-if="isDiscountEnabled || isFieldReadonly">
-              <x-field label="TOTAL AMOUNT" class="w-full">
+            <x-field class="w-full">
                 <span v-if="isFieldReadonly">{{ formatAmount(totalAmount) }}</span>
                 <x-input
                     v-if="!isFieldReadonly"
@@ -1542,10 +1656,7 @@ const providerId = computed(() => {
                     :disabled="true"
                   />
               </x-field>
-              <template #tooltip>
-                  <span>{{ paymentTooltipEnum.TOTAL_AMOUNT_VIEW }}</span>
-              </template>
-            </x-tooltip>
+            </div>
           
         </div>
         <x-divider class="mb-4 mt-10" />
@@ -1567,7 +1678,7 @@ const providerId = computed(() => {
           <!-- Header -->
           <div class="flex w-full">
             <div class="w-1/6 px-2 text-center">
-              <x-tooltip>
+              <x-tooltip style="display: initial;">
                 <span class="text-sm  ">
                   PAYMENT NO *
                 </span>
@@ -1831,6 +1942,8 @@ const providerId = computed(() => {
                     <x-tooltip>
                           <Dropzone
                           :id="paymentDocument.id"
+                          multiple="true"
+                          customDisplay="true"
                           :accept="paymentDocument.accepted_files"
                           :max-files="paymentDocument.max_files"
                           :max-size="paymentDocument.max_size"
@@ -1977,6 +2090,8 @@ const providerId = computed(() => {
                 <x-field label="DOCUMENT" class="dropzone-field">
                 <Dropzone
                   :id="paymentDocument.id"
+                  multiple="true"
+                  customDisplay="true"
                   :accept="paymentDocument.accepted_files"
                   :max-files="paymentDocument.max_files"
                   :max-size="paymentDocument.max_size"
@@ -2090,6 +2205,10 @@ const providerId = computed(() => {
   </div>
 </template>
 <style scoped>
+
+.tooltip-display {
+  display: inherit;
+} 
 /* Modal overlay */
 .modal-overlay {
   position: fixed;
