@@ -2440,7 +2440,7 @@ const loadEmailEvents = email => {
               :loading="changeInsurerForm.processing"
               @click.prevent="onConfirmChangeInsurer"
             >
-              Delete
+              Yes
             </x-button>
           </div>
         </template>
