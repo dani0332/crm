@@ -354,12 +354,12 @@ onMounted(() => {
         <DatePicker
           v-model="filters.created_at"
           label="Created Date Start"
-          :rules="filters.code || filters.email ? [] : [isRequired]"
+          :rules="filters.code || filters.email || filters.renewal_batch || filters.quote_batch_id ? [] : [isRequired]"
         />
         <DatePicker
           v-model="filters.created_at_end"
           label="Created Date End"
-          :rules="filters.code || filters.email ? [] : [isRequired]"
+          :rules="filters.code || filters.email || filters.renewal_batch || filters.quote_batch_id ? [] : [isRequired]"
         />
         <x-input
           v-model="filters.email"
