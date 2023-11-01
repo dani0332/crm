@@ -372,6 +372,7 @@ const onAddMemberModal = () => {
   memberForm.reset();
   memberActionEdit.value = false;
   modals.member = true;
+  memberForm.nationality_id= page.props.quote.nationality_id
 };
 
 const memberFieldReq = reactive({

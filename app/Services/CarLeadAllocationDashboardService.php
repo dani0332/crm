@@ -45,7 +45,8 @@ class CarLeadAllocationDashboardService extends BaseService
                     'users.status as isAvailable',
                     DB::RAW("DATE_FORMAT(users.last_login, '%d-%m-%Y %H:%i:%s') as lastLogin"),
                     'la.id as id', 'la.manual_assignment_count as manualAllocationCount',
-                    'la.auto_assignment_count as autoAllocationCount'
+                    'la.auto_assignment_count as autoAllocationCount',
+                    'la.reset_cap',
                 );
             if (! auth()->user()->hasRole(RolesEnum::Admin)) {
                 $userTeamIds = $this->getUserTeams(auth()->user()->id)->pluck('id')->toArray();

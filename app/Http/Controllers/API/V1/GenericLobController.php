@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
@@ -19,8 +20,7 @@ class GenericLobController extends Controller
     public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
     {
         $this->carQuoteService = $carQuoteService;
-        $this->healthQuoteService = $healthQuoteService;
-        
+        $this->healthQuoteService = $healthQuoteService;        
     }
 
     /**

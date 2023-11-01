@@ -21,6 +21,7 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Enums\TiersEnum;
 use App\Exports\CarQuoteExport;
 use App\Exports\HealthQuotesExport;
 use App\Facades\Capi;
@@ -51,6 +52,7 @@ use App\Services\ActivitiesService;
 use App\Services\AllocationService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
+use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -287,9 +289,15 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
+            $dateFormat = config('constants.DATE_FORMAT_ONLY');
+            $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
+            $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
                 'advisors' => $advisors,
+                'createdAtStart' => $createdAtStart,
+                'createdAtEnd' => $createdAtEnd,
                 'dropdownSource' => $dropdownSource,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'userMaxCap' => $userMaxCap,
@@ -977,7 +985,6 @@ class CRUDController extends Controller
         } else {
             if ($modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
                 $validateArray = $this->carQuoteService->getValidationArray($request);
-
             } else {
                 $jsonDecodeSkipProps = json_decode($request->get('modelSkipProperties'), true);
                 $modelSkipPropertiesList = is_null($jsonDecodeSkipProps) ? explode(',', $request->get('modelSkipProperties')) : json_decode($request->get('modelSkipProperties'), true);
@@ -1740,41 +1747,40 @@ class CRUDController extends Controller
 
     public function sendEmailOneClickBuy(Request $request)
     {
-        Log::info('sendEmailOneClickBuy START');
+        Log::info('sendEmailOneClickBuy OCB email sending started for quote uuid: '.$request->quote_uuid);
+
+        //get Car quote by uuid using model
+        $carQuote = CarQuote::where('uuid', $request->quote_uuid)->first();
+
+        $previousAdvisor = null;
+        if (! empty($carQuote->previous_advisor_id)) {
+            $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
+        }
+
         // CHECK NUMBER OF PLAN AND SEND RESPECTIVE 'ONE CLICK BUY' EMAIL TO CUSTOMER
         $listQuotePlans = $this->carQuoteService->getPlans($request->quote_uuid, true, true);
+
+        info('sendEmailOneClickBuy OCB email plans fetched for quote uuid: '.$request->quote_uuid);
+
         $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
         $emailTemplateId = (int) $this->crudService->getOcbCustomerEmailTemplate($quotePlansCount);
 
-        $emailData = (object) [
-            'quoteTypeId' => $request->quote_type_id,
-            'quoteId' => $request->quote_id,
-            'templateId' => $emailTemplateId,
-            'quoteCdbId' => $request->quote_cdb_id,
-            'customerName' => $request->customer_name,
-            'customerEmail' => $request->customer_email,
-            'previousPolicyExpiryDate' => $request->quote_previous_expiry_date,
-            'currentlyInsuredWith' => $request->quote_currently_insured_with,
-            'carMake' => $request->quote_car_make,
-            'carModel' => $request->quote_car_model,
-            'carManufactureYear' => $request->quote_car_year_of_manufacture,
-            'previousPolicyNumber' => $request->quote_previous_policy_number,
-            'advisorName' => $request->advisor_name,
-            'advisorEmailAddress' => $request->advisor_email,
-            'advisorMobileNo' => $request->advisor_mobile_no,
-            'advisorLandlineNo' => $request->advisor_landline_no,
-            'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$request->quote_uuid,
-            'listQuotePlans' => $listQuotePlans,
-            'multipleQuoteUrl' => config('constants.AFIA_WEBSITE_DOMAIN').'/car-insurance/quote/'.$request->quote_uuid.'/'.'payment/?providerCode=',
-            'quotePlansCount' => isset($quotePlansCount) ? $quotePlansCount : 0,
-        ];
+        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
-        $responseCode = $this->sendEmailCustomerService->sendOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
+        $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+
+        $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+
+        info('sendEmailOneClickBuy OCB email data built for quote uuid: '.$request->quote_uuid);
+
+        $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy');
 
         if ($responseCode == 201) {
+            info('sendEmailOneClickBuy OCB email sent to customer for quote uuid: '.$request->quote_uuid);
+
             return response()->json(['success' => 'OCB email sent to customer']);
         } else {
-            Log::info('sendEmailOneClickBuy ('.$request->quote_cdb_id.') OCB email sending failed Error Code: '.$responseCode);
+            Log::info('sendEmailOneClickBuy OCB email sending failed for quote uuid: '.$request->quote_uuid.' with error code: '.$responseCode);
 
             return response()->json(['error' => 'OCB email sending failed, please try again. Error Code: '.$responseCode], 500);
         }

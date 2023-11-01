@@ -758,17 +758,17 @@ class CarQuoteService extends BaseService
         if (isset($request->advisor_assigned_date) && $request->advisor_assigned_date != '') {
             $dateFrom = $this->parseDate($request['advisor_assigned_date'], true);
             $dateTo = $this->parseDate($request['advisor_assigned_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(cqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->renewal_expiry_date) && $request->renewal_expiry_date != '') {
             $dateFrom = $this->parseDate($request['renewal_expiry_date'], true);
             $dateTo = $this->parseDate($request['renewal_expiry_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(cqr.previous_policy_expiry_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqr.previous_policy_expiry_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(cqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (
             in_array('created_at', $searchProperties)
@@ -983,6 +983,47 @@ class CarQuoteService extends BaseService
             'update' => 'parent_duplicate_quote_id,id,advisor_id,paid_at,payment_status_id,lost_reason,plan_id,car_plan_provider_id,code,is_ecommerce,payment_gateway,created_at,next_followup_date,updated_at,promo_code,device,previous_quote_id,order_reference,payment_reference,calculated_value,created_by,updated_by,renewal_expiry_date,source,transapp_code,quote_status_id,renewal_batch,policy_number,previous_quote_policy_number,previous_policy_expiry_date,previous_quote_policy_premium,car_model_detail_id,renewal_import_code',
             'show' => 'trim,device,previous_quote_id,plan_id,premium,payment_status_id,paid_at,car_plan_provider_id,payment_gateway,cylinder,seat_capacity,quote_status_id,vehicle_type_id',
         ];
+    }
+
+    /**
+     * get car quote details, quote plans and pdf
+     * @param $uuid
+     * @return mixed
+     */
+    public function getOcbDetails($uuid)
+    {
+        $carQuote = CarQuote::select(
+            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id',
+                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date']
+        )->with(['advisor', 'carMake', 'carModel'])
+            ->where('uuid', $uuid)->first();
+
+        $plans = $this->getPlans($carQuote->uuid, true, true);
+
+        $totalPlans = is_countable($plans) ? count($plans) : 0;
+
+        $carQuote->quote_type_id = QuoteTypeId::Car;
+
+        if ($totalPlans > 0) {
+            $pdfData = [
+                'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
+                'quote_uuid' => $carQuote->uuid,
+            ];
+
+            $pdf = $this->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
+            if (isset($pdf['error'])) {
+                info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+            } else {
+                $carQuote->pdf = (object) [
+                    'content' =>   base64_encode(($pdf['pdf'])->stream()),
+                    'file_name' => $pdf['name']
+                ];
+            }
+        }
+
+        $carQuote->plans = $plans;
+
+        return $carQuote;
     }
 
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
