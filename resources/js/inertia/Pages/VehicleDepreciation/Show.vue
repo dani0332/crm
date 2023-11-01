@@ -5,6 +5,10 @@ defineProps({
   insuranceProvider: Object,
   vehicledepreciation: Object,
 });
+
+const page = usePage();
+const permissionsEnum = page.props.permissionsEnum;
+const can = permission => useCan(permission);
 </script>
 <template>
   <Head title="Vehicle Depreciation Detail" />
@@ -12,6 +16,7 @@ defineProps({
     <h2 class="text-xl font-semibold">Vehicle Depreciation Detail</h2>
     <div class="space-x-3">
       <Link
+        v-if="can(permissionsEnum.VehicleDepreciationDelete)"
         method="delete"
         :href="route('vehicledepreciation.destroy', vehicledepreciation.id)"
       >
@@ -22,7 +27,10 @@ defineProps({
           Depreciation List
         </x-button>
       </Link>
-      <Link :href="route('vehicledepreciation.edit', vehicledepreciation.id)">
+      <Link
+        v-if="can(permissionsEnum.VehicleDepreciationEdit)"
+        :href="route('vehicledepreciation.edit', vehicledepreciation.id)"
+      >
         <x-button size="sm" color="" tag="div"> Edit </x-button>
       </Link>
     </div>
