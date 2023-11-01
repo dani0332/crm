@@ -70,8 +70,7 @@ class TransactionController extends Controller
                 ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
                 ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
                 ->leftjoin('users as creator', 'transactions.created_by_id', 'creator.id')
-                ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-                ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at', 'desc')
+                ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')->orderBy('transactions.created_at', 'desc')
                 ->where('transactions.is_deleted', 0);
             if ($isTransappNonAdmin == '1') {
                 $dataTransapp->where('transactions.assigned_to_id', auth()->user()->id);
