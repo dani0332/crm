@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\LeadAllocation;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class ResetLeadAllocationCounts extends Command
 {
@@ -52,6 +53,8 @@ class ResetLeadAllocationCounts extends Command
             'auto_assignment_count' => 0,
             'manual_assignment_count' => 0,
         ]);
+
+        DB::table('sessions')->truncate(); // truncate sessions table
 
         info('Scheduler has reset counts for all users where reset_cap was true');
 
