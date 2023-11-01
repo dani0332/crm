@@ -65,8 +65,8 @@ class UpdateUserStatus extends Command
         User::whereNotIn('id', function ($query) {
             $query->select('user_id')->from('sessions');
         })
-        ->where('status', '!=', UserStatusEnum::UNAVAILABLE)
-        ->update(['status' => UserStatusEnum::UNAVAILABLE]);
+            ->where('status', '!=', UserStatusEnum::UNAVAILABLE)
+            ->update(['status' => UserStatusEnum::UNAVAILABLE]);
 
         $sessions = $this->getSessions();
 
