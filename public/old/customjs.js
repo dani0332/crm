@@ -13,6 +13,10 @@ $(document).ready(function () {
   $('#datepicker_2').datepicker({ dateFormat: 'yy-mm-dd' });
   $('#transapp_start_date').datepicker({ dateFormat: 'yy-mm-dd' });
   $('#transapp_stop_date').datepicker({ dateFormat: 'yy-mm-dd' });
+  var currentDate = new Date();
+  var formattedDate = $.datepicker.formatDate('yy-mm-dd', currentDate);
+  $('#transapp_start_date').val(formattedDate);
+  $('#transapp_stop_date').val(formattedDate);
   $('#dtBasicExample').DataTable();
   $('.dataTables_length').addClass('bs-select');
 
