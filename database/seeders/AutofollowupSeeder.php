@@ -17,11 +17,11 @@ class AutofollowupSeeder extends Seeder
      */
     public function run()
     {
-        if(!QuoteStatus::where('code', 'STALE')->first()) {
+        if(!QuoteStatus::where('code', QuoteStatusEnum::Stale)->first()) {
 
             $quoteStatus = QuoteStatus::create([
                 'text' => 'Stale',
-                'code' => 'STALE',
+                'code' => QuoteStatusEnum::Stale,
                 'sort_order' => 22,
                 'is_active' => 1,
                 'created_by' => 'faisal.abbas@insurancemarket.ae',
