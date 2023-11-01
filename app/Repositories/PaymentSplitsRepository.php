@@ -169,6 +169,10 @@ class PaymentSplitsRepository
 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
 
+                if ($paymentSplitRecord->payment_method == 'CC') {
+                    $this->generateSplitPaymentLink($request->paymentCode, $paymentSplitRecord->id, $request->modelType, $request->quote_id);
+                }
+
                 //add document references
                 if (isset($request->split_payment_details['document_detail'][$i])
                     && $paymentSplitRecord

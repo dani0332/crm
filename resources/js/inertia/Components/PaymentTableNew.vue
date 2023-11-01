@@ -213,12 +213,12 @@ const validatePaymentOption = () => {
           issueFound = true;
         }
       }
-      console.log('azhar11='+issueFound);
+      console.log('paymentMethod='+issueFound);
       if(totalSplitAmount.toFixed(2) !== parseFloat(totalAmount.value).toFixed(2)){
         isPaymentCalculationError.value = true;
         issueFound = true;
       }
-      console.log('azhar22='+issueFound);
+      console.log('paymentCalc='+issueFound);
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         isDocumentNotUploaded.value[i] = false;
 
@@ -234,25 +234,24 @@ const validatePaymentOption = () => {
           issueFound = true;
         }
       }
-
+      console.log('DocError='+issueFound);
       if(
       paymentMethodsForm.discount === 'refer_a_friend' ||
       paymentMethodsForm.discount === 'incentive_offset' ||
       paymentMethodsForm.discount === 'managerial_approval_discount'      
       ){
-        if(paymentMethodsForm.discount_reason === ''){
-          isDiscountReasonEnabled.value = true;
+        isDiscountReasonEnabled.value = true;
+        if(paymentMethodsForm.discount_reason === ''){          
           issueFound = true;
           isDiscountReasonError.value = true;
         } else {
-          isDiscountReasonEnabled.value = false;
           isDiscountReasonError.value = false;
         }      
+      } else {
+        isDiscountReasonEnabled.value = false;
+        isDiscountReasonError.value = false;
       }
-
-
-
-      console.log('azhar33='+issueFound);
+      console.log('DiscountError='+issueFound);   
     if(issueFound){
       return true;
     }
@@ -698,9 +697,11 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   totalPaidAmount.value = 0;
   isDeclineClicked.value = false;
   isDiscountReasonError.value = false;
-
   isApprovedDocumentNotUploaded.value = false;
   approvedDocument.value = '';
+  isPaymentMetodNotSelected.value = [];
+  isDocumentNotUploaded.value = [];
+
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -822,15 +823,15 @@ const validateApprovedDocument = () => {
     return false;
 }
 
-const addPayment = isValid => {
+const addPayment = isValid => {  
   
-  if (!isValid) return;  
   if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment()) return;
     if (validateApprovedDocument()) return;
   } else {
     if (validatePaymentOption()) return;  
-  }   
+  }  
+  if (!isValid) return;  
 
   //define main payment method
   let mainPaymentMethod = 'CR';
@@ -1901,14 +1902,12 @@ const providerId = computed(() => {
                           v-if = "!readOnlyPayments[count]"
                         >
                         <x-tooltip>
-                          x
+                          &#10006;                
                           <template #tooltip>
                               <span>{{ paymentTooltipEnum.DOCUMENT_DELETE_ICON }}</span>
                           </template>
                         </x-tooltip>
                         </span>
-
-
                       </span>
                     </div>
                   </div>
@@ -2206,7 +2205,19 @@ const providerId = computed(() => {
 .custom-dropdown {
   position: relative;
 }
+
 .close-icon {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  margin-left: calc(100% - 20px);
+  cursor: pointer;
+  color: #333; /* Customize the close icon color */
+  font-size: 1.2rem;
+  font-weight: normal;
+}
+
+.close-icon22 {
   position: absolute;
   top: 8px;
   left: 0;
