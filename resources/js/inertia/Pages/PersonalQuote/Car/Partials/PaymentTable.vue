@@ -15,6 +15,7 @@ const props = defineProps({
   quoteRequest: Object,
   paymentMethods: Array,
   quote: Object,
+  isCommercialVehicles: Boolean
 });
 
 const createPaymentModal = ref(false);
@@ -239,9 +240,9 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="can(permissionEnum.PaymentsCreate) &&
+        v-if="((can(permissionEnum.PaymentsCreate) &&
           !can(permissionEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA) && quoteRequest.plan"
+          !hasRole(rolesEnum.PA)) || isCommercialVehicles) && quoteRequest.plan"
         size="sm"
         color="orange"
         @click="addPaymentModal"
@@ -266,14 +267,14 @@ const providerId = computed(() => {
       <template #item-status_changed_at="item">
         {{ item.payment_status_logs.length > 0 ? item.payment_status_logs.at(-1).created_at : '' }}
       </template>
-      
+
       <template #item-actions="item">
             <div class="flex gap-2">
                 <template v-if="!can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
+                    <x-button v-if="(item.payment_methods_code == 'CC' || item.payment_methods_code == 'IN_PL') && item.payment_status_id != paymentStatusEnum.PAID && item.payment_status_id != paymentStatusEnum.CAPTURED && item.payment_status_id != paymentStatusEnum.AUTHORISED && !hasRole(rolesEnum.PA)"
+                        size="xs"
+                        color="primary"
+                        outlined
                         @click.prevent="generateCCLink(item.code)"
                     >
                         Copy Link
@@ -283,10 +284,10 @@ const providerId = computed(() => {
                     </x-button>
                 </template>
                 <template v-if="can(permissionEnum.ApprovePayments)">
-                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)" 
-                        size="xs" 
-                        color="primary" 
-                        outlined 
+                    <x-button v-if="item.payment_methods_code != 'CC' && ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(item.payment_status_id) && !hasRole(rolesEnum.PA)"
+                        size="xs"
+                        color="primary"
+                        outlined
                         @click="approvePayment(item)"
                     >
                         Approve
