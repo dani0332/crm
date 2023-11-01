@@ -567,7 +567,9 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
     totalPayments.value.splice(-7);    
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;
-    paymentMethodsForm.payment_no = '1';
+    if(noPaymentUpdate){
+      paymentMethodsForm.payment_no = '1';
+    }
   } else {
     paymentMethodsForm.payment_no = '1';
     calculatePaymentBreakup();
@@ -840,10 +842,10 @@ const addPayment = isValid => {
     mainPaymentMethod = 'PP';
   } else if(paymentMethodsForm.frequency === 'split_payments'){
     mainPaymentMethod = 'MP';
-  } else if(paymentMethodsForm.frequency === 'upfront'){
-    mainPaymentMethod = 'CR';
+  } else if(splitAmountModels.value.length===2){
+    mainPaymentMethod = paymentMethodsModels.value[1];
   }
-
+  
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
@@ -1002,94 +1004,23 @@ const deleteDocument = (docName,count) => {
   );
 };
 
-
-
 const uploadDocument = (doc, files, count) => {
-
-console.log('azhar1119='+JSON.stringify(files));
-
-let url = '/quotes/car/documents/store';
-if (files.length === 0) return;
-
-if (!fileUploadModels.value[count]) {
-  fileUploadModels.value[count] = [];
-}
-
-isUploading.value = true;
-
-// Loop through all the files and upload them one by one
-for (const file of files) {
-  const fileExists = fileUploadModels.value.flat().some((uploadedFile) => {
-    return uploadedFile.original_name === file.file.name;
-  });
-
-  if (fileExists) {
-    isFileError.value = true;
-    fileErrorMessage.value = props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
-    console.log('File already exists');
-    continue;
-  }
-
-  // Upload the file
-  documentForm
-    .transform((data) => ({
-      ...data,
-      quote_type_id: doc.quote_type_id,
-      document_type_code: doc.code,
-      folder_path: doc.folder_path,
-      file: file.file,
-    }))
-    .post(url, {
-      preserveScroll: true,
-      preserveState: true,
-      onError: (errors) => {
-        documentForm.setError(errors.error);
-        console.log('errors');
-        console.log(errors);
-
-        notification.error({
-          title: 'File upload failed',
-          position: 'top',
-        });
-      },
-      onSuccess: (data) => {
-        if (paymentMethodsForm.status === 'view') {
-          isApprovedDocumentNotUploaded.value = false;
-          approvedDocument.value = data.props.quoteDocuments[0];
-          console.log('approveddoc=' + JSON.stringify(approvedDocument.value));
-        } else {
-          isDocumentNotUploaded.value[count] = false;
-          fileUploadModels.value[count].push(data.props.quoteDocuments[0]);
-          console.log('azhar9999=' + JSON.stringify(fileUploadModels.value));
-        }
-      },
-    });
-}
-
-// Once all the files have been uploaded, set isUploading to false
-isUploading.value = false;
-};
-
-
-
-
-/*
-const uploadDocument = (doc, files, count) => {
-  let url = '/quotes/car/documents/store'; 
+  let url = '/quotes/car/documents/store-multiple'; 
   if (files.length == 0) return;
 
+  
   if (!fileUploadModels.value[count]) {
     fileUploadModels.value[count] = [];
   }        
-
   let allUploadedDocuments = fileUploadModels.value.flat();
-  if (allUploadedDocuments && allUploadedDocuments.some(file => file.original_name === files[0].file.name)) {    
+  let duplicateFileNames = files.map((file) => file.file.name);
+  isFileError.value = false;
+  if (allUploadedDocuments && allUploadedDocuments.some((uploadedFile) => duplicateFileNames.includes(uploadedFile.original_name))) {    
     isFileError.value = true;
     fileErrorMessage.value = props.paymentTooltipEnum.PAYMENT_ADD_DUPLICATE_FILES;
     console.log('File already exists');
     return false;
-  }  
-
+  }
   isUploading.value = true;
   documentForm
     .transform(data => ({
@@ -1097,7 +1028,7 @@ const uploadDocument = (doc, files, count) => {
       quote_type_id: doc.quote_type_id,
       document_type_code: doc.code,
       folder_path: doc.folder_path,
-      file: files[0].file,
+      file: files,
     }))
     .post(url, {
       preserveScroll: true,
@@ -1106,8 +1037,6 @@ const uploadDocument = (doc, files, count) => {
         documentForm.setError(errors.error);
 		    console.log("errors");
         console.log(errors);
-        
-        
         notification.error({
           title: 'File upload failed',
           position: 'top',
@@ -1120,12 +1049,13 @@ const uploadDocument = (doc, files, count) => {
           approvedDocument.value = data.props.quoteDocuments[0];
           console.log('approveddoc='+JSON.stringify(approvedDocument.value));        
           return;
-        } 
+        }
         
+        for(let i=0; i<files.length; i++ ){
+          fileUploadModels.value[count].push(data.props.quoteDocuments[i]);
+        }
         isDocumentNotUploaded.value[count] = false;
-        fileUploadModels.value[count].push(data.props.quoteDocuments[0]);
-
-        console.log('azhar9999='+JSON.stringify(fileUploadModels.value));        
+        console.log('azhar9999='+JSON.stringify(data.props.quoteDocuments[0]));        
         return;        
       },
       onFinish: () => {
@@ -1133,12 +1063,11 @@ const uploadDocument = (doc, files, count) => {
       },
     });
 };
-*/
+
 const getPlanName = computed(() => {
   const plan = props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
 });
-
 
 const providerName = computed(() => {
   const plan = props.quoteRequest.plan;
@@ -2041,7 +1970,7 @@ const providerId = computed(() => {
 
       <template v-if="isViewEnabled && isApproveClicked && paymentMethodsModels[splitPaymentNo]!='CC'">
         <x-divider class="mb-4 mt-1" />
-        <div class="p-1 mb-2">
+        <div class="w-1/4 px-2 p-1 mb-2">
           <x-tooltip>
           <h3>PAYMENT VERIFICATION</h3>
           <template #tooltip>
@@ -2058,39 +1987,48 @@ const providerId = computed(() => {
 				</x-alert>        
         <div class="flex w-full" >
               <div class="w-1/4 px-2">                
-                <x-tooltip>
-                    <x-field label="COLLECTION AMOUNT" required>
+                
+                <div>
+                <x-tooltip class="tooltip-display">
+                    <x-field label="COLLECTION AMOUNT" required></x-field>
+                    <template #tooltip>
+                     <span>{{ paymentTooltipEnum.PAYMENT_ADD_DELETE_DOCUMENT }}</span>
+                  </template>
+                </x-tooltip>
+                <x-field class="w-full">
                     <x-input
                       class="w-full"
                       v-model="paymentMethodsForm.collection_amount"
                       :rules="[rules.isRequired,rules.amount]"         
                     />
                   </x-field>
-                  <template #tooltip>
-                     <span>{{ paymentTooltipEnum.PAYMENT_ADD_DELETE_DOCUMENT }}</span>
-                  </template>
-                </x-tooltip>
+                </div> 
               </div>
-              <div class="w-1/4 px-2" v-if="paymentMethodsModels[splitPaymentNo]=='BT' || paymentMethodsModels[splitPaymentNo]=='CHQ'">
+              <div class="w-1/4 px-2" v-if="paymentMethodsModels[splitPaymentNo]=='BT' || paymentMethodsModels[splitPaymentNo]=='CHQ'">                
                 <x-tooltip>
-                  <x-field label="BANK REFERENCE NUMBER" required>
+                  <x-field label="BANK REFERENCE NUMBER" required></x-field>
+                  <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
+                </template>
+                </x-tooltip>
+                <x-field>
                   <x-input
                     class="w-full"
                     v-model="paymentMethodsForm.bank_reference_number"
                     :rules="[rules.isRequired]"         
                   />
                 </x-field>
-                <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
-                </template>
-                </x-tooltip>
               </div>
               <div class="w-1/4 px-2">
                 <x-tooltip>
-                <x-field label="DOCUMENT" class="dropzone-field">
+                <x-field label="DOCUMENT" class="dropzone-field"></x-field>
+                <template #tooltip>
+                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
+                </template>
+                </x-tooltip>
+                <x-field>
                 <Dropzone
                   :id="paymentDocument.id"
-                  multiple="true"
                   customDisplay="true"
                   :accept="paymentDocument.accepted_files"
                   :max-files="paymentDocument.max_files"
@@ -2100,10 +2038,6 @@ const providerId = computed(() => {
                 />
                 <p v-if="isApprovedDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 </x-field>
-                <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
-                </template>
-                </x-tooltip>
               </div>
         </div>
       </template>

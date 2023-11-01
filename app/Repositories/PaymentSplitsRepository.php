@@ -276,13 +276,9 @@ class PaymentSplitsRepository
         $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
         if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments){
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);            
+        } else if($paymentSplitRecord->count()==1){
+            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::DECLINED]);
         }
-        
-        //dd($paymentSplitRecord->payment->total_payments);
-
-
-
-        //PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
         return $successMessage;
     }
 }
