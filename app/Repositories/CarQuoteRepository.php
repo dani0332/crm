@@ -2,17 +2,14 @@
 
 namespace App\Repositories;
 
-use App\Enums\QuoteTypeId;
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
-use App\Models\CarQuoteRequestDetail;
 use App\Models\InsuranceProvider;
 use App\Models\QuoteStatusLog;
 use App\Traits\CentralTrait;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class CarQuoteRepository extends BaseRepository
@@ -50,19 +47,19 @@ class CarQuoteRepository extends BaseRepository
             ->leftJoin('users as u', 'u.id', '=', 'cqr.advisor_id')
             ->where('cqr.quote_status_id', $quoteStatusId);
 
-        if (!empty(request()->approval_status)) {
+        if (! empty(request()->approval_status)) {
             $query->where('clql.status', request()->approval_status);
         }
 
-        if (!empty(request()->advisor_id)) {
+        if (! empty(request()->advisor_id)) {
             $query->whereIn('cqr.advisor_id', request()->advisor_id);
         }
 
-        if (!empty(request()->renewal_batch)) {
+        if (! empty(request()->renewal_batch)) {
             $query->where('cqr.renewal_batch', request()->renewal_batch);
         }
 
-        return $query->orderBy(DB::raw(' IF (clql.status = "' . GenericRequestEnum::PENDING . '", 0, 1) '))
+        return $query->orderBy(DB::raw(' IF (clql.status = "'.GenericRequestEnum::PENDING.'", 0, 1) '))
             ->simplePaginate()->withQueryString();
     }
 
@@ -90,7 +87,7 @@ class CarQuoteRepository extends BaseRepository
             'userId' => strval(auth()->id()),
         ];
 
-        info('fn: changeInsurer sending change insurer request for quote UUID: ' . $data['uuid'] . ' providerCode: ' . $data['provider_code'] . ' planId: ' . $data['plan_id']);
+        info('fn: changeInsurer sending change insurer request for quote UUID: '.$data['uuid'].' providerCode: '.$data['provider_code'].' planId: '.$data['plan_id']);
 
         return Ken::request('/update-car-ecom-insurer', 'post', $requestData);
     }
@@ -111,8 +108,8 @@ class CarQuoteRepository extends BaseRepository
             'quoteUID' => $data['quote_uuid'],
             'update' => true,
         ];
-        $payLoad['plans'][] = (object)[
-            'planId' => (int)$data['plan_id'],
+        $payLoad['plans'][] = (object) [
+            'planId' => (int) $data['plan_id'],
             'isPayLaterActive' => true,
         ];
 
@@ -121,7 +118,7 @@ class CarQuoteRepository extends BaseRepository
 
     /**
      * update quote status
-     * @param $data
+     *
      * @return void
      */
     public function fetchUpdateQuoteStatus($data)
@@ -138,7 +135,7 @@ class CarQuoteRepository extends BaseRepository
                 'quote_request_id' => $quote->id,
                 'current_quote_status_id' => $data['quote_status_id'],
                 'previous_quote_status_id' => $previousStatusId,
-                'notes' => $data['notes'] ?? null
+                'notes' => $data['notes'] ?? null,
             ]);
 
             return $quote;
@@ -146,7 +143,6 @@ class CarQuoteRepository extends BaseRepository
     }
 
     /**
-     * @param $data
      * @return null
      */
     public function fetchFollowupStarted($data)

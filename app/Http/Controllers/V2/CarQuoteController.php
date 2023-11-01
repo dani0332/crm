@@ -7,7 +7,6 @@ use App\Enums\QuoteTypes;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
-use App\Http\Requests\ScheduleFollowupRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
 use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
@@ -64,7 +63,7 @@ class CarQuoteController extends Controller
             'quotes' => $personalQuotes,
             'advisors' => $advisors,
             'quoteBatches' => $quoteBatches,
-            'kyoEndPoint' => env('KYO_END_POINT')
+            'kyoEndPoint' => env('KYO_END_POINT'),
         ]);
     }
 

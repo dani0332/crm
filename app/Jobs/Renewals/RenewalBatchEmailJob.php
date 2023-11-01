@@ -59,7 +59,7 @@ class RenewalBatchEmailJob implements ShouldQueue, StackableJob
      */
     public function handle(RenewalsUploadService $renewalsUploadFileService)
     {
-        info('Renewals OCB email job started processId: ' . $this->renewalQuoteProcess->id);
+        info('Renewals OCB email job started processId: '.$this->renewalQuoteProcess->id);
 
         $renewalsUploadFileService->renewalBatchEmailProcess($this->batch, $this->renewalsBatchEmail, $this->renewalQuoteProcess);
 
@@ -88,7 +88,7 @@ class RenewalBatchEmailJob implements ShouldQueue, StackableJob
      */
     public function failed(Throwable $exception)
     {
-        info('CL: ' . get_class() . ' FN: failed. Job Failed. renewalQuoteProcessId: ' . $this->renewalQuoteProcess->id . ' Error: ' . $exception->getMessage());
+        info('CL: '.get_class().' FN: failed. Job Failed. renewalQuoteProcessId: '.$this->renewalQuoteProcess->id.' Error: '.$exception->getMessage());
         //$this->renewalQuoteProcess->update(['status' => RenewalProcessStatuses::FAILED]);
         RenewalsBatchEmails::where('id', $this->renewalsBatchEmail->id)->update(['total_failed' => DB::raw('total_failed+1')]);
     }
