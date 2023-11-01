@@ -64,6 +64,8 @@ class TravelQuoteService extends BaseService
             'qs.text as quote_status_id_text',
             'u.id as advisor_id',
             'u.name as advisor_id_text',
+            'tqr.previous_advisor_id',
+            'uadv.name AS previous_advisor_id_text',
             'tqr.payment_status_id',
             'ps.text AS payment_status_id_text',
             'tqr.plan_id',
@@ -104,6 +106,7 @@ class TravelQuoteService extends BaseService
             ->leftJoin('nationality as n', 'n.id', '=', 'tqr.nationality_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'tqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'tqr.advisor_id')
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'tqr.previous_advisor_id')
             ->leftJoin('region as r', 'r.id', '=', 'tqr.region_cover_for_id')
             ->leftJoin('currently_located_in as cli', 'cli.id', '=', 'tqr.currently_located_in_id')
             ->leftJoin('nationality', 'nationality.id', '=', 'tqr.destination_id')
@@ -271,24 +274,24 @@ class TravelQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(tqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at) && ! empty($request->created_at_end)) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween(DB::raw('DATE(tqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('tqr.created_at', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
 
         if (isset($request->code) && $request->code != '') {

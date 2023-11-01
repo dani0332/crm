@@ -211,7 +211,6 @@ class RenewalsUploadController extends Controller
             'azureStorageUrl' => $azureStorageUrl,
             'azureStorageContainer' => $azureStorageContainer,
         ]);
-
     }
 
     /**
@@ -246,7 +245,6 @@ class RenewalsUploadController extends Controller
             'EnumGenericYes' => GenericRequestEnum::Yes,
             'EnumSkipPlansNonGCC' => SkipPlansEnum::NON_GCC,
         ]);
-
     }
 
     public function updateRenewals()
@@ -308,7 +306,6 @@ class RenewalsUploadController extends Controller
             'process' => $process,
             'batch' => $batch,
         ]);
-
     }
 
     public function batchDetail($batch)
@@ -464,5 +461,4 @@ class RenewalsUploadController extends Controller
 
         return redirect('/');
     }
-
 }

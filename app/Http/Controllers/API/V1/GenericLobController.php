@@ -8,23 +8,10 @@ use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
-use App\Services\CarQuoteService;
-use App\Services\HealthQuoteService;
-use App\Services\TravelQuoteService;
+
 
 class GenericLobController extends Controller
 {
-    protected $carQuoteService;
-    protected $healthQuoteService;
-    protected $travelQuoteService;
-
-    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService, TravelQuoteService $travelQuoteService)
-    {
-        $this->carQuoteService = $carQuoteService;
-        $this->healthQuoteService = $healthQuoteService;
-        $this->travelQuoteService = $travelQuoteService;
-    }
-
     /**
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *
@@ -32,8 +19,8 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $serviceName = strtolower($quoteType).'QuoteService';
-        $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
+        $service = app('App\Services\\'.ucfirst($quoteType).'QuoteService');
+        $response = $service->exportPlansPdf($quoteType, $request->validated());
 
         if (isset($response['error'])) {
             vAbort($response['error']);

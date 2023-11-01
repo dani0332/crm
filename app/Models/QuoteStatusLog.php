@@ -13,6 +13,14 @@ class QuoteStatusLog extends Model
     protected $table = 'quote_status_log';
     protected $fillable = ['quote_type_id', 'quote_request_id', 'current_quote_status_id', 'created_at', 'updated_at', 'previous_quote_status_id', 'notes', 'created_by'];
 
+    /**
+     * @return void
+     */
+    public function setCreatedByIdAttribute()
+    {
+        $this->attributes['created_by_id'] = auth()->id();
+    }
+
     public function getCreatedAtAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');

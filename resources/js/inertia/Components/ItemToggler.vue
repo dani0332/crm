@@ -8,6 +8,18 @@ const props = defineProps({
     type: [String, Number],
     required: true,
   },
+  size: {
+    type: String,
+    default: 'md',
+  },
+  loading: {
+    type: Boolean,
+    default: false,
+  },
+  refresh: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const emit = defineEmits(['toggle']);
@@ -24,14 +36,27 @@ const onUpdate = () => {
 watch(
   () => props.isActive,
   () => {
-    state.value = props.isActive;
+    state.value = props.isActive == 1;
   },
   {
     immediate: true,
   },
 );
+
+watch(
+  () => props.refresh,
+  () => {
+    state.value = props.isActive == 1;
+  },
+);
 </script>
 
 <template>
-  <x-toggle v-model="state" color="emerald" @update:model-value="onUpdate" />
+  <x-toggle
+    v-model="state"
+    color="emerald"
+    :size="size"
+    :loading="loading"
+    @update:model-value="onUpdate"
+  />
 </template>
