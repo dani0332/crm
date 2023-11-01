@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Services\KenService;
 use App\Services\KyoService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\ServiceProvider;

@@ -3,14 +3,11 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
-use App\Services\CarQuoteService;
-use App\Services\HealthQuoteService;
 
 class GenericLobController extends Controller
 {
@@ -21,8 +18,8 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $serviceName = strtolower($quoteType).'QuoteService';
-        $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
+        $service = app('App\Services\\'.ucfirst($quoteType).'QuoteService');
+        $response = $service->exportPlansPdf($quoteType, $request->validated());
 
         if (isset($response['error'])) {
             vAbort($response['error']);

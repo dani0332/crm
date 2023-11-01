@@ -33,7 +33,6 @@ class KyoService
 
         info('KYO URL : '.$url);
 
-
         $response = $this->client->withBody(json_encode($data))
             ->send($method, $url)
             ->onError(function ($response) {

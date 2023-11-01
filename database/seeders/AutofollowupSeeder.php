@@ -17,7 +17,7 @@ class AutofollowupSeeder extends Seeder
      */
     public function run()
     {
-        if(!QuoteStatus::where('code', QuoteStatusEnum::Stale)->first()) {
+        if (! QuoteStatus::where('code', QuoteStatusEnum::Stale)->first()) {
 
             $quoteStatus = QuoteStatus::create([
                 'text' => 'Stale',

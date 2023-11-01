@@ -1,11 +1,11 @@
 <?php
 
 use App\Http\Controllers\API\ApiController;
+use App\Http\Controllers\API\V1\CarQuoteController;
 use App\Http\Controllers\API\V1\GenericLobController;
 use App\Http\Controllers\API\V1\QuoteDocumentController;
 use App\Http\Controllers\V2\EmbeddedProductController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\V1\CarQuoteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,7 +33,6 @@ Route::prefix('v1')->group(function () {
     Route::get('quotes/car', [CarQuoteController::class, 'index']);
     Route::post('quotes/car/{uuid}/update-lead-status', [CarQuoteController::class, 'updateLeadStatus']);
     Route::get('quotes/car/{uuid}/ocb-details', [CarQuoteController::class, 'getOcbDetails']);
-
 
     Route::post('quotes/{quoteType}/documents', [QuoteDocumentController::class, 'store']);
     Route::get('quotes/{quoteType}/{quoteUuid}/documents', [QuoteDocumentController::class, 'index']);

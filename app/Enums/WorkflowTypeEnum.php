@@ -4,7 +4,6 @@ namespace App\Enums;
 
 use BenSampo\Enum\Enum;
 
-
 final class WorkflowTypeEnum extends Enum
 {
     public const RENEWALS = 'RENEWALS';

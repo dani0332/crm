@@ -29,7 +29,7 @@ class FollowupStartedRequest extends FormRequest
             'quote_uuid' => ['required', new ValidateQuoteObject],
             'quote_status_id' => 'required|exists:quote_status,id',
             'notes' => 'nullable',
-            'followup_id' => 'required'
+            'followup_id' => 'required',
         ];
     }
 }
