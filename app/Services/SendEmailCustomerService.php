@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
 use App\Models\ApplicationStorage;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use App\Enums\DefaultAdvisorEnum;
 
 class SendEmailCustomerService extends BaseService
 {
@@ -151,7 +151,7 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->pdfAttachment->name,
                 ];
             }
-            if($emailData->advisorEmailAddress == null || $emailData->advisorName == null) {
+            if ($emailData->advisorEmailAddress == null || $emailData->advisorName == null) {
                 $emailData->advisorEmailAddress = DefaultAdvisorEnum::ADVISOREMAIL;
                 $emailData->advisorName = DefaultAdvisorEnum::ADVISORNAME;
                 $emailData->advisorMobileNo = DefaultAdvisorEnum::ADVISORMOBILENO;
