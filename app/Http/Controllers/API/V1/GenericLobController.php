@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\UpdateLeadStatusRequest;
 use App\Http\Requests\ExportPlansPdfRequest;
 use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
@@ -13,15 +14,6 @@ use App\Services\HealthQuoteService;
 
 class GenericLobController extends Controller
 {
-    protected $carQuoteService;
-    protected $healthQuoteService;
-
-    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
-    {
-        $this->carQuoteService = $carQuoteService;
-        $this->healthQuoteService = $healthQuoteService;
-    }
-
     /**
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *

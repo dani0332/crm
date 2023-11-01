@@ -985,6 +985,47 @@ class CarQuoteService extends BaseService
         ];
     }
 
+    /**
+     * get car quote details, quote plans and pdf
+     * @param $uuid
+     * @return mixed
+     */
+    public function getOcbDetails($uuid)
+    {
+        $carQuote = CarQuote::select(
+            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id',
+                'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date']
+        )->with(['advisor', 'carMake', 'carModel'])
+            ->where('uuid', $uuid)->first();
+
+        $plans = $this->getPlans($carQuote->uuid, true, true);
+
+        $totalPlans = is_countable($plans) ? count($plans) : 0;
+
+        $carQuote->quote_type_id = QuoteTypeId::Car;
+
+        if ($totalPlans > 0) {
+            $pdfData = [
+                'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
+                'quote_uuid' => $carQuote->uuid,
+            ];
+
+            $pdf = $this->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
+            if (isset($pdf['error'])) {
+                info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
+            } else {
+                $carQuote->pdf = (object) [
+                    'content' =>   base64_encode(($pdf['pdf'])->stream()),
+                    'file_name' => $pdf['name']
+                ];
+            }
+        }
+
+        $carQuote->plans = $plans;
+
+        return $carQuote;
+    }
+
     public function getQuotePlans($id, $isRenewalSort = false, $getLatestRating = false, $isDisabledEnabled = false)
     {
         $quoteUuId = CarQuote::where('uuid', '=', $id)->value('uuid');
