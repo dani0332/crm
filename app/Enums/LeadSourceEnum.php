@@ -16,4 +16,5 @@ final class LeadSourceEnum extends Enum
     const INSLY = 'Insly';
     const REVIVAL_REPLIED = 'REVIVAL_REPLIED';
     const REVIVAL_PAID = 'REVIVAL_PAID';
+    const DUBAI_NOW = 'DUBAI_NOW';
 }

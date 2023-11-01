@@ -117,6 +117,8 @@ class BikeQuoteController extends Controller
             'personalPlans' => $personalPlans,
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'storageUrl' => storageUrl(),
+            'modelType' => QuoteTypes::BIKE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::BikeManager),
             'embeddedProducts' => $embeddedProducts,
         ]);
     }
