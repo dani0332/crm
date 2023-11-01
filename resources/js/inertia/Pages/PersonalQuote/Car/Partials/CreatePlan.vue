@@ -50,6 +50,7 @@ const addPlanForm = useForm({
   is_create: 1,
   repair_type_comp: '',
   insurance_provider_id: '',
+  insurer_quote_no: '',
   car_plan_id: null,
   actual_premium: null,
   car_value: null,
@@ -196,6 +197,18 @@ const getAddonVat = item => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Enter excess"
+            type="number"
+            step="any"
+          />
+        </x-field>
+      </div>
+      <div class="w-full md:w-1/3">
+        <x-field label="Insurer Quote Number" required>
+          <x-input
+            v-model="addPlanForm.insurer_quote_no"
+            :rules="[isRequired]"
+            class="w-full"
+            placeholder="Enter Insurer Quote Number"
             type="number"
             step="any"
           />

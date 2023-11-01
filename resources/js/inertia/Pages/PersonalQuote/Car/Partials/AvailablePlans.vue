@@ -9,6 +9,7 @@ const props = defineProps({
   isPlanUpdateActive: Boolean,
   genericRequestEnum: Object,
 });
+const { isRequired } = useRules();
 
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
@@ -256,6 +257,7 @@ const onToggleManual = () => {
               <x-input
                 v-model="planForm.insurer_quote_no"
                 :disabled="!planForm.is_manual_update"
+                :rules="planForm.is_manual_update ? [isRequired] : []"
                 maxlength="50"
                 size="sm"
               />
