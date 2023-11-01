@@ -11,6 +11,15 @@
         word-wrap: break-word;
     }
 </style>
+<script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
+<script>
+    $(function(){
+        var currentDate = new Date();
+        var formattedDate = $.datepicker.formatDate('yy-mm-dd', currentDate);
+        $('#transapp_start_date').val(formattedDate);
+        $('#transapp_stop_date').val(formattedDate);
+    });
+</script>
 <div class="row">
     <div class="col-md-12 col-sm-12">
         <div class="x_panel">
