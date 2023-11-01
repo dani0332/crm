@@ -21,11 +21,10 @@ final class PaymentStatusEnum extends Enum
     const FAILED = 9;
     const PAID = 10;
     const DRAFT = 11;
-    const PARTIAL_CAPTURED = 12;    
-    
+    const PARTIAL_CAPTURED = 12;
     const DISPUTED = 13;
     const NEW = 14;
     const OVERDUE = 15;
-    const CREDIT_APPROVED = 16;    
-    const PARTIALLY_PAID = 17;    
+    const CREDIT_APPROVED = 16;
+    const PARTIALLY_PAID = 17;
 }

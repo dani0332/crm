@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\PaymentStatus;
+use Illuminate\Database\Seeder;
 
 class PaymentStatusAddSeeder extends Seeder
 {
@@ -14,7 +13,7 @@ class PaymentStatusAddSeeder extends Seeder
     public function run(): void
     {
         $recordExists = PaymentStatus::where('id', '13')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentStatus::create([
                 'id' => '13',
                 'code' => 'disputed',
@@ -25,7 +24,7 @@ class PaymentStatusAddSeeder extends Seeder
         }
 
         $recordExists = PaymentStatus::where('id', '14')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentStatus::create([
                 'id' => '14',
                 'code' => 'new',
@@ -36,7 +35,7 @@ class PaymentStatusAddSeeder extends Seeder
         }
 
         $recordExists = PaymentStatus::where('id', '15')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentStatus::create([
                 'id' => '15',
                 'code' => 'overdue',
@@ -47,7 +46,7 @@ class PaymentStatusAddSeeder extends Seeder
         }
 
         $recordExists = PaymentStatus::where('id', '16')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentStatus::create([
                 'id' => '16',
                 'code' => 'credit_approved',
@@ -58,7 +57,7 @@ class PaymentStatusAddSeeder extends Seeder
         }
 
         $recordExists = PaymentStatus::where('id', '17')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentStatus::create([
                 'id' => '17',
                 'code' => 'partially_paid',

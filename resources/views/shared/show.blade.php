@@ -10,6 +10,7 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\PermissionsEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LeadSourceEnum;
 @endphp
 
 <script src="{{ asset('vendors/jquery/dist/jquery.min.js') }}"></script>
@@ -401,8 +402,9 @@ use App\Enums\GenericRequestEnum;
     @endif
 
     @if (strtolower($model->modelType) != 'team' && strtolower($model->modelType) != 'leadstatus')
-        @if ($model->modelType == quoteTypeCode::Car)
-            <x-quote-renewal-card :record="$record" />
+        @if ($model->modelType == quoteTypeCode::Car && ($record->source == LeadSourceEnum::RENEWAL_UPLOAD ||  $record->source == LeadSourceEnum::INSLY))
+        
+            <x-quote-renewal-card :record="$record" :modeltype="$model->modelType" />
         @endif
         <x-lead-status-update :lead="$record" :modeltype="$model->modelType" :status="$record->quote_status_id" :statuses="$leadStatuses" :lostreasons="$lostReasons"
             :selectedlostreason="$selectedLostReasonId" :activityassignees="$advisors" :isQuoteDocumentEnabled="$isQuoteDocumentEnabled"

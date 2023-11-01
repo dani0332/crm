@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('payment_splits', function (Blueprint $table) {
             if (! Schema::hasColumn('payment_splits', 'payment_link')) {
-                $table->string('payment_link','1000')->nullable();
+                $table->string('payment_link', '1000')->nullable();
             }
 
             if (! Schema::hasColumn('payment_splits', 'payment_link_created_at')) {

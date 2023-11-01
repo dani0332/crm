@@ -8,20 +8,9 @@ use App\Http\Requests\OCBEmailRequest;
 use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
-use App\Services\CarQuoteService;
-use App\Services\HealthQuoteService;
 
 class GenericLobController extends Controller
 {
-    protected $carQuoteService;
-    protected $healthQuoteService;
-
-    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
-    {
-        $this->carQuoteService = $carQuoteService;
-        $this->healthQuoteService = $healthQuoteService;
-    }
-
     /**
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *

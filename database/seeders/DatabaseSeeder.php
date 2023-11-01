@@ -34,13 +34,13 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
+            AutofollowupSeeder::class,
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
-            UpdateRenewalTemplateStorageSeeder::class,
-PaymentMethodsAddSeeder::class,
+            PaymentMethodsAddSeeder::class,
             AddNewDocumentTypeSeeder::class,
-            PaymentStatusAddSeeder::class,        
-]);
+            PaymentStatusAddSeeder::class,
+        ]);
     }
 }

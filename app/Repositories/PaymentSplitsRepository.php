@@ -3,16 +3,15 @@
 namespace App\Repositories;
 
 use App\Enums\PaymentMethodsEnum;
-use App\Models\Payment;
-use App\Models\PaymentSplits;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Models\QuoteDocument;
-use App\Models\PersonalQuote;
-
-use App\Http\Controllers\SageApi;
-use App\Services\SageApiService;
 use App\Factories\SagePayloadFactory;
+use App\Http\Controllers\SageApi;
+use App\Models\Payment;
+use App\Models\PaymentSplits;
+use App\Models\PersonalQuote;
+use App\Models\QuoteDocument;
+use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 
@@ -26,38 +25,38 @@ class PaymentSplitsRepository
             ->get();
     }
 
-    public function addPaymentSplits($request,$quoteID)
-    {        
-        for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
-            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i]!=NULL) {
+    public function addPaymentSplits($request, $quoteID)
+    {
+        for ($i = 1; $i <= (count($request->split_payment_details['split_amount']) - 1); $i++) {
+            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
                 $childPaymentStatus = PaymentStatusEnum::NEW;
-                if($request->split_payment_details['payment_type'][$i]==PaymentMethodsEnum::BankTransfer){
+                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer) {
                     $childPaymentStatus = PaymentStatusEnum::PENDING;
-                }                
+                }
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $i,
                     'payment_method' => $request->split_payment_details['payment_type'][$i],
                     'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
-                    'due_date' => $request->split_payment_details['due_date'][$i],   
-                    'payment_status_id' =>  $childPaymentStatus,             
+                    'due_date' => $request->split_payment_details['due_date'][$i],
+                    'payment_status_id' => $childPaymentStatus,
                 ];
-                
+
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-                if($paymentSplitRecord){
-                    if( $paymentSplitRecord->payment_method=='CC' ){
-                        $this->generateSplitPaymentLink($quoteID,$paymentSplitRecord->id,$request->modelType,$request->quote_id);
+                if ($paymentSplitRecord) {
+                    if ($paymentSplitRecord->payment_method == 'CC') {
+                        $this->generateSplitPaymentLink($quoteID, $paymentSplitRecord->id, $request->modelType, $request->quote_id);
                     }
                     //add document references
-                    if(isset($request->split_payment_details['document_detail'][$i]) 
-                        && $paymentSplitRecord 
-                        && count($request->split_payment_details['document_detail'][$i]) 
-                        ){
-                        foreach($request->split_payment_details['document_detail'][$i] as $document){
+                    if (isset($request->split_payment_details['document_detail'][$i])
+                        && $paymentSplitRecord
+                        && count($request->split_payment_details['document_detail'][$i])
+                    ) {
+                        foreach ($request->split_payment_details['document_detail'][$i] as $document) {
                             $quoteDocumentRec = QuoteDocument::find($document['id']);
                             $quoteDocumentRec = QuoteDocument::find($document['id']);
-                            if ($quoteDocumentRec){
+                            if ($quoteDocumentRec) {
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                                 $quoteDocumentRec->save();
                             }
@@ -68,14 +67,12 @@ class PaymentSplitsRepository
         }
     }
 
-
-    public function generateSplitPaymentLink($code,$splitPaymentId,$modelType,$quoteId)
+    public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
     {
         $payment = Payment::where('code', '=', $code)->first();
-        $splitPayment = PaymentSplits::where(['code'=>$code, 'id'=>$splitPaymentId])->first();        
-        //dd($payment);       
-        
-        
+        $splitPayment = PaymentSplits::where(['code' => $code, 'id' => $splitPaymentId])->first();
+        //dd($payment);
+
         if (! $payment) {
             return false;
         }
@@ -120,74 +117,77 @@ class PaymentSplitsRepository
             ];
 
             $splitPayment->payment_link = $paymentLinkURL;
-            $splitPayment->payment_link_created_at=now();
+            $splitPayment->payment_link_created_at = now();
             $splitPayment->save();
+
             return;
         }
     }
 
     public function updatePaymentSplits($request)
     {
-        $paymentSplits = PaymentSplits::with('documents')->where(['code'=>$request->paymentCode])->get(); 
+        $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
-        if($paymentSplits){
-            foreach($paymentSplits as $paymentSplit){
-                if($paymentSplit->payment_status_id == PaymentStatusEnum::PAID) {
+        if ($paymentSplits) {
+            foreach ($paymentSplits as $paymentSplit) {
+                if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
+
                     continue;
                 }
                 //dd($paymentSplit->documents()->count());
-                foreach($paymentSplit->documents as $document){
+                foreach ($paymentSplit->documents as $document) {
                     $splitPaymentDocumentIds[$paymentSplit->sr_no][] = $document->id;
                 }
-                
+
                 $paymentSplit->documents()->delete();
                 $paymentSplit->delete();
             }
         }
 
-        for($i=1; $i<=(count($request->split_payment_details['split_amount'])-1); $i++) {
-            if(in_array($i, $paymentPaidSerialNo)){
+        for ($i = 1; $i <= (count($request->split_payment_details['split_amount']) - 1); $i++) {
+            if (in_array($i, $paymentPaidSerialNo)) {
                 continue;
             }
 
-            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i]!=NULL) {
-                
+            if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
+
                 $childPaymentStatus = PaymentStatusEnum::NEW;
-                if($request->split_payment_details['payment_type'][$i]==PaymentMethodsEnum::BankTransfer){
+                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer) {
                     $childPaymentStatus = PaymentStatusEnum::PENDING;
-                }                
+                }
                 $splitPaymentInformation = [
                     'code' => $request->paymentCode,
                     'sr_no' => $i,
                     'payment_method' => $request->split_payment_details['payment_type'][$i],
                     'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
-                    'due_date' => $request->split_payment_details['due_date'][$i],   
+                    'due_date' => $request->split_payment_details['due_date'][$i],
                     'payment_status_id' => $childPaymentStatus,
                 ];
-                
+
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-                
+
                 //add document references
-                if(isset($request->split_payment_details['document_detail'][$i]) 
-                    && $paymentSplitRecord 
-                    && count($request->split_payment_details['document_detail'][$i]) 
-                    ){
-                    foreach($request->split_payment_details['document_detail'][$i] as $document){
-                        
-                        if( isset($splitPaymentDocumentIds[$i]) && in_array($document['id'], $splitPaymentDocumentIds[$i])){
+                if (isset($request->split_payment_details['document_detail'][$i])
+                    && $paymentSplitRecord
+                    && count($request->split_payment_details['document_detail'][$i])
+                ) {
+                    foreach ($request->split_payment_details['document_detail'][$i] as $document) {
+
+                        if (isset($splitPaymentDocumentIds[$i]) && in_array($document['id'], $splitPaymentDocumentIds[$i])) {
                             $quoteDocumentRec = QuoteDocument::withTrashed()->find($document['id']);
-                            if ($quoteDocumentRec){
+                            if ($quoteDocumentRec) {
                                 $quoteDocumentRec->restore();
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                                 $quoteDocumentRec->save();
                             }
+
                             continue;
                         }
-                        $quoteDocumentRec = QuoteDocument::find($document['id']);                    
-                        if ($quoteDocumentRec){
+                        $quoteDocumentRec = QuoteDocument::find($document['id']);
+                        if ($quoteDocumentRec) {
                             $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                             $quoteDocumentRec->save();
                         }
@@ -199,9 +199,9 @@ class PaymentSplitsRepository
 
     public function updatePaymentStatus($request)
     {
-        $successMessage='Payment Verified';
-        
-        if($request->is_approved) {
+        $successMessage = 'Payment Verified';
+
+        if ($request->is_approved) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
                 'bank_reference_number' => $request->bank_reference_number,
@@ -209,7 +209,7 @@ class PaymentSplitsRepository
                 'updated_by' => $request->user()->id,
             ];
             //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-            
+
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
             /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
             $sageRequest = new \stdClass();
@@ -220,7 +220,7 @@ class PaymentSplitsRepository
             $sageRequest->premiumWithTax = $request->collection_amount;
             $sageRequest->vatOnCommission = 0;
             $sageRequest->commission = 0;
-            $sageRequest->commissionIncludingVat = 0;  
+            $sageRequest->commissionIncludingVat = 0;
             $sageRequest->invoicePaymentStatus = 'paid';
             $sageRequest->insurerPremiumTaxInvoiceNumber='';
             $sageApiService = new SageApiService();
@@ -229,38 +229,38 @@ class PaymentSplitsRepository
             $payLoad = $payLoadOptions['payload'];
             $sageResponse = $sageApiService->postToSage300($endPoint, $payLoad);
             //$sageApi = new SageApi(new SageApiService());
-            //$sageResponse = $sageApi->processSagePost($sageRequest);            
+            //$sageResponse = $sageApi->processSagePost($sageRequest);
             */
-            $leadStatus = 'policy booked';            
+            $leadStatus = 'policy booked';
             $createPrepaymentReciept = [
-                "BatchRecordType" => "CA",
-                "ReceiptsAdjustments" => [
+                'BatchRecordType' => 'CA',
+                'ReceiptsAdjustments' => [
                     [
-                        "BatchType" => "CA",
-                        "CustomerNumber" => "IC008",
-                        "BankReceiptAmount" => floatval($request->collection_amount),
-                        "CheckReceiptNumber" => "123456",
-                        "PaymentCode" => "BT",
-                        "ReceiptTransactionType" => "Prepayment",
-                        "AppliedReceiptsAdjustments" => [
+                        'BatchType' => 'CA',
+                        'CustomerNumber' => 'IC008',
+                        'BankReceiptAmount' => floatval($request->collection_amount),
+                        'CheckReceiptNumber' => '123456',
+                        'PaymentCode' => 'BT',
+                        'ReceiptTransactionType' => 'Prepayment',
+                        'AppliedReceiptsAdjustments' => [
                             [
-                                "BatchType" => "CA",
-                                "CustomerNumber" => "IC008",
-                                "ReceiptTransactionType" => "Prepayment"
-                            ]
-                        ]
-                    ]
-                ]
+                                'BatchType' => 'CA',
+                                'CustomerNumber' => 'IC008',
+                                'ReceiptTransactionType' => 'Prepayment',
+                            ],
+                        ],
+                    ],
+                ],
             ];
             $sageApiService = new SageApiService();
             $message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
             $sageResponse = json_decode($message, true);
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
-            $splitPayment->update($paymentInformation);            
+            $splitPayment->update($paymentInformation);
             //dd($documentNumberForReciept);
 
-        } elseif($request->is_declined) {
+        } elseif ($request->is_declined) {
             $paymentInformation = [
                 'declined_reason_id' => $request->declined_reason,
                 'declined_custom_reason' => $request->declined_custom_reason,
@@ -268,18 +268,18 @@ class PaymentSplitsRepository
                 'updated_by' => $request->user()->id,
             ];
             PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-            $successMessage='Payment Declined';
+            $successMessage = 'Payment Declined';
         }
 
         //Update parent payment status if all splits are paid
         $paymentSplitRecord = PaymentSplits::with('payment')->find($request->splitPaymentId);
         $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
-        if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments){
-            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);            
-        } else if($paymentSplitRecord->count()==1){
+        if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments) {
+            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);
+        } elseif ($paymentSplitRecord->count() == 1) {
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::DECLINED]);
         }
+
         return $successMessage;
     }
 }
-

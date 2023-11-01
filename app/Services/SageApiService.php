@@ -51,6 +51,7 @@ class SageApiService
 
         }
         curl_close($ch);
+
         // Return response or handle errors
         return $response;
     }

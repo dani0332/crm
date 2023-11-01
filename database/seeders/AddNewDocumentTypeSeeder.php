@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\DocumentType;
+use Illuminate\Database\Seeder;
 
 class AddNewDocumentTypeSeeder extends Seeder
 {
@@ -13,8 +12,8 @@ class AddNewDocumentTypeSeeder extends Seeder
      */
     public function run(): void
     {
-        $documentTypesCount = DocumentType::get()->where('code','CPD')->count();
-        if(!$documentTypesCount){
+        $documentTypesCount = DocumentType::get()->where('code', 'CPD')->count();
+        if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
                 'code' => 'CPD',
                 'text' => 'Payment Document',
@@ -26,7 +25,7 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'send_to_customer' => true,
                 'sort_order' => 4,
                 'is_required' => 0,
-            ]);            
-        }     
+            ]);
+        }
     }
 }

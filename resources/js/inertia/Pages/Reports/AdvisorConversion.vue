@@ -550,14 +550,14 @@ watch(
           />
         </template>
         <x-select
-            v-model="filters.isCommercial"
-            label="Commercial"
-            placeholder="Select any option"
-            :options="[
-                { value: 'All', label: 'All' },
-                { value: true, label: 'Yes' },
-                { value: false, label: 'No' },
-            ]"
+          v-model="filters.isCommercial"
+          label="Commercial"
+          placeholder="Select any option"
+          :options="[
+            { value: 'All', label: 'All' },
+            { value: true, label: 'Yes' },
+            { value: false, label: 'No' },
+          ]"
         />
       </div>
       <div class="flex justify-between gap-3 mb-4 items-center">
@@ -592,11 +592,11 @@ watch(
       :sort-type="'desc'"
     >
       <template #item-gross_conversion="item">
-        <p v-if="item.gross_conversion == 0"> NaN </p>
+        <p v-if="item.gross_conversion == 0">NaN</p>
         <p v-else>{{ item.gross_conversion }} %</p>
       </template>
       <template #item-net_conversion="item">
-        <p v-if="item.net_conversion == 0"> NaN </p>
+        <p v-if="item.net_conversion == 0">NaN</p>
         <p v-else>{{ item.net_conversion }} %</p>
       </template>
       <template #item-total_leads="item">

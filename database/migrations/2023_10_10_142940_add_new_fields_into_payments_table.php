@@ -15,9 +15,9 @@ class AddNewFieldsInToPaymentsTable extends Migration
     {
 
         Schema::table('payments', function (Blueprint $table) {
-           
+
             if (! Schema::hasColumn('payments', 'total_payments')) {
-                $table->smallInteger('total_payments')->unsigned()->nullable();                
+                $table->smallInteger('total_payments')->unsigned()->nullable();
             }
 
             if (! Schema::hasColumn('payments', 'credit_approval')) {
@@ -59,9 +59,9 @@ class AddNewFieldsInToPaymentsTable extends Migration
             if (! Schema::hasColumn('payments', 'total_amount')) {
                 $table->float('total_amount', 16, 2)->nullable();
             }
-            
+
         });
-        
+
     }
 
     /**
@@ -74,4 +74,3 @@ class AddNewFieldsInToPaymentsTable extends Migration
         //
     }
 }
-

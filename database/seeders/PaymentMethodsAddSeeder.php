@@ -1,8 +1,8 @@
 <?php
 
 namespace Database\Seeders;
+
 use App\Models\PaymentMethod;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -13,51 +13,51 @@ class PaymentMethodsAddSeeder extends Seeder
      */
     public function run(): void
     {
-        
+
         $paymentMethods = PaymentMethod::get();
-        
-        foreach($paymentMethods as $paymentMethod){
-            if($paymentMethod->tool_tip == null){
-                if($paymentMethod->code == 'BT'){
+
+        foreach ($paymentMethods as $paymentMethod) {
+            if ($paymentMethod->tool_tip == null) {
+                if ($paymentMethod->code == 'BT') {
 
                     DB::table('payment_methods')
-                    ->where('code', 'BT')
-                    ->update(['tool_tip' => 'This payment method involves the customer transferring funds directly from their bank account. It can be done electronically or through physical means such as cash or cheque deposits.']);
-                    
+                        ->where('code', 'BT')
+                        ->update(['tool_tip' => 'This payment method involves the customer transferring funds directly from their bank account. It can be done electronically or through physical means such as cash or cheque deposits.']);
+
                 }
-                if($paymentMethod->code == 'CSH'){
-                    
+                if ($paymentMethod->code == 'CSH') {
+
                     DB::table('payment_methods')
-                    ->where('code', 'CSH')
-                    ->update(['tool_tip' => 'With this method, the customer provides physical currency as payment. Ensure proper documentation and receipts when dealing with cash transactions to maintain transparency.']);
-                   
+                        ->where('code', 'CSH')
+                        ->update(['tool_tip' => 'With this method, the customer provides physical currency as payment. Ensure proper documentation and receipts when dealing with cash transactions to maintain transparency.']);
+
                 }
-                if($paymentMethod->code == 'CHQ'){
-                    
+                if ($paymentMethod->code == 'CHQ') {
+
                     DB::table('payment_methods')
-                    ->where('code', 'CHQ')
-                    ->update(['tool_tip' => 'The customer pays using a cheque that has the current date on it. Ensure the cheque details are correctly filled out and verify its authenticity.']);                    
-                    
+                        ->where('code', 'CHQ')
+                        ->update(['tool_tip' => 'The customer pays using a cheque that has the current date on it. Ensure the cheque details are correctly filled out and verify its authenticity.']);
+
                 }
-                if($paymentMethod->code == 'CC'){
-                    
+                if ($paymentMethod->code == 'CC') {
+
                     DB::table('payment_methods')
-                    ->where('code', 'CC')
-                    ->update(['tool_tip' => 'The customer settles their payment using a credit card. This can be done in-person or electronically. Ensure to get authorization and proper documentation for such transactions.']);
-                    
+                        ->where('code', 'CC')
+                        ->update(['tool_tip' => 'The customer settles their payment using a credit card. This can be done in-person or electronically. Ensure to get authorization and proper documentation for such transactions.']);
+
                 }
-                if($paymentMethod->code == 'IN_PL'){
-                    
+                if ($paymentMethod->code == 'IN_PL') {
+
                     DB::table('payment_methods')
-                    ->where('code', 'IN_PL')
-                    ->update(['tool_tip' => 'This flexible payment option allows the customer to obtain their insurance policy first and then set up an instalment-based payment plan to settle the total amount due.']);
-                    
-                }              
-            }            
-        }       
-        
+                        ->where('code', 'IN_PL')
+                        ->update(['tool_tip' => 'This flexible payment option allows the customer to obtain their insurance policy first and then set up an instalment-based payment plan to settle the total amount due.']);
+
+                }
+            }
+        }
+
         $recordExists = PaymentMethod::where('code', 'PDC')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'PDC',
                 'name' => 'Post Dated Cheque',
@@ -68,7 +68,7 @@ class PaymentMethodsAddSeeder extends Seeder
         }
 
         $recordExists = PaymentMethod::where('code', 'IP')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'IP',
                 'name' => 'Insurer Payment',
@@ -79,7 +79,7 @@ class PaymentMethodsAddSeeder extends Seeder
         }
 
         $recordExists = PaymentMethod::where('code', 'PP')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'PP',
                 'name' => 'Parttial Payment',
@@ -90,7 +90,7 @@ class PaymentMethodsAddSeeder extends Seeder
         }
 
         $recordExists = PaymentMethod::where('code', 'MP')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'MP',
                 'name' => 'Multiple Payment',
@@ -101,7 +101,7 @@ class PaymentMethodsAddSeeder extends Seeder
         }
 
         $recordExists = PaymentMethod::where('code', 'CA')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'CA',
                 'name' => 'Credit Approval',
@@ -112,7 +112,7 @@ class PaymentMethodsAddSeeder extends Seeder
         }
 
         $recordExists = PaymentMethod::where('code', 'PPR')->first();
-        if (! $recordExists) {            
+        if (! $recordExists) {
             PaymentMethod::create([
                 'code' => 'PPR',
                 'name' => 'Proforma Payment Request',

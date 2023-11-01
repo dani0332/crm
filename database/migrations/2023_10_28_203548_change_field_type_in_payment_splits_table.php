@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::table('payment_splits', function (Blueprint $table) {
             $table->integer('sr_no')->change();
-        });       
-       
+        });
+
     }
 
     /**
      * Reverse the migrations.
      */
     public function down(): void
-    {       
+    {
     }
 };
