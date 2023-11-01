@@ -40,7 +40,7 @@ class CarEmailService extends BaseService
         $advisor = User::where('id', $carQuote->advisor_id)->first();
 
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = !empty($previousAdvisor);
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
@@ -60,7 +60,7 @@ class CarEmailService extends BaseService
                 'carValue' => $plan->repairType == CarPlanType::TPL ? 'N/A' : (empty($plan->carValue) ? 'N/A' : $plan->carValue),
                 'excessAed' => empty($plan->excess) ? 'N/A' : $plan->excess,
                 'repairType' => $this->getUpdateRepairType($plan->repairType, $plan->providerCode),
-                'discountPremium' => ! empty($plan->discountPremium) ? number_format($plan->discountPremium, 2) : '',
+                'discountPremium' => !empty($plan->discountPremium) ? number_format($plan->discountPremium, 2) : '',
                 'planName' => $plan->name,
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
@@ -71,14 +71,13 @@ class CarEmailService extends BaseService
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
-        $emailData->isReAssignment = ! empty($previousAdvisor);
+        $emailData->isReAssignment = !empty($previousAdvisor);
 
         if ($carQuote->tier_id == $tierRId) {
             $emailData->isRenewal = true;
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
             $emailData->renewalDueDate = $carbonDate;
-
         }
 
         return $emailData;
@@ -89,26 +88,26 @@ class CarEmailService extends BaseService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
         //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
-        $whatsAppNumber = formatMobileNo($advisor->mobile_no);
+        $whatsAppNumber = (!empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : "");
         $emailData = (object) [
-            'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
-            'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
+            'clientFullName' => $carQuote->first_name . ' ' . $carQuote->last_name,
+            'customerName' => $carQuote->first_name . ' ' . $carQuote->last_name,
             'customerEmail' => $carQuote->email,
-            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
+            'mobilePhone' => (!empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
             'whatsAppNumber' => $whatsAppNumber,
-            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
-            'advisorEmail' => $advisor->email,
-            'advisorName' => $advisor->name,
+            'landLine' => (!empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
+            'advisorEmail' => (!empty($advisor->email) ? $advisor->email : ""),
+            'advisorName' => (!empty($advisor->name) ? $advisor->name : ""),
             'documentUrl' => [$documentUrl],
             'carQuoteId' => $carQuote->code,
             'yearOfManufacture' => $carQuote->year_of_manufacture,
             'vehicleName' => $this->getVehicleName($carQuote),
             'currentInsurer' => $carQuote->currently_insured_with,
-            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
+            'quoteLink' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
             'assignmentType' => $this->getAssignmentTypeText($carQuote->assignment_type),
-            'previousAdvisorName' => ! empty($previousAdvisor) ? $previousAdvisor->name : '',
-            'previousAdvisorStatus' => ! empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
-            'isReAssignment' => ! empty($previousAdvisor),
+            'previousAdvisorName' => !empty($previousAdvisor) ? $previousAdvisor->name : '',
+            'previousAdvisorStatus' => !empty($previousAdvisor) ? UserStatusEnum::getUserStatusText($previousAdvisor->status) : '',
+            'isReAssignment' => !empty($previousAdvisor),
         ];
 
         return $emailData;
@@ -161,7 +160,7 @@ class CarEmailService extends BaseService
 
     private function getPlanBuyNowLink($plan, $uuid)
     {
-        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$uuid.'/payment/?planId='.$plan->id.'&providerCode='.$plan->providerCode;
+        $buyNowLink = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $uuid . '/payment/?planId=' . $plan->id . '&providerCode=' . $plan->providerCode;
 
         return $buyNowLink;
     }
@@ -172,7 +171,7 @@ class CarEmailService extends BaseService
             ->where('key_name', $keyName)
             ->first();
 
-        if (! $query) {
+        if (!$query) {
             return false;
         }
 
@@ -197,7 +196,7 @@ class CarEmailService extends BaseService
 
             if ($carModel) {
                 // Update $vehicleName with car model text
-                $vehicleName .= ' '.$carModel->text;
+                $vehicleName .= ' ' . $carModel->text;
             }
         }
         if ($lead->car_model_detail_id != null) {
@@ -205,7 +204,7 @@ class CarEmailService extends BaseService
 
             if ($carModelDetail) {
                 // Update $vehicleName with car model detail text
-                $vehicleName .= ' '.$carModelDetail->text;
+                $vehicleName .= ' ' . $carModelDetail->text;
             }
         }
 
@@ -264,9 +263,9 @@ class CarEmailService extends BaseService
         $compPlans = array_filter($plans, function ($plan) {
             // Check if the 'repairType' and 'isRatingAvailable' properties exist and meet the conditions.
             return property_exists($plan, 'repairType') &&
-                   property_exists($plan, 'isRatingAvailable') &&
-                   ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
-                   $plan->isRatingAvailable === true;
+                property_exists($plan, 'isRatingAvailable') &&
+                ($plan->repairType === CarPlanType::COMP || $plan->repairType === CarPlanType::AGENCY) &&
+                $plan->isRatingAvailable === true;
         });
 
         if (count($compPlans) > 0) {
@@ -282,6 +281,6 @@ class CarEmailService extends BaseService
         }
 
         // return $top6Plans if $top6Plans is not empty otherwise return $plans
-        return ! empty($top6Plans) ? $top6Plans : [];
+        return !empty($top6Plans) ? $top6Plans : [];
     }
 }

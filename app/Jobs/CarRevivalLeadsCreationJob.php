@@ -2,19 +2,26 @@
 
 namespace App\Jobs;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteTypes;
+use App\Enums\TiersEnum;
 use App\Facades\Capi;
-use App\Facades\Ken;
+use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
+use App\Models\Tier;
+use App\Services\CarEmailService;
 use App\Services\SendEmailCustomerService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Services\CarQuoteService;
+use App\Services\CRUDService;
+use App\Services\UserService;
 use Sammyjo20\LaravelHaystack\Concerns\Stackable;
 use Sammyjo20\LaravelHaystack\Contracts\StackableJob;
 use Throwable;
@@ -29,6 +36,9 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
     public $backoff = 300;
     private $lead = null;
     protected $sendEmailCustomerService;
+    protected $carQuoteService;
+    protected $crudService;
+    protected $userService;
     /**
      * Create a new job instance.
      *
@@ -44,9 +54,13 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
      *
      * @return void
      */
-    public function handle(SendEmailCustomerService $sendEmailCustomerService)
+    public function handle(SendEmailCustomerService $sendEmailCustomerService, CarQuoteService $carQuoteService,  CRUDService $crudService, UserService $userService,)
     {
+        $this->carQuoteService = $carQuoteService;
         $this->sendEmailCustomerService = $sendEmailCustomerService;
+        $this->crudService = $crudService;
+
+        $this->userService = $userService;
         $dataArr = [
             'firstName' => $this->lead->first_name,
             'lastName' => $this->lead->last_name,
@@ -80,31 +94,73 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             'referenceUrl' => config('constants.APP_URL'),
         ];
 
-        info('CarRevivalLeadsCreationJob - Parent Lead Id  '.$this->lead->id);
+        info('CarRevivalLeadsCreationJob - Parent Lead Id  ' . $this->lead->id);
 
         $capiResponse = Capi::request('/api/v1-save-car-quote', 'post', $dataArr);
 
-        if (! isset($capiResponse->errors) && ! empty($capiResponse->quoteUID)) {
-            info('CarRevivalLeadsCreationJob - Lead Created -'.$capiResponse->quoteUID.' - CAPI Response:');
-            // $plansDataArr = $this->payLoadForPlans($capiResponse->quoteUID);
+        if (!isset($capiResponse->errors) && !empty($capiResponse->quoteUID)) {
+            info('CarRevivalLeadsCreationJob - Lead Created -' . $capiResponse->quoteUID . ' - CAPI Response:');
+
             $carQuote = $this->getQuoteObject(QuoteTypes::CAR->value, $capiResponse->quoteUID);
-            // Ken::request('/get-car-quote-plans', 'post', $plansDataArr);
-            // dispatch(new SendOCBEmailJob($capiResponse->quoteUID, 1));
 
-            $customerName = $carQuote->first_name.' '.$carQuote->last_name;
-            $emailData = (object) [
-                'quoteId' => $carQuote->id,
-                'templateId' => 296,
-                'customerName' => $customerName,
-                'customerEmail' => $carQuote->email,
-                'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL').$carQuote->uuid,
-                'subject' => $customerName."'s".' Car Insurance with Alfred '.$carQuote->code,
-            ];
-            $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'send-digital-transformation-email');
 
+            $listQuotePlans = $this->carQuoteService->getPlans($capiResponse->quoteUID, true, true);
+
+            $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
+
+            if ($quotePlansCount > 0) {
+                $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_SINGLE_MULTIPLE_PLANS;
+            } else {
+                $key = ApplicationStorageEnums::OCB_NEW_BUSINESS_ZERO_PLANS;
+            }
+            $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
+
+            info('CarRevivalLeadsCreationJob: emailTemplateId ' . json_encode($emailTemplateId));
+            $previousAdvisor = null;
+            if (!empty($carQuote->previous_advisor_id)) {
+                $previousAdvisor = $this->userService->getUserById($carQuote->previous_advisor_id);
+            }
+
+            info('CarRevivalLeadsCreationJob: previousAdvisor ' . json_encode($previousAdvisor));
+            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
+
+            $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
+
+            $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($carQuote, $listQuotePlans, $previousAdvisor, $tierR->id);
+
+
+
+            $customerName = $carQuote->first_name . ' ' . $carQuote->last_name;
+
+            $emailData->subject = $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code;
+
+            $emailData->templateId = (int) $emailTemplateId;
+
+            $emailData->advisorName = 'Alfred';
+            $emailData->advisorEmail = 'askalfred@insurancemarket.ae';
+
+            $emailData->customerEmail = 'nouman.hussain@insurancemarket.ae';
+
+            info('CarRevivalLeadsCreationJob: EmailData ' . json_encode($emailData));
+
+            // $emailData = (object) [
+            //     'quoteId' => $carQuote->id,
+            //     'templateId' => $emailTemplateId,
+            //     'customerName' => $customerName,
+            //     'customerEmail' => $carQuote->email,
+            //     'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
+            //     'subject' => $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code,
+            // ];
+
+
+            // $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
+
+            $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
+
+            info('CarRevivalLeadsCreationJob: emailResponse ' . json_encode($response));
             if ($response == 201) {
 
-                info('CarRevivalLeadsCreationJob - UUID - '.$emailData->customerEmail.' - Email Sent');
+                info('CarRevivalLeadsCreationJob - UUID - ' . $emailData->customerEmail . ' - Email Sent');
 
                 DttRevival::create([
                     'quote_type_id' => QuoteTypes::CAR->id(),
@@ -113,35 +169,22 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
                     'email_sent' => true,
                 ]);
 
-                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -'.$capiResponse->quoteUID);
+                info('CarRevivalLeadsCreationJob- Dtt Revivals inserted - UUID -' . $capiResponse->quoteUID);
 
                 CarQuote::find($this->lead->id)->update(['is_revived' => true]);
 
-                info('CarRevivalLeadsCreationJob- is_revived updated -'.$this->lead->id);
+                info('CarRevivalLeadsCreationJob- is_revived updated -' . $this->lead->id);
             } else {
-                info('CarRevivalLeadsCreationJob- email is not sent -'.$emailData->customerEmail);
+                info('CarRevivalLeadsCreationJob- email is not sent -' . $emailData->customerEmail);
             }
         } else {
 
-            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response'.json_encode($capiResponse));
+            info('CarRevivalLeadsCreationJob - Lead Not generated - capi response' . json_encode($capiResponse));
         }
-    }
-
-    private function payLoadForPlans($quoteUuId)
-    {
-        return [
-
-            'quoteUID' => $quoteUuId,
-            'getLatestRating' => false,
-            'filters' => [[
-                'field' => 'isRenewalSort',
-                'value' => false,
-            ]],
-        ];
     }
 
     public function failed(Throwable $exception)
     {
-        info('CarRevivalLeadsCreationJob -: '.$this->lead->id.' Error: '.$exception->getMessage());
+        info('CarRevivalLeadsCreationJob -: ' . $this->lead->id . ' Error: ' . $exception->getMessage());
     }
 }
