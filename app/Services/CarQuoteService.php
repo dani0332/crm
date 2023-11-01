@@ -987,7 +987,7 @@ class CarQuoteService extends BaseService
 
     /**
      * get car quote details, quote plans and pdf
-     * @param $uuid
+     *
      * @return mixed
      */
     public function getOcbDetails($uuid)
@@ -1015,8 +1015,8 @@ class CarQuoteService extends BaseService
                 info('Failed to generate PDF for UUID: '.$carQuote->uuid.' Error: '.$pdf['error']);
             } else {
                 $carQuote->pdf = (object) [
-                    'content' =>   base64_encode(($pdf['pdf'])->stream()),
-                    'file_name' => $pdf['name']
+                    'content' => base64_encode(($pdf['pdf'])->stream()),
+                    'file_name' => $pdf['name'],
                 ];
             }
         }
