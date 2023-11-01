@@ -58,6 +58,8 @@ class HomeQuoteService extends BaseService
             'hqr.advisor_id',
             'hqr.payment_status_id',
             'u.name as advisor_id_text',
+            'hqr.previous_advisor_id',
+            'uadv.name AS previous_advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
@@ -76,10 +78,12 @@ class HomeQuoteService extends BaseService
         )
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
+            ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
             ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
+
     }
 
     public function getEntity($id)
@@ -179,22 +183,22 @@ class HomeQuoteService extends BaseService
         if (isset($request->assigned_to_date_start) && $request->assigned_to_date_start != '') {
             $dateFrom = $this->parseDate($request['assigned_to_date_start'], true);
             $dateTo = $this->parseDate($request['assigned_to_date_end'], false);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.advisor_assigned_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.advisor_assigned_date', [$dateFrom, $dateTo]);
         }
         if (in_array('created_at', $searchProperties) && isset($request->created_at) && $request->created_at != '') {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
         if (! empty($request->created_at_start) && ! empty($request->created_at_end)) {
             $dateFrom = date('Y-m-d 00:00:00', strtotime($request['created_at_start']));
             $dateTo = date('Y-m-d 23:59:59', strtotime($request['created_at_end']));
-            $this->query->whereBetween(DB::raw('DATE(hqr.created_at)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqr.created_at', [$dateFrom, $dateTo]);
         }
         if (isset($request->next_followup_date) && $request->next_followup_date != '') {
             $dateFrom = $this->parseDate($request['next_followup_date'], true);
             $dateTo = $this->parseDate($request['next_followup_date_end'], true);
-            $this->query->whereBetween(DB::raw('DATE(hqrd.next_followup_date)'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('hqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
         if (isset($request->code) && $request->code != '') {
             $this->query->where('hqr.code', $request->code);

@@ -229,6 +229,7 @@ class BusinessQuoteController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
             ],
             'typeCode' => quoteTypeCode::CORPLINE,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::CorplineManager),
         ]);
     }
 

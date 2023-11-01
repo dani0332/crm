@@ -2,7 +2,6 @@
 
 use App\Enums\EnvEnum;
 use App\Enums\quoteTypeCode;
-use App\Events\UserStatusChanged;
 use App\Http\Controllers\ActivitesController;
 use App\Http\Controllers\AgeDiscountController;
 use App\Http\Controllers\AjaxController;
@@ -93,14 +92,6 @@ if (config('constants.APP_ENV') == EnvEnum::STAGING || config('constants.APP_ENV
         Route::post('/alternate-login', [LoginController::class, 'login'])->name('alternate_login');
     });
 }
-
-Route::get('test-broadcast', function () {
-    event(new UserStatusChanged(17, 1));
-
-    return 'Event has been sent!';
-});
-
-Route::get('/get-tier-users/{tierId}', [LeadAllocationController::class, 'getTierUsers']);
 
 Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redirectToGoogle');
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
@@ -225,6 +216,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::resource('car-lead-allocation', CarLeadAllocationController::class);
     Route::post('/lead-allocation/update-availability', [LeadAllocationController::class, 'updateAvailability']);
     Route::post('/lead-allocation/update-cap', [LeadAllocationController::class, 'updateCaps']);
+    Route::post('/lead-allocation/toggle-reset-cap', [LeadAllocationController::class, 'updateResetCapSwitch']);
     Route::post('/lead-allocation/toggle-lead-allocation-job-status', [LeadAllocationController::class, 'toggleLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-car-lead-allocation-job-status', [LeadAllocationController::class, 'toggleCarLeadAllocationJobStatus']);
     Route::post('/lead-allocation/toggle-renewal-car-lead-allocation-status', [LeadAllocationController::class, 'toggleRenewalCarLeadAllocationStatus']);
@@ -259,7 +251,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/get-users-by-sub-team', [DashboardController::class, 'getUsersBySubTeam']);
     Route::post('/get-team-conversion-stats', [DashboardController::class, 'getTeamAdvisorConversionStats']);
     Route::get('/get-recent-daily-stats', [DashboardController::class, 'getRecentDailyStats']);
-    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport']);
+    Route::get('/reports/lead-list', [ReportsController::class, 'renderLeadListReport'])->name('lead-list-report');
     Route::get('/dashboard/{quoteType}-conversion', [DashboardController::class, 'conversionStats']);
     Route::get('failed-jobs', [FailedJobsController::class, 'index'])->name('failed-jobs.index');
 
@@ -401,8 +393,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         // Route::resource('vehiclerange', VehicleRangeController::class);
         // Route::resource('vehiclevalue', VehicleValueController::class);
     });
-    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake']);
-    Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel']);
+    Route::get('/valuation/car-models', [ValuationController::class, 'carModelBasedOnCarMake'])->name('valuation.carmodels');
+    Route::get('/valuation/car-model-detail', [ValuationController::class, 'carTrimBasedOnCarModel'])->name('valuation.carmodeldetail');
 
     Route::group(['prefix' => 'claim'], function () {
         Route::resource('claims', ClaimController::class);
