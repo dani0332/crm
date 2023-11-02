@@ -13,15 +13,6 @@ use App\Services\HealthQuoteService;
 
 class GenericLobController extends Controller
 {
-    protected $carQuoteService;
-    protected $healthQuoteService;
-
-    public function __construct(CarQuoteService $carQuoteService, HealthQuoteService $healthQuoteService)
-    {
-        $this->carQuoteService = $carQuoteService;
-        $this->healthQuoteService = $healthQuoteService;
-    }
-
     /**
      * @return \Symfony\Component\HttpFoundation\StreamedResponse
      *
@@ -29,8 +20,8 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $serviceName = strtolower($quoteType).'QuoteService';
-        $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
+        $service = app('App\Services\\' . ucfirst($quoteType) . 'QuoteService');
+        $response = $service->exportPlansPdf($quoteType, $request->validated());
 
         if (isset($response['error'])) {
             vAbort($response['error']);
