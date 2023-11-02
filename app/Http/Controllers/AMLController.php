@@ -30,6 +30,7 @@ use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -129,8 +130,14 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
+                    $amlCreatedStartDate = Carbon::parse($request->amlCreatedStartDate)->startOfDay();
+                    $amlCreatedEndDate = Carbon::parse($request->amlCreatedEndDate)->endOfDay();
+
+                    $dataAml->whereRaw('kyc_logs.created_at BETWEEN "'.($amlCreatedStartDate).'" AND "'.($amlCreatedEndDate).'"');
                     $searchCriteriaSet = true;
+                } else {
+
+                    $dataAml->whereRaw('kyc_logs.created_at BETWEEN "'.(Carbon::today()->startOfDay()).'" AND "'.(Carbon::today()->endOfDay()).'"');
                 }
 
                 if ($searchCriteriaSet) {
