@@ -21,6 +21,7 @@ use App\Services\QuoteRequestAmlService;
 use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -59,7 +60,7 @@ class AMLController extends Controller
         if (isset($request->quoteType) && ! empty($request->quoteType)) {
             $quoteRequestTable = str_replace(' ', '_', strtolower($request->quoteType).'_quote_request');
 
-            $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
+            $dataAml = AML::select('kyc_logs.id', 'kyc_logs.input', 'kyc_logs.screenshot', 'kyc_logs.created_at', 'kyc_logs.updated_at',  'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
                 ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
                 ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
                 ->where('kyc_logs.quote_type_id', $quoteTypeId)
@@ -91,7 +92,13 @@ class AMLController extends Controller
                 isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                 isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
             ) {
-                $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
+                $amlCreatedStartDate = Carbon::parse($request->amlCreatedStartDate)->startOfDay();
+                $amlCreatedEndDate = Carbon::parse($request->amlCreatedEndDate)->endOfDay();
+
+                $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedStartDate, $amlCreatedEndDate]);
+            } else {
+
+                $dataAml->whereBetween('kyc_logs.created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
             }
             $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
