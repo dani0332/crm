@@ -50,4 +50,19 @@ class InsuranceProviderRepository extends BaseRepository
 
         return $networks;
     }
+
+    public function fetchIsCommercialVehicles($record)
+    {
+        $data = DB::table('car_make')
+            ->join('car_model', 'car_make.code', '=', 'car_model.car_make_code')
+            ->where('car_make.id', data_get($record, 'car_make_id', ''))
+            ->where('car_model.id', data_get($record, 'car_model_id', ''))
+            ->where('car_make.is_commercial', 1)
+            ->where('car_model.is_commercial', 1)
+            ->count();
+        if ($data > 0) {
+            return true;
+        }
+        return false;
+    }
 }

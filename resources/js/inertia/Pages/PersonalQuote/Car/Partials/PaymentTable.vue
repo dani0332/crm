@@ -15,7 +15,15 @@ const props = defineProps({
   quoteRequest: Object,
   paymentMethods: Array,
   quote: Object,
-  isCommercialVehicles: Boolean
+  isCommercialVehicles: Boolean,
+  carInsuranceProviders: Array
+});
+
+const insuranceProviderOptions = computed(() => {
+    return page.props.carInsuranceProviders.map(provider => ({
+        value: provider.id,
+        label: provider.text,
+    }));
 });
 
 const createPaymentModal = ref(false);
@@ -124,6 +132,7 @@ const paymentMethodsForm = useForm({
   payment_reference: '',
   paymentCode: '',
   status: 'create',
+  insurance_provider_id: ''
 });
 
 const addPayment = isValid => {
@@ -135,7 +144,7 @@ const addPayment = isValid => {
     modelType: 'Car',
     quote_id: props.quoteRequest.id,
     plan_id: props.quoteRequest.plan.id,
-    insurance_provider_id: providerId.value,
+    insurance_provider_id: props.isCommercialVehicles ? paymentMethodsForm.insurance_provider_id : providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
     reference: paymentMethodsForm.payment_reference,
@@ -340,8 +349,17 @@ const providerId = computed(() => {
             >
             </x-select>
           </x-field>
-
-          <p class="text-sm text-gray-500">
+          <x-field v-if="isCommercialVehicles" label="Insurance Provider" required>
+            <x-select
+              class="w-full md:col-span-2"
+              v-model="paymentMethodsForm.insurance_provider_id"
+              :options="insuranceProviderOptions"
+              placeholder="Select Insurance provider"
+              :rules="[rules.isRequired]"
+            >
+            </x-select>
+          </x-field>
+          <p class="text-sm text-gray-500" v-else>
             Provider Name:
             <span class="text-primary-800">{{ providerName }}</span>
           </p>

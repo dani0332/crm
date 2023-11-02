@@ -73,6 +73,7 @@ defineProps({
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
   isCommercialVehicles: Boolean,
+  carInsuranceProviders: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1950,6 +1951,7 @@ const loadEmailEvents = email => {
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
       :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
       :paymentMethods="
         paymentMethods.map(pm => {
           return { value: pm.code, label: pm.name };
