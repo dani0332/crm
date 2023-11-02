@@ -61,6 +61,13 @@ class UpdateUserStatus extends Command
 
         info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
 
+        // update all users to unavailable if they are not in sessions table
+        User::whereNotIn('id', function ($query) {
+            $query->select('user_id')->from('sessions');
+        })
+            ->where('status', '!=', UserStatusEnum::UNAVAILABLE)
+            ->update(['status' => UserStatusEnum::UNAVAILABLE]);
+
         $sessions = $this->getSessions();
 
         foreach ($sessions as $session) {

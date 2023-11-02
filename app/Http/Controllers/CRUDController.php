@@ -288,9 +288,15 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Car && in_array($this->genericModel->modelType, newUi())) {
             $gridData = $gridData->simplePaginate(10)->withQueryString();
 
+            $dateFormat = config('constants.DATE_FORMAT_ONLY');
+            $createdAtStart = Carbon::parse(now())->startOfDay()->format($dateFormat);
+            $createdAtEnd = Carbon::parse(now())->endOfDay()->format($dateFormat);
+
             return inertia('PersonalQuote/Car/LeadList', [
                 'quotes' => $gridData,
                 'advisors' => $advisors,
+                'createdAtStart' => $createdAtStart,
+                'createdAtEnd' => $createdAtEnd,
                 'dropdownSource' => $dropdownSource,
                 'isManualAllocationAllowed' => $isManualAllocationAllowed,
                 'userMaxCap' => $userMaxCap,

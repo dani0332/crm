@@ -350,7 +350,7 @@
             dt.ajax.reload();
         }
     </script>
-    <script src="{{ asset('old/customjs.min.js') }}"></script>
+    <script src="{{ asset('old/customjs.js') }}"></script>
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
             if (exception == 'Unauthorized') {

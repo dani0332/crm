@@ -40,6 +40,7 @@ class CarQuote extends BaseModel
         'created_at' => FilterTypes::DATE,
         'previous_quote_policy_number' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
+        'quote_batch_id' => FilterTypes::IN,
     ];
 
     public function getFullNameAttribute()
@@ -250,7 +251,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no']);
     }
 
     public function batch()

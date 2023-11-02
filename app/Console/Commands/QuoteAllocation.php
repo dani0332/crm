@@ -50,10 +50,10 @@ class QuoteAllocation extends Command
 
         $quoteAllocationSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH);
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
-        $allocationStartDate = $applicationStorageService->getValueByKey(ApplicationStorageEnums::CAR_LEAD_ALLOCATION_START_DATE_FOR_LEADS);
+        $allocationStartDate = now()->subWeek()->startOfDay()->toDateTimeString();
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
             $to = now()->subMinutes(7)->toDateTimeString();
-            $chunkSize = 500;
+            $chunkSize = 200;
             $linesOfBusiness = [
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
@@ -96,7 +96,9 @@ class QuoteAllocation extends Command
         $conditions = $config['conditions'];
         $processedRecords = 0;
         $quoteModel::whereNull($allocationKey)
+            ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
+            ->orderBy('created_at', 'desc')
             ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {
