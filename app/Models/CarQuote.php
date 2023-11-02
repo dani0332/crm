@@ -27,6 +27,7 @@ class CarQuote extends BaseModel
         'code' => FilterTypes::EXACT,
         'email' => FilterTypes::EXACT,
         'renewal_batch' => FilterTypes::EXACT,
+        'quote_batch_id' => FilterTypes::IN,
     ];
     protected $guarded = [];
 
@@ -228,7 +229,7 @@ class CarQuote extends BaseModel
 
     public function advisor()
     {
-        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name']);
+        return $this->hasOne(User::class, 'id', 'advisor_id')->select(['id', 'email', 'name', 'mobile_no', 'landline_no']);
     }
 
     public function batch()

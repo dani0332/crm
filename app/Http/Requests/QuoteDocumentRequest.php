@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Models\DocumentType;
@@ -81,9 +82,17 @@ class QuoteDocumentRequest extends FormRequest
                 $validator->errors()->add('member_detail_id', 'Member can be attached only for Health Insurance type');
             }
 
-            //validate if payment is authorized
-            if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
-                $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+            $quote_source = data_get($quote, 'source', '');
+            if ($quote_source == LeadSourceEnum::DUBAI_NOW) {
+                //validate if payment is authorized capture or partial capture
+                if (isset($quote->payment_status_id) && ! in_array($quote->payment_status_id, [PaymentStatusEnum::AUTHORISED, PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED])) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized, captured or partial captured.');
+                }
+            } else {
+                //validate if payment is authorized
+                if (isset($quote->payment_status_id) && $quote->payment_status_id != PaymentStatusEnum::AUTHORISED) {
+                    $validator->errors()->add('type', 'Documents can be uploaded once payment is authorized.');
+                }
             }
 
             //check for maximum number of files uploaded against selected quote and document type
