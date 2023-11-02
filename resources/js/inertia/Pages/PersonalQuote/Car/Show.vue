@@ -2062,13 +2062,14 @@ const linkEntity = () => {
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
-            <x-select
+            <ComboBox
               v-model="leadStatusForm.leadStatus"
+              :single="true"
               label="Status"
-              :options="leadStatusOptions"
-              :disabled="leadStatusDisabled"
-              placeholder="Lead Status"
               class="w-full"
+              placeholder="Please select Lead Status"
+              :disabled="leadStatusDisabled"
+              :options="leadStatusOptions"
             />
             <x-field
               label="TransApp Code"
@@ -2834,7 +2835,7 @@ const linkEntity = () => {
               :loading="changeInsurerForm.processing"
               @click.prevent="onConfirmChangeInsurer"
             >
-              Delete
+              Yes
             </x-button>
           </div>
         </template>

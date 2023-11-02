@@ -86,10 +86,8 @@ class CustomersImport implements OnEachRow
             }
 
             $customer = Customer::find($customerId);
-            if ($this->inviatationEmail == 'on') {
-                if ($customer && $customer->is_we_sent == 0) {
-                    MAWelcomeJob::dispatch($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'CORPORATE', 'corporate-myalfred-we');
-                }
+            if ($customer && $this->inviatationEmail == 'on') {
+                MAWelcomeJob::dispatch($customer->first_name, $customer->last_name, $customer->email, $customer->mobile_no, 'CORPORATE', 'corporate-myalfred-we');
             }
 
             $responseExtend = $this->berlinService->extendCustomerSubscription($customerId, $email);
