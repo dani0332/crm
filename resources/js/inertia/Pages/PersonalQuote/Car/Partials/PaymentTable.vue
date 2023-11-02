@@ -137,13 +137,16 @@ const paymentMethodsForm = useForm({
 
 const addPayment = isValid => {
   if (!isValid) return;
-
+  let plan_id= null;
+  if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
+      plan_id = props.quoteRequest.plan.id
+  }
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
     modelType: 'Car',
     quote_id: props.quoteRequest.id,
-    plan_id: props.quoteRequest.plan.id,
+    plan_id: plan_id,
     insurance_provider_id: props.isCommercialVehicles ? insurance_provider_id.value : providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
@@ -256,9 +259,9 @@ const providerId = computed(() => {
     <div class="flex justify-between gap-4 items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
-        v-if="((can(permissionEnum.PaymentsCreate) &&
+        v-if="(can(permissionEnum.PaymentsCreate) &&
           !can(permissionEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA)) || isCommercialVehicles) && quoteRequest.plan"
+          !hasRole(rolesEnum.PA) && quoteRequest.plan) || isCommercialVehicles"
         size="sm"
         color="orange"
         @click="addPaymentModal"

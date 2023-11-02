@@ -620,7 +620,7 @@ class CRUDController extends Controller
             $paymentEntityModel->load(['plan.insuranceProvider']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
-            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarDeputyManager])) {
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
                 if (InsuranceProviderRepository::isCommercialVehicles($record)) {
                     $isCommercialVehicles = true;
                     $carInsuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Car);
