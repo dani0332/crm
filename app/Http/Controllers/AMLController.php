@@ -137,7 +137,7 @@ class AMLController extends Controller
                     $searchCriteriaSet = true;
                 } else {
 
-                    $dataAml->where('kyc_logs.created_at BETWEEN', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
+                    $dataAml->whereBetween('kyc_logs.created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
                 }
 
                 if ($searchCriteriaSet) {
