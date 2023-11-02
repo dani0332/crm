@@ -282,6 +282,8 @@ class PaymentSplitsRepository
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);
         } elseif ($paymentSplitRecord->count() == 1) {
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::DECLINED]);
+        } else {
+            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
         }
 
         return $successMessage;
