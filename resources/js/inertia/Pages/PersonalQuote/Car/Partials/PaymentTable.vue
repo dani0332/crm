@@ -125,14 +125,14 @@ const editPaymentModal = payment => {
   createPaymentModal.value = true;
 };
 
+const insurance_provider_id= ref('')
 const paymentMethodsForm = useForm({
   payment_method: '',
   collection_type: '',
   amount: '',
   payment_reference: '',
   paymentCode: '',
-  status: 'create',
-  insurance_provider_id: ''
+  status: 'create'
 });
 
 const addPayment = isValid => {
@@ -144,7 +144,7 @@ const addPayment = isValid => {
     modelType: 'Car',
     quote_id: props.quoteRequest.id,
     plan_id: props.quoteRequest.plan.id,
-    insurance_provider_id: props.isCommercialVehicles ? paymentMethodsForm.insurance_provider_id : providerId.value,
+    insurance_provider_id: props.isCommercialVehicles ? insurance_provider_id.value : providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
     reference: paymentMethodsForm.payment_reference,
@@ -233,6 +233,13 @@ const providerName = computed(() => {
     return plan.insurance_provider.text;
   }
   return 'Not Available';
+});
+
+onMounted(() => {
+    const plan = props.quoteRequest.plan;
+    if (plan && plan.insurance_provider) {
+        insurance_provider_id.value=  plan.insurance_provider.id;
+    }
 });
 
 const providerId = computed(() => {
@@ -352,7 +359,7 @@ const providerId = computed(() => {
           <x-field v-if="isCommercialVehicles" label="Insurance Provider" required>
             <x-select
               class="w-full md:col-span-2"
-              v-model="paymentMethodsForm.insurance_provider_id"
+              v-model="insurance_provider_id"
               :options="insuranceProviderOptions"
               placeholder="Select Insurance provider"
               :rules="[rules.isRequired]"
