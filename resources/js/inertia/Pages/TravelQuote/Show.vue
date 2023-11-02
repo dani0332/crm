@@ -25,6 +25,7 @@ defineProps({
   emailStatuses: Array,
   isAdmin: Boolean,
   listQuotePlans: Array,
+  listSeniorQuotePlans: Array,
   activities: Array,
   customerAdditionalContacts: Array,
   ecomTravelInsuranceQuoteUrl: String,
@@ -39,6 +40,7 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
+  aboveAgeMembers: Number,
 });
 
 const page = usePage();
@@ -1506,6 +1508,9 @@ onMounted(() => {
           Copy Link
         </x-button>
       </div>
+      <h6 v-if="$props.aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
+        Travel Plans for {{ $props.travelers.length - $props.aboveAgeMembers }} member age 18-64
+      </h6>
 
       <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
         <p
@@ -1551,6 +1556,57 @@ onMounted(() => {
             </div>
           </template>
         </DataTable>
+      </div>
+
+      <div v-if="$props.aboveAgeMembers > 0" class="mt-5">
+        <h6 class="font-semibold text-primary-600 text-ms mb-1">
+          Travel Plans for {{ $props.aboveAgeMembers }} Member age above 65
+        </h6>
+        <div v-if="listSeniorQuotePlans && typeof listSeniorQuotePlans == 'string'">
+          <p
+              class="text-center text-primary-600 uppercase"
+              v-if="typeof listSeniorQuotePlans == 'string'"
+          >
+            {{ listSeniorQuotePlans }}
+          </p>
+        </div>
+        <div v-else>
+          <DataTable
+              table-class-name="tablefixed compact"
+              :headers="availablePlansTable.columns"
+              :items="listSeniorQuotePlans || []"
+              border-cell
+              hide-rows-per-page
+              :rows-per-page="15"
+              :hide-footer="listSeniorQuotePlans.length < 15"
+          >
+            <template #item-providerName="item">
+            <span class="text-primary-600 uppercase">{{
+                item.providerName
+              }}</span>
+            </template>
+            <template #item-name="item">
+              <span class="text-primary-600 uppercase">{{ item.name }}</span>
+            </template>
+            <template #item-discountPremium="item">
+            <span class="text-primary-600">{{
+                item.discountPremium + item.vat
+              }}</span>
+            </template>
+            <template #item-action="item">
+              <div>
+                <x-button
+                    size="xs"
+                    color="error"
+                    outlined
+                    @click.prevent="getPlanDetails(item.id)"
+                >
+                  View
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </div>
       </div>
 
       <x-modal v-model="modals.planDetails" size="xl" show-close backdrop>

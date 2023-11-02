@@ -736,6 +736,12 @@ class TravelQuoteService extends BaseService
         return TravelMemberDetail::where('travel_quote_request_id', $id)->get();
     }
 
+    public function getAboveAgeMembers($id)
+    {
+        return TravelMemberDetail::where('travel_quote_request_id', $id)
+            ->whereDate('dob', '<=', now()->subYears(65))->count();
+    }
+
     public function getDuplicateEntityByCode($code)
     {
         return TravelQuote::where('parent_duplicate_quote_id', $code)->first();
@@ -811,6 +817,211 @@ class TravelQuoteService extends BaseService
 
         return $listQuotePlans;
     }
+
+    /**
+     * this is just for testing, remove it once the API will be able to send the data separately for senior persons.
+     * @param $status
+     * @return string
+     */
+    public function listSeniorQuotePlans()
+    {
+        // return 0;
+        return '[
+            {
+                "id": 1,
+                "planCode": "GIG_S",
+                "name": "GIG Gulf (AXA) Smart (Senior)",
+                "travelType": "OUTBOUND",
+                "vat": 9.75,
+                "actualPremium": 195,
+                "discountPremium": 195,
+                "memberPremiumBreakdown": [
+                    {
+                        "memberId": 5641,
+                        "dob": "1938-10-08 04:00:00",
+                        "premium": 65
+                    }
+                ],
+                "providerId": 2,
+                "providerCode": "AXA",
+                "providerName": "GIG Gulf (AXA) (Senior)",
+                "addons": [],
+                "benefits": {
+                    "exclusion": [
+                        {
+                            "code": "travelCancellationRestrictionCovid19",
+                            "text": "Cancellation due to travel restirictions against COVID-19",
+                            "description": "Pays up to a set limit of benefit(s) for pre-paid or contracted costs if your trip is cancelled due to your inability to travel as a result of restrictions imposed because of Covid-19",
+                            "value": "Excluded"
+                        },
+                        {
+                            "code": "travelMissedDeparture",
+                            "text": "Missed Departure",
+                            "description": "Covers the reasonable costs of accommodation, travel, and subsistence in the event you were unable to connect to your outward or inbound travel journey as a result of a specified event/peril (such as public transport or own car breakdown, traffic delays, adverse weather conditions, etc)",
+                            "value": "Excluded"
+                        },
+                        {
+                            "code": "travelTravelVisaRejection",
+                            "text": "Travel Visa Rejection",
+                            "description": "Reimburses your visa application costs up to a specified limit in the event your visa is denied for a reason covered under the Policy",
+                            "value": "Excluded"
+                        },
+                        {
+                            "code": "travelTestingCost",
+                            "text": "Testing Cost",
+                            "description": "Pays up to a set limit of benefit in respect of necessary medical testing costs in the event of your displaying symptoms suspected to be Covid-19",
+                            "value": "Excluded"
+                        }
+                    ],
+                    "inclusion": [
+                        {
+                            "code": "travelHijack",
+                            "text": "Hijack",
+                            "description": "Pays a Distress allowance in the event your mode of transporation has been hijacked",
+                            "value": "Up to USD 5,000"
+                        },
+                        {
+                            "code": "travelRepatriationOfMortalRemains",
+                            "text": "Repatriation of mortal remains",
+                            "description": "Pays up to a set limit of benefit for the costs of post-mortem (if required), preparation of the body, and coffin essential for the transportation of the body (note that the costs of the funeral and inhumanation are not covered)",
+                            "value": "Up to USD 10,000"
+                        }
+                    ],
+                    "feature": [
+                        {
+                            "code": "travelCancellationCurtailment",
+                            "text": "Cancellation / Curtailment",
+                            "description": "Pays up to a set limit of benefit(s) for pre-paid or contracted costs if your trip is cancelled or cut short due to an insured event",
+                            "value": "Up to USD 5,000"
+                        },
+                        {
+                            "code": "travelPersonalAccident",
+                            "text": "Personal Accident",
+                            "description": "Pays up to a specified limit of benefit(s) in the event you suffer temporary or permanent disablement or death as a direct result of an accident that occurred during your trip",
+                            "value": "Up to USD 27,500"
+                        },
+                        {
+                            "code": "travelPersonalLiability",
+                            "text": "Personal Liability",
+                            "description": "Provides cover up to a specified limit for any action for which you are held responsible which results in unintentional loss of or damage to property owned by a third party, or their bodily injury &/or death",
+                            "value": "Up to USD 1,000,000"
+                        },
+                        {
+                            "code": "travelLegalExpenses",
+                            "text": "Legal Expenses",
+                            "description": "Provides cover for up to a specified limit for legal expenses necessarily incurred should you be wrongfully arrested or detained during your trip",
+                            "value": "Up to USD 4,000"
+                        }
+                    ],
+                    "covid19": [
+                        {
+                            "code": "travelQuarantineTestedPositive",
+                            "text": "Accommodation cost if tested positive",
+                            "description": "Pays up to a set limit of benefit towards the costs of necessary quarantine as stipulated by local regulations in the event you test positive for Covid-19 at any point during your trip",
+                            "value": "Up to USD 100/day max of 15 days - Reimbursment"
+                        },
+                        {
+                            "code": "travelTreatmentTestedPositive",
+                            "text": "Treatment if tested positive - hospitalized for more than 24 hrs",
+                            "description": "Covers the costs of your medical treatment if you are admitted to hospital as a result of contracting COVID-19 as evidenced by a positive test result, provided your hospitalisation is for more than 24 hours",
+                            "value": "Up to USD 1,000,000 - Direct billing"
+                        },
+                        {
+                            "code": "travelCancellationRestrictionCovid19",
+                            "text": "Cancellation due to travel restirictions against COVID-19",
+                            "description": "Pays up to a set limit of benefit(s) for pre-paid or contracted costs if your trip is cancelled due to your inability to travel as a result of restrictions imposed because of Covid-19",
+                            "value": "Excluded"
+                        },
+                        {
+                            "code": "travelCancellationTestPositive",
+                            "text": "Cancellation due to testing positive for COVID prior to departure",
+                            "description": "Pays up to a set limit of benefit(s) for pre-paid or contracted costs if your trip is cancelled due to your testing positive for COVID-19 prior to departure",
+                            "value": "Up to USD 5,000"
+                        },
+                        {
+                            "code": "travelTestingCost",
+                            "text": "Testing Cost",
+                            "description": "Pays up to a set limit of benefit in respect of necessary medical testing costs in the event of your displaying symptoms suspected to be Covid-19",
+                            "value": "Excluded"
+                        }
+                    ],
+                    "emergencyMedicalCover": [
+                        {
+                            "code": "travelEmergencyMedicalExpenses",
+                            "text": "Emergency Medical Expenses",
+                            "description": "Pays up to a set benefit limit in respect of medical, pharmaceutical and hospital/clinic expenses (including outpatient care) as a result of you contracting a sudden and unforeseen medical condition that is classified as an emergency by medical professionals",
+                            "value": "Up to USD 1,000,000"
+                        },
+                        {
+                            "code": "travelEmergencyDental",
+                            "text": "Emergency Dental",
+                            "description": "Pays up to a set benefit limit for emergency treatment &/or medication necessary to alleviate sudden and unforeseen dental pain.",
+                            "value": "Up to USD 1,000"
+                        },
+                        {
+                            "code": "travelEmergencyTransport",
+                            "text": "Emergency Transport",
+                            "description": "Covers the costs of transporting you to and from a medical facility and your holiday location, as prescribed by an attending medical practitioner",
+                            "value": "Included"
+                        }
+                    ],
+                    "travelInconvenienceCover": [
+                        {
+                            "code": "travelCancellationTestPositive",
+                            "text": "Cancellation due to testing positive for COVID prior to departure",
+                            "description": "Pays up to a set limit of benefit(s) for pre-paid or contracted costs if your trip is cancelled due to your testing positive for COVID-19 prior to departure",
+                            "value": "Up to USD 5,000"
+                        },
+                        {
+                            "code": "travelDelayedDeparture",
+                            "text": "Delayed Departure",
+                            "description": "Pays up to a set limit of benefit if your departure is delayed due to circumstances outside of your control as specified by the Policy",
+                            "value": "Up to USD 500"
+                        },
+                        {
+                            "code": "travelDelayedBaggage",
+                            "text": "Delayed Baggage",
+                            "description": "Pays up to a set limit of benefits in respect of clothing, toiletries and necessary medication in the event your baggage is temporarily lost in transit on your outbound journey between your home and the trip destination",
+                            "value": "Up to USD 250"
+                        },
+                        {
+                            "code": "travelPassportAssistance",
+                            "text": "Passport Assistance",
+                            "description": "Pays up to a set limit of benefit to make a duplicate of your passport in the event it is unintentionally lost, stolen, defaced or damaged",
+                            "value": "Up to USD 500 (Combined limit with Loss of travel documents)"
+                        },
+                        {
+                            "code": "travelPersonalBaggage",
+                            "text": "Personal Baggage",
+                            "description": "Pays up to a set limit of benefits following accidental loss of, theft of, or damage to your luggage occurring during the period of insurance",
+                            "value": "Up to USD 5,000"
+                        },
+                        {
+                            "code": "travelPersonalMoney",
+                            "text": "Personal Money",
+                            "description": "Pays up to a set limit of benefits following accidental loss of, theft of, or damage to your personal money occurring during the period of insurance",
+                            "value": "Up to USD 400"
+                        },
+                        {
+                            "code": "travelLossOfDocuments",
+                            "text": "Loss of travel documents",
+                            "description": "The Insurer will pay for the costs of issuance/replacement of the following travel documents if they are lost, stolen or destroyed on your journey. Passport • Costs to issue a temporary passport including necessary transport, accommodation and administration expenses incurred to obtain it. Travel Documents • Costs of issuing a temporary visa",
+                            "value": "Up to USD 500 (Combined limit with Passport assistance)"
+                        }
+                    ]
+                },
+                "policyWordings": [
+                    {
+                        "text": "AXA - Outbound Policy Wordings",
+                        "description": "",
+                        "link": "https://insurancemarket.blob.core.windows.net/policy-wordings/travel/axa/AXA%20Travel%20Outbound%20(Policy%20Handbook).pdf"
+                    }
+                ],
+                "excess": {}
+            }
+        ]';
+    }
+
     public function listTravelQuotePlans($id)
     {
         $travelQuotePlans = TravelQuotePlan::where('travel_quote_request_id', $id)->first();
