@@ -202,8 +202,10 @@ const membersLoadingPrices = ref([]);
 const finalPrice = ref(0);
 const totalLoadingPrice = ref(0);
 const vatAmount = ref(0);
+const loadingPriceBeingUpdated = ref(false);
 
 const handleLoadingPrice = (event, memberId) => {
+    loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
 
 //   console.log(index);
@@ -232,8 +234,20 @@ const updateGeneralInfo = () => {
       });
     }
     loadingPrices.value = [];
+    loadingPriceBeingUpdated.value = false;
   }
 //   console.log(totalLoadingPrice);
+};
+
+const checkLoadingPriceUpdate = () => {
+    event.preventDefault();
+    if (loadingPriceBeingUpdated.value) {
+        if (confirm('You have unsaved loading price changes. Do you want to leave?')) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 };
 
 onUpdated(() => {
@@ -284,6 +298,7 @@ onUpdated(() => {
                   ? 'bg-white shadow text-primary-600'
                   : 'hover:bg-white/50',
               ]"
+              onclick="checkLoadingPriceUpdate"
             >
               {{ label }}
             </button>
