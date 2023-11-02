@@ -18,8 +18,8 @@ class GenericLobController extends Controller
      */
     public function exportPlansPdf($quoteType, ExportPlansPdfRequest $request)
     {
-        $serviceName = strtolower($quoteType).'QuoteService';
-        $response = $this->{$serviceName}->exportPlansPdf($quoteType, $request->validated());
+        $service = app('App\Services\\'.ucfirst($quoteType).'QuoteService');
+        $response = $service->exportPlansPdf($quoteType, $request->validated());
 
         if (isset($response['error'])) {
             vAbort($response['error']);
