@@ -13,7 +13,8 @@
     <!-- Bootstrap -->
     <link href="{{ asset('vendors/bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.css" />
 
     <!-- Font Awesome -->
     <link href="{{ asset('vendors/font-awesome/css/font-awesome.min.css') }}" rel="stylesheet">
@@ -27,10 +28,11 @@
 
     <!-- Custom styling plus plugins -->
     <!-- <link href="{{ asset('build/css/custom.min.css') }}" rel="stylesheet"> -->
-    <link href="{{ mix('build/css/style.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('old/style.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-bs/css/dataTables.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css') }}"
+        rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css') }}" rel="stylesheet">
     <link href="https://www.jquery-az.com/jquery/css/bootstrap-markdown-editor.css" rel="stylesheet">
@@ -59,7 +61,8 @@
     <div class="loader">
     </div>
     <!-- Modal -->
-    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -147,13 +150,118 @@
     <script src="{{ asset('vendors/datatables.net-scroller/js/dataTables.scroller.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script src="{{ asset('old/Toaster.js') }}"></script>
 
+    @php
+    $pusherAppKey = config('constants.VITE_PUSHER_APP_KEY');
+    $userId = Auth::user()->id;
+    $appName = config('constants.APP_ENV');
+    @endphp
     <!-- iCheck -->
     <script src="{{ asset('vendors/iCheck/icheck.min.js') }}"></script>
     <!-- Custom Theme Scripts -->
-    <script src="{{ asset('build/js/custom.js') }}"></script>
+    <script src="{{ asset('old/custom.js') }}"></script>
     <script>
-        // global app configuration object
+        function getStatusText(statusId){
+            var statusText = '';
+            switch(parseInt(statusId)){
+                case 1:
+                    statusText = 'Online';
+                    break;
+                case 2:
+                    statusText = 'Offline';
+                    break;
+                case 3:
+                    statusText = 'Unavailable';
+                    break;
+                case 4:
+                    statusText = 'Sick';
+                    break;
+                case 5:
+                    statusText = 'On leave';
+                    break;
+                default:
+                    statusText = 'Unavailable'
+                    break;
+            }
+            return statusText;
+        }
+        var pusherAppKey = @json($pusherAppKey);
+        var userId = @json($userId);
+        var appName = @json($appName);
+        var pusher = new Pusher(pusherAppKey, {
+            cluster: 'ap1'
+        });
+
+        function changeAvailiblity(data, self)
+        {
+            if(userId == data.userId){
+                $('#online-status-div').hide();
+                $('#offline-status-div').hide();
+                $('#unavailable-status-div').hide();
+                if(data.status == 1) {
+                    $('#online-status-div').show();
+                }
+                if(data.status == 2)  {
+                    $('#offline-status-div').show();
+                }
+                if(data.status != 1 && data.status != 2 ) {
+                    $('#unavailable-status-div').show();
+                }
+            }
+            var statusText = getStatusText(data.status);
+            $(self).parent().find('.status-text').text(statusText);
+            $(self).parent().find('#is_active').prop('checked', data.status == 1 ? true: false);
+            $(self).parent().find('#is_active').removeClass('danger').removeClass('success').addClass(data.status == 1 ? 'success': 'danger');
+        }
+
+        var channel = pusher.subscribe('public.'+appName + '.activity.user');
+        channel.bind('user.status.changed', function(data) {
+            console.log(data.message);
+            if ($('.car_lead_allocation_table').length > 0) {
+                $('.car_lead_allocation_table').find("tr")
+                    .find("td:first")
+                    .each(function () {
+                        if ($(this).text() == data.userId) {
+                           //changeAvailiblity(data, this);
+                           $.toast({
+                                content: data.userName + data.message,
+                            });
+                        }
+                    });
+            }
+            if ($('.lead_allocation_table').length > 0) {
+                $('.lead_allocation_table').find("tr")
+                    .find("td:first")
+                    .each(function () {
+                        if ($(this).text() == data.userId) {
+                           //changeAvailiblity(data, this);
+                           $.toast({
+                                content: data.userName + data.message,
+                            });
+                        }
+                    });
+            }
+            // if(userId == data.userId){
+            //     $('#online-status-div').hide();
+            //     $('#offline-status-div').hide();
+            //     $('#unavailable-status-div').hide();
+            //     if(data.status == 1) {
+            //         $('#online-status-div').show();
+            //     }
+            //     if(data.status == 2)  {
+            //         $('#offline-status-div').show();
+            //     }
+            //     if(data.status != 1 && data.status != 2 ) {
+            //         $('#unavailable-status-div').show();
+            //     }
+            //     $.toast({
+            //             content: 'Your' + data.message,
+            //         });
+            // }
+        });
+
         var config = {
             routes: {
                 user_datatable_route: "{{ route('users.index') }}",
@@ -242,9 +350,7 @@
             dt.ajax.reload();
         }
     </script>
-    <!-- <script src="{{ asset('build/js/customjs.js') }}"></script> -->
-    <script src="{{ mix('build/js/customjs.min.js') }}"></script>
-    <!-- <script src="{{ asset('build/js/tm_js.js') }}"></script> -->
+    <script src="{{ asset('old/customjs.js') }}"></script>
     <script>
         $(document).ajaxError(function(event, jqxhr, settings, exception) {
             if (exception == 'Unauthorized') {

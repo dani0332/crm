@@ -10,6 +10,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
@@ -184,7 +185,9 @@ class TravelController extends Controller
             'customerAdditionalContacts' => $customerAdditionalContacts,
             'ecomTravelInsuranceQuoteUrl' => config('constants.ECOM_TRAVEL_INSURANCE_QUOTE_URL'),
             'embeddedProducts' => $embeddedProducts,
+            'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::TravelManager),
             'message' => session('message'),
+            'quoteType' => QuoteTypes::TRAVEL,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -271,6 +274,10 @@ class TravelController extends Controller
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return redirect()->back()->with('message', $record->message)->withInput();
         }
+        if (isset($response->quoteUID)) {
+            return redirect('/quotes/travel/'.$response->quoteUID)->with('message', 'Quote created successfully.');
+
+        }
 
         return redirect('/quotes/travel')->with('message', 'Quote created successfully.');
     }
@@ -284,6 +291,9 @@ class TravelController extends Controller
     public function edit($id)
     {
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        if (! $record) {
+            return abort(404);
+        }
         $dropdownSource = $this->travelQuoteService->dropdownSource($this->genericModel->properties, self::TYPE_ID);
         $fieldsToUpdate = $this->travelQuoteService->getFieldsToUpdate('skipProperties');
         $customTitles = [];

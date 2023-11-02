@@ -10,7 +10,7 @@ class CapiService
     private $baseUrl = null;
 
     /**
-     * setup http client with credentials
+     * setup http client with credentials.
      */
     public function __construct()
     {
@@ -26,7 +26,7 @@ class CapiService
     }
 
     /**
-     * send request to ken
+     * send request to ken.
      *
      * @return \GuzzleHttp\Promise\PromiseInterface|\Illuminate\Http\Client\Response
      *

@@ -120,10 +120,10 @@ const onMemberUpdate = member => {
 };
 
 // const onToggleManual = () => {
-//   // toggleLoader.value = true;
-// //   console.log('manual toggle action');
-// //   console.log(props.plan);
-// };
+//     // toggleLoader.value = true;
+//     console.log('manual toggle action');
+//     console.log(props.plan);
+// }
 
 const selectedCopay = ref([]);
 const defaultCopayId = ref(null);
@@ -143,7 +143,8 @@ const onCoPaySelect = copayId => {
     }
   });
 
-  emit('copayUpdate', selectedCopay.value);
+    emit('copayUpdate', selectedCopay.value);
+    console.log(selectedCopay.value);
 };
 
 const onTogglePlans = () => {

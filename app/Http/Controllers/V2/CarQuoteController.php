@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CarQuoteRequest;
 use App\Http\Requests\ChangeInsurerRequest;
 use App\Http\Requests\UpdateCarQuotePlanDetailsRequest;
+use App\Models\QuoteBatches;
 use App\Repositories\CarQuoteRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
@@ -56,10 +57,13 @@ class CarQuoteController extends Controller
         }
 
         $advisors = CarQuoteRepository::getAdvisors();
+        $quoteBatches = QuoteBatches::get();
 
         return inertia('CarQuote/Index', [
             'quotes' => $personalQuotes,
             'advisors' => $advisors,
+            'quoteBatches' => $quoteBatches,
+            'kyoEndPoint' => env('KYO_END_POINT'),
         ]);
     }
 
@@ -125,7 +129,7 @@ class CarQuoteController extends Controller
     }
 
     /**
-     * @param  Request  $request
+     * @param  Request  $requestvabovabovabovabo
      * @return \Illuminate\Http\JsonResponse
      */
     public function changeInsurer(ChangeInsurerRequest $request)
@@ -139,7 +143,7 @@ class CarQuoteController extends Controller
     {
         $response = CarQuoteRepository::updateCareQuotePlanDetails($request->validated());
 
-        return response()->json($response);
+        return redirect()->back(); //response()->json($response);
     }
 
     public function search(CarQuoteRequest $request)

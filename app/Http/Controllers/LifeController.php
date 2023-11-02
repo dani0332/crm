@@ -9,6 +9,7 @@ use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Requests\StoreLifeRequest;
 use App\Services\CRUDService;
@@ -184,6 +185,7 @@ class LifeController extends Controller
 
         return inertia('LifeQuote/Show', [
             'quote' => $quote,
+            'quoteType' => QuoteTypes::LIFE,
             'fieldsToDisplay' => $fields,
             'activities' => $activities,
             'modelType' => $this->genericModel->modelType,

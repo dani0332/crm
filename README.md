@@ -1,17 +1,16 @@
 <p align="center"><a href="https://insurancemarket.ae" target="_blank"><img src="https://insurancemarket.ae/_next/image/?url=%2Fassets%2Fimg%2Flogo%2Flogo.png&w=2048&q=75" width="400"></a> </p>  
 
-## About Blanka - IMCRM
+## About Blanka  - IMCRM 
 Insurance Market CRM (IMCRM) is the CRM used by internal team to handle the incoming leads, transactions, view or generate quotes for customers, generate car valuation, and manage customers. Basically its a complete solution for the back office to handle incoming customer inquiries and process their insurnace quotes.
 
 IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
-
-URLs: 
+URLs:
 
 - [Live](https://imcrm.alfred.ae/)
 - [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
-- [DEV](https://imccrmdev.alfred.ae) [DEV1](https://imccrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
+- [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
 - [TEST](https://imcrmtest.alfred.ae)
 - [Laravel Code Standard Guide Lines](https://xqsit.github.io/laravel-coding-guidelines/)
 - [Team Engineering Guide](https://github.com/InsuranceMarket-ae/engineering/wiki)
@@ -26,7 +25,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files..
 
-**Doppler Configuration**
+**Doppler Configuration** 
 
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
@@ -38,8 +37,8 @@ Once you have doppler CLI installed on your local machine, run the following com
 This repository use Laravel Mix to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
 - Run ```yarn``` so all the necassary packages are installed
-- Run ```yarn run prod``` to generate a production build
-- Run ```yarn watch``` to hot load the changes as you make them while development.
+- Run ```yarn prod``` to generate a production build
+- Run ```yarn dev``` to hot load the changes as you make them while development.
 
 **Redis Allocated DBs**
 - Prod - 15
@@ -52,7 +51,7 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 
 ## Contributing 
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
-- ```main``` branch is used for production deployments.    
+- ```main``` branch is used for production deployments.
 
 ## Cypress test instructions
 
@@ -62,4 +61,4 @@ To run Cypress tests on local machine:
 - Run cypress runner using command ```yarn cypress open```
 - Select e2e tests and then any browser i.e. chrome. 
 - Try running your desired test. 
-- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran. 
+- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran.
