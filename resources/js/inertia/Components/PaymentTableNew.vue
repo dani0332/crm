@@ -85,7 +85,7 @@ const { copy, copied } = useClipboard();
 const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   if (paymentStatus==props.paymentStatusEnum.PAID){
     notification.error({
-        title: 'Payment already \'Paid\'; button deactivated for this transaction',
+        title: 'Payment already \'Paid\', button deactivated for this transaction',
         position: 'top',
       });
   } else {
@@ -628,7 +628,7 @@ const addPaymentModal = () => {
 
   if ( props.payments.length>0 ) {
       notification.error({
-        title: 'Payment already added; click \'Edit\' for changes.',
+        title: 'Payment already added, click \'Edit\' for changes.',
         position: 'top',
       });
       return;   

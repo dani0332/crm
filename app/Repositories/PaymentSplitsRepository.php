@@ -89,7 +89,7 @@ class PaymentSplitsRepository
             $paymentLink = $splitPayment->payment_method == PaymentMethodsEnum::InsureNowPayLater ? $paymentLink.'tabby' : $paymentLink.'checkout';
 
             $paymentParams = [
-                'code' => $payment->code,
+                'code' => $payment->code.'-'.$splitPayment->sr_no,
                 'quoteTypeId' => $quoteTypeId,
             ];
             $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
@@ -113,7 +113,7 @@ class PaymentSplitsRepository
                     'currencyCode' => 'AED',
                     'value' => ceil($splitPayment->payment_amount * 100),
                 ],
-                'merchantOrderReference' => strtoupper($payment->code),
+                'merchantOrderReference' => strtoupper($payment->code.'-'.$splitPayment->sr_no),
             ];
 
             $splitPayment->payment_link = $paymentLinkURL;
