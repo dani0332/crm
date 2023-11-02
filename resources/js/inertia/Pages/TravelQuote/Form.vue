@@ -337,6 +337,7 @@ function resetTravelInfo(value) {
 
         <x-field label="Email">
           <x-input
+            type="email"
             v-model="quoteForm.email"
             class="w-full"
             :disabled="editMode"
