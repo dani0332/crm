@@ -95,7 +95,7 @@ class AMLController extends Controller
                     }
                 }
 
-                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
+                $dataAml = AML::select('kyc_logs.id', 'kyc_logs.input', 'kyc_logs.screenshot', 'kyc_logs.created_at', 'kyc_logs.updated_at',  'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
                     ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
                     ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
                     ->where('kyc_logs.quote_type_id', $request->quoteType)
@@ -133,11 +133,11 @@ class AMLController extends Controller
                     $amlCreatedStartDate = Carbon::parse($request->amlCreatedStartDate)->startOfDay();
                     $amlCreatedEndDate = Carbon::parse($request->amlCreatedEndDate)->endOfDay();
 
-                    $dataAml->whereRaw('kyc_logs.created_at BETWEEN "'.($amlCreatedStartDate).'" AND "'.($amlCreatedEndDate).'"');
+                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedStartDate, $amlCreatedEndDate]);
                     $searchCriteriaSet = true;
                 } else {
 
-                    $dataAml->whereRaw('kyc_logs.created_at BETWEEN "'.(Carbon::today()->startOfDay()).'" AND "'.(Carbon::today()->endOfDay()).'"');
+                    $dataAml->where('kyc_logs.created_at BETWEEN', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
                 }
 
                 if ($searchCriteriaSet) {

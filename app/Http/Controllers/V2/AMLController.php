@@ -95,10 +95,10 @@ class AMLController extends Controller
                 $amlCreatedStartDate = Carbon::parse($request->amlCreatedStartDate)->startOfDay();
                 $amlCreatedEndDate = Carbon::parse($request->amlCreatedEndDate)->endOfDay();
 
-                $dataAml->whereRaw('kyc_logs.created_at BETWEEN "'.($amlCreatedStartDate).'" AND "'.($amlCreatedEndDate).'"');
+                $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedStartDate, $amlCreatedEndDate]);
             } else {
 
-                $dataAml->whereRaw('kyc_logs.created_at BETWEEN "'.(Carbon::today()->startOfDay()).'" AND "'.(Carbon::today()->endOfDay()).'"');
+                $dataAml->where('kyc_logs.created_at BETWEEN', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
             }
             $quotes = $dataAml->simplePaginate(10)->withQueryString();
         }
