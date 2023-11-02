@@ -30,15 +30,15 @@ const valuationForm = useForm({
 const error = ref(false);
 
 const makeCodeError = computed(() => {
-  if (valuationForm.make_code == null && error.value) return true;
+  return (valuationForm.make_code == null && error.value) ?? false;
 });
 
 const carIdError = computed(() => {
-  if (valuationForm.modelId == null && error.value) return true;
+  return (valuationForm.modelId == null && error.value) ?? false;
 });
 
 const carTrimError = computed(() => {
-  if (valuationForm.carTrim == null && error.value) return true;
+  return (valuationForm.carTrim == null && error.value) ?? false;
 });
 
 function onSubmit(isValid) {

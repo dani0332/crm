@@ -12,16 +12,17 @@ const carModels = ref(props.carmodels);
 const loader = reactive({ table: false, carModel: false, trimloading: false });
 
 const makeCodeError = computed(() => {
-  if (deprecationForm.car_make_id == null && error.value) return true;
+  return (deprecationForm.car_make_id == null && error.value) ?? false;
 });
 
 const carIdError = computed(() => {
-  if (deprecationForm.car_model_id == null && error.value) return true;
+  return (deprecationForm.car_model_id == null && error.value) ?? false;
 });
 
 const providerNameError = computed(() => {
-  if (deprecationForm.insurance_provider_value == null && error.value)
-    return true;
+  return (
+    (deprecationForm.insurance_provider_value == null && error.value) ?? false
+  );
 });
 
 const getCarModel = e => {
