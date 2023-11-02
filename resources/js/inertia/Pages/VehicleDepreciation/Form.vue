@@ -7,11 +7,46 @@ const props = defineProps({
 });
 
 const { isRequired } = useRules();
+const error = ref(false);
+const carModels = ref(props.carmodels);
+const loader = reactive({ table: false, carModel: false, trimloading: false });
+
+const makeCodeError = computed(() => {
+  if (deprecationForm.car_make_id == null && error.value) return true;
+});
+
+const carIdError = computed(() => {
+  if (deprecationForm.car_model_id == null && error.value) return true;
+});
+
+const providerNameError = computed(() => {
+  if (deprecationForm.insurance_provider_value == null && error.value)
+    return true;
+});
+
+const getCarModel = e => {
+  let carMake = props.carmakes.find(x => x.id == e);
+  loader.carModel = true;
+  axios
+    .get(route('valuation.carmodels', { make_code: carMake.code }))
+    .then(response => {
+      carModels.value = response.data;
+    })
+    .catch(error =>
+      notification.error({
+        title: 'Error',
+        position: 'top',
+      }),
+    )
+    .finally(() => (loader.carModel = false));
+};
 
 const deprecationForm = useForm({
   car_make_id: props.vehicledepreciation?.car_make_id ?? null,
   insurance_provider_value:
-    props.vehicledepreciation?.insurance_provider_id ?? null,
+    props.vehicledepreciation?.insurance_provider_id ??
+    props.vehicledepreciation?.insurance_provider_value ??
+    null,
   car_model_id: props.vehicledepreciation?.car_model_id ?? null,
   first_year: props.vehicledepreciation?.first_year ?? null,
   second_year: props.vehicledepreciation?.second_year ?? null,
@@ -30,23 +65,33 @@ const isEdit = computed(() => {
 });
 
 const onSubmit = isValid => {
-  if (!isValid) return;
+  if (
+    deprecationForm.car_make_id == null ||
+    deprecationForm.car_model_id == null ||
+    deprecationForm.insurance_provider_value == null
+  )
+    error.value = true;
+  else {
+    deprecationForm.clearErrors();
 
-  deprecationForm.clearErrors();
+    const method = isEdit.value ? 'put' : 'post';
+    const url = isEdit.value
+      ? route('vehicledepreciation.update', props.vehicledepreciation.id)
+      : route('vehicledepreciation.store');
 
-  const method = isEdit.value ? 'put' : 'post';
-  const url = isEdit.value
-    ? route('vehicledepreciation.update', props.vehicledepreciation.id)
-    : route('vehicledepreciation.store');
+    const options = {
+      onError: errors => {
+        deprecationForm.setError(errors);
+      },
+    };
 
-  const options = {
-    onError: errors => {
-      deprecationForm.setError(errors);
-    },
-  };
-
-  deprecationForm.submit(method, url, options);
+    deprecationForm.submit(method, url, options);
+  }
 };
+
+onMounted(() => {
+  if (isEdit.value) getCarModel(deprecationForm.car_make_id);
+});
 </script>
 <template>
   <Head title="Create Vehical Depreciation" />
@@ -64,7 +109,8 @@ const onSubmit = isValid => {
   <x-form class="my-4" @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-3 gap-4">
       <x-field label="Car Make">
-        <x-select
+        <ComboBox
+          :single="true"
           v-model="deprecationForm.car_make_id"
           :options="
             props.carmakes.map(item => ({
@@ -72,23 +118,31 @@ const onSubmit = isValid => {
               label: item.text,
             }))
           "
-          class="w-full"
+          placeholder="Search by Car Make"
+          :rules="[isRequired]"
+          :hasError="makeCodeError"
+          @update:modelValue="getCarModel($event)"
         />
       </x-field>
       <x-field label="Car Model">
-        <x-select
+        <ComboBox
+          :single="true"
           v-model="deprecationForm.car_model_id"
           :options="
-            props.carmodels.map(item => ({
+            carModels.map(item => ({
               value: item.id,
               label: item.text,
             }))
           "
+          :rules="[isRequired]"
           class="w-full"
+          :hasError="carIdError"
+          :loading="loader.carModel"
         />
       </x-field>
       <x-field label="Insurance Provider">
-        <x-select
+        <ComboBox
+          :single="true"
           v-model="deprecationForm.insurance_provider_value"
           :options="
             props.insuranceProviders.map(item => ({
@@ -96,6 +150,8 @@ const onSubmit = isValid => {
               label: item.text,
             }))
           "
+          :rules="[isRequired]"
+          :hasError="providerNameError"
           class="w-full"
         />
       </x-field>
