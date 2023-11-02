@@ -51,6 +51,7 @@ final class QuoteStatusEnum extends Enum
     const NotLookingForMotorInsurance = 49;
     const NonGccSpec = 50;
     const PendingQuote = 51;
+    const Stale = 54;
     const CarSold = 52;
     const Uncontactable = 53;
 }

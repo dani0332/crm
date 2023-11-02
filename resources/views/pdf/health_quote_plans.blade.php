@@ -358,10 +358,10 @@
 
             ["code" => "heading", "title" => "Co‐pay or Co‐insurance"],
             ["code" => "coPayment", "title" => "Outpatient co-pay", "type" => 'coInsurance'],
-            ["code" => "consultation", "title" => "Outpatient Consultation", "type" => 'coInsurance'],
-            ["code" => "diagnostics", "title" => "Outpatient Diagnostics", "type" => 'coInsurance'],
+            // ["code" => "consultation", "title" => "Outpatient Consultation", "type" => 'coInsurance'],
+            // ["code" => "diagnostics", "title" => "Outpatient Diagnostics", "type" => 'coInsurance'],
             ["code" => "physiotherapy", "title" => "Outpatient Physiotherapy", "type" => 'coInsurance'],
-            ["code" => "medicine", "title" => "Outpatient Medicine", "type" => 'coInsurance'],
+            // ["code" => "medicine", "title" => "Outpatient Medicine", "type" => 'coInsurance'],
             ["code" => "dentalCover", "title" => "Routine Dental", "type" => 'coInsurance'],
             ["code" => "opticalCover", "title" => "Routine Optical", "type" => 'coInsurance'],
             ["code" => "inpatient", "title" => "Inpatient", "type" => 'coInsurance'],

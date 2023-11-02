@@ -28,7 +28,8 @@ const date = ref('');
 let isloading = ref(false);
 
 const maxDate = computed(() => {
-  let days = new Date().getDate() + props.source == 'Renewal_upload' ? 14 : 9;
+  
+  let days = props.source == 'Renewal_upload' ? 14 : 9;
   return new Date(new Date().setDate(new Date().getDate() + days));
 });
 

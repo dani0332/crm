@@ -1,15 +1,19 @@
 <script setup>
 import LeadAssignment from '../PersonalQuote/Partials/LeadAssignment';
+import FollowUpModal from './Partials/FollowUpModal.vue';
 
 const notification = useToast();
 
 defineProps({
   quotes: Object,
   quoteStatuses: Array,
+  quoteBatches: Object,
   advisors: Array,
+  kyoEndPoint: String,
 });
 
 const quoteType = 'car';
+const isLoading = ref(false);
 
 const advisorOptions = computed(() => {
   return page.props.advisors.map(advisor => ({
@@ -23,6 +27,15 @@ const dateFormat = date => {
 };
 
 const page = usePage();
+
+const hasRole = role => useHasRole(role);
+const rolesEnum = page.props.rolesEnum;
+
+const showFollowUpModal = ref(false);
+const disableFollowUp = computed(() => {
+  if (!page.props.quotes.data) return true;
+  else return page.props.quotes?.data?.length == 0 ?? false;
+});
 const loader = reactive({
   table: false,
   export: false,
@@ -34,6 +47,8 @@ let availableFilters = {
   last_name: '',
   email: '',
   previous_quote_policy_number: '',
+  renewal_batch: '',
+  quote_batch_id: '',
   page: 1,
 };
 
@@ -59,9 +74,9 @@ function onSubmit(isValid) {
     });
   } else {
     notification.error({
-    title: 'Error while fetching quotes. Please try again',
-    position: 'top',
-  });
+      title: 'Error while fetching quotes. Please try again',
+      position: 'top',
+    });
   }
 }
 
@@ -100,7 +115,8 @@ const tableHeader = [
   { text: 'CAR MODEL YEAR', value: 'year_of_manufacture' },
   { text: 'TYPE OF CAR INSURANCE', value: 'car_type_insurance_id' },
   { text: 'CURRENTLY INSURED WITH', value: 'insurance_provider' },
-  { text: 'CREATED DATE', value: 'created_at' },  {
+  { text: 'CREATED DATE', value: 'created_at' },
+  {
     text: 'ADVISOR ASSIGNED DATE',
     value: 'advisor_assigned_date',
   },
@@ -116,11 +132,11 @@ const quotesSelected = ref([]),
   isDisabled = ref(false);
 
 const manualAssignmentSuccess = () => {
-    quotesSelected.value = [];
-    notification.success({
-        title: `${quoteType.capitalizeFirstChar()} Manual Leads Assigned`,
-        position: 'top',
-      });
+  quotesSelected.value = [];
+  notification.success({
+    title: `${quoteType.capitalizeFirstChar()} Manual Leads Assigned`,
+    position: 'top',
+  });
 };
 
 const manualAssignmentError = () => {
@@ -128,6 +144,41 @@ const manualAssignmentError = () => {
     title: 'Manual Assignment Failed',
     position: 'top',
   });
+};
+
+const sendtemplateForm = data => {
+  isLoading.value = true;
+  data.renewal_batch = filters.renewal_batch;
+  data.quote_batch_id = filters.quote_batch_id;
+  axios
+    .post(`${page.props.kyoEndPoint}/workflows`, data)
+    .then(response => {
+      showFollowUpModal.value = false;
+      notification.success({
+        title: response.data.message,
+        position: 'top',
+      });
+    })
+    .catch(error => {
+      notification.error({
+        title: 'Error! Sending Follow up emails',
+        position: 'top',
+      });
+    })
+    .finally(() => {
+      isLoading.value = false;
+    });
+};
+
+const openFollowUpModal = () => {
+  let title =
+    !filters.renewal_batch && !filters.quote_batch_id
+      ? 'Please select quote batch or renewl batch'
+      : filters.renewal_batch && filters.quote_batch_id
+      ? 'Please select either quote batch or renewl batch'
+      : '';
+  if (title) notification.error({ title: title, position: 'top' });
+  else showFollowUpModal.value = true;
 };
 </script>
 
@@ -151,21 +202,23 @@ const manualAssignmentError = () => {
     <!--   filters     -->
     <x-form @submit="onSubmit" :auto-focus="false">
       <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-              <x-tooltip position="bottom">
-                  <label class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600">
-                      Ref-ID
-                  </label>
-                  <template #tooltip> Reference ID </template>
-              </x-tooltip>
-              <x-input
-                  v-model="filters.code"
-                  type="search"
-                  name="code"
-                  class="w-full"
-                  placeholder="Search by Ref-ID"
-              />
-          </div>
+        <div>
+          <x-tooltip position="bottom">
+            <label
+              class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-600"
+            >
+              Ref-ID
+            </label>
+            <template #tooltip> Reference ID </template>
+          </x-tooltip>
+          <x-input
+            v-model="filters.code"
+            type="search"
+            name="code"
+            class="w-full"
+            placeholder="Search by Ref-ID"
+          />
+        </div>
         <x-input
           v-model="filters.email"
           type="search"
@@ -182,14 +235,55 @@ const manualAssignmentError = () => {
           class="w-full"
           placeholder="Search by Policy Number"
         />
+
+        <x-input
+          v-model="filters.renewal_batch"
+          type="search"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
+
+        <x-field label="Quote Batch">
+          <ComboBox
+            v-model="filters.quote_batch_id"
+            placeholder="Search by Quote Batch"
+            :options="
+              quoteBatches.map(quoteBatch => ({
+                value: quoteBatch.id,
+                label: quoteBatch.name,
+              }))
+            "
+          />
+        </x-field>
       </div>
-      <div class="flex justify-end gap-3 mb-4">
+      <div class="flex justify-end gap-3 mb-5">
         <x-button size="sm" color="#ff5e00" type="submit">Search</x-button>
         <x-button size="sm" color="primary" @click.prevent="onReset">
           Reset
         </x-button>
       </div>
+
+      <div
+        class="flex justify-end gap-3 mb-4 mt-4"
+        v-show="hasRole(rolesEnum.CarManager)"
+      >
+        <x-button
+          size="sm"
+          color="#ff5e00"
+          type="button"
+          :disabled="disableFollowUp"
+          @click.prevent="openFollowUpModal"
+          >Send Followup Emails
+        </x-button>
+      </div>
     </x-form>
+    <FollowUpModal
+      v-model:modelValue="showFollowUpModal"
+      :isLoading="isLoading"
+      @sendTemplateForm="form => sendtemplateForm(form)"
+    />
 
     <Transition name="fade">
       <div v-if="quotesSelected.length > 0" class="mb-4">
@@ -209,7 +303,7 @@ const manualAssignmentError = () => {
       table-class-name="tablefixed"
       :loading="loader.table"
       :headers="tableHeader"
-      :items=" quotes.data || []"
+      :items="quotes.data || []"
       border-cell
       hide-rows-per-page
       hide-footer
@@ -217,12 +311,12 @@ const manualAssignmentError = () => {
     >
       <template #item-code="{ code, uuid }">
         <a
-            :href="route('car.show', uuid)"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-primary-500 hover:underline"
-            >
-            {{ code }}
+          :href="route('car.show', uuid)"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-primary-500 hover:underline"
+        >
+          {{ code }}
         </a>
       </template>
 
@@ -253,7 +347,6 @@ const manualAssignmentError = () => {
       <template #item-advisor_assigned_date="item">
         {{ item?.car_quote_request_detail?.advisor_assigned_date }}
       </template>
-
     </DataTable>
 
     <Pagination
