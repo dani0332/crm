@@ -294,20 +294,22 @@ class EmbeddedProductRepository extends BaseRepository
             $certificate_number = $transaction[0]['certificate_number'];
             $premium = $transaction[0]['price_with_vat'];
         }
-        $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
-        $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
-        $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
-        $viewData['type'] = $modelType;
-        $viewData['master_policy_number'] = 1234;
-        $viewData['certificate_number'] = $certificate_number;
-        $viewData['premium'] = $premium;
-        $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
-
-        $attachments[] = [
-            'Content' => base64_encode($pdf->output()),
-            'Name' => 'Salama_Certificate.pdf',
-            'ContentType' => 'application/pdf',
-        ];
+        // send certificate only for medex
+        if (strtoupper($short_code) == 'MDX') {
+            $viewData['name'] = $quoteObject->first_name.' '.$quoteObject->last_name;
+            $viewData['dob'] = isset($quoteObject->dob) ? Carbon::parse($quoteObject->dob)->format('Y-m-d') : null;
+            $viewData['date_of_enrollment'] = Carbon::now()->format('Y-m-d');
+            $viewData['type'] = $modelType;
+            $viewData['master_policy_number'] = 1234;
+            $viewData['certificate_number'] = $certificate_number;
+            $viewData['premium'] = $premium;
+            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])->loadView('pdf.ep_certificate', compact('viewData'));
+            $attachments[] = [
+                'Content' => base64_encode($pdf->output()),
+                'Name' => 'Salama_Certificate.pdf',
+                'ContentType' => 'application/pdf',
+            ];
+        }
 
         $body = json_encode([
             'From' => config('constants.MA_FROM_EMAIL'),
