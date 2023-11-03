@@ -221,6 +221,19 @@ const handleLoadingPrice = (event, memberId) => {
   }
 };
 
+const checkLoadingPriceUpdate = (e) => {
+    if (loadingPriceBeingUpdated.value) {
+        if (confirm('You have unsaved loading price changes. Do you want to leave?')) {
+            loadingPriceBeingUpdated.value = false;
+            return true;
+        } else {
+            e.preventDefault();
+            return false;
+        }
+    }
+};
+
+
 const memberIndexPerId = id => {
   return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id);
 };
@@ -240,16 +253,6 @@ const updateGeneralInfo = () => {
 //   console.log(totalLoadingPrice);
 };
 
-const checkLoadingPriceUpdate = () => {
-    event.preventDefault();
-    if (loadingPriceBeingUpdated.value) {
-        if (confirm('You have unsaved loading price changes. Do you want to leave?')) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-};
 
 onUpdated(() => {
   getDefaultVaues();
@@ -292,6 +295,7 @@ onUpdated(() => {
             v-slot="{ selected }"
           >
             <button
+            @click="checkLoadingPriceUpdate"
               :class="[
                 'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
                 'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
@@ -299,7 +303,6 @@ onUpdated(() => {
                   ? 'bg-white shadow text-primary-600'
                   : 'hover:bg-white/50',
               ]"
-              onclick="checkLoadingPriceUpdate"
             >
               {{ label }}
             </button>
