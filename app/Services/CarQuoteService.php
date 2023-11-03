@@ -1171,7 +1171,6 @@ class CarQuoteService extends BaseService
                 'quoteUID' => $request->car_quote_uuid,
                 'update' => $isUpdate,
                 'url' => strval($request->current_url),
-                'insurer_quote_no' => $request->insurer_quote_no,
                 'ipAddress' => request()->ip(),
                 'userAgent' => request()->header('User-Agent'),
                 'userId' => strval(auth()->id()),
