@@ -11,6 +11,7 @@ defineProps({
   memberCategories: Array,
   salaryBands: Array,
   nationalities: Array,
+  countryList: Array,
   emirates: Array,
   advisors: Array,
   listQuotePlans: Array,
@@ -78,6 +79,7 @@ const modals = reactive({
   activity: false,
   activityConfirm: false,
   planFilters: false,
+  kycDoc: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -190,6 +192,13 @@ const nationalityOptions = computed(() => {
     value: nat.id,
     label: nat.text,
   }));
+});
+
+const countryList = computed(() => {
+  return page.props.countryList.map(nat => ({
+    value: nat.name,
+    label: nat.name,
+  }))
 });
 
 const memberCategoriesOptions = computed(() => {
@@ -354,6 +363,27 @@ const memberForm = useForm({
   update_lead_against_member: null,
 });
 
+const kycForm = useForm({
+  country_of_residence: null,
+  place_of_birth: null,
+  resident_status: null,
+  residential_address: null,
+  mobile_number: null,
+  email: null,
+  customer_tenure: null,
+  id_type: null,
+  id_number: null,
+  id_issue_date: null,
+  id_expiry_date: null,
+  mode_of_contact: null,
+  mode_of_delivery: null,
+  employed: null,
+  income_source: null,
+  pep: null,
+  financial_sanctions: null,
+  dual_nationality: null,
+});
+
 function onEditMember(data) {
   memberActionEdit.value = true;
   modals.member = true;
@@ -367,6 +397,10 @@ function onEditMember(data) {
   memberForm.salary_band_id = data.salary_band_id;
   memberForm.update_lead_against_member = data.index === 1;
 }
+
+const addKycDoc = () => {
+  modals.kycDoc = true;
+};
 
 const onAddMemberModal = () => {
   memberForm.reset();
@@ -1310,9 +1344,250 @@ onMounted(() => {
       </div>
 
       <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800">Customer Profile</h3>
+          <x-button @click.prevent="addKycDoc" size="sm" color="primary">
+            KYC - Pending
+          </x-button>
+        </div>
         <x-divider class="mb-4 mt-1" />
       </div>
+
+      <x-modal v-model="modals.kycDoc" size="xl" show-close backdrop>
+        <template #header>
+          KYC Document Form
+        </template>
+
+        <x-form @submit="onMemberSubmit" :auto-focus="false">
+          <div class="grid md:grid-cols-4 gap-4">
+            <x-input
+                v-model="quote.uuid"
+                label="Customer ID"
+                placeholder="Customer ID"
+                class="w-full"
+            />
+
+            <x-input
+                v-model="quote.first_name"
+                label="First Name"
+                placeholder="First Name"
+                class="w-full"
+            />
+
+            <x-input
+                v-model="quote.last_name"
+                label="Last Name"
+                placeholder="Last Name"
+                class="w-full"
+            />
+
+            <DatePicker
+                v-model="quote.dob"
+                label="DOB"
+            />
+
+            <ComboBox
+                v-model="quote.nationality_id"
+                label="Nationality"
+                :options="nationalityOptions"
+                placeholder="Select Nationality"
+                :single="true"
+            />
+
+            <ComboBox
+                v-model="kycForm.country_of_residence"
+                label="Country of residence"
+                :options="countryList"
+                placeholder="Country of residence"
+                :single="true"
+            />
+
+            <ComboBox
+                v-model="kycForm.place_of_birth"
+                label="Place of birth"
+                :options="countryList"
+                placeholder="Place of birth"
+                :single="true"
+            />
+
+            <x-select
+                v-model="kycForm.resident_status"
+                label="Resident Status"
+                :options="[
+                  { value: 'uae', label: 'UAE resident' },
+                  { value: 'non_uae', label: 'Non UAE resident' },
+                ]"
+                placeholder="Resident Status"
+                :rules="[isRequired]"
+            />
+          </div>
+          <div class="grid md:grid-cols-2">
+            <x-input
+                v-model="kycForm.residential_address"
+                label="Resident Address"
+                placeholder="Resident Address"
+                :rules="[isRequired]"
+            />
+          </div>
+          <div class="grid md:grid-cols-4 gap-4">
+            <x-input
+                v-model="kycForm.mobile_number"
+                label="Mobile number"
+                placeholder="Mobile number"
+                type="number"
+                :rules="[isRequired]"
+            />
+
+            <x-input
+                v-model="kycForm.email"
+                label="Email"
+                placeholder="Email"
+                type="email"
+                :rules="[isRequired]"
+            />
+
+            <x-input
+                v-model="kycForm.customer_tenure"
+                label="Customer tenure"
+                placeholder="Customer tenure"
+                :rules="[isRequired]"
+            />
+          </div>
+          <div class="grid md:grid-cols-4 gap-4">
+            <x-select
+                v-model="kycForm.id_type"
+                label="ID type"
+                :options="[
+                  { value: 'testin', label: 'testing' },
+                ]"
+                placeholder="ID type"
+                :rules="[isRequired]"
+            />
+
+            <x-input
+                v-model="kycForm.id_number"
+                label="ID number"
+                placeholder="ID number"
+                :rules="[isRequired]"
+            />
+
+            <DatePicker
+                v-model="kycForm.id_issue_date"
+                label="ID issue date"
+            />
+
+            <DatePicker
+                v-model="kycForm.id_expiry_date"
+                label="ID expiry date"
+            />
+
+            <x-input
+                v-model="kycForm.mode_of_contact"
+                label="Mode of contact"
+                placeholder="Mode of contact"
+                :rules="[isRequired]"
+            />
+
+            <x-input
+                v-model="kycForm.mode_of_delivery"
+                label="Mode of delivery"
+                placeholder="Mode of delivery"
+                :rules="[isRequired]"
+            />
+          </div>
+
+          <div class="grid md:grid-cols-1 gap-4">
+            <h3 class="font-bold text-black-800 text-center">Source of income</h3>
+          </div>
+
+          <div class="grid md:grid-cols-2 gap-4">
+            <x-input
+                v-model="kycForm.employed"
+                label="Employed"
+                placeholder="Employer/Company name"
+                :rules="[isRequired]"
+            />
+
+            <x-input
+              v-model="kycForm.income_source"
+              label="Business owner / Partner"
+              placeholder="Professional Job title"
+              :rules="[isRequired]"
+          />
+          </div>
+
+          <div class="grid md:grid-cols-1 gap-4">
+            <h3 class="font-bold text-black-800 text-center">For compliance use only</h3>
+          </div>
+
+          <div class="grid md:grid-cols-3">
+            <x-label>
+              Is the customer a PEP
+            </x-label>
+            <x-radio
+                v-model="kycForm.pep"
+                value="1"
+                label="Yes"
+                :rules="[isRequired]"
+            />
+            <x-radio
+                v-model="kycForm.pep"
+                value="0"
+                label="No"
+            />
+          </div>
+
+          <div class="grid md:grid-cols-3">
+            <x-label>
+              Is the customer or business subjected to financial sanctions / or connected with prescribed terrorist organizations?
+            </x-label>
+            <x-radio
+                v-model="kycForm.financial_sanctions"
+                value="1"
+                label="Yes"
+                :rules="[isRequired]"
+            />
+            <x-radio
+                v-model="kycForm.financial_sanctions"
+                value="0"
+                label="No"
+            />
+          </div>
+
+          <div class="grid md:grid-cols-3">
+            <x-label>
+              Does the customer have dual nationality
+            </x-label>
+            <x-radio
+                v-model="kycForm.dual_nationality"
+                value="1"
+                label="Yes"
+                :rules="[isRequired]"
+            />
+            <x-radio
+                v-model="kycForm.dual_nationality"
+                value="0"
+                label="No"
+            />
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <x-button size="sm" @click.prevent="modals.kycDoc = false">
+              Cancel
+            </x-button>
+
+            <x-button
+                size="sm"
+                color="emerald"
+                :loading="memberForm.processing"
+                type="submit"
+                class="px-6"
+            >
+              {{ memberActionEdit ? 'Update' : 'Save' }}
+            </x-button>
+          </div>
+        </x-form>
+      </x-modal>
 
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
