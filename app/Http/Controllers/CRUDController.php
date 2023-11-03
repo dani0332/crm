@@ -77,6 +77,7 @@ use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 
@@ -843,7 +844,10 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
+            $countries = Http::get( 'https://countriesnow.space/api/v0.1/countries/flag/images');
+
             return inertia('HealthQuote/Show', [
+                'countryList' => json_decode($countries->body())->data,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
