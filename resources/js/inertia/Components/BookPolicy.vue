@@ -72,7 +72,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Invoice Description</dt>
-          <dd>eee</dd>
+          <dd></dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Main Class Insurance</dt>
@@ -84,7 +84,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Sub Class</dt>
-          <dd>aaa</dd>
+          <dd></dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insurer Invoice Date</dt>
@@ -100,7 +100,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Broker Invoice Number</dt>
-          <dd>aaa</dd>
+          <dd></dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insurer Tax Invoice Number</dt>
@@ -115,7 +115,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Discount</dt>
-          <dd>aaa</dd>
+          <dd></dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insurer Commmission Invoice Number</dt>
@@ -148,7 +148,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">VAT on commission</dt>
-          <dd>aaa</dd>
+          <dd></dd>
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Commmission VAT APPLICABLE</dt>
@@ -166,7 +166,7 @@ const vatCommission = () => {
         </div>
         <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Total commission</dt>
-          <dd>aaa</dd>
+          <dd></dd>
         </div>
       </dl>
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
