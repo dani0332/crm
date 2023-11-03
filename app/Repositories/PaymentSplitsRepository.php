@@ -215,7 +215,7 @@ class PaymentSplitsRepository
             //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
 
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
-            /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
+            /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING 
             $sageRequest = new \stdClass();
             $sageRequest->discount = 0.00;
             $sageRequest->insurerInvoiceDate = $splitPayment->due_date;
@@ -235,29 +235,17 @@ class PaymentSplitsRepository
             //$sageApi = new SageApi(new SageApiService());
             //$sageResponse = $sageApi->processSagePost($sageRequest);
             */
+            /* CUSTOMER PAYLOAD
+            $payLoadOptions = SagePayloadFactory::createCustomerPayload($successMessage);
+            $jsonResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+            dd($jsonResponse);
             $leadStatus = 'policy booked';
-            $createPrepaymentReciept = [
-                'BatchRecordType' => 'CA',
-                'ReceiptsAdjustments' => [
-                    [
-                        'BatchType' => 'CA',
-                        'CustomerNumber' => 'IC008',
-                        'BankReceiptAmount' => floatval($request->collection_amount),
-                        'CheckReceiptNumber' => '123456',
-                        'PaymentCode' => 'BT',
-                        'ReceiptTransactionType' => 'Prepayment',
-                        'AppliedReceiptsAdjustments' => [
-                            [
-                                'BatchType' => 'CA',
-                                'CustomerNumber' => 'IC008',
-                                'ReceiptTransactionType' => 'Prepayment',
-                            ],
-                        ],
-                    ],
-                ],
-            ];
+            */
+            
+            //$message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
             $sageApiService = new SageApiService();
-            $message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
+            $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
+            $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);            
             $sageResponse = json_decode($message, true);
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;

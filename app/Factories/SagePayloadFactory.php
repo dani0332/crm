@@ -272,6 +272,47 @@ class SagePayloadFactory
         ];
     }
 
+    public static function createCustomerPayload($request)
+    {
+        $payLoad = [           
+                'CustomerNumber' => 'P0089899',
+                'CustomerName' => 'Hafeez Azhar',
+                'GroupCode' => 'PHI',            
+        ];
+        return [
+            'endPoint' => 'AR/ARCustomers',
+            'payload' => $payLoad,
+        ];
+    }
+
+    public static function createPrepaymentPayload($request)
+    {
+        $payLoad = [
+            'BatchRecordType' => 'CA',
+            'ReceiptsAdjustments' => [
+                [
+                    'BatchType' => 'CA',
+                    'CustomerNumber' => 'IC008',
+                    'BankReceiptAmount' => floatval($request->collection_amount),
+                    'CheckReceiptNumber' => '123456',
+                    'PaymentCode' => 'BT',
+                    'ReceiptTransactionType' => 'Prepayment',
+                    'AppliedReceiptsAdjustments' => [
+                        [
+                            'BatchType' => 'CA',
+                            'CustomerNumber' => 'IC008',
+                            'ReceiptTransactionType' => 'Prepayment',
+                        ],
+                    ],
+                ],
+            ],
+        ];
+        return [
+            'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
+            'payload' => $payLoad,
+        ];
+    }
+
     private static function createOptionalFields($request)
     {
         $optionalArray = [
