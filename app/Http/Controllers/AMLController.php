@@ -135,8 +135,12 @@ class AMLController extends Controller
 
                     $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedStartDate, $amlCreatedEndDate]);
                     $searchCriteriaSet = true;
-                } else {
+                }
 
+                $searchTypeIsValid = ($request->searchType == 'cdbId' || $request->searchType == 'customerEmail');
+                $amlDateRangeNotProvided = isset($request->amlCreatedStartDate) && isset($request->amlCreatedEndDate);
+
+                if (! $searchTypeIsValid && ! $amlDateRangeNotProvided) {
                     $dataAml->whereBetween('kyc_logs.created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
                 }
 
