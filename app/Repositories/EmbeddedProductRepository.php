@@ -319,7 +319,8 @@ class EmbeddedProductRepository extends BaseRepository
             'TemplateModel' => [
                 'params' => [
                     'customerName' => $quoteObject->first_name.' '.$quoteObject->last_name,
-                    'isMedex' => true,
+                    // For MEDEX pass true else false
+                    'isMedex' => strtoupper($short_code) == 'MDX' ? true : false,
                     'productName' => $product_name,
                     'productDescription' => $product_description,
                     'advisor' => (object) $advisorData,
