@@ -423,3 +423,14 @@ border-primary animate-spin;
   border-color: rgb(55 65 81) transparent transparent transparent;
   transform: rotate(360deg);
 }
+
+.arrow-b .x-popover-container::after {
+  content: '';
+  position: absolute;
+  bottom: -9px;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(55 65 81) transparent transparent transparent;
+}

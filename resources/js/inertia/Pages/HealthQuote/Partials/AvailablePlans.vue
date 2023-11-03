@@ -5,7 +5,7 @@ const props = defineProps({
   genders: Object,
 });
 
-const emit = defineEmits(['copayUpdate', 'update:modelValue']);
+const emit = defineEmits(['copayUpdate', 'update:modelValue', 'membersDetailsReviewed']);
 
 const showModal = computed({
   get: () => props.modelValue,
@@ -249,6 +249,7 @@ const updateGeneralInfo = () => {
     }
     loadingPrices.value = [];
     loadingPriceBeingUpdated.value = false;
+    emit('membersDetailsReviewed', true);
   }
 //   console.log(totalLoadingPrice);
 };

@@ -379,6 +379,9 @@ const memberFieldReq = reactive({
   nationality: false,
   dob: false,
 });
+
+const membersDetailsUpdated = ref(false);
+
 const onMemberSubmit = isValid => {
   if (memberForm.nationality_id == null) {
     memberFieldReq.nationality = true;
@@ -400,6 +403,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
+        membersDetailsUpdated.value = true;
       },
       onFinish: () => {
         modals.member = false;
@@ -413,6 +417,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
+        membersDetailsUpdated.value = true;
       },
       onFinish: () => {
         modals.member = false;
@@ -434,12 +439,17 @@ const memberDeleteConfirmed = () => {
         title: 'Member Deleted',
         position: 'top',
       });
+      membersDetailsUpdated.value = true;
     },
     onFinish: () => {
       modals.memberConfirm = false;
     },
   });
 };
+
+const onRecieveMembersDetailsReview = () => {
+    membersDetailsUpdated.value = false;
+}
 
 const memberDataDocs = membersDetail => {
   return membersDetail
@@ -1907,14 +1917,39 @@ onMounted(() => {
         </template>
         <template #item-action="item">
           <div class="flex gap-2 pr-2">
-            <x-button
-              size="xs"
-              color="primary"
-              outlined
-              @click.prevent="planClicked(item)"
-            >
-              View
+            <!-- put here -->
+            <template v-if="membersDetailsUpdated">
+            <x-tooltip position="top" class="arrow-b">
+                <x-badge
+                    size="xs"
+                    color="error"
+                    outlined
+                    offset-x="-8"
+                    offset-y="-10"
+                >
+                    <x-button
+                    size="xs"
+                    color="primary"
+                    outlined
+                    @click.prevent="planClicked(item)"
+                    >
+                    View
+                    </x-button>
+                    <template #content>!</template>
+                </x-badge>
+              <template #tooltip>Price outdated! <br/> Please update</template>
+            </x-tooltip>
+            </template>
+            <template v-else>
+              <x-button
+                size="xs"
+                color="primary"
+                outlined
+                @click.prevent="planClicked(item)"
+              >
+                View
             </x-button>
+            </template>
             <x-button
               size="xs"
               color="emerald"
@@ -1938,6 +1973,7 @@ onMounted(() => {
         :plan="selectedPlan"
         :genders="genderOptions"
         @copay-update="onSelectedCopay"
+        @membersDetailsReviewed="onRecieveMembersDetailsReview"
       />
 
       <x-modal v-model="modals.createPlan" size="xl" show-close backdrop>
