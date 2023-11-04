@@ -54,6 +54,7 @@ const insurerAvailableTrimsOptions = computed(() => {
 
 const toggleLoader = ref(false);
 const toggleManualLoader = ref(false);
+const showInsurerError = ref(false);
 
 const planForm = useForm({
   car_quote_uuid: usePage().props.record.uuid,
@@ -129,6 +130,13 @@ const onUpdatePlan = () => {
       position: 'top',
     });
     return;
+  }
+
+  if (planForm.is_manual_update && planForm.insurer_quote_no == '') {
+    showInsurerError.value = true;
+    return;
+  } else {
+    showInsurerError.value = false;
   }
 
   let addons = [];
@@ -257,7 +265,7 @@ const onToggleManual = () => {
               <x-input
                 v-model="planForm.insurer_quote_no"
                 :disabled="!planForm.is_manual_update"
-                :rules="planForm.is_manual_update ? [isRequired] : []"
+                :error="showInsurerError ? 'This field is required' : ''"
                 maxlength="50"
                 size="sm"
               />
