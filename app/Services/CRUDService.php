@@ -28,8 +28,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-use function PHPUnit\Framework\isEmpty;
-
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
@@ -565,7 +563,7 @@ class CRUDService extends BaseService
                 $payment = $transaction['payments'][0];
                 $maxAmount = $payment->premium_captured - $payment->premium_refunded;
 
-                if ($maxAmount >= $request->amount || isEmpty($payment->premium_captured)) {
+                if ($maxAmount >= $request->amount) {
                     $paymentAction = new PaymentAction();
                     $paymentAction->payment_code = $transaction->code; //$embededTransaction->code;
                     $paymentAction->is_fulfilled = 0;
