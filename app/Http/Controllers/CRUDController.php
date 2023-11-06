@@ -844,10 +844,10 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
-            $countries = Http::get( 'https://countriesnow.space/api/v0.1/countries/flag/images');
+            $countries = Nationality::pluck('country_name');
 
             return inertia('HealthQuote/Show', [
-                'countryList' => json_decode($countries->body())->data,
+                'countryList' => $countries,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),

@@ -196,8 +196,8 @@ const nationalityOptions = computed(() => {
 
 const countryList = computed(() => {
   return page.props.countryList.map(nat => ({
-    value: nat.name,
-    label: nat.name,
+    value: nat,
+    label: nat,
   }))
 });
 
