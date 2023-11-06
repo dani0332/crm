@@ -529,7 +529,7 @@ class RenewalsUploadService
 
             info($logPrefix.' excel data stored in DB.');
 
-            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead, true);
 
             if ($validationResult) {
                 $this->updateQuotes($renewalsUploadLead);
@@ -1340,9 +1340,9 @@ class RenewalsUploadService
         return $quoteDetail;
     }
 
-    public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
+    public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead, $isUpdate = false)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) use ($isUpdate) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
@@ -1451,6 +1451,10 @@ class RenewalsUploadService
                                     if (! $leadData->excess) {
                                         $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
                                     }
+                                }
+
+                                if ($isUpdate && $leadData->premium > 0 && !$leadData->insurer_quote_no) {
+                                    $leadValidationErrors->push('Insurer Quote No is required');
                                 }
                                 if (! $leadData->premium && $leadData->excess) {
                                     $leadValidationErrors->push('Renewal Premium is required with Excess');
