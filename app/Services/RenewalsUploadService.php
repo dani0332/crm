@@ -529,7 +529,7 @@ class RenewalsUploadService
 
             info($logPrefix.' excel data stored in DB.');
 
-            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead, true);
+            $validationResult = $this->uploadedLeadsValidation($renewalsUploadLead);
 
             if ($validationResult) {
                 $this->updateQuotes($renewalsUploadLead);
@@ -1340,9 +1340,9 @@ class RenewalsUploadService
         return $quoteDetail;
     }
 
-    public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead, $isUpdate = false)
+    public function uploadedLeadsValidation(RenewalsUploadLeads $renewalsUploadLead)
     {
-        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) use ($isUpdate) {
+        RenewalQuoteProcess::where('status', RenewalProcessStatuses::NEW)->where('renewals_upload_lead_id', $renewalsUploadLead->id)->chunkById(50, function ($leads) {
             foreach ($leads as $lead) {
                 $leadValidationErrors = collect();
 
@@ -1453,7 +1453,7 @@ class RenewalsUploadService
                                     }
                                 }
 
-                                if ($isUpdate && $leadData->premium > 0 && !$leadData->insurer_quote_no) {
+                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && !$leadData->insurer_quote_no) {
                                     $leadValidationErrors->push('Insurer Quote No is required');
                                 }
                                 if (! $leadData->premium && $leadData->excess) {
