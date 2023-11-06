@@ -209,8 +209,7 @@ const getAddonVat = item => {
             :rules="[isRequired]"
             class="w-full"
             placeholder="Enter Insurer Quote Number"
-            type="number"
-            step="any"
+            maxlength="50"
           />
         </x-field>
       </div>
