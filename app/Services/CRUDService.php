@@ -28,6 +28,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use function PHPUnit\Framework\isEmpty;
+
 class CRUDService extends BaseService
 {
     use GenericQueriesAllLobs;
@@ -258,8 +260,10 @@ class CRUDService extends BaseService
             }
             $entity->save();
 
-            if (strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
-                && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable) {
+            if (
+                strtolower($request->modelType) == strtolower(quoteTypeCode::Car)
+                && $request->leadStatus == QuoteStatusEnum::CarSold || $request->leadStatus == QuoteStatusEnum::Uncontactable
+            ) {
                 if (! empty($request->car_lost_quote_log_id) && auth()->user()->hasRole(RolesEnum::MarketingOperations)) {
                     //perform approval or rejection
                     $carLostQuoteLog = CarLostQuoteLog::where([
@@ -547,38 +551,48 @@ class CRUDService extends BaseService
     {
         $embeddedProductOptionsIds = EmbeddedProductOption::where('embedded_product_id', $request->embedded_id)->pluck('id');
         $type = QuoteType::where('code', $request->modelType)->first();
-        $embededTransaction = EmbeddedTransaction::where('quote_request_id', $request->quote_id)
+
+        $embededTransaction = EmbeddedTransaction::with(['payments'])->where('quote_request_id', $request->quote_id)
             ->where('quote_type_id', $type->id)
+            ->where('is_selected', true)
             ->whereIn('product_id', $embeddedProductOptionsIds)
-            ->first();
-        if (isset($embededTransaction->payments[0])) {
-            $payment = $embededTransaction->payments[0];
-            $maxAmount = $payment->premium_captured - $payment->premium_refunded;
-            if ($maxAmount >= $request->amount) {
-                $paymentAction = new PaymentAction();
-                $paymentAction->payment_code = $embededTransaction->code; //$embededTransaction->code;
-                $paymentAction->is_fulfilled = 0;
-                $paymentAction->action_type = 'REFUND';
-                $paymentAction->reason = $request->reason;
-                $paymentAction->amount = $request->amount;
-                $paymentAction->created_by = auth()->user()->email;
+            ->get();
 
-                $paymentAction->save();
-                $data = [
-                    'uuid' => $request->uuid,
-                    'type_id' => $type->id,
-                    'code' => $embededTransaction->code,
+        if ($embededTransaction->isNotEmpty()) {
+            if (! empty($embededTransaction[0]['payments'][0])) {
+                $transaction = $embededTransaction[0];
 
-                ];
-                $processResponse = $this->processCancelPayment($data);
+                $payment = $transaction['payments'][0];
+                $maxAmount = $payment->premium_captured - $payment->premium_refunded;
 
-                return response($processResponse, 403);
+                if ($maxAmount >= $request->amount || isEmpty($payment->premium_captured)) {
+                    $paymentAction = new PaymentAction();
+                    $paymentAction->payment_code = $transaction->code; //$embededTransaction->code;
+                    $paymentAction->is_fulfilled = 0;
+                    $paymentAction->action_type = 'REFUND';
+                    $paymentAction->reason = $request->reason;
+                    $paymentAction->amount = $request->amount;
+                    $paymentAction->created_by = auth()->user()->email;
+
+                    $paymentAction->save();
+                    $data = [
+                        'uuid' => $request->uuid,
+                        'type_id' => $type->id,
+                        'code' => $transaction->code,
+
+                    ];
+                    $processResponse = $this->processCancelPayment($data);
+
+                    return response($processResponse, 403);
+                } else {
+                    return response(['should not be maximum'], 403);
+                }
             } else {
-                return response(['should not be maximum'], 403);
+                return response(['Payment not exist'], 403);
             }
         }
 
-        return response(['Payment not exist'], 403);
+        return response(['Transaction not exist'], 403);
     }
     public function processCancelPayment($data)
     {
