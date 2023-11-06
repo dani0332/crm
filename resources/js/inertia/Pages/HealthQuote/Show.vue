@@ -1972,6 +1972,7 @@ onMounted(() => {
         v-model="modals.plan"
         :plan="selectedPlan"
         :genders="genderOptions"
+        :memebersDetailsChanged="membersDetailsUpdated"
         @copay-update="onSelectedCopay"
         @membersDetailsReviewed="onRecieveMembersDetailsReview"
       />

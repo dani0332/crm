@@ -3,9 +3,14 @@ const props = defineProps({
   modelValue: Boolean,
   plan: Object,
   genders: Object,
+  memebersDetailsChanged: Boolean,
 });
 
-const emit = defineEmits(['copayUpdate', 'update:modelValue', 'membersDetailsReviewed']);
+const emit = defineEmits([
+  'copayUpdate',
+  'update:modelValue',
+  'membersDetailsReviewed',
+]);
 
 const showModal = computed({
   get: () => props.modelValue,
@@ -143,8 +148,7 @@ const onCoPaySelect = copayId => {
     }
   });
 
-    emit('copayUpdate', selectedCopay.value);
-    console.log(selectedCopay.value);
+  emit('copayUpdate', selectedCopay.value);
 };
 
 const onTogglePlans = () => {
@@ -194,7 +198,6 @@ const getDefaultVaues = () => {
     });
 
     newActualPremium.value = smallestCopayValue;
-
   }
 };
 
@@ -206,10 +209,10 @@ const vatAmount = ref(0);
 const loadingPriceBeingUpdated = ref(false);
 
 const handleLoadingPrice = (event, memberId) => {
-    loadingPriceBeingUpdated.value = true;
+  loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
 
-//   console.log(index);
+  //   console.log(index);
 
   if (index > -1) {
     loadingPrices.value[index].price = event.target.value;
@@ -221,18 +224,19 @@ const handleLoadingPrice = (event, memberId) => {
   }
 };
 
-const checkLoadingPriceUpdate = (e) => {
-    if (loadingPriceBeingUpdated.value) {
-        if (confirm('You have unsaved loading price changes. Do you want to leave?')) {
-            loadingPriceBeingUpdated.value = false;
-            return true;
-        } else {
-            e.preventDefault();
-            return false;
-        }
+const checkLoadingPriceUpdate = e => {
+  if (loadingPriceBeingUpdated.value) {
+    if (
+      confirm('You have unsaved loading price changes. Do you want to leave?')
+    ) {
+      loadingPriceBeingUpdated.value = false;
+      return true;
+    } else {
+      e.preventDefault();
+      return false;
     }
+  }
 };
-
 
 const memberIndexPerId = id => {
   return props.plan.memberPremiumBreakdown.findIndex(m => m.memberId == id);
@@ -251,9 +255,8 @@ const updateGeneralInfo = () => {
     loadingPriceBeingUpdated.value = false;
     emit('membersDetailsReviewed', true);
   }
-//   console.log(totalLoadingPrice);
+  //   console.log(totalLoadingPrice);
 };
-
 
 onUpdated(() => {
   getDefaultVaues();
@@ -291,12 +294,44 @@ onUpdated(() => {
         >
           <Tab
             v-for="{ index, label } in tabs"
-            as="template"
             :key="index"
             v-slot="{ selected }"
           >
+            <x-tooltip
+              v-if="label == 'Members' && props.memebersDetailsChanged"
+              position="bottom"
+              class="arrow-t"
+            >
+              <x-badge
+                size="xs"
+                color="error"
+                outlined
+                offset-x="-8"
+                offset-y="-10"
+              >
+                <button
+                  @click="checkLoadingPriceUpdate"
+                  :class="[
+                    'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
+                    'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
+                    selected
+                      ? 'bg-white shadow text-primary-600'
+                      : 'hover:bg-white/50',
+                  ]"
+                >
+                  {{ label }}
+                </button>
+                <template #content>!</template>
+              </x-badge>
+              <template #tooltip
+                >Price outdated! <br />
+                Please update</template
+              >
+            </x-tooltip>
+
             <button
-            @click="checkLoadingPriceUpdate"
+              v-else
+              @click="checkLoadingPriceUpdate"
               :class="[
                 'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
                 'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-50 focus:outline-none focus:ring-2',
@@ -347,7 +382,7 @@ onUpdated(() => {
                 >
                   {{
                     (finalPrice =
-                        newActualPremium +
+                      newActualPremium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
                       totalLoadingPrice).toLocaleString()
