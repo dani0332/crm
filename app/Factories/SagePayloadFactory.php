@@ -272,16 +272,20 @@ class SagePayloadFactory
         ];
     }
 
-    public static function createCustomerPayload($request)
+    public static function createCustomerPayload($customer)
     {
+        $appendGroup = 'G';
+        $customerNumber = self::customizeCustomerId($customer->id, $appendGroup);
+        //dd($customerNumber);
         $payLoad = [           
-                'CustomerNumber' => 'P0089899',
-                'CustomerName' => 'Hafeez Azhar',
+                'CustomerNumber' => $customerNumber.'H',
+                'CustomerName' => $customer->first_name.' '.$customer->last_name,
                 'GroupCode' => 'PHI',            
         ];
         return [
             'endPoint' => 'AR/ARCustomers',
             'payload' => $payLoad,
+            'customerNumber' => $customerNumber,
         ];
     }
 
@@ -313,6 +317,18 @@ class SagePayloadFactory
         ];
     }
 
+    private static function customizeCustomerId($customerId, $appendGroup, $minLength = 12) {
+        $minLength = max(1, $minLength);
+        $paddingLength = $minLength - strlen($customerId);    
+        if ($paddingLength < 0) {
+            return $customerId;
+        } else {
+            $paddedCustomerId = str_repeat('0', $paddingLength) . $customerId;
+            $paddedCustomerId[0] = $appendGroup;
+            return $paddedCustomerId;
+        }
+    }    
+   
     private static function createOptionalFields($request)
     {
         $optionalArray = [

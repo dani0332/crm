@@ -202,9 +202,8 @@ class PaymentSplitsRepository
     }
 
     public function updatePaymentStatus($request)
-    {
+    {       
         $successMessage = 'Payment Verified';
-
         if ($request->is_approved) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
@@ -235,6 +234,7 @@ class PaymentSplitsRepository
             //$sageApi = new SageApi(new SageApiService());
             //$sageResponse = $sageApi->processSagePost($sageRequest);
             */
+            
             /* CUSTOMER PAYLOAD
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($successMessage);
             $jsonResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
@@ -243,6 +243,10 @@ class PaymentSplitsRepository
             */
             
             //$message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
+            /* NEW CUSTOMER CREATION           
+            $sageApiService = new SageApiService();
+            $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id);
+            */
             $sageApiService = new SageApiService();
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
             $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);            

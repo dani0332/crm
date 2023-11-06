@@ -21,7 +21,7 @@ const props = defineProps({
   quoteType: String,
   storageUrl: String,
 });
-
+console.log('QUOTEREQUEST='+JSON.stringify(props.quote));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -886,6 +886,7 @@ const addPayment = isValid => {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
       plan_id: props.quoteRequest.plan.id,
+      customer_id: props.quote.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
       splitPaymentId: paymentMethodsForm.splitPaymentId,

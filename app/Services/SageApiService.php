@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Services;
+use App\Factories\SagePayloadFactory;
+use App\Models\Customer;
 
 class SageApiService
 {
@@ -14,6 +16,25 @@ class SageApiService
         $this->sageLogin = env('SAGE_300_LOGIN');
         $this->sagePassword = env('SAGE_300_PASSWORD');
         $this->sageRequestUrl = env('SAGE_300_BASE_URL').env('SAGE_300_VERSION');
+    }
+
+    public function verifySageCustomer($customerId)
+    {
+        $customer = Customer::find($customerId);
+        if ($customer) {
+            $payLoadOptions = SagePayloadFactory::createCustomerPayload($customer);
+            $jsonResponse = $this->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
+
+            $response = json_decode($jsonResponse, true);
+            //dd($response);
+            if( isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate'){
+                return $payLoadOptions['customerNumber'];
+            } else if (isset($response['CustomerNumber'])) {
+                return $response['CustomerNumber'];
+            } else {
+                return false;
+            }
+        }            
     }
 
     public function postToSage300($endPoint, $payLoad)
