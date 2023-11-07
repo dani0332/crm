@@ -601,7 +601,7 @@ class RenewalsUploadService
     public function buildCustomerData($data)
     {
         $data['customer_name'] = trim($data['customer_name']);
-        
+
         //default values
         $customerData = [
             'first_name' => $data['customer_name'],
@@ -1472,6 +1472,10 @@ class RenewalsUploadService
                                     if (! $leadData->excess) {
                                         $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
                                     }
+                                }
+
+                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no) {
+                                    $leadValidationErrors->push('Insurer Quote No is required');
                                 }
                                 if (! $leadData->premium && $leadData->excess) {
                                     $leadValidationErrors->push('Renewal Premium is required with Excess');
