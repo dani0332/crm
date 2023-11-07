@@ -1,266 +1,311 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Plans Comparison PDF</title>
-
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>KYC Document</title>
     <style>
-        @page {
-            margin:0;
-            padding: 0;
-        }
-        html {
-            line-height: 1.5;
-            margin:0;
-            padding: 0;
-        }
         body {
-            line-height: 1;
-            font-family: "DejaVu Sans", sans-serif;
-
-        }
-        header{
-            position: fixed;
-            top: 0;
-            left: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             height: 200px;
-            width: 100%;
-            display: block;
-        }
-        div,
-        span,
-        table,
-        tbody,
-        tfoot,
-        thead,
-        tr,
-        th,
-        td,
-        blockquote,
-        dl,
-        dd,
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        hr,
-        figure,
-        p,
-        pre {
-            margin: 0;
-        }
-        a {
-            text-decoration: inherit;
-        }
-        b,
-        strong {
-            font-weight: bolder;
-        }
-        table.tbl-dec {
-            border: none;
-        }
-        table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
-        table {
-            min-width: 1220px;
-            width: 1220px;
-            text-indent: 0;
-            border-color: #bfbfbf;
-            max-width: 1220px;
-            margin: 7px 12px auto;
-            border-spacing: 0;
-        }
-        tbody{
-            margin-bottom: 130px;
-        }
-        .header {
-            background: #1d83bc;
-            color: #ffffff;
-            font-size: 16px;
-            text-align: center;
-            padding: 8px 10px;
-            width: 100%;
-            height: 57px;
-            max-height: 57px;
-        }
-        .header .logo {
-            float: left;
-            background-color: white;
-            border-radius: 5px;
-            padding: 5px 10px 5px 0px;
-            height: 50px;
-            max-height: 50px;
-        }
-        .header .logo img {
-            max-height: 50px;
-            height: 50px;
-        }
-        .header h3 {
-            float: right;
-            text-align: right;
-            padding-right: 18px;
-        }
-        tbody > tr > td {
-            border: 1px solid #bfbfbf;
-        }
-        thead > tr > th {
-            border: 1px solid #bfbfbf;
-        }
-        td > p, th > p {
-            padding: 4px;
-            font-size: 14px;
-            text-align: center;
-            font-weight: normal;
-        }
-        .text-left {
-            text-align: left;
-        }
-        .text-xs {
-            font-size: 13px;
-        }
-        .text-sm {
-            font-size: 14px;
-        }
-        .text-xl {
-            font-size: 16px;
-        }
-        .blue-box {
-            background: #ddfdfc;
-        }
-        .bg-light-blue {
-            border: 1px solid #bfbfbf;
-            background: #EFF6FF;
-            padding: 8px;
-            color: #252525;
-        }
-        .text-black{color: #000000;}
-        .provider {
-            border: 1px solid #bfbfbf;
-            font-size: 15px;
-            line-height: 28px;
-            font-weight: 400;
-            color: #4ea4a8;
-            vertical-align: middle;
-            max-height: 50px;
-            height: 50px;
-        }
-        .spacer {
-            padding: 3px;
-        }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;}
-        .quote-info {
-            text-align: right;
-            vertical-align: bottom;
-            margin-top: -1px;
-            background: #EFF6FF;
-            font-size: 14px;
-            text-align: left;
-            padding: 8px;
-            max-width: 100%;
-            font-weight: normal;
-        }
-        .info h5 {
-            background: #1d83bc;
-            color: #ffffff;
-            padding: 3px;
-            font-weight: normal;
-            margin: 0 0 10px 0;
-        }
-        .info p {
-            font-size: 12px;
-        }
-        .btn-all-quotes {
-            background-color: #1d83bc;
-            color: #ffffff;
-            padding: 8px 25px;
-            margin-top: 50px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 15px;
-            font-weight: bold;
-            border-radius: 5px;
-            margin-bottom: 0px;
-        }
-        .btn-buy
-        {
-            background-color: #FE7333;
-            color: #ffffff;
-            padding: 12px 15px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 14px;
-            font-weight: bold;
-            border-radius: 5px;
-        }
-        .btn-buy:hover{
-            background-color: #d7fbd0;
-        }
-        .text-heading {
-            color: #ffffff;
-            background-color: #1d83bc;
-        }
-        .heading-desc {
-            font-size: 12px;
-        }
-        .provider-logo {
-            width: 100px;
-        }
-        .no-border {border: none;}
-        footer {
-            position: fixed;
-            bottom: 0px;
-            left: 0px;
-            right: 0px;
-            padding: 0px;
-            margin: 80px 0 0 0;
-            background-color: #1d83bc;
-            color: black;
-            text-align: center;
-            position: fixed;
-            bottom: 0px;
-            height: 145px;
-            z-index: 1500;
+            margin-top: 260px;
         }
 
-        table.tbl-footer {
-            padding: 18px 12px;
-            margin: 0;
-            width: 100%;
-            border: none;
+        .card {
+            background-color: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            width: 95%;
+            text-align: center;
         }
-        th.provider-name {
-            padding: 0;
-            margin: 0;
+
+        .text-center {
+            text-align: center;
         }
-        table.tbl-footer tr td, table.tbl-footer tr td a {
-            color: #ffffff;
-            border: none;
+
+        .label {
+            display: inline-block;
+            width: auto; /* Adjust the width as needed */
+        }
+
+        .value {
+            text-decoration: underline;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .ml-2 {
+            margin-left: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: left;
+        }
+
+        .custom-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -10px; /* Negative margin to counteract padding on columns */
+        }
+
+        .custom-md-3,
+        .custom-md-4,
+        .custom-md-4,
+        .custom-md-6,
+        .custom-md-8 {
+            box-sizing: border-box;
+            padding: 10px; /* Padding for gutters */
+        }
+
+        .custom-md-3 {
+            flex: 0 0 25%; /* 3 columns */
+        }
+
+        .custom-md-4 {
+            flex: 0 0 33.33%; /* 4 columns */
+        }
+
+        .custom-md-6 {
+            flex: 0 0 50%; /* 2 columns */
+        }
+
+        .custom-md-8 {
+            flex: 0 0 66.66%; /* 2 columns */
+        }
+
+        .custom-row > div > div {
+            border: solid rgb(230, 164, 41) 1px;
+            border-radius: 6px;
+            padding-left: 2px;
+        }
+
+        .font-14 {
             font-size: 14px;
         }
-        .text-left {text-align: left;}
-        .text-right {text-align: right;}
-        .full-page-image {
-            width: 100%;
-            z-index: 999;
-        }
-        .text-center {text-align: center;}
-        .text-white { color: #ffffff}
-        .text-underline{text-decoration:underline }
-
     </style>
 </head>
 <body>
-    <h1>Mirza Haseeb Baig</h1>
-    <table>
-        <tbody>
-            <tr>
-                <td>{{ $data['title'] }}</td>
-                <td>{{ $data['quoteType'] }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="card">
+        <h1>KYC Individual</h1>
+        <div class="container">
+            <div class="custom-row">
+                <div class="custom-md-3">
+                    <div>
+                        <span class="label">Customer ID:</span>
+                        <span class="value">{{ $data['customer_id'] }}</span>
+                    </div>
+                </div>
+
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">First Name:</span>
+                        <span class="value">{{ $data['first_name'] }}</span>
+                    </div>
+                </div>
+
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Last Name:</span>
+                        <span class="value">{{ $data['last_name'] }}</span>
+                    </div>
+                </div>
+
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Date of birth:</span>
+                        <span class="value">{{ dateFormat($data['dob']) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-row">
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Nationality:</span>
+                        <span class="value">{{ $data['nationality_text'] }}</span>
+                    </div>
+                </div>
+
+                <div class="custom-md-4">
+                    <div class="div">
+                        <span class="label">Country of residence:</span>
+                        <span class="value">{{ $data['country_name'] }}</span>
+                    </div>
+                </div>
+
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Place of birth:</span>
+                        <span class="value">{{ $data['birth_place'] }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-row">
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Residence status:</span>
+                        <span class="value">{{ $data['resident_status'] }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-8">
+                    <div class="div">
+                        <span class="label">Residential address:</span>
+                        <span class="value font-14">{{ $data['residential_address'] }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-row">
+                <div class="custom-md-4">
+                    <div class="div">
+                        <span class="label">Mobile number:</span>
+                        <span class="value">{{ $data['mobile_number'] }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-4">
+                    <div class="div">
+                        <span class="label">Email:</span>
+                        <span class="value font-14">{{ $data['email'] }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Customer tenure:</span>
+                        <span class="value">{{ $data['customer_tenure'] }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-row">
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">ID type:</span>
+                        <span class="value">{{ $data['id_type'] }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-4">
+                    <div class="div">
+                        <span class="label">ID number:</span>
+                        <span class="value">{{ $data['id_number'] }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-4">
+                    <div class="div">
+                        <span class="label">ID issue date:</span>
+                        <span class="value">{{ dateFormat($data['id_issue_date']) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-row">
+                <div class="custom-md-4">
+                    <div class="div">
+                        <span class="label">ID expiry date:</span>
+                        <span class="value">{{ dateFormat($data['id_expiry_date']) }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Mode of contact:</span>
+                        <span class="value">{{ $data['mode_of_contact'] }}</span>
+                    </div>
+                </div>
+                <div class="custom-md-3">
+                    <div class="div">
+                        <span class="label">Mode of delivery:</span>
+                        <span class="value">{{ $data['mode_of_delivery'] }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="text-center">Source of Income</h2>
+
+            <div class="custom-row">
+                <div class="custom-md-4">
+                    <span class="label">Employed:</span>
+                    <input type="radio" class="value" @checked($data['income_source'] == 'employed') />
+                    <br/><br/>
+                    <span class="label">Business owner / Partner:</span>
+                    <input type="radio" class="value" @checked($data['income_source'] == 'business') />
+                </div>
+                <div class="custom-md-6">
+                    @if($data['income_source'] == 'employed')
+                        <div>
+                            <span class="label">Employer/Company name:</span>
+                            <span class="value">{{ $data['company_name'] }}</span>
+                        </div>
+                        <br/>
+                        <div>
+                            <span class="label">Professional Job title:</span>
+                            <span class="value">{{ $data['professional_title'] }}</span>
+                        </div>
+                        <br/>
+                        <div>
+                            <span class="label">Employment sector:</span>
+                            <span class="value">{{ $data['employment_sector'] }}</span>
+                        </div>
+                    @elseif($data['income_source'] == 'business')
+                        <div>
+                            <span class="label">Company name:</span>
+                            <span class="value">{{ $data['company_name'] }}</span>
+                        </div>
+                        <br/>
+                        <div>
+                            <span class="label">Trade License#:</span>
+                            <span class="value">{{ $data['trade_license'] }}</span>
+                        </div>
+                        <br/>
+                        <div>
+                            <span class="label">Position in company:</span>
+                            <span class="value">{{ $data['company_position'] }}</span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <h2 class="text-center">For compliance use only</h2>
+
+            <div class="custom-row">
+                <div class="custom-md-6">
+                    <strong class="label">Is the customer a PEP?</strong>
+                </div>
+                <div class="custom-md-4">
+                    <input type="radio" @checked($data['pep'] == 'yes')/>
+                    <span>YES</span>
+                    <input type="radio" class="ml-2" @checked($data['pep'] == 'no')/>
+                    <span>No</span>
+                </div>
+            </div>
+
+            <div class="custom-row">
+                <div class="custom-md-6">
+                    <strong class="label"
+                    >Is the customer or business subjected to financial sanctions / or
+                        connected with prescribed terrorist organizations?</strong
+                    >
+                </div>
+                <div class="custom-md-4">
+                    <input type="radio" @checked($data['financial_sanctions'] == 'yes')/>
+                    <span>YES</span>
+                    <input type="radio" class="ml-2" @checked($data['financial_sanctions'] == 'no')/>
+                    <span>No</span>
+                </div>
+            </div>
+
+            <div class="custom-row">
+                <div class="custom-md-6">
+                    <strong class="label">Does the customer have dual nationality?</strong>
+                </div>
+                <div class="custom-md-4">
+                    <input type="radio" @checked($data['dual_nationality'] == 'yes')/>
+                    <span>YES</span>
+                    <input type="radio" class="ml-2" @checked($data['dual_nationality'] == 'no')/>
+                    <span>No</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

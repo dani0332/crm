@@ -10,6 +10,7 @@ use App\Http\Requests\KycDocRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
@@ -182,16 +183,14 @@ class AjaxController extends Controller
 
     }
 
-    public function uploadKycDocument(Request $request)
+    public function uploadKycDocument(KycDocRequest $request)
     {
         try {
-            $data = [
-                'title' => 'KYC Document',
-                'quoteType' => 'Health',
-            ];
+            $data = $request->validated();
+            $data['nationality_text'] = Nationality::where('id', $data['nationality_id'])->value('text');
+            $data['country_name'] = Nationality::where('id', $data['country_of_residence'])->value('country_name');
+            $data['birth_place'] = Nationality::where('id', $data['place_of_birth'])->value('country_name');
 
-            /*$pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-                ->loadView('pdf.kyc_document', compact('data'));*/
             $pdf = PDF::loadView('pdf.kyc_document', compact('data'));
             $pdfFile = $pdf->output();
 
@@ -199,23 +198,9 @@ class AjaxController extends Controller
             \Storage::put($filePath, $pdfFile);
 
             return response()->json(['success' => true]);
-
-            return response($pdfFile)->header('Content-Type', 'application/pdf');
-
-            // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-            $pdfName = 'testingmirza.pdf';
-            // $pdf->download($pdfName);
-            return response()->json(['data' => $pdf->stream(), 'name' => 'Salama_Certificate']);
-
-            return ['pdf' => $pdf, 'name' => $pdfName];
         } catch (\Exception $ex) {
             info($ex->getMessage());
         }
-
-        /*if (isset($response['error'])) {
-            info($response['error']);
-            return redirect()->back()->with('message', $response['error']);
-        }*/
         return response()->json(['success' => true]);
     }
 }

@@ -844,7 +844,7 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
-            $countries = Nationality::pluck('country_name');
+            $countries = Nationality::all();
 
             $amlQuoteStatus = '';
 

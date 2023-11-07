@@ -345,9 +345,9 @@ function getUniqueCode($limit)
 {
     return strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $limit));
 }
-function get_dob_date_format()
+function dateFormat($date): string
 {
-    return 'Y-m-d';
+    return date(env('DATE_DISPLAY_FORMAT'), strtotime($date));
 }
 
 /**

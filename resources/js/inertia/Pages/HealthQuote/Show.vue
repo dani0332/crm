@@ -197,8 +197,8 @@ const nationalityOptions = computed(() => {
 
 const countryList = computed(() => {
   return page.props.countryList.map(nat => ({
-    value: nat,
-    label: nat,
+    value: nat.id,
+    label: nat.country_name,
   }))
 });
 
@@ -1499,8 +1499,8 @@ const onKycSubmit = () => {
                 v-model="kycForm.resident_status"
                 label="Resident Status"
                 :options="[
-                  { value: 'uae', label: 'UAE resident' },
-                  { value: 'non_uae', label: 'Non UAE resident' },
+                  { value: 'UAE resident', label: 'UAE resident' },
+                  { value: 'Non UAE resident', label: 'Non UAE resident' },
                 ]"
                 placeholder="Resident Status"
                 :rules="[isRequired]"
@@ -1535,7 +1535,6 @@ const onKycSubmit = () => {
                 v-model="kycForm.customer_tenure"
                 label="Customer tenure"
                 placeholder="Customer tenure"
-                type="number"
                 :rules="[isRequired]"
             />
           </div>
@@ -1632,10 +1631,10 @@ const onKycSubmit = () => {
                   v-model="kycForm.employment_sector"
                   label="Employment sector"
                   :options="[
-                    { value: 'government', label: 'Government Sector' },
-                    { value: 'semi_government', label: 'Semi Government Sector' },
-                    { value: 'private', label: 'Private Sector' },
-                    { value: 'freezone_sector', label: 'Freezone sector' },
+                    { value: 'Government Sector', label: 'Government Sector' },
+                    { value: 'Semi Government Sector', label: 'Semi Government Sector' },
+                    { value: 'Private Sector', label: 'Private Sector' },
+                    { value: 'Freezone sector', label: 'Freezone sector' },
                   ]"
                   placeholder="Employment sector"
                   :rules="[rules.isRequired]"
@@ -1670,10 +1669,10 @@ const onKycSubmit = () => {
                   v-model="kycForm.company_position"
                   label="Position in Company"
                   :options="[
-                    { value: 'owner', label: 'Owner' },
-                    { value: 'partner', label: 'Partner' },
-                    { value: 'shareholder', label: 'Shareholder' },
-                    { value: 'manager', label: 'Manager' },
+                    { value: 'Owner', label: 'Owner' },
+                    { value: 'Partner', label: 'Partner' },
+                    { value: 'Shareholder', label: 'Shareholder' },
+                    { value: 'Manager', label: 'Manager' },
                   ]"
                   placeholder="Position in Company"
                   :rules="[rules.isRequired]"
@@ -1692,14 +1691,14 @@ const onKycSubmit = () => {
             <div class="grid md:grid-cols-2">
               <x-radio
                   v-model="kycForm.pep"
-                  value="yes"
+                  value="Yes"
                   label="Yes"
                   :rules="[isRequired]"
                   :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
               />
               <x-radio
                   v-model="kycForm.pep"
-                  value="no"
+                  value="No"
                   label="No"
                   :rules="[isRequired]"
                   :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
@@ -1714,14 +1713,14 @@ const onKycSubmit = () => {
             <div class="grid md:grid-cols-2 mt-3">
               <x-radio
                   v-model="kycForm.financial_sanctions"
-                  value="yes"
+                  value="Yes"
                   label="Yes"
                   :rules="[isRequired]"
                   :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
               />
               <x-radio
                   v-model="kycForm.financial_sanctions"
-                  value="no"
+                  value="No"
                   label="No"
                   :rules="[isRequired]"
                   :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
@@ -1736,14 +1735,14 @@ const onKycSubmit = () => {
             <div class="grid md:grid-cols-2">
               <x-radio
                   v-model="kycForm.dual_nationality"
-                  value="yes"
+                  value="Yes"
                   label="Yes"
                   :rules="[isRequired]"
                   :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
               />
               <x-radio
                   v-model="kycForm.dual_nationality"
-                  value="no"
+                  value="No"
                   label="No"
                   :rules="[isRequired]"
                   :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
