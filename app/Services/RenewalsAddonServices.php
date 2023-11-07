@@ -25,9 +25,13 @@ class RenewalsAddonServices
         return CarMake::where('text', '=', $text)->get()->first();
     }
 
-    public function getCarModel($text)
+    public function getCarModel($text, $carMake=null)
     {
-        return CarModel::where('text', '=', $text)->get()->first();
+        $query = CarModel::where('text', '=', $text);
+        if($carMake != null){
+            $query= $query->where('car_make_code', $carMake->code);
+        }
+        return $query->get()->first();
     }
 
     public function getCarTypeOfInsurance($text)
