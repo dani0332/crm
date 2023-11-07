@@ -227,6 +227,20 @@ const can = permission => useCan(permission);
                 <td>No</td>
                 <td>20</td>
               </tr>
+              <tr>
+                <td>16</td>
+                <td>Customer Mobile#</td>
+                <td>Customer Mobile Number</td>
+                <td>No</td>
+                <td>20</td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td>Customer Email#</td>
+                <td>Customer Email address</td>
+                <td>No</td>
+                <td>100</td>
+              </tr>
             </tbody>
           </table>
         </div>

@@ -1868,22 +1868,24 @@ class RenewalsUploadService
             $currently_located_in_id = $this->getCurrentlyLocatedIdByCode($data['currently_located_in']);;
 
             $quoteData = [
-                'destination' => $data['destination'],
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
+                'destination' => trim($data['destination']),
+                'first_name' => trim($data['first_name']),
+                'last_name' => trim($data['last_name']),
                 'source' => TravelQuoteEnum::REVIVAL,
                 'customer_id' => $customer->id ?? null,
                 'payment_status_id' => $payment_status_id,
                 'quote_status_id' => $transApprovedId,
-                'code' => $data['code'],
+                'code' => trim($data['code']),
                 'uuid' => $quoteUuid,
-                'policy_number' => $data['policy_number'],
+                'policy_number' => trim($data['policy_number']),
                 'advisor_id' => $advisorId,
-                'premium' => $data['premium'],
-                'is_ecommerce' => $data['is_ecommerce'] == GenericRequestEnum::Yes ? 1 : 0,
-                'renewal_batch' => $data['renewal_batch'],
+                'premium' => trim($data['premium']),
+                'is_ecommerce' => trim($data['is_ecommerce']) == GenericRequestEnum::Yes ? 1 : 0,
+                'renewal_batch' => trim($data['renewal_batch']),
                 'currently_located_in_id' => $currently_located_in_id,
-                'renewal_expiry_date' => Carbon::parse($data['renewal_expiry_date'])->format('Y-m-d'),
+                'renewal_expiry_date' => Carbon::parse(trim($data['renewal_expiry_date']))->format('Y-m-d'),
+                'email' => trim($data['customer_email']),
+                'mobile_no' => trim($data['customer_mobile']),
             ];
 
             $quote = TravelQuote::create($quoteData);
