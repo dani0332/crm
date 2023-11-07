@@ -58,7 +58,7 @@ class InsuranceProviderRepository extends BaseRepository
         $commercialVehicleCount = DB::table('car_make')
             ->join('car_model', 'car_make.code', '=', 'car_model.car_make_code')
             ->where('car_make.id', $record->car_make_id ?? 0)
-            ->where('car_model.id',$record->car_model_id ?? 0)
+            ->where('car_model.id', $record->car_model_id ?? 0)
             ->where('car_make.is_commercial', 1)
             ->where('car_model.is_commercial', 1)
             ->count();
