@@ -846,7 +846,16 @@ class CRUDController extends Controller
 
             $countries = Nationality::pluck('country_name');
 
+            $amlQuoteStatus = '';
+
+            if ($record->quote_status_id == QuoteStatusEnum::AMLScreeningCleared) {
+                $amlQuoteStatus = 'no';
+            } elseif($record->quote_status_id == QuoteStatusEnum::AMLScreeningFailed) {
+                $amlQuoteStatus = 'yes';
+            }
+
             return inertia('HealthQuote/Show', [
+                'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
