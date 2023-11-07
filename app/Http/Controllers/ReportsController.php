@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\User;
 use App\Services\AdvisorConversionReportService;
@@ -157,6 +158,19 @@ class ReportsController extends Controller
             'filterOptions' => $renewalBatchReportService->getFilterOptions(),
             'defaultFilters' => $renewalBatchReportService->getDefaultFilters(),
             'renewalBatchesList' => $renewalBatches,
+        ]);
+    }
+
+    public function renderSaleManagementReport(Request $request)
+    {
+        $reportCategory = $request->reportCategory;
+
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+
+        return inertia('ManagementReport/index', [
+            'reportData' => $reportInstance->getReportData($request),
+            'filterOptions' => $reportInstance->getFilterOptions(),
+            'defaultFilters' => $reportInstance->getDefaultFilters(),
         ]);
     }
 }
