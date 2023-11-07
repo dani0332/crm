@@ -55,7 +55,7 @@ class CammyService
                         'provider' => $plan->providerName,
                         'premium' => '',
                         'features' => $features->toArray(),
-                        'logo' => $plan->logo,
+                        'logo' => $plan->logo ?? '',
                         'planLink' => $plan->planLink ?? '',
                     ]);
                 }
