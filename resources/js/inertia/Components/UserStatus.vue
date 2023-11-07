@@ -18,7 +18,6 @@ const statusText = id => {
 
 const userStatus = useStorage('refresh-user-counts', 0);
 
-
 const options = {
   cluster: 'ap1',
   forceTLS: false,
@@ -32,23 +31,23 @@ const channel = pusher.subscribe(
 const listen = () => {
   channel.bind('user.status.changed', function (e) {
     currentStatus.value = e.status;
-    if(e.status == 1) {
-        notification.success({
-            title: e.userName + e.message,
-            position: 'top',
-        });
+    if (e.status == 1) {
+      notification.success({
+        title: e.userName + e.message,
+        position: 'top',
+      });
     }
-    if(e.status == 2) {
-        notification.info({
-            title: e.userName + e.message,
-            position: 'top',
-        });
+    if (e.status == 2) {
+      notification.info({
+        title: e.userName + e.message,
+        position: 'top',
+      });
     }
-    if(e.status == 3) {
-        notification.error({
-            title: e.userName + e.message,
-            position: 'top',
-        });
+    if (e.status == 3) {
+      notification.error({
+        title: e.userName + e.message,
+        position: 'top',
+      });
     }
     userStatus.value = e.status;
   });
@@ -66,7 +65,7 @@ onUnmounted(() => {
 
 <template>
   <div>
-   <!--  <x-badge
+    <!--  <x-badge
       :color="
         {
           1: 'success',
