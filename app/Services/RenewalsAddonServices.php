@@ -25,12 +25,13 @@ class RenewalsAddonServices
         return CarMake::where('text', '=', $text)->get()->first();
     }
 
-    public function getCarModel($text, $carMake=null)
+    public function getCarModel($text, $carMake = null)
     {
         $query = CarModel::where('text', '=', $text);
-        if($carMake != null){
-            $query= $query->where('car_make_code', $carMake->code);
+        if ($carMake != null) {
+            $query = $query->where('car_make_code', $carMake->code);
         }
+
         return $query->get()->first();
     }
 

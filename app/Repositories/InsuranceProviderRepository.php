@@ -65,6 +65,7 @@ class InsuranceProviderRepository extends BaseRepository
         if ($data > 0) {
             return true;
         }
+
         return false;
     }
 }
