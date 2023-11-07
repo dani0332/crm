@@ -30,7 +30,7 @@ class VehicleDepreciationController extends Controller
      */
     public function index(Request $request)
     {
-    
+
         $data = VehicleDepreciation::select('vehicle_depreciation.*', 'ip.text as ip_text')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
             ->orderBy('created_at', 'desc')

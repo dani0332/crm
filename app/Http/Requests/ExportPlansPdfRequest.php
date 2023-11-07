@@ -42,6 +42,7 @@ class ExportPlansPdfRequest extends FormRequest
             'plan_ids' => $quoteType == quoteTypeCode::Health ? 'required|array|min:1|max:5' : 'required|array|min:3|max:5',
             'addons' => 'nullable|array',
         ];
+
         return $rules;
     }
 

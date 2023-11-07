@@ -589,7 +589,7 @@ class RenewalsUploadService
     public function buildCustomerData($data)
     {
         $data['customer_name'] = trim($data['customer_name']);
-        
+
         //default values
         $customerData = [
             'first_name' => $data['customer_name'],
