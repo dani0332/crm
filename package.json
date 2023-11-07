@@ -6,7 +6,6 @@
         "prod": "yarn && doppler run -- vite build"
     },
     "devDependencies": {
-        "@tailwindcss/forms": "^0.5.6",
         "@vitejs/plugin-vue": "^4.4.0",
         "alpinejs": "^3.10.5",
         "autoprefixer": "^10.4.16",
@@ -15,7 +14,7 @@
         "lodash": "^4.17.21",
         "postcss": "^8.4.30",
         "prettier": "^3.0.3",
-        "tailwindcss": "^3.3.3",
+        "tailwindcss": "^3.3.5",
         "unplugin-auto-import": "^0.16.6",
         "unplugin-vue-components": "^0.25.2",
         "use-vue3-easy-data-table": "^0.1.4",
@@ -23,8 +22,8 @@
     },
     "dependencies": {
         "@headlessui/vue": "^1.7.16",
-        "@indielayer/ui": "^1.0.9",
-        "@inertiajs/vue3": "^1.0.12",
+        "@indielayer/ui": "^1.1.0",
+        "@inertiajs/vue3": "^1.0.14",
         "@vuepic/vue-datepicker": "^7.2.0",
         "@vueuse/core": "^10.5.0",
         "cypress-file-upload": "^5.0.8",
