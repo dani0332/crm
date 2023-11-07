@@ -68,7 +68,7 @@ const planForm = useForm({
   is_create: 0,
   addons: props.plan.addons,
   insurerTrim: props.plan.insurerTrimId || null,
-  insurer_quote_no: props.plan.insurerQuoteNo,
+  insurer_quote_no: props.plan.insurerQuoteNo || '',
   is_manual_update: props.plan.isManualUpdate,
   ancillary_excess: props.plan.ancillaryExcess,
   current_url: usePage().url,
