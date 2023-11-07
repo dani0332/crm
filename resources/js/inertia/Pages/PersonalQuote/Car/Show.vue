@@ -1177,7 +1177,6 @@ const emailsHeaders = ref([
   { text: 'Email', value: 'customer_email' },
   { text: 'Subject', value: 'subject' },
   { text: 'Schedule Date', value: 'schedule_date' },
-  { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
@@ -1659,13 +1658,14 @@ const loadEmailEvents = email => {
       <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
-            <x-select
+            <ComboBox
               v-model="leadStatusForm.leadStatus"
+              :single="true"
               label="Status"
-              :options="leadStatusOptions"
-              :disabled="leadStatusDisabled"
-              placeholder="Lead Status"
               class="w-full"
+              placeholder="Please select Lead Status"
+              :disabled="leadStatusDisabled"
+              :options="leadStatusOptions"
             />
             <x-field
               label="TransApp Code"
@@ -2431,7 +2431,7 @@ const loadEmailEvents = email => {
               :loading="changeInsurerForm.processing"
               @click.prevent="onConfirmChangeInsurer"
             >
-              Delete
+              Yes
             </x-button>
           </div>
         </template>
