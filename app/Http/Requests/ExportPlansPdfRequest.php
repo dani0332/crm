@@ -38,7 +38,7 @@ class ExportPlansPdfRequest extends FormRequest
     {
         return [
             'quote_uuid' => ['required', new ValidateQuoteObject],
-            'plan_ids' =>   (request()->quoteType = 'travel')?'required|array|min:2|max:5':'required|array|min:3|max:5',
+            'plan_ids' =>   (request()->quoteType = 'travel')?'required|array|min:1|max:5':'required|array|min:3|max:5',
             'addons' => 'nullable|array',
         ];
     }
@@ -62,7 +62,7 @@ class ExportPlansPdfRequest extends FormRequest
     {
         return [
             'plan_ids.max' => 'Maximum 5 plans are allowed to select',
-            'plan_ids.min' => (request()->quoteType = 'travel')?'Minimum 2 plans should be selected':'Minimum 3 plans should be selected',
+            'plan_ids.min' => (request()->quoteType = 'travel')?'Minimum 1 plans should be selected':'Minimum 3 plans should be selected',
         ];
     }
 }
