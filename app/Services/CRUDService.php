@@ -603,4 +603,16 @@ class CRUDService extends BaseService
 
         return $model::where('id', $quoteId)->withCount('documents')->value('documents_count');
     }
+
+    /*
+     * This function is just for checking AML Status.
+     */
+    public function checkAmlQuoteStatus($statusId)
+    {
+        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
+            return 'no';
+        } elseif($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+            return 'yes';
+        }
+    }
 }

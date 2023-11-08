@@ -482,9 +482,12 @@ class CRUDController extends Controller
             //Fix for trailing slash when loading plans through jQuery
             return redirect(request()->url());
         }
+        $countries = Nationality::all();
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
@@ -672,6 +675,9 @@ class CRUDController extends Controller
             $nationalities = NationalityRepository::withActive()->get();
 
             return inertia('PersonalQuote/Car/Show', compact([
+                'amlQuoteStatus',
+                'countries',
+                'kycDocument',
                 'record', 'quote', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
@@ -876,18 +882,6 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
-
-            $countries = Nationality::all();
-
-            $amlQuoteStatus = '';
-
-            if ($record->quote_status_id == QuoteStatusEnum::AMLScreeningCleared) {
-                $amlQuoteStatus = 'no';
-            } elseif($record->quote_status_id == QuoteStatusEnum::AMLScreeningFailed) {
-                $amlQuoteStatus = 'yes';
-            }
-
-            $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
 
             return inertia('HealthQuote/Show', [
                 'amlQuoteStatus' => $amlQuoteStatus,
