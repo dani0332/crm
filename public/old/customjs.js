@@ -1162,7 +1162,7 @@ $(document).ready(function () {
       $('#amlCreatedStartDate').css('border-color', 'red');
       $('#amlCreatedEndDate').css('border-color', 'red');
       return false;
-    } else if (amlCreatedStartDate != '' && amlCreatedEndDate != '') {
+    } else if (amlCreatedStartDate != '' && amlCreatedEndDate != '' && (searchType != "cdbId" && searchType != "customerEmail")) {
       var amlCreatedStartDateSet = new Date(amlCreatedStartDate);
       var amlCreatedEndDateSet = new Date(amlCreatedEndDate);
 
