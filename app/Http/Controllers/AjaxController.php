@@ -2,30 +2,37 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\DocumentTypeCode;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Http\Requests\KycDocRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Services\HealthQuoteService;
+use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use PDF;
 
 class AjaxController extends Controller
 {
     use GenericQueriesAllLobs;
 
     protected $healthQuoteService;
+    protected $quoteDocumentService;
 
-    public function __construct(HealthQuoteService $healthQuoteService)
+    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService)
     {
         $this->healthQuoteService = $healthQuoteService;
+        $this->quoteDocumentService = $quoteDocumentService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -178,5 +185,31 @@ class AjaxController extends Controller
             return response()->json([]);
         }
 
+    }
+
+    public function uploadKycIndividualDocument($quoteType, KycDocRequest $request)
+    {
+        try {
+            $data = $request->validated();
+            $data['nationality_text'] = Nationality::where('id', $data['nationality_id'])->value('text');
+            $data['country_name'] = Nationality::where('id', $data['country_of_residence'])->value('country_name');
+            $data['birth_place'] = Nationality::where('id', $data['place_of_birth'])->value('country_name');
+            $data['document_type_code'] = DocumentTypeCode::KYCDOC;
+
+            $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
+            $pdfFile = $pdf->output();
+
+            $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+
+            if ($document) {
+                return response()->json(['success' => true]);
+            }
+        } catch (\Exception $ex) {
+            info($ex->getMessage());
+        }
+
+        return response()->json(['error' => false]);
     }
 }

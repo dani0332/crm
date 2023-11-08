@@ -9,6 +9,7 @@ use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
 use App\Enums\CustomerTypeEnum;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
@@ -80,6 +81,7 @@ use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 
@@ -875,7 +877,22 @@ class CRUDController extends Controller
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
+            $countries = Nationality::all();
+
+            $amlQuoteStatus = '';
+
+            if ($record->quote_status_id == QuoteStatusEnum::AMLScreeningCleared) {
+                $amlQuoteStatus = 'no';
+            } elseif($record->quote_status_id == QuoteStatusEnum::AMLScreeningFailed) {
+                $amlQuoteStatus = 'yes';
+            }
+
+            $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
+
             return inertia('HealthQuote/Show', [
+                'amlQuoteStatus' => $amlQuoteStatus,
+                'countryList' => $countries,
+                'kycDocumentCount' => $kycDocument,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
