@@ -112,8 +112,8 @@ class UpdateUserStatus extends Command
                 info('System pushed event notification');
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
+            info('----------- Activity Check Ended for User : '.$session->user->name.' -----------');
         }
-        info('----------- Activity Check Ended for User : '.$session->user->name.' -----------');
 
         return 0;
     }
