@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -25,9 +26,17 @@ use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 
 class CycleQuoteController extends Controller
 {
+    protected $crudService;
+
+    public function __construct(CRUDService $crudService)
+    {
+        $this->crudService = $crudService;
+    }
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -135,7 +144,14 @@ class CycleQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $countries = Nationality::all();
+        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Cycle, $quote->id);
+
         return inertia('CycleQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'kycDocumentCount' => $kycDocument,
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
             'activities' => $activities,
