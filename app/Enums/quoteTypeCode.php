@@ -46,4 +46,5 @@ class quoteTypeCode extends Enum
     const Cycle = 'Cycle';
     const Jetski = 'Jetski';
     const Aml = 'Aml';
+    const TRA = 'TRA';
 }
