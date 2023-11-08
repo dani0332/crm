@@ -565,12 +565,12 @@ class CRUDService extends BaseService
 
                 if ($maxAmount >= $request->amount) {
                     PaymentAction::create([
-                        'payment_code'=>$transaction->code,
+                        'payment_code' => $transaction->code,
                         'is_fulfilled' => 0,
                         'action_type' => 'REFUND',
                         'reason' => $request->reason,
                         'amount' => $request->amount,
-                        'created_by' => auth()->user()->email
+                        'created_by' => auth()->user()->email,
 
                     ]);
                     $data = [
