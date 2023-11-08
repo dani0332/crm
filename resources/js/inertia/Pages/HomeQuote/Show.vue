@@ -1,5 +1,6 @@
 <script setup>
 import MemberDetails from "../../Components/MemberDetails.vue";
+import KycIndividualModal from "../../Components/KycIndividualModal.vue";
 
 defineProps({
   quote: Object,
@@ -41,6 +42,7 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+  kycDocModal: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -433,6 +435,11 @@ const linkEntity = () => {
         console.log(err);
     });
 }
+
+const kycDocModal = val => {
+  modals.kycDocModal = val;
+};
+
 </script>
 
 <template>
@@ -620,11 +627,32 @@ const linkEntity = () => {
       </div>
     </div>
 
+    <x-modal size="xl" v-model="modals.kycDocModal" show-close backdrop>
+      <template #header>
+        KYC Individual Form
+      </template>
+      <KycIndividualModal
+          :roles="$page.props.rolesEnum"
+          :quote="page.props.quote"
+          :status="kycDocModal"
+          :country-list="page.props.countryList"
+          :aml-quote-status="page.props.amlQuoteStatus"
+          :nationalities="page.props.nationalities"
+          :modelType="page.props.modelType"
+      />
+    </x-modal>
+
       <div class="p-4 rounded shadow mb-6 bg-white">
-          <div>
-              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
-              <x-divider class="mb-4 mt-1" />
-          </div>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+          <x-button @click.prevent="kycDocModal(true)" size="sm" color="primary" v-if="!page.props.kycDocumentCount > 0">
+            KYC - Pending
+          </x-button>
+          <x-button size="sm" color="orange" v-else>
+            KYC - Complete
+          </x-button>
+        </div>
+          <x-divider class="mb-4 mt-1" />
           <x-form @submit="updateProfileDetails" :auto-focus="false">
               <div class="text-sm">
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
