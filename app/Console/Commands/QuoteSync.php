@@ -31,9 +31,9 @@ class ResetLeadAllocationCounts extends Command
         $entries = QuoteSync::where('is_synced', false)->get();
 
         foreach ($entries as $entry) {
-
+            info('Syncing QuoteSync entry: '.$entry->id);
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->first();
-
+            info('Syncing QuoteSync entry: '.$entry->id.' quote Id : '.$quote->uuid);
             if ($quote) {
                 DB::beginTransaction();
                 try {
@@ -71,9 +71,9 @@ class ResetLeadAllocationCounts extends Command
                 ];
 
                 $modelClassName = $quoteTypeModels[$entry->quote_type_id];
-                info('Syncing QuoteSync entry: '.$entry->id.' modelClassName: '.$modelClassName);
+
                 $sourceQuote = $modelClassName::where('uuid', $entry->quote_uuid)->first();
-                info('Syncing QuoteSync entry: '.$entry->id.' sourceQuote: '.$sourceQuote);
+
                 if ($sourceQuote) {
                     DB::beginTransaction();
                     try {
