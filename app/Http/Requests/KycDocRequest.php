@@ -22,6 +22,7 @@ class KycDocRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'quote_uuid' => 'required',
             'customer_id' => 'required',
             'first_name' => 'required',
             'last_name' => 'required',
