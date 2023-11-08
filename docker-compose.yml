@@ -25,4 +25,5 @@ volumes:
   dev01logs:
   dev02logs:
   uatlogs:
+  uat2logs:
   testlogs:

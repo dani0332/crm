@@ -575,6 +575,8 @@ class CRUDController extends Controller
 
         if ($this->genericModel->modelType == quoteTypeCode::Car) { // Car plans to display on detail view
             $quote = $record;
+            $isCommercialVehicles = false;
+            $carInsuranceProviders = [];
             $ecomCarInsuranceQuoteUrl = config('constants.ECOM_CAR_INSURANCE_QUOTE_URL');
             $carQuotePlanAddons = $this->carQuoteService->getCarQuotePlanAddons($id);
             $listQuotePlans = $this->carQuoteService->getPlans($id);
@@ -619,6 +621,12 @@ class CRUDController extends Controller
             $paymentEntityModel->load(['plan.insuranceProvider']);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CAR->id(), $record->id);
 
+            if (auth()->user()->hasAnyRole([RolesEnum::CarAdvisor, RolesEnum::CarManager])) {
+                if (InsuranceProviderRepository::isCommercialVehicles($record)) {
+                    $isCommercialVehicles = true;
+                    $carInsuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Car);
+                }
+            }
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
@@ -670,6 +678,7 @@ class CRUDController extends Controller
                 'paymentEntityModel', 'payments', 'paymentMethods', 'isQuoteDocumentEnabled', 'quoteDocuments', 'displaySendPolicyButton', 'customerAdditionalContacts', 'lostApproveReasons', 'lostRejectReasons', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'carMakeText', 'carModelText', 'advisor', 'tiers', 'daysAfterCapturedPayment', 'access', 'carPlanFeaturesCodeEnum', 'carPlanExclusionsCodeEnum', 'documentTypes', 'planURL', 'storageUrl', 'kyoEndPoint',
                 'carPlanTypeEnum', 'UBORelations', 'UBOsDetails', 'emirates', 'customerTypeEnum', 'memberRelations', 'membersDetails', 'industryType', 'nationalities',
+                'isCommercialVehicles', 'carInsuranceProviders'
             ]));
         }
 
