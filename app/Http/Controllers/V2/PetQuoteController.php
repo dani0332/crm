@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -25,9 +26,17 @@ use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 
 class PetQuoteController extends Controller
 {
+    protected $crudService;
+
+
+    public function __construct(CRUDService $crudService)
+    {
+        $this->crudService = $crudService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -113,7 +122,14 @@ class PetQuoteController extends Controller
             })->values();
         }
 
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $countries = Nationality::all();
+        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Pet, $quote->id);
+
         return inertia('PetQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'kycDocumentCount' => $kycDocument,
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
             'activities' => $activities,
