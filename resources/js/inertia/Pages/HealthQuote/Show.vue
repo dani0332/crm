@@ -1992,7 +1992,6 @@ onMounted(() => {
             select-all
             deselect-all
           />
-
           <div>
             <x-tooltip position="right" class="arrow-l">
               <label
