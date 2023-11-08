@@ -86,6 +86,10 @@ const onKycSubmit = () => {
           position: 'top',
         });
       }
+    }).catch(error => {
+      if (error.response.status === 422) {
+        console.error(error.response.data.errors);
+      }
     });
   }
 };
@@ -115,6 +119,7 @@ const nationalityOptions = computed(() => {
             placeholder="Customer ID"
             class="w-full disabled"
             :disabled="true"
+            :rules="[isRequired]"
         />
 
         <x-input
@@ -123,6 +128,7 @@ const nationalityOptions = computed(() => {
             placeholder="First Name"
             class="w-full"
             :disabled="true"
+            :rules="[isRequired]"
         />
 
         <x-input
@@ -131,21 +137,24 @@ const nationalityOptions = computed(() => {
             placeholder="Last Name"
             class="w-full"
             :disabled="true"
+            :rules="[isRequired]"
         />
 
         <DatePicker
             v-model="quote.dob"
             label="DOB"
             :disabled="true"
+            :rules="[isRequired]"
         />
 
-        <ComboBox
+        <x-select
             v-model="quote.nationality_id"
             label="Nationality"
             :options="nationalityOptions"
-            placeholder="Select Nationality"
+            placeholder="Nationality"
             :single="true"
             :disabled="true"
+            :rules="[isRequired]"
         />
 
         <ComboBox
@@ -154,6 +163,7 @@ const nationalityOptions = computed(() => {
             :options="countryList"
             placeholder="Country of residence"
             :single="true"
+            :rules="[isRequired]"
         />
 
         <ComboBox
@@ -162,6 +172,7 @@ const nationalityOptions = computed(() => {
             :options="countryList"
             placeholder="Place of birth"
             :single="true"
+            :rules="[isRequired]"
         />
 
         <x-select

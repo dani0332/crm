@@ -19,6 +19,7 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
+use App\Models\Nationality;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -179,7 +180,14 @@ class TravelController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $countries = Nationality::all();
+        $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
+
         return inertia('TravelQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'kycDocumentCount' => $kycDocument,
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
