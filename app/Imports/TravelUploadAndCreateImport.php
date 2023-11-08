@@ -48,6 +48,7 @@ class TravelUploadAndCreateImport implements OnEachRow, SkipsOnFailure, WithChun
         $row = $row->toArray();
 
         $quoteData = $this->mapQuoteData($row);
+
         return RenewalQuoteProcess::create([
             'renewals_upload_lead_id' => $this->renewalsUploadLead->id,
             'quote_type' => strtoupper(quoteTypeCode::TRA),

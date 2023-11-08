@@ -23,8 +23,8 @@ use App\Imports\TravelUploadAndCreateImport;
 use App\Imports\UploadAndCreateImport;
 use App\Imports\UploadAndUpdateImport;
 use App\Jobs\Renewals\CreateRenewalQuotesJob;
-use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
 use App\Jobs\Renewals\CreateRenewalsWorkflowJob;
+use App\Jobs\Renewals\CreateTravelRenewalQuotesJob;
 use App\Jobs\Renewals\FetchPlansForRenewalsQuoteJob;
 use App\Jobs\Renewals\ProcessRenewalsUploadCreate;
 use App\Jobs\Renewals\ProcessRenewalsUploadUpdate;
@@ -1388,7 +1388,7 @@ class RenewalsUploadService
                         info('CQF VALIDATION - Quote Found for Update - '.$lead->policy_number);
                     }
                 }
-                #If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
+                //If the request is for Travel Renewal Expired Process, it will skip the insurer conditions.
                 if ($lead->quote_type != quoteTypeCode::TRA) {
                     if (! $leadData->insurer) {
                         $leadValidationErrors->push('Insurance Provider is required');
@@ -1733,7 +1733,6 @@ class RenewalsUploadService
     //        info('updateRenewalQuoteEmailSent END emailSent->id: '.$emailSent->id);
     //    }
 
-
     /**
      * Travel renewals upload and create.
      *
@@ -1872,7 +1871,7 @@ class RenewalsUploadService
             $quoteUuid = $this->generateUUID($quoteType->id);
             $payment_status_id = $this->getPaymentStatusIdByCode($data['payment_status']);
             $customer = $this->getCustomer($data, $searchByName);
-            $currently_located_in_id = $this->getCurrentlyLocatedIdByCode($data['currently_located_in']);;
+            $currently_located_in_id = $this->getCurrentlyLocatedIdByCode($data['currently_located_in']);
 
             $quoteData = [
                 'destination' => trim($data['destination']),
@@ -1898,7 +1897,7 @@ class RenewalsUploadService
             $quote = TravelQuote::create($quoteData);
 
             //update advisor assign date/time
-            if ( ! empty($advisorId)) {
+            if (! empty($advisorId)) {
                 $this->updateAdvisorAssignedDateTime($quoteType->code, $quote->id, $renewalUploadLead->created_by_id, $advisorId);
             }
 
