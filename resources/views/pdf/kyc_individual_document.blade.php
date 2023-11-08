@@ -272,9 +272,9 @@
                     <strong class="label">Is the customer a PEP?</strong>
                 </div>
                 <div class="custom-md-4">
-                    <input type="radio" @checked($data['pep'] == 'yes')/>
+                    <input type="radio" @checked($data['pep'] == 'Yes')/>
                     <span>YES</span>
-                    <input type="radio" class="ml-2" @checked($data['pep'] == 'no')/>
+                    <input type="radio" class="ml-2" @checked($data['pep'] == 'No')/>
                     <span>No</span>
                 </div>
             </div>
@@ -287,9 +287,9 @@
                     >
                 </div>
                 <div class="custom-md-4">
-                    <input type="radio" @checked($data['financial_sanctions'] == 'yes')/>
+                    <input type="radio" @checked($data['financial_sanctions'] == 'Yes')/>
                     <span>YES</span>
-                    <input type="radio" class="ml-2" @checked($data['financial_sanctions'] == 'no')/>
+                    <input type="radio" class="ml-2" @checked($data['financial_sanctions'] == 'No')/>
                     <span>No</span>
                 </div>
             </div>
@@ -299,9 +299,9 @@
                     <strong class="label">Does the customer have dual nationality?</strong>
                 </div>
                 <div class="custom-md-4">
-                    <input type="radio" @checked($data['dual_nationality'] == 'yes')/>
+                    <input type="radio" @checked($data['dual_nationality'] == 'Yes')/>
                     <span>YES</span>
-                    <input type="radio" class="ml-2" @checked($data['dual_nationality'] == 'no')/>
+                    <input type="radio" class="ml-2" @checked($data['dual_nationality'] == 'No')/>
                     <span>No</span>
                 </div>
             </div>

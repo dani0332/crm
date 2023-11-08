@@ -2,7 +2,7 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import KycModal from "../../Components/KycModal.vue";
+import KycIndividualModal from "../../Components/KycIndividualModal.vue";
 
 defineProps({
   quote: Object,
@@ -12,8 +12,6 @@ defineProps({
   memberCategories: Array,
   salaryBands: Array,
   nationalities: Array,
-  countryList: Array,
-  amlQuoteStatus: String,
   emirates: Array,
   advisors: Array,
   listQuotePlans: Array,
@@ -194,13 +192,6 @@ const nationalityOptions = computed(() => {
     value: nat.id,
     label: nat.text,
   }));
-});
-
-const countryList = computed(() => {
-  return page.props.countryList.map(nat => ({
-    value: nat.id,
-    label: nat.country_name,
-  }))
 });
 
 const memberCategoriesOptions = computed(() => {
@@ -392,8 +383,8 @@ function onEditMember(data) {
   memberForm.update_lead_against_member = data.index === 1;
 }
 
-const addKycDoc = () => {
-  modals.kycDocModal = true;
+const kycDocModal = val => {
+  modals.kycDocModal = val;
 };
 
 const onAddMemberModal = () => {
@@ -1148,7 +1139,6 @@ onMounted(() => {
   isMounted.value = true;
 });
 
-
 </script>
 <template>
   <div>
@@ -1342,7 +1332,7 @@ onMounted(() => {
       <div class="mt-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-          <x-button @click.prevent="addKycDoc" size="sm" color="primary">
+          <x-button @click.prevent="kycDocModal(true)" size="sm" color="primary">
             KYC - Pending
           </x-button>
         </div>
@@ -1354,8 +1344,15 @@ onMounted(() => {
         <template #header>
           KYC Individual Form
         </template>
-
-        <kyc-modal :quote="page.props.quote" />
+        <KycIndividualModal
+            :roles="$page.props.rolesEnum"
+            :quote="page.props.quote"
+            :status="kycDocModal"
+            :country-list="page.props.countryList"
+            :aml-quote-status="page.props.amlQuoteStatus"
+            :nationalities="page.props.nationalities"
+            :modelType="quoteType"
+        />
       </x-modal>
 
       <div class="text-sm">

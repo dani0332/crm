@@ -187,7 +187,7 @@ class AjaxController extends Controller
 
     }
 
-    public function uploadKycDocument($quoteType, KycDocRequest $request)
+    public function uploadKycIndividualDocument($quoteType, KycDocRequest $request)
     {
         try {
             $data = $request->validated();
@@ -196,7 +196,7 @@ class AjaxController extends Controller
             $data['birth_place'] = Nationality::where('id', $data['place_of_birth'])->value('country_name');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
-            $pdf = PDF::loadView('pdf.kyc_document', compact('data'));
+            $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
             $pdfFile = $pdf->output();
 
             $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
@@ -206,11 +206,10 @@ class AjaxController extends Controller
             if ($document) {
                 return response()->json(['success' => true]);
             }
-
-            return response()->json(['error' => false]);
         } catch (\Exception $ex) {
             info($ex->getMessage());
         }
-        return response()->json(['success' => true]);
+
+        return response()->json(['error' => false]);
     }
 }

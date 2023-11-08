@@ -1,14 +1,37 @@
 <script setup>
 const page = usePage();
+const notification = useToast();
+const hasRole = role => useHasRole(role);
+const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const props = defineProps({
+  roles: Array,
   quote: Object,
-  kycDocModal: Boolean
+  status: Function,
+  countryList: Array,
+  amlQuoteStatus: String,
+  nationalities: Array,
+  modelType: String
 })
 
-const hasRole = role => useHasRole(role);
+const rules = {
+  isEmail: v =>
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+      'E-mail must be valid',
+  isRequired: v => !!v || 'This field is required',
+  allowEmpty: v => true || 'This field is required',
+  isPhone: v =>
+      /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
+      'Phone must be valid',
+};
 
 const kycForm = reactive({
+  quote_uuid: props.quote.uuid,
+  customer_id: props.quote.customer_id,
+  first_name: props.quote.first_name,
+  last_name: props.quote.last_name,
+  dob: props.quote.dob,
+  nationality_id: props.quote.nationality_id,
   country_of_residence: null,
   place_of_birth: null,
   resident_status: null,
@@ -33,7 +56,6 @@ const kycForm = reactive({
   dual_nationality: props.amlQuoteStatus,
 });
 
-
 const incomeSourceFields = reactive({
   employed: false,
   business: false,
@@ -49,55 +71,15 @@ function changeIncomeSource(val) {
   }
 }
 
-
-const emit = defineEmits(['update:modelValue', 'loaded']);
-// const notification = useToast();
-// const {isRequired} = useRules();
-const showModal = computed({
-  get: () => props.modelValue,
-  set: val => emit('update:modelValue', val),
-});
-
 const onKycSubmit = () => {
-  let data = {
-    quote_uuid: props.quote.uuid,
-    customer_id: props.quote.customer_id,
-    first_name: props.quote.first_name,
-    last_name: props.quote.last_name,
-    dob: props.quote.dob,
-    nationality_id: props.quote.nationality_id,
-    country_of_residence: kycForm.country_of_residence,
-    place_of_birth: kycForm.place_of_birth,
-    resident_status: kycForm.resident_status,
-    residential_address: kycForm.residential_address,
-    mobile_number: kycForm.mobile_number,
-    email: kycForm.email,
-    customer_tenure: kycForm.customer_tenure,
-    id_type: kycForm.id_type,
-    id_number: kycForm.id_number,
-    id_issue_date: kycForm.id_issue_date,
-    id_expiry_date: kycForm.id_expiry_date,
-    mode_of_contact: kycForm.mode_of_contact,
-    mode_of_delivery: kycForm.mode_of_delivery,
-    income_source: kycForm.income_source,
-    company_name: kycForm.company_name,
-    professional_title: kycForm.professional_title,
-    employment_sector: kycForm.employment_sector,
-    trade_license: kycForm.trade_license,
-    company_position: kycForm.company_position,
-    pep: kycForm.pep,
-    financial_sanctions: kycForm.financial_sanctions,
-    dual_nationality: kycForm.dual_nationality,
-  };
   if (confirm('Are you sure you want to create and save the document?')) {
-    axios.post('/health/upload-kycdoc', data).then(response => {
+    axios.post(`/${props.modelType}/upload-individual-kycdoc`, kycForm).then(response => {
       if (response.data.success) {
         notification.success({
           title: 'KYC Document uploaded.',
           position: 'top',
         });
       } else {
-        console.log(notification)
         notification.error({
           title: 'Document not uploaded.',
           position: 'top',
@@ -107,9 +89,19 @@ const onKycSubmit = () => {
   }
 };
 
-function closeModal() {
+const countryList = computed(() => {
+  return props.countryList.map(nat => ({
+    value: nat.id,
+    label: nat.country_name,
+  }))
+});
 
-}
+const nationalityOptions = computed(() => {
+  return props.nationalities.map(nat => ({
+    value: nat.id,
+    label: nat.text,
+  }));
+});
 
 </script>
 
@@ -370,14 +362,14 @@ function closeModal() {
               value="Yes"
               label="Yes"
               :rules="[isRequired]"
-              :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
+              :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
           <x-radio
               v-model="kycForm.pep"
               value="No"
               label="No"
               :rules="[isRequired]"
-              :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
+              :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
         </div>
       </div>
@@ -392,14 +384,14 @@ function closeModal() {
               value="Yes"
               label="Yes"
               :rules="[isRequired]"
-              :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
+              :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
           <x-radio
               v-model="kycForm.financial_sanctions"
               value="No"
               label="No"
               :rules="[isRequired]"
-              :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
+              :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
         </div>
       </div>
@@ -414,20 +406,20 @@ function closeModal() {
               value="Yes"
               label="Yes"
               :rules="[isRequired]"
-              :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
+              :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
           <x-radio
               v-model="kycForm.dual_nationality"
               value="No"
               label="No"
               :rules="[isRequired]"
-              :disabled="!hasRole($page.props.rolesEnum.COMPLIANCE)"
+              :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
         </div>
       </div>
 
       <div class="flex justify-end gap-3">
-        <x-button size="sm" @click.prevent="closeModal">
+        <x-button size="sm" @click.prevent="status(false)">
           Cancel
         </x-button>
 
