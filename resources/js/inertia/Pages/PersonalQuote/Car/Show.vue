@@ -1573,6 +1573,10 @@ const linkEntity = () => {
                         </div>
                         <div>{{ record.code }}</div>
 					</div>
+                    <div class="grid sm:grid-cols-2">
+                        <dt class="font-medium">CUSTOMER TYPE</dt>
+                        <dd>{{ quote.customer_type }}</dd>
+                    </div>
 					<div class="grid sm:grid-cols-2">
 						<dt class="font-medium">BATCH</dt>
 						<dd>{{ record.quote_batch_id_text }}</dd>

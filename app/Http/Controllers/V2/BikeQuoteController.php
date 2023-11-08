@@ -113,6 +113,12 @@ class BikeQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
+        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value){
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
+
         return inertia('BikeQuote/Show', [
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,

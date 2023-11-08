@@ -786,7 +786,7 @@ const linkEntity = () => {
                   </div>
 
                   <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">COMPANY TYPE</dt>
+                      <dt class="font-medium">INDUSTRY TYPE</dt>
                       <dd>
                           <x-select
                               v-model="customerProfileForm.industry_type_code"

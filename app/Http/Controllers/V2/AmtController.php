@@ -257,6 +257,11 @@ class AmtController extends Controller
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+        if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value){
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
 
         return inertia('GroupMedicalQuote/Show', [
             'quote' => $record,

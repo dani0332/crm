@@ -6,6 +6,7 @@ use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
@@ -305,6 +306,7 @@ class AMLController extends Controller
                 }
             }
 
+            session()->put('amlResponseCheck', []);
             $bridgerInsightService = new BridgerInsightService();
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
@@ -332,6 +334,13 @@ class AMLController extends Controller
                         CustomerTypeEnum::Individual)
                         ->delay(now()->addSeconds(5));
                 }
+
+                if(!in_array(true, session()->get('amlResponseCheck'))) {
+                    $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
+                    $updateQuote->save();
+                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                }
+                session()->forget('amlResponseCheck');
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
@@ -360,6 +369,13 @@ class AMLController extends Controller
                     BridgerAMLJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual)
                         ->delay(now()->addSeconds(5));
                 }
+
+                if(!in_array(true, session()->get('amlResponseCheck'))) {
+                    $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
+                    $updateQuote->save();
+                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                }
+                session()->forget('amlResponseCheck');
             }
 
             return redirect()->back();

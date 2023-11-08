@@ -159,14 +159,8 @@ class BridgerInsightService
                             KycLog::insert($kycLogDetails);
                             Log::info('Bridger Insight Service - KYC Log data inserted');
 
-                            if (! isset($getDecodeContents->Records)) {
-                                $quoteDetails = AMLService::getQuoteDetails($quoteTypeId, $quoteId);
-                                $quoteDetails->update(['quote_status_id' => QuoteStatusEnum::AMLScreeningCleared]);
-                                Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
-                            }
-
-                            Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                             AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
+                            Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                         }
                     }
                 }

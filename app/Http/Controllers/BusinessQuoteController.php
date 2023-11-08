@@ -165,6 +165,12 @@ class BusinessQuoteController extends Controller
             ];
         })->values();
 
+        if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value){
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $UBODetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id(), CustomerTypeEnum::Entity);

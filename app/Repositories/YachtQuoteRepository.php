@@ -82,6 +82,7 @@ class YachtQuoteRepository extends BaseRepository
             ->with([
                 'yachtQuote',
                 'advisor',
+                'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {

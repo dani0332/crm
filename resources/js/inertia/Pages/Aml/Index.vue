@@ -51,7 +51,6 @@ const filtersForm = useForm({
 function onReset() {
   router.visit('/kyc/aml', {
     method: 'get',
-    data: { page: 1 },
     preserveScroll: true,
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),

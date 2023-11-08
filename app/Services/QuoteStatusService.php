@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\QuoteStatusEnum;
 use App\Models\KycLog;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
@@ -21,18 +23,28 @@ class QuoteStatusService
             $checkAMlService->updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true, ['quote_status_id' => $quoteStatus->id]);
         }
 
-        $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
-        $updateQuote->quote_status_id = $quoteStatus->id;
+        if (!empty($request)) {
+            $fetchKycLog = KycLog::where('id', $request['aml_id'])->withTrashed();
+            $fetchKycLog->update([
+                'decision' => $request['aml_decision'] ?? '',
+                'notes' => trim($request['notes']) ?? '',
+            ]);
+
+            $kycLog = $fetchKycLog->first();
+            $kycLogs = KycLog::where(['quote_request_id' => $kycLog->quote_request_id, 'quote_type_id' => $kycLog->quote_type_id])->withTrashed()
+                ->get()->pluck('decision')->toArray();
+
+            $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+            if (!(in_array(null, $kycLogs))) {
+                $quoteStatusID = (in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
+                $updateQuote->quote_status_id = $quoteStatusID;
+            }
+        } else {
+            $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
+            $updateQuote->quote_status_id = $quoteStatus->id;
+        }
 
         if ($updateQuote->save()) {
-
-            if (! empty($request)) {
-                KycLog::where('id', $request['aml_id'])->withTrashed()->update([
-                    'decision' => $request['aml_decision'] ?? '',
-                    'notes' => trim($request['notes']) ?? '',
-                ]);
-            }
-
             $clientFullName = $updateQuote->first_name.' '.$updateQuote->last_name;
 
             return [$quoteStatus->text, $updateQuote->code, $quoteType->text, $updateQuote->pa_id, $clientFullName];

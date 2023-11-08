@@ -100,8 +100,13 @@ class YachtQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
-        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value){
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
 
+        $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
 
         return inertia('YachtQuote/Show', [

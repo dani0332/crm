@@ -120,6 +120,7 @@ class PetQuoteRepository extends BaseRepository
                 'petQuote.petType:id,text',
                 'plans:id,text',
                 'advisor',
+                'nationality',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {

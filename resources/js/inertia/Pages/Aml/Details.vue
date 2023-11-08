@@ -611,7 +611,9 @@ const dateToYear = date => {
                     {{ EntityDetails.Name.Full ?? '' }}
                 </template>
                 <template #item-status="{ match_found, decision }">
-                    {{ (match_found > 0 ) ? (decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK ? amlDecisionStatusEnum.REJECTED : amlDecisionStatusEnum.ESCALATED) : amlDecisionStatusEnum.PASS }}
+                    {{ (match_found > 0 ) ? (decision === null ? amlDecisionStatusEnum.ESCALATED :
+                        ( decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK ? amlDecisionStatusEnum.REJECTED : amlDecisionStatusEnum.PASS)
+                ) : amlDecisionStatusEnum.PASS }}
                 </template>
                 <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
                     <div class="space-x-4">

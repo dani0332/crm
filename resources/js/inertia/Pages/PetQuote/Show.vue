@@ -483,7 +483,7 @@ const linkEntity = () => {
                       </div>
                       <div class="grid sm:grid-cols-2">
                           <dt class="font-medium">NATIONALITY</dt>
-                          <dd>{{ quote.nationality_id_text }}</dd>
+                          <dd>{{ quote.nationality?.text }}</dd>
                       </div>
                       <div class="grid sm:grid-cols-2">
                           <dt class="font-medium">DATE OF BIRTH</dt>

@@ -61,10 +61,12 @@ class HomeQuoteService extends BaseService
             'hqr.payment_status_id',
             'u.name as advisor_id_text',
             'hqr.previous_advisor_id',
+            'hqr.dob',
             'uadv.name AS previous_advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
+            'n.TEXT AS nationality_id_text',
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
@@ -96,6 +98,7 @@ class HomeQuoteService extends BaseService
             'ent.industry_type_code',
             'ent.emirate_of_registration_id'
         )
+            ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')

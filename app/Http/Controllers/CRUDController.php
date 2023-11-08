@@ -512,6 +512,11 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
+        if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $leadStatuses = collect($leadStatuses)->filter(function ($value){
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {

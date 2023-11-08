@@ -55,7 +55,7 @@ function submitDecision(decision) {
                     title: 'Quote Status Updated',
                     position: 'top',
                 });
-
+                window.location = `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`;
             } else {
                 notification.error({
                     title: 'Quote Status not Updated',
