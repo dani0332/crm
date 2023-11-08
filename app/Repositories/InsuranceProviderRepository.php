@@ -29,6 +29,8 @@ class InsuranceProviderRepository extends BaseRepository
                 'insurance_provider_quote_type.quote_type_id',
             ])
             ->where('quote_type_id', $quoteTypeId)
+            ->where('insurance_provider.is_active', 1)
+            ->where('insurance_provider.is_deleted', 0)
             ->join('insurance_provider', 'insurance_provider.id', '=', 'insurance_provider_quote_type.insurance_provider_id')
             ->get();
     }
@@ -49,5 +51,21 @@ class InsuranceProviderRepository extends BaseRepository
         }
 
         return $networks;
+    }
+
+    public function fetchIsCommercialVehicles($record)
+    {
+        $commercialVehicleCount = DB::table('car_make')
+            ->join('car_model', 'car_make.code', '=', 'car_model.car_make_code')
+            ->where('car_make.id', $record->car_make_id ?? 0)
+            ->where('car_model.id', $record->car_model_id ?? 0)
+            ->where('car_make.is_commercial', 1)
+            ->where('car_model.is_commercial', 1)
+            ->count();
+        if ($commercialVehicleCount > 0) {
+            return true;
+        }
+
+        return false;
     }
 }

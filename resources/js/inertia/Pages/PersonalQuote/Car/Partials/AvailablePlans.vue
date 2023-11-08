@@ -9,6 +9,7 @@ const props = defineProps({
   isPlanUpdateActive: Boolean,
   genericRequestEnum: Object,
 });
+const { isRequired } = useRules();
 
 const notification = useToast();
 const coreInsurer = ['AXA', 'OIC', 'TM', 'QIC', 'RSA'];
@@ -53,6 +54,7 @@ const insurerAvailableTrimsOptions = computed(() => {
 
 const toggleLoader = ref(false);
 const toggleManualLoader = ref(false);
+const showInsurerError = ref(false);
 
 const planForm = useForm({
   car_quote_uuid: usePage().props.record.uuid,
@@ -66,7 +68,7 @@ const planForm = useForm({
   is_create: 0,
   addons: props.plan.addons,
   insurerTrim: props.plan.insurerTrimId || null,
-  insurer_quote_no: props.plan.insurerQuoteNo,
+  insurer_quote_no: (props.plan.insurerQuoteNo != null && props.plan.insurerQuoteNo != '') ? props.plan.insurerQuoteNo : '',
   is_manual_update: props.plan.isManualUpdate,
   ancillary_excess: props.plan.ancillaryExcess,
   current_url: usePage().url,
@@ -128,6 +130,13 @@ const onUpdatePlan = () => {
       position: 'top',
     });
     return;
+  }
+
+  if (planForm.is_manual_update && planForm.insurer_quote_no == '') {
+    showInsurerError.value = true;
+    return;
+  } else {
+    showInsurerError.value = false;
   }
 
   let addons = [];
@@ -256,6 +265,7 @@ const onToggleManual = () => {
               <x-input
                 v-model="planForm.insurer_quote_no"
                 :disabled="!planForm.is_manual_update"
+                :error="showInsurerError ? 'This field is required' : ''"
                 maxlength="50"
                 size="sm"
               />

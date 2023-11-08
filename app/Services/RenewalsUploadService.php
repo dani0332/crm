@@ -588,6 +588,8 @@ class RenewalsUploadService
      */
     public function buildCustomerData($data)
     {
+        $data['customer_name'] = trim($data['customer_name']);
+
         //default values
         $customerData = [
             'first_name' => $data['customer_name'],
@@ -759,8 +761,11 @@ class RenewalsUploadService
             ];
 
             if ($quoteType->code == quoteTypeCode::Car) {
+                $model = null;
                 $make = CarMake::where('text', $data['make'])->first();
-                $model = CarModel::where('text', $data['model'])->first();
+                if ($make) {
+                    $model = CarModel::where('text', $data['model'])->where('car_make_code', $make->code)->first();
+                }
 
                 if ($model) {
                     $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
@@ -929,7 +934,7 @@ class RenewalsUploadService
             throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
 
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
-            $carModel = $this->renewalsAddonService->getCarModel($data['model']);
+            $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
             $claimHistory = $this->getClaimHistory($data['claim_history']);
@@ -1451,6 +1456,10 @@ class RenewalsUploadService
                                     if (! $leadData->excess) {
                                         $leadValidationErrors->push('Excess should be > 0 with Repair Type - COMP or AGENCY');
                                     }
+                                }
+
+                                if ($lead->type == RenewalsUploadType::UPDATE_LEADS && $leadData->premium > 0 && ! $leadData->insurer_quote_no) {
+                                    $leadValidationErrors->push('Insurer Quote No is required');
                                 }
                                 if (! $leadData->premium && $leadData->excess) {
                                     $leadValidationErrors->push('Renewal Premium is required with Excess');
