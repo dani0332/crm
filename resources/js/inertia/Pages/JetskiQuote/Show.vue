@@ -205,7 +205,7 @@ const permissionsEnum = page.props.permissionsEnum;
 
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob_formatted }}</dd>
+            <dd>{{ quote.dob }}</dd>
           </div>
         </dl>
       </div>

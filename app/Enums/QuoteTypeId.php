@@ -25,16 +25,4 @@ final class QuoteTypeId extends Enum
     const Jetski = 11;
     const Corpline = 101;
     const GroupMedical = 102;
-
-    public static function getOptions()
-    {
-        $oClass = new ReflectionClass(__CLASS__);
-        $constants = $oClass->getConstants();
-        $retval = [];
-        foreach ($constants as $name => $val) {
-            $retval[$val] = $name;
-        }
-
-        return $retval;
-    }
 }

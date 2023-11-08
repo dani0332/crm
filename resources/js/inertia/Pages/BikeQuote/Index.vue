@@ -99,7 +99,7 @@ const tableHeader = [
   { text: 'Ref-ID', value: 'uuid' },
   { text: 'FIRST NAME', value: 'first_name' },
   { text: 'LAST NAME', value: 'last_name' },
-  { text: 'DOB', value: 'dob_formatted' },
+  { text: 'DOB', value: 'dob' },
   { text: 'LEAD STATUS', value: 'quote_status' },
   { text: 'ADVISOR', value: 'advisor' },
   { text: 'CREATED DATE', value: 'created_at' },
