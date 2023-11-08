@@ -115,7 +115,6 @@ class UpdateUserStatus extends Command
             info('----------- Activity Check Ended for User : '.$session->user->name.' -----------');
         }
 
-
         return 0;
     }
 
