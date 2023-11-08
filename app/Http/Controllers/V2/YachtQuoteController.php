@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V2;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -23,9 +24,17 @@ use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
+use App\Services\CRUDService;
 
 class YachtQuoteController extends Controller
 {
+    protected $crudService;
+
+    public function __construct(CRUDService $crudService)
+    {
+        $this->crudService = $crudService;
+    }
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -109,7 +118,14 @@ class YachtQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
 
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $countries = Nationality::all();
+        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Cycle, $quote->id);
+
         return inertia('YachtQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'kycDocumentCount' => $kycDocument,
             'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
             'activities' => $activities,
