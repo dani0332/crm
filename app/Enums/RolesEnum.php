@@ -97,5 +97,5 @@ final class RolesEnum extends Enum
     public const SeniorManagement = 'SENIOR_MANAGEMENT';
     public const Accounts = 'ACCOUNTS';
     public const CallDesk = 'CALL_DESK';
-    public const EP_ADMIN = 'EP_ADMIN';
+    public const EpAdmin = 'EP_ADMIN';
 }

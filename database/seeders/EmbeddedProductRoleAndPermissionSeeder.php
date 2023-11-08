@@ -18,7 +18,7 @@ class EmbeddedProductRoleAndPermissionSeeder extends Seeder
     public function run(): void
     {
         $role = Role::firstOrCreate([
-            'name' => RolesEnum::EP_ADMIN,
+            'name' => RolesEnum::EpAdmin,
             'guard_name' => 'web',
         ], [
             'created_at' => now(),
@@ -33,7 +33,7 @@ class EmbeddedProductRoleAndPermissionSeeder extends Seeder
         ]);
 
         if (!empty($role) && !empty($permission)) {
-            $roles = [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::BetaUser, RolesEnum::EP_ADMIN];
+            $roles = [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::BetaUser, RolesEnum::EpAdmin];
 
             foreach ($roles as $item) {
                 $res = Role::where('name', $item)->first();
