@@ -20,8 +20,8 @@ class CreateTravelRenewalQuotesJob implements ShouldQueue, StackableJob
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Stackable;
 
-    public $timeout = 60;
-    public $backoff = 10;
+    public $timeout = 30;
+    public $backoff = 90;
     public $tries = 3;
     private $renewalQuoteProcess;
 
