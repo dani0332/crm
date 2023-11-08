@@ -46,10 +46,14 @@ trait GenericQueriesAllLobs
      * @param $id can be id or uuid
      * @return false|mixed
      */
-    public function getQuoteObject($quoteType, $id)
+    public function getQuoteObject($quoteType, $id, $isKyc = false)
     {
         $nameSpace = '\\App\\Models\\';
-        $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        if ($isKyc) {
+            $model = $nameSpace.ucwords($quoteType).'Quote';
+        } else {
+            $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
+        }
 
         if (! class_exists($model)) {
             return false;
