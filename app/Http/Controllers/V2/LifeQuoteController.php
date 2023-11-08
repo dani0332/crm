@@ -6,12 +6,14 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\Emirate;
+use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -23,10 +25,17 @@ use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
+use App\Services\CRUDService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
 {
+    protected $crudService;
+
+    public function __construct(CRUDService $crudService)
+    {
+        $this->crudService = $crudService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -125,7 +134,14 @@ class LifeQuoteController extends Controller
             ];
         }
 
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $countries = Nationality::all();
+        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Life, $quote->id);
+
         return inertia('LifeQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'kycDocumentCount' => $kycDocument,
             'quoteType' => QuoteTypes::LIFE,
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
