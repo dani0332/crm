@@ -52,7 +52,7 @@ const { getRootProps, getInputProps, open, isDragActive } = useDropzone({
     class="relative bg-primary-50 rounded-md text-center flex flex-col gap-4 items-center border border-primary-300 ease-linear transition-all duration-150"
     :class="[isDragActive ? 'border-primary-600 bg-primary-100' : '']"
   >
-    <div v-if="customDisplay" class="p-2">      
+    <div v-if="customDisplay" class="p-1">      
       <input v-bind="getInputProps()" />
       <x-button @click="open" size="xs" :loading="loading">
         Upload Documents

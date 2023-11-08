@@ -30,7 +30,11 @@ class PaymentSplitsRepository
         for ($i = 1; $i <= (count($request->split_payment_details['split_amount']) - 1); $i++) {
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
                 $childPaymentStatus = PaymentStatusEnum::NEW;
-                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer) {
+                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer || 
+                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::InsurerPayment || 
+                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::Cheque ||
+                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::PostDatedCheque  
+                ) {
                     $childPaymentStatus = PaymentStatusEnum::PENDING;
                 }
                 $splitPaymentInformation = [
@@ -154,7 +158,11 @@ class PaymentSplitsRepository
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
 
                 $childPaymentStatus = PaymentStatusEnum::NEW;
-                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer) {
+                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer || 
+                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::InsurerPayment || 
+                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::Cheque ||
+                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::PostDatedCheque  
+                ) {
                     $childPaymentStatus = PaymentStatusEnum::PENDING;
                 }
                 $splitPaymentInformation = [
@@ -211,9 +219,13 @@ class PaymentSplitsRepository
                 'payment_status_id' => PaymentStatusEnum::PAID,
                 'updated_by' => $request->user()->id,
             ];
-            //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
+            //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
+            $payment = Payment::where('code', $splitPayment->code)->first();
+            if ($payment) {
+                $payment->update(['captured_amount' => ($payment->captured_amount + $request->collection_amount)]);
+            }
+            
             /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING 
             $sageRequest = new \stdClass();
             $sageRequest->discount = 0.00;
@@ -264,7 +276,7 @@ class PaymentSplitsRepository
                 'updated_by' => $request->user()->id,
             ];
             PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-            $successMessage = 'Payment Declined';
+            $successMessage = 'Payment Declined';            
         }
 
         //Update parent payment status if all splits are paid
@@ -272,8 +284,8 @@ class PaymentSplitsRepository
         $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
         if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments) {
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);
-        } elseif ($paymentSplitRecord->count() == 1) {
-            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::DECLINED]);
+        } elseif ($request->is_declined) {
+            Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::NEW]);
         } else {
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
         }
