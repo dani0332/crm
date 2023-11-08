@@ -564,15 +564,15 @@ class CRUDService extends BaseService
                 $maxAmount = $payment->premium_captured - $payment->premium_refunded;
 
                 if ($maxAmount >= $request->amount) {
-                    $paymentAction = new PaymentAction();
-                    $paymentAction->payment_code = $transaction->code; //$embededTransaction->code;
-                    $paymentAction->is_fulfilled = 0;
-                    $paymentAction->action_type = 'REFUND';
-                    $paymentAction->reason = $request->reason;
-                    $paymentAction->amount = $request->amount;
-                    $paymentAction->created_by = auth()->user()->email;
+                    PaymentAction::create([
+                        'payment_code'=>$transaction->code,
+                        'is_fulfilled' => 0,
+                        'action_type' => 'REFUND',
+                        'reason' => $request->reason,
+                        'amount' => $request->amount,
+                        'created_by' => auth()->user()->email
 
-                    $paymentAction->save();
+                    ]);
                     $data = [
                         'uuid' => $request->uuid,
                         'type_id' => $type->id,
@@ -583,14 +583,14 @@ class CRUDService extends BaseService
 
                     return response($processResponse, 403);
                 } else {
-                    return response(['should not be maximum'], 403);
+                    return response(['Cancel amount should not exceeded from transaction amount'], 403);
                 }
             } else {
                 return response(['Payment not exist'], 403);
             }
         }
 
-        return response(['Transaction not exist'], 403);
+        return response(['Transaction does not exist'], 403);
     }
     public function processCancelPayment($data)
     {
