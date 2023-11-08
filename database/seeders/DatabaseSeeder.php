@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
+            UpdateCustomerToHealthAndTravelMemberDetails::class,
             UpdateCodeColumnInCustomerTable::class,
             CustomerMembersTableSeeder::class,
         ]);
