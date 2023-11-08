@@ -6,7 +6,6 @@ use App\Enums\PermissionsEnum;
 use App\Enums\RolesEnum;
 use App\Models\Permission;
 use App\Models\Role;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -32,12 +31,12 @@ class EmbeddedProductRoleAndPermissionSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        if (!empty($role) && !empty($permission)) {
+        if (! empty($role) && ! empty($permission)) {
             $roles = [RolesEnum::Admin, RolesEnum::Engineering, RolesEnum::BetaUser, RolesEnum::EpAdmin];
 
             foreach ($roles as $item) {
                 $res = Role::where('name', $item)->first();
-                if (!empty($res)) {
+                if (! empty($res)) {
                     $record = DB::table('role_has_permissions')->where('role_id', $res->id)->where('permission_id', $permission->id)->first();
                     if (empty($record)) {
                         DB::table('role_has_permissions')->insert(
