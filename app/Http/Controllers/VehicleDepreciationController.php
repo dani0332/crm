@@ -30,10 +30,9 @@ class VehicleDepreciationController extends Controller
      */
     public function index(Request $request)
     {
-        $data = VehicleDepreciation::select('vehicle_depreciation.*', 'car_make.text as car_make_text', 'ip.text as ip_text', 'car_model.text as car_model_text')
+
+        $data = VehicleDepreciation::select('vehicle_depreciation.*', 'ip.text as ip_text')
             ->leftJoin('insurance_provider as ip', 'ip.id', '=', 'vehicle_depreciation.insurance_provider_id')
-            ->leftjoin('car_make', 'vehicle_depreciation.car_make_id', 'car_make.id')
-            ->leftjoin('car_model', 'vehicle_depreciation.car_model_id', 'car_model.id')
             ->orderBy('created_at', 'desc')
             ->simplePaginate(10)->withQueryString();
 
@@ -141,9 +140,9 @@ class VehicleDepreciationController extends Controller
      * @param  \App\Models\VehicleDepreciation  $vehicleDepreciation
      * @return \Illuminate\Http\Response
      */
-    public function edit(VehicleDepreciation $vehicledepreciation)
+    public function edit($id)
     {
-        $data = VehicleDepreciation::find($vehicledepreciation->id);
+        $data = VehicleDepreciation::find($id);
         $carMakes = CarMake::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $carModels = CarModel::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();
         $insuranceProviders = InsuranceProvider::where('is_active', '=', 1)->orderBy('sort_order', 'asc')->get();

@@ -12,6 +12,7 @@ use App\Services\ReasonService;
 use App\Services\TransAppService;
 use App\Traits\TeamHierarchyTrait;
 use Auth;
+use Carbon\Carbon;
 use DataTables;
 use DB;
 use Illuminate\Http\Request;
@@ -54,26 +55,25 @@ class TransactionController extends Controller
 
         if ($request->ajax()) {
             $dataTransapp = $transaction::select(
-                'transactions.*',
-                'statuses.name as status',
+                'transactions.approval_code',
+                'transactions.created_at',
                 'insurance_companies.name as insurance',
-                'type_of_insurances.text as type_of_insurance',
+                'transactions.amount_paid',
+                DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name'),
+                'transactions.risk_details',
+                'creator.name as created_by_name',
                 'handlers.name as handler_name',
-                'creaters.name as created_by_name',
                 'payment_modes.name as payment_mode',
-                DB::raw('CONCAT(customer.first_name, " ", customer.last_name) AS customer_name')
+
             )
                 ->leftjoin('customer', 'customer.id', 'transactions.customer_id')
                 ->leftjoin('insurance_companies', 'insurance_companies.id', 'transactions.insurance_company_id')
                 ->leftjoin('users as handlers', 'transactions.assigned_to_id', 'handlers.id')
-
-                ->leftjoin('users as creaters', 'transactions.created_by_id', 'creaters.id')
-                ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')
-                ->leftjoin('statuses', 'statuses.id', 'transactions.status_id')->orderBy('transactions.created_at', 'desc')
-                ->leftjoin('type_of_insurances', 'type_of_insurances.id', 'transactions.type_of_insurance_id')
+                ->leftjoin('users as creator', 'transactions.created_by_id', 'creator.id')
+                ->leftjoin('payment_modes', 'payment_modes.id', 'transactions.payment_mode_id')->orderBy('transactions.created_at', 'desc')
                 ->where('transactions.is_deleted', 0);
             if ($isTransappNonAdmin == '1') {
-                $dataTransapp->where('transactions.assigned_to_id', Auth::user()->id);
+                $dataTransapp->where('transactions.assigned_to_id', auth()->user()->id);
             }
             if (! empty($request->team_id) && $request->team_id[0] != null) {
                 $dataTransapp->leftjoin('user_team', 'handlers.id', 'user_team.user_id');
@@ -82,7 +82,9 @@ class TransactionController extends Controller
             }
             if (isset($request->transapp_start_date) && ! empty($request->transapp_start_date)
             && isset($request->transapp_stop_date) && ! empty($request->transapp_stop_date)) {
-                $dataTransapp->whereBetween('transactions.created_at', [\Carbon\Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', \Carbon\Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
+                $dataTransapp->whereBetween('transactions.created_at', [Carbon::parse($request->transapp_start_date)->format('Y-m-d').' 00:00:00', Carbon::parse($request->transapp_stop_date)->format('Y-m-d').' 23:59:59']);
+            } else {
+                $dataTransapp->whereBetween('transactions.created_at', [now()->startOfDay(), now()->endOfDay()]);
             }
             if (! empty($request->transapp_approval_code)) {
                 $dataTransapp->where('transactions.approval_code', $request->transapp_approval_code)->orWhere('transactions.prev_approval_code', $request->transapp_approval_code);
