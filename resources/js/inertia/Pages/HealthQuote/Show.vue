@@ -1332,8 +1332,11 @@ onMounted(() => {
       <div class="mt-6">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-          <x-button @click.prevent="kycDocModal(true)" size="sm" color="primary">
+          <x-button @click.prevent="kycDocModal(true)" size="sm" color="primary" v-if="!page.props.kycDocumentCount > 0">
             KYC - Pending
+          </x-button>
+          <x-button size="sm" color="orange" v-else>
+            KYC - Complete
           </x-button>
         </div>
         <x-divider class="mb-4 mt-1" />

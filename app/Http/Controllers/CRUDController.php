@@ -8,6 +8,7 @@ use App\Enums\CarPlanExclusionsCode;
 use App\Enums\CarPlanFeaturesCode;
 use App\Enums\CarPlanType;
 use App\Enums\CarTeamType;
+use App\Enums\DocumentTypeCode;
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
 use App\Enums\HomePossessionType;
@@ -861,9 +862,12 @@ class CRUDController extends Controller
                 $amlQuoteStatus = 'yes';
             }
 
+            $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
+
             return inertia('HealthQuote/Show', [
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
+                'kycDocumentCount' => $kycDocument,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),

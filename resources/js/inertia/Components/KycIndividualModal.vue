@@ -79,6 +79,7 @@ const onKycSubmit = () => {
           title: 'KYC Document uploaded.',
           position: 'top',
         });
+        props.status(false)
       } else {
         notification.error({
           title: 'Document not uploaded.',
