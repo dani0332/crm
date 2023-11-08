@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\CustomerTypeEnum;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\TravelMemberDetail;
@@ -21,14 +22,15 @@ class CustomerMembersTableSeeder extends Seeder
                 $isDuplicate = DB::table('customer_members')
                     ->where('quote_id', $hqrmd->health_quote_request_id)
                     ->where('quote_type', HealthQuote::class)
-                    ->where('customer_id', $hqrmd->customer_id)
+                    ->where('customer_entity_id', $hqrmd->customer_id)
                     ->exists();
 
                 if (! $isDuplicate) {
                     DB::table('customer_members')->insert([
                         'quote_type' => HealthQuote::class,
                         'quote_id' => $hqrmd->health_quote_request_id ?? null,
-                        'customer_id' => $hqrmd->customer_id ?? null,
+                        'customer_entity_id' => $hqrmd->customer_id ?? null,
+                        'customer_type' => CustomerTypeEnum::Individual,
                         'code' => $hqrmd->code ?? null,
                         'first_name' => $hqrmd->first_name ?? null,
                         'last_name' => $hqrmd->last_name ?? null,
@@ -54,14 +56,15 @@ class CustomerMembersTableSeeder extends Seeder
                 $isDuplicate = DB::table('customer_members')
                     ->where('quote_id', $tqrmd->travel_quote_request_id)
                     ->where('quote_type', TravelQuote::class)
-                    ->where('customer_id', $tqrmd->customer_id)
+                    ->where('customer_entity_id', $tqrmd->customer_id)
                     ->exists();
 
                 if (! $isDuplicate) {
                     DB::table('customer_members')->insert([
                         'quote_type' => TravelQuote::class,
                         'quote_id' => $tqrmd->travel_quote_request_id ?? null,
-                        'customer_id' => $tqrmd->customer_id ?? null,
+                        'customer_entity_id' => $tqrmd->customer_id ?? null,
+                        'customer_type' => CustomerTypeEnum::Individual,
                         'code' => $tqrmd->code ?? null,
                         'first_name' => $tqrmd->first_name ?? null,
                         'last_name' => $tqrmd->last_name ?? null,
