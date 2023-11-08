@@ -48,8 +48,6 @@ class CustomerMembersTableSeeder extends Seeder
             }
         });
 
-        // $this->command->info('Health Quote Request Member Details seeded successfully.');
-
         TravelMemberDetail::chunk(100, function ($travelMemberDetails) {
             foreach ($travelMemberDetails as $tqrmd) {
                 $isDuplicate = DB::table('customer_members')
