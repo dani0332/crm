@@ -23,6 +23,7 @@ class CustomerMembersTableSeeder extends Seeder
                     ->where('quote_id', $hqrmd->health_quote_request_id)
                     ->where('quote_type', HealthQuote::class)
                     ->where('customer_entity_id', $hqrmd->customer_id)
+                    ->where('code', $hqrmd->code)
                     ->exists();
 
                 if (! $isDuplicate) {
@@ -54,6 +55,7 @@ class CustomerMembersTableSeeder extends Seeder
                     ->where('quote_id', $tqrmd->travel_quote_request_id)
                     ->where('quote_type', TravelQuote::class)
                     ->where('customer_entity_id', $tqrmd->customer_id)
+                    ->where('code', $tqrmd->code)
                     ->exists();
 
                 if (! $isDuplicate) {
