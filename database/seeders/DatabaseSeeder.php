@@ -38,6 +38,8 @@ class DatabaseSeeder extends Seeder
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
+            UpdateCodeColumnInCustomerTable::class,
+            CustomerMembersTableSeeder::class,
         ]);
     }
 }
