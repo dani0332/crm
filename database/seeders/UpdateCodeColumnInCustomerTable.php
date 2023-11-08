@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Customer;
 use App\Enums\CustomerTypeEnum;
+use App\Models\Customer;
 use Illuminate\Database\Seeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class UpdateCodeColumnInCustomerTable extends Seeder
 {
@@ -22,7 +21,7 @@ class UpdateCodeColumnInCustomerTable extends Seeder
                 }
 
                 $customer->update([
-                    'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id
+                    'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
                 ]);
             }
         });

@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
+use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
+use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use Illuminate\Database\Seeder;
-use App\Models\HealthMemberDetail;
-use App\Models\TravelMemberDetail;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 class CustomerMembersTableSeeder extends Seeder
 {
@@ -25,10 +24,10 @@ class CustomerMembersTableSeeder extends Seeder
                     ->where('customer_id', $hqrmd->customer_id)
                     ->exists();
 
-                if (!$isDuplicate) {
+                if (! $isDuplicate) {
                     DB::table('customer_members')->insert([
                         'quote_type' => HealthQuote::class,
-                        'quote_id'  => $hqrmd->health_quote_request_id ?? null,
+                        'quote_id' => $hqrmd->health_quote_request_id ?? null,
                         'customer_id' => $hqrmd->customer_id ?? null,
                         'code' => $hqrmd->code ?? null,
                         'first_name' => $hqrmd->first_name ?? null,
@@ -58,10 +57,10 @@ class CustomerMembersTableSeeder extends Seeder
                     ->where('customer_id', $tqrmd->customer_id)
                     ->exists();
 
-                if (!$isDuplicate) {
+                if (! $isDuplicate) {
                     DB::table('customer_members')->insert([
                         'quote_type' => TravelQuote::class,
-                        'quote_id'  => $tqrmd->travel_quote_request_id ?? null,
+                        'quote_id' => $tqrmd->travel_quote_request_id ?? null,
                         'customer_id' => $tqrmd->customer_id ?? null,
                         'code' => $tqrmd->code ?? null,
                         'first_name' => $tqrmd->first_name ?? null,
