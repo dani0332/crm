@@ -29,7 +29,7 @@ class ResetLeadAllocationCounts extends Command
     {
 
         $entries = QuoteSync::where('is_synced', false)->get();
-        
+
         foreach ($entries as $entry) {
 
             $quote = PersonalQuote::where('uuid', $entry->quote_uuid)->first();
@@ -53,10 +53,9 @@ class ResetLeadAllocationCounts extends Command
 
                 } catch (Exception $e) {
                     DB::rollBack();
-                    info(' QuoteSyncJob Error: ' . $e->getMessage());
+                    info(' QuoteSyncJob Error: '.$e->getMessage());
                 }
-            }
-            else {
+            } else {
                 $quoteTypeModels = [
                     1 => CarQuote::class,
                     2 => HomeQuote::class,
@@ -72,9 +71,9 @@ class ResetLeadAllocationCounts extends Command
                 ];
 
                 $modelClassName = $quoteTypeModels[$entry->quote_type_id];
-                info('Syncing QuoteSync entry: ' . $entry->id . ' modelClassName: ' . $modelClassName);
+                info('Syncing QuoteSync entry: '.$entry->id.' modelClassName: '.$modelClassName);
                 $sourceQuote = $modelClassName::where('uuid', $entry->quote_uuid)->first();
-                info('Syncing QuoteSync entry: ' . $entry->id . ' sourceQuote: ' . $sourceQuote);
+                info('Syncing QuoteSync entry: '.$entry->id.' sourceQuote: '.$sourceQuote);
                 if ($sourceQuote) {
                     DB::beginTransaction();
                     try {
@@ -86,13 +85,13 @@ class ResetLeadAllocationCounts extends Command
                                 $personalQuote->$column = $value;
                             }
                         }
-                        info('Syncing QuoteSync entry: ' . $entry->id . ' personalQuote: ' . $personalQuote);
+                        info('Syncing QuoteSync entry: '.$entry->id.' personalQuote: '.$personalQuote);
                         $personalQuote->save();
                         $entry->update(['processed' => true]);
                         DB::commit();
                     } catch (Exception $e) {
                         DB::rollBack();
-                        info(' QuoteSyncJob Error: ' . $e->getMessage());
+                        info(' QuoteSyncJob Error: '.$e->getMessage());
                     }
                 }
             }
@@ -100,4 +99,3 @@ class ResetLeadAllocationCounts extends Command
     }
 
 }
-
