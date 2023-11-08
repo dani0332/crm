@@ -777,8 +777,11 @@ class RenewalsUploadService
             ];
 
             if ($quoteType->code == quoteTypeCode::Car) {
+                $model = null;
                 $make = CarMake::where('text', $data['make'])->first();
-                $model = CarModel::where('text', $data['model'])->first();
+                if ($make) {
+                    $model = CarModel::where('text', $data['model'])->where('car_make_code', $make->code)->first();
+                }
 
                 if ($model) {
                     $vehicleType = $this->renewalsAddonService->getVehicleType($model->vehicle_type_id);
@@ -947,7 +950,7 @@ class RenewalsUploadService
             throw_unless($quote, ('Quote not found for PolicyNumber: '.$data['policy_number'].' EndDate: '.$data['end_date'].' Batch: '.$renewalQuoteProcess->batch));
 
             $carMake = $this->renewalsAddonService->getCarMake($data['make']);
-            $carModel = $this->renewalsAddonService->getCarModel($data['model']);
+            $carModel = $this->renewalsAddonService->getCarModel($data['model'], $carMake);
             $advisorId = $this->renewalsAddonService->getUserInfo($data['advisor']);
             $previousAdvisorId = $this->renewalsAddonService->getUserInfo($data['previous_advisor']);
             $claimHistory = $this->getClaimHistory($data['claim_history']);
