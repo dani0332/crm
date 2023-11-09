@@ -106,7 +106,6 @@ class QuoteAllocation extends Command
             ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {
-                    info('------ Lead allocation started for '.QuoteTypeId::getDescription($quoteType)." lead: $lead->uuid ------");
                     $allocationStrategy = AllocationFactory::createStrategy($quoteType, $lead->uuid);
                     $allocationStrategy->executeSteps();
                     $processedRecords++;
@@ -115,6 +114,5 @@ class QuoteAllocation extends Command
         if ($processedRecords === 0) {
             info('No records found for '.QuoteTypeId::getDescription($quoteType));
         }
-        info('------ Lead allocation end for '.QuoteTypeId::getDescription($quoteType).'  ------');
     }
 }
