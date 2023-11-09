@@ -272,9 +272,9 @@
                     <strong class="label">Is the customer a PEP?</strong>
                 </div>
                 <div class="custom-md-4">
-                    <input type="radio" @checked($data['pep'] == 'Yes')/>
+                    <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'Yes')/>
                     <span>YES</span>
-                    <input type="radio" class="ml-2" @checked($data['pep'] == 'No')/>
+                    <input type="radio" class="ml-2" @checked(isset($data['pep']) && $data['pep'] == 'No')/>
                     <span>No</span>
                 </div>
             </div>
@@ -287,9 +287,9 @@
                     >
                 </div>
                 <div class="custom-md-4">
-                    <input type="radio" @checked($data['financial_sanctions'] == 'Yes')/>
+                    <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'Yes')/>
                     <span>YES</span>
-                    <input type="radio" class="ml-2" @checked($data['financial_sanctions'] == 'No')/>
+                    <input type="radio" class="ml-2" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'No')/>
                     <span>No</span>
                 </div>
             </div>
@@ -299,9 +299,9 @@
                     <strong class="label">Does the customer have dual nationality?</strong>
                 </div>
                 <div class="custom-md-4">
-                    <input type="radio" @checked($data['dual_nationality'] == 'Yes')/>
+                    <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'Yes')/>
                     <span>YES</span>
-                    <input type="radio" class="ml-2" @checked($data['dual_nationality'] == 'No')/>
+                    <input type="radio" class="ml-2" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'No')/>
                     <span>No</span>
                 </div>
             </div>
