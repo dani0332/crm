@@ -1,6 +1,5 @@
 <script setup>
 import KycEntityModal from "../../Components/KycEntityModal.vue";
-import KycIndividualModal from "../../Components/KycIndividualModal.vue";
 
 defineProps({
   quote: Object,
