@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanType;
 use App\Enums\carTypeInsuranceCode;
@@ -32,6 +33,7 @@ use App\Jobs\Renewals\ProcessTravelRenewalsUploadCreate;
 use App\Jobs\Renewals\RenewalBatchEmailJob;
 use App\Jobs\Renewals\UpdateRenewalQuotesJob;
 use App\Models\AML;
+use App\Models\ApplicationStorage;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -1681,10 +1683,18 @@ class RenewalsUploadService
                 Haystack::build()
                     ->onQueue('renewals')
                     ->addJobs($jobs)
-                    ->then(function () use ($logPrefix, $renewalsBatchEmail) {
+                    ->then(function () use ($logPrefix, $renewalsBatchEmail, $batch) {
                         info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
-                        CreateRenewalsWorkflowJob::dispatch($renewalsBatchEmail);
+
+                        if (($enableFollowups = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_FOLLOWUP)->first())) {
+                            if ($enableFollowups->value == 1) {
+                                info($logPrefix.'EnableFollowup is: ON. Renewals OCB email followup job dispatched for batch:'.$batch);
+                                CreateRenewalsWorkflowJob::dispatch($renewalsBatchEmail);
+                            } else {
+                                info($logPrefix.'EnableFollowup is: OFF batch: '.$batch.' is not scheduled');
+                            }
+                        }
                     })
                     ->catch(function () use ($logPrefix, $renewalsBatchEmail) {
                         info($logPrefix.' one of batch is failed. ');
