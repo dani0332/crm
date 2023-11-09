@@ -250,6 +250,49 @@ const linkEntity = () => {
 
             <x-divider class="mb-4 mt-4"/>
 
+            <h3 class="font-semibold text-primary-800 text-lg mb-4">
+                Payer Details
+            </h3>
+
+            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                <x-field label="Payment Method:">
+                    <x-input
+                        v-model="insuredFormDetails.insured_first_name"
+                        :rules="[isRequired]"
+                        placeholder="Insured First Name"
+                        type="text"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Payer Name:">
+                    <x-input
+                        v-model="insuredFormDetails.insured_last_name"
+                        :rules="[isRequired]"
+                        placeholder="Insured Last Name"
+                        type="text"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Total Amount:">
+                    <x-input
+                        v-model="insuredFormDetails.insured_first_name"
+                        :rules="[isRequired]"
+                        placeholder="Insured First Name"
+                        type="text"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field label="Paid By:">
+                    <x-input
+                        v-model="insuredFormDetails.insured_last_name"
+                        :rules="[isRequired]"
+                        placeholder="Insured Last Name"
+                        type="text"
+                        class="w-full"
+                    />
+                </x-field>
+            </dl>
+
             <div class="text-right space-x-4 mt-8">
                 <x-button
                     size="sm"
