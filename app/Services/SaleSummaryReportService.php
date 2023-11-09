@@ -28,8 +28,6 @@ class SaleSummaryReportService implements ManagementReport
     public function getFilterOptions()
     {
 
-        
-
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
 
         $loginUserId = auth()->user()->id;

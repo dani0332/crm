@@ -24,28 +24,23 @@ class ManagementReportServiceFactory
         $strategy = null;
         if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
             $strategy = new SaleSummaryReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::SALE_DETAIL){
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::SALE_DETAIL) {
             $strategy = new SaleDetailReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::ENDING_POLICIES){
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::ENDING_POLICIES) {
             $strategy = new EndingPoliciesReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::TRANSACTION){
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::TRANSACTION) {
             $strategy = new TransactionReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::ACTIVE_POLICIES){
+        } elseif ($reportCategory == ManagementReportCategoriesEnum::ACTIVE_POLICIES) {
             $strategy = new ActivePoliciesReportService();
-        }
-        else{
+        } else {
             info('No strategy found for report category : '.$reportCategory);
         }
-
 
         return $strategy;
     }
 
-    public static function getFilterOptions(){
+    public static function getFilterOptions()
+    {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
 
         $managementReportCategories = [];
