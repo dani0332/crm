@@ -176,10 +176,10 @@
   resolved "https://registry.yarnpkg.com/@headlessui/vue/-/vue-1.7.16.tgz#bdc9d32d329248910325539b99e6abfce0c69f89"
   integrity sha512-nKT+nf/q6x198SsyK54mSszaQl/z+QxtASmgMEJtpxSX2Q0OPJX0upS/9daDyiECpeAsvjkoOrm2O/6PyBQ+Qg==
 
-"@indielayer/ui@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@indielayer/ui/-/ui-1.1.0.tgz#f287c5011d69325b3d5ac5829705ad726aa1b781"
-  integrity sha512-uDh/XORtcUJtsQn0fpXbgibaiai2xsDQJq9Ac188h3mEVeY73FxsTd4be+u/ISXa2UlxsweEIwvZXsyD2U85hw==
+"@indielayer/ui@1.0.9":
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/@indielayer/ui/-/ui-1.0.9.tgz#547234b45cb0ee5271756d1205ba2ba14a959b33"
+  integrity sha512-2csTeZ4k2++M2Or63//yPcYYrDEXVdd+2Z5EN6qO5JIR52Q4eOKsmEI4aSbOOE2HkWFpkagQ8JmHGMjNP0+riQ==
 
 "@inertiajs/core@1.0.14":
   version "1.0.14"

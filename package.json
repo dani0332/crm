@@ -22,7 +22,7 @@
     },
     "dependencies": {
         "@headlessui/vue": "^1.7.16",
-        "@indielayer/ui": "^1.1.0",
+        "@indielayer/ui": "1.0.9",
         "@inertiajs/vue3": "^1.0.14",
         "@vuepic/vue-datepicker": "^7.2.0",
         "@vueuse/core": "^10.5.0",
