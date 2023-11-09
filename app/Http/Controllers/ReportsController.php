@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ManagementReportCategoriesEnum;
 use App\Factories\ManagementReportServiceFactory;
 use App\Models\RenewalBatch;
 use App\Models\User;
@@ -163,12 +164,12 @@ class ReportsController extends Controller
 
     public function renderSaleManagementReport(Request $request)
     {
-        $reportCategory = $request->reportCategory;
+        $reportCategory = !isset($reportCategory)  ? ManagementReportCategoriesEnum::SALE_SUMMARY  : $request->reportCategory;
 
-        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
+        $reportInstance =  ManagementReportServiceFactory::createStrategy($reportCategory);
 
         return inertia('ManagementReport/index', [
-            'reportData' => $reportInstance->getReportData($request),
+            // 'reportData' => $reportInstance->getReportData($request),
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
         ]);

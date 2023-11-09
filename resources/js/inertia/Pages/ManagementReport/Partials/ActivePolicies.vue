@@ -1,52 +1,29 @@
 <script setup>
 const props = defineProps({
   reportData: Object,
-  loader: {
-    type: Boolean,
-    default: false,
-  },
+  loader: Boolean,
 });
 
 const tableHeader = reactive([
   {
-    text: 'GROUP BY',
+    text: 'Insurer',
     value: 'uuid',
   },
   {
-    text: 'Total Policies',
-    value: 'first_name',
+    text: 'Line of Business',
+    value: 'uuid',
   },
   {
-    text: 'Total Endorsements',
-    value: 'source',
-  },
-  {
-    text: 'Total Transactions',
-    value: 'quoteStatus',
+    text: 'Active Policy Count',
+    value: 'uuid',
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'payment_status_id',
-  },
-  {
-    text: 'Total VAT',
-    value: 'is_ecommerce',
-  },
-  {
-    text: 'Price (VAT not applicable)',
     value: 'advisor',
   },
   {
-    text: 'Discount',
-    value: 'created_at',
-  },
-  {
-    text: 'Commission (VAT applicable)',
+    text: 'Price (VAT not applicable)',
     value: 'updated_at',
-  },
-  {
-    text: 'Total Price',
-    value: 'tier',
   },
 ]);
 </script>
@@ -56,7 +33,7 @@ const tableHeader = reactive([
     table-class-name=""
     :loading="loader"
     :headers="tableHeader"
-    :items="[]"
+    :items="props.reportData.data || []"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"
@@ -64,7 +41,7 @@ const tableHeader = reactive([
     hide-footer
   >
   </DataTable>
-  <!-- <Pagination
+  <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -72,5 +49,5 @@ const tableHeader = reactive([
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  /> -->
+  />
 </template>
