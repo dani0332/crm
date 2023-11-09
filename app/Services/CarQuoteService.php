@@ -770,6 +770,9 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->created_at)) {
+            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         if (
             in_array('created_at', $searchProperties)
             && isset($request->created_at) && $request->created_at != ''
@@ -780,7 +783,7 @@ class CarQuoteService extends BaseService
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
-            $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
         }
 
         foreach ($searchProperties as $item) {
@@ -1472,10 +1475,8 @@ class CarQuoteService extends BaseService
 
             if ($quoteViewCount) {
                 // If the record exists, increment its visit_count
-                info('Quote view count record found for lead : '.$record->code);
                 $quoteViewCount->increment('visit_count');
             } else {
-                info('Quote view count record not found for lead : '.$record->code);
                 // If the record does not exist, create a new one
                 QuoteViewCount::create([
                     'quote_id' => $record->id,
