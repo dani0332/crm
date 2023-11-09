@@ -103,12 +103,6 @@ class QuoteAllocation extends Command
             ->select('uuid')
             ->whereBetween('created_at', [$allocationStartDate, $to])
             ->orderBy('created_at', 'desc')
-            ->when($conditions, function ($query) use ($conditions, $tierR) {
-                $query->where($conditions);
-                if ($tierR) {
-                    $query->where('tier_id', '!=', $tierR->id);
-                }
-            })
             ->when($conditions, fn ($query) => $query->where($conditions))
             ->chunk($chunkSize, function ($leads) use ($quoteType, $processedRecords) {
                 foreach ($leads as $lead) {
