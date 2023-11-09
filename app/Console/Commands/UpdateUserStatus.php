@@ -61,23 +61,12 @@ class UpdateUserStatus extends Command
 
         info('Inactive Threshold right now is : '.$userInactiveThreshold.' and last activity time matched will be : '.$inactiveThreshold);
 
-        // update all users to unavailable if they are not in sessions table
-        User::whereNotIn('id', function ($query) {
-            $query->select('user_id')->from('sessions');
-        })
-            ->where('status', '!=', UserStatusEnum::UNAVAILABLE)
-            ->update(['status' => UserStatusEnum::UNAVAILABLE]);
-
         $sessions = $this->getSessions();
 
         foreach ($sessions as $session) {
-
-            info('----------- Activity Check Started for User : '.$session->user->name.' -----------');
             [$userId, $lastActivity, $currentUserStatus] = $this->extractUserInformation($session);
 
             if ($currentUserStatus == UserStatusEnum::LEAVE || $currentUserStatus == UserStatusEnum::SICK) {
-                info('User : '.$session->user->name.' will be skipped due to current status');
-
                 continue;
             }
 
@@ -96,10 +85,9 @@ class UpdateUserStatus extends Command
                 }
 
                 if ($newStatus != $currentUserStatus) {
-                    info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus);
+                    info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus, $session->user->name));
-                    info('System pushed event notification');
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {
                         $carId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Car)->first()->pluck('id');
                         $healthId = Team::where('type', TeamTypeEnum::PRODUCT)->where('name', quoteTypeCode::Health)->first()->pluck('id');
@@ -116,11 +104,9 @@ class UpdateUserStatus extends Command
             } elseif ($lastActivity >= $inactiveThreshold && $currentUserStatus != UserStatusEnum::ONLINE) {
                 info('System will now change the status to Active from status : '.$currentUserStatus.' for user : '.$session->user->name);
                 event(new UserStatusChanged($userId, UserStatusEnum::ONLINE, $session->user->name));
-                info('System pushed event notification');
                 User::where('id', $userId)->update(['status' => UserStatusEnum::ONLINE]);
             }
         }
-        info('----------- Activity Check Ended for User : '.$session->user->name.' -----------');
 
         return 0;
     }

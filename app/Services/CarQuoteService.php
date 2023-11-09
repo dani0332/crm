@@ -328,8 +328,6 @@ class CarQuoteService extends BaseService
         }
 
         if ($request->car_value_tier) {
-            info('Car value at enquiry is about to change from : '.$carQuote->car_value_tier.' to : '.$request->car_value_tier.' for lead : '.$carQuote->code);
-
             $carQuote->car_value_tier = $request->car_value_tier;
 
             $originalValue = $carQuote->car_value; // taking backup of original car_value
@@ -340,12 +338,8 @@ class CarQuoteService extends BaseService
 
             $carQuote->car_value = $originalValue; // adding back the original value since tier is now selected.
 
-            info('After car value tier update the new selected tier is : '.$selectedTier->name.' for lead : '.$carQuote->code);
-
             $carQuote->tier_id = $selectedTier->id;
             $carQuote->cost_per_lead = $selectedTier->cost_per_lead;
-
-            info('Car tier and cost per lead updated after value change for lead : '.$carQuote->code);
         }
 
         $carQuote->updated_by = auth()->user()->email;
@@ -375,7 +369,6 @@ class CarQuoteService extends BaseService
             $childRecord = $this->createDetailEntity($id);
         }
         $oldAdvisorAssignedDate = $childRecord->advisor_assigned_date;
-        info('before update - Old advisor assigned date is : '.$oldAdvisorAssignedDate);
         $childRecord->advisor_assigned_by_id = Auth::user()->id;
         $childRecord->advisor_assigned_date = Carbon::now();
         $childRecord->save();
@@ -799,6 +792,9 @@ class CarQuoteService extends BaseService
             $dateTo = $this->parseDate($request['next_followup_date_end'], false);
             $this->query->whereBetween('cqrd.next_followup_date', [$dateFrom, $dateTo]);
         }
+        if (! isset($request->code) && ! isset($request->email) && ! isset($request->created_at)) {
+            $this->query->whereBetween('cqr.created_at', [now()->startOfDay()->toDateTimeString(), now()->endOfDay()->toDateTimeString()]);
+        }
         if (
             in_array('created_at', $searchProperties)
             && isset($request->created_at) && $request->created_at != ''
@@ -809,7 +805,7 @@ class CarQuoteService extends BaseService
         ) {
             $dateFrom = $this->parseDate($request['created_at'], true);
             $dateTo = $this->parseDate($request['created_at_end'], false);
-            $this->query->whereBetween(DB::raw('cqr.created_at'), [$dateFrom, $dateTo]);
+            $this->query->whereBetween('cqr.created_at', [$dateFrom, $dateTo]);
         }
 
         foreach ($searchProperties as $item) {
@@ -1354,13 +1350,9 @@ class CarQuoteService extends BaseService
 
             $this->updateTierAndCost($lead); // will assign/update tier and update cost per lead from tier
 
-            info('Manual assignment done for lead : '.$lead->uuid);
-
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
-            info('after update Old advisor assigned date is : '.$oldAdvisorAssignedDate);
-
-            info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
+            info('Manual assignment done for lead : '.$lead->uuid.' and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
@@ -1394,19 +1386,15 @@ class CarQuoteService extends BaseService
     public function updateTierAndCost($lead)
     {
         if ($lead->tier_id == null) {
-            info('Manual assignment: tier is not assigned, evaluating tier now');
             $selectedTier = $this->leadAllocationService->getTierForValue($lead);
 
             if ($selectedTier) {
-                info('Found tier : '.$selectedTier->name.', with id : '.$selectedTier->id.' against lead : '.$lead->code);
                 $lead->tier_id = $selectedTier->id;
-                info('since tier is now assigned, we will update the cost per lead from tier');
                 $lead->cost_per_lead = $selectedTier->cost_per_lead;
             } else {
                 info('Unable to find tier against lead : '.$lead->code);
             }
         } else {
-            info('since tier is assigned, we will update the cost per lead from tier');
             $lead->cost_per_lead = Tier::where('id', $lead->tier_id)->get()->first()->cost_per_lead;
         }
     }
@@ -1418,7 +1406,6 @@ class CarQuoteService extends BaseService
         } else {
             $leadIds = array_map('intval', explode(',', trim($request->selectTmLeadId, ',')));
         }
-        info('Leads ids for manual assign: '.json_encode($leadIds));
 
         return $leadIds;
     }
@@ -1542,10 +1529,8 @@ class CarQuoteService extends BaseService
 
             if ($quoteViewCount) {
                 // If the record exists, increment its visit_count
-                info('Quote view count record found for lead : '.$record->code);
                 $quoteViewCount->increment('visit_count');
             } else {
-                info('Quote view count record not found for lead : '.$record->code);
                 // If the record does not exist, create a new one
                 QuoteViewCount::create([
                     'quote_id' => $record->id,
@@ -1712,7 +1697,7 @@ class CarQuoteService extends BaseService
                 // Determine if the previous assignment was system-assigned
                 $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
 
-                info('Previous assignment type was either system assigned or system reassigned : '.$isSystemAssigned);
+                info('Previous assignment type is : '.$isSystemAssigned);
 
                 // Update allocation counts based on assignment type (if applicable)
                 if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {

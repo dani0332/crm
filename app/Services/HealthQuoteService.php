@@ -1122,13 +1122,9 @@ class HealthQuoteService extends BaseService
 
             $lead->assignment_type = $isReassignment ? AssignmentTypeEnum::MANUAL_REASSIGNED : AssignmentTypeEnum::MANUAL_ASSIGNED;
 
-            info('Manual assignment done for lead : '.$lead->uuid);
-
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
-            info('after update Old advisor assigned date is : '.$oldAdvisorAssignedDate);
-
-            info('Assigned Date and id are update in details table for lead : '.$lead->uuid);
+            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
@@ -1212,14 +1208,12 @@ class HealthQuoteService extends BaseService
                 // Determine if the previous assignment was system-assigned
                 $isSystemAssigned = in_array($previousAssignmentType, $systemAssignedTypes);
 
-                info('Previous assignment type was either system assigned or system reassigned : '.$isSystemAssigned);
-
                 // Update allocation counts based on assignment type (if applicable)
                 if ($isSystemAssigned && $previousAdvisorAllocationRecord->auto_assignment_count > 0) {
-                    info('About to deduct from auto assignment count for previous advisor');
+                    info('deduct from auto assignment count for previous advisor');
                     $previousAdvisorAllocationRecord->auto_assignment_count = $previousAdvisorAllocationRecord->auto_assignment_count - 1;
                 } elseif ($previousAdvisorAllocationRecord->manual_assignment_count > 0) {
-                    info('About to deduct from manual assignment count for previous advisor');
+                    info('deduct from manual assignment count for previous advisor');
                     $previousAdvisorAllocationRecord->manual_assignment_count = $previousAdvisorAllocationRecord->manual_assignment_count - 1;
                 }
 
@@ -1579,7 +1573,6 @@ class HealthQuoteService extends BaseService
     public function validateLead($lead, mixed $leadId, array $result, bool $skipLead, int $userId): array
     {
         if ($lead->health_team_type == null || $lead->health_team_type == '') {
-            info('Lead with id: '.$leadId.' is not assigned to any health team');
             $msg = 'Health team is missing please select health team first';
             array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
             $skipLead = true;
@@ -1588,7 +1581,6 @@ class HealthQuoteService extends BaseService
         $user = User::where('id', $userId)->first();
         $subTeam = Team::where('id', $user->sub_team_id)->first();
         if (strtolower($subTeam->name) != strtolower($lead->health_team_type)) {
-            info('Advisor : '.$userId.' can take lead: '.$leadId.' but he is not assigned to the correct health team');
             $msg = 'User sub team mismatch with lead health team';
             array_push($result, ['leadId' => $lead->code, 'msg' => $msg]);
             $skipLead = true;
