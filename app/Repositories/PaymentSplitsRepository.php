@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentAllocationStatus;
 use App\Enums\QuoteTypeId;
 use App\Factories\SagePayloadFactory;
 use App\Http\Controllers\SageApi;
@@ -29,14 +30,7 @@ class PaymentSplitsRepository
     {
         for ($i = 1; $i <= (count($request->split_payment_details['split_amount']) - 1); $i++) {
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
-                $childPaymentStatus = PaymentStatusEnum::NEW;
-                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer || 
-                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::InsurerPayment || 
-                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::Cheque ||
-                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::PostDatedCheque  
-                ) {
-                    $childPaymentStatus = PaymentStatusEnum::PENDING;
-                }
+                $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
                 $splitPaymentInformation = [
                     'code' => $quoteID,
                     'sr_no' => $i,
@@ -157,14 +151,7 @@ class PaymentSplitsRepository
 
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
 
-                $childPaymentStatus = PaymentStatusEnum::NEW;
-                if ($request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::BankTransfer || 
-                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::InsurerPayment || 
-                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::Cheque ||
-                    $request->split_payment_details['payment_type'][$i] == PaymentMethodsEnum::PostDatedCheque  
-                ) {
-                    $childPaymentStatus = PaymentStatusEnum::PENDING;
-                }
+                $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
                 $splitPaymentInformation = [
                     'code' => $request->paymentCode,
                     'sr_no' => $i,
@@ -209,22 +196,52 @@ class PaymentSplitsRepository
         }
     }
 
+    public function getChildPaymentStatus($paymentType){
+        $childPaymentStatus = PaymentStatusEnum::NEW;
+        if ($paymentType == PaymentMethodsEnum::BankTransfer || 
+            $paymentType == PaymentMethodsEnum::InsurerPayment || 
+            $paymentType == PaymentMethodsEnum::Cheque ||
+            $paymentType == PaymentMethodsEnum::PostDatedCheque  
+        ) {
+            $childPaymentStatus = PaymentStatusEnum::PENDING;
+        } elseif ($paymentType == PaymentMethodsEnum::CreditApproval) {
+            $childPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
+        }
+        return $childPaymentStatus;
+
+    }
+
     public function updatePaymentStatus($request)
-    {       
+    {  
         $successMessage = 'Payment Verified';
         if ($request->is_approved) {
             $paymentInformation = [
                 'collection_amount' => $request->collection_amount,
                 'bank_reference_number' => $request->bank_reference_number,
                 'payment_status_id' => PaymentStatusEnum::PAID,
+                'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED,
                 'updated_by' => $request->user()->id,
             ];
             $splitPayment = PaymentSplits::find($request->splitPaymentId);
             //$splitPayment = PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
             $payment = Payment::where('code', $splitPayment->code)->first();
             if ($payment) {
-                $payment->update(['captured_amount' => ($payment->captured_amount + $request->collection_amount)]);
+                $payment->update(
+                    ['captured_amount' => ($payment->captured_amount + $request->collection_amount),
+                    'payment_allocation_status'=>PaymentAllocationStatus::NOT_ALLOCATED]
+                );
             }
+            //associate approved documents with payment split
+            if(isset($request->approved_document_model[1]) && count($request->approved_document_model[1]) > 0){
+                foreach($request->approved_document_model[1] as $document){
+                    $quoteDocumentRec = QuoteDocument::find($document['id']);
+                    if ($quoteDocumentRec) {
+                        $quoteDocumentRec->payment_split_id = $splitPayment->id;
+                        $quoteDocumentRec->save();
+                    }
+                }
+            }
+           
             
             /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING 
             $sageRequest = new \stdClass();

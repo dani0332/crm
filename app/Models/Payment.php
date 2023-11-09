@@ -17,7 +17,7 @@ class Payment extends Model
     protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount',
         'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
         'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date',
-        'discount_value', 'total_amount',
+        'discount_value', 'total_amount','payment_allocation_status'
     ];
     protected $forceDeleting = true;
 
