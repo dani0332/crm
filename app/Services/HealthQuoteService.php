@@ -1098,7 +1098,7 @@ class HealthQuoteService extends BaseService
 
             $oldAdvisorAssignedDate = $this->updateChildRecord($lead->id); // will update the car quote request detail entity about assignment
 
-            info('Manual assignment done and details table updated for lead : '.$lead->uuid. 'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
+            info('Manual assignment done and details table updated for lead : '.$lead->uuid.'and old advisor assigned date is : '.$oldAdvisorAssignedDate);
 
             $this->addManualAllocationCountAndUpdate($userId, $lead, $previousAdvisorId, $oldAdvisorAssignedDate, $oldAssignmentType); // update new and previous (if applicable) advisor counts in lead allocation table
 
