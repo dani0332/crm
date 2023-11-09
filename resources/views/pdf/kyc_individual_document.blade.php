@@ -1,310 +1,301 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <title>KYC Document</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 200px;
-            margin-top: 260px;
+            text-align: center;
         }
-
         .card {
             background-color: #f5f5f5;
             border: 1px solid #ddd;
-            border-radius: 5px;
-            padding: 20px;
+            border-radius: 8px;
+            padding-left: 20px;
+            padding-right: 20px;
             width: 95%;
             text-align: center;
+            margin: 0 auto;
         }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .label {
-            display: inline-block;
-            width: auto; /* Adjust the width as needed */
-        }
-
-        .value {
-            text-decoration: underline;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .ml-2 {
-            margin-left: 20px;
-        }
-
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             text-align: left;
         }
-
-        .custom-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin: -10px; /* Negative margin to counteract padding on columns */
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
-
-        .custom-md-3,
-        .custom-md-4,
-        .custom-md-4,
-        .custom-md-6,
-        .custom-md-8 {
-            box-sizing: border-box;
-            padding: 10px; /* Padding for gutters */
+        table tr td {
+            border-right-style: solid;
+            border-color: #f5f5f5;
+            border-width: 18px;
         }
-
-        .custom-md-3 {
-            flex: 0 0 25%; /* 3 columns */
-        }
-
-        .custom-md-4 {
-            flex: 0 0 33.33%; /* 4 columns */
-        }
-
-        .custom-md-6 {
-            flex: 0 0 50%; /* 2 columns */
-        }
-
-        .custom-md-8 {
-            flex: 0 0 66.66%; /* 2 columns */
-        }
-
-        .custom-row > div > div {
-            border: solid rgb(230, 164, 41) 1px;
+        .data {
+            border: 1px solid rgb(230, 164, 41);
             border-radius: 6px;
-            padding-left: 2px;
+            padding: 4px;
+            text-align: left;
         }
-
+        .value {
+            text-decoration: underline;
+            font-weight: bold;
+        }
         .font-14 {
             font-size: 14px;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .ml-2 {
+            margin-left: 20px;
         }
     </style>
 </head>
 <body>
     <div class="card">
-        <h1>KYC Individual</h1>
-        <div class="container">
-            <div class="custom-row">
-                <div class="custom-md-3">
-                    <div>
-                        <span class="label">Customer ID:</span>
-                        <span class="value">{{ $data['customer_id'] }}</span>
-                    </div>
-                </div>
+        <h1 style="margin-top: -6px;">KYC Individual</h1>
+        <div class="container" style="margin-top: -20px;">
+            <table>
+                <tr>
+                    <td style="width: 25%;">
+                        <div class="data">
+                            Customer ID:
+                            <span class="value">{{ $data['customer_id'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 25%;">
+                        <div class="data">
+                            First Name:
+                            <span class="value">{{ $data['first_name'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 25%;">
+                        <div class="data">
+                            Last Name:
+                            <span class="value">{{ $data['last_name'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 25%;">
+                        <div class="data">
+                            Date of birth:
+                            <span class="value">{{ dateFormat($data['dob']) }}</span>
+                        </div>
+                    </td>
+                </tr>
 
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">First Name:</span>
-                        <span class="value">{{ $data['first_name'] }}</span>
-                    </div>
-                </div>
+                <tr>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            Nationality:
+                            <span class="value">{{ $data['nationality_text'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;" colspan="2">
+                        <div class="data">
+                            Country of residence:
+                            <span class="value">{{ $data['country_name'] }}</span>
+                        </div>
+                    </td>
+                </tr>
 
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Last Name:</span>
-                        <span class="value">{{ $data['last_name'] }}</span>
-                    </div>
-                </div>
+                <tr>
+                    <td style="width: 33%;" colspan="2">
+                        <div class="data">
+                            Place of birth:
+                            <span class="value">{{ $data['birth_place'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;" colspan="2">
+                        <div class="data">
+                            Residence status:
+                            <span class="value">{{ $data['resident_status'] }}</span>
+                        </div>
+                    </td>
+                </tr>
 
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Date of birth:</span>
-                        <span class="value">{{ dateFormat($data['dob']) }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="custom-row">
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Nationality:</span>
-                        <span class="value">{{ $data['nationality_text'] }}</span>
-                    </div>
-                </div>
+                <tr>
+                    <td colspan="3" style="width: 66%;">
+                        <div class="data">
+                            Residential address:
+                            <span class="value">{{ $data['residential_address'] }}</span>
+                        </div>
+                    </td>
+                </tr>
 
-                <div class="custom-md-4">
-                    <div class="div">
-                        <span class="label">Country of residence:</span>
-                        <span class="value">{{ $data['country_name'] }}</span>
-                    </div>
-                </div>
+                <tr>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            Mobile number:
+                            <span class="value font-14">{{ $data['mobile_number'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            Email:
+                            <span class="value font-14">{{ $data['email'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            Customer tenure:
+                            <span class="value">{{ $data['customer_tenure'] }}</span>
+                        </div>
+                    </td>
+                </tr>
 
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Place of birth:</span>
-                        <span class="value">{{ $data['birth_place'] }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="custom-row">
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Residence status:</span>
-                        <span class="value">{{ $data['resident_status'] }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-8">
-                    <div class="div">
-                        <span class="label">Residential address:</span>
-                        <span class="value font-14">{{ $data['residential_address'] }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="custom-row">
-                <div class="custom-md-4">
-                    <div class="div">
-                        <span class="label">Mobile number:</span>
-                        <span class="value">{{ $data['mobile_number'] }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-4">
-                    <div class="div">
-                        <span class="label">Email:</span>
-                        <span class="value font-14">{{ $data['email'] }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Customer tenure:</span>
-                        <span class="value">{{ $data['customer_tenure'] }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="custom-row">
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">ID type:</span>
-                        <span class="value">{{ $data['id_type'] }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-4">
-                    <div class="div">
-                        <span class="label">ID number:</span>
-                        <span class="value">{{ $data['id_number'] }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-4">
-                    <div class="div">
-                        <span class="label">ID issue date:</span>
-                        <span class="value">{{ dateFormat($data['id_issue_date']) }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="custom-row">
-                <div class="custom-md-4">
-                    <div class="div">
-                        <span class="label">ID expiry date:</span>
-                        <span class="value">{{ dateFormat($data['id_expiry_date']) }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Mode of contact:</span>
-                        <span class="value">{{ $data['mode_of_contact'] }}</span>
-                    </div>
-                </div>
-                <div class="custom-md-3">
-                    <div class="div">
-                        <span class="label">Mode of delivery:</span>
-                        <span class="value">{{ $data['mode_of_delivery'] }}</span>
-                    </div>
-                </div>
-            </div>
+                <tr>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            ID type:
+                            <span class="value">{{ $data['id_type'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            ID number:
+                            <span class="value">{{ $data['id_number'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            ID issue date:
+                            <span class="value">{{ dateFormat($data['id_issue_date']) }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 33%;">
+                        <div class="data">
+                            ID expiry date:
+                            <span class="value">{{ dateFormat($data['id_expiry_date']) }}</span>
+                        </div>
+                    </td>
+                </tr>
 
-            <h2 class="text-center">Source of Income</h2>
-
-            <div class="custom-row">
-                <div class="custom-md-4">
-                    <span class="label">Employed:</span>
-                    <input type="radio" class="value" @checked($data['income_source'] == 'employed') />
-                    <br/><br/>
-                    <span class="label">Business owner / Partner:</span>
-                    <input type="radio" class="value" @checked($data['income_source'] == 'business') />
-                </div>
-                <div class="custom-md-6">
+                <tr>
+                    <td style="width: 50%;" colspan="2">
+                        <div class="data">
+                            Mode of contact:
+                            <span class="value">{{ $data['mode_of_contact'] }}</span>
+                        </div>
+                    </td>
+                    <td style="width: 50%;" colspan="2">
+                        <div class="data">
+                            Mode of delivery:
+                            <span class="value">{{ $data['mode_of_delivery'] }}</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr style="margin-bottom: -25px;">
+                    <td colspan="4">
+                        <h2 class="text-center">Source of Income</h2>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div>
+                            Employed:
+                            <input type="radio" class="value" @checked($data['income_source'] == 'employed') />
+                        </div>
+                    </td>
                     @if($data['income_source'] == 'employed')
-                        <div>
-                            <span class="label">Employer/Company name:</span>
-                            <span class="value">{{ $data['company_name'] }}</span>
-                        </div>
-                        <br/>
-                        <div>
-                            <span class="label">Professional Job title:</span>
-                            <span class="value">{{ $data['professional_title'] }}</span>
-                        </div>
-                        <br/>
-                        <div>
-                            <span class="label">Employment sector:</span>
-                            <span class="value">{{ $data['employment_sector'] }}</span>
-                        </div>
-                    @elseif($data['income_source'] == 'business')
-                        <div>
-                            <span class="label">Company name:</span>
-                            <span class="value">{{ $data['company_name'] }}</span>
-                        </div>
-                        <br/>
-                        <div>
-                            <span class="label">Trade License#:</span>
-                            <span class="value">{{ $data['trade_license'] }}</span>
-                        </div>
-                        <br/>
-                        <div>
-                            <span class="label">Position in company:</span>
-                            <span class="value">{{ $data['company_position'] }}</span>
-                        </div>
+                        <td colspan="3">
+                            <div class="data">
+                                Employer/Company name:
+                                <span class="value">{{ $data['company_name'] }}</span>
+                            </div>
+                            <br>
+                            <div class="data">
+                                Professional Job title:
+                                <span class="value">{{ $data['professional_title'] }}</span>
+                            </div>
+                            <br>
+                            <div class="data">
+                                Employment sector:
+                                <span class="value">{{ $data['employment_sector'] }}</span>
+                            </div>
+                        </td>
                     @endif
-                </div>
-            </div>
+                </tr>
+                <tr>
+                    <td>
+                        <div>
+                            Business owner / Partner:
+                            <input type="radio" class="value" @checked($data['income_source'] == 'business') />
+                        </div>
+                    </td>
+                    @if($data['income_source'] == 'business')
+                        <td colspan="3">
+                            <div class="data">
+                                Company name:
+                                <span class="value">{{ $data['company_name'] }}</span>
+                            </div>
+                            <br>
+                            <div class="data">
+                                Trade License#:
+                                <span class="value">{{ $data['trade_license'] }}</span>
+                            </div>
+                            <br>
+                            <div class="data">
+                                Position in company:
+                                <span class="value">{{ $data['company_position'] }}</span>
+                            </div>
+                        </td>
+                    @endif
+                </tr>
 
-            <h2 class="text-center">For compliance use only</h2>
+                <tr style="margin-bottom: -25px;">
+                    <td colspan="4">
+                        <h2 class="text-center">For compliance use only</h2>
+                    </td>
+                </tr>
 
-            <div class="custom-row">
-                <div class="custom-md-6">
-                    <strong class="label">Is the customer a PEP?</strong>
-                </div>
-                <div class="custom-md-4">
-                    <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'Yes')/>
-                    <span>YES</span>
-                    <input type="radio" class="ml-2" @checked(isset($data['pep']) && $data['pep'] == 'No')/>
-                    <span>No</span>
-                </div>
-            </div>
+                <tr>
+                    <td colspan="3">
+                        <div>
+                            <span>Is the customer a PEP?</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div>
+                            <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'Yes')/>
+                            <span>YES</span>
+                            <input type="radio" class="ml-2" @checked(isset($data['pep']) && $data['pep'] == 'No')/>
+                            <span>No</span>
+                        </div>
+                    </td>
+                </tr>
 
-            <div class="custom-row">
-                <div class="custom-md-6">
-                    <strong class="label"
-                    >Is the customer or business subjected to financial sanctions / or
-                        connected with prescribed terrorist organizations?</strong
-                    >
-                </div>
-                <div class="custom-md-4">
-                    <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'Yes')/>
-                    <span>YES</span>
-                    <input type="radio" class="ml-2" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'No')/>
-                    <span>No</span>
-                </div>
-            </div>
+                <tr>
+                    <td colspan="3">
+                        <div>
+                            <span>Is the customer or business subjected to financial sanctions / or
+                            connected with prescribed terrorist organizations?</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'Yes')/>
+                        <span>YES</span>
+                        <input type="radio" class="ml-2" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'No')/>
+                        <span>No</span>
+                    </td>
+                </tr>
 
-            <div class="custom-row">
-                <div class="custom-md-6">
-                    <strong class="label">Does the customer have dual nationality?</strong>
-                </div>
-                <div class="custom-md-4">
-                    <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'Yes')/>
-                    <span>YES</span>
-                    <input type="radio" class="ml-2" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'No')/>
-                    <span>No</span>
-                </div>
-            </div>
+                <tr>
+                    <td colspan="3">
+                        <div>
+                            <span>Does the customer have dual nationality?</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'Yes')/>
+                        <span>YES</span>
+                        <input type="radio" class="ml-2" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'No')/>
+                        <span>No</span>
+                    </td>
+                </tr>
+
+            </table>
         </div>
     </div>
 </body>

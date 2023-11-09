@@ -199,6 +199,7 @@ class AjaxController extends Controller
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
+            $pdf->setPaper('A4', 'landscape');
             $pdfFile = $pdf->output();
 
             $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
