@@ -28,7 +28,8 @@ const date = ref('');
 let isloading = ref(false);
 
 const maxDate = computed(() => {
-  let days = new Date().getDate() + props.source == 'Renewal_upload' ? 14 : 9;
+  
+  let days = props.source == 'Renewal_upload' ? 14 : 9;
   return new Date(new Date().setDate(new Date().getDate() + days));
 });
 
@@ -155,7 +156,7 @@ onMounted(() => getPauseReaons());
       </x-field>
       <div class="flex justify-end gap-3 mt-5">
         <x-button type="submit" size="sm" color="primary" :loading="isloading">
-          Send
+          Ok
         </x-button>
         <x-button
           size="sm"

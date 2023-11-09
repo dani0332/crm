@@ -13,6 +13,13 @@ class CustomerService extends BaseService
         return Customer::where('email', strtolower(trim($email)))->first();
     }
 
+    public static function getCustomerByName($first_name, $last_name)
+    {
+        return Customer::where('first_name', strtolower(trim($first_name)))
+            ->where('last_name', strtolower(trim($last_name)))
+            ->first();
+    }
+
     public static function getUniqueCustomerByMobileNo($mobileNo)
     {
         return Customer::where('mobile_no', $mobileNo)->first();
