@@ -1687,14 +1687,12 @@ class RenewalsUploadService
                         info($logPrefix.' all jobs completed successfully');
                         $renewalsBatchEmail->update(['status' => ProcessStatusCode::COMPLETED]);
 
-                        if(($enableFollowups = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_FOLLOWUP)->first()))
-                        {
-                            if($enableFollowups->value == 1) {
-                                info($logPrefix . 'EnableFollowup is: ON. Renewals OCB email followup job dispatched for batch:' . $batch);
+                        if (($enableFollowups = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_AUTO_FOLLOWUP)->first())) {
+                            if ($enableFollowups->value == 1) {
+                                info($logPrefix.'EnableFollowup is: ON. Renewals OCB email followup job dispatched for batch:'.$batch);
                                 CreateRenewalsWorkflowJob::dispatch($renewalsBatchEmail);
-                            } else
-                            {
-                                info($logPrefix . 'EnableFollowup is: OFF batch: ' . $batch . ' is not scheduled');
+                            } else {
+                                info($logPrefix.'EnableFollowup is: OFF batch: '.$batch.' is not scheduled');
                             }
                         }
                     })
