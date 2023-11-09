@@ -45,6 +45,9 @@ class KycEntityDocRequest extends FormRequest
             'manager_nationality' => 'required',
             'manager_dob' => 'required',
             'manager_position' => 'required',
+            'pep' => 'string',
+            'financial_sanctions' => 'string',
+            'dual_nationality' => 'string',
         ];
     }
 }
