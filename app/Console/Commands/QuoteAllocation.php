@@ -65,7 +65,7 @@ class QuoteAllocation extends Command
                         return $lead instanceof CarQuote
                             && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                             && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-                            && (! $tierR || $lead->tier_id !== $tierR->id) // exclude tier R
+                            && ($lead->tier_id != $tierR->id) // exclude tier R
                             && $lead->is_renewal_tier_email_sent === 0;
                     },
                 ],
