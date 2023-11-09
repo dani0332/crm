@@ -610,9 +610,11 @@ class CRUDService extends BaseService
     public function checkAmlQuoteStatus($statusId)
     {
         if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
-            return 'no';
+            return 'No';
         } elseif($statusId == QuoteStatusEnum::AMLScreeningFailed) {
-            return 'yes';
+            return 'Yes';
         }
+
+        return null;
     }
 }

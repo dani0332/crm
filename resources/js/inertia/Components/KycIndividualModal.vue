@@ -108,6 +108,10 @@ const nationalityOptions = computed(() => {
   }));
 });
 
+const computedRules = computed(() => {
+  return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
+});
+
 </script>
 
 <template>
@@ -373,14 +377,14 @@ const nationalityOptions = computed(() => {
               v-model="kycForm.pep"
               value="Yes"
               label="Yes"
-              :rules="[isRequired]"
+              :rules="computedRules"
               :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
           <x-radio
               v-model="kycForm.pep"
               value="No"
               label="No"
-              :rules="[isRequired]"
+              :rules="computedRules"
               :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
         </div>
@@ -395,14 +399,14 @@ const nationalityOptions = computed(() => {
               v-model="kycForm.financial_sanctions"
               value="Yes"
               label="Yes"
-              :rules="[isRequired]"
+              :rules="computedRules"
               :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
           <x-radio
               v-model="kycForm.financial_sanctions"
               value="No"
               label="No"
-              :rules="[isRequired]"
+              :rules="computedRules"
               :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
         </div>
@@ -417,14 +421,14 @@ const nationalityOptions = computed(() => {
               v-model="kycForm.dual_nationality"
               value="Yes"
               label="Yes"
-              :rules="[isRequired]"
+              :rules="computedRules"
               :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
           <x-radio
               v-model="kycForm.dual_nationality"
               value="No"
               label="No"
-              :rules="[isRequired]"
+              :rules="computedRules"
               :disabled="!hasRole(props.roles.COMPLIANCE)"
           />
         </div>
