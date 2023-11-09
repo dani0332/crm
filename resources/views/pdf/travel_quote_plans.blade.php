@@ -267,8 +267,10 @@
         foreach ($quotePlans->quotes->plans as &$quotePlan){
             $addonsPrice = $addonsVat =
             $quotePlan->discountPremium =
-            $quotePlan->vat =
             $quotePlan->total= 0;
+            if(!isset($quotePlan->vat)){
+                $quotePlan->vat = 0;
+            }
 
             if (! isset($quotePlan->id) || ! in_array($quotePlan->id, $planIds)) {
                 continue;
@@ -280,10 +282,18 @@
                     $quotePlan->{$benefit} = json_decode(collect(@$quotePlan->benefits->{$benefit})->keyBy('code')->toJson());
                 }
             }
-            $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
+             $quotePlan->exclusion = json_decode(collect($quotePlan->benefits->exclusion)->keyBy('code')->toJson());
+        $quotePlan->inclusion = json_decode(collect($quotePlan->benefits->inclusion)->keyBy('code')->toJson());
+        $quotePlan->feature = json_decode(collect($quotePlan->benefits->feature)->keyBy('code')->toJson());
+        $quotePlan->emergencyMedicalCover = json_decode(collect($quotePlan->benefits->emergencyMedicalCover)->keyBy('code')->toJson());
+        $quotePlan->covid19 = json_decode(collect($quotePlan->benefits->covid19)->keyBy('code')->toJson());
+        $quotePlan->travelInconvenienceCover = json_decode(collect($quotePlan->benefits->travelInconvenienceCover)->keyBy('code')->toJson());
+
+            // $quotePlan->addons = isset($addons) ? $addons[$quotePlan->id] : json_decode(collect($quotePlan->addons)->keyBy('code')->toJson());
              $discountPremium = $vat = [];
 
             // Discount Premium and VAT new Implementation
+
                 $quotePlan->vat = $quotePlan->vat;
                //$quotePlan->vat = 100;
                 $quotePlan->total = ($quotePlan->actualPremium + $quotePlan->vat);
@@ -322,34 +332,34 @@
             ["code" => "heading", "title" => "TRAVEL INCONVENIENCE BENEFITS"],
 
             ["code" => "travelCancellationCurtailment", "title" => "Cancellation / Curtailment", "type" => 'feature'],
-            ["code" => "travelCancellationTestPositive", "title" => "Cancellation due to testing positive for COVID prior to departure", "type" => 'feature'],
-            ["code" => "travelCancellationRestrictionCovid19", "title" => "Cancellation due to travel restrictions against COVID-19", "type" => 'feature'],
-            ["code" => "travelDelayedBaggage", "title" => "Delayed Baggage", "type" => 'feature'],
-            ["code" => "travelDelayedDeparture", "title" => "Delayed Departure", "type" => 'feature'],
-            ["code" => "travelHijack", "title" => "Hijack", "type" => 'networkList'],
-            ["code" => "travelLegalExpenses", "title" => "Legal Expenses", "type" => 'feature'],
-            ["code" => "travelMissedDeparture", "title" => "Missed Departure", "type" => 'feature'],
-            ["code" => "travelPassportAssistance", "title" => "Passport Assistance", "type" => 'feature'],
+            ["code" => "travelCancellationTestPositive", "title" => "Cancellation due to testing positive for COVID prior to departure", "type" => 'covid19'],
+            ["code" => "travelCancellationRestrictionCovid19", "title" => "Cancellation due to travel restrictions against COVID-19", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelDelayedBaggage", "title" => "Delayed Baggage", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelDelayedDeparture", "title" => "Delayed Departure", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelHijack", "title" => "Hijack", "type" => 'exclusion'],
+            ["code" => "travelLegalExpenses", "title" => "Legal Expenses", "type" => 'travelLegalExpenses'],
+            ["code" => "travelMissedDeparture", "title" => "Missed Departure", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPassportAssistance", "title" => "Passport Assistance", "type" => 'travelInconvenienceCover'],
             ["code" => "travelPersonalAccident", "title" => "Personal Accident", "type" => 'feature'],
-            ["code" => "travelPersonalBaggage", "title" => "Personal Baggage", "type" => 'feature'],
-            ["code" => "travelPersonalLiability", "title" => "Personal Liability", "type" => 'feature'],
-            ["code" => "travelPersonalMoney", "title" => "Personal Money", "type" => 'feature'],
-            ["code" => "travelTravelVisaRejection", "title" => "Travel Visa Rejection", "type" => 'feature'],
+            ["code" => "travelPersonalBaggage", "title" => "Personal Baggage", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPersonalLiability", "title" => "Personal Liability", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelPersonalMoney", "title" => "Personal Money", "type" => 'travelInconvenienceCover'],
+            ["code" => "travelTravelVisaRejection", "title" => "Travel Visa Rejection", "type" => 'travelInconvenienceCover'],
 
             ["code" => "heading", "title" => "Emergency Medical Benefits"],
 
-            ["code" => "travelEmergencyDental", "title" => "Emergency Dental", "type" => 'feature'],
-            ["code" => "travelEmergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => 'feature'],
-            ["code" => "travelEmergencyTransport", "title" => "Emergency Transport", "type" => 'feature'],
-            ["code" => "travelRepatriationOfMortalRemains", "title" => "Repatriation of mortal remains", "type" => 'feature'],
-            ["code" => "travelRepatriationofotherinsuredPerson", "title" => "Repatriation of other insured Person", "type" => 'feature'],
+            ["code" => "travelEmergencyDental", "title" => "Emergency Dental", "type" => 'emergencyMedicalCover'],
+            ["code" => "travelEmergencyMedicalExpenses", "title" => "Emergency Medical Expenses", "type" => 'emergencyMedicalCover'],
+            ["code" => "travelEmergencyTransport", "title" => "Emergency Transport", "type" => 'emergencyMedicalCover'],
+            ["code" => "travelRepatriationOfMortalRemains", "title" => "Repatriation of mortal remains", "type" => 'inclusion'],
+            ["code" => "travelRepatriationOtherInsuredPerson", "title" => "Repatriation of other insured Person", "type" => 'exclusion'],
 
             ["code" => "heading", "title" => "EXCESS"],
             ["code" => "heading", "title" => "COVID 19"],
 
-            ["code" => "travelTestingCost", "title" => "Testing Cost", "type" => 'feature'],
-            ["code" => "travelQuarantineTestedPositive", "title" => "Accommodation cost if tested positive", "type" => 'feature'],
-            ["code" => "travelTreatmentTestedPositive", "title" => "Treatment if tested positive - hospitalized for more than 24 hrs", "type" => 'feature'],
+            ["code" => "travelTestingCost", "title" => "Testing Cost", "type" => 'covid19'],
+            ["code" => "travelQuarantineTestedPositive", "title" => "Accommodation cost if tested positive", "type" => 'covid19'],
+            ["code" => "travelTreatmentTestedPositive", "title" => "Treatment if tested positive - hospitalized for more than 24 hrs", "type" => 'covid19'],
              ["code" => "actualPremium", "title" => "Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "vat", "title" => "VAT", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],
             ["code" => "total", "title" => "Total Premium", "type" => "info",  "heading_class" => "text-heading", "row_class" => 'row-spacing'],

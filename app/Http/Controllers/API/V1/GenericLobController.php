@@ -9,7 +9,6 @@ use App\Jobs\CarRenewalEmailJob;
 use App\Jobs\SendOCBEmailJob;
 use App\Models\CarQuote;
 
-
 class GenericLobController extends Controller
 {
     /**
