@@ -75,8 +75,6 @@ class CarAllocationService extends AllocationService
             info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
-
-        info('At the end tier query for is : '.json_encode($tiersQuery->toSql()));
     }
 
     public function getExcludedUserIds()
@@ -109,8 +107,6 @@ class CarAllocationService extends AllocationService
 
     public function getPlanAndYear($carLead): array
     {
-        info('Started searching tier for car lead: '.json_encode($carLead->code));
-
         // Retrieve car quote plans with specific conditions.
         $plans = CarQuotePlanDetail::where('quote_uuid', $carLead->uuid)
             ->where('is_rating_available', true)
@@ -119,9 +115,7 @@ class CarAllocationService extends AllocationService
         // Calculate the year of manufacture that is 15 years ago from the current date.
         $yearOfManufacture = now()->subYear(15)->year;
 
-        info('yearOfManufacture is: '.$yearOfManufacture);
-
-        info('Number of plans found are: '.count($plans));
+        info('yearOfManufacture is: '.$yearOfManufacture. ' and number of plans found are: '.count($plans));
 
         return [$plans, $yearOfManufacture];
     }
@@ -161,8 +155,6 @@ class CarAllocationService extends AllocationService
 
         // Check if the car's year of manufacture is newer than 15 years.
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
-            info('Inside year of manufacture block, and car year of manufacture is: '.$carLead->year_of_manufacture);
-
             // Check if more than one plan is found against the car lead.
             if (count($plans) > 0) {
                 info('More than one plan found against car lead: '.$carLead->uuid);
@@ -184,8 +176,6 @@ class CarAllocationService extends AllocationService
                 }
             }
         } else {
-            info('Inside year of manufacture older block, and car year of manufacture is: '.$carLead->year_of_manufacture);
-
             // Determine the tier based on a value and return the first matching tier.
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
@@ -219,8 +209,6 @@ class CarAllocationService extends AllocationService
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('Result of available users are: '.json_encode(collect($eligibleUsers)->pluck('user_id')));
-
                 return $eligibleUsers->toArray();
             }
         }
@@ -306,8 +294,6 @@ class CarAllocationService extends AllocationService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             );
 
-        info('lead source records: '.json_encode($records->get()));
-
         return $records->get();
     }
 
@@ -331,8 +317,6 @@ class CarAllocationService extends AllocationService
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
-
-        info('Tier eligible users are: '.json_encode($availableUserIds));
 
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
@@ -490,7 +474,6 @@ class CarAllocationService extends AllocationService
 
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
-            info('Inside reassignment single run and advisor selected is : '.$advisorId);
             $leads->where('advisor_id', $advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
@@ -531,8 +514,6 @@ class CarAllocationService extends AllocationService
 
     public function updateLeadTier($lead, $tier): void
     {
-        info('login users not found for selected lead so will try to assign only tier for lead : '.$lead->uuid);
-
         CarQuote::where('id', $lead->id)->update([
             'tier_id' => $tier->id,
         ]);

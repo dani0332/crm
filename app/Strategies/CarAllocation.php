@@ -6,7 +6,6 @@ use App\Enums\AssignmentTypeEnum;
 use App\Models\Tier;
 use App\Services\CarAllocationService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Log;
 
 class CarAllocation implements Allocation
 {
@@ -27,7 +26,6 @@ class CarAllocation implements Allocation
 
             if (! $lead) {
                 info('Lead not found or either was not under assignment criteria');
-
                 return false; // when lead is not on criteria or not found
             }
 
