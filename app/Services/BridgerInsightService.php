@@ -140,6 +140,7 @@ class BridgerInsightService
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             // AML Log data inserted into kyc_logs just for BridgerInsight
+                            session()->push('amlResponseCheck', isset($getDecodeContents->Records));
                             $kycLogDetails = [
                                 'quote_request_id' => $quoteId,
                                 'quote_type_id' => $quoteTypeId,

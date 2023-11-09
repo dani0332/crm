@@ -646,7 +646,7 @@ const linkEntity = () => {
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
-                <dt class="font-medium">COMPANY CONCERN</dt>
+                <dt class="font-medium">ENTITY TYPE</dt>
                 <dd>
                     <ComboBox
                         @update:modelValue="entityTypeChange($event)"

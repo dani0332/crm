@@ -85,6 +85,7 @@ final class RolesEnum extends Enum
     public const CarManager = 'CAR_MANAGER';
     public const LeadPool = 'LEAD_POOL';
     public const COMPLIANCE = 'COMPLIANCE';
+    public const ComplianceSuperUser = 'COMPLIANCE_SUPER_USER';
     public const AML = 'AML';
     public const BikeAdvisor = 'BIKE_ADVISOR';
     public const BikeManager = 'BIKE_MANAGER';
