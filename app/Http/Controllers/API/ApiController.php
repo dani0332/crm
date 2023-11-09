@@ -46,7 +46,7 @@ class ApiController extends Controller
                 $allocationType = $request->input('quoteTypeId');
                 $allocationId = $request->input('quoteUUID');
 
-                info('------ Lead allocation with api started for lead : '.$allocationId.' with quote type id'. $allocationType .' ------');
+                info('------ Lead allocation with api started for lead : '.$allocationId.' with quote type id'.$allocationType.' ------');
 
                 $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
 

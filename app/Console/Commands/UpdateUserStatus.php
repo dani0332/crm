@@ -85,7 +85,7 @@ class UpdateUserStatus extends Command
                 }
 
                 if ($newStatus != $currentUserStatus) {
-                    info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus. ' for user : '.$session->user->name);
+                    info('System will now change status from : '.$currentUserStatus.' to : '.$newStatus.' for user : '.$session->user->name);
                     User::where('id', $userId)->update(['status' => $newStatus]);
                     event(new UserStatusChanged($userId, $newStatus, $session->user->name));
                     if ($newStatus == UserStatusEnum::UNAVAILABLE) {

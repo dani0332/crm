@@ -26,6 +26,7 @@ class CarAllocation implements Allocation
 
             if (! $lead) {
                 info('Lead not found or either was not under assignment criteria');
+
                 return false; // when lead is not on criteria or not found
             }
 
