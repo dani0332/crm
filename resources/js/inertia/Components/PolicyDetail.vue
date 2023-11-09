@@ -39,6 +39,7 @@ const planQuoteInsurerNumber = computed(() => {
   let obj = page.props.listQuotePlans.filter(
     item => item.id == page.props.record.plan_id,
   );
+
   return obj[0]?.insurerQuoteNo;
 });
 
@@ -196,7 +197,7 @@ const onUpdatePolicyDetails = () => {
       <div class="w-full md:w-1/2">
         <x-input
           v-model="policyDetailsForm.quote_plan_insurer_quote_number"
-          type="number"
+          type="text"
           label="Insurer Quote Number"
           placeholder="Insurer Quote Number"
           class="w-full"
