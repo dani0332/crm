@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class KycDocRequest extends FormRequest
+class KycIndividualDocRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -47,9 +47,6 @@ class KycDocRequest extends FormRequest
             'employment_sector' => 'required_if:income_source,employed',
             'trade_license' => 'required_if:income_source,business',
             'company_position' => 'required_if:income_source,business',
-            'pep' => 'required',
-            'financial_sanctions' => 'required',
-            'dual_nationality' => 'required',
         ];
     }
 }

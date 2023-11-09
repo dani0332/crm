@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
@@ -263,7 +264,17 @@ class AmtController extends Controller
             })->values();
         }
 
+        $countries = Nationality::all();
+        $kycDocument = $this->crudService->getKycDocuments(quoteTypeCode::Business, $record->id);
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $entities = Entity::all();
+
         return inertia('GroupMedicalQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'kycDocumentCount' => $kycDocument,
+            'entities' => $entities,
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
             'modelType' => QuoteTypes::BUSINESS,

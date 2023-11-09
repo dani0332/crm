@@ -1,4 +1,7 @@
 <script setup>
+import KycEntityModal from "../../Components/KycEntityModal.vue";
+import KycIndividualModal from "../../Components/KycIndividualModal.vue";
+
 defineProps({
   quote: Object,
   quoteDetails: Object,
@@ -51,6 +54,7 @@ const modals = reactive({
   contactDeleteConfirm: false,
   contactPrimaryConfirm: false,
   customerEntityNotFound: false,
+  kycDocModal: false,
 });
 
 const leadDuplicateForm = useForm({
@@ -318,6 +322,10 @@ const linkEntity = () => {
     })
     .finally(() => (loader.tradeDetail = false));
 };
+
+const kycDocModal = val => {
+  modals.kycDocModal = val;
+};
 </script>
 
 <template>
@@ -562,11 +570,33 @@ const linkEntity = () => {
         </div>
       </div>
 
+    <x-modal size="xl" v-model="modals.kycDocModal" show-close backdrop>
+      <template #header>
+        KYC Individual Form
+      </template>
+      <KycEntityModal
+          :roles="$page.props.rolesEnum"
+          :quote="page.props.quote"
+          :status="kycDocModal"
+          :country-list="page.props.countryList"
+          :aml-quote-status="page.props.amlQuoteStatus"
+          :nationalities="page.props.nationalities"
+          :modelType="page.props.quoteType"
+          :entities="page.props.entities"
+      />
+    </x-modal>
+
       <div class="p-4 rounded shadow mb-6 bg-white">
-        <div>
+        <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-          <x-divider class="mb-4 mt-1" />
+          <x-button @click.prevent="kycDocModal(true)" size="sm" color="primary" v-if="!page.props.kycDocumentCount > 0">
+            KYC - Pending
+          </x-button>
+          <x-button size="sm" color="orange" v-else>
+            KYC - Complete
+          </x-button>
         </div>
+        <x-divider class="mb-4 mt-1" />
         <x-form @submit="updateProfileDetails" :auto-focus="false">
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">

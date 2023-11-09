@@ -7,10 +7,12 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Http\Requests\KycDocRequest;
+use App\Http\Requests\KycEntityDocRequest;
+use App\Http\Requests\KycIndividualDocRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -187,7 +189,7 @@ class AjaxController extends Controller
 
     }
 
-    public function uploadKycIndividualDocument($quoteType, KycDocRequest $request)
+    public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)
     {
         try {
             $data = $request->validated();
@@ -198,6 +200,33 @@ class AjaxController extends Controller
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
             $pdfFile = $pdf->output();
+
+            $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
+
+            $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+
+            if ($document) {
+                return response()->json(['success' => true]);
+            }
+        } catch (\Exception $ex) {
+            info($ex->getMessage());
+        }
+
+        return response()->json(['error' => false]);
+    }
+
+    public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
+    {
+        try {
+            $data = $request->validated();
+            $data['industry_type_code'] = Entity::where('id', $data['industry_type'])->value('industry_type_code');
+            $data['corporation_country'] = Nationality::where('id', $data['country_of_corporation'])->value('country_name');
+            $data['manager_country'] = Nationality::where('id', $data['manager_nationality'])->value('text');
+            $data['document_type_code'] = DocumentTypeCode::KYCDOC;
+
+            $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
+            $pdfFile = $pdf->output();
+            info($quoteType);
 
             $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
