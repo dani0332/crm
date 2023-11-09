@@ -52,16 +52,16 @@ class QuoteAllocation extends Command
 
         $quoteAllocationSwitch = $applicationStorageService->getValueByKey(ApplicationStorageEnums::QUOTE_ALLOCATION_SWITCH);
         $masterSwitchConfigValue = (int) config('constants.QUOTE_ALLOCATION_MASTER_SWITCH');
-        $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
         $allocationStartDate = now()->subWeek()->startOfDay()->toDateTimeString();
         if ($quoteAllocationSwitch == 1 && $masterSwitchConfigValue == 1) {
+            $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
             $to = now()->subMinutes(7)->toDateTimeString();
             $chunkSize = 200;
             $linesOfBusiness = [
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
                     'allocationKey' => 'advisor_id',
-                    'conditions' => function ($lead, $tierR) {
+                    'conditions' => function ($lead) use ($tierR) {
                         return $lead instanceof CarQuote
                             && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                             && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
