@@ -61,7 +61,7 @@ class QuoteAllocation extends Command
                 QuoteTypeId::Car => [
                     'model' => CarQuote::class,
                     'allocationKey' => 'advisor_id',
-                    'conditions' => function ($lead) use($tierR) {
+                    'conditions' => function ($lead) use ($tierR) {
                         return $lead instanceof CarQuote
                             && ! in_array($lead->quote_status_id, [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
                             && ! in_array($lead->source, [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
