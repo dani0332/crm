@@ -1,51 +1,34 @@
 <?php
 
-namespace App\Factories;
+namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportGroupByEnum;
 use App\Models\LeadSource;
+use App\Models\PersonalQuote;
 use App\Models\Team;
-use App\Services\ActivePoliciesReportService;
-use App\Services\ApplicationStorageService;
-use App\Services\EndingPoliciesReportService;
-use App\Services\SaleDetailReportService;
-use App\Services\SaleSummaryReportService;
-use App\Services\TransactionReportService;
+use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
-class ManagementReportServiceFactory
+class SaleDetailReportService implements ManagementReport
 {
     use TeamHierarchyTrait;
 
-    public static function createStrategy($reportCategory)
+    public function getReportData(Request $request)
     {
-        $strategy = null;
-        if ($reportCategory == ManagementReportCategoriesEnum::SALE_SUMMARY) {
-            $strategy = new SaleSummaryReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::SALE_DETAIL){
-            $strategy = new SaleDetailReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::ENDING_POLICIES){
-            $strategy = new EndingPoliciesReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::TRANSACTION){
-            $strategy = new TransactionReportService();
-        }
-        else if($reportCategory == ManagementReportCategoriesEnum::ACTIVE_POLICIES){
-            $strategy = new ActivePoliciesReportService();
-        }
-        else{
-            info('No strategy found for report category : '.$reportCategory);
-        }
-
-
-        return $strategy;
+        $groupBy = $request->groupBy;
+        $query = PersonalQuote::query()
+            ->select(
+                DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
+                DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
+            )->get();
     }
 
-    public static function getFilterOptions(){
+    public function getFilterOptions()
+    {
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
 
         $managementReportCategories = [];
@@ -60,7 +43,7 @@ class ManagementReportServiceFactory
 
         $loginUserId = auth()->user()->id;
 
-        $teamIds = TeamHierarchyTrait::getUserTeams($loginUserId);
+        $teamIds = $this->getUserTeams($loginUserId);
 
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
             ->select('name', 'id')
@@ -87,5 +70,21 @@ class ManagementReportServiceFactory
             'managementReportCategories' => $managementReportCategories,
             'managementReportGroupBy' => $managementReportGroupBy,
         ];
+    }
+
+    public function getDefaultFilters()
+    {
+        $advisorAssignedDates = [ManagementReportCategoriesEnum::SALE_DETAIL];
+
+        return [
+            'managementReportCategories' => $advisorAssignedDates,
+        ];
+    }
+
+    public function applyFilters($query, $filters)
+    {
+        $filters = (object) $filters;
+        $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
+        $freshLoad = ! isset($filters->page);
     }
 }

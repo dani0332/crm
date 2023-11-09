@@ -11,7 +11,7 @@ use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class SaleSummaryReportService implements ManagementReport
+class ActivePoliciesReportService implements ManagementReport
 {
     use TeamHierarchyTrait;
 
@@ -27,9 +27,6 @@ class SaleSummaryReportService implements ManagementReport
 
     public function getFilterOptions()
     {
-
-        
-
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
 
         $loginUserId = auth()->user()->id;
