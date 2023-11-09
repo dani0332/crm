@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
             PolicyIssuanceStatusSeeder::class,
+            EmbeddedProductRoleAndPermissionSeeder::class,
         ]);
     }
 }

@@ -15,6 +15,15 @@ const props = defineProps({
   quoteRequest: Object,
   paymentMethods: Array,
   quote: Object,
+  isCommercialVehicles: Boolean,
+  carInsuranceProviders: Array,
+});
+
+const insuranceProviderOptions = computed(() => {
+  return page.props.carInsuranceProviders.map(provider => ({
+    value: provider.id,
+    label: provider.text,
+  }));
 });
 
 const createPaymentModal = ref(false);
@@ -116,6 +125,7 @@ const editPaymentModal = payment => {
   createPaymentModal.value = true;
 };
 
+const insurance_provider_id = ref('');
 const paymentMethodsForm = useForm({
   payment_method: '',
   collection_type: '',
@@ -127,14 +137,19 @@ const paymentMethodsForm = useForm({
 
 const addPayment = isValid => {
   if (!isValid) return;
-
+  let plan_id = null;
+  if (props.quoteRequest.plan && props.quoteRequest.plan.id) {
+    plan_id = props.quoteRequest.plan.id;
+  }
   let data = {
     captured_amount: paymentMethodsForm.amount,
     code: paymentMethodsForm.payment_method,
     modelType: 'Car',
     quote_id: props.quoteRequest.id,
-    plan_id: props.quoteRequest.plan.id,
-    insurance_provider_id: providerId.value,
+    plan_id: plan_id,
+    insurance_provider_id: props.isCommercialVehicles
+      ? insurance_provider_id.value
+      : providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: paymentMethodsForm.payment_method,
     reference: paymentMethodsForm.payment_reference,
@@ -189,17 +204,6 @@ const addPayment = isValid => {
     });
 };
 
-const captureApprovePaymentModal = ref(false);
-
-const captureApprovePaymentForm = useForm({
-  paymentCode: '',
-});
-const captureApprovePayment = item => {
-  captureApprovePaymentModal.value = true;
-
-  captureApprovePaymentForm.paymentCode = item.payment_methods_code;
-};
-
 const approvePayment = payment => {
   let data = {
     code: payment.code,
@@ -236,6 +240,13 @@ const providerName = computed(() => {
   return 'Not Available';
 });
 
+onMounted(() => {
+  const plan = props.quoteRequest.plan;
+  if (plan && plan.insurance_provider) {
+    insurance_provider_id.value = plan.insurance_provider.id;
+  }
+});
+
 const providerId = computed(() => {
   const plan = props.quoteRequest.plan;
   if (plan && plan.insurance_provider) {
@@ -248,19 +259,20 @@ const providerId = computed(() => {
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
     <div class="flex justify-between gap-4 items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">Manage Payments</h3>
+      <h3 class="font-semibold text-primary-800 text-lg">Payments</h3>
       <x-button
         v-if="
-          can(permissionEnum.PaymentsCreate) &&
-          !can(permissionEnum.ApprovePayments) &&
-          !hasRole(rolesEnum.PA) &&
-          quoteRequest.plan
+          (can(permissionEnum.PaymentsCreate) &&
+            !can(permissionEnum.ApprovePayments) &&
+            !hasRole(rolesEnum.PA) &&
+            quoteRequest.plan) ||
+          isCommercialVehicles
         "
         size="sm"
         color="orange"
         @click="addPaymentModal"
       >
-        Add Manual Payment
+        Add Payment
       </x-button>
     </div>
     <DataTable
@@ -331,24 +343,9 @@ const providerId = computed(() => {
               size="xs"
               color="primary"
               outlined
-              @click="captureApprovePayment(item)"
+              @click="approvePayment(item)"
             >
               Approve
-            </x-button>
-            <x-button
-              v-if="
-                item.payment_methods_code === 'CC' &&
-                ![paymentStatusEnum.PAID, paymentStatusEnum.CAPTURED].includes(
-                  item.payment_status_id,
-                ) &&
-                !hasRole(rolesEnum.PA)
-              "
-              size="xs"
-              color="primary"
-              outlined
-              @click="captureApprovePayment(item)"
-            >
-              Capture
             </x-button>
           </template>
           <template v-if="item.payment_status_id == paymentStatusEnum.PAID">
@@ -359,19 +356,6 @@ const providerId = computed(() => {
         </div>
       </template>
     </DataTable>
-
-    <x-modal v-model="captureApprovePaymentModal" size="lg" show-close backdrop>
-      <span class="text-primary-800 font-semibold">
-        {{
-          captureApprovePaymentForm.paymentCode === 'CC'
-            ? 'Capture Payment'
-            : 'Approve Payment'
-        }}
-      </span>
-      <div class="w-full grid md:grid-cols-2 gap-5">
-        <x-button color="primary" type="submit"> Create </x-button>
-      </div>
-    </x-modal>
     <x-modal v-model="createPaymentModal" size="lg" show-close backdrop>
       <template #header>
         <span class="text-primary-800 font-semibold">
@@ -411,8 +395,21 @@ const providerId = computed(() => {
             >
             </x-select>
           </x-field>
-
-          <p class="text-sm text-gray-500">
+          <x-field
+            v-if="isCommercialVehicles"
+            label="Insurance Provider"
+            required
+          >
+            <x-select
+              class="w-full md:col-span-2"
+              v-model="insurance_provider_id"
+              :options="insuranceProviderOptions"
+              placeholder="Select Insurance provider"
+              :rules="[rules.isRequired]"
+            >
+            </x-select>
+          </x-field>
+          <p class="text-sm text-gray-500" v-else>
             Provider Name:
             <span class="text-primary-800">{{ providerName }}</span>
           </p>

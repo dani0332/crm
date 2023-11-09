@@ -100,4 +100,5 @@ final class RolesEnum extends Enum
     public const PRODUCTION = 'PRODUCTION';
     public const NRA = 'NRA';
     public const FINANCE = 'FINANCE';
+    public const EpAdmin = 'EP_ADMIN';
 }

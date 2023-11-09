@@ -74,6 +74,8 @@ defineProps({
   carPlanTypeEnum: Object,
   policyIssuanceStatus: Array,
   bPDetails: Array,
+  isCommercialVehicles: Boolean,
+  carInsuranceProviders: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -1210,7 +1212,6 @@ const emailsHeaders = ref([
   { text: 'Email', value: 'customer_email' },
   { text: 'Subject', value: 'subject' },
   { text: 'Schedule Date', value: 'schedule_date' },
-  { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
@@ -1981,6 +1982,8 @@ const loadEmailEvents = email => {
       :payments="payments"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
       :paymentMethods="
         paymentMethods.map(pm => {
           return { value: pm.code, label: pm.name };
