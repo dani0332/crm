@@ -15,7 +15,6 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: Array,
   quoteDocuments: Array,
   documentTypes: Object,
   cdnPath: String,
@@ -72,6 +71,8 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
+  isCommercialVehicles: Boolean,
+  carInsuranceProviders: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -234,6 +235,7 @@ function repairTypeCheck(repairType) {
 }
 
 const availablePlansTable = reactive({
+  data: [],
   columns: [
     { text: 'Provider Name', value: 'providerName' },
     { text: 'Plan Name', value: 'name' },
@@ -336,6 +338,22 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
+``
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            availablePlansTable.data= res.data
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
+
 
 const historyDataTable = [
   { text: 'Modified At', value: 'created_at' },
@@ -346,13 +364,11 @@ const historyDataTable = [
 ];
 
 const availablePlansItems = computed(() => {
-  if (!Array.isArray(page.props.listQuotePlans)) {
-    return [];
-  }
-  return typeof page.props.listQuotePlans !== 'string'
-    ? page.props.listQuotePlans
-    : [];
-});
+	if (! Array.isArray(availablePlansTable.data)) {
+		return [];
+	}
+	return typeof availablePlansTable.data !== 'string' ? availablePlansTable.data : [];
+})
 
 const totalPriceVAT = computed(() => {
   let vat = 0;
@@ -1177,7 +1193,6 @@ const emailsHeaders = ref([
   { text: 'Email', value: 'customer_email' },
   { text: 'Subject', value: 'subject' },
   { text: 'Schedule Date', value: 'schedule_date' },
-  { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
@@ -1227,7 +1242,8 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 onMounted(() => {
-  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
+  onLoadAvailablePlansData();
+  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
     getFollowUpsByQuote();
   }
 
@@ -1948,6 +1964,8 @@ const loadEmailEvents = email => {
       :payments="payments"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
       :paymentMethods="
         paymentMethods.map(pm => {
           return { value: pm.code, label: pm.name };
@@ -2209,9 +2227,7 @@ const loadEmailEvents = email => {
             @click.prevent="copyLink"
             size="sm"
             color="emerald"
-            v-if="
-              typeof listQuotePlans !== 'string' && listQuotePlans.length > 0
-            "
+           v-if="typeof availablePlansTable.data !== 'string' && availablePlansTable.data.length > 0"
           >
             Copy Link
           </x-button>
@@ -2474,6 +2490,7 @@ const loadEmailEvents = email => {
             ])
           "
           :totalSelectedAddonsPriceWithVat="totalPriceVAT"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
       <x-modal v-model="modals.sendConfirm" show-close backdrop>
@@ -2499,7 +2516,9 @@ const loadEmailEvents = email => {
         <LazyCreatePlan
           :record="record"
           :insuranceProviders="insuranceProviders"
-          :listQuotePlans="listQuotePlans"
+          :available-plans="availablePlansItems"
+          @success="onCreatePlan"
+          @error="onPlanError"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->

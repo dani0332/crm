@@ -156,7 +156,7 @@ onMounted(() => getPauseReaons());
       </x-field>
       <div class="flex justify-end gap-3 mt-5">
         <x-button type="submit" size="sm" color="primary" :loading="isloading">
-          Send
+          Ok
         </x-button>
         <x-button
           size="sm"

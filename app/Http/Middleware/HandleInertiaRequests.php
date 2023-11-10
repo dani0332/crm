@@ -416,7 +416,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
+        if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
 
