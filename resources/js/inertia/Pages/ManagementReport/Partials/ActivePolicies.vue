@@ -7,23 +7,23 @@ const props = defineProps({
 const tableHeader = reactive([
   {
     text: 'Insurer',
-    value: 'uuid',
+    value: 'insurer',
   },
   {
     text: 'Line of Business',
-    value: 'uuid',
+    value: 'line_of_business',
   },
   {
     text: 'Active Policy Count',
-    value: 'uuid',
+    value: 'active_policy_count',
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'advisor',
+    value: 'price_with_vat',
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'updated_at',
+    value: 'price_without_vat',
   },
 ]);
 </script>
@@ -41,7 +41,7 @@ const tableHeader = reactive([
     hide-footer
   >
   </DataTable>
-  <Pagination
+  <!-- <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -49,5 +49,5 @@ const tableHeader = reactive([
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  />
+  /> -->
 </template>

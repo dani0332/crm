@@ -7,87 +7,87 @@ const props = defineProps({
 const tableHeader = reactive([
   {
     text: 'Customer Name',
-    value: 'uuid',
+    value: 'customer_name',
   },
   {
     text: 'Customer ID',
-    value: 'first_name',
+    value: 'customer_id',
   },
   {
     text: 'Policy Number',
-    value: 'uuid',
+    value: 'policy_number',
   },
   {
     text: 'Insurer',
-    value: 'tier',
+    value: 'insurer',
   },
   {
     text: 'Line Of Bussiness',
-    value: 'uuid',
+    value: 'line_of_bussiness',
   },
   {
     text: 'Policy Start Date',
-    value: 'source',
+    value: 'policy_start_date',
   },
   {
     text: 'Policy Expiry Date',
-    value: 'source',
+    value: 'policy_expiry_date',
   },
   {
     text: 'Collected Amount',
-    value: 'tier',
+    value: 'collected_amount',
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'advisor',
+    value: 'price_with_vat',
   },
   {
     text: 'Total VAT',
-    value: 'created_at',
+    value: 'total_vat',
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'updated_at',
+    value: 'price_without_vat',
   },
   {
     text: 'Discount',
-    value: 'tier',
+    value: 'discount',
   },
   {
     text: 'Total Price',
-    value: 'tier',
+    value: 'total_price',
   },
   {
     text: 'Pending Balance',
-    value: 'tier',
+    value: 'pending_balance',
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'tier',
+    value: 'commission_with_vat',
   },
   {
     text: 'VAT on Commission',
-    value: 'tier',
+    value: 'vat_on_commission',
   },
   {
     text: 'Commission (VAT not applicable)',
-    value: 'tier',
+    value: 'commission_without_vat',
   },
   {
     text: 'Policy Issuer',
-    value: 'first_name',
+    value: 'policy_issuer',
   },
   {
     text: 'Lead Source',
-    value: 'payment_status_id',
+    value: 'lead_source',
   },
   {
     text: 'Advisor',
-    value: 'tier',
+    value: 'advisor',
   },
   {
     text: 'Notes ',
-    value: 'tier',
+    value: 'notes',
   },
 ]);
 </script>
@@ -105,7 +105,7 @@ const tableHeader = reactive([
     hide-footer
   >
   </DataTable>
-  <Pagination
+  <!-- <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -113,5 +113,5 @@ const tableHeader = reactive([
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  />
+  /> -->
 </template>

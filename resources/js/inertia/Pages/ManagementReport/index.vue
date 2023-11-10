@@ -1,24 +1,31 @@
 <script setup>
-import SaleSummary from './Partials/SaleSummary.vue';
+import ActivePolicies from './Partials/ActivePolicies.vue';
+import EndingPolicies from './Partials/EndingPolicies.vue';
+import SalesDetail from './Partials/SalesDetail.vue';
+import SalesSummary from './Partials/SaleSummary.vue';
+import Transaction from './Partials/Transactions.vue';
 
 const props = defineProps({
   reportData: Object,
   defaultFilters: Object,
+  filterOptions: Object,
+  reportName: String,
 });
 
-const loaders = reactive({
-  table: false,
-});
+const reportComponents = {
+  'Customer Active Policies Report': ActivePolicies,
+  'Ending Policies Report': EndingPolicies,
+  'Sales Report Detailed': SalesDetail,
+  'Installment Report': Transaction,
+};
 
-const selectedReport = computed(() => {
-  if (filters.reportCategory == 'Sale Summary Report') return SaleSummary;
-});
+const subTeams = ref([]);
 
 const { isRequired } = useRules();
 
 const filters = reactive({
-  reportCategory: 'Sale Summary Report',
-  createdAt: [],
+  reportCategory: props.reportName,
+  createdAt: [new Date(), new Date()],
   reportType: null,
   teams: [],
   subTeams: [],
@@ -31,24 +38,62 @@ const filters = reactive({
   page: 1,
 });
 
+const loaders = reactive({
+  table: false,
+  subTeams: false,
+});
+
+let selectedReport = computed(
+  () => reportComponents[props.reportName] || SalesSummary,
+);
+
+const computedReportTypes = computed(() => {
+  filters.reportType = null;
+  const filterCondition = filters.reportCategory ?? null;
+
+  return filterCondition
+    ? reportTypes.value.filter(x => x.report.includes(filterCondition))
+    : reportTypes.value;
+});
+
+const leadSource = computed(() => {
+  return Object.keys(props.filterOptions?.leadSources).map(key => ({
+    value: key,
+    label: props.filterOptions?.leadSources[key],
+  }));
+});
+
+const teams = computed(() => {
+  return Object.keys(props.filterOptions?.teams).map(key => ({
+    value: key,
+    label: props.filterOptions?.teams[key],
+  }));
+});
+
+const disabledGroupBy = computed(() => {
+  return filters.reportCategory != 'Sales Summary Report' ?? false;
+});
+
 const reportCategories = reactive([
-  { label: 'Sales Summary Report', value: 'Sale Summary Report' },
-  { label: 'Sales Report Detailed', value: 'Sales Report Detailed' },
+  {
+    label: 'Sales Summary Report',
+    value: 'Sales Summary Report',
+  },
+  {
+    label: 'Sales Report Detailed',
+    value: 'Sales Report Detailed',
+  },
   {
     label: 'Ending Policies Report',
     value: 'Ending Policies Report',
   },
   {
-    label: 'Installment Report',
-    value: 'Installment Report',
+    label: 'Transactions Report',
+    value: 'Transactions Report',
   },
   {
-    label: 'Customer Active Policies Report',
-    value: 'Customer Active Policies Report',
-  },
-  {
-    label: 'Renewals - Daily Summary Report',
-    value: 'Renewals - Daily Summary Report',
+    label: 'Active Policies Report',
+    value: 'Active Policies Report',
   },
 ]);
 
@@ -74,84 +119,65 @@ const groupBy = reactive([
   { label: 'Line of Business', value: 'Line of Business' },
 ]);
 
+const umtGroup = reactive([
+  { label: 'UMT Source', value: 'UMT Source' },
+  { label: 'UMT Medium', value: 'UMT Medium' },
+  { label: 'UMT Campaign', value: 'UMT Campaign' },
+]);
+
 const reportTypes = ref([
   {
     label: 'Issued Policies',
     value: 'Issued Policies',
-    report: 'SalesSummary',
-    column: 'policy_issuance_date',
+    report: ['Sales Summary Report', 'Sales Report Detailed'],
   },
   {
     label: 'Transaction Payments',
     value: 'Transaction Payments',
-    report: 'SalesSummary',
-    column: 'payment_due_date',
-  },
-  {
-    label: 'Issued Policies',
-    value: 'Issued Policies',
-    report: 'SalesDetail',
-    column: 'policy_issuance_date',
-  },
-  {
-    label: 'Transaction Payments',
-    value: 'Transaction Payments',
-    report: 'SalesDetail',
-    column: 'payment_due_date',
+    report: [
+      'Sales Summary Report',
+      'Sales Report Detailed',
+      'Transactions Report',
+    ],
   },
   {
     label: 'Expiring Policies',
     value: 'Expiring Policies',
-    report: 'EndingPolicies',
-    column: 'policy_expiry_date',
+    report: ['Ending Policies Report'],
   },
   {
-    label: 'Transaction Payments',
-    value: 'Transaction Payments',
-    report: 'TransactionReport',
-    column: 'payment_due_date',
+    label: 'Active Policies',
+    value: 'Active Policies',
+    report: ['Active Policies Report'],
   },
 ]);
 
-// onMounted(() => {
-//   if (page.props.defaultFilters && !params['page']) {
-//     filters.advisorAssignedDates =
-//       page.props.defaultFilters.advisorAssignedDates;
-//   }
+const onTeamChange = e => {
+  if (e.length == 0) return;
 
-//   setQueryStringFilters();
-
-//   if (params['teams[]'] && params['teams[]'].length > 0) {
-//     onTeamChange(params['teams[]']);
-//   }
-//   isMounted.value = true;
-// });
-
-const leadSource = computed(() => {
-  return Object.keys(props.defaultFilters?.leadSource).map(key => ({
-    value: key,
-    label: props.defaultFilters?.leadSource[key],
-  }));
-});
-
-const teams = computed(() => {
-  return Object.keys(props.defaultFilters?.teams).map(key => ({
-    value: key,
-    label: props.defaultFilters?.teams[key],
-  }));
-});
-
-const subTeams = computed(() => {
-  return Object.keys(props.defaultFilters?.subTeams).map(key => ({
-    value: key,
-    label: props.defaultFilters?.tiers[key],
-  }));
-});
+  loaders.subTeams = true;
+  axios
+    .post(`/reports/fetch-advisor-by-team`, {
+      teamIds: Array.isArray(e) ? e : [e],
+    })
+    .then(res => {
+      if (res.data.length > 0) {
+        console.log(res.data);
+        subTeams.value = Object.keys(res.data).map(key => ({
+          value: res.data[key].id,
+          label: res.data[key].name,
+        }));
+      }
+    })
+    .finally(() => {
+      loaders.subTeams = false;
+    });
+};
 
 const onSubmit = isValid => {
   if (!isValid) return;
   filters.page = 1;
-  router.visit(route('lead-list-report'), {
+  router.visit(route('report-management'), {
     method: 'get',
     data: useGenerateQueryString(filters),
     preserveState: true,
@@ -162,7 +188,7 @@ const onSubmit = isValid => {
 };
 
 function onReset() {
-  router.visit(route('lead-list-report'), {
+  router.visit(route('report-management'), {
     method: 'get',
     data: { page: 1 },
     preserveScroll: true,
@@ -179,22 +205,22 @@ function onReset() {
   <x-divider class="my-4" />
   <x-form @submit="onSubmit" :auto-focus="false">
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Report Category">
+      <x-field label="Report Category" required>
         <x-select
-          :single="true"
           v-model="filters.reportCategory"
           placeholder="Select Report Category"
           :options="reportCategories"
           class="w-full"
+          :rules="[isRequired]"
         />
       </x-field>
-      <x-field label="Report Type">
+      <x-field label="Report Type" required>
         <x-select
-          :single="true"
-          v-model="filters.ReportType"
+          v-model="filters.reportType"
           placeholder="Select Report Type"
-          :options="reportTypes"
+          :options="computedReportTypes"
           class="w-full"
+          :rules="[isRequired]"
         />
       </x-field>
       <x-field label="Create Date" required>
@@ -205,9 +231,10 @@ function onReset() {
           :max-range="92"
           size="sm"
           model-type="yyyy-MM-dd"
+          :rules="[isRequired]"
         />
       </x-field>
-      <x-field label="Transaction Type" required>
+      <x-field label="Transaction Type">
         <x-select
           v-model="filters.transactionType"
           placeholder="Search by Transaction"
@@ -221,25 +248,26 @@ function onReset() {
         <ComboBox
           v-model="filters.teams"
           placeholder="Search By Teams"
-          :options="props.defaultFilters?.teams"
-          :max-limit="3"
+          :options="teams"
           deselect-all
+          @update:modelValue="onTeamChange($event)"
         />
       </x-field>
       <x-field label="Sub Teams">
         <ComboBox
           v-model="filters.subTeams"
           placeholder="Search By Teams"
-          :options="props.defaultFilters?.subTeams"
+          :options="subTeams"
           :max-limit="3"
           deselect-all
+          :loading="loaders.subTeams"
         />
       </x-field>
       <x-field label="Lead Source">
         <ComboBox
           v-model="filters.leadSources"
           placeholder="Search by Lead Source"
-          :options="props.defaultFilters?.leadSource"
+          :options="leadSource"
           :max-limit="3"
           deselect-all
         />
@@ -263,21 +291,22 @@ function onReset() {
           placeholder="Search by Group"
           :options="groupBy"
           class="w-full"
+          :disabled="disabledGroupBy"
         />
       </x-field>
       <x-field label="UMT (Group By 1)">
         <x-select
-          v-model="filters.transactionType"
+          v-model="filters.utmFirst"
           placeholder="Search by UMT Group"
-          :options="groupBy"
+          :options="umtGroup"
           class="w-full"
         />
       </x-field>
       <x-field label="UMT (Group By 2)">
         <x-select
-          v-model="filters.transactionType"
+          v-model="filters.utmSecond"
           placeholder="Search by Ecommerce"
-          :options="groupBy"
+          :options="umtGroup"
           class="w-full"
         />
       </x-field>

@@ -10,43 +10,43 @@ const props = defineProps({
 const tableHeader = reactive([
   {
     text: 'GROUP BY',
-    value: 'uuid',
+    value: 'group_by',
   },
   {
     text: 'Total Policies',
-    value: 'first_name',
+    value: 'total_policies',
   },
   {
     text: 'Total Endorsements',
-    value: 'source',
+    value: 'total_endorsements',
   },
   {
     text: 'Total Transactions',
-    value: 'quoteStatus',
+    value: 'total_transaction',
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'payment_status_id',
+    value: 'price_vat_applicable',
   },
   {
     text: 'Total VAT',
-    value: 'is_ecommerce',
+    value: 'total_vat',
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'advisor',
+    value: 'price_vat_not_applicable',
   },
   {
     text: 'Discount',
-    value: 'created_at',
+    value: 'discount',
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'updated_at',
+    value: 'commission',
   },
   {
     text: 'Total Price',
-    value: 'tier',
+    value: 'total_price',
   },
 ]);
 </script>

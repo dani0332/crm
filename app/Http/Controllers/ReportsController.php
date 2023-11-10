@@ -169,9 +169,10 @@ class ReportsController extends Controller
         $reportInstance =  ManagementReportServiceFactory::createStrategy($reportCategory);
 
         return inertia('ManagementReport/index', [
-            // 'reportData' => $reportInstance->getReportData($request),
+            'reportData' => $reportInstance->getReportData($request),
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
+            'reportName' => $request->reportCategory ?? 'Sales Summary Report'
         ]);
     }
 }

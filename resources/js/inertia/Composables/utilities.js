@@ -40,12 +40,17 @@ export const useObjToUrl = obj =>
     .join('&');
 };
 
+// modified useGenerateQueryString also for the arrays
+
 export const useGenerateQueryString = filters =>
 {
   const query = {};
-  Object.keys(filters).forEach(key =>
+  Object.keys(filters).forEach((key) =>
   {
-    if (filters[key] !== '' && filters[key] != null)
+    if (Array.isArray(filters[key]) && filters[key].length > 0)
+    {
+      query[key] = filters[key];
+    } else if (filters[key] !== '' && filters[key] != null)
     {
       query[key] = filters[key];
     }

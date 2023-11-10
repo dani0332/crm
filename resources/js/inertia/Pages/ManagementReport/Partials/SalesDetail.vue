@@ -7,119 +7,119 @@ const props = defineProps({
 const tableHeader = reactive([
   {
     text: 'Policy Number',
-    value: 'uuid',
+    value: 'policy_number',
   },
   {
     text: 'Transactions',
-    value: 'first_name',
+    value: 'transactions',
   },
   {
     text: 'Policy Start Date',
-    value: 'source',
+    value: 'policy_start_date',
   },
   {
     text: 'Payment Due Date',
-    value: 'quoteStatus',
+    value: 'payment_due_date',
   },
   {
     text: 'Lead Source',
-    value: 'payment_status_id',
+    value: 'lead_source',
   },
   {
     text: 'Team',
-    value: 'is_ecommerce',
+    value: 'team',
   },
   {
     text: 'Price (VAT applicable)',
-    value: 'advisor',
+    value: 'price_with_vat',
   },
   {
     text: 'Total VAT',
-    value: 'created_at',
+    value: 'total_vat',
   },
   {
     text: 'Price (VAT not applicable)',
-    value: 'updated_at',
+    value: 'price_without_vat',
   },
   {
     text: 'Discount',
-    value: 'tier',
+    value: 'discount',
   },
   {
     text: 'Total Price',
-    value: 'tier',
+    value: 'total_price',
   },
   {
     text: 'Commission (VAT applicable)',
-    value: 'tier',
+    value: 'commission',
   },
   {
     text: 'VAT on Commission',
-    value: 'tier',
+    value: 'vat_on_commission',
   },
   {
     text: 'Commission (VAT not applicable)',
-    value: 'tier',
+    value: 'commission_without_vat',
   },
   {
     text: 'Total Commission',
-    value: 'tier',
+    value: 'total_commission',
   },
   {
     text: 'Collects',
-    value: 'tier',
+    value: 'collects',
   },
   {
     text: 'Insurer Tax Invoice Number',
-    value: 'tier',
+    value: 'inurer_tax_invoice_number',
   },
   {
     text: 'Tax Invoice Date',
-    value: 'tier',
+    value: 'tax_invoice_date',
   },
   {
     text: 'Transaction Payment Status',
-    value: 'tier',
+    value: 'transaction_payment_status',
   },
   {
     text: 'Date Paid',
-    value: 'tier',
+    value: 'date_paid',
   },
   {
     text: 'Collected Amount',
-    value: 'tier',
+    value: 'collected_amount',
   },
   {
     text: 'Customer Name',
-    value: 'tier',
+    value: 'customer_name',
   },
   {
     text: 'Customer Id',
-    value: 'tier',
+    value: 'customer_id',
   },
   {
     text: 'Customer Type',
-    value: 'tier',
+    value: 'customer_type',
   },
   {
     text: 'Insurer',
-    value: 'tier',
+    value: 'insurer',
   },
   {
     text: 'Line of Business',
-    value: 'tier',
+    value: 'line_of_business',
   },
   {
     text: 'Sub-Type',
-    value: 'tier',
+    value: 'sub_type',
   },
   {
     text: 'Advisor',
-    value: 'tier',
+    value: 'advisor',
   },
   {
     text: 'Policy Issuer ',
-    value: 'tier',
+    value: 'policy_issuer',
   },
 ]);
 </script>
@@ -137,7 +137,7 @@ const tableHeader = reactive([
     hide-footer
   >
   </DataTable>
-  <Pagination
+  <!-- <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -145,5 +145,5 @@ const tableHeader = reactive([
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  />
+  /> -->
 </template>
