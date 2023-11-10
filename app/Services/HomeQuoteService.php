@@ -62,7 +62,7 @@ class HomeQuoteService extends BaseService
             'hqr.payment_status_id',
             'u.name as advisor_id_text',
             'hqr.previous_advisor_id',
-            'hqr.dob',
+            DB::raw('DATE_FORMAT(hqr.dob, "%d-%m-%Y") as dob'),
             'uadv.name AS previous_advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
