@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CycleQuoteRequest;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CycleQuoteRepository;
@@ -146,12 +147,12 @@ class CycleQuoteController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Cycle, $quote->id);
+        $entities = $quote->customer_type == 'Entity' ? Entity::all() : null;
 
         return inertia('CycleQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
+            'entities' => $entities,
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
             'activities' => $activities,
