@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
@@ -132,12 +133,12 @@ class BikeQuoteController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Bike, $quote->id);
+        $entities = $quote->customer_type == 'Entity' ? Entity::all() : null;
 
         return inertia('BikeQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
+            'entities' => $entities,
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'activities' => $activities,
