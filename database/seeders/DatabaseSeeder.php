@@ -40,7 +40,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             UpdateCustomerToHealthAndTravelMemberDetails::class,
             UpdateCodeColumnInCustomerTable::class,
-            CustomerMembersTableSeeder::class,
+            EmbeddedProductRoleAndPermissionSeeder::class,
         ]);
     }
 }
