@@ -30,7 +30,9 @@ const changeButtonType = val => {
 }
 
 onMounted(() => {
-  if (props.quote.kyc_decision !== 'Complete') {
+  if (props.quote.kyc_decision === 'Complete') {
+    modals.buttonType = true
+  } else {
     modals.buttonType = false
   }
 });
