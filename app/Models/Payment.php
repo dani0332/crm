@@ -103,6 +103,15 @@ class Payment extends Model
         return $this->hasMany(PaymentStatusLog::class, 'payment_code', 'code');
     }
 
+    public function getCustomerPaymentInstrument()
+    {
+        return $this->belongsTo(
+            CustomerPaymentInstrument::class,
+            'customer_payment_instrument_id',
+            'id'
+        );
+    }
+
     public function getCreatedAtAttribute($date)
     {
         return (! empty($date)) ? Carbon::parse($date)->format(config('constants.DATETIME_DISPLAY_FORMAT')) : '';

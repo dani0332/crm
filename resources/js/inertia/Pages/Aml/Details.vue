@@ -1,6 +1,7 @@
 <script setup>
 import IndividualModel from "./Partials/IndividualModel.vue";
 import EntityModel from "./Partials/EntityModel.vue";
+import { onMounted, ref } from "vue";
 
 const props = defineProps({
     quoteType: Object,
@@ -32,6 +33,7 @@ const props = defineProps({
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
+const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
 const loader = reactive({
     table: false,
@@ -50,6 +52,14 @@ const tableHeader = [
     {text: 'Date of Birth', value: 'date_of_birth'},
     {text: 'Screening Date', value: 'created_at'},
     {text: 'Status', value: 'status'},
+];
+
+const payersTableHeader = [
+    {text: 'PAYMENT REF ID', value: 'code'},
+    {text: 'PAYMENT METHOD', value: 'payment_method.name' },
+    {text: 'PAYER NAME', value: 'get_customer_payment_instrument.card_holder_name' },
+    {text: 'TOTAL AMOUNT', value: 'captured_amount'},
+    {text: 'PAID BY', value: 'paid_by'},
 ];
 
 if (hasRole(rolesEnum.COMPLIANCE)) {
@@ -74,6 +84,12 @@ const dateToYear = date => {
     }
     return '';
 }
+
+onMounted(()=> {
+    // paymentsRef.value = page.props.quoteRequest.payments;
+    console.log(paymentsRef.value);
+
+});
 
 </script>
 
@@ -626,6 +642,39 @@ const dateToYear = date => {
                             View
                         </x-button>
                     </div>
+                </template>
+            </DataTable>
+        </div>
+
+        <div class="p-4 rounded shadow mb-6 bg-white">
+            <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                <h3 class="font-semibold text-primary-800 text-lg">Payer Details</h3>
+            </div>
+            <x-divider class="mb-4 mt-1" />
+            <DataTable
+                table-class-name="tablefixed"
+                :headers="payersTableHeader"
+                :loading="loader.table"
+                :items="paymentsRef || []"
+                border-cell
+                hide-rows-per-page
+                hide-footer
+                fixed-checkbox
+            >
+                <template #payment_ref_id="{ code }">
+                    {{ code }}
+                </template>
+                <template #payment-method="{ payment_method }">
+                    {{ payment_method.name }}
+                </template>
+                <template #payer-name="item">
+                    {{ paymentsRef.get_customer_payment_instrument.car_holder_name ? paymentsRef.get_customer_payment_instrument.car_holder_name : 'N/A' }}
+                </template>
+                <template #total-amount="{ captured_amount}">
+                    {{ captured_amount }}
+                </template>
+                <template #paid_by="{ paid_by}">
+                    {{paymentsRef.paid_by ? paymentsRef.paid_by : 'Third Party' }}
                 </template>
             </DataTable>
         </div>

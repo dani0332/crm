@@ -77,6 +77,8 @@ class AMLService
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $quoteRequestDetails = CarQuote::with([
                 'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer',
                 'uaeLicenseHeldFor',
@@ -91,6 +93,8 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = HomeQuote::with([
                 'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer',
                 'possessionType',
@@ -100,6 +104,8 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
                 'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer',
                 'healthCoverFor',
@@ -111,6 +117,8 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
             $quoteRequestDetails = LifeQuote::with([
                 'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer',
                 'purposeOfInsurance',
@@ -125,6 +133,8 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $quoteRequestDetails = BusinessQuote::with([
                 'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer',
                 'businessTypeOfInsurance',
@@ -133,6 +143,8 @@ class AMLService
         } elseif ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
             $quoteRequestDetails = TravelQuote::with([
                 'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
                 'customer',
                 'regionCoverFor',
@@ -146,11 +158,15 @@ class AMLService
                     'petQuote',
                     'customer',
                     'quoteStatus',
+                    'payments.paymentMethod',
+                    'payments.getCustomerPaymentInstrument',
                     'paymentStatus',
                 ])->where('id', $quoteRequestId)->firstOrFail();
             } else {
                 $quoteRequestDetails = PetQuote::with([
                     'quoteStatus',
+                    'payments.paymentMethod',
+                    'payments.getCustomerPaymentInstrument',
                     'paymentStatus',
                     'customer',
                 ])->where('id', $quoteRequestId)->firstOrFail();

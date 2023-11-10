@@ -1,4 +1,5 @@
 <script setup>
+import { ref, watch } from 'vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
 import UBODetailsModels from './UBODetailsModels.vue';
 import {XButton, XInput} from '@indielayer/ui';
@@ -40,6 +41,7 @@ const nationalitiesOptions = computed(() => {
         label: nat.text,
     }));
 });
+
 const emirateRegistrationOptions = computed(() => {
     return props.emirates.map(emirate => ({
         value: emirate.id,
@@ -186,6 +188,33 @@ const linkEntity = () => {
         })
         .finally(() => (entityDetailsFound.value = false));
 };
+
+const payerNameRef = ref(null);
+
+const insurerFullName = computed(() => {
+    return (
+        insuredFormDetails.insured_first_name +
+        ' ' +
+        insuredFormDetails.insured_last_name
+        );
+    });
+
+const paidByRef = ref('third-party');
+
+watch(
+  () => insurerFullName,
+  val => {
+    if (payerNameRef.value == val) {
+      paidByRef.value = 'self';
+    }
+  }
+);
+
+// onMounted(() => {
+// //   console.log(props.entityDetails)
+// //   console.log(props.quoteDetails.payments)
+// //   console.log(props.membersDetails)
+// });
 </script>
 
 <template>
@@ -254,44 +283,99 @@ const linkEntity = () => {
                 Payer Details
             </h3>
 
-            <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                <x-field label="Payment Method:">
+            <section v-if="props.quoteDetails.payments ">
+            <dl v-for=" payment in props.quoteDetails.payments" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                <x-field label="Payment ID:">
                     <x-input
-                        v-model="insuredFormDetails.insured_first_name"
+                        v-model="payment.code"
+                        placeholder="Payment ID"
+                        :readonly="true"
                         :rules="[isRequired]"
-                        placeholder="Insured First Name"
                         type="text"
                         class="w-full"
                     />
                 </x-field>
-                <x-field label="Payer Name:">
+                <x-field label="Payment Method:">
                     <x-input
-                        v-model="insuredFormDetails.insured_last_name"
+                        v-model="payment.payment_method.name"
+                        placeholder="Payment Method"
+                        :readonly="true"
                         :rules="[isRequired]"
-                        placeholder="Insured Last Name"
                         type="text"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
+                    <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
+                        <x-input
+                        v-model="payment.get_customer_payment_instrument.card_holder_name"
+                        placeholder="Payer Name"
+                        :readonly="true"
+                        :rules="[isRequired]"
+                        type="text"
+                        class="w-full"
+                        />
+                    </template>
+                    <template v-else>
+                        <x-input
+                        v-model="payerNameRef"
+                        placeholder="Payer Name"
+                        type="text"
+                        :rules="[isRequired]"
+                        class="w-full"
+                        />
+                    </template>
+                </x-field>
+                <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
+                    <x-input
+                        v-model="insurerFullName"
+                        placeholder="Payer Name"
+                        :readonly="true"
+                        :rules="[isRequired]"
+                        type="text"
+                        class="w-full"
+                    />
+                </x-field>
+                <x-field v-else>
+                    <x-input
+                        v-model="payerNameRef"
+                        placeholder="Payer Name"
+                        type="text"
+                        :rules="[isRequired]"
                         class="w-full"
                     />
                 </x-field>
                 <x-field label="Total Amount:">
                     <x-input
-                        v-model="insuredFormDetails.insured_first_name"
+                        v-model="payment.captured_amount"
+                        :readonly="true"
                         :rules="[isRequired]"
-                        placeholder="Insured First Name"
+                        placeholder="Total Amount"
                         type="text"
                         class="w-full"
                     />
                 </x-field>
                 <x-field label="Paid By:">
-                    <x-input
-                        v-model="insuredFormDetails.insured_last_name"
+                    <ComboBox
+                        v-model="paidByRef"
+                        :single="true"
                         :rules="[isRequired]"
-                        placeholder="Insured Last Name"
-                        type="text"
+                        placeholder="Select Paid by"
+                        :options="[
+                            {label: 'Self', value: 'self'},
+                            {label: 'Third Party', value: 'third-party'}
+                        ]"
+                        selected-value="self"
                         class="w-full"
                     />
                 </x-field>
+                <br/>
+                <x-divider class="mb-4 mt-4"/>
+                <x-divider class="mb-4 mt-4"/>
             </dl>
+            </section>
+
+
 
             <div class="text-right space-x-4 mt-8">
                 <x-button
