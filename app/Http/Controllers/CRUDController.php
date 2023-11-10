@@ -767,7 +767,7 @@ class CRUDController extends Controller
             return inertia('HomeQuote/Show', [
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
-                'kycDocumentCount' => $kycDocument,
+                'entities' => $entities,
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
