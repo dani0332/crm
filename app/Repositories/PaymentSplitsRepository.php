@@ -2,9 +2,9 @@
 
 namespace App\Repositories;
 
+use App\Enums\PaymentAllocationStatus;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
-use App\Enums\PaymentAllocationStatus;
 use App\Enums\QuoteTypeId;
 use App\Factories\SagePayloadFactory;
 use App\Http\Controllers\SageApi;
@@ -196,23 +196,25 @@ class PaymentSplitsRepository
         }
     }
 
-    public function getChildPaymentStatus($paymentType){
+    public function getChildPaymentStatus($paymentType)
+    {
         $childPaymentStatus = PaymentStatusEnum::NEW;
-        if ($paymentType == PaymentMethodsEnum::BankTransfer || 
-            $paymentType == PaymentMethodsEnum::InsurerPayment || 
+        if ($paymentType == PaymentMethodsEnum::BankTransfer ||
+            $paymentType == PaymentMethodsEnum::InsurerPayment ||
             $paymentType == PaymentMethodsEnum::Cheque ||
-            $paymentType == PaymentMethodsEnum::PostDatedCheque  
+            $paymentType == PaymentMethodsEnum::PostDatedCheque
         ) {
             $childPaymentStatus = PaymentStatusEnum::PENDING;
         } elseif ($paymentType == PaymentMethodsEnum::CreditApproval) {
             $childPaymentStatus = PaymentStatusEnum::CREDIT_APPROVED;
         }
+
         return $childPaymentStatus;
 
     }
 
     public function updatePaymentStatus($request)
-    {  
+    {
         $successMessage = 'Payment Verified';
         if ($request->is_approved) {
             $paymentInformation = [
@@ -228,13 +230,13 @@ class PaymentSplitsRepository
             if ($payment) {
                 $payment->update(
                     ['captured_amount' => ($payment->captured_amount + $request->collection_amount),
-                    'payment_allocation_status'=>PaymentAllocationStatus::NOT_ALLOCATED]
+                        'payment_allocation_status' => PaymentAllocationStatus::NOT_ALLOCATED]
                 );
             }
             //associate approved documents with payment split
-            if(isset($request->approved_document_model[$splitPayment->sr_no]) 
-                && count($request->approved_document_model[$splitPayment->sr_no]) > 0){
-                foreach($request->approved_document_model[$splitPayment->sr_no] as $document){
+            if (isset($request->approved_document_model[$splitPayment->sr_no])
+                && count($request->approved_document_model[$splitPayment->sr_no]) > 0) {
+                foreach ($request->approved_document_model[$splitPayment->sr_no] as $document) {
                     $quoteDocumentRec = QuoteDocument::find($document['id']);
                     if ($quoteDocumentRec) {
                         $quoteDocumentRec->payment_split_id = $splitPayment->id;
@@ -242,9 +244,8 @@ class PaymentSplitsRepository
                     }
                 }
             }
-           
-            
-            /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING 
+
+            /* STILL PARAMETERS REQUIRED FROM OTHER DEVELOPING
             $sageRequest = new \stdClass();
             $sageRequest->discount = 0.00;
             $sageRequest->insurerInvoiceDate = $splitPayment->due_date;
@@ -264,22 +265,22 @@ class PaymentSplitsRepository
             //$sageApi = new SageApi(new SageApiService());
             //$sageResponse = $sageApi->processSagePost($sageRequest);
             */
-            
+
             /* CUSTOMER PAYLOAD
             $payLoadOptions = SagePayloadFactory::createCustomerPayload($successMessage);
             $jsonResponse = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             dd($jsonResponse);
             $leadStatus = 'policy booked';
             */
-            
+
             //$message = $sageApiService->postToSage300('AR/ARReceiptAndAdjustmentBatches', $createPrepaymentReciept);
-            /* NEW CUSTOMER CREATION           
+            /* NEW CUSTOMER CREATION
             $sageApiService = new SageApiService();
             $sageCustomerNumber = $sageApiService->verifySageCustomer($request->customer_id);
             */
             $sageApiService = new SageApiService();
             $payLoadOptions = SagePayloadFactory::createPrepaymentPayload($request);
-            $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);            
+            $message = $sageApiService->postToSage300($payLoadOptions['endPoint'], $payLoadOptions['payload']);
             $sageResponse = json_decode($message, true);
             $documentNumberForReciept = $sageResponse['ReceiptsAdjustments'][0]['DocumentNumber'];
             $paymentInformation['sage_reciept_id'] = $documentNumberForReciept;
@@ -294,7 +295,7 @@ class PaymentSplitsRepository
                 'updated_by' => $request->user()->id,
             ];
             PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
-            $successMessage = 'Payment Declined';            
+            $successMessage = 'Payment Declined';
         }
 
         //Update parent payment status if all splits are paid

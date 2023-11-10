@@ -277,11 +277,12 @@ class SagePayloadFactory
         $appendGroup = 'G';
         $customerNumber = self::customizeCustomerId($customer->id, $appendGroup);
         //dd($customerNumber);
-        $payLoad = [           
-                'CustomerNumber' => $customerNumber.'H',
-                'CustomerName' => $customer->first_name.' '.$customer->last_name,
-                'GroupCode' => 'PHI',            
+        $payLoad = [
+            'CustomerNumber' => $customerNumber.'H',
+            'CustomerName' => $customer->first_name.' '.$customer->last_name,
+            'GroupCode' => 'PHI',
         ];
+
         return [
             'endPoint' => 'AR/ARCustomers',
             'payload' => $payLoad,
@@ -311,24 +312,27 @@ class SagePayloadFactory
                 ],
             ],
         ];
+
         return [
             'endPoint' => 'AR/ARReceiptAndAdjustmentBatches',
             'payload' => $payLoad,
         ];
     }
 
-    private static function customizeCustomerId($customerId, $appendGroup, $minLength = 12) {
+    private static function customizeCustomerId($customerId, $appendGroup, $minLength = 12)
+    {
         $minLength = max(1, $minLength);
-        $paddingLength = $minLength - strlen($customerId);    
+        $paddingLength = $minLength - strlen($customerId);
         if ($paddingLength < 0) {
             return $customerId;
         } else {
-            $paddedCustomerId = str_repeat('0', $paddingLength) . $customerId;
+            $paddedCustomerId = str_repeat('0', $paddingLength).$customerId;
             $paddedCustomerId[0] = $appendGroup;
+
             return $paddedCustomerId;
         }
-    }    
-   
+    }
+
     private static function createOptionalFields($request)
     {
         $optionalArray = [

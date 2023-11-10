@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Services;
+
 use App\Factories\SagePayloadFactory;
 use App\Models\Customer;
 
@@ -27,14 +28,14 @@ class SageApiService
 
             $response = json_decode($jsonResponse, true);
             //dd($response);
-            if( isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate'){
+            if (isset($response['error']['code']) && $response['error']['code'] == 'RecordDuplicate') {
                 return $payLoadOptions['customerNumber'];
-            } else if (isset($response['CustomerNumber'])) {
+            } elseif (isset($response['CustomerNumber'])) {
                 return $response['CustomerNumber'];
             } else {
                 return false;
             }
-        }            
+        }
     }
 
     public function postToSage300($endPoint, $payLoad)

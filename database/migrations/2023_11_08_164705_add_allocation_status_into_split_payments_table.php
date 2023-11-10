@@ -18,7 +18,7 @@ return new class extends Migration
 
             if (! Schema::hasColumn('payment_splits', 'reference')) {
                 $table->string('reference', '1000')->nullable();
-            } 
+            }
 
             if (! Schema::hasColumn('payment_splits', 'captured_at')) {
                 $table->dateTime('captured_at')->nullable();
@@ -35,7 +35,7 @@ return new class extends Migration
             if (! Schema::hasColumn('payment_splits', 'is_approved')) {
                 $table->boolean('is_approved')->default(false);
             }
-               
+
         });
     }
 

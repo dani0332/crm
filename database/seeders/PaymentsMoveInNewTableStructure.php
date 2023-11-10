@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\Payment;
 use App\Models\PaymentSplits;
+use Illuminate\Database\Seeder;
 
 class PaymentsMoveInNewTableStructure extends Seeder
-{ 
+{
     /**
      * Run the database seeds.
      */
@@ -16,16 +15,15 @@ class PaymentsMoveInNewTableStructure extends Seeder
     {
         // NEED VERIFICATION AT THE END
         //$payments = Payment::all();
-        $payments = Payment::where('code','CAR-GTUKFY49')->orderBy('created_at')->get();
+        $payments = Payment::where('code', 'CAR-GTUKFY49')->orderBy('created_at')->get();
 
-        
         foreach ($payments as $payment) {
             // Extract the code and check if it has child payments
             $code = $payment->code;
 
-            $splitPaymentExists = PaymentSplits::where('code',$code)->count();
+            $splitPaymentExists = PaymentSplits::where('code', $code)->count();
 
-            if($splitPaymentExists>0){
+            if ($splitPaymentExists > 0) {
                 continue;
             }
             $childPayments = Payment::where('code', 'like', "$code%")->get();
@@ -34,7 +32,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
             $payment->frequency = 'split_payments';
             $payment->total_price = $grandTotal;
             $payment->total_amount = $grandTotal;
-            $payment->collection_type='broker';
+            $payment->collection_type = 'broker';
             $payment->collection_date = $payment->updated_at;
             $payment->save();
 
@@ -42,13 +40,12 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 $payment_sr_no = 1;
                 foreach ($childPayments as $childPayment) {
 
-
-                    if ( $childPayment->payment_status_id == 11 ){ //draft
+                    if ($childPayment->payment_status_id == 11) { //draft
                         $childPayment->payment_status_id = 14; //new
                     }
                     // Create a new SplitPayment record
                     $collectionAmount = 0;
-                    if ($childPayment->payment_status_id==10){ //if paid
+                    if ($childPayment->payment_status_id == 10) { //if paid
                         $collectionAmount = $childPayment->captured_amount;
                     }
                     PaymentSplits::create([
@@ -62,7 +59,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                         'cc_payment_id' => $childPayment->amount,
                         'cc_payment_gateway' => $childPayment->amount,
                         'payment_link' => $childPayment->payment_link,
-                        'payment_link_created_at' => $childPayment->payment_link_created_at, 
+                        'payment_link_created_at' => $childPayment->payment_link_created_at,
                     ]);
 
                     $payment_sr_no++;
@@ -71,8 +68,6 @@ class PaymentsMoveInNewTableStructure extends Seeder
                 }
             }
         }
-
-
 
     }
 }

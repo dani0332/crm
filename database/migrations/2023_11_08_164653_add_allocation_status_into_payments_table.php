@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('payments', function (Blueprint $table) {
             if (! Schema::hasColumn('payments', 'payment_allocation_status')) {
                 $table->string('payment_allocation_status', '1000')->nullable();
-            }           
+            }
         });
     }
 

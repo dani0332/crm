@@ -524,9 +524,9 @@
                                 @if($feature['type'] == 'info')
 
                                     @if($feature['code'] == 'ancillaryExcess')
-                                        {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%')  : 'N/A' !!}
+                                        {!!  $plans[$planId]->{$feature['code']} ? ($plans[$planId]->{$feature['code']} . '%')  : 'TBA' !!}
                                     @else
-                                        {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                                        {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'TBA' !!}
                                     @endif
 
                                 @elseif($feature['type'] == 'prop')
