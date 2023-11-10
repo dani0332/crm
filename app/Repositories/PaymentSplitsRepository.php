@@ -232,8 +232,9 @@ class PaymentSplitsRepository
                 );
             }
             //associate approved documents with payment split
-            if(isset($request->approved_document_model[1]) && count($request->approved_document_model[1]) > 0){
-                foreach($request->approved_document_model[1] as $document){
+            if(isset($request->approved_document_model[$splitPayment->sr_no]) 
+                && count($request->approved_document_model[$splitPayment->sr_no]) > 0){
+                foreach($request->approved_document_model[$splitPayment->sr_no] as $document){
                     $quoteDocumentRec = QuoteDocument::find($document['id']);
                     if ($quoteDocumentRec) {
                         $quoteDocumentRec->payment_split_id = $splitPayment->id;

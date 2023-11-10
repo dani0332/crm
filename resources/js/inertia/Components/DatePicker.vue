@@ -37,6 +37,10 @@ const props = defineProps({
     type: String,
     default: '',
   },
+  onChange: {
+    type: String,
+    default: '',
+  },
 });
 
 const selectedData = computed({
@@ -62,6 +66,7 @@ const selectedData = computed({
     utc="preserve"
     :is-24="false"
     text-input
+    @change="props.onChange"
   >
     <template #dp-input="{ value, onClear, onInput, onBlur }">
       <x-input

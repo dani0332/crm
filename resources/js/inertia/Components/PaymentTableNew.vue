@@ -37,6 +37,7 @@ const isViewEnabled = ref(false);
 const fileErrorMessage = ref('');
 const splitPaymentNo = ref(0);
 const isApproveClicked = ref(false);
+const isApproveConfirm = ref(false);
 const isDeclineClicked = ref(false);
 const isDeclineCustomReason = ref(false);
 const isApprovePaymentError = ref(false);
@@ -556,7 +557,10 @@ const formatAmount = (amount) => {
 const handleFrequencyChange = (noPaymentUpdate=true) => {
   var resetPaymentMethod = false;
   totalPayments.value = []; 
-  paymentMethodsForm.credit_approval = '';
+  if ( paymentMethodsForm.status === 'create' ) {
+    paymentMethodsForm.credit_approval = '';
+  }
+  
   isCustomReasonEnabled.value = false; 
   handleApprovalReasonChange();
 
@@ -731,6 +735,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no) => {
   isPaymentMetodNotSelected.value = [];
   isDocumentNotUploaded.value = [];
   resetDiscountReason.value = '';
+  isApproveConfirm.value = false;
 
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
@@ -837,18 +842,22 @@ const paymentMethodsForm = useForm({
 });
 
 const validateViewPayment = () => {  
-  if (parseFloat(splitAmountModels.value[splitPaymentNo.value]).toFixed(2) > parseFloat(paymentMethodsForm.collection_amount).toFixed(2)) {
-     isApprovePaymentError.value = true;
-    return true;
+  if (isApprovePaymentError.value === false){
+    if (parseFloat(splitAmountModels.value[splitPaymentNo.value]).toFixed(2) > parseFloat(paymentMethodsForm.collection_amount).toFixed(2)) {
+      isApprovePaymentError.value = true;
+      return true;
+    }
   }
   return false;
 }
 
 const validateApprovedDocument = () => {  
-  if (paymentMethodsForm.collection_type==='insurer') {      
-      console.log('sssazhar1='+approvedDocumentModel.value);
-      if (approvedDocumentModel.value==='' ) {
-        console.log('sssazhar122='+approvedDocumentModel.value);
+  if (paymentMethodsForm.collection_type==='insurer') {  
+console.log('tt'+splitPaymentNo.value);
+console.log('docccazhar1='+JSON.stringify(approvedDocumentModel.value[splitPaymentNo.value]));
+
+    if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
+    || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
         isApprovedDocumentNotUploaded.value = true;
         return true;
       } else {
@@ -1369,6 +1378,7 @@ const providerId = computed(() => {
                 name="collection_date"                
                 v-model="paymentMethodsForm.collection_date"
                 :rules="[rules.isRequired]"
+                :onChange="calculateDueDates()"
               />
             </x-field>
           </div>
@@ -1593,6 +1603,8 @@ const providerId = computed(() => {
                 <span v-if="paymentMethodsForm.credit_approval!=''" class="close-icon"  @mousedown.stop="resetCreditApproval()">
                 &#10006; 
               </span>
+
+              {{ console.log('CAAAAAazhar19='+paymentMethodsForm.credit_approval) }}
               <select
                   class="custom-select"
                   v-model="paymentMethodsForm.credit_approval"
@@ -2180,9 +2192,9 @@ const providerId = computed(() => {
                   />
                 </x-field>
               </div>
-              <div class="w-1/2 px-2">
+              <div class="w-1/3 px-2">
                 <x-tooltip>
-                <x-field label="DOCUMENT" class="dropzone-field"></x-field>
+                <x-field label="DOCUMENT" class="dropzone-field" :required="paymentMethodsForm.collection_type==='insurer'"></x-field>
                 <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
                 </template>
@@ -2207,11 +2219,11 @@ const providerId = computed(() => {
       <x-divider class="mb-4 mt-1" />
       <template  v-if="isViewEnabled">        
         
-          <template v-if="isApproveClicked">
+          <template v-if="isApproveConfirm">
             <div class="w-full text-right">Do you wish to proceed with payment confirmation?</div>
             <div class="w-full flex justify-end">
               <div class="mr-4">
-                <x-button size="sm" @click="isApproveClicked = !isApproveClicked">
+                <x-button size="sm" @click="isApproveClicked = !isApproveClicked; isApproveConfirm=!isApproveConfirm">
                   No
                 </x-button>
               </div>
@@ -2240,7 +2252,10 @@ const providerId = computed(() => {
                 </x-button>
               </div>
               <div v-if="!isDeclineClicked && paymentMethodsModels[splitPaymentNo]!='CC'">
-                <x-button class="mr-2" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked">
+                <x-button v-if="!isApproveClicked" class="mr-2" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked">
+                  Approve
+                </x-button>
+                <x-button v-if="isApproveClicked" class="mr-2" size="sm" color="#ff5e00" @click="isApproveConfirm = !isApproveConfirm">
                   Approve
                 </x-button>
               </div>
@@ -2373,10 +2388,10 @@ const providerId = computed(() => {
   position: absolute;
   top: 8px;
   left: 0;
-  margin-left: calc(100% - 20px);
+  margin-left: calc(100% - 39px);
   cursor: pointer;
   color: #333; /* Customize the close icon color */
-  font-size: 1.2rem;
+  font-size: 1.rem;
   font-weight: normal;
 }
 

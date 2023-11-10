@@ -41,6 +41,7 @@ class DatabaseSeeder extends Seeder
             PaymentMethodsAddSeeder::class,
             AddNewDocumentTypeSeeder::class,
             PaymentStatusAddSeeder::class,
+            updateDocTypePayment::class,
         ]);
     }
 }
