@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -21,7 +22,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -30,6 +31,21 @@ class CarEmailService extends BaseService
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
+        $quotePlansCount = is_countable($plans) ? count($plans) : 0;
+        if ($quotePlansCount > 0) {
+            info('Inside plans of count: '.$lead->uuid.'    ');
+            $pdfData = [
+                'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
+                'quote_uuid' => $lead->uuid,
+            ];
+            $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
+            if (isset($pdf['error'])) {
+                info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
+            } else {
+                $emailData->pdfAttachment = (object) $pdf;
+                info('attaching pdf: '.$lead->uuid.'    ');
+            }
+        }
 
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
 
@@ -68,6 +84,7 @@ class CarEmailService extends BaseService
                 'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
+
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);

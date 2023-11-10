@@ -155,7 +155,7 @@ class HealthAllocationService extends AllocationService
 
     public function updateQuoteDetail($leadId)
     {
-        info('about to update car quote detail record for : '.$leadId);
+        info('about to update health quote detail record for : '.$leadId);
 
         $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
         $oldAdvisorAssignedDate = '';
