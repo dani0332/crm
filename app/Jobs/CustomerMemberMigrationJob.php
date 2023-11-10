@@ -4,11 +4,13 @@ namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
 use App\Models\HealthMemberDetail;
+use App\Models\KycLog;
 use App\Models\TravelMemberDetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 
@@ -17,6 +19,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
     public $tries = 1;
     public $timeout = 2000;
     public $backoff = 4000;
+    private $totalDuplicate = 0;
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -33,8 +36,6 @@ class CustomerMemberMigrationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $totalDuplicate = 0;
-
         HealthMemberDetail::chunk(500, function ($healthMemberDetails) {
             foreach ($healthMemberDetails as $hqrmd) {
                 $isDuplicate = DB::table('customer_members')
@@ -67,7 +68,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                         'updated_at' => now(),
                     ]);
                 } else {
-                    $totalDuplicate++;
+                    $this->totalDuplicate++;
                 }
             }
         });
@@ -119,6 +120,11 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });
 
-        Log::info('total duplicats: '.$this->totalDuplicate);
+        info('total duplicats: '.$this->totalDuplicate);
+    }
+
+    public function middleware()
+    {
+        return [(new WithoutOverlapping('CustomerMemberMigrationJob'))->dontRelease()];
     }
 }
