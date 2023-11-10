@@ -209,7 +209,7 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                DB::table('entities')->insert([
+                DB::table('customer_details')->insert([
                     'customer_id' => $data['customer_id'],
                     'country_of_residence' => $data['country_of_residence'],
                     'place_of_birth' => $data['place_of_birth'],

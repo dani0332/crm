@@ -19,6 +19,7 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -182,12 +183,13 @@ class TravelController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         $countries = Nationality::all();
-        $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
+        $entities = $record->customer_type == 'Entity' ? Entity::all() : null;
 
         return inertia('TravelQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
+            'entities' => $entities,
+            'quoteType' => quoteTypeCode::Travel,
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
