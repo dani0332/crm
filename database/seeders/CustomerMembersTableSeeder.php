@@ -2,13 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\KycLog;
-use App\Models\HealthQuote;
-use App\Models\TravelQuote;
 use App\Enums\CustomerTypeEnum;
-use Illuminate\Database\Seeder;
 use App\Models\HealthMemberDetail;
+use App\Models\HealthQuote;
+use App\Models\KycLog;
 use App\Models\TravelMemberDetail;
+use App\Models\TravelQuote;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -20,6 +20,7 @@ class CustomerMembersTableSeeder extends Seeder
      */
     public function run(): void
     {
+        DB::beginTransaction();
         HealthMemberDetail::chunk(500, function ($healthMemberDetails) {
             foreach ($healthMemberDetails as $hqrmd) {
                 $isDuplicate = DB::table('customer_members')
@@ -29,8 +30,8 @@ class CustomerMembersTableSeeder extends Seeder
                     ->where('code', $hqrmd->code)
                     ->exists();
 
-                Log::info('hqrmd id: ' . $hqrmd->id);
-                Log::info('isDuplicate: ' . $isDuplicate);
+                Log::info('hqrmd id: '.$hqrmd->id);
+                Log::info('isDuplicate: '.$isDuplicate);
 
                 if (! $isDuplicate) {
                     DB::table('customer_members')->insert([
@@ -51,12 +52,14 @@ class CustomerMembersTableSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                }else{
+                } else {
                     $this->totalDuplicate++;
                 }
             }
         });
+        DB::commit();
 
+        DB::beginTransaction();
         TravelMemberDetail::chunk(500, function ($travelMemberDetails) {
             foreach ($travelMemberDetails as $tqrmd) {
                 $isDuplicate = DB::table('customer_members')
@@ -66,8 +69,8 @@ class CustomerMembersTableSeeder extends Seeder
                     ->where('code', $tqrmd->code)
                     ->exists();
 
-                Log::info('tqrmd id: ' . $tqrmd->id);
-                Log::info('isDuplicate: ' . $isDuplicate);
+                Log::info('tqrmd id: '.$tqrmd->id);
+                Log::info('isDuplicate: '.$isDuplicate);
 
                 if (! $isDuplicate) {
                     DB::table('customer_members')->insert([
@@ -88,25 +91,24 @@ class CustomerMembersTableSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-                }else{
+                } else {
                     $this->totalDuplicate++;
                 }
             }
         });
+        DB::commit();
 
-        KycLog::withTrashed()->chunk(100, function ($kycLogs){
-            foreach ($kycLogs as $kycLog)
-            {
-                if ($kycLog->match_found != null && $kycLog->match_found == 0)
-                {
+        KycLog::withTrashed()->chunk(100, function ($kycLogs) {
+            foreach ($kycLogs as $kycLog) {
+                if ($kycLog->match_found != null && $kycLog->match_found == 0) {
                     $kycLog->update([
-                        'decision' => 'Pass'
+                        'decision' => 'Pass',
                     ]);
                 }
             }
         });
 
-        Log::info('total duplicats: ' . $this->totalDuplicate);
+        Log::info('total duplicats: '.$this->totalDuplicate);
 
     }
 }
