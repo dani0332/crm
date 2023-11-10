@@ -2260,7 +2260,7 @@ const loadEmailEvents = email => {
                 v-if="isBetaUser && puaPremium && puaPremium !=null"
                 size="xs"
                 color="error"
-                class="mt-0.5 text-[10px]"
+                class="mt-0.5 text-[10px] pua-tag"
             >
                 <x-tooltip  position="right">
                     <template #tooltip>
@@ -3155,3 +3155,10 @@ const loadEmailEvents = email => {
     :id="$page.props.record.id"
   />
 </template>
+
+<style>
+    .pua-tag{
+        color:white;
+        background-color: #E00000;
+    }
+</style>
