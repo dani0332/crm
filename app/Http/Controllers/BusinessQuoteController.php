@@ -204,14 +204,12 @@ class BusinessQuoteController extends Controller
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
         $countries = Nationality::all();
-        $kycDocument = $this->crudService->getKycDocuments(quoteTypeCode::Business, $record->id);
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
 
         return inertia('CorpLineQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
             'entities' => $entities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
