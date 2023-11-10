@@ -11,7 +11,7 @@ class FollowupController extends Controller
 {
     public function getEmailEvents(EmailEventsRequest $request)
     {
-        $response = DynamoDb::table('kazuya-email-content-stage')
+        $response = DynamoDb::table(config('constants.DYNAMO_EMAIL_CONTENT_TABLE'))
             ->setKeyConditionExpression('#recipientEmail = :recipientEmail')
             ->setFilterExpression('#messageID = :messageID')
             ->setExpressionAttributeName('#recipientEmail', 'recipientEmail')
