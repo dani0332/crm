@@ -609,13 +609,6 @@ class CRUDService extends BaseService
         return $response;
     }
 
-    public function getKycDocuments($modelType, $quoteId)
-    {
-        $model = '\\App\\Models\\'.ucwords($modelType).'Quote';
-
-        return $model::where('id', $quoteId)->withCount('documents')->value('documents_count');
-    }
-
     /*
      * This function is just for checking AML Status.
      */
