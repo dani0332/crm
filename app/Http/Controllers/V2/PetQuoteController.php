@@ -12,6 +12,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\PetQuoteRequest;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -124,12 +125,12 @@ class PetQuoteController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Pet, $quote->id);
+        $entities = $quote->customer_type == 'Entity' ? Entity::all() : null;
 
         return inertia('PetQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
+            'entities' => $entities,
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
             'activities' => $activities,
