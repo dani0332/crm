@@ -108,9 +108,9 @@ class CentralService
                     ((method_exists($repository, 'fetchCreateDuplicate') && ! checkPersonalQuotes(ucfirst($lob))) ? $repository::createDuplicate($dataArr) : PersonalQuoteRepository::createDuplicate($dataArr, ucfirst($lob))) :
                     Capi::request('/api/v1-save-'.strtolower($lob).'-quote', 'post', $dataArr);
 
-                if (isset($response->message) && str_contains($response->message, 'Error')) {
+                if (empty($response) || (isset($response->message) && str_contains($response->message, 'Error'))) {
                     $resp['errors'][] = 'Something went wrong while duplicating '.$lob.' quotes';
-                } elseif (isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
+                } elseif (isset($response->quoteUID) && isset($parentRecord->enquiryType) && $parentRecord->enquiryType == GenericRequestEnum::RECORD_PURPOSE) {
                     $record = $repository::where('uuid', $response->quoteUID)->first();
                     if ($record) {
                         $update = [
