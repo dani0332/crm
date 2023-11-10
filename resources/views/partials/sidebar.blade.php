@@ -182,7 +182,7 @@ use App\Enums\PermissionsEnum;
                             </ul>
                     </ul>
                 @endcanany
-               
+
                 @canany([PermissionsEnum::VehicleDepreciationList, PermissionsEnum::VehicleValuationList])
                 <ul class="nav side-menu">
                     <li><a><i class="fa fa-car" aria-hidden="true"></i> Car <span class="fa fa-chevron-down"></span></a>
@@ -322,11 +322,11 @@ use App\Enums\PermissionsEnum;
                     </li>
                 </ul>
                 @endcan
-                @hasanyrole(RolesEnum::BetaUser.'|'.RolesEnum::Admin.'|'.RolesEnum::Engineering)
+                @can(PermissionsEnum::EmbeddedProductView)
                 <ul class="nav side-menu">
                     <li><a href="{{ url('embedded-products') }}"><i></i> Embedded Products </a>
                 </ul>
-                @endhasanyrole
+                @endcan
 
                 @if(auth()->user()->hasRole(RolesEnum::BetaUser))
                 <ul class="nav side-menu">
