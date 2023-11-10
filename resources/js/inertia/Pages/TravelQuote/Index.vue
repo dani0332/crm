@@ -245,6 +245,9 @@ onMounted(() => {
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-semibold">Lead List</h2>
       <div class="space-x-3">
+        <Link :href="route('travel.expired.upload')" v-if="permissions.admin">
+          <x-button size="sm" color="#1d83bc" tag="div"> Upload Expired Leads </x-button>
+        </Link>
         <Link :href="route('travel.cards')">
           <x-button size="sm" color="#1d83bc" tag="div"> Cards View </x-button>
         </Link>
@@ -327,9 +330,8 @@ onMounted(() => {
             :options="leadsStatusOptions"
           />
         </x-field>
-        <x-field label="Advisor">
+        <x-field label="Advisor" v-if="!permissions.travelAdvisor">
           <ComboBox
-            v-if="!permissions.travelAdvisor"
             v-model="filters.advisor_id"
             placeholder="Search by Advisor"
             :options="advisorsOptions"
@@ -366,10 +368,19 @@ onMounted(() => {
           />
         </x-field>
         <x-field label="Travel Coverage" required>
-          <x-select
-            v-model="filters.coverage_code"
-            :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
-            class="w-full"
+            <x-select
+                v-model="filters.coverage_code"
+                :options="filters.direction_code == 'travelUaeInbound'?inboundCoverageCode:outboundCoverageCode"
+                class="w-full"
+            />
+        </x-field>
+        <x-field label="Source">
+          <x-input
+              v-model="filters.source"
+              type="search"
+              name="source"
+              class="w-full"
+              placeholder="Search by Source"
           />
         </x-field>
         <x-input
