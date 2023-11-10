@@ -26,10 +26,12 @@ use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CRUDService;
+use App\Traits\GenericQueriesAllLobs;
 
 class BikeQuoteController extends Controller
 {
     protected $crudService;
+    use GenericQueriesAllLobs;
 
     public function __construct(CRUDService $crudService)
     {

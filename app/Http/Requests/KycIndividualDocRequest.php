@@ -47,9 +47,9 @@ class KycIndividualDocRequest extends FormRequest
             'employment_sector' => 'required_if:income_source,employed',
             'trade_license' => 'required_if:income_source,business',
             'company_position' => 'required_if:income_source,business',
-            'pep' => 'string',
-            'financial_sanctions' => 'string',
-            'dual_nationality' => 'string',
+            'pep' => 'sometimes',
+            'financial_sanctions' => 'sometimes',
+            'dual_nationality' => 'sometimes',
         ];
     }
 }

@@ -627,6 +627,6 @@ class CRUDService extends BaseService
             return 'Yes';
         }
 
-        return null;
+        return '';
     }
 }

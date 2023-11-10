@@ -8,6 +8,7 @@ const props = defineProps({
   roles: Array,
   quote: Object,
   status: Function,
+  buttonStatus: Function,
   countryList: Array,
   amlQuoteStatus: String,
   nationalities: Array,
@@ -63,7 +64,8 @@ const onKycSubmit = () => {
           title: 'KYC Document uploaded.',
           position: 'top',
         });
-        props.status(false)
+        props.status(false);
+        props.buttonStatus(true);
       } else {
         notification.error({
           title: 'Document not uploaded.',

@@ -8,6 +8,7 @@ const props = defineProps({
   roles: Array,
   quote: Object,
   status: Function,
+  buttonStatus: Function,
   countryList: Array,
   amlQuoteStatus: String,
   nationalities: Array,
@@ -79,7 +80,8 @@ const onKycSubmit = () => {
           title: 'KYC Document uploaded.',
           position: 'top',
         });
-        props.status(false)
+        props.status(false);
+        props.buttonStatus(true);
       } else {
         notification.error({
           title: 'Document not uploaded.',
@@ -118,7 +120,7 @@ const computedRules = computed(() => {
   <x-form @submit="onKycSubmit" :auto-focus="false">
       <div class="grid md:grid-cols-4 gap-4">
         <x-input
-            v-model="quote.customer_id"
+            v-model="kycForm.customer_id"
             label="Customer ID"
             placeholder="Customer ID"
             class="w-full disabled"
@@ -127,7 +129,7 @@ const computedRules = computed(() => {
         />
 
         <x-input
-            v-model="quote.first_name"
+            v-model="kycForm.first_name"
             label="First Name"
             placeholder="First Name"
             class="w-full"
@@ -136,7 +138,7 @@ const computedRules = computed(() => {
         />
 
         <x-input
-            v-model="quote.last_name"
+            v-model="kycForm.last_name"
             label="Last Name"
             placeholder="Last Name"
             class="w-full"
@@ -144,15 +146,15 @@ const computedRules = computed(() => {
             :rules="[isRequired]"
         />
 
-        <DatePicker
-            v-model="quote.dob"
+        <x-input
+            v-model="kycForm.dob"
             label="DOB"
             :disabled="true"
             :rules="[isRequired]"
         />
 
         <x-select
-            v-model="quote.nationality_id"
+            v-model="kycForm.nationality_id"
             label="Nationality"
             :options="nationalityOptions"
             placeholder="Nationality"
@@ -219,6 +221,7 @@ const computedRules = computed(() => {
             v-model="kycForm.customer_tenure"
             label="Customer tenure"
             placeholder="Customer tenure"
+            type="number"
             :rules="[isRequired]"
         />
       </div>

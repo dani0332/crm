@@ -36,6 +36,7 @@ use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
 use App\Models\Nationality;
@@ -486,7 +487,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        $kycDocument =$this->crudService->getKycDocuments($this->genericModel->modelType, $record->id);
+        $entities = $record->customer_type == 'Entity' ? Entity::all() : null;
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
@@ -889,7 +890,7 @@ class CRUDController extends Controller
             return inertia('HealthQuote/Show', [
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
-                'kycDocumentCount' => $kycDocument,
+                'entities' => $entities,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\DocumentTypeCode;
+use App\Enums\Kyc;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
@@ -22,6 +23,7 @@ use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use PDF;
 
 class AjaxController extends Controller
@@ -207,6 +209,30 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
+                DB::table('customer_details')->insert([
+                    'customer_id' => $data['customer_id'],
+                    'country_of_residence' => $data['country_of_residence'],
+                    'place_of_birth' => $data['place_of_birth'],
+                    'residential_status' => $data['resident_status'],
+                    'residential_address' => $data['residential_address'],
+                    'customer_tenure' => $data['customer_tenure'],
+                    'id_type' => $data['id_type'],
+                    'id_number' => $data['id_number'],
+                    'id_issuance_date' => $data['id_issue_date'],
+                    'id_expiry_date' => $data['id_expiry_date'],
+                    'source_of_income' => $data['income_source'],
+                    'employer_company_name' => $data['company_name'],
+                    'job_title' => $data['professional_title'] ?? null,
+                    'employment_sector' => $data['employment_sector'] ?? null,
+                    'trade_license_no' => $data['trade_license'] ?? null,
+                    'position_in_company' => $data['company_position'] ?? null,
+                    'mode_of_contact' => $data['mode_of_contact'] ?? null,
+                    'mode_of_delivery' => $data['mode_of_delivery'] ?? null,
+                ]);
+
+                $quote->kyc_decision = Kyc::COMPLETE;
+                $quote->save();
+
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
