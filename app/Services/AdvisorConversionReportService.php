@@ -214,7 +214,6 @@ class AdvisorConversionReportService extends BaseService
             $query = $query->where('car_quote_request.quote_batch_id', $batch->id);
         }
         $dateFormat = config('constants.DB_DATE_FORMAT_MATCH');
-        info('date : '.json_encode($filters));
 
         $maxDays = ApplicationStorageService::getValueByKeyName(GenericRequestEnum::MAX_DAYS);
         $freshLoad = ! isset($filters->page);
@@ -235,26 +234,21 @@ class AdvisorConversionReportService extends BaseService
         }
 
         if (isset($filters->ecommerceFilter) && $filters->ecommerceFilter != 'All') {
-            info('ecommerceFilter are : '.json_encode($filters->ecommerceFilter));
             $query->where('car_quote_request.is_ecommerce', $filters->ecommerceFilter == 'Yes' ? 1 : 0);
         }
         if (isset($filters->excludeCreatedLeadsFilter)) {
-            info('excludeCreatedLeadsFilter are : '.json_encode($filters->excludeCreatedLeadsFilter));
             if ($filters->excludeCreatedLeadsFilter == 'yes') {
                 info('inside excludeCreatedLeadsFilter');
                 $query->where('car_quote_request.source', '!=', LeadSourceEnum::IMCRM);
             }
         }
         if (isset($filters->tiersFilter) && count($filters->tiersFilter) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiersFilter));
             $query->whereIn('car_quote_request.tier_id', $filters->tiersFilter);
         }
         if (isset($filters->leadSourceFilter) && count($filters->leadSourceFilter) > 0) {
-            info('leadSourceFilter are : '.json_encode($filters->leadSourceFilter));
             $query->whereIn('car_quote_request.source', $filters->leadSourceFilter);
         }
         if (isset($filters->teamsFilter) && count($filters->teamsFilter) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teamsFilter));
             $value = $filters->teamsFilter;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()
@@ -266,47 +260,37 @@ class AdvisorConversionReportService extends BaseService
             });
         }
         if (isset($filters->advisorsFilter) && count($filters->advisorsFilter) > 0) {
-            info('advisorsFilter are : '.json_encode($filters->advisorsFilter));
             $query->whereIn('car_quote_request.advisor_id', $filters->advisorsFilter);
         }
 
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::TOTAL_LEADS) {
-            info('inside lead type total');
             $query->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NEW_LEADS) {
-            info('inside lead type new');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::NewLead)->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::NOT_INTERESTED) {
-            info('inside lead type not interested');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::PriceTooHigh, QuoteStatusEnum::PolicyPurchasedBeforeFirstCall, QuoteStatusEnum::NotInterested, QuoteStatusEnum::NotEligibleForInsurance, QuoteStatusEnum::NotLookingForMotorInsurance, QuoteStatusEnum::NonGccSpec, QuoteStatusEnum::AMLScreeningFailed])->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::IN_PROGRESS) {
-            info('inside lead type in progress');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::NotContactablePe, QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer, QuoteStatusEnum::Quoted, QuoteStatusEnum::PaymentPending, QuoteStatusEnum::AMLScreeningCleared, QuoteStatusEnum::PendingQuote])->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::MANUAL_CREATED) {
-            info('inside lead type MANUAL_CREATED');
             $query->where('source', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::BAD_LEAD) {
-            info('inside lead type BAD_LEAD');
             $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::AFIA_RENEWALS_COUNT) {
-            info('inside lead type AFIA_RENEWALS_COUNT');
             $query->where('car_quote_request.quote_status_id', QuoteStatusEnum::IMRenewal)->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::SALE_LEAD) {
-            info('inside lead type SALE_LEAD');
             $query->where(function ($query) {
                 $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
                     ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);
             })->where('source', '!=', LeadSourceEnum::IMCRM);
         }
         if (isset($filters->leadType) && $filters->leadType == ReportsLeadTypeEnum::CREATED_SALE_LEAD) {
-            info('inside lead type CREATED_SALE_LEAD');
             $query->where(function ($query) {
                 $query->whereIn('car_quote_request.quote_status_id', [QuoteStatusEnum::TransactionApproved, QuoteStatusEnum::PolicyIssued])
                     ->orWhere('car_quote_request.payment_status_id', PaymentStatusEnum::CAPTURED);

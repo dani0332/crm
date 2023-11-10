@@ -25,7 +25,7 @@ Please make sure to go through the last two lines to familiarize yourself with t
 - Ask for a dump of stage DB which you will need to import.
 - Run ```composer install``` to install the laravel required files..
 
-**Doppler Configuration**
+**Doppler Configuration** 
 
 Once you have doppler CLI installed on your local machine, run the following command to initiate the login setup.
 - ```doppler setup``` This will initiate the login process, use Google login. Once logged in you will be prompted to select the profile you want to use the environment variables. You can run the command again to switch profile.
@@ -33,7 +33,7 @@ Once you have doppler CLI installed on your local machine, run the following com
 - ```composer serve``` This will initiate the local server on your machine using th doppler env variables.
 - ```doppler run -- php artisan <any command>``` will run the laravel commands using your doppler configured profile.
 
-**Assets Configuration** 
+**Assets Configuration**
 This repository use Laravel Mix to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
 - Run ```yarn``` so all the necassary packages are installed 
