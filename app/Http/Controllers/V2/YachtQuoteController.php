@@ -11,6 +11,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\DocumentTypeRepository;
@@ -120,12 +121,12 @@ class YachtQuoteController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $kycDocument =$this->crudService->getKycDocuments(quoteTypeCode::Cycle, $quote->id);
+        $entities = $quote->customer_type == 'Entity' ? Entity::all() : null;
 
         return inertia('YachtQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
+            'entities' => $entities,
             'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
             'activities' => $activities,
