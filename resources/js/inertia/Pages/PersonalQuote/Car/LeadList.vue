@@ -66,6 +66,8 @@ const tableHeader = [
   { text: 'PRICE', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'QUOTE LINK', value: 'quote_link' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const ecommerceOptions = [
@@ -437,7 +439,7 @@ onMounted(() => {
         />
         <x-input
           v-model="filters.renewal_batch"
-          type="number"
+          type="text"
           name="renewal_batch"
           label="Renewal Batch"
           class="w-full"
