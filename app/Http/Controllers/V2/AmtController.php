@@ -265,19 +265,16 @@ class AmtController extends Controller
         }
 
         $countries = Nationality::all();
-        $kycDocument = $this->crudService->getKycDocuments(quoteTypeCode::Business, $record->id);
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
 
         return inertia('GroupMedicalQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
-            'kycDocumentCount' => $kycDocument,
             'entities' => $entities,
             'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
-            'modelType' => QuoteTypes::BUSINESS,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'genderOptions' => $this->crudService->getGenderOptions(),
