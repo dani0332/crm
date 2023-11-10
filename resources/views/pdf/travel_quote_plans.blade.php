@@ -252,6 +252,12 @@
         .text-center {text-align: center;}
         .text-white { color: #ffffff}
         .text-underline{text-decoration:underline }
+        .hidden{
+            display: none;
+        }
+        tr:has(td) {
+            display: none;
+        }
 
     </style>
 </head>
@@ -466,6 +472,7 @@
                 </tr>
             </thead>
             <tbody>
+            @php $featCount = 0 @endphp
                 @foreach($features as $feature)
 
                 @if($feature['code'] == 'coPayment' && !isset($addons))
@@ -492,43 +499,73 @@
                 @endif
 
                 {{-- feature rows --}}
-                <tr class="{{ ($feature['row_class'] ?? "")}}" >
+                   <?php $planIterate = 0; ?>
+                <tr class="<?php echo 'row_'.$featCount; ?> {{ ($feature['row_class'] ?? "")}}" >
                     <td class="{{@$feature['heading_class']}}"><p class="text-left">{{@$feature['title']}}</p></td>
                     @foreach($planIds as $planId)
-                    <td class="{{@$feature['col_class']}}">
-                        <p>
-                            @if($feature['type'] == 'info')
-                                {!!  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' !!}
+                        <?php $return_value = '';
+                            ?>
+                        @if($feature['type'] == 'info')
 
-                            @elseif($feature['type'] == 'prop')
-                                {!!  $plans[$planId]->{$feature['code']} !!}
+                            @php $return_value =  $plans[$planId]->{$feature['code']} ? formatAmount($plans[$planId]->{$feature['code']})  : 'N/A' @endphp
 
-                            @elseif($feature['type'] == 'buy')
-                                @if($plans[$planId]->discountPremium)
-                                    <a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>
-                                @else
-                                    N/A
-                                @endif
 
-                            @elseif(is_array($feature['type']))
-                                @php $value = "Excluded"; @endphp
-                                @foreach($feature['type'] as $type)
-                                    @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
-                                        @php $value = $plans[$planId]->{$type}->{$feature['code']}->value; break; @endphp
-                                    @endif
-                                @endforeach
-                                {!! ($value)  !!}
+                        @elseif($feature['type'] == 'prop')
+                            @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
+
+                        @elseif($feature['type'] == 'buy')
+                            @if($plans[$planId]->discountPremium)
+                                @php  $return_value = `<a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>`; @endphp
                             @else
-                                @if($feature['code'] == 'coPayment')
-                                    {{ $addons[$planId]['coPayment']['text'] ?? 'N/A' }}
-                                @else
-                                    {!!  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' !!}
-                                @endif
+                                @php $return_value = 'N/A';  @endphp
                             @endif
-                        </p>
-                    </td>
+
+                        @elseif(is_array($feature['type']))
+                            @php $value = "Excluded";  @endphp
+                            @foreach($feature['type'] as $type)
+                                @if(isset($plans[$planId]->{$type}->{$feature['code']}->value))
+                                    @php $value = $plans[$planId]->{$type}->{$feature['code']}->value; break; @endphp
+                                @endif
+                            @endforeach
+                            @php  $return_value  = $value; @endphp
+                        @else
+                            @if($feature['code'] == 'coPayment')
+                                @php  $return_value = $addons[$planId]['coPayment']['text'] ?? 'N/A'; @endphp
+                            @else
+                                @php  $return_value =  $plans[$planId]->{$feature['type']}->{$feature['code']}->value ?? 'Excluded' ; @endphp
+                            @endif
+                        @endif
+                        <td class="{{@$feature['col_class']}}">
+                            <p>
+                    <?php if($return_value == 'Excluded'){
+                            $planIterate++;
+                    ?>
+                                Excluded
+                    <?php }else{
+                        $planIterate = 0;
+                        ?>
+                        <?php echo $return_value ?>
+
+                  <?php  } ?>
+                  </p>
+
+                        </td>
+                            <?php if(count($planIds) == $planIterate){
+
+                            ?>
+                            <style>
+                                .row_<?php echo $featCount; ?>{
+                                    display: none !important;
+                                }
+                            </style>
+                    <?php
+
+                        }
+                        ?>
+
                     @endforeach
                 </tr>
+                    <?php $featCount++; ?>
                  @endforeach
                 <tr>
                     <td >
