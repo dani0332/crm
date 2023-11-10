@@ -165,7 +165,6 @@ const complianceRules = computed(() => {
           label="First Name"
           placeholder="First Name"
           class="w-full"
-          :disabled="true"
           :rules="[isRequired]"
       />
 
@@ -174,7 +173,6 @@ const complianceRules = computed(() => {
           label="Last Name"
           placeholder="Last Name"
           class="w-full"
-          :disabled="true"
           :rules="[isRequired]"
       />
 

@@ -43,7 +43,7 @@
             font-weight: bold;
         }
         .font-14 {
-            font-size: 14px;
+            font-size: 14px !important;
         }
         .text-center {
             text-align: center;

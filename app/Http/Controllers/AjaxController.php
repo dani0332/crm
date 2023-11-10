@@ -209,7 +209,7 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                DB::table('customer_details')->insert([
+                DB::table('entities')->insert([
                     'customer_id' => $data['customer_id'],
                     'country_of_residence' => $data['country_of_residence'],
                     'place_of_birth' => $data['place_of_birth'],
@@ -254,13 +254,36 @@ class AjaxController extends Controller
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
             $pdf->setPaper('A4', 'landscape');
             $pdfFile = $pdf->output();
-            info($quoteType);
 
             $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
+                DB::table('entities')->insert([
+                    'code' => 'ENT-2',
+                    'trade_license_no' => 'BIL-TEST-1234',
+                    'company_name' => 'test',
+                    'company_address' => 'testing',
+                    'industry_type_code' => 'Consultancy',
+                    'emirate_of_registration_id' => 2,
+                    'mobile_no' => $data['mobile_number'],
+                    'email' => $data['email'],
+                    'website' => $data['website'],
+                    'legal_structure' => $data['legal_structure'],
+                    'country_of_corporation' => $data['country_of_corporation'],
+                    'registered_address' => $data['registered_address'],
+                    'communication_address' => $data['communication_address'],
+                    'id_type' => $data['id_document_type'],
+                    'id_number' => $data['id_number'],
+                    'id_issuance_date' => $data['id_issue_date'],
+                    'id_expiry_date' => $data['id_expiry_date'],
+                    'id_issuance_authority' => $data['issuing_authority'],
+                ]);
+
+                $quote->kyc_decision = Kyc::COMPLETE;
+                $quote->save();
+
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {

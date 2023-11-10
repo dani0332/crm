@@ -75,7 +75,7 @@ onMounted(() => {
         :country-list="props.countryList"
         :aml-quote-status="props.amlQuoteStatus"
         :nationalities="props.nationalities"
-        :modelType="props.quoteType"
+        :modelType="props.modelType"
         :entities="props.entities"
     />
   </x-modal>
