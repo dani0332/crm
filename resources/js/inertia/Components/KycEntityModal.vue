@@ -14,6 +14,10 @@ const props = defineProps({
   nationalities: Array,
   modelType: String,
   entities: Array,
+  legalStructure: Array,
+  idDocumentType: Array,
+  issuancePlace: Array,
+  issuingAuthority: Array,
 })
 
 const rules = {
@@ -108,39 +112,33 @@ const entitiesOptions = computed(() => {
   }));
 });
 
-const legalStructureOptions = [
-  {value: 'Establishment', label: 'Establishment'},
-  {value: 'Sole proprietorship', label: 'Sole proprietorship'},
-  {value: 'Private joint stock company', label: 'Private joint stock company'},
-  {value: 'Limited liability company', label: 'Limited liability company'},
-  {value: 'Public joint stock company', label: 'Public joint stock company'},
-  {value: 'Branch of a foreign company', label: 'Branch of a foreign company'},
-];
+const legalStructureOptions = computed(() => {
+  return props.legalStructure.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
 
-const placeOfIssuanceOptions = [
-  {value: 'Dubai', label: 'Dubai'},
-  {value: 'Abu Dhabi', label: 'Abu Dhabi'},
-  {value: 'Sharjah', label: 'Sharjah'},
-  {value: 'Umm Al Quwain', label: 'Umm Al Quwain'},
-  {value: 'Ras Al Khaima', label: 'Ras Al Khaima'},
-  {value: 'Ajman', label: 'Ajman'},
-  {value: 'Fujairah', label: 'Fujairah'},
-];
+const placeOfIssuanceOptions = computed(() => {
+  return props.issuancePlace.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
 
-const issuingAuthorityOptions = [
-  {value: 'Department of Economic Development (DED)', label: 'Department of Economic Development (DED)'},
-  {value: 'Free Zone Authorities', label: 'Free Zone Authorities'},
-  {value: 'Dubai Creative Clusters Authority (DCCA)', label: 'Dubai Creative Clusters Authority (DCCA)'},
-  {value: 'Ministry of Economy', label: 'Ministry of Economy'},
-  {value: 'Department of Tourism and Commerce Marketing (DTCM)', label: 'Department of Tourism and Commerce Marketing (DTCM)'},
-  {value: 'Department of Health and Prevention (DoHP)', label: 'Department of Health and Prevention (DoHP)'},
-  {value: 'Ministry of Human Resources and Emiratisation (MOHRE)', label: 'Ministry of Human Resources and Emiratisation (MOHRE)'},
-  {value: 'Ministry of Interior', label: 'Ministry of Interior'},
-  {value: 'Department of Energy (DoE)', label: 'Department of Energy (DoE)'},
-  {value: 'Central Bank of the UAE', label: 'Central Bank of the UAE'},
-  {value: 'Telecommunications Regulatory Authority (TRA)', label: 'Telecommunications Regulatory Authority (TRA)'},
-  {value: 'Dubai Multi Commodities Centre (DMCC)', label: 'Dubai Multi Commodities Centre (DMCC)'},
-];
+const issuingAuthorityOptions = computed(() => {
+  return props.issuingAuthority.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const documentTypeOptions = computed(() => {
+  return props.idDocumentType.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
 
 const complianceRules = computed(() => {
   return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
@@ -284,11 +282,7 @@ const complianceRules = computed(() => {
         </x-tooltip>
         <x-select
             v-model="kycForm.id_document_type"
-            :options="[
-                {value: 'Trade License', label: 'Trade License'},
-                {value: 'MOA', label: 'MOA'},
-                {value: 'Others', label: 'Others'},
-            ]"
+            :options="documentTypeOptions"
             placeholder="ID / Document Type"
             class="w-full"
             :single="true"

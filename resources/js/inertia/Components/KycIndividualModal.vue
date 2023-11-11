@@ -12,7 +12,12 @@ const props = defineProps({
   countryList: Array,
   amlQuoteStatus: String,
   nationalities: Array,
-  modelType: String
+  modelType: String,
+  idDocumentType: Array,
+  modeOfContact: Array,
+  employmentSectors: Array,
+  residentialStatus: Array,
+  companyPosition: Array,
 })
 
 const rules = {
@@ -110,6 +115,41 @@ const nationalityOptions = computed(() => {
   }));
 });
 
+const residentialStatusOptions = computed(() => {
+  return props.residentialStatus.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const documentIdTypeOptions = computed(() => {
+  return props.idDocumentType.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const modeOfContactOptions = computed(() => {
+  return props.modeOfContact.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const employmentSectorsOptions = computed(() => {
+  return props.employmentSectors.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const companyPositionOptions = computed(() => {
+  return props.companyPosition.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
 const computedRules = computed(() => {
   return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
 });
@@ -184,10 +224,7 @@ const computedRules = computed(() => {
         <x-select
             v-model="kycForm.resident_status"
             label="Resident Status"
-            :options="[
-                  { value: 'UAE resident', label: 'UAE resident' },
-                  { value: 'Non UAE resident', label: 'Non UAE resident' },
-                ]"
+            :options="residentialStatusOptions"
             placeholder="Resident Status"
             :rules="[isRequired]"
         />
@@ -229,13 +266,7 @@ const computedRules = computed(() => {
         <x-select
             v-model="kycForm.id_type"
             label="ID type"
-            :options="[
-                  { value: 'emirated_id', label: 'Emirates ID' },
-                  { value: 'passport', label: 'Passport' },
-                  { value: 'home_country_id', label: 'Home Country ID' },
-                  { value: 'driving_license', label: 'Driving License' },
-                  { value: 'visa', label: 'Visa' },
-                ]"
+            :options="documentIdTypeOptions"
             placeholder="ID type"
             :rules="[isRequired]"
         />
@@ -263,12 +294,7 @@ const computedRules = computed(() => {
         <x-select
             v-model="kycForm.mode_of_contact"
             label="Mode of contact"
-            :options="[
-                  { value: 'phone', label: 'Phone' },
-                  { value: 'email', label: 'Email' },
-                  { value: 'phone_and_email', label: 'Phone and Email' },
-                  { value: 'walk_in', label: 'Walk-in' },
-                ]"
+            :options="modeOfContactOptions"
             placeholder="Mode of contact"
             :rules="[isRequired]"
         />
@@ -276,12 +302,7 @@ const computedRules = computed(() => {
         <x-select
             v-model="kycForm.mode_of_delivery"
             label="Mode of delivery"
-            :options="[
-                  { value: 'phone', label: 'Phone' },
-                  { value: 'email', label: 'Email' },
-                  { value: 'phone_and_email', label: 'Phone and Email' },
-                  { value: 'walk_in', label: 'Walk-in' },
-                ]"
+            :options="modeOfContactOptions"
             placeholder="Mode of delivery"
             :rules="[isRequired]"
         />
@@ -317,12 +338,7 @@ const computedRules = computed(() => {
           <x-select
               v-model="kycForm.employment_sector"
               label="Employment sector"
-              :options="[
-                    { value: 'Government Sector', label: 'Government Sector' },
-                    { value: 'Semi Government Sector', label: 'Semi Government Sector' },
-                    { value: 'Private Sector', label: 'Private Sector' },
-                    { value: 'Freezone sector', label: 'Freezone sector' },
-                  ]"
+              :options="employmentSectorsOptions"
               placeholder="Employment sector"
               :rules="[rules.isRequired]"
           />
@@ -355,12 +371,7 @@ const computedRules = computed(() => {
           <x-select
               v-model="kycForm.company_position"
               label="Position in Company"
-              :options="[
-                    { value: 'Owner', label: 'Owner' },
-                    { value: 'Partner', label: 'Partner' },
-                    { value: 'Shareholder', label: 'Shareholder' },
-                    { value: 'Manager', label: 'Manager' },
-                  ]"
+              :options="companyPositionOptions"
               placeholder="Position in Company"
               :rules="[rules.isRequired]"
           />

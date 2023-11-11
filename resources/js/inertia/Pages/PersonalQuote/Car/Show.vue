@@ -1775,6 +1775,12 @@ const linkEntity = () => {
                 :nationalities="page.props.nationalities"
                 :modelType="quoteType"
                 :entities="page.props.entities"
+                :legal-structure="page.props.legalStructure"
+                :id-document-type="page.props.idDocumentType"
+                :mode-of-contact="page.props.modeOfContact"
+                :employment-sectors="page.props.employmentSectors"
+                :residential-status="page.props.residentialStatus"
+                :company-position="page.props.companyPosition"
             />
           </div>
             <x-divider class="mb-4 mt-1" />

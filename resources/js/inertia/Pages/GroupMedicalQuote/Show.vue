@@ -576,6 +576,10 @@ const linkEntity = () => {
               :nationalities="page.props.nationalities"
               :modelType="page.props.quoteType"
               :entities="page.props.entities"
+              :legal-structure="page.props.legalStructure"
+              :id-document-type="page.props.idDocumentType"
+              :issuance-place="page.props.issuancePlace"
+              :issuing-authority="page.props.issuanceAuthorities"
           />
         </div>
         <x-divider class="mb-4 mt-1" />

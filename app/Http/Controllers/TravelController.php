@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -183,12 +184,29 @@ class TravelController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         $countries = Nationality::all();
-        $entities = $record->customer_type == 'Entity' ? Entity::all() : null;
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = null;
+        if ($record->customer_type == AmlSearchType::ENTITY) {
+            $entities = Entity::all();
+            $legalStructure = $this->lookupService->getLegalStructure();
+            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        } else {
+            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
+            $modeOfContact = $this->lookupService->getModeOfContact();
+            $employmentSectors = $this->lookupService->getEmploymentSector();
+            $residentialStatus = $this->lookupService->getResidentialStatus();
+            $companyPosition = $this->lookupService->getCompanyPosition();
+        }
 
         return inertia('TravelQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
             'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'modeOfContact' => $modeOfContact,
+            'employmentSectors' => $employmentSectors,
+            'residentialStatus' => $residentialStatus,
+            'companyPosition' => $companyPosition,
             'quoteType' => quoteTypeCode::Travel,
             'quote' => $record,
             'fieldsToDisplay' => $fields,

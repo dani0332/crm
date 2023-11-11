@@ -14,6 +14,14 @@ const props = defineProps({
   nationalities: Array,
   modelType: String,
   entities: Array,
+  idDocumentType: Array,
+  modeOfContact: Array,
+  employmentSectors: Array,
+  residentialStatus: Array,
+  companyPosition: Array,
+  legalStructure: Array,
+  issuancePlace: Array,
+  issuingAuthority: Array,
 });
 
 const modals = reactive({
@@ -60,6 +68,11 @@ onMounted(() => {
         :aml-quote-status="props.amlQuoteStatus"
         :nationalities="props.nationalities"
         :modelType="props.modelType"
+        :id-document-type="props.idDocumentType"
+        :mode-of-contact="props.modeOfContact"
+        :employment-sectors="props.employmentSectors"
+        :residential-status="props.residentialStatus"
+        :company-position="props.companyPosition"
     />
   </x-modal>
 
@@ -77,6 +90,10 @@ onMounted(() => {
         :nationalities="props.nationalities"
         :modelType="props.modelType"
         :entities="props.entities"
+        :id-document-type="props.idDocumentType"
+        :legal-structure="props.legalStructure"
+        :issuance-place="props.issuancePlace"
+        :issuing-authority="props.issuingAuthority"
     />
   </x-modal>
 </template>

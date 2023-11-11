@@ -129,6 +129,8 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'emiratesId', 'text' => 'Emirates Id', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'passport', 'text' => 'Passport', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'homeCountryId', 'text' => 'Home Country ID', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'drivingLicense', 'text' => 'Driving License', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'visa', 'text' => 'Visa', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 
@@ -186,6 +188,28 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'CBUAE', 'text' => 'Central Bank of the UAE', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'TRA', 'text' => 'Telecommunications Regulatory Authority (TRA)', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DMCC', 'text' => 'Dubai Multi Commodities Centre (DMCC)', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'government', 'text' => 'Government Sector', 'created_at' => now(), 'updated_at' =>
+                    now()],
+                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'semiGovernment', 'text' => 'Semi Government Sector', 'created_at' => now(), 'updated_at' =>
+                    now()],
+                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'private', 'text' => 'Private Sector', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'freezone', 'text' => 'Freezone Sector', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::COMPANY_POSITION)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'owner', 'text' => 'Owner', 'created_at' => now(), 'updated_at' =>
+                    now()],
+                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'partner', 'text' => 'Partner', 'created_at' => now(), 'updated_at' =>
+                    now()],
+                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'shareholder', 'text' => 'Shareholder', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'manager', 'text' => 'Manager', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
     }

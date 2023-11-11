@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -26,14 +26,17 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\CRUDService;
+use App\Services\LookupService;
 
 class YachtQuoteController extends Controller
 {
     protected $crudService;
+    protected $lookupService;
 
-    public function __construct(CRUDService $crudService)
+    public function __construct(CRUDService $crudService, LookupService $lookupService)
     {
         $this->crudService = $crudService;
+        $this->lookupService = $lookupService;
     }
 
     /**
@@ -121,12 +124,29 @@ class YachtQuoteController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $entities = $quote->customer_type == 'Entity' ? Entity::all() : null;
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = null;
+        if ($quote->customer_type == AmlSearchType::ENTITY) {
+            $entities = Entity::all();
+            $legalStructure = $this->lookupService->getLegalStructure();
+            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        } else {
+            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
+            $modeOfContact = $this->lookupService->getModeOfContact();
+            $employmentSectors = $this->lookupService->getEmploymentSector();
+            $residentialStatus = $this->lookupService->getResidentialStatus();
+            $companyPosition = $this->lookupService->getCompanyPosition();
+        }
 
         return inertia('YachtQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
             'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'modeOfContact' => $modeOfContact,
+            'employmentSectors' => $employmentSectors,
+            'residentialStatus' => $residentialStatus,
+            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::YACHT,
             'quote' => $quote,
             'activities' => $activities,

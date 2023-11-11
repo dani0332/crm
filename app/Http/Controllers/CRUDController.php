@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\AmlSearchType;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -487,8 +488,20 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
-        $entities = $record->customer_type == 'Entity' ? Entity::all() : null;
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = null;
+        if ($record->customer_type == AmlSearchType::ENTITY) {
+            $entities = Entity::all();
+            $legalStructure = $this->lookupService->getLegalStructure();
+            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        } else {
+            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
+            $modeOfContact = $this->lookupService->getModeOfContact();
+            $employmentSectors = $this->lookupService->getEmploymentSector();
+            $residentialStatus = $this->lookupService->getResidentialStatus();
+            $companyPosition = $this->lookupService->getCompanyPosition();
+        }
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+
         abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
@@ -678,6 +691,12 @@ class CRUDController extends Controller
             return inertia('PersonalQuote/Car/Show', compact([
                 'amlQuoteStatus',
                 'entities',
+                'legalStructure',
+                'idDocumentType',
+                'modeOfContact',
+                'employmentSectors',
+                'residentialStatus',
+                'companyPosition',
                 'countries',
                 'record', 'quote', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
@@ -768,6 +787,12 @@ class CRUDController extends Controller
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
                 'entities' => $entities,
+                'legalStructure' => $legalStructure,
+                'idDocumentType' => $idDocumentType,
+                'modeOfContact' => $modeOfContact,
+                'employmentSectors' => $employmentSectors,
+                'residentialStatus' => $residentialStatus,
+                'companyPosition' => $companyPosition,
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -891,6 +916,12 @@ class CRUDController extends Controller
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
                 'entities' => $entities,
+                'legalStructure' => $legalStructure,
+                'idDocumentType' => $idDocumentType,
+                'modeOfContact' => $modeOfContact,
+                'employmentSectors' => $employmentSectors,
+                'residentialStatus' => $residentialStatus,
+                'companyPosition' => $companyPosition,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
