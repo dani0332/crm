@@ -16,4 +16,5 @@ final class AMLDecisionStatusEnum extends Enum
     const TRUE_MATCH = 'TrueMatch';
     const TRUE_MATCH_ACCEPT_RISK = 'TrueMatchAcceptRisk';
     const TRUE_MATCH_REJECT_RISK = 'TrueMatchRejectRisk';
+    const RYU = 'RYU';
 }

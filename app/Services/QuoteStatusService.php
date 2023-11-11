@@ -31,14 +31,15 @@ class QuoteStatusService
             ]);
 
             $kycLog = $fetchKycLog->first();
-            $kycLogs = KycLog::where(['quote_request_id' => $kycLog->quote_request_id, 'quote_type_id' => $kycLog->quote_type_id])->withTrashed()
-                ->get()->pluck('decision')->toArray();
+            $kycLogs = KycLog::where(['quote_request_id' => $kycLog->quote_request_id, 'quote_type_id' => $kycLog->quote_type_id])
+                ->where( function($aml) use ($quoteRequestId, $quoteTypeId) {
+                    $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                    $aml->orWhereNull('decision');
+                })->withTrashed()->get()->pluck('decision')->toArray();
 
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
-            if (!(in_array(null, $kycLogs))) {
-                $quoteStatusID = (in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
-                $updateQuote->quote_status_id = $quoteStatusID;
-            }
+            $quoteStatusID = (in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
+            $updateQuote->quote_status_id = $quoteStatusID;
         } else {
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
             $updateQuote->quote_status_id = $quoteStatus->id;

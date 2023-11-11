@@ -143,4 +143,9 @@ class CentralController extends Controller
 
         return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
     }
+
+    public function loadAvailablePlans($type, $id)
+    {
+        return (new CentralService())->loadAvailablePlans($type, $id);
+    }
 }
