@@ -86,4 +86,9 @@ class PetQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Pet);
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

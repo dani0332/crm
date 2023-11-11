@@ -74,4 +74,9 @@ class HomeQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Home);
     }
+
+    public function documents()
+    {
+        return $this->morphMany(QuoteDocument::class, 'quote_documentable');
+    }
 }

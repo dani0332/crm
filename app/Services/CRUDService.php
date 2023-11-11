@@ -608,4 +608,18 @@ class CRUDService extends BaseService
 
         return $response;
     }
+
+    /*
+     * This function is just for checking AML Status.
+     */
+    public function checkAmlQuoteStatus($statusId)
+    {
+        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
+            return 'No';
+        } elseif($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+            return 'Yes';
+        }
+
+        return '';
+    }
 }

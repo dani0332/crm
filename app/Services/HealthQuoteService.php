@@ -123,6 +123,7 @@ class HealthQuoteService extends BaseService
             'hqr.is_ecommerce',
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
+            'hqr.kyc_decision',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping

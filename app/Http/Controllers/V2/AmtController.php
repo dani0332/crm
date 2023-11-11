@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
@@ -263,10 +264,25 @@ class AmtController extends Controller
             })->values();
         }
 
+        $countries = Nationality::all();
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $entities = Entity::all();
+        $legalStructure = $this->lookupService->getLegalStructure();
+        $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        $issuancePlace = $this->lookupService->getIssuancePlaces();
+        $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+
         return inertia('GroupMedicalQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
-            'modelType' => QuoteTypes::BUSINESS,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'genderOptions' => $this->crudService->getGenderOptions(),

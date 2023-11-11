@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import KycForm from "../../../Components/KycForm.vue";
 
 defineProps({
 	quote: Object,
@@ -1780,10 +1781,27 @@ const linkEntity = () => {
 		</x-modal>
 
         <div class="p-4 rounded shadow mb-6 bg-white">
-            <div>
-                <h3 class="font-semibold text-primary-800 text-lg">{{ record.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
-                <x-divider class="mb-4 mt-1" />
-            </div>
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">{{ record.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity ' }} Profile</h3>
+            <KycForm
+                :roles="$page.props.rolesEnum"
+                :quote="page.props.quote"
+                :country-list="page.props.countries"
+                :aml-quote-status="page.props.amlQuoteStatus"
+                :nationalities="page.props.nationalities"
+                :modelType="quoteType"
+                :entities="page.props.entities"
+                :legal-structure="page.props.legalStructure"
+                :id-document-type="page.props.idDocumentType"
+                :mode-of-contact="page.props.modeOfContact"
+                :employment-sectors="page.props.employmentSectors"
+                :residential-status="page.props.residentialStatus"
+                :company-position="page.props.companyPosition"
+                :issuance-place="page.props.issuancePlace"
+                :issuing-authority="page.props.issuanceAuthorities"
+            />
+          </div>
+            <x-divider class="mb-4 mt-1" />
             <x-form @submit="updateProfileDetails" :auto-focus="false">
                 <div class="text-sm">
                     <dl v-if="record.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -1974,6 +1992,7 @@ const linkEntity = () => {
                 </div>
             </x-form>
         </div>
+
         <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
             <h3 class="font-semibold text-center text-lg mb-10">Search Entity by Parent Entity Trade License No</h3>
             <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
