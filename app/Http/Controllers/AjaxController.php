@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enums\DocumentTypeCode;
 use App\Enums\Kyc;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
+use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -18,6 +20,7 @@ use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
+use App\Repositories\LookupRepository;
 use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -245,10 +248,20 @@ class AjaxController extends Controller
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
         try {
+            $businessQuote = BusinessQuote::with('quoteRequestEntityMapping.entity')->where('uuid', $request->quote_uuid)->first();
+
+            if(! isset($businessQuote->quoteRequestEntityMapping->entity)) {
+                return response()->json(['message' => 'Trade License not found.']);
+            }
+
             $data = $request->validated();
             $data['industry_type_code'] = Entity::where('id', $data['industry_type'])->value('industry_type_code');
             $data['corporation_country'] = Nationality::where('id', $data['country_of_corporation'])->value('country_name');
             $data['manager_country'] = Nationality::where('id', $data['manager_nationality'])->value('text');
+            $data['legal_structure_text'] = LookupRepository::where('code', $data['legal_structure'])->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
+            $data['issuance_place_text'] = LookupRepository::where('code', $data['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
+            $data['document_type_text'] = LookupRepository::where('code', $data['id_document_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
+            $data['issuing_authority_text'] = LookupRepository::where('code', $data['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
@@ -260,13 +273,7 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                DB::table('entities')->insert([
-                    'code' => 'ENT-2',
-                    'trade_license_no' => 'BIL-TEST-1234',
-                    'company_name' => 'test',
-                    'company_address' => 'testing',
-                    'industry_type_code' => 'Consultancy',
-                    'emirate_of_registration_id' => 2,
+                Entity::where('id', $businessQuote->quoteRequestEntityMapping->entity->id)->update([
                     'mobile_no' => $data['mobile_number'],
                     'email' => $data['email'],
                     'website' => $data['website'],
@@ -284,12 +291,19 @@ class AjaxController extends Controller
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 
+                /*$quote->customer()->create([
+                    'fist_name' => $data['manager_name'],
+                    'nationality_id' => $data['manager_nationality'],
+                    'dob' => $data['manager_dob'],
+                    'position' => $data['manager_position'],
+                ]);*/
+
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
             info($ex->getMessage());
         }
 
-        return response()->json(['error' => false]);
+        return response()->json(['message' => 'Something went wrong, contact to administrator.']);
     }
 }

@@ -100,7 +100,7 @@
                     <td style="width: 50%;" colspan="2">
                         <div class="data">
                             Legal structure:
-                            <span class="value">{{ $data['legal_structure'] }}</span>
+                            <span class="value">{{ $data['legal_structure_text'] }}</span>
                         </div>
                     </td>
                     <td style="width: 50%;" colspan="2">
@@ -154,7 +154,7 @@
                     <td style="width: 50%; margin-bottom: 2px;" colspan="2">
                         <div class="data">
                             ID / Document Type:
-                            <span class="value">{{ $data['id_document_type'] }}</span>
+                            <span class="value">{{ $data['document_type_text'] }}</span>
                         </div>
                     </td>
                     <td style="width: 50%;" colspan="2">
@@ -184,7 +184,7 @@
                     <td style="width: 50%; margin-bottom: 2px;" colspan="2">
                         <div class="data">
                             Place of issue:
-                            <span class="value">{{ dateFormat($data['place_of_issue']) }}</span>
+                            <span class="value">{{ dateFormat($data['issuance_place_text']) }}</span>
                         </div>
                     </td>
                 </tr>
@@ -193,7 +193,7 @@
                     <td style="width: 80%;" colspan="3">
                         <div class="data">
                             ID issuing authority:
-                            <span class="value">{{ $data['issuing_authority'] }}</span>
+                            <span class="value">{{ $data['issuing_authority_text'] }}</span>
                         </div>
                     </td>
                 </tr>

@@ -72,14 +72,12 @@ const onKycSubmit = () => {
         props.buttonStatus(true);
       } else {
         notification.error({
-          title: 'Document not uploaded.',
+          title: response.data.message,
           position: 'top',
         });
       }
     }).catch(error => {
-      if (error.response.status === 422) {
-        console.error(error.response.data.errors);
-      }
+      console.error(error.response.data);
     });
   }
 };
