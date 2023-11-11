@@ -97,6 +97,13 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+
+    Route::get('migrate-customer-member', function () {
+        if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
+            \App\Jobs\CustomerMemberMigrationJob::dispatch();
+        }
+    });
+
     Route::get('leadsearch', function () {
         return redirect('home');
     });

@@ -36,6 +36,8 @@ class CustomerMemberMigrationJob implements ShouldQueue
      */
     public function handle(): void
     {
+        info('customer member migration job started');
+
         HealthMemberDetail::chunk(500, function ($healthMemberDetails) {
             foreach ($healthMemberDetails as $hqrmd) {
                 $isDuplicate = DB::table('customer_members')
@@ -120,7 +122,9 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });
 
-        info('total duplicats: '.$this->totalDuplicate);
+        info('total duplicates: '.$this->totalDuplicate);
+
+        info('customer member migration job completed');
     }
 
     public function middleware()
