@@ -292,17 +292,14 @@ class AjaxController extends Controller
                     'id_issuance_date' => $data['id_issue_date'],
                     'id_expiry_date' => $data['id_expiry_date'],
                     'id_issuance_authority' => $data['issuing_authority'],
+                    // 'manager_name' => $data['manager_name'],
+                    // 'manager_nationality' => $data['manager_nationality'],
+                    // 'manager_dob' => $data['manager_dob'],
+                    // 'manager_position' => $data['manager_position'],
                 ]);
 
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
-
-                /*$quote->customer()->create([
-                    'fist_name' => $data['manager_name'],
-                    'nationality_id' => $data['manager_nationality'],
-                    'dob' => $data['manager_dob'],
-                    'position' => $data['manager_position'],
-                ]);*/
 
                 return response()->json(['success' => true]);
             }
