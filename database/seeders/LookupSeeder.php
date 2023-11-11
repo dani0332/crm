@@ -116,5 +116,77 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::ENTITY_TYPE, 'code' => 'SubEntity', 'text' => 'Sub Entity'],
             ]);
         }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::RESIDENT_STATUS)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::RESIDENT_STATUS, 'code' => 'uaeResident', 'text' => 'UAE resident', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::RESIDENT_STATUS, 'code' => 'nonUaeResident', 'text' => 'Non UAE resident', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::DOCUMENT_ID_TYPE)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'emiratesId', 'text' => 'Emirates Id', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'passport', 'text' => 'Passport', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::DOCUMENT_ID_TYPE, 'code' => 'homeCountryId', 'text' => 'Home Country ID', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::MODE_OF_CONTACT)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => 'phone', 'text' => 'Phone', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => 'email', 'text' => 'Email', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => 'phoneAndEmail', 'text' => 'Phone and Email', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_CONTACT, 'code' => 'walkIn', 'text' => 'Walk-in', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::LEGAL_STRUCTURE)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'establishment', 'text' => 'Establishment', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'soleProprietorship', 'text' => 'Sole proprietorship', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'privateJointStockCompany', 'text' => 'Private joint stock company', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'limitedLiabilityCompany', 'text' => 'Limited liability company', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'publicJointStockCompany', 'text' => 'Public joint stock company', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::LEGAL_STRUCTURE, 'code' => 'branchOfForeignCompany', 'text' => 'Branch of a foreign company', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::ISSUANCE_PLACE)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'dubai', 'text' => 'Dubai', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'abuDhabi', 'text' => 'Abu Dhabi', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'sharjah', 'text' => 'Sharjah', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'ummAlQuwain', 'text' => 'Umm Al Quwain', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'rasAlKhaima', 'text' => 'Ras Al Khaima', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'ajman', 'text' => 'Ajman', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUANCE_PLACE, 'code' => 'fujairah', 'text' => 'Fujairah', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::ENTITY_DOCUMENT_TYPE, 'code' => 'tradeLicense', 'text' => 'Trade License', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ENTITY_DOCUMENT_TYPE, 'code' => 'moa', 'text' => 'MOA', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ENTITY_DOCUMENT_TYPE, 'code' => 'others', 'text' => 'Others', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::ISSUING_AUTHORITY)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DED', 'text' => 'Department of Economic Development (DED)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'FZA', 'text' => 'Free Zone Authorities', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DCCA', 'text' => 'Dubai Creative Clusters Authority (DCCA)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'ME', 'text' => 'Ministry of Economy', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DTCM', 'text' => 'Department of Tourism and Commerce Marketing (DTCM)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DoHP', 'text' => 'Department of Health and Prevention (DoHP)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'MOHRE', 'text' => 'Ministry of Human Resources and Emiratisation (MOHRE)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'MI', 'text' => 'Ministry of Interior', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DoE', 'text' => 'Department of Energy (DoE)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'CBUAE', 'text' => 'Central Bank of the UAE', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'TRA', 'text' => 'Telecommunications Regulatory Authority (TRA)', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::ISSUING_AUTHORITY, 'code' => 'DMCC', 'text' => 'Dubai Multi Commodities Centre (DMCC)', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
     }
 }
