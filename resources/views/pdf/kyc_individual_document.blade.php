@@ -110,7 +110,7 @@
                     <td style="width: 33%;" colspan="2">
                         <div class="data">
                             Residence status:
-                            <span class="value">{{ $data['resident_status'] }}</span>
+                            <span class="value">{{ $data['resident_status_text'] }}</span>
                         </div>
                     </td>
                 </tr>
@@ -149,7 +149,7 @@
                     <td style="width: 33%;">
                         <div class="data">
                             ID type:
-                            <span class="value">{{ $data['id_type'] }}</span>
+                            <span class="value">{{ $data['id_type_text'] }}</span>
                         </div>
                     </td>
                     <td style="width: 33%;">
@@ -176,13 +176,13 @@
                     <td style="width: 50%;" colspan="2">
                         <div class="data">
                             Mode of contact:
-                            <span class="value">{{ $data['mode_of_contact'] }}</span>
+                            <span class="value">{{ $data['mode_of_contact_text'] }}</span>
                         </div>
                     </td>
                     <td style="width: 50%;" colspan="2">
                         <div class="data">
                             Mode of delivery:
-                            <span class="value">{{ $data['mode_of_delivery'] }}</span>
+                            <span class="value">{{ $data['mode_of_delivery_text'] }}</span>
                         </div>
                     </td>
                 </tr>
@@ -212,7 +212,7 @@
                             <br>
                             <div class="data">
                                 Employment sector:
-                                <span class="value">{{ $data['employment_sector'] }}</span>
+                                <span class="value">{{ $data['employment_sector_text'] }}</span>
                             </div>
                         </td>
                     @endif
@@ -238,7 +238,7 @@
                             <br>
                             <div class="data">
                                 Position in company:
-                                <span class="value">{{ $data['company_position'] }}</span>
+                                <span class="value">{{ $data['company_position_text'] }}</span>
                             </div>
                         </td>
                     @endif
