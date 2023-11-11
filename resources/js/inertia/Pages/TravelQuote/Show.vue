@@ -26,7 +26,6 @@ defineProps({
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
-  listQuotePlans: Array,
   activities: Array,
   customerAdditionalContacts: Array,
   ecomTravelInsuranceQuoteUrl: String,
@@ -294,6 +293,7 @@ const addTravelMember = isValid => {
         title: 'Member Added',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -342,6 +342,7 @@ const editTraveler = isValid => {
         title: 'Member Updated',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -367,6 +368,7 @@ const deleteTraveler = id => {
         title: 'Member Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -511,6 +513,21 @@ const onDocDelete = name => {
   confirmDeleteData.docs = name;
 };
 
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/travel/available-plans/${page.props.quote.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            availablePlansTable.data = res.data
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
+
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
   router.post(
@@ -585,6 +602,7 @@ const emailStatusesTableColumns = computed(() => {
 });
 
 const availablePlansTable = reactive({
+  data: [],
   columns: [
     {
       text: 'Provider Name',
@@ -959,6 +977,7 @@ const linkEntity = () => {
 }
 
 onMounted(() => {
+    onLoadAvailablePlansData()
   if (page.props.message) {
     notification.success({
       title: page.props.message,
@@ -2010,7 +2029,7 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
         <x-button
-          v-if="listQuotePlans.length > 0 && permissions.canNotApprovePayments"
+          v-if="availablePlansTable.data.length > 0 && permissions.canNotApprovePayments"
           size="sm"
           color="orange"
           @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
@@ -2019,23 +2038,23 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
+      <div v-if="availablePlansTable.data && typeof availablePlansTable.data == 'string'">
         <p
           class="text-center text-primary-600 uppercase"
-          v-if="typeof listQuotePlans == 'string'"
+          v-if="typeof availablePlansTable.data == 'string'"
         >
-          {{ listQuotePlans }}
+          {{ availablePlansTable.data }}
         </p>
       </div>
       <div v-else>
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
-          :items="listQuotePlans || []"
+          :items="availablePlansTable.data || []"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
-          :hide-footer="listQuotePlans.length < 15"
+          :hide-footer="availablePlansTable.data.length < 15"
         >
           <template #item-providerName="item">
             <span class="text-primary-600 uppercase">{{

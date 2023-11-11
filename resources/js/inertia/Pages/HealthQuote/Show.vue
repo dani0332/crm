@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import KycForm from "../../Components/KycForm.vue";
+import {computed} from "vue";
 
 defineProps({
   quote: Object,
@@ -15,7 +16,6 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: Array,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -449,6 +449,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
+        onLoadAvailablePlansData()
       },
       onFinish: () => {
         modals.member = false;
@@ -462,6 +463,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
+        onLoadAvailablePlansData()
       },
       onFinish: () => {
         modals.member = false;
@@ -483,6 +485,7 @@ const memberDeleteConfirmed = () => {
         title: 'Member Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       modals.memberConfirm = false;
@@ -504,6 +507,7 @@ const planDataTable = ref();
 
 const plansTable = reactive({
   isLoading: false,
+  data: [],
   columns: [
     {
       text: 'Provider Name',
@@ -539,6 +543,23 @@ const plansTable = reactive({
     },
   ],
 });
+
+
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            plansTable.data= res.data.length > 0 ? res?.data[0] : []
+            getSmallestCopayRateAsDefaultValue();
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
 
 const planClicked = plan => {
   selectedPlan.value = plan;
@@ -642,7 +663,7 @@ const onCreatePlan = () => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['listQuotePlans'],
+    only: ['plansTable.data'],
     onStart: () => {
       modals.createPlan = false;
     },
@@ -702,16 +723,15 @@ watch(
   },
 );
 
-const plansData = ref(page.props.listQuotePlans);
 
-const listQuotePlansFiltered = ref(
-  plansData.value.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden)),
-);
+const listQuotePlansFiltered = computed(() => {
+    return plansTable.data.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden))
+})
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
-  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+  listQuotePlansFiltered.value = plansTable.data.filter(plan => {
     let isManualPlan = planFilters.manual_plan;
     let isCurrentlyOnline = planFilters.current_online;
     let network = planFilters.network;
@@ -754,7 +774,7 @@ const onPlanFiltersReset = () => {
   planFilters.network = [];
   planFilters.manual_plan = null;
   planFilters.current_online = null;
-  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  listQuotePlansFiltered.value = plansTable.data;
   modals.planFilters = false;
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
@@ -773,11 +793,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
-  plansData.value.forEach(element => {
+  plansTable.data.forEach(element => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
+        smallestCopayVAT = Number(value.vat)
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
         smallestCopayValue = Number(value.premium);
@@ -1288,11 +1308,11 @@ const linkEntity = () => {
 }
 
 onMounted(() => {
+  onLoadAvailablePlansData()
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
-  getSmallestCopayRateAsDefaultValue();
   isMounted.value = true;
 
 });
@@ -2352,7 +2372,7 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
-          <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ plansTable.data.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
           <x-button-group v-if="selectedPlans.length > 0" size="sm">
@@ -2381,7 +2401,7 @@ onMounted(() => {
           </x-button>
 
           <x-button
-            v-if="listQuotePlans.length > 0"
+            v-if="plansTable.data.length > 0"
             size="sm"
             color="orange"
             @click.prevent="
@@ -2398,7 +2418,7 @@ onMounted(() => {
             :show="planFiltersCount > 0"
           >
             <x-button
-              v-if="listQuotePlans.length > 0"
+              v-if="plansTable.data.length > 0"
               size="sm"
               color="primary"
               @click.prevent="modals.planFilters = true"
@@ -2499,6 +2519,7 @@ onMounted(() => {
           :plan="selectedPlan"
           :genders="genderOptions"
           @copay-update="onSelectedCopay"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
 
@@ -2537,7 +2558,6 @@ onMounted(() => {
             select-all
             deselect-all
           />
-
           <div>
             <x-tooltip position="right" class="arrow-l">
               <label

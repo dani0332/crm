@@ -33,6 +33,7 @@ const decisionNotesModal = ref(false);
 const submitDecisionLoading = ref(false);
 const decisionModalHeading = ref('');
 const amlDecision = ref('');
+const decisionSelected = ref({});
 const passingDecisions = [ props.amlDecisionStatusCode.FALSE_POSITIVE, props.amlDecisionStatusCode.TRUE_MATCH_ACCEPT_RISK];
 const decisionTitles = {
     FalsePositive : 'False Positive',
@@ -40,12 +41,20 @@ const decisionTitles = {
     TrueMatchRejectRisk: 'True Match - Reject Risk',
 };
 
+const decisionOptions = [
+    { value: props.amlDecisionStatusCode.UNKNOWN, label: 'Unknown' },
+    { value: props.amlDecisionStatusCode.FALSE_POSITIVE, label: 'False Positive' },
+    { value: props.amlDecisionStatusCode.TRUE_MATCH, label: 'True Match' }
+];
+
 function submitDecision(decision) {
+
     submitDecisionLoading.value = true;
     let quoteStatusCode = passingDecisions.includes(decision)
         ? props.quoteStatusCode.AMLScreeningCleared
         : props.quoteStatusCode.AMLScreeningFailed;
-    let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}/quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&aml_id=${props.aml.id}&aml_decision=${decision}`;
+    let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}/quoteStatusUpdate/${quoteStatusCode}?
+        notes=${decisionNotes.value}&aml_id=${props.aml.id}&aml_decision=${decision}&decisonsForUpdatePortal=${JSON.stringify(decisionSelected.value)}`;
 
     axios
         .get(url)
@@ -78,6 +87,7 @@ const submitAMLDecision = decision => {
 };
 
 const setSelectedOption = (e, item) => {
+    decisionSelected.value[item.EntityDetails.IDs[0].Number] = e;
     let index = amlResults.value.findIndex(
         x => x.EntityUniqueID == item.EntityUniqueID,
     );
@@ -181,6 +191,22 @@ const falsePositive = computed(() => {
                 fixed-checkbox
             >
                 <template #item-result="item">
+<!--                    <div class="custom-select">-->
+<!--                        <select-->
+<!--                            v-model="item.decision"-->
+<!--                            class="px-3 py-2 rounded-md outline-primary-500 border border-gray-300 dark:border-gray-700 bg-white focus:outline-primary-500 focus:border-primary-500 focus:border-2"-->
+<!--                        >-->
+<!--                            <option-->
+<!--                                class="text-base bg-white hover:bg-red-700 px-4 rounded-0"-->
+<!--                                :value="x.value"-->
+<!--                                v-for="x in decisionOptions"-->
+<!--                                :key="x.label"-->
+<!--                                @change="setSelectedOption($event, item)"-->
+<!--                            >-->
+<!--                                {{ x.label }}-->
+<!--                            </option>-->
+<!--                        </select>-->
+<!--                    </div>-->
                     <x-select
                         :modelValue="item.decision"
                         :options="[

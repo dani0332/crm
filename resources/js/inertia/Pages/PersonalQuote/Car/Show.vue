@@ -243,6 +243,7 @@ function repairTypeCheck(repairType) {
 }
 
 const availablePlansTable = reactive({
+  data: [],
   columns: [
     { text: 'Provider Name', value: 'providerName' },
     { text: 'Plan Name', value: 'name' },
@@ -345,6 +346,22 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
+``
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            availablePlansTable.data= res.data
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
+
 
 const historyDataTable = [
   { text: 'Modified At', value: 'created_at' },
@@ -355,13 +372,11 @@ const historyDataTable = [
 ];
 
 const availablePlansItems = computed(() => {
-  if (!Array.isArray(page.props.listQuotePlans)) {
-    return [];
-  }
-  return typeof page.props.listQuotePlans !== 'string'
-    ? page.props.listQuotePlans
-    : [];
-});
+	if (! Array.isArray(availablePlansTable.data)) {
+		return [];
+	}
+	return typeof availablePlansTable.data !== 'string' ? availablePlansTable.data : [];
+})
 
 const totalPriceVAT = computed(() => {
   let vat = 0;
@@ -1239,7 +1254,8 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 onMounted(() => {
-  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
+  onLoadAvailablePlansData();
+  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
     getFollowUpsByQuote();
   }
 
@@ -2638,9 +2654,7 @@ const linkEntity = () => {
             @click.prevent="copyLink"
             size="sm"
             color="emerald"
-            v-if="
-              typeof listQuotePlans !== 'string' && listQuotePlans.length > 0
-            "
+           v-if="typeof availablePlansTable.data !== 'string' && availablePlansTable.data.length > 0"
           >
             Copy Link
           </x-button>
@@ -2903,6 +2917,7 @@ const linkEntity = () => {
             ])
           "
           :totalSelectedAddonsPriceWithVat="totalPriceVAT"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
       <x-modal v-model="modals.sendConfirm" show-close backdrop>
@@ -2928,7 +2943,9 @@ const linkEntity = () => {
         <LazyCreatePlan
           :record="record"
           :insuranceProviders="insuranceProviders"
-          :listQuotePlans="listQuotePlans"
+          :available-plans="availablePlansItems"
+          @success="onCreatePlan"
+          @error="onPlanError"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->

@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Jobs\BridgerDecisionUpdateJob;
 use App\Models\AML;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -174,7 +175,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
@@ -205,8 +206,8 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
-                $message->to($emailRecipients)->cc(auth()->user()->email)->subject($emailSubject);
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail) {
+                $message->to($emailRecipients)->cc($loginUserEmail)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
             }
         );
@@ -246,6 +247,23 @@ class AMLService
         }
 
         return $customerChildDetails;
+    }
+
+    public static function updateAMLDecisionLexisNexis($request)
+    {
+        \Log::info('Bridger Insight - AML Decision Update API Call');
+        $amlDescions = json_decode($request['decisonsForUpdatePortal']);
+
+        $bridgerInsightService = new BridgerInsightService();
+        $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+
+        foreach ($amlDescions as $resultId => $amlDescion) {
+            BridgerDecisionUpdateJob::dispatch(
+                $bridgerAPIToken,
+                $resultId,
+                $amlDescion)
+                ->delay(now()->addSeconds(5));
+        }
 
     }
 }
