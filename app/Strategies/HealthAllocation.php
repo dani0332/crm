@@ -23,7 +23,6 @@ class HealthAllocation implements Allocation
         $lead = $this->fetchLead();
 
         if (! $lead) {
-            info('No lead found or either lead is not under assignment criteria');
 
             return false; // when lead is not on criteria or not found
         }

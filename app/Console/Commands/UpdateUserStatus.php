@@ -143,8 +143,6 @@ class UpdateUserStatus extends Command
 
         $lastActivity = Carbon::createFromTimestamp($session->last_activity);
 
-        info('Last activity for user : '.$session->user->name.' was at : '.$lastActivity.' and current status is : '.$session->user->status);
-
         $currentUserStatus = $session->user->status ?? UserStatusEnum::UNAVAILABLE;
 
         return [$userId, $lastActivity, $currentUserStatus];
