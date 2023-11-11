@@ -22,17 +22,19 @@ class BridgerAMLJob implements ShouldQueue
     private $quoteTypeID;
     private $customerType;
     private $bridgerAPIToken;
+    private $loginCustomerEmail;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($bridgerAPIToken, $payload, $quoteRequestID, $quoteTypeID, $customerType)
+    public function __construct($bridgerAPIToken, $payload, $quoteRequestID, $quoteTypeID, $customerType, $loginCustomerEmail)
     {
         $this->bridgerAPIToken = $bridgerAPIToken;
         $this->payload = $payload;
         $this->quoteRequestID = $quoteRequestID;
         $this->quoteTypeID = $quoteTypeID;
         $this->customerType = $customerType;
+        $this->loginCustomerEmail = $loginCustomerEmail ?? '';
     }
 
     /**
@@ -42,7 +44,7 @@ class BridgerAMLJob implements ShouldQueue
     {
         try {
             info('BridgerAMLJob - AML Check with Code '.$this->payload['code'].' - Data : '.json_encode($this->payload));
-            $bridgerInsightService->searchAMLResult($this->bridgerAPIToken, $this->payload, $this->quoteRequestID, $this->quoteTypeID, $this->customerType);
+            $bridgerInsightService->searchAMLResult($this->bridgerAPIToken, $this->payload, $this->quoteRequestID, $this->quoteTypeID, $this->customerType, $this->loginCustomerEmail);
         } catch (\Exception $exception) {
             info('BridgerAMLJob Exception: '.$exception->getMessage());
             Log::error($exception);
