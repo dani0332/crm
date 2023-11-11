@@ -347,8 +347,9 @@ class AMLController extends Controller
                         $memberDetail,
                         $quoteRequestId,
                         $quoteTypeId,
-                        CustomerTypeEnum::Individual)
-                        ->delay(now()->addSeconds(5));
+                        CustomerTypeEnum::Individual,
+                        auth()->user()->email
+                    )->delay(now()->addSeconds(5));
                 }
 
                 if(!in_array(true, session()->get('amlResponseCheck')) && !in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
@@ -382,11 +383,11 @@ class AMLController extends Controller
 
                 // Bridger Insight API Call for Entity
                 $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entityId];
-                BridgerAMLJob::dispatch($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity)
+                BridgerAMLJob::dispatch($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email)
                     ->delay(now()->addSeconds(5));
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    BridgerAMLJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual)
+                    BridgerAMLJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, auth()->user()->email)
                         ->delay(now()->addSeconds(5));
                 }
 
