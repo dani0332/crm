@@ -74,7 +74,7 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = Config::get('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $loginUserEmail =  auth()->user()->email;
+            $loginUserEmail =  auth()->user()->email ?? '';
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
