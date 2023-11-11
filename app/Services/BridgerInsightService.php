@@ -74,6 +74,7 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = Config::get('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
+            $loginUserEmail =  auth()->user()->email;
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
@@ -159,8 +160,7 @@ class BridgerInsightService
 
                             KycLog::insert($kycLogDetails);
                             Log::info('Bridger Insight Service - KYC Log data inserted');
-
-                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text);
+                            AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records ?? ['Records' => 'Not Found']), $customerOrEntityName, $quoteType->text,$loginUserEmail);
                             Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                         }
                     }

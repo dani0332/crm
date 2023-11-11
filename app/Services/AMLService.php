@@ -175,7 +175,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
@@ -206,8 +206,8 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
-                $message->to($emailRecipients)->cc(auth()->user()->email)->subject($emailSubject);
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail) {
+                $message->to($emailRecipients)->cc($loginUserEmail)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
             }
         );
