@@ -239,4 +239,47 @@ class BridgerInsightService
         return $payLoad;
     }
 
+    public function updateDecisionOnLexisNexis($bridgerToken, $resultId, $decision)
+    {
+        $bridgerEndPoint = $this->bridgerEndPoint.'/api/Results/SetRecordState';
+        $bridgerClient = new \GuzzleHttp\Client();
+
+        $amlUpdateData = [
+            'ClientContext' => [
+                'ClientID' => $this->bridgerClientID,
+                'UserID' => $this->bridgerUserName,
+                'Password' => $this->bridgerPassword
+            ],
+            'ResultID' => $resultId,
+            'State' => [
+                'Note' => 'Testing Decision Update'
+            ]
+        ];
+
+        try {
+            $bridgerRequest = $bridgerClient->post(
+                $bridgerEndPoint,
+                [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                        'Authorization' => 'Bearer ' . $bridgerToken['response'],
+                        'X-API-Key' => $this->bridgerAPIKey,
+                    ],
+                    'body' => json_encode($amlUpdateData),
+                    'timeout' => 10,
+                ]
+            );
+
+            $getStatusCode = $bridgerRequest->getStatusCode();
+            $getContents = $bridgerRequest->getBody();
+            $getDecodeContents = json_decode($getContents);
+
+            Log::info("Bridger Insight Service - AML Decision Update API Call Response : " .json_encode($getContents));
+
+        } catch (Exception $exception) {
+            Log::error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
+        }
+    }
+
 }

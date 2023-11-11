@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Jobs\BridgerDecisionUpdateJob;
 use App\Models\AML;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -246,6 +247,23 @@ class AMLService
         }
 
         return $customerChildDetails;
+    }
+
+    public static function updateAMLDecisionLexisNexis($request)
+    {
+        \Log::info('Bridger Insight - AML Decision Update API Call');
+        $amlDescions = json_decode($request['decisonsForUpdatePortal']);
+
+        $bridgerInsightService = new BridgerInsightService();
+        $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+
+        foreach ($amlDescions as $resultId => $amlDescion) {
+            BridgerDecisionUpdateJob::dispatch(
+                $bridgerAPIToken,
+                $resultId,
+                $amlDescion)
+                ->delay(now()->addSeconds(5));
+        }
 
     }
 }

@@ -279,6 +279,11 @@ class AMLController extends Controller
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
 
+            // Update Decision on Lexis Nexis Portal
+            if(isset(\request()->decisonsForUpdatePortal)) {
+                AMLService::updateAMLDecisionLexisNexis(\request()->toArray());
+            }
+
             return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');
         }
     }
