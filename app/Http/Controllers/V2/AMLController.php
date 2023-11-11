@@ -24,6 +24,7 @@ use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\HealthMemberDetail;
+use App\Models\KycLog;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -191,7 +192,11 @@ class AMLController extends Controller
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
-        $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId]);
+        $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+            ->where( function($aml) use ($quoteRequestId, $quoteTypeId) {
+                $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $aml->orWhereNull('decision');
+            });
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
@@ -315,6 +320,12 @@ class AMLController extends Controller
             $bridgerInsightService = new BridgerInsightService();
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
+            $kycLogs = KycLog::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+                ->where( function($aml) use ($quoteRequestId, $quoteTypeId) {
+                    $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                    $aml->orWhereNull('decision');
+                })->withTrashed()->get()->pluck('decision')->toArray();
+
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 \Log::info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
@@ -340,10 +351,14 @@ class AMLController extends Controller
                         ->delay(now()->addSeconds(5));
                 }
 
-                if(!in_array(true, session()->get('amlResponseCheck'))) {
+                if(!in_array(true, session()->get('amlResponseCheck')) && !in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                } else {
+                    $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+                    $updateQuote->save();
+                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 }
                 session()->forget('amlResponseCheck');
             }
@@ -375,10 +390,14 @@ class AMLController extends Controller
                         ->delay(now()->addSeconds(5));
                 }
 
-                if(!in_array(true, session()->get('amlResponseCheck'))) {
+                if(!in_array(true, session()->get('amlResponseCheck')) && !in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                } else {
+                    $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+                    $updateQuote->save();
+                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 }
                 session()->forget('amlResponseCheck');
             }
