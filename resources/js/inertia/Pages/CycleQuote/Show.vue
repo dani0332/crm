@@ -452,6 +452,8 @@ const linkEntity = () => {
               :employment-sectors="page.props.employmentSectors"
               :residential-status="page.props.residentialStatus"
               :company-position="page.props.companyPosition"
+              :issuance-place="page.props.issuancePlace"
+              :issuing-authority="page.props.issuanceAuthorities"
           />
         </div>
         <x-divider class="mb-4 mt-1" />

@@ -136,11 +136,13 @@ class BikeQuoteController extends Controller
 
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = null;
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
         if ($quote->customer_type == AmlSearchType::ENTITY) {
             $entities = Entity::all();
             $legalStructure = $this->lookupService->getLegalStructure();
             $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+            $issuancePlace = $this->lookupService->getIssuancePlaces();
+            $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
         } else {
             $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
             $modeOfContact = $this->lookupService->getModeOfContact();
@@ -155,6 +157,8 @@ class BikeQuoteController extends Controller
             'entities' => $entities,
             'legalStructure' => $legalStructure,
             'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
             'modeOfContact' => $modeOfContact,
             'employmentSectors' => $employmentSectors,
             'residentialStatus' => $residentialStatus,
