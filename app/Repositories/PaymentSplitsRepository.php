@@ -298,8 +298,10 @@ class PaymentSplitsRepository
             $successMessage = 'Payment Declined';
         }
 
-        //Update parent payment status if all splits are paid
-        $paymentSplitRecord = PaymentSplits::with('payment')->find($request->splitPaymentId);
+        //Update parent payment status
+        $this->setMasterPaymentStatus($request->splitPaymentId);
+       
+        /*
         $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
         if ($totalPaidPayments == $paymentSplitRecord->payment->total_payments) {
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PAID]);
@@ -307,8 +309,36 @@ class PaymentSplitsRepository
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::NEW]);
         } else {
             Payment::where('code', $paymentSplitRecord->code)->update(['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]);
-        }
+        }*/
 
         return $successMessage;
+    }
+
+    public function setMasterPaymentStatus($splitPaymentId)
+    {
+        $splitPayment = PaymentSplits::with('payment')->find($splitPaymentId);
+        $payment = Payment::where('code', $splitPayment->code)->first();
+        if ($payment) {
+            if ($payment->frequency == 'upfront') {
+                $payment->update(
+                    ['payment_status_id' => $splitPayment->payment_status_id]
+                );
+            } else {
+                $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
+                if ($totalPaidPayments == $splitPayment->payment->total_payments) {
+                    $payment->update(
+                        ['payment_status_id' => PaymentStatusEnum::PAID]
+                    );
+                } else if($totalPaidPayments > 0){
+                    $payment->update(
+                        ['payment_status_id' => PaymentStatusEnum::PARTIALLY_PAID]
+                    );
+                } else {
+                    $payment->update(
+                        ['payment_status_id' => PaymentStatusEnum::NEW]
+                    );
+                }
+            }            
+        } 
     }
 }
