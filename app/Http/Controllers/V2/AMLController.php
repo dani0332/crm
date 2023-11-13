@@ -269,8 +269,6 @@ class AMLController extends Controller
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
-        dd(request()->toArray());
-
         $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
 
         if ($updateQuoteStatusResp == 'false') {
@@ -285,8 +283,8 @@ class AMLController extends Controller
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
-            if (isset(\request()->decisonsForUpdatePortal)) {
-                AMLService::updateAMLDecisionLexisNexis(\request()->toArray());
+            if (isset(request()->decisonsForUpdatePortal)) {
+                AMLService::updateAMLDecisionLexisNexis(request());
             }
 
             return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');

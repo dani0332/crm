@@ -235,7 +235,7 @@ class BridgerInsightService
         return $payLoad;
     }
 
-    public function updateDecisionOnLexisNexis($bridgerToken, $resultId, $decision)
+    public function updateDecisionOnLexisNexis($bridgerToken, $resultId, $decisions, $notes = '')
     {
         $bridgerEndPoint = $this->bridgerEndPoint.'/api/Results/SetRecordState';
         $bridgerClient = new \GuzzleHttp\Client();
@@ -248,7 +248,8 @@ class BridgerInsightService
             ],
             'ResultID' => $resultId,
             'State' => [
-                'Note' => 'Testing Decision Update',
+                'MatchStates' => $decisions->values(),
+                'Note' => $notes,
             ],
         ];
 

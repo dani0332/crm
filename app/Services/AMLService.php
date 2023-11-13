@@ -243,19 +243,39 @@ class AMLService
 
     public static function updateAMLDecisionLexisNexis($request)
     {
+        if (! $request->result_id) {
+            info('Bridger Insight - AML Decision Update API Call - Result Id not found');
+
+            return false;
+        }
         info('Bridger Insight - AML Decision Update API Call');
-        $amlDescions = json_decode($request['decisonsForUpdatePortal']);
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
-        foreach ($amlDescions as $resultId => $amlDescion) {
-            $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $resultId, $amlDescion);
-            // BridgerDecisionUpdateJob::dispatch(
-            //     $bridgerAPIToken,
-            //     $resultId,
-            //     $amlDescion)
-            //     ->delay(now()->addSeconds(5));
+        $decisionValues = [];
+        foreach (json_decode($request->decisonsForUpdatePortal) as $descision) {
+            array_push($decisionValues, array_values((array) $descision)[0]);
         }
+
+        $index = 0;
+        $matchesData = collect(json_decode($request->match_states));
+        foreach ($matchesData as $match) {
+            $match->Type = $decisionValues[$index];
+            $index++;
+        }
+
+        $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchesData, $request->notes);
+
+        // $amlDescions = json_decode($request->decisonsForUpdatePortal);
+
+        // foreach ($amlDescions as $resultId => $amlDescion) {
+        //     $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $amlDescion);
+        //     // BridgerDecisionUpdateJob::dispatch(
+        //     //     $bridgerAPIToken,
+        //     //     $resultId,
+        //     //     $amlDescion)
+        //     //     ->delay(now()->addSeconds(5));
+        // }
     }
 }
