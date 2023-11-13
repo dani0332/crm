@@ -328,7 +328,7 @@ class CustomerRepository extends BaseRepository
             //'transaction_value',
             'mode_of_delivery',
             'employment_sector',
-            'customer_tenure'
+            'customer_tenure',
         ]));
 
         $customer->refresh();

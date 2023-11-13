@@ -256,7 +256,7 @@ class AjaxController extends Controller
         try {
             $businessQuote = BusinessQuote::with('quoteRequestEntityMapping.entity')->where('uuid', $request->quote_uuid)->first();
 
-            if(! isset($businessQuote->quoteRequestEntityMapping->entity)) {
+            if (! isset($businessQuote->quoteRequestEntityMapping->entity)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
 

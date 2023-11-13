@@ -616,7 +616,7 @@ class CRUDService extends BaseService
     {
         if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
             return 'No';
-        } elseif($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
             return 'Yes';
         }
 

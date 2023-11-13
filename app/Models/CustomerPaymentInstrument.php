@@ -10,5 +10,4 @@ class CustomerPaymentInstrument extends Model
     use HasFactory;
 
     protected $table = 'customer_payment_instrument';
-
 }

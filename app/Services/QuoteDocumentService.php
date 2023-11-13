@@ -99,7 +99,7 @@ class QuoteDocumentService extends BaseService
                 // Set the filename for Azure storage
                 $filePathAzure = 'documents/'.$documentType->folder_path.'/'.$fileNameAzure;
                 Storage::disk('azureIM')->put($filePathAzure, base64_decode($file_data));
-            } elseif($isKyc) {
+            } elseif ($isKyc) {
                 $originalName = 'SystemGeneratedKycDocument.pdf';
 
                 // Generate a unique filename

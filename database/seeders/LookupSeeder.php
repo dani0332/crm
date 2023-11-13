@@ -193,10 +193,8 @@ class LookupSeeder extends Seeder
 
         if (! DB::table('lookups')->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->first()) {
             DB::table('lookups')->insert([
-                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'government', 'text' => 'Government Sector', 'created_at' => now(), 'updated_at' =>
-                    now()],
-                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'semiGovernment', 'text' => 'Semi Government Sector', 'created_at' => now(), 'updated_at' =>
-                    now()],
+                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'government', 'text' => 'Government Sector', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'semiGovernment', 'text' => 'Semi Government Sector', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'private', 'text' => 'Private Sector', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::EMPLOYMENT_SECTOR, 'code' => 'freezone', 'text' => 'Freezone Sector', 'created_at' => now(), 'updated_at' => now()],
             ]);
@@ -204,10 +202,8 @@ class LookupSeeder extends Seeder
 
         if (! DB::table('lookups')->where('key', LookupsEnum::COMPANY_POSITION)->first()) {
             DB::table('lookups')->insert([
-                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'owner', 'text' => 'Owner', 'created_at' => now(), 'updated_at' =>
-                    now()],
-                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'partner', 'text' => 'Partner', 'created_at' => now(), 'updated_at' =>
-                    now()],
+                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'owner', 'text' => 'Owner', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'partner', 'text' => 'Partner', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'shareholder', 'text' => 'Shareholder', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'manager', 'text' => 'Manager', 'created_at' => now(), 'updated_at' => now()],
             ]);
@@ -215,10 +211,8 @@ class LookupSeeder extends Seeder
 
         if (! DB::table('lookups')->where('key', LookupsEnum::MODE_OF_DELIVERY)->first()) {
             DB::table('lookups')->insert([
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modSent', 'text' => 'Sent to customer via Email', 'created_at' => now(), 'updated_at' =>
-                    now()],
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modDelivered', 'text' => 'Delivered to customer via Courier', 'created_at' => now(), 'updated_at' =>
-                    now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modSent', 'text' => 'Sent to customer via Email', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modDelivered', 'text' => 'Delivered to customer via Courier', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modCollected', 'text' => 'Collected by customer from office', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }

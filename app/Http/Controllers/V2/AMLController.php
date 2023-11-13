@@ -2,54 +2,54 @@
 
 namespace App\Http\Controllers\V2;
 
-use DataTables;
-use Carbon\Carbon;
-use App\Models\AML;
-use App\Models\Entity;
-use App\Models\Emirate;
-use App\Models\Payment;
-use App\Enums\RolesEnum;
-use App\Models\Customer;
-use App\Enums\QuoteTypes;
-use App\Models\QuoteType;
+use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
-use App\Enums\QuoteTypeId;
-use App\Jobs\BridgerAMLJob;
-use App\Models\QuoteStatus;
-use App\Enums\quoteTypeCode;
-use App\Services\AMLService;
-use Illuminate\Http\Request;
-use App\Models\PersonalQuote;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\CustomerTypeEnum;
+use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Jobs\BridgerAMLJob;
+use App\Models\AML;
+use App\Models\ApplicationStorage;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
-use App\Models\UAEAMLListUploads;
-use App\Services\CheckAmlService;
-use App\Models\ApplicationStorage;
+use App\Models\Customer;
+use App\Models\CustomerPaymentInstrument;
+use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
 use App\Models\Lookup;
-use App\Models\TravelMemberDetail;
-use App\Enums\AMLDecisionStatusEnum;
-use App\Http\Controllers\Controller;
-use App\Services\QuoteStatusService;
+use App\Models\Payment;
+use App\Models\PersonalQuote;
+use App\Models\QuoteRequestEntityMapping;
+use App\Models\QuoteStatus;
+use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
-use App\Services\SanctionListService;
-use App\Traits\GenericQueriesAllLobs;
-use App\Http\Requests\AMLCheckRequest;
+use App\Models\TravelMemberDetail;
+use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
 use App\Repositories\LookupRepository;
-use App\Services\BridgerInsightService;
-use App\Models\CustomerPaymentInstrument;
-use App\Models\QuoteRequestEntityMapping;
-use App\Repositories\QuoteTypeRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
+use App\Repositories\QuoteTypeRepository;
+use App\Services\AMLService;
+use App\Services\BridgerInsightService;
+use App\Services\CheckAmlService;
+use App\Services\QuoteStatusService;
+use App\Services\SanctionListService;
+use App\Traits\GenericQueriesAllLobs;
+use Carbon\Carbon;
+use DataTables;
+use Illuminate\Http\Request;
 
 class AMLController extends Controller
 {
@@ -244,7 +244,7 @@ class AMLController extends Controller
             LookupsEnum::EMPLOYMENT_SECTOR,
             LookupsEnum::LEGAL_STRUCTURE,
             LookupsEnum::ISSUANCE_PLACE,
-            LookupsEnum::ISSUING_AUTHORITY
+            LookupsEnum::ISSUING_AUTHORITY,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
@@ -278,7 +278,7 @@ class AMLController extends Controller
             'isCompanySearchEnabled' => $isCompanySearchEnabled,
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
-            'lookups' => $lookups
+            'lookups' => $lookups,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -287,8 +287,7 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
-
-       // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
+        // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
@@ -436,15 +435,15 @@ class AMLController extends Controller
                         $customerInstrument->update([
                             'card_holder_name' => $AMLCheckRequest->payerName,
                         ]);
-                    } else if (!$customerInstrument) {
+                    } elseif (! $customerInstrument) {
                         return response()->json([
                             'status' => false,
-                            'message' => 'Customer Instrument record not found'
+                            'message' => 'Customer Instrument record not found',
                         ]);
                     } else {
                         $payment->update([
                             'paid_by' => $AMLCheckRequest->paidBy,
-                            'payer_name' => $AMLCheckRequest->payerName
+                            'payer_name' => $AMLCheckRequest->payerName,
                         ]);
                     }
 
