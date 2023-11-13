@@ -25,6 +25,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
+use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -189,6 +190,7 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
+
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
@@ -200,7 +202,7 @@ class AMLController extends Controller
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->firstOrFail();
+        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
@@ -231,6 +233,12 @@ class AMLController extends Controller
             $quoteStatusCode = $quoteStatus[0]->code;
         }
 
+        $residentStatuses = Lookup::where('key', 'resident-status')->get();
+        $idTypes = Lookup::where('key', 'id-type')->get();
+        $modeOfContacts = Lookup::where('key', 'mode-of-contact')->get();
+        $modeOfDelivery = Lookup::where('key', LookupsEnum::MODE_OF_DELIVERY)->get();
+        $employmentSectors = Lookup::where('key', LookupsEnum::EMPLOYMENT_SECTOR)->get();
+
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $data = [
@@ -257,6 +265,11 @@ class AMLController extends Controller
             'isCompanySearchEnabled' => $isCompanySearchEnabled,
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
+            'residentStatuses' => $residentStatuses,
+            'idTypes' => $idTypes,
+            'modeOfContacts' => $modeOfContacts,
+            'modeOfDelivery' => $modeOfDelivery,
+            'employmentSectors' => $employmentSectors
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -265,6 +278,8 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
+
+       // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
@@ -295,6 +310,7 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+        dd(request()->all());
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
 
