@@ -16,4 +16,14 @@ enum LookupsEnum: string
     case ENTITY_TYPE = 'entity-type';
     case PARENT_ENTITY = 'Parent';
     case SUB_ENTITY = 'SubEntity';
+    case RESIDENT_STATUS = 'resident-status';
+    case DOCUMENT_ID_TYPE = 'id-type';
+    case MODE_OF_CONTACT = 'mode-of-contact';
+    case LEGAL_STRUCTURE = 'legal-structure';
+    case ISSUANCE_PLACE = 'issuance-place';
+    case ENTITY_DOCUMENT_TYPE = 'entity-document-type';
+    case ISSUING_AUTHORITY = 'issuing-authority';
+    case EMPLOYMENT_SECTOR = 'employment-sector';
+    case COMPANY_POSITION = 'company-position';
+    case MODE_OF_DELIVERY = 'mode-of-delivery';
 }

@@ -18,6 +18,7 @@ use App\Http\Requests\StoreBusinessQuoteRequest;
 use App\Http\Requests\UpdateBusinessQuoteRequest;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
@@ -166,7 +167,7 @@ class BusinessQuoteController extends Controller
         })->values();
 
         if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value){
+            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
@@ -202,7 +203,23 @@ class BusinessQuoteController extends Controller
 
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
 
+        $countries = Nationality::all();
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $entities = Entity::all();
+        $legalStructure = $this->lookupService->getLegalStructure();
+        $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        $issuancePlace = $this->lookupService->getIssuancePlaces();
+        $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+
         return inertia('CorpLineQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
             'modelType' => $this->genericModel->modelType,

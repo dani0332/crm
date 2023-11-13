@@ -30,6 +30,7 @@ class PersonalQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'previous_quote_policy_number_text' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
     ];
@@ -238,6 +239,6 @@ class PersonalQuote extends Model implements AuditableContract
     public function quoteRequestEntityMapping()
     {
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
-            ->where('quote_type_id', QuoteTypeId::Pet);
+            ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
     }
 }

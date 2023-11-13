@@ -30,6 +30,7 @@ use App\Services\QuoteStatusService;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use Auth;
+use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
 
@@ -94,7 +95,7 @@ class AMLController extends Controller
                     }
                 }
 
-                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
+                $dataAml = AML::select('kyc_logs.id', 'kyc_logs.input', 'kyc_logs.screenshot', 'kyc_logs.created_at', 'kyc_logs.updated_at', 'kyc_logs.quote_request_id', 'kyc_logs.quote_type_id', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
                     ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
                     ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
                     ->where('kyc_logs.quote_type_id', $request->quoteType)
@@ -129,8 +130,18 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$request->amlCreatedStartDate.'" AND "'.$request->amlCreatedEndDate.'"');
+                    $amlCreatedStartDate = Carbon::parse($request->amlCreatedStartDate)->startOfDay();
+                    $amlCreatedEndDate = Carbon::parse($request->amlCreatedEndDate)->endOfDay();
+
+                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedStartDate, $amlCreatedEndDate]);
                     $searchCriteriaSet = true;
+                }
+
+                $searchTypeIsValid = ($request->searchType == 'cdbId' || $request->searchType == 'customerEmail');
+                $amlDateRangeNotProvided = isset($request->amlCreatedStartDate) && isset($request->amlCreatedEndDate);
+
+                if (! $searchTypeIsValid && ! $amlDateRangeNotProvided) {
+                    $dataAml->whereBetween('kyc_logs.created_at', [Carbon::today()->startOfDay(), Carbon::today()->endOfDay()]);
                 }
 
                 if ($searchCriteriaSet) {

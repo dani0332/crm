@@ -31,6 +31,8 @@ use App\Models\UAEAMLListUploads;
 use App\Services\CheckAmlService;
 use App\Models\ApplicationStorage;
 use App\Models\HealthMemberDetail;
+use App\Models\KycLog;
+use App\Models\Lookup;
 use App\Models\TravelMemberDetail;
 use App\Enums\AMLDecisionStatusEnum;
 use App\Http\Controllers\Controller;
@@ -39,6 +41,8 @@ use App\Models\SanctionListDownloads;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
 use App\Http\Requests\AMLCheckRequest;
+use App\Repositories\CustomerRepository;
+use App\Repositories\EntityRepository;
 use App\Repositories\LookupRepository;
 use App\Services\BridgerInsightService;
 use App\Models\CustomerPaymentInstrument;
@@ -79,7 +83,6 @@ class AMLController extends Controller
         $quotes = [];
 
         if ($request->ajax()) {
-
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
                 $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
@@ -190,14 +193,19 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
+
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
-        $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId]);
+        $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+            ->where(function ($aml) {
+                $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $aml->orWhereNull('decision');
+            });
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->firstOrFail();
+        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
@@ -228,6 +236,22 @@ class AMLController extends Controller
             $quoteStatusCode = $quoteStatus[0]->code;
         }
 
+        $lookups = Lookup::whereIn('key', [
+            LookupsEnum::RESIDENT_STATUS,
+            LookupsEnum::DOCUMENT_ID_TYPE,
+            LookupsEnum::MODE_OF_CONTACT,
+            LookupsEnum::MODE_OF_DELIVERY,
+            LookupsEnum::EMPLOYMENT_SECTOR,
+            LookupsEnum::LEGAL_STRUCTURE,
+            LookupsEnum::ISSUANCE_PLACE,
+            LookupsEnum::ISSUING_AUTHORITY
+        ])->get()->groupBy('key');
+
+        //lookups , loop through each key, replace - with _ and update key
+        $lookups = $lookups->mapWithKeys(function ($item, $key) {
+            return [str_replace('-', '_', $key) => $item];
+        });
+
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $data = [
@@ -254,6 +278,7 @@ class AMLController extends Controller
             'isCompanySearchEnabled' => $isCompanySearchEnabled,
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
+            'lookups' => $lookups
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -262,6 +287,8 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
+
+       // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
@@ -279,6 +306,10 @@ class AMLController extends Controller
             $clientFullName = $updateQuoteStatusResp[4];
             if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+            }
+            // Update Decision on Lexis Nexis Portal
+            if (isset(request()->decisonsForUpdatePortal)) {
+                AMLService::updateAMLDecisionLexisNexis(request());
             }
 
             return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');
@@ -298,7 +329,7 @@ class AMLController extends Controller
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
 
         if ($updateQuote) {
-            \Log::info('Bridger Insight - Get Quote Successfully');
+            info('Bridger Insight - Get Quote Successfully');
             if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
                 if (checkPersonalQuotes($quoteType->code)) {
                     AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, AMLService::isDataMigrated($quoteTypeId, $quoteId));
@@ -312,11 +343,15 @@ class AMLController extends Controller
             $bridgerInsightService = new BridgerInsightService();
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
+            $kycLogs = KycLog::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+                ->where(function ($aml) {
+                    $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                    $aml->orWhereNull('decision');
+                })->withTrashed()->get()->pluck('decision')->toArray();
+
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 \Log::info('Bridger Insight - Customer type : Individual');
-                $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
-                $customer->update($AMLCheckRequest->validated());
-                $customer->refresh();
+                $customer = CustomerRepository::updateIndividualDetail($AMLCheckRequest->customer_id, $AMLCheckRequest->safe());
                 \Log::info('Bridger Insight - Customer Updated Successfully');
 
                 $getMemberOrUBODetails[] = [
@@ -328,54 +363,54 @@ class AMLController extends Controller
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    BridgerAMLJob::dispatch(
+                    BridgerAMLJob::dispatchSync(
                         $bridgerAPIToken,
                         $memberDetail,
                         $quoteRequestId,
                         $quoteTypeId,
-                        CustomerTypeEnum::Individual)
-                        ->delay(now()->addSeconds(5));
+                        CustomerTypeEnum::Individual,
+                        auth()->user()->email);
                 }
 
-                if(!in_array(true, session()->get('amlResponseCheck'))) {
+                if (! in_array(true, session()->get('amlResponseCheck')) && ! in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                } else {
+                    $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+                    $updateQuote->save();
+                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 }
                 session()->forget('amlResponseCheck');
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
+
                 \Log::info('Bridger Insight - Customer type : Entity');
-                $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license_no], [
-                    'company_name' => $AMLCheckRequest->company_name,
-                    'company_address' => $AMLCheckRequest->company_address,
-                    'industry_type_code' => $AMLCheckRequest->industry_type_code,
-                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id,
-                ]);
-                $entityId = $entity->id;
-                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
+                $entity = EntityRepository::updateEntityDetail($AMLCheckRequest->safe());
                 \Log::info('Bridger Insight - Entity Updated Successfully');
 
                 QuoteRequestEntityMapping::updateOrCreate([
                     'quote_type_id' => $quoteType->id,
                     'quote_request_id' => $quoteRequestId,
-                ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
+                ], ['entity_id' => $entity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
                 // Bridger Insight API Call for Entity
-                $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entityId];
-                BridgerAMLJob::dispatch($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity)
-                    ->delay(now()->addSeconds(5));
+                $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
+                BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
-                    BridgerAMLJob::dispatch($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual)
-                        ->delay(now()->addSeconds(5));
+                    BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, auth()->user()->email);
                 }
 
-                if(!in_array(true, session()->get('amlResponseCheck'))) {
+                if (! in_array(true, session()->get('amlResponseCheck')) && ! in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                } else {
+                    $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
+                    $updateQuote->save();
+                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 }
                 session()->forget('amlResponseCheck');
             }

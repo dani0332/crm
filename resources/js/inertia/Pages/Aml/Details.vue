@@ -29,7 +29,8 @@ const props = defineProps({
     yearsList: Array,
     isCompanySearchEnabled: {type: [Array, String]},
     customerDetails: Object,
-    amlDecisionStatusEnum: Object
+    amlDecisionStatusEnum: Object,
+    lookups: Object
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -603,6 +604,13 @@ onMounted(()=> {
             :memberRelations="memberRelations"
             :uboRelations="uboRelations"
             :customerTypeEnum="customerTypeEnum"
+            :residentStatuses="residentStatuses"
+            :idTypes="idTypes"
+            :modeOfContacts="modeOfContacts"
+            :modeOfDelivery="modeOfDelivery"
+            :employmentSectors="employmentSectors"
+            :legalStructure="legalStructure"
+            :lookups="lookups"
         />
 
         <div class="p-4 rounded shadow mb-6 bg-white">

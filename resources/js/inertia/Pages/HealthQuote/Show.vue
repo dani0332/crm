@@ -2,6 +2,8 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import KycForm from "../../Components/KycForm.vue";
+import {computed} from "vue";
 
 defineProps({
   quote: Object,
@@ -14,7 +16,6 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: Array,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -387,6 +388,19 @@ const memberForm = useForm({
   customer_type: page.props.quote.customer_type
 });
 
+
+
+const rules = {
+  isEmail: v =>
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+      'E-mail must be valid',
+  isRequired: v => !!v || 'This field is required',
+  allowEmpty: v => true || 'This field is required',
+  isPhone: v =>
+      /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
+      'Phone must be valid',
+};
+
 function onEditMember(data) {
   memberActionEdit.value = true;
   modals.member = true;
@@ -435,6 +449,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
+        onLoadAvailablePlansData()
       },
       onFinish: () => {
         modals.member = false;
@@ -448,6 +463,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
+        onLoadAvailablePlansData()
       },
       onFinish: () => {
         modals.member = false;
@@ -469,6 +485,7 @@ const memberDeleteConfirmed = () => {
         title: 'Member Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       modals.memberConfirm = false;
@@ -490,6 +507,7 @@ const planDataTable = ref();
 
 const plansTable = reactive({
   isLoading: false,
+  data: [],
   columns: [
     {
       text: 'Provider Name',
@@ -525,6 +543,23 @@ const plansTable = reactive({
     },
   ],
 });
+
+
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            plansTable.data= res.data.length > 0 ? res?.data[0] : []
+            getSmallestCopayRateAsDefaultValue();
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
 
 const planClicked = plan => {
   selectedPlan.value = plan;
@@ -628,7 +663,7 @@ const onCreatePlan = () => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['listQuotePlans'],
+    only: ['plansTable.data'],
     onStart: () => {
       modals.createPlan = false;
     },
@@ -688,16 +723,15 @@ watch(
   },
 );
 
-const plansData = ref(page.props.listQuotePlans);
 
-const listQuotePlansFiltered = ref(
-  plansData.value.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden)),
-);
+const listQuotePlansFiltered = computed(() => {
+    return plansTable.data.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden))
+})
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
-  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+  listQuotePlansFiltered.value = plansTable.data.filter(plan => {
     let isManualPlan = planFilters.manual_plan;
     let isCurrentlyOnline = planFilters.current_online;
     let network = planFilters.network;
@@ -740,7 +774,7 @@ const onPlanFiltersReset = () => {
   planFilters.network = [];
   planFilters.manual_plan = null;
   planFilters.current_online = null;
-  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  listQuotePlansFiltered.value = plansTable.data;
   modals.planFilters = false;
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
@@ -759,11 +793,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
-  plansData.value.forEach(element => {
+  plansTable.data.forEach(element => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
+        smallestCopayVAT = Number(value.vat)
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
         smallestCopayValue = Number(value.premium);
@@ -1274,15 +1308,14 @@ const linkEntity = () => {
 }
 
 onMounted(() => {
+  onLoadAvailablePlansData()
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
-  getSmallestCopayRateAsDefaultValue();
   isMounted.value = true;
 
 });
-
 </script>
 
 <template>
@@ -1515,11 +1548,28 @@ onMounted(() => {
       </div>
     </div>
 
+
+
       <div class="p-4 rounded shadow mb-6 bg-white">
-          <div>
-              <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
-              <x-divider class="mb-4 mt-1" />
-          </div>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+          <KycForm
+              :roles="$page.props.rolesEnum"
+              :quote="page.props.quote"
+              :country-list="page.props.countryList"
+              :aml-quote-status="page.props.amlQuoteStatus"
+              :nationalities="page.props.nationalities"
+              :modelType="quoteType"
+              :entities="page.props.entities"
+              :legal-structure="page.props.legalStructure"
+              :id-document-type="page.props.idDocumentType"
+              :mode-of-contact="page.props.modeOfContact"
+              :employment-sectors="page.props.employmentSectors"
+              :residential-status="page.props.residentialStatus"
+              :company-position="page.props.companyPosition"
+          />
+        </div>
+          <x-divider class="mb-4 mt-1" />
           <x-form @submit="updateProfileDetails" :auto-focus="false">
               <div class="text-sm">
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -2322,7 +2372,7 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
-          <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ plansTable.data.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
           <x-button-group v-if="selectedPlans.length > 0" size="sm">
@@ -2351,7 +2401,7 @@ onMounted(() => {
           </x-button>
 
           <x-button
-            v-if="listQuotePlans.length > 0"
+            v-if="plansTable.data.length > 0"
             size="sm"
             color="orange"
             @click.prevent="
@@ -2368,7 +2418,7 @@ onMounted(() => {
             :show="planFiltersCount > 0"
           >
             <x-button
-              v-if="listQuotePlans.length > 0"
+              v-if="plansTable.data.length > 0"
               size="sm"
               color="primary"
               @click.prevent="modals.planFilters = true"
@@ -2469,6 +2519,7 @@ onMounted(() => {
           :plan="selectedPlan"
           :genders="genderOptions"
           @copay-update="onSelectedCopay"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
 
@@ -2507,7 +2558,6 @@ onMounted(() => {
             select-all
             deselect-all
           />
-
           <div>
             <x-tooltip position="right" class="arrow-l">
               <label

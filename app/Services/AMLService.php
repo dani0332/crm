@@ -6,6 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
+use App\Jobs\BridgerDecisionUpdateJob;
 use App\Models\AML;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -80,7 +81,7 @@ class AMLService
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'uaeLicenseHeldFor',
                 'carMake',
                 'carModel',
@@ -89,38 +90,35 @@ class AMLService
                 'claimHistory',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = HomeQuote::with([
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'possessionType',
                 'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'healthCoverFor',
                 'maritalStatus',
                 'emirate',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
             $quoteRequestDetails = LifeQuote::with([
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'purposeOfInsurance',
                 'children',
                 'maritalStatus',
@@ -129,34 +127,31 @@ class AMLService
                 'currency',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $quoteRequestDetails = BusinessQuote::with([
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'businessTypeOfInsurance',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
             $quoteRequestDetails = TravelQuote::with([
                 'quoteStatus',
                 'payments.paymentMethod',
                 'payments.getCustomerPaymentInstrument',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'regionCoverFor',
                 'travelCoverFor',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
             if ($isDataMigrated) {
                 $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
                     'petQuote',
-                    'customer',
+                    'customer.detail',
                     'quoteStatus',
                     'payments.paymentMethod',
                     'payments.getCustomerPaymentInstrument',
@@ -168,7 +163,7 @@ class AMLService
                     'payments.paymentMethod',
                     'payments.getCustomerPaymentInstrument',
                     'paymentStatus',
-                    'customer',
+                    'customer.detail',
                 ])->where('id', $quoteRequestId)->firstOrFail();
             }
         }
@@ -190,7 +185,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
@@ -221,8 +216,8 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail) {
-                $message->to($emailRecipients)->cc(auth()->user()->email)->subject($emailSubject);
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail) {
+                $message->to($emailRecipients)->cc($loginUserEmail)->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
             }
         );
@@ -234,12 +229,10 @@ class AMLService
         $customerType = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
 
         if ($customerType == CustomerTypeEnum::IndividualShort) {
-
             if ($quoteType->code == QuoteTypes::HEALTH->value) {
                 $customerChildDetails = HealthMemberDetail::with('nationality')->where([
                     'health_quote_request_id' => $quoteRequestId,
                 ])->get();
-
             } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
                 $customerChildDetails = TravelMemberDetail::with('nationality')->where([
                     'travel_quote_request_id' => $quoteRequestId,
@@ -262,6 +255,43 @@ class AMLService
         }
 
         return $customerChildDetails;
+    }
 
+    public static function updateAMLDecisionLexisNexis($request)
+    {
+        if (! $request->result_id) {
+            info('Bridger Insight - AML Decision Update API Call - Result Id not found');
+
+            return false;
+        }
+        info('Bridger Insight - AML Decision Update API Call');
+
+        $bridgerInsightService = new BridgerInsightService();
+        $bridgerAPIToken = $bridgerInsightService->getJWTToken();
+
+        $decisionValues = [];
+        foreach (json_decode($request->decisonsForUpdatePortal) as $descision) {
+            array_push($decisionValues, array_values((array) $descision)[0]);
+        }
+
+        $index = 0;
+        $matchesData = collect(json_decode($request->match_states));
+        foreach ($matchesData as $match) {
+            $match->Type = $decisionValues[$index];
+            $index++;
+        }
+
+        $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchesData, $request->notes);
+
+        // $amlDescions = json_decode($request->decisonsForUpdatePortal);
+
+        // foreach ($amlDescions as $resultId => $amlDescion) {
+        //     $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $amlDescion);
+        //     // BridgerDecisionUpdateJob::dispatch(
+        //     //     $bridgerAPIToken,
+        //     //     $resultId,
+        //     //     $amlDescion)
+        //     //     ->delay(now()->addSeconds(5));
+        // }
     }
 }

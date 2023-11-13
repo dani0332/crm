@@ -1,4 +1,6 @@
 <script setup>
+import KycForm from "@/inertia/Components/KycForm.vue";
+
 defineProps({
   quote: Object,
   genderOptions: Object,
@@ -715,10 +717,23 @@ const linkEntity = () => {
     </div>
 
       <div class="p-4 rounded shadow mb-6 bg-white">
-          <div>
-              <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-              <x-divider class="mb-4 mt-1" />
-          </div>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
+          <KycForm
+              :roles="$page.props.rolesEnum"
+              :quote="page.props.quote"
+              :country-list="page.props.countryList"
+              :aml-quote-status="page.props.amlQuoteStatus"
+              :nationalities="page.props.nationalities"
+              :modelType="page.props.quoteType"
+              :entities="page.props.entities"
+              :legal-structure="page.props.legalStructure"
+              :id-document-type="page.props.idDocumentType"
+              :issuance-place="page.props.issuancePlace"
+              :issuing-authority="page.props.issuanceAuthorities"
+          />
+        </div>
+          <x-divider class="mb-4 mt-1" />
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -797,7 +812,7 @@ const linkEntity = () => {
                       </dd>
                   </div>
                   <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">COMPANY CONCERN</dt>
+                      <dt class="font-medium">ENTITY TYPE</dt>
                       <dd>
                           <ComboBox
                               @update:modelValue="entityTypeChange($event)"

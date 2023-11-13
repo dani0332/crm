@@ -15,6 +15,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessInsuranceType;
 use App\Models\BusinessQuote;
 use App\Models\Emirate;
+use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
@@ -121,7 +122,7 @@ class AmtController extends Controller
 
         if (
             empty($request->email) && empty($request->code) && empty($request->first_name) &&
-            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no)
+            empty($request->last_name) && empty($request->quote_status_id) && empty($request->mobile_no) && empty($request->renewal_batch) && empty($request->previous_quote_policy_number)
         ) {
             $data->where('bqr.quote_status_id', '!=', QuoteStatusEnum::Fake);
         }
@@ -258,15 +259,30 @@ class AmtController extends Controller
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value){
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
 
+        $countries = Nationality::all();
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $entities = Entity::all();
+        $legalStructure = $this->lookupService->getLegalStructure();
+        $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+        $issuancePlace = $this->lookupService->getIssuancePlaces();
+        $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+
         return inertia('GroupMedicalQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'quoteType' => quoteTypeCode::Business,
             'quote' => $record,
             'quoteDetails' => $quoteDetails,
-            'modelType' => QuoteTypes::BUSINESS,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
             'genderOptions' => $this->crudService->getGenderOptions(),
