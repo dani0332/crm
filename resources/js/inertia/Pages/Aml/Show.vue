@@ -66,9 +66,10 @@ function submitDecision(decision) {
           decisionSelected.value,
         )}&result_id=${
           JSON.parse(props.aml.results)[0].ResultID
-        }&match_states=${
-          JSON.parse(props.aml.results)[0].RecordDetails.RecordState.MatchStates
-        }`;
+        }&match_states=${JSON.stringify(
+          JSON.parse(props.aml.results)[0].RecordDetails.RecordState
+            .MatchStates,
+        )}`;
 
   axios
     .get(url)
