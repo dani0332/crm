@@ -166,7 +166,7 @@ class BusinessQuoteController extends Controller
         })->values();
 
         if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
-            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value){
+            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }

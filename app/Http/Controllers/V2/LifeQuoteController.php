@@ -102,7 +102,7 @@ class LifeQuoteController extends Controller
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
-            $quoteStatuses = collect($quoteStatuses)->filter(function ($value){
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
