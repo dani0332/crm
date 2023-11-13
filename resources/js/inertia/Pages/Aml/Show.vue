@@ -62,9 +62,9 @@ function submitDecision(decision) {
   }/quoteStatusUpdate/${quoteStatusCode}?
         notes=${decisionNotes.value}&aml_id=${
           props.aml.id
-        }&aml_decision=${decision}&decisonsForUpdatePortal=${JSON.stringify(
+        }&aml_decision=${decision}&decisonsForUpdatePortal=[${JSON.stringify(
           decisionSelected.value,
-        )}&result_id=${
+        )}]&result_id=${
           JSON.parse(props.aml.results)[0].ResultID
         }&match_states=${JSON.stringify(
           JSON.parse(props.aml.results)[0].RecordDetails.RecordState
@@ -206,36 +206,26 @@ const falsePositive = computed(() => {
         fixed-checkbox
       >
         <template #item-result="item">
-          <!--                    <div class="custom-select">-->
-          <!--                        <select-->
-          <!--                            v-model="item.decision"-->
-          <!--                            class="px-3 py-2 rounded-md outline-primary-500 border border-gray-300 dark:border-gray-700 bg-white focus:outline-primary-500 focus:border-primary-500 focus:border-2"-->
-          <!--                        >-->
-          <!--                            <option-->
-          <!--                                class="text-base bg-white hover:bg-red-700 px-4 rounded-0"-->
-          <!--                                :value="x.value"-->
-          <!--                                v-for="x in decisionOptions"-->
-          <!--                                :key="x.label"-->
-          <!--                                @change="setSelectedOption($event, item)"-->
-          <!--                            >-->
-          <!--                                {{ x.label }}-->
-          <!--                            </option>-->
-          <!--                        </select>-->
-          <!--                    </div>-->
-          <x-select
-            :modelValue="item.decision"
-            :options="[
-              { value: amlDecisionStatusCode.UNKNOWN, label: 'Unknown' },
-              {
-                value: amlDecisionStatusCode.FALSE_POSITIVE,
-                label: 'False Positive',
-              },
-              { value: amlDecisionStatusCode.TRUE_MATCH, label: 'True Match' },
-            ]"
-            placeholder="Select Result"
-            class="w-full"
-            @update:modelValue="setSelectedOption($event, item)"
-          />
+          <div class="relative py-2">
+            <x-select
+              :modelValue="item.decision"
+              :options="[
+                { value: amlDecisionStatusCode.UNKNOWN, label: 'Unknown' },
+                {
+                  value: amlDecisionStatusCode.FALSE_POSITIVE,
+                  label: 'False Positive',
+                },
+                {
+                  value: amlDecisionStatusCode.TRUE_MATCH,
+                  label: 'True Match',
+                },
+              ]"
+              placeholder="Select Result"
+              class="w-full"
+              @update:modelValue="setSelectedOption($event, item)"
+              size="xs"
+            />
+          </div>
         </template>
 
         <template
