@@ -81,7 +81,6 @@ class AMLController extends Controller
         $quotes = [];
 
         if ($request->ajax()) {
-
             if (isset($request->quoteType) && ! empty($request->quoteType)) {
                 $quoteTypeId = $quoteTypes->where('code', $request->quoteType)->first()?->id;
                 $quoteRequestTable = strtolower($request->quoteType).'_quote_request';
@@ -306,10 +305,9 @@ class AMLController extends Controller
             if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
-
             // Update Decision on Lexis Nexis Portal
-            if (isset(\request()->decisonsForUpdatePortal)) {
-                AMLService::updateAMLDecisionLexisNexis(\request()->toArray());
+            if (isset(request()->decisonsForUpdatePortal)) {
+                AMLService::updateAMLDecisionLexisNexis(request());
             }
 
             return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');
@@ -329,7 +327,7 @@ class AMLController extends Controller
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
 
         if ($updateQuote) {
-            \Log::info('Bridger Insight - Get Quote Successfully');
+            info('Bridger Insight - Get Quote Successfully');
             if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
                 if (checkPersonalQuotes($quoteType->code)) {
                     AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, AMLService::isDataMigrated($quoteTypeId, $quoteId));
