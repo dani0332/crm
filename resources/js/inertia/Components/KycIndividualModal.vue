@@ -2,6 +2,7 @@
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
+const convertDate = date => useConvertDate(date);
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const props = defineProps({
@@ -36,7 +37,7 @@ const kycForm = reactive({
   customer_id: props.quote.customer_id,
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
-  dob: null,
+  dob: convertDate(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id,
   country_of_residence: null,
   place_of_birth: null,
@@ -152,20 +153,6 @@ const companyPositionOptions = computed(() => {
 
 const computedRules = computed(() => {
   return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
-});
-
-onMounted(() => {
-  const originalDate = props.quote.dob;
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
-
-  const [day, month, year] = originalDate.split('-');
-  const date = new Date(year, month - 1, day);
-  const adjustedDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60 * 1000));
-
-  kycForm.dob = `${adjustedDate.toString().split(' ')[0]} ${months[adjustedDate.getMonth()]} ${adjustedDate.getDate()} ${adjustedDate.getFullYear()} ${adjustedDate.toTimeString().split(' ')[0]}`;
 });
 
 </script>
