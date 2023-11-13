@@ -10,4 +10,8 @@ class CustomerPaymentInstrument extends Model
     use HasFactory;
 
     protected $table = 'customer_payment_instrument';
+
+    protected $fillable = [
+        'card_holder_name'
+    ];
 }

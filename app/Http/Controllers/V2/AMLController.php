@@ -426,14 +426,15 @@ class AMLController extends Controller
 
         if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
             foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
-                $payment = Payment::where('code', $paymentDetail['code'])->first();
+                $payment = Payment::where('code', $paymentDetail['paymentCode'])->first();
                 if ($payment) {
                     $customerInstrument = CustomerPaymentInstrument::find($payment->customer_payment_instrument_id)
                         ->first();
 
-                    if ($customerInstrument && $AMLCheckRequest->paymentMethod == 'Credit Card') {
+                    if ($customerInstrument && $paymentDetail['paymentMethod'] == 'Credit Card'
+                        && ($customerInstrument->card_holder_name == null || $customerInstrument->card_holder_name == '')) {
                         $customerInstrument->update([
-                            'card_holder_name' => $AMLCheckRequest->payerName,
+                            'card_holder_name' => $paymentDetail['payerName'],
                         ]);
                     } elseif (! $customerInstrument) {
                         return response()->json([
@@ -442,10 +443,13 @@ class AMLController extends Controller
                         ]);
                     } else {
                         $payment->update([
-                            'paid_by' => $AMLCheckRequest->paidBy,
-                            'payer_name' => $AMLCheckRequest->payerName,
+                            'payer_name' => $paymentDetail['payerName'],
                         ]);
                     }
+
+                    $payment->update([
+                        'paid_by' => $paymentDetail['paidBy'],
+                    ]);
 
                     return response()->json(['status' => true, 'message' => 'Updated']);
                 } else {
