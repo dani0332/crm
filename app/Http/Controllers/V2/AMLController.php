@@ -193,7 +193,7 @@ class AMLController extends Controller
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
         $amlRecordFetch = AML::with('quotetype')->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->where( function($aml) use ($quoteRequestId, $quoteTypeId) {
+            ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
             });
@@ -285,7 +285,7 @@ class AMLController extends Controller
             }
 
             // Update Decision on Lexis Nexis Portal
-            if(isset(\request()->decisonsForUpdatePortal)) {
+            if (isset(\request()->decisonsForUpdatePortal)) {
                 AMLService::updateAMLDecisionLexisNexis(\request()->toArray());
             }
 
@@ -321,7 +321,7 @@ class AMLController extends Controller
             $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
             $kycLogs = KycLog::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-                ->where( function($aml) use ($quoteRequestId, $quoteTypeId) {
+                ->where(function ($aml) {
                     $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                     $aml->orWhereNull('decision');
                 })->withTrashed()->get()->pluck('decision')->toArray();
@@ -351,7 +351,7 @@ class AMLController extends Controller
                         auth()->user()->email);
                 }
 
-                if(!in_array(true, session()->get('amlResponseCheck')) && !in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
+                if (! in_array(true, session()->get('amlResponseCheck')) && ! in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
@@ -388,7 +388,7 @@ class AMLController extends Controller
                     BridgerAMLJob::dispatchSync($bridgerAPIToken, $memberDetail, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Individual, auth()->user()->email);
                 }
 
-                if(!in_array(true, session()->get('amlResponseCheck')) && !in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
+                if (! in_array(true, session()->get('amlResponseCheck')) && ! in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
                     \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);

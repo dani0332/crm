@@ -4,12 +4,10 @@ namespace App\Services;
 
 use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
-use App\Enums\QuoteStatusEnum;
 use App\Models\KycLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Config;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -57,7 +55,6 @@ class BridgerInsightService
 
                 return $_return;
             }
-
         } catch (\GuzzleHttp\Exception\BadResponseException $e) {
             $_return['status'] = false;
             $responseErrorCode = $e->getResponse()->getStatusCode();
@@ -72,9 +69,9 @@ class BridgerInsightService
         if ($bridgerAPIToken['status']) {
             $quoteId = $quoteRequestId;
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-            $amlQuoteUrl = Config::get('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+            $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $loginUserEmail =  auth()->user()->email ?? '';
+            $loginUserEmail = auth()->user()->email ?? '';
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
@@ -181,7 +178,7 @@ class BridgerInsightService
                     'Type' => 'Role',
                     'RolesOrUsers' => ['Administrator'],
                 ],
-                'WriteResultsToDatabase' => false,
+                'WriteResultsToDatabase' => true,
                 'PredefinedSearchName' => 'List Screening',
             ],
         ];
@@ -248,12 +245,12 @@ class BridgerInsightService
             'ClientContext' => [
                 'ClientID' => $this->bridgerClientID,
                 'UserID' => $this->bridgerUserName,
-                'Password' => $this->bridgerPassword
+                'Password' => $this->bridgerPassword,
             ],
             'ResultID' => $resultId,
             'State' => [
-                'Note' => 'Testing Decision Update'
-            ]
+                'Note' => 'Testing Decision Update',
+            ],
         ];
 
         try {
@@ -263,7 +260,7 @@ class BridgerInsightService
                     'headers' => [
                         'Content-Type' => 'application/json',
                         'Accept' => 'application/json',
-                        'Authorization' => 'Bearer ' . $bridgerToken['response'],
+                        'Authorization' => 'Bearer '.$bridgerToken['response'],
                         'X-API-Key' => $this->bridgerAPIKey,
                     ],
                     'body' => json_encode($amlUpdateData),
@@ -275,11 +272,9 @@ class BridgerInsightService
             $getContents = $bridgerRequest->getBody();
             $getDecodeContents = json_decode($getContents);
 
-            Log::info("Bridger Insight Service - AML Decision Update API Call Response : " .json_encode($getContents));
-
+            Log::info('Bridger Insight Service - AML Decision Update API Call Response : '.json_encode($getContents));
         } catch (Exception $exception) {
             Log::error('Bridger Insight Service - Failed - Error : '.$exception->getMessage());
         }
     }
-
 }
