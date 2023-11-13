@@ -105,7 +105,6 @@ class BridgerInsightService
                         'timeout' => 10,
                     ]
                 );
-
                 $getStatusCode = $bridgerRequest->getStatusCode();
                 $getContents = $bridgerRequest->getBody();
                 $getDecodeContents = json_decode($getContents);
