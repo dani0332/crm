@@ -176,7 +176,7 @@ class BridgerInsightService
                     'Division' => 'Default Division',
                     'EmailNotification' => false,
                     'Type' => 'Role',
-                    'RolesOrUsers' => ['Administrator'],
+                    'RolesOrUsers' => ['Administrator', 'Compliance Officer', 'Junior Compliance Officer'],
                 ],
                 'WriteResultsToDatabase' => true,
                 'PredefinedSearchName' => 'List Screening',
