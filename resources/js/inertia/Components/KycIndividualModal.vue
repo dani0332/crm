@@ -36,13 +36,13 @@ const kycForm = reactive({
   customer_id: props.quote.customer_id,
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
-  dob: props.quote.dob,
+  dob: null,
   nationality_id: props.quote.nationality_id,
   country_of_residence: null,
   place_of_birth: null,
   resident_status: null,
   residential_address: null,
-  mobile_number: props.quote.mobile_number,
+  mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   customer_tenure: null,
   id_type: null,
@@ -154,6 +154,20 @@ const computedRules = computed(() => {
   return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
 });
 
+onMounted(() => {
+  const originalDate = props.quote.dob;
+  const months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
+
+  const [day, month, year] = originalDate.split('-');
+  const date = new Date(year, month - 1, day);
+  const adjustedDate = new Date(date.getTime() - (date.getTimezoneOffset() * 60 * 1000));
+
+  kycForm.dob = `${adjustedDate.toString().split(' ')[0]} ${months[adjustedDate.getMonth()]} ${adjustedDate.getDate()} ${adjustedDate.getFullYear()} ${adjustedDate.toTimeString().split(' ')[0]}`;
+});
+
 </script>
 
 <template>
@@ -173,7 +187,6 @@ const computedRules = computed(() => {
             label="First Name"
             placeholder="First Name"
             class="w-full"
-            :disabled="true"
             :rules="[isRequired]"
         />
 
@@ -182,14 +195,13 @@ const computedRules = computed(() => {
             label="Last Name"
             placeholder="Last Name"
             class="w-full"
-            :disabled="true"
             :rules="[isRequired]"
         />
 
-        <x-input
+        <DatePicker
             v-model="kycForm.dob"
             label="DOB"
-            :disabled="true"
+            type="date"
             :rules="[isRequired]"
         />
 
@@ -199,7 +211,6 @@ const computedRules = computed(() => {
             :options="nationalityOptions"
             placeholder="Nationality"
             :single="true"
-            :disabled="true"
             :rules="[isRequired]"
         />
 
