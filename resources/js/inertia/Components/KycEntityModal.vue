@@ -138,8 +138,16 @@ const documentTypeOptions = computed(() => {
   }));
 });
 
+const complianceDisable = reactive({
+  isDisable: true
+});
+
 const complianceRules = computed(() => {
-  return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
+  return (hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)) ? [rules.isRequired] : [];
+});
+
+onMounted(() => {
+  complianceDisable.isDisable = !(hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser));
 });
 
 </script>
@@ -417,14 +425,14 @@ const complianceRules = computed(() => {
             value="Yes"
             label="Yes"
             :rules="complianceRules"
-            :disabled="!hasRole(props.roles.COMPLIANCE)"
+            :disabled="complianceDisable.isDisable"
         />
         <x-radio
             v-model="kycForm.pep"
             value="No"
             label="No"
             :rules="complianceRules"
-            :disabled="!hasRole(props.roles.COMPLIANCE)"
+            :disabled="complianceDisable.isDisable"
         />
       </div>
     </div>
@@ -439,14 +447,14 @@ const complianceRules = computed(() => {
             value="Yes"
             label="Yes"
             :rules="complianceRules"
-            :disabled="!hasRole(props.roles.COMPLIANCE)"
+            :disabled="complianceDisable.isDisable"
         />
         <x-radio
             v-model="kycForm.financial_sanctions"
             value="No"
             label="No"
             :rules="complianceRules"
-            :disabled="!hasRole(props.roles.COMPLIANCE)"
+            :disabled="complianceDisable.isDisable"
         />
       </div>
     </div>
@@ -461,14 +469,14 @@ const complianceRules = computed(() => {
             value="Yes"
             label="Yes"
             :rules="complianceRules"
-            :disabled="!hasRole(props.roles.COMPLIANCE)"
+            :disabled="complianceDisable.isDisable"
         />
         <x-radio
             v-model="kycForm.dual_nationality"
             value="No"
             label="No"
             :rules="complianceRules"
-            :disabled="!hasRole(props.roles.COMPLIANCE)"
+            :disabled="complianceDisable.isDisable"
         />
       </div>
     </div>
