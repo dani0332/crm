@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             // CarLostStorageSeeder::class,
             // AddPersonalLobsProducts::class,
             // addCarQuoteNewStatuses::class,
-            // LookupSeeder::class,
+            LookupSeeder::class,
             // CommercialKeywordsSeeder::class,
             RuleTypeSeeder::class,
             CommercialMakeModelKeywordsPermissionsSeeder::class,

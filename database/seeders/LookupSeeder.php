@@ -75,5 +75,26 @@ class LookupSeeder extends Seeder
                 ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveIncorrectEmail', 'text' => 'Incorrect email ID - email ID belongs to a different person', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::NEW_BUSINESS)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::NEW_BUSINESS, 'code' => 'newBusiness', 'text' => 'New Business', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+        if (! DB::table('lookups')->where('key', LookupsEnum::EXISTING_CUSTOMER_RENEWAL)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::EXISTING_CUSTOMER_RENEWAL, 'code' => 'extCustomerRenewal', 'text' => "Existing Customer's Renewal", 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+        if (! DB::table('lookups')->where('key', LookupsEnum::EXISTING_CUSTOMER_NEW_BUSINESS)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::EXISTING_CUSTOMER_NEW_BUSINESS, 'code' => 'extCustomerNewBusiness', 'text' => "Existing Customer's New Business", 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
+        if (! DB::table('lookups')->where('key', LookupsEnum::ENDORSEMENT)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::ENDORSEMENT, 'code' => 'endorsement', 'text' => 'Endorsement', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
     }
 }
