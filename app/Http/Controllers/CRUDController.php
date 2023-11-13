@@ -1796,6 +1796,17 @@ class CRUDController extends Controller
         return back()->with('success', $successMessage);
     }
 
+    public function splitPaymentsApprove(Request $request)
+    {
+        dd($request->all());
+        if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+            return;
+        }
+        $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+
+        return back()->with('success', $successMessage);
+    }
+
     public function updatePayment(Request $request)
     {
 
