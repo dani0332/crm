@@ -2,6 +2,7 @@
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
+const convertDate = date => useConvertDate(date);
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const props = defineProps({
@@ -36,13 +37,13 @@ const kycForm = reactive({
   customer_id: props.quote.customer_id,
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
-  dob: props.quote.dob,
+  dob: convertDate(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id,
   country_of_residence: null,
   place_of_birth: null,
   resident_status: null,
   residential_address: null,
-  mobile_number: props.quote.mobile_number,
+  mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   customer_tenure: null,
   id_type: null,
@@ -150,8 +151,16 @@ const companyPositionOptions = computed(() => {
   }));
 });
 
-const computedRules = computed(() => {
-  return hasRole(props.roles.COMPLIANCE) ? [rules.isRequired] : [];
+const complianceDisable = reactive({
+  isDisable: true
+});
+
+const complianceRules = computed(() => {
+  return (hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)) ? [rules.isRequired] : [];
+});
+
+onMounted(() => {
+  complianceDisable.isDisable = !(hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser));
 });
 
 </script>
@@ -173,7 +182,6 @@ const computedRules = computed(() => {
             label="First Name"
             placeholder="First Name"
             class="w-full"
-            :disabled="true"
             :rules="[isRequired]"
         />
 
@@ -182,14 +190,13 @@ const computedRules = computed(() => {
             label="Last Name"
             placeholder="Last Name"
             class="w-full"
-            :disabled="true"
             :rules="[isRequired]"
         />
 
-        <x-input
+        <DatePicker
             v-model="kycForm.dob"
             label="DOB"
-            :disabled="true"
+            type="date"
             :rules="[isRequired]"
         />
 
@@ -199,7 +206,6 @@ const computedRules = computed(() => {
             :options="nationalityOptions"
             placeholder="Nationality"
             :single="true"
-            :disabled="true"
             :rules="[isRequired]"
         />
 
@@ -391,15 +397,15 @@ const computedRules = computed(() => {
               v-model="kycForm.pep"
               value="Yes"
               label="Yes"
-              :rules="computedRules"
-              :disabled="!hasRole(props.roles.COMPLIANCE)"
+              :rules="complianceRules"
+              :disabled="complianceDisable.isDisable"
           />
           <x-radio
               v-model="kycForm.pep"
               value="No"
               label="No"
-              :rules="computedRules"
-              :disabled="!hasRole(props.roles.COMPLIANCE)"
+              :rules="complianceRules"
+              :disabled="complianceDisable.isDisable"
           />
         </div>
       </div>
@@ -413,15 +419,15 @@ const computedRules = computed(() => {
               v-model="kycForm.financial_sanctions"
               value="Yes"
               label="Yes"
-              :rules="computedRules"
-              :disabled="!hasRole(props.roles.COMPLIANCE)"
+              :rules="complianceRules"
+              :disabled="complianceDisable.isDisable"
           />
           <x-radio
               v-model="kycForm.financial_sanctions"
               value="No"
               label="No"
-              :rules="computedRules"
-              :disabled="!hasRole(props.roles.COMPLIANCE)"
+              :rules="complianceRules"
+              :disabled="complianceDisable.isDisable"
           />
         </div>
       </div>
@@ -435,15 +441,15 @@ const computedRules = computed(() => {
               v-model="kycForm.dual_nationality"
               value="Yes"
               label="Yes"
-              :rules="computedRules"
-              :disabled="!hasRole(props.roles.COMPLIANCE)"
+              :rules="complianceRules"
+              :disabled="complianceDisable.isDisable"
           />
           <x-radio
               v-model="kycForm.dual_nationality"
               value="No"
               label="No"
-              :rules="computedRules"
-              :disabled="!hasRole(props.roles.COMPLIANCE)"
+              :rules="complianceRules"
+              :disabled="complianceDisable.isDisable"
           />
         </div>
       </div>
