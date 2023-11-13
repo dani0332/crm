@@ -212,5 +212,15 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::COMPANY_POSITION, 'code' => 'manager', 'text' => 'Manager', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
+
+        if (! DB::table('lookups')->where('key', LookupsEnum::MODE_OF_DELIVERY)->first()) {
+            DB::table('lookups')->insert([
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modSent', 'text' => 'Sent to customer via Email', 'created_at' => now(), 'updated_at' =>
+                    now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modDelivered', 'text' => 'Delivered to customer via Courier', 'created_at' => now(), 'updated_at' =>
+                    now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modCollected', 'text' => 'Collected by customer from office', 'created_at' => now(), 'updated_at' => now()],
+            ]);
+        }
     }
 }

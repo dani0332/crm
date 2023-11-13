@@ -311,4 +311,29 @@ class CustomerRepository extends BaseRepository
 
         return $_return;
     }
+
+    public function fetchUpdateIndividualDetail($customerId, $data)
+    {
+        $customer = Customer::with('nationality')->findOrFail($customerId);
+        $customer->update($data->only('insured_first_name', 'insured_last_name', 'nationality_id', 'dob'));
+
+        $customer->detail()->update($data->only([
+            'place_of_birth',
+            'country_of_residence',
+            'residential_address',
+            'residential_status',
+            'id_type',
+            'id_issuance_date',
+            'mode_of_contact',
+            //'transaction_value',
+            'mode_of_delivery',
+            'employment_sector',
+            'customer_tenure'
+        ]));
+
+        $customer->refresh();
+
+        return $customer;
+    }
+
 }

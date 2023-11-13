@@ -79,7 +79,7 @@ class AMLService
             $quoteRequestDetails = CarQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'uaeLicenseHeldFor',
                 'carMake',
                 'carModel',
@@ -93,7 +93,7 @@ class AMLService
             $quoteRequestDetails = HomeQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'possessionType',
                 'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
@@ -102,7 +102,7 @@ class AMLService
             $quoteRequestDetails = HealthQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'healthCoverFor',
                 'maritalStatus',
                 'emirate',
@@ -113,7 +113,7 @@ class AMLService
             $quoteRequestDetails = LifeQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'purposeOfInsurance',
                 'children',
                 'maritalStatus',
@@ -127,7 +127,7 @@ class AMLService
             $quoteRequestDetails = BusinessQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'businessTypeOfInsurance',
             ])->where('id', $quoteRequestId)->firstOrFail();
 
@@ -135,7 +135,7 @@ class AMLService
             $quoteRequestDetails = TravelQuote::with([
                 'quoteStatus',
                 'paymentStatus',
-                'customer',
+                'customer.detail',
                 'regionCoverFor',
                 'travelCoverFor',
                 'nationality',
@@ -145,7 +145,7 @@ class AMLService
             if ($isDataMigrated) {
                 $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
                     'petQuote',
-                    'customer',
+                    'customer.detail',
                     'quoteStatus',
                     'paymentStatus',
                 ])->where('id', $quoteRequestId)->firstOrFail();
@@ -153,7 +153,7 @@ class AMLService
                 $quoteRequestDetails = PetQuote::with([
                     'quoteStatus',
                     'paymentStatus',
-                    'customer',
+                    'customer.detail',
                 ])->where('id', $quoteRequestId)->firstOrFail();
             }
         }
