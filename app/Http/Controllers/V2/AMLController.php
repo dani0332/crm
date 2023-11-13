@@ -388,7 +388,7 @@ class AMLController extends Controller
 
     public function insuredPayerDetailsUpdate(AMLCheckRequest $AMLCheckRequest)
     {
-        dd($AMLCheckRequest->toArray());
+        // dd($AMLCheckRequest->toArray());
 
         if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
             foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
