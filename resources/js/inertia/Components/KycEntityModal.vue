@@ -42,7 +42,7 @@ const kycForm = reactive({
   country_of_corporation: 56, //Default UAE
   registered_address: null,
   communication_address: null,
-  mobile_number: props.quote.mobile_number,
+  mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   website: null,
   id_document_type: null,
