@@ -8,7 +8,6 @@ use App\Models\KycLog;
 use App\Models\QuoteType;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
-use Config;
 use Exception;
 use Illuminate\Support\Facades\Log;
 
@@ -70,9 +69,9 @@ class BridgerInsightService
         if ($bridgerAPIToken['status']) {
             $quoteId = $quoteRequestId;
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
-            $amlQuoteUrl = Config::get('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
+            $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $loginUserEmail = auth()->user()->email;
+            $loginUserEmail = auth()->user()->email ?? '';
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
