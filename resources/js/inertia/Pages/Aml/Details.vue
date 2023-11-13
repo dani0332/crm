@@ -87,7 +87,7 @@ const dateToYear = date => {
 
 onMounted(()=> {
     // paymentsRef.value = page.props.quoteRequest.payments;
-    console.log(paymentsRef.value);
+    // console.log(paymentsRef.value);
 
 });
 

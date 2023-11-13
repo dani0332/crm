@@ -22,7 +22,12 @@ class AMLCheckRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [];
+        $rules = [
+            'payment_Details' => [
+                'required',
+                'array'
+            ]
+        ];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             $rules = array_merge($rules, [
                 'insured_first_name' => 'required|max:200',

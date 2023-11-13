@@ -2,48 +2,50 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\AMLDecisionStatusEnum;
-use App\Enums\CustomerTypeEnum;
+use DataTables;
+use Carbon\Carbon;
+use App\Models\AML;
+use App\Models\Entity;
+use App\Models\Emirate;
+use App\Models\Payment;
+use App\Enums\RolesEnum;
+use App\Models\Customer;
+use App\Enums\QuoteTypes;
+use App\Models\QuoteType;
 use App\Enums\LookupsEnum;
+use App\Enums\QuoteTypeId;
+use App\Jobs\BridgerAMLJob;
+use App\Models\QuoteStatus;
+use App\Enums\quoteTypeCode;
+use App\Services\AMLService;
+use Illuminate\Http\Request;
+use App\Models\PersonalQuote;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
-use App\Enums\RolesEnum;
-use App\Http\Controllers\Controller;
-use App\Http\Requests\AMLCheckRequest;
+use App\Enums\CustomerTypeEnum;
 use App\Http\Requests\AMLRequest;
-use App\Jobs\BridgerAMLJob;
-use App\Models\AML;
-use App\Models\ApplicationStorage;
 use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
-use App\Models\Customer;
-use App\Models\Emirate;
-use App\Models\Entity;
-use App\Models\HealthMemberDetail;
-use App\Models\PersonalQuote;
-use App\Models\QuoteRequestEntityMapping;
-use App\Models\QuoteStatus;
-use App\Models\QuoteType;
-use App\Models\SanctionListDownloads;
-use App\Models\TravelMemberDetail;
 use App\Models\UAEAMLListUploads;
-use App\Repositories\LookupRepository;
-use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
-use App\Repositories\QuoteTypeRepository;
-use App\Services\AMLService;
-use App\Services\BridgerInsightService;
 use App\Services\CheckAmlService;
+use App\Models\ApplicationStorage;
+use App\Models\HealthMemberDetail;
+use App\Models\TravelMemberDetail;
+use App\Enums\AMLDecisionStatusEnum;
+use App\Http\Controllers\Controller;
 use App\Services\QuoteStatusService;
+use App\Models\SanctionListDownloads;
 use App\Services\SanctionListService;
 use App\Traits\GenericQueriesAllLobs;
-use Carbon\Carbon;
-use DataTables;
-use Illuminate\Http\Request;
+use App\Http\Requests\AMLCheckRequest;
+use App\Repositories\LookupRepository;
+use App\Services\BridgerInsightService;
+use App\Models\CustomerPaymentInstrument;
+use App\Models\QuoteRequestEntityMapping;
+use App\Repositories\QuoteTypeRepository;
+use App\Repositories\NationalityRepository;
+use App\Repositories\QuoteMemberDetailsRepository;
 
 class AMLController extends Controller
 {
@@ -382,6 +384,45 @@ class AMLController extends Controller
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
+    }
+
+    public function insuredPayerDetailsUpdate(AMLCheckRequest $AMLCheckRequest)
+    {
+        dd($AMLCheckRequest->toArray());
+
+        if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
+            foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
+                $payment = Payment::where('code', $paymentDetail->code)->first();
+                if ($payment) {
+                    $customerInstrument = CustomerPaymentInstrument::find($payment->customer_payment_instrument_id)
+                        ->first();
+
+                    if ($customerInstrument && $AMLCheckRequest->paymentMethod == 'Credit Card') {
+                        $customerInstrument->update([
+                            'card_holder_name' => $AMLCheckRequest->payerName,
+                        ]);
+                    } else if (!$customerInstrument) {
+                        return response()->json([
+                            'status' => false,
+                            'message' => 'Customer Instrument record not found'
+                        ]);
+                    } else {
+                        $payment->update([
+                            'paid_by' => $AMLCheckRequest->paidBy,
+                            'payer_name' => $AMLCheckRequest->payerName
+                        ]);
+                    }
+
+                    return response()->json(['status' => true, 'message' => 'Updated']);
+                } else {
+                    return response()->json(['status' => false, 'message' => 'Payment not found']);
+                }
+            }
+        } else {
+            return response()->json(['status' => false, 'message' => 'Payments data missing']);
+        }
+
+        return response()->json(['status' => false, 'message' => 'Whoops! Something went wrong']);
     }
 
     public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables)

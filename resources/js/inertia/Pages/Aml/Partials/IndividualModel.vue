@@ -19,6 +19,8 @@ const props = defineProps({
     customerTypeEnum: Object,
 });
 
+const paymentsDataArray = ref(props.quoteDetails.payments || []);
+
 const loader = ref({
     search: false,
 });
@@ -54,6 +56,16 @@ const industryTypeOptions = computed(() => {
         label: indType.text,
     }));
 });
+
+const paymentDetailsRef = ref([
+    {
+        paymentCode : '',
+        paymentMethod: '',
+        payerName: '',
+        paymentAmount: '',
+        paidBy: '',
+    }
+]);
 
 const insuredFormDetails = useForm({
     customer_id: props.quoteDetails.customer_id,
@@ -95,6 +107,38 @@ const submitQuoteUpdateForm = () => {
             location.reload();
         },
     });
+}
+
+// new update function
+const updateInsuredAndPaymentsDetails = () => {
+    linkLoader.value = true;
+    let entityDetails = {
+        quote_type_id: props.quoteType.id,
+        quote_request_id: props.quoteDetails.id,
+        entity_id: tradeLicenseEntity.entity_id,
+        payment_Details: paymentDetailsRef.value
+    };
+    axios
+        .post(route('insuredPayerDetailsUpdate'), entityDetails)
+        .then(res => {
+            if (res.data.status) {
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            }else{
+                notification.error({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            }
+            linkLoader.value = false;
+
+        })
+        .catch(err => {
+            console.log(err);
+        })
 }
 
 const insuredDetailsSubmit = isValid => {
@@ -201,6 +245,15 @@ const insurerFullName = computed(() => {
 
 const paidByRef = ref('third-party');
 
+const updateDetails = () => {
+
+    // console.log("update clicked");
+    console.log(paymentDetailsRef.value);
+
+    updateInsuredAndPaymentsDetails(paymentDetailsRef);
+
+};
+
 watch(
   () => insurerFullName,
   val => {
@@ -210,11 +263,17 @@ watch(
   }
 );
 
-// onMounted(() => {
-// //   console.log(props.entityDetails)
-// //   console.log(props.quoteDetails.payments)
-// //   console.log(props.membersDetails)
-// });
+onMounted(() => {
+
+    paymentDetailsRef.value = props.quoteDetails.payments.map(payment => ({
+        paymentCode : payment.code,
+        paymentMethod: payment.payment_method.name,
+        payerName: payment.get_customer_payment_instrument?.card_holder_name ?? '',
+        paymentAmount: payment.captured_amount,
+        paidBy: 'self',
+    }));
+
+});
 </script>
 
 <template>
@@ -283,101 +342,109 @@ watch(
                 Payer Details
             </h3>
 
-            <section v-if="props.quoteDetails.payments ">
-            <dl v-for=" payment in props.quoteDetails.payments" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                <x-field label="Payment ID:">
-                    <x-input
-                        v-model="payment.code"
-                        placeholder="Payment ID"
-                        :readonly="true"
-                        :rules="[isRequired]"
-                        type="text"
-                        class="w-full"
-                    />
-                </x-field>
-                <x-field label="Payment Method:">
-                    <x-input
-                        v-model="payment.payment_method.name"
-                        placeholder="Payment Method"
-                        :readonly="true"
-                        :rules="[isRequired]"
-                        type="text"
-                        class="w-full"
-                    />
-                </x-field>
-                <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
-                    <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
+            <section v-if="paymentsDataArray.length > 0">
+                <dl v-for="(payment, index) in paymentsDataArray" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                    <x-field label="Payment ID:">
                         <x-input
-                        v-model="payment.get_customer_payment_instrument.card_holder_name"
-                        placeholder="Payer Name"
-                        :readonly="true"
-                        :rules="[isRequired]"
-                        type="text"
-                        class="w-full"
+                            v-model="paymentDetailsRef[index].paymentCode"
+                            placeholder="Payment ID"
+                            :readonly="true"
+                            :rules="[isRequired]"
+                            type="text"
+                            class="w-full"
                         />
-                    </template>
-                    <template v-else>
+                    </x-field>
+                    <x-field label="Payment Method:">
                         <x-input
-                        v-model="payerNameRef"
-                        placeholder="Payer Name"
-                        type="text"
-                        :rules="[isRequired]"
-                        class="w-full"
+                            v-model="paymentDetailsRef[index].paymentMethod"
+                            placeholder="Payment Method"
+                            :readonly="true"
+                            :rules="[isRequired]"
+                            type="text"
+                            class="w-full"
                         />
-                    </template>
-                </x-field>
-                <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
-                    <x-input
-                        v-model="insurerFullName"
-                        placeholder="Payer Name"
-                        :readonly="true"
-                        :rules="[isRequired]"
-                        type="text"
-                        class="w-full"
-                    />
-                </x-field>
-                <x-field v-else>
-                    <x-input
-                        v-model="payerNameRef"
-                        placeholder="Payer Name"
-                        type="text"
-                        :rules="[isRequired]"
-                        class="w-full"
-                    />
-                </x-field>
-                <x-field label="Total Amount:">
-                    <x-input
-                        v-model="payment.captured_amount"
-                        :readonly="true"
-                        :rules="[isRequired]"
-                        placeholder="Total Amount"
-                        type="text"
-                        class="w-full"
-                    />
-                </x-field>
-                <x-field label="Paid By:">
-                    <ComboBox
-                        v-model="paidByRef"
-                        :single="true"
-                        :rules="[isRequired]"
-                        placeholder="Select Paid by"
-                        :options="[
-                            {label: 'Self', value: 'self'},
-                            {label: 'Third Party', value: 'third-party'}
-                        ]"
-                        selected-value="self"
-                        class="w-full"
-                    />
-                </x-field>
-                <br/>
-                <x-divider class="mb-4 mt-4"/>
-                <x-divider class="mb-4 mt-4"/>
-            </dl>
+                    </x-field>
+                    <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
+                        <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
+                            <x-input
+                            v-model="paymentDetailsRef[index].payerName"
+                            placeholder="Payer Name"
+                            :readonly="true"
+                            :rules="[isRequired]"
+                            type="text"
+                            class="w-full"
+                            />
+                        </template>
+                        <template v-else>
+                            <x-input
+                            v-model="paymentDetailsRef[index].payerName"
+                            placeholder="Payer Name"
+                            type="text"
+                            :rules="[isRequired]"
+                            class="w-full"
+                            />
+                        </template>
+                    </x-field>
+                    <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
+                        <x-input
+                            v-model="insurerFullName"
+                            placeholder="Payer Name"
+                            :readonly="true"
+                            :rules="[isRequired]"
+                            type="text"
+                            class="w-full"
+                        />
+                    </x-field>
+                    <x-field v-else>
+                        <x-input
+                            v-model="paymentDetailsRef[index].payerName"
+                            placeholder="Payer Name"
+                            type="text"
+                            :rules="[isRequired]"
+                            class="w-full"
+                        />
+                    </x-field>
+                    <x-field label="Total Amount:">
+                        <x-input
+                            v-model="paymentDetailsRef[index].paymentAmount"
+                            :readonly="true"
+                            :rules="[isRequired]"
+                            placeholder="Total Amount"
+                            type="text"
+                            class="w-full"
+                        />
+                    </x-field>
+                    <x-field label="Paid By:">
+                        <ComboBox
+                            v-model="paymentDetailsRef[index].paidBy"
+                            :single="true"
+                            :rules="[isRequired]"
+                            placeholder="Select Paid by"
+                            :options="[
+                                {label: 'Self', value: 'self'},
+                                {label: 'Third Party', value: 'third-party'}
+                            ]"
+                            selected="self"
+                            class="w-full"
+                        />
+                    </x-field>
+                    <br/>
+                    <x-divider class="mb-4 mt-4"/>
+                    <x-divider class="mb-4 mt-4"/>
+                </dl>
             </section>
 
 
 
             <div class="text-right space-x-4 mt-8">
+                <x-button
+                    size="sm"
+                    color="orange"
+                    type="button"
+                    @click.prevent="updateDetails"
+                >
+                    Update
+                </x-button>
                 <x-button
                     size="sm"
                     color="success"
