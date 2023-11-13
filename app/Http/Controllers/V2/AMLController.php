@@ -426,7 +426,7 @@ class AMLController extends Controller
 
         if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
             foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
-                $payment = Payment::where('code', $paymentDetail->code)->first();
+                $payment = Payment::where('code', $paymentDetail['code'])->first();
                 if ($payment) {
                     $customerInstrument = CustomerPaymentInstrument::find($payment->customer_payment_instrument_id)
                         ->first();
