@@ -2,6 +2,8 @@
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import MemberDetails from "../../Components/MemberDetails.vue";
 import KycForm from "@/inertia/Components/KycForm.vue";
+import LazyDocumentUploader from "@/inertia/Pages/TravelQuote/Partials/DocumentUploader.vue";
+import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
 
 defineProps({
   quote: Object,
@@ -23,6 +25,8 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  documentTypes: Object,
+  storageUrl: String,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -32,6 +36,8 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+  doc: false,
+  docConfirm: false,
 });
 
 const rules = {
@@ -1020,6 +1026,13 @@ const linkEntity = () => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+    />
+
+    <QuoteDocuments
+        :document-types="documentTypes"
+        :quote-documents="quote.documents || []"
+        :storageUrl="storageUrl"
+        :quote="quote"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

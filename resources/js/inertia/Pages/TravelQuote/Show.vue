@@ -1937,16 +1937,6 @@ onMounted(() => {
           >
             Send Policy
           </x-button>
-          <x-button
-            size="sm"
-            color="green"
-            v-if="
-              enums.paymentStatusEnum.AUTHORISED == quote.payment_status_id &&
-              permissions.notProductionApproval
-            "
-          >
-            Copy Upload Link
-          </x-button>
         </div>
       </div>
       <DataTable
