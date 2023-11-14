@@ -199,8 +199,6 @@ class TravelController extends Controller
             $companyPosition = $this->lookupService->getCompanyPosition();
         }
 
-        // dd($quoteDocuments);
-
         return inertia('TravelQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
