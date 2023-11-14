@@ -788,6 +788,7 @@ class CRUDController extends Controller
             }
 
             return inertia('HomeQuote/Show', [
+                'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
                 'entities' => $entities,
@@ -820,7 +821,8 @@ class CRUDController extends Controller
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
-
+                    'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
+                    'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,
