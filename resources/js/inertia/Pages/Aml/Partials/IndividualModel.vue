@@ -413,8 +413,7 @@ onMounted(() => {
 
                     <x-field label="Country / Place of Birth">
                         <ComboBox
-                            :single="true"
-                            :rules="[isRequired]"
+                            :single="true"                            
                             v-model="insuredFormDetails.nationality_id"
                             placeholder="Please enter the Place of Birth of the customer as per Passport"
                             :options="nationalitiesOptions"
@@ -425,7 +424,6 @@ onMounted(() => {
                     <x-field label="Country of Residence">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.country_of_residence"
                             placeholder="Country of Residence"
                             :options="nationalitiesOptions"
@@ -436,7 +434,6 @@ onMounted(() => {
                     <x-field label="Residential Address">
                         <x-input
                             v-model="insuredFormDetails.residential_address"
-                            :rules="[isRequired]"
                             placeholder="Residential Address"
                             type="text"
                             class="w-full"
@@ -447,7 +444,6 @@ onMounted(() => {
                         <ComboBox
                             :single="true"
                             v-model="insuredFormDetails.residential_status"
-                            :rules="[isRequired]"
                             placeholder="Resident Status"
                             :options="residentStatusOptions"
                             class="w-full"
@@ -469,7 +465,6 @@ onMounted(() => {
                     <x-field label="ID Issue Date">
                         <DatePicker
                             v-model="insuredFormDetails.id_issuance_date"
-                            :rules="[isRequired]"
                             placeholder="ID Issue Date"
                             class="w-full"
                         />
@@ -479,7 +474,6 @@ onMounted(() => {
                     <x-field label="Mode Of Contact">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.mode_of_contact"
                             placeholder="Please specify the mode of contact with this customer"
                             :options="modeOfContactOptions"
@@ -490,7 +484,6 @@ onMounted(() => {
                     <x-field label="Transaction Value">
                         <x-input
                             v-model="insuredFormDetails.transaction_value"
-                            :rules="[isRequired]"
                             placeholder="Transaction Value"
                             type="number"
                             class="w-full"
@@ -500,7 +493,6 @@ onMounted(() => {
                     <x-field label="Mode Of Delivery">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.mode_of_delivery"
                             placeholder="Please select the mode of delivery of the policy documents"
                             :options="modeOfDeliveryOptions"
@@ -511,7 +503,6 @@ onMounted(() => {
                     <x-field label="Employment Sector">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.employment_sector"
                             placeholder="Employment Sector"
                             :options="employmentSectorOptions"
@@ -522,7 +513,6 @@ onMounted(() => {
                     <x-field label="Customer Tenure">
                         <x-input
                             v-model="insuredFormDetails.customer_tenure"
-                            :rules="[isRequired]"
                             placeholder="Customer Tenure"
                             type="text"
                             class="w-full"
@@ -644,12 +634,13 @@ onMounted(() => {
 
             <div class="text-right space-x-4 mt-8">
                 <x-button
+                    v-show="false"
                     size="sm"
                     color="orange"
                     type="button"
                     @click.prevent="updateDetails"
                 >
-                    Update
+                    Update Only
                 </x-button>
                 <x-button
                     size="sm"
@@ -793,7 +784,6 @@ onMounted(() => {
                     <x-field label="Website">
                         <x-input
                             v-model="insuredFormDetails.website"
-                            :rules="[isRequired]"
                             placeholder="Please enter the official website of the entity here"
                             type="text"
                             class="w-full"
@@ -803,7 +793,6 @@ onMounted(() => {
                     <x-field label="ID / Document Type">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.entity_id_type"
                             placeholder="Please specify the type of ID received from the customer "
                             :options="idTypeOptions"
@@ -832,7 +821,6 @@ onMounted(() => {
                     <x-field label="Place of Issue">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.id_issuance_place"
                             placeholder="Place of Issue"
                             :options="idIssuancePlanceOptions"
@@ -843,7 +831,6 @@ onMounted(() => {
                     <x-field label="ID Issue Authority">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
                             v-model="insuredFormDetails.id_issuance_authority"
                             placeholder="ID Issue Authority"
                             :options="idIssuanceAuthorityOptions"
@@ -1016,6 +1003,7 @@ onMounted(() => {
                     Cancel
                 </x-button>
                 <x-button
+                v-show="false"
                     size="sm"
                     color="orange"
                     type="button"

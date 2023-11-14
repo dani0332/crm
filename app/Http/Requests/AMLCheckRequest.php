@@ -35,17 +35,17 @@ class AMLCheckRequest extends FormRequest
                 'nationality_id' => 'required',
                 'dob' => 'required',
 
-                'place_of_birth' => 'required',
-                'country_of_residence' => 'required',
-                'residential_address' => 'required',
-                'residential_status' => 'required',
-                'id_type' => 'required',
-                'id_issuance_date' => 'required',
-                'mode_of_contact' => 'required',
-                'transaction_value' => 'required',
-                'mode_of_delivery' => 'required',
-                'employment_sector' => 'required',
-                'customer_tenure' => 'required',
+//                'place_of_birth' => 'required',
+//                'country_of_residence' => 'required',
+//                'residential_address' => 'required',
+//                'residential_status' => 'required',
+//                'id_type' => 'required',
+//                'id_issuance_date' => 'required',
+//                'mode_of_contact' => 'required',
+//                'transaction_value' => 'required',
+//                'mode_of_delivery' => 'required',
+//                'employment_sector' => 'required',
+//                'customer_tenure' => 'required',
 
             ]);
         }
@@ -58,14 +58,15 @@ class AMLCheckRequest extends FormRequest
                 'entity_type_code' => 'nullable',
                 'industry_type_code' => 'nullable',
                 'emirate_of_registration_id' => 'nullable',
-                'legal_structure' => 'required',
-                'country_of_corporation' => 'required',
-                'website' => 'required',
-                'entity_id_type' => 'required',
-                'entity_id_issuance_date' => 'required',
-                'id_expiry_date' => 'required',
-                'id_issuance_place' => 'required',
-                'id_issuance_authority' => 'required',
+                
+                // 'legal_structure' => 'required',
+                // 'country_of_corporation' => 'required',
+                // 'website' => 'required',
+                // 'entity_id_type' => 'required',
+                // 'entity_id_issuance_date' => 'required',
+                // 'id_expiry_date' => 'required',
+                // 'id_issuance_place' => 'required',
+                // 'id_issuance_authority' => 'required',
             ]);
         }
 
