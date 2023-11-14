@@ -226,9 +226,6 @@ const falsePositive = computed(() => {
         :loading="loader.table"
         :items="amlResults || []"
         border-cell
-        hide-rows-per-page
-        hide-footer
-        fixed-checkbox
       >
         <template #item-result="item">
           <div class="relative py-2">
