@@ -446,59 +446,6 @@ const linkEntity = () => {
     });
 }
 
-const quoteDocumentsTable = reactive({
-  isLoading: false,
-  columns: [
-    {
-      text: 'Document Type',
-      value: 'document_type_text',
-    },
-    {
-      text: 'Document Name',
-      value: 'original_name',
-    },
-    {
-      text: 'Created At',
-      value: 'created_at',
-    },
-    {
-      text: 'Created By',
-      value: 'created_by_name',
-    },
-    {
-      text: 'Action',
-      value: 'action',
-    },
-  ],
-});
-
-const onDocDelete = name => {
-  modals.docConfirm = true;
-  confirmDeleteData.docs = name;
-};
-
-const confirmDeleteDoc = () => {
-  quoteDocumentsTable.isLoading = true;
-  router.post(
-      `/documents/delete`,
-      {
-        docName: confirmDeleteData.docs,
-        quoteId: page.props.quote.id,
-      },
-      {
-        preserveScroll: true,
-        onFinish: () => {
-          modals.docConfirm = false;
-          quoteDocumentsTable.isLoading = false;
-          notification.error({
-            title: 'File Deleted',
-            position: 'top',
-          });
-        },
-      },
-  );
-};
-
 </script>
 
 <template>
