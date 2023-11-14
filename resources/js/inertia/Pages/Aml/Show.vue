@@ -266,6 +266,13 @@ const falsePositive = computed(() => {
           {{ firstName + ' ' + lastName }}
         </template>
 
+          <template
+              v-if="responseFrom === 'Bridger'"
+              #item-date_of_birth="{ EntityDetails }"
+          >
+              {{ EntityDetails.AdditionalInfo.filter(x => x.Type === "DOB").map( dob => dob.Value).toString() ?? "" }}
+          </template>
+
         <template v-if="responseFrom === 'RYU'" #item-date_of_birth="{ dob }">
           {{ dob }}
         </template>
@@ -283,6 +290,24 @@ const falsePositive = computed(() => {
         <template v-if="responseFrom === 'RYU'" #item-customer_id="{ id }">
           {{ id ?? '' }}
         </template>
+
+          <template
+              v-if="responseFrom === 'Bridger'"
+              #item-customer_id="{ EntityDetails }"
+          >
+              {{ EntityDetails.IDs.filter(x => x.Type === "ProprietaryUID").map( ProprietaryUID => ProprietaryUID.Number).toString() ?? "" }}
+          </template>
+
+          <template
+              v-if="responseFrom === 'Bridger'"
+              #item-address="{ EntityDetails }"
+          >
+              {{
+                  EntityDetails.Addresses.map(
+                      address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
+                  ).toString() ?? ''
+              }}
+          </template>
 
         <template
           v-if="responseFrom === 'Bridger'"
