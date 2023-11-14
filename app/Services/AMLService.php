@@ -254,12 +254,8 @@ class AMLService
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
-        $decisionValues = [];
-        foreach (json_decode($request->decisonsForUpdatePortal) as $descision) {
-            array_push($decisionValues, array_values((array) $descision)[0]);
-        }
-
         $index = 0;
+        $decisionValues = array_values( (array) json_decode($request->decisonsForUpdatePortal)[0]) ?? [];
         $matchesData = collect(json_decode($request->match_states));
         foreach ($matchesData as $match) {
             $match->Type = $decisionValues[$index];
@@ -268,15 +264,6 @@ class AMLService
 
         $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchesData, $request->notes);
 
-        // $amlDescions = json_decode($request->decisonsForUpdatePortal);
-
-        // foreach ($amlDescions as $resultId => $amlDescion) {
-        //     $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $amlDescion);
-        //     // BridgerDecisionUpdateJob::dispatch(
-        //     //     $bridgerAPIToken,
-        //     //     $resultId,
-        //     //     $amlDescion)
-        //     //     ->delay(now()->addSeconds(5));
-        // }
+        return true;
     }
 }
