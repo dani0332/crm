@@ -2,6 +2,7 @@
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import MemberDetails from "../../Components/MemberDetails.vue";
 import KycForm from "@/inertia/Components/KycForm.vue";
+import LazyDocumentUploader from "@/inertia/Pages/TravelQuote/Partials/DocumentUploader.vue";
 
 defineProps({
   quote: Object,
@@ -23,6 +24,9 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  cdnPath: String,
+  quoteDocuments: Object,
+  permissions: Object,
 });
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
@@ -32,6 +36,8 @@ const modals = reactive({
   duplicate: false,
   activity: false,
   activityConfirm: false,
+  doc: false,
+  docConfirm: false,
 });
 
 const rules = {
@@ -438,6 +444,59 @@ const linkEntity = () => {
         console.log(err);
     });
 }
+
+const quoteDocumentsTable = reactive({
+  isLoading: false,
+  columns: [
+    {
+      text: 'Document Type',
+      value: 'document_type_text',
+    },
+    {
+      text: 'Document Name',
+      value: 'original_name',
+    },
+    {
+      text: 'Created At',
+      value: 'created_at',
+    },
+    {
+      text: 'Created By',
+      value: 'created_by_name',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const onDocDelete = name => {
+  modals.docConfirm = true;
+  confirmDeleteData.docs = name;
+};
+
+const confirmDeleteDoc = () => {
+  quoteDocumentsTable.isLoading = true;
+  router.post(
+      `/documents/delete`,
+      {
+        docName: confirmDeleteData.docs,
+        quoteId: page.props.quote.id,
+      },
+      {
+        preserveScroll: true,
+        onFinish: () => {
+          modals.docConfirm = false;
+          quoteDocumentsTable.isLoading = false;
+          notification.error({
+            title: 'File Deleted',
+            position: 'top',
+          });
+        },
+      },
+  );
+};
 
 </script>
 
@@ -1021,6 +1080,102 @@ const linkEntity = () => {
       :quote="quote"
       :modelType="quoteType"
     />
+
+    <div
+        class="p-4 rounded shadow mb-6 bg-white"
+        v-if="permissions.isQuoteDocumentEnabled"
+    >
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Documents
+          <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
+        </h3>
+        <div class="flex gap-2">
+          <x-button
+              @click.prevent="modals.doc = true"
+              size="sm"
+              color="orange"
+              v-if="
+              permissions.canNotEditPayments &&
+              permissions.notProductionApproval
+            "
+          >
+            Upload Documents
+          </x-button>
+          <x-button
+              size="sm"
+              color="red"
+              v-if="displaySendPolicyButton && permissions.notProductionApproval"
+              @click="sendPolicyToClient"
+          >
+            Send Policy
+          </x-button>
+        </div>
+      </div>
+      <DataTable
+          table-class-name="compact"
+          :headers="quoteDocumentsTable.columns"
+          :items="quoteDocuments || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="quoteDocuments.length < 15"
+      >
+        <template #item-original_name="item">
+          <a
+              :href="cdnPath + item.doc_url"
+              target="_blank"
+              class="text-primary-600"
+          >
+            {{ item.original_name }}
+          </a>
+        </template>
+        <template #item-action="{ doc_name }">
+          <div>
+            <x-button
+                size="xs"
+                color="error"
+                outlined
+                @click.prevent="onDocDelete(doc_name)"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </DataTable>
+
+      <x-modal v-model="modals.doc" size="xl" show-close backdrop>
+        <template #header> Upload Documents </template>
+        <LazyDocumentUploader
+            :doc-types="documentTypes"
+            :docs="quoteDocuments || []"
+            :cdn="cdnPath"
+        />
+      </x-modal>
+      <x-modal v-model="modals.docConfirm" show-close backdrop>
+        <template #header> Delete Document </template>
+        <p>Are you sure you want to delete this document?</p>
+        <template #actions>
+          <div class="text-right space-x-4">
+            <x-button
+                size="sm"
+                ghost
+                @click.prevent="modals.docConfirm = false"
+            >
+              Cancel
+            </x-button>
+            <x-button
+                size="sm"
+                color="error"
+                @click.prevent="confirmDeleteDoc"
+                :loading="quoteDocumentsTable.isLoading"
+            >
+              Delete
+            </x-button>
+          </div>
+        </template>
+      </x-modal>
+    </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
