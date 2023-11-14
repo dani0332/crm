@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
 use App\Enums\HealthTeamType;
+use App\Enums\Kyc;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
@@ -15,6 +16,7 @@ use App\Jobs\CarLost\CarLostStatusRejected;
 use App\Jobs\IntroEmailJob;
 use App\Jobs\SyncSIBContactJob;
 use App\Models\CarLostQuoteLog;
+use App\Models\CustomerDetail;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\GenericModel;
@@ -621,5 +623,34 @@ class CRUDService extends BaseService
         }
 
         return '';
+    }
+    public function calculateScore($quote)
+    {
+        if (isset($quote->payments[0])) {
+            $payments = $quote->payments[0];
+            $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            $customerScore += 1; // b default for transaction volume;
+            $customerScore += 1; // For products all product have 1
+            $customerScore += 1; // payment volume for future use
+
+            $customerScore += in_array(strtolower($payments->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payments->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 1);
+
+            $customerDetail = $quote->customer->customerDetail;
+            if ($customerDetail) {
+
+                $customerScore += in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
+                $customerScore += in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
+                $customerScore += in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+                $customerScore += in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+
+                $customerScore += in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
+                $customerScore += in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
+                $customerScore += in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
+
+                $customer = CustomerDetail::find($customerDetail->id);
+                $customer->risk_score = $customerScore;
+                $customer->save();
+            }
+        }
     }
 }

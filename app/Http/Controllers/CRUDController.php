@@ -39,6 +39,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -687,6 +688,8 @@ class CRUDController extends Controller
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
+            $carQuote = CarQuote::where('uuid', $quote->uuid)->first();
+            $this->crudService->calculateScore($carQuote);
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'amlQuoteStatus', 'entities', 'legalStructure', 'idDocumentType', 'issuancePlace', 'issuanceAuthorities', 'modeOfContact', 'employmentSectors', 'residentialStatus', 'companyPosition', 'countries',
@@ -907,6 +910,8 @@ class CRUDController extends Controller
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HEALTH->id(), $record->id);
 
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
+            $healthq = HealthQuote::where('uuid', $record->uuid)->first();
+            $this->crudService->calculateScore($healthq);
 
             return inertia('HealthQuote/Show', [
                 'amlQuoteStatus' => $amlQuoteStatus,

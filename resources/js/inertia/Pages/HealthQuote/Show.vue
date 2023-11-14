@@ -1552,7 +1552,7 @@ onMounted(() => {
 
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
+          <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer' : 'Entity '}} Profile</h3>
           <KycForm
               :roles="$page.props.rolesEnum"
               :quote="page.props.quote"
@@ -1664,6 +1664,10 @@ onMounted(() => {
                       <div class="grid sm:grid-cols-2">
                           <dt class="font-medium">MEMBER CATEGORY</dt>
                           <dd>{{ quote.member_category_id_text }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">Risk Category</dt>
+                          <dd>{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
                       </div>
                   </dl>
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">

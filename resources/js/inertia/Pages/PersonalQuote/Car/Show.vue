@@ -1515,6 +1515,7 @@ const linkEntity = () => {
             <dt class="font-medium">PAYMENT REFERENCE</dt>
             <dd>{{ record.payment_reference ?? '' }}</dd>
           </div>
+
         </dl>
         <div class="grid sm:grid-cols-1 mt-3">
           <dt class="font-medium mb-3">ADDONS</dt>
@@ -1884,6 +1885,10 @@ const linkEntity = () => {
                         <div class="grid sm:grid-cols-2">
                             <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                             <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+                        </div>
+                        <div class="grid sm:grid-cols-2">
+                            <dt class="font-medium">Risk Category</dt>
+                            <dd>{{record.risk_score==null?'N/A':record.risk_score <= 16?'Low Risk':((record.risk_score <= 31)?'Medium Risk':(record.risk_score >= 32?'High Risk':'N/A')) }}</dd>
                         </div>
                     </dl>
                     <dl v-if="record.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
