@@ -107,6 +107,31 @@ const setSelectedOption = (e, item) => {
     x => x.EntityUniqueID == item.EntityUniqueID,
   );
   if (index != -1) amlResults.value[index].decision = e;
+
+  if(e === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.ComplianceSuperUser)) {
+
+      // Send Bridger Response to Compliance Super User when Decision True Match
+      let data = {
+          aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+          quote_ref_id : props.aml.quote_request_id,
+          customer_entity_name : props.aml.input,
+          quote_type_text : props.aml.quote_type_text,
+          bridger_response: props.aml.results,
+      };
+
+      axios.post(`/kyc/send-bridger-response`, data)
+          .then(res => {
+              console.log(res)
+              notification.success({
+                  title: res.data.message,
+                  position: 'top',
+              });
+          })
+          .catch(err => {
+              console.log(err);
+          })
+  }
+
 };
 
 const isTrue = computed(() => {

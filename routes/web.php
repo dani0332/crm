@@ -429,6 +429,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('aml/upload/uae-list', [$controller, 'uaeSanctionListUpload'])->name('uaeSanctionListUpload');
         Route::get('aml-fetch-entity', [V2AMLController::class, 'fetchEntity'])->name('aml-fetch-entity');
         Route::post('link-entity-details', [V2AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
+        Route::post('send-bridger-response', [V2AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
     });
 
     Route::group(['prefix' => 'medical'], function () {

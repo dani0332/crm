@@ -185,14 +185,15 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
+        $complianceRole = $forComplianceSuperUser ? RolesEnum::ComplianceSuperUser : RolesEnum::COMPLIANCE;
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', [RolesEnum::COMPLIANCE])->get();
+            ->whereIn('roles.name', [$complianceRole])->get();
 
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
