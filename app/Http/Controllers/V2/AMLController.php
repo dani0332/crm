@@ -350,7 +350,12 @@ class AMLController extends Controller
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 \Log::info('Bridger Insight - Customer type : Individual');
-                $customer = CustomerRepository::updateIndividualDetail($AMLCheckRequest->customer_id, $AMLCheckRequest->safe());
+
+                $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
+                $customer->update($AMLCheckRequest->validated());
+                $customer->refresh();
+                
+                //$customer = CustomerRepository::updateIndividualDetail($AMLCheckRequest->customer_id, $AMLCheckRequest->safe());
                 \Log::info('Bridger Insight - Customer Updated Successfully');
 
                 $getMemberOrUBODetails[] = [
@@ -386,13 +391,20 @@ class AMLController extends Controller
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
 
                 \Log::info('Bridger Insight - Customer type : Entity');
-                $entity = EntityRepository::updateEntityDetail($AMLCheckRequest->safe());
+                $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license_no], [
+                    'company_name' => $AMLCheckRequest->company_name,
+                    'company_address' => $AMLCheckRequest->company_address,
+                    'industry_type_code' => $AMLCheckRequest->industry_type_code,
+                    'emirate_of_registration_id' => $AMLCheckRequest->emirate_of_registration_id,
+                ]);
+                $entityId = $entity->id;
+                $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
                 \Log::info('Bridger Insight - Entity Updated Successfully');
 
                 QuoteRequestEntityMapping::updateOrCreate([
                     'quote_type_id' => $quoteType->id,
                     'quote_request_id' => $quoteRequestId,
-                ], ['entity_id' => $entity->id, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
+                ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
                 // Bridger Insight API Call for Entity
                 $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
@@ -426,7 +438,7 @@ class AMLController extends Controller
          * ======== PLEASE DON'T REMOVE THIS COMMENTED CODE YET ========
          * ======== THIS CODE IS FOR FUTURE REFERENCE ========
          */
-        
+
         // dd($AMLCheckRequest->toArray());
 
         // if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
