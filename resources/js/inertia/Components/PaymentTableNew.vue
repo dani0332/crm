@@ -723,7 +723,7 @@ const addPaymentModal = () => {
 
 const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
 
-  if( sr_no===0 && (payment.payment_status.id === props.paymentStatusEnum.PAID) ) {
+  if( sr_no===0 && (payment.payment_status.id === props.paymentStatusEnum.PAID) && capture_approval===0 ) {
     notification.error({
           title: 'No further actions allowed to paid payments',
           position: 'top',
@@ -849,6 +849,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   }
 
   if(capture_approval>0) {
+    isApproveClicked.value = true;
     if(capture_approval==1) {
       isCreditCardView.value = true;
     }    
@@ -891,6 +892,14 @@ const validateViewPayment = (isValid) => {
   return false;
 }
 
+const validateCapturePayment = (isValid) => { 
+  if(isApproveConfirm.value === false && isValid) {
+    isApproveConfirm.value = true;
+    return true;
+  }
+  return false;
+}
+
 const validateApprovedDocument = () => {  
   if (paymentMethodsForm.collection_type==='insurer') {  
 console.log('tt'+splitPaymentNo.value);
@@ -909,7 +918,9 @@ console.log('docccazhar1='+JSON.stringify(approvedDocumentModel.value[splitPayme
 
 const addPayment = isValid => {  
   
-  if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
+  if(isCreditApprovalView.value === true){
+    if (validateCapturePayment(isValid)) return;
+  } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;
     if (validateApprovedDocument()) return;
   } else {
@@ -1198,6 +1209,104 @@ const uploadDocument = (doc, files, count) => {
 };
 
 
+const getCaptureValidation = computed(() => {  
+  if ( props.payments.length>0 ) {
+    if(props.payments[0].is_approved===1){
+      return false;
+    }
+    let paymentRecord = props.payments[0]
+    if ( paymentRecord.frequency==='upfront' ){
+        let paymentSplitRec = paymentRecord.payment_splits[0];
+        if (paymentSplitRec.payment_method.code==='CC' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.AUTHORISED) {
+          return true;
+        } else if (paymentSplitRec.payment_method.code==='IP' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.PENDING) {
+          return true;
+        } else if (paymentSplitRec.payment_method.code==='CA' &&  paymentSplitRec.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVAL) {
+          return true;
+        } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
+          return true;
+        }
+    } else if ( paymentRecord.frequency==='split_payment' ){
+      const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");
+      if (paymentMethodCC.length > 0) {
+        let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORIZED);
+        if( ccPaymentStatus.length===paymentMethodCC.length ) {
+          return true;
+        }        
+        /*paymentMethodCC.forEach(element => {
+          if (element.payment_status.code===props.paymentStatusEnum.AUTHORIZED) {
+            return true;
+          }
+        });*/
+        
+      } else {
+        let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
+        if (ipPaymentStatus.length > 0) {
+          let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PENDING);
+          if( ipPending.length===ipPaymentStatus.length ) {
+            return true;
+          } 
+        } else {
+          let caPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CA");
+          if (caPaymentStatus.length > 0) {
+            let caApproved = caPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.CREDIT_APPROVAL);
+            if( caApproved.length===caPaymentStatus.length ) {
+              return true;
+            } 
+          } else {
+            let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
+            if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
+              return true;
+            } 
+          }
+        }
+      }
+    } else {
+      if (
+        (paymentRecord.payment_splits[0].payment_method.code==='IP' ||
+        paymentRecord.payment_splits[0].payment_method.code==='PDC'
+        ) &&
+        paymentRecord.payment_splits[0].payment_status.code===props.paymentStatusEnum.PENDING) {
+        return true;
+      } else if(paymentRecord.payment_splits[0].payment_status.code===props.paymentStatusEnum.PAID){
+        return true;
+      }
+      /*
+      let paidPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_status.code===props.paymentStatusEnum.PAID);
+      if( paidPaymentStatus.length===paymentRecord.payment_splits.length ) {
+        return true;
+      }*/
+      return true;
+
+
+    }
+  }
+  return false;
+});
+
+const alertCapture = () => {  
+  let errorMsg = 'Pending payment';
+  if(props.payments[0].is_approved===1){
+    errorMsg = 'Payment already approved';   
+  }
+  notification.error({
+      title: errorMsg,
+      position: 'top',
+    });
+};
+
+const getCaptureOption = computed(() => {
+  if ( props.payments.length>0 ) {
+    const paymentMethodCC = props.payments[0].payment_splits.filter(item => item.payment_method.code === "CC");
+    if (paymentMethodCC.length > 0) {
+      return 'capture';
+    } else {
+      return 'approve';
+    }
+  }
+  return;
+});
+
 const getPlanName = computed(() => {
   const plan = props.quoteRequest.plan;
   return plan ? plan.text : 'Not Available';
@@ -1385,15 +1494,16 @@ const providerId = computed(() => {
                     <x-button size="xs" color="primary" outlined @click="editPaymentModal(item,0,0,0)">
                         Edit
                     </x-button>
-
-                    <x-button size="xs" color="orange" outlined @click="editPaymentModal(item,0,0,1)">
-                        Capture
-                    </x-button>
-
-                    <x-button size="xs" color="orange" outlined @click="editPaymentModal(item,0,0,2)">
-                        Approval
-                    </x-button>
-
+                    <template v-if="can(permissionEnum.ApprovePayments)">
+                      <x-button v-if="getCaptureOption==='capture'" size="xs" color="orange" outlined 
+                      @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 1) : alertCapture()">
+                          Capture
+                      </x-button>
+                      <x-button v-if="getCaptureOption==='approve'" size="xs" color="orange" outlined 
+                      @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 2) : alertCapture()">
+                          Approval
+                      </x-button>
+                    </template>
                 </template>
             </div>
               </td>
@@ -2138,7 +2248,7 @@ const providerId = computed(() => {
                     </template> 
                   </div>
                   <div class="w-1/5 px-2 mb-2">
-                    <x-tooltip>
+                    <x-tooltip v-if="!readOnlyPayments[count]">
                           <Dropzone
                           :id="paymentDocument.id"
                           multiple="true"
@@ -2147,8 +2257,7 @@ const providerId = computed(() => {
                           :max-files="paymentDocument.max_files"
                           :max-size="paymentDocument.max_size"
                           :loading="documentForm.processing"
-                          @change="uploadDocument(paymentDocument, $event, count)"
-                          v-if="!readOnlyPayments[count]"
+                          @change="uploadDocument(paymentDocument, $event, count)"                          
                         />
                       <template #tooltip>
                         <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
@@ -2331,8 +2440,7 @@ const providerId = computed(() => {
         </div>
       </template>
 
-      <x-divider class="mb-4 mt-1" />
-      
+      <x-divider class="mb-4 mt-1" />     
       
       <template  v-if="isViewEnabled || isCreditApprovalView">
           <template v-if="isApproveConfirm">
@@ -2350,8 +2458,8 @@ const providerId = computed(() => {
               </div>
             </div>
           </template>          
-          <template v-else-if="paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC'" >
-            <div v-if="(splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
+          <template v-else-if="isCreditApprovalView || (paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC')" >
+            <div v-if="isCreditApprovalView || (splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
                 <x-button size="sm" @click="isDeclineClicked=!isDeclineClicked;isApproveClicked=false">
                   Cancel
@@ -2367,11 +2475,11 @@ const providerId = computed(() => {
                   Decline
                 </x-button>
               </div>
-              <div v-if="!isDeclineClicked && paymentMethodsModels[splitPaymentNo]!='CC'">
+              <div v-if="!isDeclineClicked && (paymentMethodsModels[splitPaymentNo]!='CC' || isCreditApprovalView)">
                 <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked">
                   Approve
                 </x-button>
-                <x-button v-if="isApproveClicked || isCreditApprovalView" class="mr-2" size="sm" color="#ff5e00" type="submit">
+                <x-button v-if="isApproveClicked" class="mr-2" size="sm" color="#ff5e00" type="submit">
                   Approve
                 </x-button>
               </div>

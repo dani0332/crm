@@ -1787,8 +1787,7 @@ class CRUDController extends Controller
     }
     public function splitPaymentUpdate(Request $request)
     {
-        //dd($request->all());
-        if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+        if (!(auth()->user()->can(PermissionsEnum::ApprovePayments))) {
             return;
         }
         $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
@@ -1797,13 +1796,11 @@ class CRUDController extends Controller
     }
 
     public function splitPaymentsApprove(Request $request)
-    {
-        dd($request->all());
-        if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
+    {        
+        if (!(auth()->user()->can(PermissionsEnum::ApprovePayments))) {
             return;
         }
-        $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
-
+        $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
         return back()->with('success', $successMessage);
     }
 
