@@ -225,6 +225,62 @@ const submitQuoteUpdateForm = () => {
 //         })
 // }
 
+const validateCustomerFields = ref(false);
+
+const customerDetailsForm = useForm({
+
+    customer_id: props.quoteDetails.customer_id,
+    customer_type: props.customerTypeEnum.Individual,
+    quote_type: props.quoteType.code,
+
+    insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
+    insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+    nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
+    dob: props.quoteDetails?.customer.dob ?? null,
+
+    place_of_birth: props.quoteDetails?.customer?.detail?.place_of_birth ?? null,
+    country_of_residence: props.quoteDetails?.customer?.detail?.country_of_residence ?? null,
+    residential_address: props.quoteDetails?.customer?.detail?.residential_address ?? null,
+    residential_status: props.quoteDetails?.customer?.detail?.residential_status ?? null,
+    id_type: props.quoteDetails?.customer?.detail?.id_type ?? null,
+    id_issuance_date: props.quoteDetails?.customer?.detail?.id_issuance_date ?? null,
+    mode_of_contact: props.quoteDetails?.customer?.detail?.mode_of_contact ?? null,
+    transaction_value: props.quoteDetails?.customer?.detail?.transaction_value ?? null,
+    mode_of_delivery: props.quoteDetails?.customer?.detail?.mode_of_delivery ?? null,
+    employment_sector: props.quoteDetails?.customer?.detail?.employment_sector ?? null,
+    customer_tenure: props.quoteDetails?.customer?.detail?.customer_tenure ?? null,
+});
+
+const updateCustomerDetails = () => {
+
+    //validate customerDetailsForm manually
+    
+
+
+    console.log("VALIDATE", isValid);
+    validateCustomerFields.value = true;
+
+    if (!isValid) return;
+
+    customerDetailsForm.post(`${props.quoteDetails.id}/update-customer-details`, {
+        preserveScroll: true,
+        onError: errors => {
+            notification.error({
+                title: errors.error || 'Customer update failed',
+                position: 'top',
+            });
+        },
+        onSuccess: () => {
+            notification.success({
+                title: 'Customer update failed',
+                position: 'top',
+            });
+
+        },
+    });
+
+}
+
 const insuredDetailsSubmit = isValid => {
     if (!isValid) return;
 
@@ -435,6 +491,7 @@ onMounted(() => {
                         <x-input
                             v-model="insuredFormDetails.residential_address"
                             placeholder="Residential Address"
+                            :rules="validateCustomerFields ? [isRequired] : []"
                             type="text"
                             class="w-full"
                         />
@@ -634,11 +691,10 @@ onMounted(() => {
 
             <div class="text-right space-x-4 mt-8">
                 <x-button
-                    v-show="false"
                     size="sm"
                     color="orange"
                     type="button"
-                    @click.prevent="updateDetails"
+                    @click.prevent="updateCustomerDetails"
                 >
                     Update Only
                 </x-button>
@@ -1003,13 +1059,12 @@ onMounted(() => {
                     Cancel
                 </x-button>
                 <x-button
-                v-show="false"
                     size="sm"
                     color="orange"
                     type="button"
                     @click.prevent="updateDetails"
                 >
-                    Update
+                    Update Only 2
                 </x-button>
                 <x-button
                     size="sm"

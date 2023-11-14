@@ -315,6 +315,12 @@ class AMLController extends Controller
         }
     }
 
+    public function updateCustomerDetails()
+    {
+        //update customer information only
+        dd(request()->all());
+    }
+
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         $quoteId = $quoteRequestId;
@@ -354,7 +360,7 @@ class AMLController extends Controller
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
                 $customer->refresh();
-                
+
                 //$customer = CustomerRepository::updateIndividualDetail($AMLCheckRequest->customer_id, $AMLCheckRequest->safe());
                 \Log::info('Bridger Insight - Customer Updated Successfully');
 
