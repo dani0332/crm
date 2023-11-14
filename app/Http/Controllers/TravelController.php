@@ -199,6 +199,8 @@ class TravelController extends Controller
             $companyPosition = $this->lookupService->getCompanyPosition();
         }
 
+        // dd($quoteDocuments);
+
         return inertia('TravelQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
@@ -226,7 +228,7 @@ class TravelController extends Controller
             'lostReasons' => $this->lookupService->getLostReasons(),
             'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
             'ecomDetails' => $ecomDetails,
-            'quoteDocuments' => $quoteDocuments,
+            'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
