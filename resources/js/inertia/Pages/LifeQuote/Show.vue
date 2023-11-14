@@ -25,7 +25,6 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
-  cdnPath: String,
   documentTypes: Object,
   storageUrl: String,
 });
