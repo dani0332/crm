@@ -16,6 +16,7 @@ use App\Services\SageApiService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Models\PaymentStatusLog;
 
 class PaymentSplitsRepository
 {
@@ -347,7 +348,7 @@ class PaymentSplitsRepository
     }
 
     public function setMasterPaymentStatus($splitPaymentId)
-    {
+    { 
         $splitPayment = PaymentSplits::with('payment')->find($splitPaymentId);
         $payment = Payment::where('code', $splitPayment->code)->first();
         if ($payment) {
@@ -357,7 +358,7 @@ class PaymentSplitsRepository
                 );
             } else {
                 $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
-                if ($totalPaidPayments == $splitPayment->payment->total_payments) {
+                if ($totalPaidPayments == $payment->total_payments) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PAID]
                     );
@@ -372,5 +373,15 @@ class PaymentSplitsRepository
                 }
             }            
         } 
+    }
+
+    public function logPaymentStatus($code,$status,$splitPaymentNo=0,$declineReason='') {
+        $paymentLog = new PaymentStatusLog([
+            'current_payment_status_id' => PaymentStatusEnum::NEW,
+            'payment_code' => $paymentInformation['code'],
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $paymentLog->save();
     }
 }

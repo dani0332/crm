@@ -236,7 +236,7 @@ const validatePaymentOption = () => {
         console.log('azharLEN='+fileUploadModels.value[i]);
         if ( (
           paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' 
-          || paymentMethodsModels.value[i]=='PDC' || 
+          || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' ||
           ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   
           ) 
         && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)       
@@ -462,10 +462,6 @@ const handleDiscountChange = () => {
     discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
   }
   calculateTotalAmount();
-};
-
-const handleCollectionDateChange = () => {
-  dueDateModels.value[1] = paymentMethodsForm.collection_date;
 };
 
 const calculateDueDates = () => {
@@ -1327,6 +1323,11 @@ const providerId = computed(() => {
   }
   return null;
 });
+
+// Watch for changes in paymentMethodsForm.collection_date
+watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
+  calculateDueDates();
+});
 </script>
 
 <template>
@@ -1571,8 +1572,7 @@ const providerId = computed(() => {
                 v-if="!isFieldReadonly"
                 name="collection_date"                
                 v-model="paymentMethodsForm.collection_date"
-                :rules="[rules.isRequired]"
-                :onChangeCustom="handleCollectionDateChange()"               
+                :rules="[rules.isRequired]"                
               />
             </x-field>
           </div>
