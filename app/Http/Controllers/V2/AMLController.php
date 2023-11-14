@@ -14,6 +14,8 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\UpdateAMLCustomerDetailRequest;
+use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -315,10 +317,16 @@ class AMLController extends Controller
         }
     }
 
-    public function updateCustomerDetails()
+    public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
     {
-        //update customer information only
-        dd(request()->all());
+        $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
+        return response()->json(['success' => true]);
+    }
+
+    public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
+    {
+        $entity = EntityRepository::updateEntityDetail($request->safe());
+        return response()->json(['success' => true]);
     }
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)

@@ -28,6 +28,8 @@ const loader = ref({
     search: false,
 });
 
+const isEmptyNationality = ref(false);
+
 
 const emit = defineEmits(['update:modelValue', 'loaded']);
 const notification = useToast();
@@ -131,6 +133,31 @@ const idIssuancePlanceOptions = computed(() => {
 //     }
 // ]);
 
+const validateCustomerFields = ref(false);
+
+const customerAmlOnly = () => {
+    validateCustomerFields.value = false;
+    return true;
+}
+
+const customerAllFields = () => {
+    validateCustomerFields.value = true;
+    return true;
+}
+
+
+const validateEntityFields = ref(false);
+
+const entityAmlOnly = () => {
+    validateEntityFields.value = false;
+    return true;
+}
+
+const entityAllFields = () => {
+    validateEntityFields.value = true;
+    return true;
+}
+
 const insuredFormDetails = useForm({
     customer_id: props.quoteDetails.customer_id,
     customer_type: props.customerTypeEnum.Individual,
@@ -157,11 +184,9 @@ const insuredFormDetails = useForm({
     id_issuance_place: props.entityDetails?.entity?.id_issuance_place ?? null,
     id_issuance_authority: props.entityDetails?.entity?.id_issuance_authority ?? null,
 
-
-
     insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
     insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
-    nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
+    nationality_id:  props.quoteDetails?.customer.nationality_id ?? null,
     dob: props.quoteDetails?.customer.dob ?? null,
 
     entity_id: props.entityDetails?.entity?.id,
@@ -193,100 +218,76 @@ const submitQuoteUpdateForm = () => {
     });
 }
 
-// new update function
-// const updateInsuredAndPaymentsDetails = () => {
-//     linkLoader.value = true;
-//     let entityDetails = {
-//         quote_type_id: props.quoteType.id,
-//         quote_request_id: props.quoteDetails.id,
-//         entity_id: tradeLicenseEntity.entity_id,
-//         payment_Details: paymentDetailsRef.value
-//     };
-//     axios
-//         .post(route('insuredPayerDetailsUpdate'), entityDetails)
-//         .then(res => {
-//             if (res.data.status) {
-
-//                 notification.success({
-//                     title: res.data.message,
-//                     position: 'top',
-//                 });
-//             }else{
-//                 notification.error({
-//                     title: res.data.message,
-//                     position: 'top',
-//                 });
-//             }
-//             linkLoader.value = false;
-
-//         })
-//         .catch(err => {
-//             console.log(err);
-//         })
-// }
-
-const validateCustomerFields = ref(false);
-
-const customerDetailsForm = useForm({
-
-    customer_id: props.quoteDetails.customer_id,
-    customer_type: props.customerTypeEnum.Individual,
-    quote_type: props.quoteType.code,
-
-    insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
-    insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
-    nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
-    dob: props.quoteDetails?.customer.dob ?? null,
-
-    place_of_birth: props.quoteDetails?.customer?.detail?.place_of_birth ?? null,
-    country_of_residence: props.quoteDetails?.customer?.detail?.country_of_residence ?? null,
-    residential_address: props.quoteDetails?.customer?.detail?.residential_address ?? null,
-    residential_status: props.quoteDetails?.customer?.detail?.residential_status ?? null,
-    id_type: props.quoteDetails?.customer?.detail?.id_type ?? null,
-    id_issuance_date: props.quoteDetails?.customer?.detail?.id_issuance_date ?? null,
-    mode_of_contact: props.quoteDetails?.customer?.detail?.mode_of_contact ?? null,
-    transaction_value: props.quoteDetails?.customer?.detail?.transaction_value ?? null,
-    mode_of_delivery: props.quoteDetails?.customer?.detail?.mode_of_delivery ?? null,
-    employment_sector: props.quoteDetails?.customer?.detail?.employment_sector ?? null,
-    customer_tenure: props.quoteDetails?.customer?.detail?.customer_tenure ?? null,
-});
 
 const updateCustomerDetails = () => {
 
-    //validate customerDetailsForm manually
-    
+    let customerDetailData = {
+        customer_id:insuredFormDetails.customer_id,
+        customer_type: insuredFormDetails.customer_type,
+        quote_type: insuredFormDetails.quote_type,
 
+        insured_first_name: insuredFormDetails.insured_first_name,
+        insured_last_name: insuredFormDetails.insured_last_name,
+        nationality_id:  insuredFormDetails.nationality_id,
+        dob: insuredFormDetails.dob,
 
-    console.log("VALIDATE", isValid);
-    validateCustomerFields.value = true;
+        place_of_birth: insuredFormDetails.place_of_birth,
+        country_of_residence: insuredFormDetails.country_of_residence,
+        residential_address: insuredFormDetails.residential_address,
+        residential_status: insuredFormDetails.residential_status,
+        id_type: insuredFormDetails.id_type,
+        id_issuance_date: insuredFormDetails.id_issuance_date,
+        mode_of_contact: insuredFormDetails.mode_of_contact,
+        transaction_value: insuredFormDetails.transaction_value,
+        mode_of_delivery: insuredFormDetails.mode_of_delivery,
+        employment_sector: insuredFormDetails.employment_sector,
+        customer_tenure: insuredFormDetails.customer_tenure,
+    };
 
-    if (!isValid) return;
-
-    customerDetailsForm.post(`${props.quoteDetails.id}/update-customer-details`, {
-        preserveScroll: true,
-        onError: errors => {
-            notification.error({
-                title: errors.error || 'Customer update failed',
-                position: 'top',
-            });
-        },
-        onSuccess: () => {
-            notification.success({
-                title: 'Customer update failed',
-                position: 'top',
-            });
-
-        },
-    });
-
+    axios
+        .post(`${props.quoteDetails.id}/update-customer-details`, customerDetailData)
+        .then(res => {
+            console.log(res, "RESPONSE");
+            if (res.status) {
+                notification.success({
+                    title: 'Customer Details Updated',
+                    position: 'top',
+                });
+            }else{
+                notification.error({
+                    title: 'Something went wrong',
+                    position: 'top',
+                });
+            }
+            linkLoader.value = false;
+        })
+        .catch(err => {
+            console.log(err);
+        })
 }
 
 const insuredDetailsSubmit = isValid => {
+
+    if(insuredFormDetails.nationality_id == null && validateCustomerFields.value == false) {
+        isEmptyNationality.value = true;
+    } else {
+        isEmptyNationality.value = false;
+    }
+
     if (!isValid) return;
 
-    if(insuredFormDetails.customer_type == props.customerTypeEnum.Individual) {
+    console.log("HERE", isValid);
+
+    if(insuredFormDetails.customer_type == props.customerTypeEnum.Individual && validateCustomerFields.value == true) {
+        //validate all fields and update only
+        updateCustomerDetails();
+    }
+
+    if(insuredFormDetails.customer_type == props.customerTypeEnum.Individual && validateCustomerFields.value == false) {
+        //validate basic information and run aml
         modals.insuredDetailConfirmation = true;
     }
+
 
     if(insuredFormDetails.customer_type == props.customerTypeEnum.Entity) {
         submitQuoteUpdateForm();
@@ -385,6 +386,106 @@ const insurerFullName = computed(() => {
 
 const paidByRef = ref('third-party');
 
+
+
+// new update function
+// const updateInsuredAndPaymentsDetails = () => {
+//     linkLoader.value = true;
+//     let entityDetails = {
+//         quote_type_id: props.quoteType.id,
+//         quote_request_id: props.quoteDetails.id,
+//         entity_id: tradeLicenseEntity.entity_id,
+//         payment_Details: paymentDetailsRef.value
+//     };
+//     axios
+//         .post(route('insuredPayerDetailsUpdate'), entityDetails)
+//         .then(res => {
+//             if (res.data.status) {
+
+//                 notification.success({
+//                     title: res.data.message,
+//                     position: 'top',
+//                 });
+//             }else{
+//                 notification.error({
+//                     title: res.data.message,
+//                     position: 'top',
+//                 });
+//             }
+//             linkLoader.value = false;
+
+//         })
+//         .catch(err => {
+//             console.log(err);
+//         })
+// }
+
+
+//faisal
+// const customerDetailsForm = useForm({
+
+//     customer_id: props.quoteDetails.customer_id,
+//     customer_type: props.customerTypeEnum.Individual,
+//     quote_type: props.quoteType.code,
+
+//     insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
+//     insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+//     nationality_id:  null,//props.quoteDetails?.customer.nationality_id ??
+//     dob: props.quoteDetails?.customer.dob ?? null,
+
+//     place_of_birth: props.quoteDetails?.customer?.detail?.place_of_birth ?? null,
+//     country_of_residence: props.quoteDetails?.customer?.detail?.country_of_residence ?? null,
+//     residential_address: props.quoteDetails?.customer?.detail?.residential_address ?? null,
+//     residential_status: props.quoteDetails?.customer?.detail?.residential_status ?? null,
+//     id_type: props.quoteDetails?.customer?.detail?.id_type ?? null,
+//     id_issuance_date: props.quoteDetails?.customer?.detail?.id_issuance_date ?? null,
+//     mode_of_contact: props.quoteDetails?.customer?.detail?.mode_of_contact ?? null,
+//     transaction_value: props.quoteDetails?.customer?.detail?.transaction_value ?? null,
+//     mode_of_delivery: props.quoteDetails?.customer?.detail?.mode_of_delivery ?? null,
+//     employment_sector: props.quoteDetails?.customer?.detail?.employment_sector ?? null,
+//     customer_tenure: props.quoteDetails?.customer?.detail?.customer_tenure ?? null,
+// });
+
+//faisal
+// const updateCustomerDetails = () => {
+
+//     //submit form manually
+
+
+
+//     console.log(myForm.value);
+
+//     //validate customerDetailsForm manually
+//     validateCustomerFields.value = true;
+
+//     if (myForm.refs.value.validate()) {
+//         console.log("VALIDATED");
+//     }
+//     else{
+//         console.log("FAILED");
+//     }
+
+//     // console.log(isValid, ":VALID");
+
+//     // customerDetailsForm.post(`${props.quoteDetails.id}/update-customer-details`, {
+//     //     preserveScroll: true,
+//     //     onError: errors => {
+//     //         notification.error({
+//     //             title: errors.error || 'Customer update failed',
+//     //             position: 'top',
+//     //         });
+//     //     },
+//     //     onSuccess: () => {
+//     //         notification.success({
+//     //             title: 'Customer update failed',
+//     //             position: 'top',
+//     //         });
+
+//     //     },
+//     // });
+
+// }
+
 const updateDetails = () => {
 
     // console.log("update clicked");
@@ -426,7 +527,7 @@ onMounted(() => {
                 person(s) as per the Emirates ID
             </p>
 
-            <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
+            <x-form  @submit="insuredDetailsSubmit" :auto-focus="false">
                 <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
                     <x-field label="Insured First Name">
                         <x-input
@@ -450,7 +551,7 @@ onMounted(() => {
                         <ComboBox
                             :single="true"
                             v-model="insuredFormDetails.nationality_id"
-                            :rules="[isRequired]"
+                            :hasError="isEmptyNationality"
                             placeholder="Select Nationality"
                             :options="nationalitiesOptions"
                             class="w-full"
@@ -470,9 +571,10 @@ onMounted(() => {
                     <x-field label="Country / Place of Birth">
                         <ComboBox
                             :single="true"                            
-                            v-model="insuredFormDetails.nationality_id"
+                            v-model="insuredFormDetails.place_of_birth"
                             placeholder="Please enter the Place of Birth of the customer as per Passport"
                             :options="nationalitiesOptions"
+                            :hasError="!insuredFormDetails.place_of_birth && validateCustomerFields"
                             class="w-full"
                         />
                     </x-field>
@@ -483,6 +585,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.country_of_residence"
                             placeholder="Country of Residence"
                             :options="nationalitiesOptions"
+                            :hasError="!insuredFormDetails.country_of_residence && validateCustomerFields"
                             class="w-full"
                         />
                     </x-field>
@@ -492,7 +595,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.residential_address"
                             placeholder="Residential Address"
                             :rules="validateCustomerFields ? [isRequired] : []"
-                            type="text"
+                            type="text"                            
                             class="w-full"
                         />
                     </x-field>
@@ -503,6 +606,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.residential_status"
                             placeholder="Resident Status"
                             :options="residentStatusOptions"
+                            :hasError="!insuredFormDetails.residential_status && validateCustomerFields"
                             class="w-full"
                         />
                     </x-field>
@@ -510,7 +614,7 @@ onMounted(() => {
                     <x-field label="ID Type">
                         <ComboBox
                             :single="true"
-                            :rules="[isRequired]"
+                            :hasError="!insuredFormDetails.id_type && validateCustomerFields"
                             v-model="insuredFormDetails.id_type"
                             placeholder="Please specify the type of ID received from the customer "
                             :options="idTypeOptions"
@@ -522,6 +626,7 @@ onMounted(() => {
                     <x-field label="ID Issue Date">
                         <DatePicker
                             v-model="insuredFormDetails.id_issuance_date"
+                            :rules="validateCustomerFields ? [isRequired] : []"
                             placeholder="ID Issue Date"
                             class="w-full"
                         />
@@ -532,6 +637,7 @@ onMounted(() => {
                         <ComboBox
                             :single="true"
                             v-model="insuredFormDetails.mode_of_contact"
+                            :hasError="!insuredFormDetails.mode_of_contact && validateCustomerFields"
                             placeholder="Please specify the mode of contact with this customer"
                             :options="modeOfContactOptions"
                             class="w-full"
@@ -542,6 +648,7 @@ onMounted(() => {
                         <x-input
                             v-model="insuredFormDetails.transaction_value"
                             placeholder="Transaction Value"
+                            :rules="validateCustomerFields ? [isRequired] : []"
                             type="number"
                             class="w-full"
                         />
@@ -551,6 +658,7 @@ onMounted(() => {
                         <ComboBox
                             :single="true"
                             v-model="insuredFormDetails.mode_of_delivery"
+                            :hasError="!insuredFormDetails.mode_of_delivery && validateCustomerFields"
                             placeholder="Please select the mode of delivery of the policy documents"
                             :options="modeOfDeliveryOptions"
                             class="w-full"
@@ -560,6 +668,7 @@ onMounted(() => {
                     <x-field label="Employment Sector">
                         <ComboBox
                             :single="true"
+                            :hasError="!insuredFormDetails.employment_sector && validateCustomerFields"
                             v-model="insuredFormDetails.employment_sector"
                             placeholder="Employment Sector"
                             :options="employmentSectorOptions"
@@ -571,6 +680,7 @@ onMounted(() => {
                         <x-input
                             v-model="insuredFormDetails.customer_tenure"
                             placeholder="Customer Tenure"
+                            :rules="validateCustomerFields ? [isRequired] : []"
                             type="text"
                             class="w-full"
                         />
@@ -690,21 +800,31 @@ onMounted(() => {
 
 
             <div class="text-right space-x-4 mt-8">
+
                 <x-button
                     size="sm"
-                    color="orange"
-                    type="button"
-                    @click.prevent="updateCustomerDetails"
+                    color="warning"
+                    type="submit"
+                    @click="customerAllFields"
+                  
                 >
                     Update Only
                 </x-button>
+
                 <x-button
                     size="sm"
                     color="success"
                     type="submit"
+                    @click="customerAmlOnly"
+                  
                 >
                     Confirm
                 </x-button>
+
+                
+
+                 <!-- @click.prevent="insuredDetailsSubmit"  --> 
+                
             </div>
         </x-form>
     </x-modal>
@@ -820,6 +940,7 @@ onMounted(() => {
                     <x-field label="Legal Structure">
                         <ComboBox
                             :single="true"
+                            :hasError="!insuredFormDetails.legal_structure && validateEntityFields"
                             v-model="insuredFormDetails.legal_structure"
                             placeholder="Legal Structure"
                             :options="legalStructureOptions"
@@ -830,6 +951,7 @@ onMounted(() => {
                     <x-field label="Country of Incorporation">
                         <ComboBox
                             :single="true"
+                            :hasError="!insuredFormDetails.country_of_corporation && validateEntityFields"
                             v-model="insuredFormDetails.country_of_corporation"
                             placeholder="Country of Incorporation"
                             :options="nationalitiesOptions"
@@ -842,6 +964,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.website"
                             placeholder="Please enter the official website of the entity here"
                             type="text"
+                            :rules="validateEntityFields ? [isRequired] : []"
                             class="w-full"
                         />
                     </x-field>
@@ -849,6 +972,7 @@ onMounted(() => {
                     <x-field label="ID / Document Type">
                         <ComboBox
                             :single="true"
+                            :hasError="!insuredFormDetails.entity_id_type && validateEntityFields"
                             v-model="insuredFormDetails.entity_id_type"
                             placeholder="Please specify the type of ID received from the customer "
                             :options="idTypeOptions"
@@ -860,6 +984,7 @@ onMounted(() => {
                         <DatePicker
                             v-model="insuredFormDetails.entity_id_issuance_date"
                             placeholder="Please specify the issuance date of the ID collected"
+                            :rules="validateEntityFields ? [isRequired] : []"
                             class="w-full"
                         />
                     </x-field>
@@ -869,6 +994,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.id_expiry_date"
                             placeholder="Please specify the Expiry date of the ID collected"
                             class="w-full"
+                            :rules="validateEntityFields ? [isRequired] : []"
                         />
                     </x-field>
 
@@ -878,6 +1004,7 @@ onMounted(() => {
                         <ComboBox
                             :single="true"
                             v-model="insuredFormDetails.id_issuance_place"
+                            :hasError="!insuredFormDetails.id_issuance_place && validateEntityFields"
                             placeholder="Place of Issue"
                             :options="idIssuancePlanceOptions"
                             class="w-full"
@@ -888,6 +1015,7 @@ onMounted(() => {
                         <ComboBox
                             :single="true"
                             v-model="insuredFormDetails.id_issuance_authority"
+                            :hasError="!insuredFormDetails.id_issuance_authority && validateEntityFields"
                             placeholder="ID Issue Authority"
                             :options="idIssuanceAuthorityOptions"
                             class="w-full"
@@ -1061,15 +1189,17 @@ onMounted(() => {
                 <x-button
                     size="sm"
                     color="orange"
-                    type="button"
-                    @click.prevent="updateDetails"
+                    type="submit"
+                    :loading="insuredFormDetails.processing"
+                    @click.prevent="entityAllFields"
                 >
-                    Update Only 2
+                    Update Only
                 </x-button>
                 <x-button
                     size="sm"
                     color="success"
                     type="submit"
+                    @click.prevent="entityAmlOnly"
                     :loading="insuredFormDetails.processing"
                 >
                     Submit
