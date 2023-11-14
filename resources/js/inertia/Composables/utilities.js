@@ -54,6 +54,9 @@ export const useGenerateQueryString = filters =>
 };
 
 export const useConvertDate = date => {
+  if (date == null) {
+    return null;
+  }
   const [day, month, year] = date.split('-');
   return `${year}-${month}-${day}`;
 };
