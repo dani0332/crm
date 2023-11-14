@@ -78,4 +78,10 @@ class Customer extends Model implements AuditableContract
     {
         return $this->belongsTo(self::class, 'id', 'customer_id');
     }
+
+    public function customerDetail()
+    {
+        return $this->hasOne(CustomerDetail::class, 'customer_id', 'id');
+    }
+
 }
