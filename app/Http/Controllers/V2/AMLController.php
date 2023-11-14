@@ -422,45 +422,50 @@ class AMLController extends Controller
 
     public function insuredPayerDetailsUpdate(AMLCheckRequest $AMLCheckRequest)
     {
+        /**
+         * ======== PLEASE DON'T REMOVE THIS COMMENTED CODE YET ========
+         * ======== THIS CODE IS FOR FUTURE REFERENCE ========
+         */
+        
         // dd($AMLCheckRequest->toArray());
 
-        if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
-            foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
-                $payment = Payment::where('code', $paymentDetail['paymentCode'])->first();
-                if ($payment) {
-                    $customerInstrument = CustomerPaymentInstrument::find($payment->customer_payment_instrument_id)
-                        ->first();
+        // if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
+        //     foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
+        //         $payment = Payment::where('code', $paymentDetail['paymentCode'])->first();
+        //         if ($payment) {
+        //             $customerInstrument = CustomerPaymentInstrument::find($payment->customer_payment_instrument_id)
+        //                 ->first();
 
-                    if ($customerInstrument && $paymentDetail['paymentMethod'] == 'Credit Card'
-                        && ($customerInstrument->card_holder_name == null || $customerInstrument->card_holder_name == '')) {
-                        $customerInstrument->update([
-                            'card_holder_name' => $paymentDetail['payerName'],
-                        ]);
-                    } elseif (! $customerInstrument) {
-                        return response()->json([
-                            'status' => false,
-                            'message' => 'Customer Instrument record not found',
-                        ]);
-                    } else {
-                        $payment->update([
-                            'payer_name' => $paymentDetail['payerName'],
-                        ]);
-                    }
+        //             if ($customerInstrument && $paymentDetail['paymentMethod'] == 'Credit Card'
+        //                 && ($customerInstrument->card_holder_name == null || $customerInstrument->card_holder_name == '')) {
+        //                 $customerInstrument->update([
+        //                     'card_holder_name' => $paymentDetail['payerName'],
+        //                 ]);
+        //             } elseif (! $customerInstrument) {
+        //                 return response()->json([
+        //                     'status' => false,
+        //                     'message' => 'Customer Instrument record not found',
+        //                 ]);
+        //             } else {
+        //                 $payment->update([
+        //                     'payer_name' => $paymentDetail['payerName'],
+        //                 ]);
+        //             }
 
-                    $payment->update([
-                        'paid_by' => $paymentDetail['paidBy'],
-                    ]);
+        //             $payment->update([
+        //                 'paid_by' => $paymentDetail['paidBy'],
+        //             ]);
 
-                    return response()->json(['status' => true, 'message' => 'Updated']);
-                } else {
-                    return response()->json(['status' => false, 'message' => 'Payment not found']);
-                }
-            }
-        } else {
-            return response()->json(['status' => false, 'message' => 'Payments data missing']);
-        }
+        //             return response()->json(['status' => true, 'message' => 'Updated']);
+        //         } else {
+        //             return response()->json(['status' => false, 'message' => 'Payment not found']);
+        //         }
+        //     }
+        // } else {
+        //     return response()->json(['status' => false, 'message' => 'Payments data missing']);
+        // }
 
-        return response()->json(['status' => false, 'message' => 'Whoops! Something went wrong']);
+        // return response()->json(['status' => false, 'message' => 'Whoops! Something went wrong']);
     }
 
     public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables)

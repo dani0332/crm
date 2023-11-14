@@ -22,7 +22,7 @@ const props = defineProps({
     lookups: Object
 });
 
-const paymentsDataArray = ref(props.quoteDetails.payments || []);
+// const paymentsDataArray = ref(props.quoteDetails.payments || []);
 
 const loader = ref({
     search: false,
@@ -121,15 +121,15 @@ const idIssuancePlanceOptions = computed(() => {
 });
 
 
-const paymentDetailsRef = ref([
-    {
-        paymentCode : '',
-        paymentMethod: '',
-        payerName: '',
-        paymentAmount: '',
-        paidBy: '',
-    }
-]);
+// const paymentDetailsRef = ref([
+//     {
+//         paymentCode : '',
+//         paymentMethod: '',
+//         payerName: '',
+//         paymentAmount: '',
+//         paidBy: '',
+//     }
+// ]);
 
 const insuredFormDetails = useForm({
     customer_id: props.quoteDetails.customer_id,
@@ -194,36 +194,36 @@ const submitQuoteUpdateForm = () => {
 }
 
 // new update function
-const updateInsuredAndPaymentsDetails = () => {
-    linkLoader.value = true;
-    let entityDetails = {
-        quote_type_id: props.quoteType.id,
-        quote_request_id: props.quoteDetails.id,
-        entity_id: tradeLicenseEntity.entity_id,
-        payment_Details: paymentDetailsRef.value
-    };
-    axios
-        .post(route('insuredPayerDetailsUpdate'), entityDetails)
-        .then(res => {
-            if (res.data.status) {
+// const updateInsuredAndPaymentsDetails = () => {
+//     linkLoader.value = true;
+//     let entityDetails = {
+//         quote_type_id: props.quoteType.id,
+//         quote_request_id: props.quoteDetails.id,
+//         entity_id: tradeLicenseEntity.entity_id,
+//         payment_Details: paymentDetailsRef.value
+//     };
+//     axios
+//         .post(route('insuredPayerDetailsUpdate'), entityDetails)
+//         .then(res => {
+//             if (res.data.status) {
 
-                notification.success({
-                    title: res.data.message,
-                    position: 'top',
-                });
-            }else{
-                notification.error({
-                    title: res.data.message,
-                    position: 'top',
-                });
-            }
-            linkLoader.value = false;
+//                 notification.success({
+//                     title: res.data.message,
+//                     position: 'top',
+//                 });
+//             }else{
+//                 notification.error({
+//                     title: res.data.message,
+//                     position: 'top',
+//                 });
+//             }
+//             linkLoader.value = false;
 
-        })
-        .catch(err => {
-            console.log(err);
-        })
-}
+//         })
+//         .catch(err => {
+//             console.log(err);
+//         })
+// }
 
 const insuredDetailsSubmit = isValid => {
     if (!isValid) return;
@@ -332,30 +332,30 @@ const paidByRef = ref('third-party');
 const updateDetails = () => {
 
     // console.log("update clicked");
-    console.log(paymentDetailsRef.value);
+    // console.log(paymentDetailsRef.value);
 
-    updateInsuredAndPaymentsDetails(paymentDetailsRef);
+    // updateInsuredAndPaymentsDetails(paymentDetailsRef);
 
 };
 
-watch(
-  () => insurerFullName,
-  val => {
-    if (payerNameRef.value == val) {
-      paidByRef.value = 'self';
-    }
-  }
-);
+// watch(
+//   () => insurerFullName,
+//   val => {
+//     if (payerNameRef.value == val) {
+//       paidByRef.value = 'self';
+//     }
+//   }
+// );
 
 onMounted(() => {
 
-    paymentDetailsRef.value = props.quoteDetails.payments.map(payment => ({
-        paymentCode : payment.code,
-        paymentMethod: payment.payment_method.name,
-        payerName: payment.get_customer_payment_instrument?.card_holder_name ?? '',
-        paymentAmount: payment.captured_amount,
-        paidBy: 'self',
-    }));
+    // paymentDetailsRef.value = props.quoteDetails.payments.map(payment => ({
+    //     paymentCode : payment.code,
+    //     paymentMethod: payment.payment_method.name,
+    //     payerName: payment.get_customer_payment_instrument?.card_holder_name ?? '',
+    //     paymentAmount: payment.captured_amount,
+    //     paidBy: 'self',
+    // }));
 
 });
 </script>
@@ -544,7 +544,7 @@ onMounted(() => {
 
                 <x-divider class="mb-4 mt-4"/>
 
-            <h3 class="font-semibold text-primary-800 text-lg mb-4">
+            <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
                 Payer Details
             </h3>
 
@@ -638,7 +638,7 @@ onMounted(() => {
                     <x-divider class="mb-4 mt-4"/>
                     <x-divider class="mb-4 mt-4"/>
                 </dl>
-            </section>
+            </section> -->
 
 
 
@@ -911,7 +911,7 @@ onMounted(() => {
             />
             <x-divider class="mb-4 mt-4"/>
 
-            <h3 class="font-semibold text-primary-800 text-lg mb-4">
+            <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
                 Payer Details
             </h3>
 
@@ -1005,7 +1005,7 @@ onMounted(() => {
                     <x-divider class="mb-4 mt-4"/>
                     <x-divider class="mb-4 mt-4"/>
                 </dl>
-            </section>
+            </section> -->
 
             <div class="text-right space-x-4 mt-8">
                 <x-button
