@@ -19,6 +19,7 @@ use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
@@ -30,20 +31,17 @@ use App\Repositories\UserRepository;
 use App\Services\CentralService;
 use App\Services\CRUDService;
 use App\Services\LookupService;
-use App\Services\QuoteDocumentService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
 {
     protected $crudService;
     protected $lookupService;
-    private $quoteDocumentService;
 
-    public function __construct(CRUDService $crudService, LookupService $lookupService, QuoteDocumentService $quoteDocumentService)
+    public function __construct(CRUDService $crudService, LookupService $lookupService)
     {
         $this->crudService = $crudService;
         $this->lookupService = $lookupService;
-        $this->quoteDocumentService = $quoteDocumentService;
     }
     /**
      * Display a listing of the resource.
@@ -160,11 +158,11 @@ class LifeQuoteController extends Controller
             $companyPosition = $this->lookupService->getCompanyPosition();
         }
 
-        $isQuoteDocumentEnabled = $this->quoteDocumentService->quoteDocumentEnabled(quoteTypeCode::Life);
-        $quoteDocuments = $this->quoteDocumentService->getQuoteDocuments(quoteTypeCode::Life, $quote->id);
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
 
         return inertia('LifeQuote/Show', [
-            'quoteDocuments' => array_values($quoteDocuments->toArray()),
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
             'entities' => $entities,
@@ -197,10 +195,6 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
-            'permissions' => [
-                'canNotEditPayments' => auth()->user()->cannot(PermissionsEnum::PaymentsEdit),
-                'isQuoteDocumentEnabled' => $isQuoteDocumentEnabled,
-            ],
         ]);
     }
 

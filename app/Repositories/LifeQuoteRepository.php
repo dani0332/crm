@@ -88,6 +88,11 @@ class LifeQuoteRepository extends BaseRepository
             'paymentStatus', 'customer.additionalContactInfo', 'quoteRequestEntityMapping' => function ($entityMapping) {
                 $entityMapping->with('entity');
             }])
+            ->with([
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])
             ->select([
                 'life_quote_request.*',
                 \DB::raw('IF(EXISTS (
