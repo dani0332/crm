@@ -159,7 +159,7 @@ class MembersDetailController extends Controller
                 unset($healthMemberDetails['quote_request_id']);
             }
 
-            $healthMemberDetail = HealthMemberDetail::with(['relation', 'nationality'])->findOrFail($id);
+            $healthMemberDetail = HealthMemberDetail::findOrFail($id);
             $healthMemberDetail->update($healthMemberDetails);
 
             $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
@@ -171,6 +171,8 @@ class MembersDetailController extends Controller
             }
 
             HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update($heathLeadData);
+
+            $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
 
             return response()->json(['status' => true, 'message' => 'Updated', 'data' => $healthMemberDetail]);
 
@@ -186,11 +188,13 @@ class MembersDetailController extends Controller
                 unset($travelMemberDetails['quote_request_id']);
             }
 
-            $travelMemberDetail = TravelMemberDetail::with(['relation', 'nationality'])->findOrFail($id);
+            $travelMemberDetail = TravelMemberDetail::findOrFail($id);
             $travelMemberDetail->update($travelMemberDetails);
 
             TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
             TravelQuote::where('primary_member_id', $id)->update(['dob' => $travelMemberDetails['dob']]);
+
+            $travelMemberDetail = $travelMemberDetail->load(['relation', 'nationality']);
 
             return response()->json(['status' => true, 'message' => 'Updated', 'data' => $travelMemberDetail]);
 
@@ -213,7 +217,7 @@ class MembersDetailController extends Controller
                 ]);
             }
 
-            $memberDetail = QuoteMemberDetail::with(['relation', 'nationality'])->findOrFail($id);
+            $memberDetail = QuoteMemberDetail::findOrFail($id);
             $memberDetail->update(array_merge($quoteMemberDetails,
                 [
                     'quote_type_id' => $quoteTypeId,
@@ -221,6 +225,8 @@ class MembersDetailController extends Controller
                 ]));
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
+
+            $memberDetail = $memberDetail->load(['relation', 'nationality']);
 
             return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
 
