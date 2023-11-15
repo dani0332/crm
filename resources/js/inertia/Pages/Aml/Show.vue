@@ -33,6 +33,7 @@ const submitDecisionLoading = ref(false);
 const decisionModalHeading = ref('');
 const amlDecision = ref('');
 const decisionSelected = ref({});
+const decisionResultIds = ref({});
 const passingDecisions = [
   props.amlDecisionStatusCode.FALSE_POSITIVE,
   props.amlDecisionStatusCode.TRUE_MATCH_ACCEPT_RISK,
@@ -57,19 +58,9 @@ function submitDecision(decision) {
   let quoteStatusCode = passingDecisions.includes(decision)
     ? props.quoteStatusCode.AMLScreeningCleared
     : props.quoteStatusCode.AMLScreeningFailed;
-  let url = `${props.aml.quote_type_id}/details/${
-    props.aml.quote_request_id
-  }/quoteStatusUpdate/${quoteStatusCode}?
-        notes=${decisionNotes.value}&aml_id=${
-          props.aml.id
-        }&aml_decision=${decision}&decisonsForUpdatePortal=[${JSON.stringify(
-          decisionSelected.value,
-        )}]&result_id=${
-          JSON.parse(props.aml.results)[0].ResultID
-        }&match_states=${JSON.stringify(
-          JSON.parse(props.aml.results)[0].RecordDetails.RecordState
-            .MatchStates,
-        )}`;
+  let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
+    /quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&aml_id=${props.aml.id}&aml_decision=${decision}
+    &decisonsForUpdatePortal=[${JSON.stringify(decisionSelected.value)}]&result_id=${JSON.parse(props.aml.results)[0].ResultID}`;
 
   axios
     .get(url)
@@ -102,10 +93,12 @@ const submitAMLDecision = decision => {
 };
 
 const setSelectedOption = (e, item) => {
-  decisionSelected.value[item.EntityDetails.IDs[0].Number] = e;
+
+  decisionSelected.value[item.ID] = e;
   let index = amlResults.value.findIndex(
     x => x.EntityUniqueID == item.EntityUniqueID,
   );
+
   if (index != -1) amlResults.value[index].decision = e;
 
   if(e === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.ComplianceSuperUser)) {
