@@ -19,6 +19,7 @@ use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
@@ -272,7 +273,11 @@ class AmtController extends Controller
         $issuancePlace = $this->lookupService->getIssuancePlaces();
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
 
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
+
         return inertia('GroupMedicalQuote/Show', [
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
             'entities' => $entities,
