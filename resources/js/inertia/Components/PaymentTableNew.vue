@@ -65,6 +65,8 @@ const checkDetailModels = ref([]);
 const readOnlyPayments = ref([]);
 const splitPaymentRecord = ref([]);
 const filesTest = ref([]);
+const isCreditPaymentInvalid = ref([]);
+const isCreditPaymentInvalidError = ref([]);
 const currentFileIndex = ref(0);
 const zoomLevel = ref(1);
 const isGalleryModelOpen = ref(false);
@@ -750,6 +752,8 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   isCreditApprovalView.value = false;
   isCreditCardView.value = false;
   approveErrorMessage.value = "";
+  isCreditPaymentInvalid.value = [];
+  isCreditPaymentInvalidError.value = [];
 
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
@@ -888,8 +892,28 @@ const validateViewPayment = (isValid) => {
   return false;
 }
 
-const validateCapturePayment = (isValid) => { 
-  if(isApproveConfirm.value === false && isValid) {
+const validateCapturePayment = (isValid) => {
+  if(isApproveConfirm.value === false && isValid) {    
+    let noError = true;
+    isCreditPaymentInvalid.value = [];
+    if (isCreditCardView.value === true) {
+      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+        //isCreditPaymentInvalid.value[i] = false;
+        console.log('INNN11'+JSON.stringify(collectionAmountModels.value[i]));
+        if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
+          isCreditPaymentInvalid.value[i] = true;
+          isCreditPaymentInvalidError.value[i] = "This field is required";
+        }       
+        
+        if (parseFloat(collectionAmountModels.value[i]) > parseFloat(splitAmountModels.value[i])) {          
+          isCreditPaymentInvalid.value[i] = true;
+          isCreditPaymentInvalidError.value[i] = "Amount is grater than payable";                
+        }
+      }      
+    }        
+    if (isCreditPaymentInvalid.value.includes(true)) {
+      return true;
+    }
     isApproveConfirm.value = true;
     return true;
   }
@@ -898,9 +922,6 @@ const validateCapturePayment = (isValid) => {
 
 const validateApprovedDocument = () => {  
   if (paymentMethodsForm.collection_type==='insurer') {  
-console.log('tt'+splitPaymentNo.value);
-console.log('docccazhar1='+JSON.stringify(approvedDocumentModel.value[splitPaymentNo.value]));
-
     if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
     || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
         isApprovedDocumentNotUploaded.value = true;
@@ -914,15 +935,17 @@ console.log('docccazhar1='+JSON.stringify(approvedDocumentModel.value[splitPayme
 
 const addPayment = isValid => {  
   
-  if(isCreditApprovalView.value === true){
+  if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;
     if (validateApprovedDocument()) return;
   } else {
+    console.log('INNN22');
     if (validatePaymentOption()) return;  
   }  
-  if (!isValid) return;  
+  if (!isValid) return; 
+  
 
   //define main payment method
   let mainPaymentMethod = 'CR';
@@ -2167,8 +2190,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </div>            
 
           </template>
-            <template v-else>
-              {{ console.log('azhar6969='+parseInt(paymentMethodsForm.payment_no))}}
+            <template v-else>              
               <div v-for="count in parseInt(paymentMethodsForm.payment_no)" :key="count" class="mb-2">
                 <div class="flex w-full custombreak" >
                   <div class="w-1/6 px-2 text-center">{{ count }}</div>
@@ -2231,8 +2253,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       <x-input
                         v-model="collectionAmountModels[count]"
                         class="w-full"
-                        :rules="[rules.isRequired]"              
+                        :class="{'custom-select-error': isCreditPaymentInvalid[count]}"                                           
                       />
+                      <p v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">{{  isCreditPaymentInvalidError[count] }}</p>
                     </template> 
                   </div>
                   <div class="w-1/5 px-2" v-else>
@@ -2337,7 +2360,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <x-field label="CUSTOM REASON" required>
                 <x-input
                   class="w-full"
-                  v-model="paymentMethodsForm.decline_custom_reason"
+                  v-model="paymentMethodsForm.declined_custom_reason"
                   :rules="[rules.isRequired]"         
                 />
               </x-field>
@@ -2465,7 +2488,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   Cancel
                 </x-button>
               </div>            
-              <div v-if="!isApproveClicked && !isDeclineClicked" class="mr-4">
+              <div v-if="(!isApproveClicked && !isDeclineClicked) || (isCreditApprovalView && !isDeclineClicked)" class="mr-4">
                 <x-button size="sm"  @click="handleDeclinedChange">
                   Decline
                 </x-button>
@@ -2479,16 +2502,18 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked">
                   Approve
                 </x-button>
-                <x-button v-if="isApproveClicked" class="mr-2" size="sm" color="#ff5e00" type="submit">
+                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2" size="sm" color="#ff5e00" type="submit">
+                  <template v-if="isCreditApprovalView && isCreditCardView">
+                  Capture
+                  </template>
+                  <template v-else>
                   Approve
+                  </template>
                 </x-button>
               </div>
             </div>
           </template>        
       </template>
-
-
-
       <template v-else>        
         <div class="w-full md:col-span-4 flex justify-end"> 
             <div v-if="paymentMethodsForm.status == 'edit'" class="mr-4">

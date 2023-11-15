@@ -17,6 +17,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use App\Models\PaymentStatusLog;
+use App\Enums\QuoteStatusEnum;
 
 class PaymentSplitsRepository
 {
@@ -217,32 +218,49 @@ class PaymentSplitsRepository
 
     public function updateSplitPaymentsApprove($request)
     {
+        //dd($request->all());
+
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
         }
 
-        $totalCapturedPayment = 0;
-        if ( $request->is_capture ) { //update collected amount in childs            
-            foreach ($request->collection_amount as $key => $splitAmount) {
-                $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
-                if ($paymentSplit) {
-                    $paymentSplit->collection_amount = $splitAmount;
-                    $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
-                    $paymentSplit->save();
+        if ($request->is_declined) {
+            $firstPayment = $quoteModel->payments()->first();
+            $firstPayment->update([
+                'decline_reason_id' => $request->declined_reason,
+                'decline_custom_reason' => $request->declined_custom_reason,
+                'payment_status_id' => PaymentStatusEnum::DECLINED,
+                'updated_by' => Auth::user()->id,            
+            ]);
+            $successMessage = 'Transaction declined';
+        } else {
+            $totalCapturedPayment = 0;
+            if ( $request->is_capture ) { //update collected amount in childs            
+                foreach ($request->collection_amount as $key => $splitAmount) {
+                    $paymentSplit = PaymentSplits::where(['code' => $quoteModel->code, 'sr_no' => $key])->first();
+                    if ($paymentSplit) {
+                        $paymentSplit->collection_amount = $splitAmount;
+                        $paymentSplit->payment_status_id = PaymentStatusEnum::PAID;
+                        $paymentSplit->save();
+                    }
+                    $totalCapturedPayment += $splitAmount;
                 }
-                $totalCapturedPayment += $splitAmount;
             }
+            $firstPayment = $quoteModel->payments()->first();
+            $firstPayment->update([
+                'is_approved' => 1,
+                'captured_amount' => ($firstPayment->captured_amount + $totalCapturedPayment),
+                'payment_status_id' => PaymentStatusEnum::PAID,
+                'updated_by' => Auth::user()->id,            
+            ]);
+
+            $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
+            $quoteModel->save();
+            $successMessage = 'Transaction approved';
         }
-        $firstPayment = $quoteModel->payments()->first();
-        $firstPayment->update([
-            'is_approved' => 1,
-            'captured_amount' => ($firstPayment->captured_amount + $totalCapturedPayment),
-            'payment_status_id' => PaymentStatusEnum::PAID,
-            'updated_by' => Auth::user()->id,            
-        ]);       
-        
-        $successMessage = 'Transaction approved';
+
+       
         return $successMessage;
     }
 
@@ -357,7 +375,10 @@ class PaymentSplitsRepository
                     ['payment_status_id' => $splitPayment->payment_status_id]
                 );
             } else {
-                $totalPaidPayments = PaymentSplits::where('payment_status_id', PaymentStatusEnum::PAID)->count();
+                $totalPaidPayments = PaymentSplits::where([
+                    'payment_status_id'=>PaymentStatusEnum::PAID,
+                    'code'=>$splitPayment->code    
+                ])->count();
                 if ($totalPaidPayments == $payment->total_payments) {
                     $payment->update(
                         ['payment_status_id' => PaymentStatusEnum::PAID]
