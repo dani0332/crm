@@ -1139,7 +1139,7 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
@@ -1566,7 +1566,7 @@ class HealthQuoteService extends BaseService
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-            //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
         }
     }
