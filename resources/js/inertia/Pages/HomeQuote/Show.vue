@@ -1,6 +1,8 @@
 <script setup>
 import MemberDetails from "../../Components/MemberDetails.vue";
 import KycForm from "@/inertia/Components/KycForm.vue";
+import LazyDocumentUploader from "@/inertia/Pages/TravelQuote/Partials/DocumentUploader.vue";
+import QuoteDocuments from "@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue";
 
 defineProps({
   quote: Object,
@@ -31,6 +33,9 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  quoteDocuments: Object,
+  documentTypes: Object,
+  storageUrl: String,
 });
 
 const page = usePage();
@@ -1015,6 +1020,13 @@ const linkEntity = () => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+    />
+
+    <QuoteDocuments
+        :document-types="documentTypes"
+        :quote-documents="quote.documents || []"
+        :storageUrl="storageUrl"
+        :quote="quote"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

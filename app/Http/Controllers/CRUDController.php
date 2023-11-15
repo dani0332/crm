@@ -39,6 +39,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
+use App\Models\HealthQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
@@ -776,6 +777,7 @@ class CRUDController extends Controller
             }
 
             return inertia('HomeQuote/Show', [
+                'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
                 'entities' => $entities,
@@ -808,7 +810,6 @@ class CRUDController extends Controller
                     'create_payments' => auth()->user()->can(PermissionsEnum::PaymentsCreate) && $paymentEntityModel->plan && ! auth()->user()->hasRole(RolesEnum::PA),
                     'isPA' => auth()->user()->hasRole(RolesEnum::PA),
                     'isAdvisor' => auth()->user()->hasRole(RolesEnum::EBPAdvisor) || auth()->user()->hasRole(RolesEnum::HealthAdvisor) || auth()->user()->hasRole(RolesEnum::RMAdvisor),
-
                 ],
                 'quoteStatusEnum' => QuoteStatusEnum::asArray(),
                 'modelType' => $quoteType,

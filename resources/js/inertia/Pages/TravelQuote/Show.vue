@@ -1344,6 +1344,12 @@ onMounted(() => {
                           />
                       </dd>
                   </div>
+
+                  <div class="grid sm:grid-cols-2">
+                      <dt class="font-medium">Risk Category</dt>
+                      <dd>{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
+                  </div>
+
               </dl>
               <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
@@ -1936,16 +1942,6 @@ onMounted(() => {
             @click="sendPolicyToClient"
           >
             Send Policy
-          </x-button>
-          <x-button
-            size="sm"
-            color="green"
-            v-if="
-              enums.paymentStatusEnum.AUTHORISED == quote.payment_status_id &&
-              permissions.notProductionApproval
-            "
-          >
-            Copy Upload Link
           </x-button>
         </div>
       </div>
