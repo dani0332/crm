@@ -1,5 +1,6 @@
 <script setup>
 import KycForm from "@/inertia/Components/KycForm.vue";
+import QuoteDocuments from "@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue";
 
 defineProps({
   quote: Object,
@@ -17,6 +18,8 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  documentTypes: Object,
+  storageUrl: String,
 });
 
 const page = usePage();
@@ -798,6 +801,13 @@ const linkEntity = () => {
         :quote="quote"
         :canAddBatchNumber="canAddBatchNumber"
       />
+
+    <QuoteDocuments
+        :document-types="documentTypes"
+        :quote-documents="quote.documents || []"
+        :storageUrl="storageUrl"
+        :quote="quote"
+    />
 
       <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
         <div>
