@@ -6,7 +6,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Jobs\BridgerDecisionUpdateJob;
 use App\Models\AML;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -275,7 +274,7 @@ class AMLService
         foreach ($decisionValues as $matchKey => $matchValue) {
             $matchResultsForUpdate[] = [
                 'MatchID' => $matchKey,
-                'Type' => $matchValue
+                'Type' => $matchValue,
             ];
         }
 
