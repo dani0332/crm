@@ -90,6 +90,7 @@ const memberForm = useForm({
   dob: null,
   relation_code: null,
   nationality_id: null,
+  is_payer: props.is_payer ?? false,
 });
 
 function onMemberSubmit(isValid) {
@@ -153,7 +154,7 @@ function onMemberSubmit(isValid) {
         </x-button>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-x-6 gap-y-4">
+      <div class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
         <x-field label="Member Name" required>
           <x-input
             v-model="memberForm.first_name"
@@ -189,6 +190,12 @@ function onMemberSubmit(isValid) {
             :rules="[isRequired]"
           />
         </x-field>
+        <x-checkbox
+          v-model="memberForm.is_payer"
+          label="Is This Member a Payer?"
+          color="primary"
+          class="mb-0 mt-6"
+        />
       </div>
     </div>
     <x-divider v-if="addMember" class="mb-3 mt-1" />
@@ -252,9 +259,9 @@ function onMemberSubmit(isValid) {
         </x-button>
       </div>
     </template>
-    <template #item-is_private="{ is_private }">
+    <template #item-is_payer="item">
       <div class="flex gap-2">
-        <x-checkbox :value="is_private" color="primary" />
+        <x-checkbox :value="item.is_payer" color="primary" />
       </div>
     </template>
   </DataTable>

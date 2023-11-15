@@ -1,7 +1,6 @@
 <script setup>
 import IndividualModel from './Partials/IndividualModel.vue';
 import EntityModel from './Partials/EntityModel.vue';
-import PayerForm from './Partials/ThirdPartyPayerForm.vue';
 import { onMounted, ref } from 'vue';
 
 const props = defineProps({
@@ -37,7 +36,7 @@ const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
-const showPayerForm = ref(false);
+
 const loader = reactive({
   table: false,
 });
@@ -678,9 +677,6 @@ onMounted(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Payer Details</h3>
-        <x-button size="sm" color="primary" type="submit" :loading="isLoading">
-          Add Third party Payer
-        </x-button>
       </div>
       <x-divider class="mb-4 mt-1" />
       <DataTable
@@ -714,10 +710,7 @@ onMounted(() => {
         </template>
       </DataTable>
     </div>
-    <PayerForm
-      :modelValue="showPayerForm"
-      @update:modelValue="showPayerForm = false"
-    />
+
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"
