@@ -61,6 +61,10 @@ const memberDetailsTable = reactive({
       text: 'Action',
       value: 'action',
     },
+    {
+      text: 'Is this member is private',
+      value: 'is_private',
+    },
   ],
 });
 function onEditMember(data) {
@@ -246,6 +250,11 @@ function onMemberSubmit(isValid) {
         >
           Edit
         </x-button>
+      </div>
+    </template>
+    <template #item-is_private="{ is_private }">
+      <div class="flex gap-2">
+        <x-checkbox :value="is_private" color="primary" />
       </div>
     </template>
   </DataTable>
