@@ -17,7 +17,7 @@ class LookupSeeder extends Seeder
      */
     public function run()
     {
-        if (!$exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_MATERIALS)->first()) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_MATERIALS)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_MATERIALS, 'code' => 'matFrp', 'text' => 'FRP', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_MATERIALS, 'code' => 'matGrp', 'text' => 'GRP', 'created_at' => now(), 'updated_at' => now()],
@@ -25,21 +25,21 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-        if (!$exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_USES)->first()) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::JETSKI_USES)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_USES, 'code' => 'commercialUse', 'text' => 'Commercial use (Rental business)', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::JETSKI->id(), 'key' => LookupsEnum::JETSKI_USES, 'code' => 'privateUse', 'text' => 'Private use', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 
-        if (!$exists = DB::table('lookups')->where('key', LookupsEnum::PET_TYPES)->first()) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::PET_TYPES)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_TYPES, 'code' => 'dog', 'text' => 'Dog', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_TYPES, 'code' => 'cat', 'text' => 'Cat', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 
-        if (!$exists = DB::table('lookups')->where('key', LookupsEnum::PET_AGES)->first()) {
+        if (! $exists = DB::table('lookups')->where('key', LookupsEnum::PET_AGES)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => 'lessThan1Year', 'text' => 'Less than 1 year old', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypes::PET->id(), 'key' => LookupsEnum::PET_AGES, 'code' => '1yearOld', 'text' => '1 year old', 'created_at' => now(), 'updated_at' => now()],
@@ -55,7 +55,7 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('lookups')->where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->first()) {
+        if (! DB::table('lookups')->where('key', LookupsEnum::CAR_LOST_REJECT_REASONS)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectInvalidProof', 'text' => 'Incorrect proof attached', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_REJECT_REASONS, 'code' => 'rejectMissingContact', 'text' => 'Proof attached does not show the contact information', 'created_at' => now(), 'updated_at' => now()],
@@ -65,7 +65,7 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('lookups')->where('key', LookupsEnum::CAR_LOST_APPROVE_REASONS)->first()) {
+        if (! DB::table('lookups')->where('key', LookupsEnum::CAR_LOST_APPROVE_REASONS)->first()) {
             DB::table('lookups')->insert([
                 ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'confirmedSold', 'text' => 'Confirmed Sold', 'created_at' => now(), 'updated_at' => now()],
                 ['quote_type_id' => QuoteTypeId::Car, 'key' => LookupsEnum::CAR_LOST_APPROVE_REASONS, 'code' => 'approveUnreachable', 'text' => 'Client is unreachable on call and email', 'created_at' => now(), 'updated_at' => now()],
@@ -76,14 +76,12 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-        if (!DB::table('lookups')->where('key', LookupsEnum::TRANSACTION_TYPE)->first()) {
+        if (! DB::table('lookups')->where('key', LookupsEnum::TRANSACTION_TYPE)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'newBusiness', 'text' => 'New Business', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'extCustomerRenewal', 'text' => "Existing Customer's Renewal", 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'extCustomerNewBusiness', 'text' => "Existing Customer's New Business", 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'endorsement', 'text' => 'Endorsement', 'created_at' => now(), 'updated_at' => now()],
-
-
 
             ]);
         }
