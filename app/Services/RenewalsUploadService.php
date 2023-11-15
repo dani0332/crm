@@ -9,6 +9,7 @@ use App\Enums\carTypeInsuranceCode;
 use App\Enums\FetchPlansStatuses;
 use App\Enums\GenericRequestEnum;
 use App\Enums\InsuranceProvidersEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\ProcessStatusCode;
 use App\Enums\quoteStatusCode;
@@ -59,6 +60,7 @@ use App\Models\TravelQuote;
 use App\Models\UAELicenseHeldFor;
 use App\Models\User;
 use App\Repositories\CarQuoteRepository;
+use App\Repositories\LookupRepository;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DateTime;
@@ -778,6 +780,10 @@ class RenewalsUploadService
                 'previous_advisor_id' => $previousAdvisorId,
             ];
 
+            $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPE)->where('code', 'endorsement')->first();
+            if ($lookup) {
+                $quoteData['transaction_type_id'] = $lookup->id;
+            }
             if ($quoteType->code == quoteTypeCode::Car) {
                 $model = null;
                 $make = CarMake::where('text', $data['make'])->first();
