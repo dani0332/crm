@@ -76,12 +76,12 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-        if (! DB::table('lookups')->where('key', LookupsEnum::TRANSACTION_TYPE)->first()) {
+        if (! DB::table('lookups')->where('key', LookupsEnum::TRANSACTION_TYPES)->first()) {
             DB::table('lookups')->insert([
-                ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'newBusiness', 'text' => 'New Business', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'extCustomerRenewal', 'text' => "Existing Customer's Renewal", 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'extCustomerNewBusiness', 'text' => "Existing Customer's New Business", 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::TRANSACTION_TYPE, 'code' => 'endorsement', 'text' => 'Endorsement', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => 'newBusiness', 'text' => 'New Business', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => 'extCustomerRenewal', 'text' => "Existing Customer's Renewal", 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => 'extCustomerNewBusiness', 'text' => "Existing Customer's New Business", 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::TRANSACTION_TYPES, 'code' => 'endorsement', 'text' => 'Endorsement', 'created_at' => now(), 'updated_at' => now()],
 
             ]);
         }

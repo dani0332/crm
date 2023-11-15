@@ -780,7 +780,7 @@ class RenewalsUploadService
                 'previous_advisor_id' => $previousAdvisorId,
             ];
 
-            $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPE)->where('code', 'extCustomerRenewal')->first();
+            $lookup = LookupRepository::where('key', LookupsEnum::TRANSACTION_TYPES)->where('code', 'extCustomerRenewal')->first();
             if ($lookup) {
                 $quoteData['transaction_type_id'] = $lookup->id;
             }
