@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Models\ApplicationStorage;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class addDubaiNowLeadSourceExemptionInAppStorage extends Seeder
