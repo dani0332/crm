@@ -59,7 +59,7 @@ const memberDetailsTable = reactive({
       value: 'relation',
     },
     {
-      text: 'Is this member is private',
+      text: 'Is this member is payer?',
       value: 'is_payer',
     },
     {
@@ -110,13 +110,17 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
-        console.log(res.data);
+        addMember.value = false;
         if (res.status) {
           let { data } = res.data;
 
           let index = members.value.findIndex(x => x.id == data.id);
           if (index != -1) {
-            members.value[index] = { ...data };
+            members.value[index] = {
+              ...data,
+              nationality: data.nationality,
+              relation: data.relation,
+            };
           }
         }
       })
@@ -137,7 +141,15 @@ function onMemberSubmit(isValid) {
         });
         memberForm.reset();
         addMember.value = false;
-        members.value.push({ ...res.data });
+        if (res.status) {
+          let { data } = res.data;
+
+          members.value.push({
+            ...data,
+            nationality: data.nationality,
+            relation: data.relation,
+          });
+        }
       })
       .catch(err => {
         notification.error({
@@ -165,7 +177,10 @@ function onMemberSubmit(isValid) {
         </x-button>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center">
+      <div
+        class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center"
+        v-if="addMember"
+      >
         <x-field label="Member Name" required>
           <x-input
             v-model="memberForm.first_name"

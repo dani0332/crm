@@ -94,9 +94,14 @@ function onMemberSubmit(isValid) {
         memberForm.reset();
         if (res.status) {
           let { data } = res.data;
+
           let index = members.value.findIndex(x => x.id == data.id);
           if (index != -1) {
-            members.value[index] = { ...data };
+            members.value[index] = {
+              ...data,
+              nationality: data.nationality,
+              relation: data.relation,
+            };
           }
         }
       })
@@ -120,7 +125,15 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
-        members.value.push({ ...res.data });
+        if (res.status) {
+          let { data } = res.data;
+
+          members.value.push({
+            ...data,
+            nationality: data.nationality,
+            relation: data.relation,
+          });
+        }
       })
       .catch(err => {
         notification.error({
