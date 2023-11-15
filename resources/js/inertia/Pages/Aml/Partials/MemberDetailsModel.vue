@@ -14,6 +14,7 @@ const { isRequired } = useRules();
 const isEmptyField = ref(false);
 const isLoading = ref(false);
 
+const members = ref(props.membersDetails);
 const notification = useToast();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
@@ -109,6 +110,7 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
+        members.value.push({ ...res.data });
       })
       .catch(err => {
         notification.error({
@@ -127,6 +129,7 @@ function onMemberSubmit(isValid) {
         });
         memberForm.reset();
         addMember.value = false;
+        members.value.push({ ...res.data });
       })
       .catch(err => {
         notification.error({
@@ -229,7 +232,7 @@ function onMemberSubmit(isValid) {
   <DataTable
     table-class-name="tablefixed compact"
     :headers="memberDetailsTable.columns"
-    :items="membersDetails || []"
+    :items="members || []"
     show-index
     border-cell
     hide-rows-per-page
@@ -259,9 +262,11 @@ function onMemberSubmit(isValid) {
         </x-button>
       </div>
     </template>
-    <template #item-is_payer="item">
+    <template #item-is_payer="{ is_payer }">
+      {{ is_payer ?? '-' }}
       <div class="flex gap-2">
-        <x-checkbox :value="item.is_payer" color="primary" />
+        <checkbox :checked="is_payer"></checkbox>
+        <!-- <x-checkbox :value="item.is_payer" color="primary" /> -->
       </div>
     </template>
   </DataTable>

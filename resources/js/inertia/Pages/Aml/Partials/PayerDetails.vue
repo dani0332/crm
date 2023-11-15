@@ -23,6 +23,8 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
+const members = ref(props.membersDetails);
+
 const addMember = ref(false);
 const editMemberDetails = ref(false);
 const addMemberToggle = (payload = false) => {
@@ -90,6 +92,7 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
+        members.value.push({ ...res.data });
       })
       .catch(err => {
         notification.error({
@@ -111,6 +114,7 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
+        members.value.push({ ...res.data });
       })
       .catch(err => {
         notification.error({
@@ -141,7 +145,7 @@ function onMemberSubmit(isValid) {
   <DataTable
     table-class-name="tablefixed compact mt-5"
     :headers="memberDetailsTable.columns"
-    :items="membersDetails || []"
+    :items="members || []"
     show-index
     border-cell
     hide-rows-per-page
@@ -186,7 +190,7 @@ function onMemberSubmit(isValid) {
             <x-input
               v-model="memberForm.first_name"
               :rules="[isRequired]"
-              placeholder="Customer ID"
+              placeholder="Payer Name"
               type="text"
               class="w-full"
             />
@@ -209,7 +213,9 @@ function onMemberSubmit(isValid) {
           </x-field>
         </div>
         <div class="flex justify-end">
-          <x-button type="submit" size="sm" color="orange"> Save </x-button>
+          <x-button type="submit" size="sm" color="orange" :loading="isLoading">
+            Save
+          </x-button>
         </div>
       </x-form>
     </template>

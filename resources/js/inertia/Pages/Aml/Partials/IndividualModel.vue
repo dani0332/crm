@@ -511,9 +511,16 @@ const updateDetails = () => {
 //   }
 // );
 
-const is_insured = computed(() => {
-  return props.membersDetails.some(x => x.is_payer) ?? false;
-});
+const is_insured = ref(false);
+
+watch(
+  props.membersDetails,
+  () => {
+    is_insured.value = !props.membersDetails.some(x => x.is_payer);
+  },
+  { immediate: true },
+);
+
 onMounted(() => {
   // paymentDetailsRef.value = props.quoteDetails.payments.map(payment => ({
   //     paymentCode : payment.code,
