@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests;
 
-use App\Enums\CustomerTypeEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateAMLCustomerDetailRequest extends FormRequest
@@ -22,7 +21,7 @@ class UpdateAMLCustomerDetailRequest extends FormRequest
      */
     public function rules(): array
     {
-       return [
+        return [
             'insured_first_name' => 'required',
             'insured_last_name' => 'required',
             'nationality_id' => 'required',
@@ -38,6 +37,6 @@ class UpdateAMLCustomerDetailRequest extends FormRequest
             'mode_of_delivery' => 'required',
             'employment_sector' => 'required',
             'customer_tenure' => 'required',
-       ];
+        ];
     }
 }
