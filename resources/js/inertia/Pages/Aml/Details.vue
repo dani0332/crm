@@ -674,7 +674,7 @@ onMounted(() => {
       </DataTable>
     </div>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Payer Details</h3>
       </div>
@@ -709,7 +709,7 @@ onMounted(() => {
           {{ paymentsRef.paid_by ? paymentsRef.paid_by : 'Third Party' }}
         </template>
       </DataTable>
-    </div>
+    </div> -->
 
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"

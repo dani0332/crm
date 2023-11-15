@@ -39,7 +39,6 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
-use App\Models\HealthQuote;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;

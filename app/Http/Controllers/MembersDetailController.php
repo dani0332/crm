@@ -39,15 +39,20 @@ class MembersDetailController extends Controller
             }
 
             $healthMemberCount = HealthMemberDetail::where('customer_id', $healthMemberDetails['customer_id'])->count();
-            HealthMemberDetail::create(array_merge($healthMemberDetails, [
+            $healthMemberDetail = HealthMemberDetail::create(array_merge($healthMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$healthMemberDetails['customer_id'].'-'.++$healthMemberCount,
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
             ]));
 
+            $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
+
             HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
+
+            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $healthMemberDetail]);
 
         } elseif (strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) &&
             (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
+
             $travelMemberDetails = $request->validated();
 
             if (! in_array('travel_quote_request_id', $request->validated())) {
@@ -58,12 +63,16 @@ class MembersDetailController extends Controller
             }
 
             $travelMemberCount = TravelMemberDetail::where('customer_id', $travelMemberDetails['customer_id'])->count();
-            TravelMemberDetail::create(array_merge($travelMemberDetails, [
+            $travelMemberDetail = TravelMemberDetail::create(array_merge($travelMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$travelMemberDetails['customer_id'].'-'.++$travelMemberCount,
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
             ]));
 
+            $travelMemberDetail = $travelMemberDetail->load(['relation', 'nationality']);
+
             TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
+
+            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $travelMemberDetail]);
 
         } else {
             $quoteMemberDetails = $request->validated();
@@ -96,13 +105,17 @@ class MembersDetailController extends Controller
                     CustomerTypeEnum::IndividualShort.'-'.$request->customer_id.'-'.(++$quoteMemberCount) :
                     CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount);
 
-                QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
+                $quoteMemberDetails = QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
                     'quote_type_id' => $quoteTypeId,
                     'code' => $quoteMemberCode,
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 ]);
+                $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
                 $quoteObject->updated_at = Carbon::now();
                 $quoteObject->save();
+
+                return response()->json(['status' => true, 'message' => 'Updated', 'data' => $quoteMemberDetails]);
+
             }
         }
 
@@ -146,7 +159,8 @@ class MembersDetailController extends Controller
                 unset($healthMemberDetails['quote_request_id']);
             }
 
-            HealthMemberDetail::findOrFail($id)->update($healthMemberDetails);
+            $healthMemberDetail = HealthMemberDetail::findOrFail($id);
+            $healthMemberDetail->update($healthMemberDetails);
 
             $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
             HealthQuote::where('primary_member_id', $id)->update($healthMemberData);
@@ -157,6 +171,10 @@ class MembersDetailController extends Controller
             }
 
             HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update($heathLeadData);
+
+            $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
+
+            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $healthMemberDetail]);
 
         } elseif (strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) &&
             (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
@@ -170,9 +188,15 @@ class MembersDetailController extends Controller
                 unset($travelMemberDetails['quote_request_id']);
             }
 
-            TravelMemberDetail::findOrFail($id)->update($travelMemberDetails);
+            $travelMemberDetail = TravelMemberDetail::findOrFail($id);
+            $travelMemberDetail->update($travelMemberDetails);
+
             TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
             TravelQuote::where('primary_member_id', $id)->update(['dob' => $travelMemberDetails['dob']]);
+
+            $travelMemberDetail = $travelMemberDetail->load(['relation', 'nationality']);
+
+            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $travelMemberDetail]);
 
         } else {
             $quoteMemberDetails = $request->validated();
@@ -193,13 +217,18 @@ class MembersDetailController extends Controller
                 ]);
             }
 
-            QuoteMemberDetail::findOrFail($id)->update(array_merge($quoteMemberDetails,
+            $memberDetail = QuoteMemberDetail::findOrFail($id);
+            $memberDetail->update(array_merge($quoteMemberDetails,
                 [
                     'quote_type_id' => $quoteTypeId,
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 ]));
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
+
+            $memberDetail = $memberDetail->load(['relation', 'nationality']);
+
+            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
 
         }
 

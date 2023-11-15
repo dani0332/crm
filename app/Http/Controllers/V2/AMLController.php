@@ -590,7 +590,7 @@ class AMLController extends Controller
     public function sendBridgerResponse(Request $request)
     {
         if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
-            \Log::info("Bridger Insight : Email Triggered to Compliance Super User");
+            \Log::info('Bridger Insight : Email Triggered to Compliance Super User');
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
                 $request['aml_quote_url'],
                 $request['quote_ref_id'],

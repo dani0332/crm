@@ -18,7 +18,7 @@ final class Kyc extends Enum
     const COUNTRY_NATIONALITY_FOUR_RATING = ['north korea', 'iran, islamic republic of'];
     const PAYMENT_MODE_TWO_RATING = ['CHQ'];
     const PAYMENT_MODE_THREE_RATING = ['CSH', 'third party payment'];
-    const MODE_OF_CONTACT_THREE_RATING = ['non_face_to_face', 'email', 'phone', 'phone_and_email','phoneandemail'];
+    const MODE_OF_CONTACT_THREE_RATING = ['non_face_to_face', 'email', 'phone', 'phone_and_email', 'phoneandemail'];
     const MODE_OF_DELIVERY_THREE_RATING = ['authorised third party', 'unknown', 'email'];
     const RESIDENT_STATUS_THREE_RATING = ['non resident'];
     const TENURE_TWO_RATING = ['2'];
