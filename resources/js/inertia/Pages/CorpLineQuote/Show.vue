@@ -1,5 +1,6 @@
 <script setup>
 import KycForm from "@/inertia/Components/KycForm.vue";
+import QuoteDocuments from "@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue";
 
 defineProps({
   quote: Object,
@@ -25,6 +26,8 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  documentTypes: Object,
+  storageUrl: String,
 });
 
 const page = usePage();
@@ -1016,6 +1019,13 @@ const linkEntity = () => {
         </x-button>
       </div>
     </div>
+
+    <QuoteDocuments
+        :document-types="documentTypes"
+        :quote-documents="page.props.quoteDocuments || []"
+        :storageUrl="storageUrl"
+        :quote="quote"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
