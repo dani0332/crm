@@ -14,6 +14,7 @@ const { isRequired } = useRules();
 const isEmptyField = ref(false);
 const isLoading = ref(false);
 
+const members = ref(props.membersDetails);
 const notification = useToast();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
@@ -58,12 +59,12 @@ const memberDetailsTable = reactive({
       value: 'relation',
     },
     {
-      text: 'Action',
-      value: 'action',
+      text: 'Is this member is private',
+      value: 'is_payer',
     },
     {
-      text: 'Is this member is private',
-      value: 'is_private',
+      text: 'Action',
+      value: 'action',
     },
   ],
 });
@@ -109,6 +110,15 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
+        console.log(res.data);
+        if (res.status) {
+          let { data } = res.data;
+
+          let index = members.value.findIndex(x => x.id == data.id);
+          if (index != -1) {
+            members.value[index] = { ...data };
+          }
+        }
       })
       .catch(err => {
         notification.error({
@@ -127,6 +137,7 @@ function onMemberSubmit(isValid) {
         });
         memberForm.reset();
         addMember.value = false;
+        members.value.push({ ...res.data });
       })
       .catch(err => {
         notification.error({
@@ -229,7 +240,7 @@ function onMemberSubmit(isValid) {
   <DataTable
     table-class-name="tablefixed compact"
     :headers="memberDetailsTable.columns"
-    :items="membersDetails || []"
+    :items="members || []"
     show-index
     border-cell
     hide-rows-per-page
@@ -259,9 +270,12 @@ function onMemberSubmit(isValid) {
         </x-button>
       </div>
     </template>
-    <template #item-is_payer="item">
+    <template #item-is_payer="{ is_payer }">
       <div class="flex gap-2">
-        <x-checkbox :value="item.is_payer" color="primary" />
+        <x-checkbox
+          :modelValue="is_payer == 0 ? false : true"
+          color="primary"
+        />
       </div>
     </template>
   </DataTable>
