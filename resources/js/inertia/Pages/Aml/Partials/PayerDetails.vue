@@ -23,7 +23,7 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
-const members = ref(props.membersDetails);
+const members = ref([...props.membersDetails]);
 
 const addMember = ref(false);
 const editMemberDetails = ref(false);
