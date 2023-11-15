@@ -25,7 +25,7 @@ class MemberDetailRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'dob' => 'required',
+            'dob' => 'sometimes',
             'nationality_id' => 'nullable',
             'first_name' => 'nullable',
             'relation_code' => 'nullable',

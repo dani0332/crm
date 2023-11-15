@@ -41,6 +41,7 @@ class MembersDetailController extends Controller
             $healthMemberCount = HealthMemberDetail::where('customer_id', $healthMemberDetails['customer_id'])->count();
             HealthMemberDetail::create(array_merge($healthMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$healthMemberDetails['customer_id'].'-'.++$healthMemberCount,
+                'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
             ]));
 
             HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
@@ -59,6 +60,7 @@ class MembersDetailController extends Controller
             $travelMemberCount = TravelMemberDetail::where('customer_id', $travelMemberDetails['customer_id'])->count();
             TravelMemberDetail::create(array_merge($travelMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$travelMemberDetails['customer_id'].'-'.++$travelMemberCount,
+                'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
             ]));
 
             TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
@@ -97,6 +99,7 @@ class MembersDetailController extends Controller
                 QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
                     'quote_type_id' => $quoteTypeId,
                     'code' => $quoteMemberCode,
+                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 ]);
                 $quoteObject->updated_at = Carbon::now();
                 $quoteObject->save();
@@ -138,6 +141,7 @@ class MembersDetailController extends Controller
             if (! in_array('health_quote_request_id', $request->validated())) {
                 $healthMemberDetails = array_merge([
                     'health_quote_request_id' => $request->quote_request_id,
+                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 ], $healthMemberDetails);
                 unset($healthMemberDetails['quote_request_id']);
             }
@@ -161,6 +165,7 @@ class MembersDetailController extends Controller
             if (! in_array('travel_quote_request_id', $request->validated())) {
                 $travelMemberDetails = array_merge([
                     'travel_quote_request_id' => $request->quote_request_id,
+                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 ], $travelMemberDetails);
                 unset($travelMemberDetails['quote_request_id']);
             }
@@ -188,7 +193,11 @@ class MembersDetailController extends Controller
                 ]);
             }
 
-            QuoteMemberDetail::findOrFail($id)->update(array_merge($quoteMemberDetails, ['quote_type_id' => $quoteTypeId]));
+            QuoteMemberDetail::findOrFail($id)->update(array_merge($quoteMemberDetails,
+                [
+                    'quote_type_id' => $quoteTypeId,
+                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
+                ]));
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
