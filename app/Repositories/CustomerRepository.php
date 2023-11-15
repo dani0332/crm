@@ -312,12 +312,14 @@ class CustomerRepository extends BaseRepository
         return $_return;
     }
 
-    public function fetchUpdateIndividualDetail($customerId, $data)
+    public function fetchUpdateCustomerDetails($customerId, $data)
     {
-        $customer = Customer::with('nationality')->findOrFail($customerId);
-        $customer->update($data->only('insured_first_name', 'insured_last_name', 'nationality_id', 'dob'));
+        info('before updating customer details');
 
-        $customer->detail()->update($data->only([
+        $customer = Customer::with('nationality')->findOrFail($customerId);
+        $customer->update($data->only(['insured_first_name', 'insured_last_name', 'nationality_id', 'dob']));
+
+        $customer->detail()->updateOrCreate(['customer_id' => $customerId], $data->only([
             'place_of_birth',
             'country_of_residence',
             'residential_address',
@@ -332,6 +334,8 @@ class CustomerRepository extends BaseRepository
         ]));
 
         $customer->refresh();
+
+        info('customer detail updated');
 
         return $customer;
     }

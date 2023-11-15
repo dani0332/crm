@@ -251,7 +251,7 @@ class BridgerInsightService
             ],
             'ResultID' => $resultId,
             'State' => [
-                'MatchStates' => $decisions->toArray(),
+                'MatchStates' => $decisions,
                 'Note' => $notes,
             ],
         ];
