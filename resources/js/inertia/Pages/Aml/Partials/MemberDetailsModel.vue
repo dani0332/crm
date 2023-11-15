@@ -59,12 +59,12 @@ const memberDetailsTable = reactive({
       value: 'relation',
     },
     {
-      text: 'Action',
-      value: 'action',
+      text: 'Is this member is private',
+      value: 'is_payer',
     },
     {
-      text: 'Is this member is private',
-      value: 'is_private',
+      text: 'Action',
+      value: 'action',
     },
   ],
 });
@@ -110,7 +110,15 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
-        members.value.push({ ...res.data });
+        console.log(res.data);
+        if (res.status) {
+          let { data } = res.data;
+
+          let index = members.value.findIndex(x => x.id == data.id);
+          if (index != -1) {
+            members.value[index] = { ...data };
+          }
+        }
       })
       .catch(err => {
         notification.error({
@@ -263,10 +271,11 @@ function onMemberSubmit(isValid) {
       </div>
     </template>
     <template #item-is_payer="{ is_payer }">
-      {{ is_payer ?? '-' }}
       <div class="flex gap-2">
-        <checkbox :checked="is_payer"></checkbox>
-        <!-- <x-checkbox :value="item.is_payer" color="primary" /> -->
+        <x-checkbox
+          :modelValue="is_payer == 0 ? false : true"
+          color="primary"
+        />
       </div>
     </template>
   </DataTable>

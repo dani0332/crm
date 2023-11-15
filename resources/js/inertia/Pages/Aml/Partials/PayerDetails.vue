@@ -92,7 +92,13 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
         memberForm.reset();
-        members.value.push({ ...res.data });
+        if (res.status) {
+          let { data } = res.data;
+          let index = members.value.findIndex(x => x.id == data.id);
+          if (index != -1) {
+            members.value[index] = { ...data };
+          }
+        }
       })
       .catch(err => {
         notification.error({

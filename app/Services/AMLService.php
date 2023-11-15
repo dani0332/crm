@@ -185,14 +185,15 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
+        $complianceRole = $forComplianceSuperUser ? RolesEnum::ComplianceSuperUser : RolesEnum::COMPLIANCE;
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', [RolesEnum::COMPLIANCE])->get();
+            ->whereIn('roles.name', [$complianceRole])->get();
 
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
@@ -269,29 +270,17 @@ class AMLService
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
-        $decisionValues = [];
-        foreach (json_decode($request->decisonsForUpdatePortal) as $descision) {
-            array_push($decisionValues, array_values((array) $descision)[0]);
+        $matchResultsForUpdate = [];
+        $decisionValues = (array) json_decode($request->decisonsForUpdatePortal)[0] ?? [];
+        foreach ($decisionValues as $matchKey => $matchValue) {
+            $matchResultsForUpdate[] = [
+                'MatchID' => $matchKey,
+                'Type' => $matchValue
+            ];
         }
 
-        $index = 0;
-        $matchesData = collect(json_decode($request->match_states));
-        foreach ($matchesData as $match) {
-            $match->Type = $decisionValues[$index];
-            $index++;
-        }
+        $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchResultsForUpdate, $request->notes);
 
-        $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchesData, $request->notes);
-
-        // $amlDescions = json_decode($request->decisonsForUpdatePortal);
-
-        // foreach ($amlDescions as $resultId => $amlDescion) {
-        //     $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $amlDescion);
-        //     // BridgerDecisionUpdateJob::dispatch(
-        //     //     $bridgerAPIToken,
-        //     //     $resultId,
-        //     //     $amlDescion)
-        //     //     ->delay(now()->addSeconds(5));
-        // }
+        return true;
     }
 }

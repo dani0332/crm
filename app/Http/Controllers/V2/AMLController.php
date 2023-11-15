@@ -320,12 +320,14 @@ class AMLController extends Controller
     public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
     {
         $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
+
         return response()->json(['success' => true]);
     }
 
     public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
     {
         $entity = EntityRepository::updateEntityDetail($request->safe());
+
         return response()->json(['success' => true]);
     }
 
@@ -583,5 +585,25 @@ class AMLController extends Controller
         )->where('id', $request->entity_id)->first();
 
         return response()->json(['status' => true, 'response' => $entity, 'message' => 'Entity Linked Successfully']);
+    }
+
+    public function sendBridgerResponse(Request $request)
+    {
+        if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
+            \Log::info("Bridger Insight : Email Triggered to Compliance Super User");
+            AMLService::sendAMLMatchedEmailtoComplianceTeam(
+                $request['aml_quote_url'],
+                $request['quote_ref_id'],
+                json_encode($request['bridger_response']),
+                $request['customer_entity_name'],
+                $request['quote_type_text'],
+                auth()->user()->email,
+                true
+            );
+
+            return response()->json(['message' => 'Email Triggered to Compliance Super User']);
+        }
+
+        return true;
     }
 }

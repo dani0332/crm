@@ -124,6 +124,7 @@ class HealthQuoteService extends BaseService
             'payment_status.text as payment_status_text',
             'hqr.price_starting_from',
             'hqr.kyc_decision',
+            'cd.risk_score',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -149,7 +150,7 @@ class HealthQuoteService extends BaseService
             WHEN hqr.assignment_type = 4 THEN "Manual ReAssigned" ELSE "" END) as assignment_type'),
             'ihp.code as plan_provider_code',
             'ihp.code as plan_provider_code',
-            'hqr.health_plan_co_payment_id',
+            'hqr.health_plan_co_payment_id'
         )
             ->leftJoin('marital_status as ms', 'ms.id', '=', 'hqr.marital_status_id')
             ->leftJoin('health_quote_request_detail as hqrd', 'hqrd.health_quote_request_id', '=', 'hqr.id')
@@ -169,6 +170,7 @@ class HealthQuoteService extends BaseService
             ->leftJoin('insurance_provider as ins_provider', 'ins_provider.id', '=', 'hqr.currently_insured_with_id')
             ->leftjoin('payment_status', 'hqr.payment_status_id', 'payment_status.id')
             ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
+            ->leftJoin('customer_details as cd', 'hqr.customer_id', 'cd.customer_id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Health));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
@@ -875,6 +877,7 @@ class HealthQuoteService extends BaseService
 
     public function getQuotePlans($id)
     {
+
         $quoteUuId = HealthQuote::where('uuid', '=', $id)->value('uuid');
         $plansApiEndPoint = config('constants.KEN_API_ENDPOINT').'/get-health-quote-plans';
         $plansApiToken = config('constants.KEN_API_TOKEN');
@@ -1139,7 +1142,7 @@ class HealthQuoteService extends BaseService
                 ->addJob(new GetQuotePlansJob($lead))
                 ->then(function () use ($lead, $isReassignment, $previousAdvisorId) {
                     if (in_array($lead->health_team_type, [HealthTeamType::EBP, HealthTeamType::RM_NB, HealthTeamType::RM_SPEED])) {
-                        //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
+                        CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(15));
                         IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', $previousAdvisorId, $isReassignment)->delay(now()->addSeconds(15));
                     }
                 })->dispatch();
@@ -1566,7 +1569,7 @@ class HealthQuoteService extends BaseService
         $lead->save();
 
         if ($lead->quote_status_id == QuoteStatusEnum::Qualified) {
-            //CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
+            CammyJob::dispatch($lead, 'intro')->delay(now()->addSeconds(3));
             IntroEmailJob::dispatch(quoteTypeCode::Health, 'Capi', $lead->uuid, 'send-rm-intro-email', null, false)->delay(now()->addSeconds(3));
         }
     }

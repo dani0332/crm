@@ -33,6 +33,7 @@ const submitDecisionLoading = ref(false);
 const decisionModalHeading = ref('');
 const amlDecision = ref('');
 const decisionSelected = ref({});
+const decisionResultIds = ref({});
 const passingDecisions = [
   props.amlDecisionStatusCode.FALSE_POSITIVE,
   props.amlDecisionStatusCode.TRUE_MATCH_ACCEPT_RISK,
@@ -57,19 +58,9 @@ function submitDecision(decision) {
   let quoteStatusCode = passingDecisions.includes(decision)
     ? props.quoteStatusCode.AMLScreeningCleared
     : props.quoteStatusCode.AMLScreeningFailed;
-  let url = `${props.aml.quote_type_id}/details/${
-    props.aml.quote_request_id
-  }/quoteStatusUpdate/${quoteStatusCode}?
-        notes=${decisionNotes.value}&aml_id=${
-          props.aml.id
-        }&aml_decision=${decision}&decisonsForUpdatePortal=[${JSON.stringify(
-          decisionSelected.value,
-        )}]&result_id=${
-          JSON.parse(props.aml.results)[0].ResultID
-        }&match_states=${JSON.stringify(
-          JSON.parse(props.aml.results)[0].RecordDetails.RecordState
-            .MatchStates,
-        )}`;
+  let url = `${props.aml.quote_type_id}/details/${props.aml.quote_request_id}
+    /quoteStatusUpdate/${quoteStatusCode}?notes=${decisionNotes.value}&aml_id=${props.aml.id}&aml_decision=${decision}
+    &decisonsForUpdatePortal=[${JSON.stringify(decisionSelected.value)}]&result_id=${JSON.parse(props.aml.results)[0].ResultID}`;
 
   axios
     .get(url)
@@ -102,11 +93,38 @@ const submitAMLDecision = decision => {
 };
 
 const setSelectedOption = (e, item) => {
-  decisionSelected.value[item.EntityDetails.IDs[0].Number] = e;
+
+  decisionSelected.value[item.ID] = e;
   let index = amlResults.value.findIndex(
     x => x.EntityUniqueID == item.EntityUniqueID,
   );
+
   if (index != -1) amlResults.value[index].decision = e;
+
+  if(e === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.ComplianceSuperUser)) {
+
+      // Send Bridger Response to Compliance Super User when Decision True Match
+      let data = {
+          aml_quote_url : `/kyc/aml/${props.aml.quote_type_id}/details/${props.aml.quote_request_id}`,
+          quote_ref_id : props.aml.quote_request_id,
+          customer_entity_name : props.aml.input,
+          quote_type_text : props.aml.quote_type_text,
+          bridger_response: props.aml.results,
+      };
+
+      axios.post(`/kyc/send-bridger-response`, data)
+          .then(res => {
+              console.log(res)
+              notification.success({
+                  title: res.data.message,
+                  position: 'top',
+              });
+          })
+          .catch(err => {
+              console.log(err);
+          })
+  }
+
 };
 
 const isTrue = computed(() => {
@@ -201,9 +219,6 @@ const falsePositive = computed(() => {
         :loading="loader.table"
         :items="amlResults || []"
         border-cell
-        hide-rows-per-page
-        hide-footer
-        fixed-checkbox
       >
         <template #item-result="item">
           <div class="relative py-2">
@@ -241,6 +256,13 @@ const falsePositive = computed(() => {
           {{ firstName + ' ' + lastName }}
         </template>
 
+          <template
+              v-if="responseFrom === 'Bridger'"
+              #item-date_of_birth="{ EntityDetails }"
+          >
+              {{ EntityDetails.AdditionalInfo.filter(x => x.Type === "DOB").map( dob => dob.Value).toString() ?? "" }}
+          </template>
+
         <template v-if="responseFrom === 'RYU'" #item-date_of_birth="{ dob }">
           {{ dob }}
         </template>
@@ -258,6 +280,24 @@ const falsePositive = computed(() => {
         <template v-if="responseFrom === 'RYU'" #item-customer_id="{ id }">
           {{ id ?? '' }}
         </template>
+
+          <template
+              v-if="responseFrom === 'Bridger'"
+              #item-customer_id="{ EntityDetails }"
+          >
+              {{ EntityDetails.IDs.filter(x => x.Type === "ProprietaryUID").map( ProprietaryUID => ProprietaryUID.Number).toString() ?? "" }}
+          </template>
+
+          <template
+              v-if="responseFrom === 'Bridger'"
+              #item-address="{ EntityDetails }"
+          >
+              {{
+                  EntityDetails.Addresses.map(
+                      address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
+                  ).toString() ?? ''
+              }}
+          </template>
 
         <template
           v-if="responseFrom === 'Bridger'"

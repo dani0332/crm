@@ -5,8 +5,10 @@ namespace App\Http\Controllers\V2;
 use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
+use App\Enums\PermissionsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -17,6 +19,7 @@ use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
@@ -155,7 +158,11 @@ class LifeQuoteController extends Controller
             $companyPosition = $this->lookupService->getCompanyPosition();
         }
 
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+
         return inertia('LifeQuote/Show', [
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
             'entities' => $entities,
