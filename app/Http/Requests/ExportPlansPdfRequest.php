@@ -36,11 +36,14 @@ class ExportPlansPdfRequest extends FormRequest
      */
     public function rules()
     {
-        return [
+        $quoteType = ucfirst(request()->quoteType);
+        $rules = [
             'quote_uuid' => ['required', new ValidateQuoteObject],
-            'plan_ids' => 'required|array|min:3|max:5',
+            'plan_ids' => $quoteType == quoteTypeCode::Health ? 'required|array|min:1|max:5' : 'required|array|min:3|max:5',
             'addons' => 'nullable|array',
         ];
+
+        return $rules;
     }
 
     /**
