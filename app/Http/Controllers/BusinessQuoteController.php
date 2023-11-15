@@ -212,6 +212,7 @@ class BusinessQuoteController extends Controller
         $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
 
         return inertia('CorpLineQuote/Show', [
+            'storageUrl' => storageUrl(),
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,
             'entities' => $entities,
@@ -232,7 +233,7 @@ class BusinessQuoteController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'quoteDocuments' => $quoteDocuments,
+            'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
