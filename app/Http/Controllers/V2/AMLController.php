@@ -14,6 +14,8 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\UpdateAMLCustomerDetailRequest;
+use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -315,6 +317,18 @@ class AMLController extends Controller
         }
     }
 
+    public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
+    {
+        $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
+        return response()->json(['success' => true]);
+    }
+
+    public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
+    {
+        $entity = EntityRepository::updateEntityDetail($request->safe());
+        return response()->json(['success' => true]);
+    }
+
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
         $quoteId = $quoteRequestId;
@@ -354,7 +368,7 @@ class AMLController extends Controller
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
                 $customer->refresh();
-                
+
                 //$customer = CustomerRepository::updateIndividualDetail($AMLCheckRequest->customer_id, $AMLCheckRequest->safe());
                 \Log::info('Bridger Insight - Customer Updated Successfully');
 
