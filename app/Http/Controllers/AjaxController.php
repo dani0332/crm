@@ -38,7 +38,7 @@ class AjaxController extends Controller
     protected $quoteDocumentService;
     protected $CRUDService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService,CRUDService $CRUDService)
+    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
