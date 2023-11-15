@@ -320,12 +320,14 @@ class AMLController extends Controller
     public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
     {
         $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
+
         return response()->json(['success' => true]);
     }
 
     public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
     {
         $entity = EntityRepository::updateEntityDetail($request->safe());
+
         return response()->json(['success' => true]);
     }
 
