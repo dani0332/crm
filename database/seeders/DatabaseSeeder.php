@@ -39,6 +39,7 @@ class DatabaseSeeder extends Seeder
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
+            addDubaiNowLeadSourceExemptionInAppStorage::class,
         ]);
     }
 }
