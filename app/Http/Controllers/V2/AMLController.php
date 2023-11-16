@@ -281,9 +281,8 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
-            'entities' =>$entities
+            'entities' => $entities,
         ];
-
 
         if ($quoteType->code == quoteTypeCode::Business) {
             $data['businessTypeCode'] = BusinessQuoteType::where('id', $quoteRequest->business_type_of_insurance_id)->value('code');

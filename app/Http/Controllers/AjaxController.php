@@ -217,7 +217,6 @@ class AjaxController extends Controller
             $pdf->setPaper('A4', 'landscape');
             $pdfFile = $pdf->output();
 
-   
             $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);

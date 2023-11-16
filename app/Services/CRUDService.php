@@ -630,11 +630,11 @@ class CRUDService extends BaseService
         if (isset($quote->payments[0])) {
 
             $paymentTopScore = 0;
-            foreach($quote->payments as $payment){
-                 $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 1);
-                 if($currentScore > $paymentTopScore){
-                     $paymentTopScore = $currentScore;
-                 }
+            foreach ($quote->payments as $payment) {
+                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 1);
+                if ($currentScore > $paymentTopScore) {
+                    $paymentTopScore = $currentScore;
+                }
             }
             $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
             $customerScore += 1; // by default for transaction volume;
