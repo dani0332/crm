@@ -52,7 +52,7 @@ class CarAllocationService extends AllocationService
         return CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
             ->whereNotIn('source', $exemptedLeadSources)
-            ->where('is_renewal_tier_email_sent', 0);
+            ->where('is_renewal_tier_email_sent', 0)->first();
     }
 
     public function getTier($tierId)
