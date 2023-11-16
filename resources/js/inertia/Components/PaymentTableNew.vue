@@ -2534,39 +2534,51 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
       </template>
       </x-form>
-
     <div class="modal-overlay" v-if="isGalleryModelOpen">
       <div class="modal-container">
         <div class="modal-header">
-          <h2 class="text-xl font-semibold">Document Viewer</h2>   
-          <x-button type="button" class="btn btn-primary" @click="closeInnerModal">Close</x-button>
-        </div>
-
-        <div class="modal-body">           
-          <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="text-center">
-            <div class="scrollable-container">  
-            <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />          
-              </div>
-        </div>
-            <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
-              <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="600px" />
+            <div class="flex items-center justify-between">
+            <div class="text-lg font-bold mb-2">Document Viewer</div>
+            <div class="flex items-center space-x-2 cursor-pointer" @click="closeInnerModal">
+              <span class="text-gray-600 font-bold">&#10006;</span>
             </div>
-        </div>
-
-        <div class="modal-footer">
-          <x-button type="button" color="emerald" class="mr-2" @click="previousFile" :disabled="!hasPreviousFile">Previous</x-button>
-          
-          <div class="mt-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
-            <x-button type="button" color="gray" class="mr-2 text-sm" @click="zoomIn">Zoom In</x-button>
-            <x-button type="button" color="gray" class="text-sm" @click="zoomOut">Zoom Out</x-button>
           </div>
-          
-          <x-button type="button" color="emerald" class="btn btn-secondary" @click="nextFile" :disabled="!hasNextFile">Next</x-button>                        
+          <x-divider class="mb-4 mt-1" />
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2  cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
+              <span class="text-gray-600 font-bold">&#8592;</span> 
+              <span class="font-bold">Previous</span>
+            </div>
+            <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
+              <div class="flex items-center space-x-2  cursor-pointer" @click="zoomIn">
+                <span class="text-gray-600 font-bold">&#43;</span> 
+                <span class="font-bold">Zoom In</span>
+              </div>
+              <div class="flex items-center space-x-2  cursor-pointer" @click="zoomOut">
+                <span class="text-gray-600 font-bold">&#8722;</span> 
+                <span class="font-bold">Zoom Out</span>
+              </div>
+            </div>
+            <div class="flex items-center space-x-2  cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
+              <span class="text-gray-600 font-bold">&#8594;</span> 
+              <span class="font-bold">Next</span>
+            </div>
+          </div>
         </div>
+        <x-divider class="mb-4 mt-1" />
+        <div class="modal-body">           
+            <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="text-center">
+                <div class="scrollable-container">  
+                <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />          
+            </div>
+            </div>
+            <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
+              <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
+            </div>
+        </div>        
       </div>
     </div>
-    </x-modal> 
-    
+    </x-modal>    
   </div>
 </template>
 <style scoped>
@@ -2607,11 +2619,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 }
 /* Modal header */
 .modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
+  
 }
 /* Modal body */
 .modal-body {

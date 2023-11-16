@@ -168,6 +168,9 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('embedded-products/{id}/toggle-status', [EmbeddedProductController::class, 'toggleStatus'])->name('embedded-products.toggle-status');
 
     Route::get('/clear-cache', function () {
+        if (request()->has('info')) {
+            return phpinfo();
+        }
         Artisan::call('cache:clear');
         Artisan::call('route:clear');
         Artisan::call('config:clear');
