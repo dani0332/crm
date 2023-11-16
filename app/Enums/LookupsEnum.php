@@ -11,4 +11,8 @@ enum LookupsEnum: string
     case CAR_LOST_REJECT_REASONS = 'car-lost-reject-reasons';
     case CAR_LOST_APPROVE_REASONS = 'car-lost-approve-reasons';
     case TRANSACTION_TYPES = 'transaction-types';
+    case NEW_BUSINESS = 'newBusiness';
+    case EXT_CUSTOMER_RENWAL = 'extCustomerRenewal';
+    case EXT_CUSTOMER_NEW_BUSINESS = 'extCustomerNewBusiness';
+    case ENDORSEMENT = 'endorsement';
 }
