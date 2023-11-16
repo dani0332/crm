@@ -620,8 +620,6 @@ onMounted(() => {
       :memberRelations="memberRelations"
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
-      :modeOfDelivery="modeOfDelivery"
-      :employmentSectors="employmentSectors"
       :lookups="lookups"
       :entities="entities"
     />

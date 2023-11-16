@@ -4,6 +4,7 @@ const notification = useToast();
 const hasRole = role => useHasRole(role);
 const convertDate = date => useConvertDate(date);
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
+const isLoading = ref(false);
 
 const props = defineProps({
   roles: Array,
@@ -80,6 +81,7 @@ function changeIncomeSource(val) {
 
 const onKycSubmit = () => {
   if (confirm('Are you sure you want to create and save the document?')) {
+    isLoading.value = true;
     axios
       .post(`/${props.modelType}/upload-individual-kycdoc`, kycForm)
       .then(response => {
@@ -88,8 +90,8 @@ const onKycSubmit = () => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-          props.status(false);
-          props.buttonStatus(true);
+          // props.status(false);
+          // props.buttonStatus(true);
         } else {
           notification.error({
             title: 'Document not uploaded.',
@@ -101,7 +103,8 @@ const onKycSubmit = () => {
         if (error.response.status === 422) {
           console.error(error.response.data.errors);
         }
-      });
+      })
+      .finally(() => (isLoading.value = false));
   }
 };
 
@@ -470,7 +473,13 @@ onMounted(() => {
           Cancel
         </x-button> -->
 
-      <x-button size="sm" color="orange" type="submit" class="px-6">
+      <x-button
+        :loading="isLoading"
+        size="sm"
+        color="orange"
+        type="submit"
+        class="px-6"
+      >
         Save
       </x-button>
     </div>
