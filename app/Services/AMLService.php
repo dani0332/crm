@@ -264,7 +264,7 @@ class AMLService
 
             return false;
         }
-        info('Bridger Insight - AML Decision Update API Call');
+        info('Bridger Insight - AML Decision Update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-'));
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
