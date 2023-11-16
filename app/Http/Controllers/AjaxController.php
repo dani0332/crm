@@ -21,6 +21,7 @@ use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Repositories\LookupRepository;
+use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
@@ -35,11 +36,13 @@ class AjaxController extends Controller
 
     protected $healthQuoteService;
     protected $quoteDocumentService;
+    protected $CRUDService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService)
+    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
+        $this->CRUDService = $CRUDService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -119,6 +122,7 @@ class AjaxController extends Controller
         $paymentLog->save();
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
+        $this->CRUDService->calculateScore($quoteModel);
 
         return response()->json(['success' => true]);
     }
@@ -259,7 +263,7 @@ class AjaxController extends Controller
         try {
             $businessQuote = BusinessQuote::with('quoteRequestEntityMapping.entity')->where('uuid', $request->quote_uuid)->first();
 
-            if(! isset($businessQuote->quoteRequestEntityMapping->entity)) {
+            if (! isset($businessQuote->quoteRequestEntityMapping->entity)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
 

@@ -51,6 +51,7 @@ class CarEmailService extends BaseService
 
         return $responseCode;
     }
+
     private function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
@@ -95,7 +96,6 @@ class CarEmailService extends BaseService
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
             $emailData->renewalDueDate = $carbonDate;
-
         }
 
         return $emailData;
@@ -106,7 +106,7 @@ class CarEmailService extends BaseService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
         //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
-        $whatsAppNumber = formatMobileNo($advisor->mobile_no);
+        $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
@@ -198,10 +198,8 @@ class CarEmailService extends BaseService
 
     private function getVehicleName($lead)
     {
-
         $vehicleName = '';
         if ($lead->car_make_id != null) {
-
             $carMake = CarMake::find($lead->car_make_id);
 
             if ($carMake) {

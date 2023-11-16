@@ -1,6 +1,4 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3';
-
 const props = defineProps({
   quoteType: Object,
   quoteDetails: Object,
@@ -11,10 +9,9 @@ const props = defineProps({
 });
 
 const { isRequired } = useRules();
-const isEmptyField = ref(false);
 const isLoading = ref(false);
+const showPayerForm = ref(false);
 
-const members = ref(props.membersDetails);
 const notification = useToast();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
@@ -26,11 +23,10 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
-const memberRelationOptions = computed(() => {
-  return props.memberRelations.map(relation => ({
-    value: relation.code,
-    label: relation.text,
-  }));
+const members = ref([...props.membersDetails]);
+
+const computedMembers = computed(() => {
+  return members.value.filter(x => x.is_payer);
 });
 
 const addMember = ref(false);
@@ -43,7 +39,7 @@ const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
     {
-      text: 'Full Name',
+      text: 'Name',
       value: 'first_name',
     },
     {
@@ -55,22 +51,15 @@ const memberDetailsTable = reactive({
       value: 'nationality',
     },
     {
-      text: 'Relation',
-      value: 'relation',
-    },
-    {
-      text: 'Is this member is payer?',
-      value: 'is_payer',
-    },
-    {
       text: 'Action',
       value: 'action',
     },
   ],
 });
+
 function onEditMember(data) {
   memberForm.clearErrors();
-  addMember.value = true;
+  showPayerForm.value = true;
   editMemberDetails.value = true;
   memberForm.quote_type = props.quoteType.code;
   memberForm.quote_request_id = props.quoteDetails.id;
@@ -79,6 +68,7 @@ function onEditMember(data) {
   memberForm.dob = data.dob;
   memberForm.relation_code = data.relation_code;
   memberForm.nationality_id = data.nationality_id;
+  memberForm.is_payer = data.is_payer ? true : false;
 }
 
 const memberForm = useForm({
@@ -91,13 +81,10 @@ const memberForm = useForm({
   dob: null,
   relation_code: null,
   nationality_id: null,
-  is_payer: props.is_payer ?? false,
+  is_payer: props.is_payer ?? true,
 });
 
 function onMemberSubmit(isValid) {
-  if (memberForm.nationality_id == null) isEmptyField.value = true;
-  else isEmptyField.value = false;
-
   if (!isValid) return;
 
   isLoading.value = true;
@@ -106,11 +93,10 @@ function onMemberSubmit(isValid) {
       .put(`/members/${memberForm.id}`, memberForm)
       .then(res => {
         notification.success({
-          title: 'Member Updated Successfully',
+          title: 'Payer Updated Successfully',
           position: 'top',
         });
         memberForm.reset();
-        addMember.value = false;
         if (res.status) {
           let { data } = res.data;
 
@@ -130,17 +116,20 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
       })
-      .finally(() => (isLoading.value = false));
+      .finally(() => {
+        isLoading.value = false;
+        showPayerForm.value = false;
+        editMemberDetails.value = false;
+      });
   } else {
     axios
       .post(`/members`, memberForm)
       .then(res => {
         notification.success({
-          title: 'Member Added Successfully',
+          title: 'Payer Added Successfully',
           position: 'top',
         });
         memberForm.reset();
-        addMember.value = false;
         if (res.status) {
           let { data } = res.data;
 
@@ -157,105 +146,30 @@ function onMemberSubmit(isValid) {
           position: 'top',
         });
       })
-      .finally(() => (isLoading.value = false));
+      .finally(() => {
+        isLoading.value = false;
+        showPayerForm.value = false;
+      });
   }
 }
 </script>
 
 <template>
-  <x-form @submit="onMemberSubmit" :auto-focus="false">
-    <div v-show="addMember" class="mb-4">
-      <div class="flex justify-between">
-        <h3 class="font-semibold text-primary-800 text-lg mb-3">Add Member</h3>
-        <x-button
-          v-if="addMember"
-          @click.prevent="addMemberToggle"
-          size="sm"
-          color="red"
-        >
-          Hide
-        </x-button>
-      </div>
-
-      <div
-        class="grid md:grid-cols-3 gap-x-6 gap-y-4 items-center"
-        v-if="addMember"
-      >
-        <x-field label="Member Name" required>
-          <x-input
-            v-model="memberForm.first_name"
-            placeholder="Member Name"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Nationality" required>
-          <ComboBox
-            :single="true"
-            v-model="memberForm.nationality_id"
-            placeholder="Select Nationality"
-            :options="nationalitiesOptions"
-            class="w-full"
-            :hasError="isEmptyField"
-          />
-        </x-field>
-        <x-field label="Date of Birth" required>
-          <DatePicker
-            v-model="memberForm.dob"
-            placeholder="Date of Birth"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-field label="Relation" required>
-          <x-select
-            v-model="memberForm.relation_code"
-            placeholder="Select Relation"
-            :options="memberRelationOptions"
-            class="w-full"
-            :rules="[isRequired]"
-          />
-        </x-field>
-        <x-checkbox
-          v-model="memberForm.is_payer"
-          label="Is This Member a Payer?"
-          color="primary"
-          class="mb-0 mt-6"
-        />
-      </div>
-    </div>
-    <x-divider v-if="addMember" class="mb-3 mt-1" />
-
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Member Details
-        <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
-      </h3>
-      <x-button
-        v-if="addMember"
-        size="sm"
-        color="primary"
-        type="submit"
-        :loading="isLoading"
-      >
-        Submit Member
-      </x-button>
-      <x-button
-        v-else
-        size="sm"
-        @click.prevent="addMemberToggle(true)"
-        color="orange"
-        type="button"
-        :loading="isLoading"
-      >
-        Add Member
-      </x-button>
-    </div>
-  </x-form>
+  <div class="flex justify-between mt-5">
+    <h3 class="font-semibold text-primary-800 text-lg mb-3">Payer Details</h3>
+    <x-button
+      size="sm"
+      color="orange"
+      :loading="isLoading"
+      @click.prevent="showPayerForm = true"
+    >
+      Add Third Party Payer
+    </x-button>
+  </div>
   <DataTable
-    table-class-name="tablefixed compact"
+    table-class-name="tablefixed compact mt-5"
     :headers="memberDetailsTable.columns"
-    :items="members || []"
+    :items="computedMembers || []"
     show-index
     border-cell
     hide-rows-per-page
@@ -285,13 +199,49 @@ function onMemberSubmit(isValid) {
         </x-button>
       </div>
     </template>
-    <template #item-is_payer="{ is_payer }">
-      <div class="flex gap-2">
-        <x-checkbox
-          :modelValue="is_payer == 0 ? false : true"
-          color="primary"
-        />
-      </div>
-    </template>
   </DataTable>
+
+  <AppModal
+    :showClose="true"
+    :showHeader="true"
+    v-model:modelValue="showPayerForm"
+  >
+    <template #header>Please Confirm Below Details</template>
+    <template #default>
+      <x-form @submit="onMemberSubmit" :auto-focus="false">
+        <div class="grid md:grid-cols-2 mb-5 gap-4">
+          <x-field label="Payer Name" required>
+            <x-input
+              v-model="memberForm.first_name"
+              :rules="[isRequired]"
+              placeholder="Payer Name"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Nationality">
+            <ComboBox
+              :single="true"
+              v-model="memberForm.nationality_id"
+              placeholder="Select Nationality"
+              :options="nationalitiesOptions"
+              class="w-full"
+            />
+          </x-field>
+          <x-field label="Date Of Birth">
+            <DatePicker
+              v-model="memberForm.dob"
+              placeholder="Date of Birth"
+              class="w-full"
+            />
+          </x-field>
+        </div>
+        <div class="flex justify-end">
+          <x-button type="submit" size="sm" color="orange" :loading="isLoading">
+            Save
+          </x-button>
+        </div>
+      </x-form>
+    </template>
+  </AppModal>
 </template>

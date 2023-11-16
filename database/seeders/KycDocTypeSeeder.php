@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\DocumentTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class KycDocTypeSeeder extends Seeder

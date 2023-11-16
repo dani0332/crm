@@ -5,10 +5,10 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 if (! function_exists('generate_code')) {
     /**
@@ -558,7 +558,7 @@ if (! function_exists('formatLandlineDisplay')) {
     }
 }
 
-if(! function_exists('createKycPDF')) {
+if (! function_exists('createKycPDF')) {
     function createKycPDF()
     {
         try {

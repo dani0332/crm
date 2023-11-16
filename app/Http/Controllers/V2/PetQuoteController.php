@@ -35,7 +35,6 @@ class PetQuoteController extends Controller
     protected $crudService;
     protected $lookupService;
 
-
     public function __construct(CRUDService $crudService, LookupService $lookupService)
     {
         $this->crudService = $crudService;

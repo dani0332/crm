@@ -39,6 +39,7 @@ class DocumentType extends Model implements AuditableContract
     public static function findOrCreate($code)
     {
         $obj = static::where('code', $code)->first();
+
         return $obj ?: new static;
     }
 }

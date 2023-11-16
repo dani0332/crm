@@ -14,7 +14,7 @@ class Payment extends Model
     protected $primaryKey = 'code';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link'];
+    protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount', 'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by', 'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'payer_name', 'paid_by'];
     protected $forceDeleting = true;
 
     /**
@@ -101,6 +101,15 @@ class Payment extends Model
     public function paymentStatusLogs()
     {
         return $this->hasMany(PaymentStatusLog::class, 'payment_code', 'code');
+    }
+
+    public function getCustomerPaymentInstrument()
+    {
+        return $this->belongsTo(
+            CustomerPaymentInstrument::class,
+            'customer_payment_instrument_id',
+            'id'
+        );
     }
 
     public function getCreatedAtAttribute($date)

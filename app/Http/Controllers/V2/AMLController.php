@@ -14,6 +14,8 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\AMLCheckRequest;
 use App\Http\Requests\AMLRequest;
+use App\Http\Requests\UpdateAMLCustomerDetailRequest;
+use App\Http\Requests\UpdateAMLEntityDetailRequest;
 use App\Jobs\BridgerAMLJob;
 use App\Models\AML;
 use App\Models\ApplicationStorage;
@@ -21,10 +23,13 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
+use App\Models\CustomerPaymentInstrument;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
+use App\Models\Lookup;
+use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -32,6 +37,8 @@ use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
 use App\Models\TravelMemberDetail;
 use App\Models\UAEAMLListUploads;
+use App\Repositories\CustomerRepository;
+use App\Repositories\EntityRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
@@ -199,7 +206,7 @@ class AMLController extends Controller
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
 
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
-        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->firstOrFail();
+        $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
 
         if ($quoteTypeId == QuoteTypeId::Health) {
@@ -230,6 +237,23 @@ class AMLController extends Controller
             $quoteStatusCode = $quoteStatus[0]->code;
         }
 
+        $lookups = Lookup::whereIn('key', [
+            LookupsEnum::RESIDENT_STATUS,
+            LookupsEnum::DOCUMENT_ID_TYPE,
+            LookupsEnum::MODE_OF_CONTACT,
+            LookupsEnum::MODE_OF_DELIVERY,
+            LookupsEnum::EMPLOYMENT_SECTOR,
+            LookupsEnum::LEGAL_STRUCTURE,
+            LookupsEnum::ISSUANCE_PLACE,
+            LookupsEnum::ISSUING_AUTHORITY,
+            LookupsEnum::COMPANY_POSITION,
+        ])->get()->groupBy('key');
+
+        //lookups , loop through each key, replace - with _ and update key
+        $lookups = $lookups->mapWithKeys(function ($item, $key) {
+            return [str_replace('-', '_', $key) => $item];
+        });
+        $entities = Entity::all();
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $data = [
@@ -256,6 +280,8 @@ class AMLController extends Controller
             'isCompanySearchEnabled' => $isCompanySearchEnabled,
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
+            'lookups' => $lookups,
+            'entities' => $entities,
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -264,6 +290,7 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
+        // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
@@ -290,6 +317,20 @@ class AMLController extends Controller
 
             return redirect()->back()->with('success', 'Quote Status is set to '.$quoteStatusText.'');
         }
+    }
+
+    public function updateCustomerDetails(UpdateAMLCustomerDetailRequest $request)
+    {
+        $customer = CustomerRepository::updateCustomerDetails($request->customer_id, $request->safe());
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateEntityDetails(UpdateAMLEntityDetailRequest $request)
+    {
+        $entity = EntityRepository::updateEntityDetail($request->safe());
+
+        return response()->json(['success' => true]);
     }
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
@@ -381,7 +422,7 @@ class AMLController extends Controller
                 ], ['entity_id' => $entityId, 'entity_type_code' => $AMLCheckRequest->entity_type_code]);
 
                 // Bridger Insight API Call for Entity
-                $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entityId];
+                $entityDetailsForApi = ['company_name' => $entity->company_name, 'code' => CustomerTypeEnum::EntityShort.'-'.$entity->id];
                 BridgerAMLJob::dispatchSync($bridgerAPIToken, $entityDetailsForApi, $quoteRequestId, $quoteTypeId, CustomerTypeEnum::Entity, auth()->user()->email);
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
@@ -404,6 +445,54 @@ class AMLController extends Controller
         }
 
         return redirect()->back()->with('error', 'Something went wrong');
+    }
+
+    public function insuredPayerDetailsUpdate(AMLCheckRequest $AMLCheckRequest)
+    {
+        /*
+         * ======== PLEASE DON'T REMOVE THIS COMMENTED CODE YET ========
+         * ======== THIS CODE IS FOR FUTURE REFERENCE ========
+         */
+
+        // dd($AMLCheckRequest->toArray());
+
+        // if (isset($AMLCheckRequest->payment_Details) && count($AMLCheckRequest->payment_Details) > 0) {
+        //     foreach ($AMLCheckRequest->payment_Details as $paymentDetail) {
+        //         $payment = Payment::where('code', $paymentDetail['paymentCode'])->first();
+        //         if ($payment) {
+        //             $customerInstrument = CustomerPaymentInstrument::find($payment->customer_payment_instrument_id)
+        //                 ->first();
+
+        //             if ($customerInstrument && $paymentDetail['paymentMethod'] == 'Credit Card'
+        //                 && ($customerInstrument->card_holder_name == null || $customerInstrument->card_holder_name == '')) {
+        //                 $customerInstrument->update([
+        //                     'card_holder_name' => $paymentDetail['payerName'],
+        //                 ]);
+        //             } elseif (! $customerInstrument) {
+        //                 return response()->json([
+        //                     'status' => false,
+        //                     'message' => 'Customer Instrument record not found',
+        //                 ]);
+        //             } else {
+        //                 $payment->update([
+        //                     'payer_name' => $paymentDetail['payerName'],
+        //                 ]);
+        //             }
+
+        //             $payment->update([
+        //                 'paid_by' => $paymentDetail['paidBy'],
+        //             ]);
+
+        //             return response()->json(['status' => true, 'message' => 'Updated']);
+        //         } else {
+        //             return response()->json(['status' => false, 'message' => 'Payment not found']);
+        //         }
+        //     }
+        // } else {
+        //     return response()->json(['status' => false, 'message' => 'Payments data missing']);
+        // }
+
+        // return response()->json(['status' => false, 'message' => 'Whoops! Something went wrong']);
     }
 
     public function sanctionListHistory(Request $request, SanctionListDownloads $sanctionListDownloads, Datatables $datatables)

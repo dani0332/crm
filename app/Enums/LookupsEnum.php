@@ -25,4 +25,5 @@ enum LookupsEnum: string
     case ISSUING_AUTHORITY = 'issuing-authority';
     case EMPLOYMENT_SECTOR = 'employment-sector';
     case COMPANY_POSITION = 'company-position';
+    case MODE_OF_DELIVERY = 'mode-of-delivery';
 }
