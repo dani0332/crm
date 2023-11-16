@@ -31,6 +31,7 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
+  entities: Object,
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -602,6 +603,7 @@ onMounted(() => {
       :memberRelations="memberRelations"
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
+      :lookups="lookups"
     />
 
     <IndividualModel
@@ -618,13 +620,10 @@ onMounted(() => {
       :memberRelations="memberRelations"
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
-      :residentStatuses="residentStatuses"
-      :idTypes="idTypes"
-      :modeOfContacts="modeOfContacts"
       :modeOfDelivery="modeOfDelivery"
       :employmentSectors="employmentSectors"
-      :legalStructure="legalStructure"
       :lookups="lookups"
+      :entities="entities"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">

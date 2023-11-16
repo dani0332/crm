@@ -25,6 +25,10 @@ const nationalitiesOptions = computed(() => {
 
 const members = ref([...props.membersDetails]);
 
+const computedMembers = computed(() => {
+  return members.value.filter(x => x.is_payer);
+});
+
 const addMember = ref(false);
 const editMemberDetails = ref(false);
 const addMemberToggle = (payload = false) => {
@@ -64,6 +68,7 @@ function onEditMember(data) {
   memberForm.dob = data.dob;
   memberForm.relation_code = data.relation_code;
   memberForm.nationality_id = data.nationality_id;
+  memberForm.is_payer = data.is_payer ? true : false;
 }
 
 const memberForm = useForm({
@@ -76,7 +81,7 @@ const memberForm = useForm({
   dob: null,
   relation_code: null,
   nationality_id: null,
-  is_payer: props.is_payer ?? false,
+  is_payer: props.is_payer ?? true,
 });
 
 function onMemberSubmit(isValid) {
@@ -164,7 +169,7 @@ function onMemberSubmit(isValid) {
   <DataTable
     table-class-name="tablefixed compact mt-5"
     :headers="memberDetailsTable.columns"
-    :items="members || []"
+    :items="computedMembers || []"
     show-index
     border-cell
     hide-rows-per-page

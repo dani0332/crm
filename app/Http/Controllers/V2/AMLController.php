@@ -247,13 +247,14 @@ class AMLController extends Controller
             LookupsEnum::LEGAL_STRUCTURE,
             LookupsEnum::ISSUANCE_PLACE,
             LookupsEnum::ISSUING_AUTHORITY,
+            LookupsEnum::COMPANY_POSITION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
-
+        $entities = Entity::all();
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $data = [
@@ -281,7 +282,9 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
+            'entities' =>$entities
         ];
+
 
         if ($quoteType->code == quoteTypeCode::Business) {
             $data['businessTypeCode'] = BusinessQuoteType::where('id', $quoteRequest->business_type_of_insurance_id)->value('code');

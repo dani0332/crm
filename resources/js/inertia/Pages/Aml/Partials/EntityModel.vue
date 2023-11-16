@@ -1,7 +1,6 @@
 <script setup>
 import UBODetailsModels from './UBODetailsModels.vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
-import { onClickOutside } from '@vueuse/core';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -14,6 +13,8 @@ const props = defineProps({
   memberRelations: Object,
   uboRelations: Object,
   customerTypeEnum: Object,
+  lookups: Object,
+  legalStructure: Object,
 });
 
 const loader = ref({
