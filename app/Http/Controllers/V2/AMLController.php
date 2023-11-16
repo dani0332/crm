@@ -280,7 +280,7 @@ class AMLController extends Controller
             $quotePaID = $updateQuoteStatusResp[3];
             $clientFullName = $updateQuoteStatusResp[4];
             if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
-                \Log::info('Bridger Insight - Decision update Email triggered to Compliance Team');
+                info('Bridger Insight - Decision update Email triggered to Compliance Team');
                 $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
@@ -326,11 +326,11 @@ class AMLController extends Controller
                 })->withTrashed()->get()->pluck('decision')->toArray();
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
-                \Log::info('Bridger Insight - Customer type : Individual');
+                info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customer->update($AMLCheckRequest->validated());
                 $customer->refresh();
-                \Log::info('Bridger Insight - Customer Updated Successfully');
+                info('Bridger Insight - Customer Updated Successfully');
 
                 $getMemberOrUBODetails[] = [
                     'first_name' => $customer->insured_first_name,
@@ -354,17 +354,17 @@ class AMLController extends Controller
                 if (! in_array(true, session()->get('amlResponseCheck')) && ! in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
-                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 } else {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
                     $updateQuote->save();
-                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 }
                 session()->forget('amlResponseCheck');
             }
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Entity) {
-                \Log::info('Bridger Insight - Customer type : Entity');
+                info('Bridger Insight - Customer type : Entity');
                 $entity = Entity::updateOrCreate(['trade_license_no' => $AMLCheckRequest->trade_license_no], [
                     'company_name' => $AMLCheckRequest->company_name,
                     'company_address' => $AMLCheckRequest->company_address,
@@ -373,7 +373,7 @@ class AMLController extends Controller
                 ]);
                 $entityId = $entity->id;
                 $entity->update(['code' => CustomerTypeEnum::EntityShort.'-'.$entityId]);
-                \Log::info('Bridger Insight - Entity Updated Successfully');
+                info('Bridger Insight - Entity Updated Successfully');
 
                 QuoteRequestEntityMapping::updateOrCreate([
                     'quote_type_id' => $quoteType->id,
@@ -391,11 +391,11 @@ class AMLController extends Controller
                 if (! in_array(true, session()->get('amlResponseCheck')) && ! in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningCleared;
                     $updateQuote->save();
-                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Clear - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 } else {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
                     $updateQuote->save();
-                    \Log::info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
                 }
                 session()->forget('amlResponseCheck');
             }
@@ -500,7 +500,7 @@ class AMLController extends Controller
     public function sendBridgerResponse(Request $request)
     {
         if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
-            \Log::info("Bridger Insight : Email Triggered to Compliance Super User");
+            info('Bridger Insight : Email Triggered to Compliance Super User');
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
                 $request['aml_quote_url'],
                 $request['quote_ref_id'],

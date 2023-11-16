@@ -6,7 +6,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Jobs\BridgerDecisionUpdateJob;
 use App\Models\AML;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -249,7 +248,7 @@ class AMLService
 
             return false;
         }
-        info('Bridger Insight - AML Decision Update API Call. AML ID: '.($request->aml_id ?? "-").' - Lexis Nexis Alert ID: '. ($request->result_id ?? "-"));
+        info('Bridger Insight - AML Decision Update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-'));
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
@@ -259,7 +258,7 @@ class AMLService
         foreach ($decisionValues as $matchKey => $matchValue) {
             $matchResultsForUpdate[] = [
                 'MatchID' => $matchKey,
-                'Type' => $matchValue
+                'Type' => $matchValue,
             ];
         }
 
