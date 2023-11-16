@@ -628,10 +628,9 @@ class CRUDService extends BaseService
     {
 
         if (isset($quote->payments[0])) {
-
             $paymentTopScore = 0;
             foreach ($quote->payments as $payment) {
-                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 1);
+                $currentScore = in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_THREE_RATING) ? 3 : (in_array(strtolower($payment->payment_methods_code), Kyc::PAYMENT_MODE_TWO_RATING) ? 2 : 2);
                 if ($currentScore > $paymentTopScore) {
                     $paymentTopScore = $currentScore;
                 }
@@ -652,11 +651,9 @@ class CRUDService extends BaseService
 
                 $customerScore += in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
                 $customerScore += in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
-                $customerScore += in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
 
-                $customer = CustomerDetail::find($customerDetail->id);
-                $customer->risk_score = $customerScore;
-                $customer->save();
+                $quote->risk_score = $customerScore;
+                $quote->save();
             }
         }
     }
