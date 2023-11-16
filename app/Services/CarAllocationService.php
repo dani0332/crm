@@ -37,22 +37,14 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
-        // Check if Dubai Now exclusion should be applied
-        $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
-
-        // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
-
-        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
-        if ($shouldIncludeDubaiNow) {
-            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
-        }
-
-        // Create a query to retrieve a car lead
-        return CarQuote::where('uuid', $quoteId)
+        // Create a query to retrieve a car lead based on the provided quote ID and filters.
+        $query = CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', $exemptedLeadSources)
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('is_renewal_tier_email_sent', 0);
+
+        // Retrieve the first matching car lead from the query or return null if none is found.
+        return $query->first();
     }
 
     public function getTier($tierId)
@@ -471,23 +463,12 @@ class CarAllocationService extends AllocationService
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
 
-        // Check if Dubai Now exclusion should be applied
-        $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
-
-        // List of exempted lead sources
-        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
-
-        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
-        if ($shouldIncludeDubaiNow) {
-            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
-        }
-
         // Get the Tier R
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
         // Query to fetch leads
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
-            ->whereNotIn('source', $exemptedLeadSources)
+            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
             ->where('quote_status_id', QuoteStatusEnum::NewLead)
             ->where('is_renewal_tier_email_sent', 0);
 

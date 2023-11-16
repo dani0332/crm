@@ -36,7 +36,6 @@ class DatabaseSeeder extends Seeder
             CreateAndAssignSubTeamsToAdvisors::class,
             AutofollowupSeeder::class,
             addReassignmentTime::class,
-            addDubaiNowLeadSourceExemptionInAppStorage::class,
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
