@@ -47,6 +47,7 @@ class CarAllocationService extends AllocationService
         if ($shouldIncludeDubaiNow) {
             $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
         }
+
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
         return CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
