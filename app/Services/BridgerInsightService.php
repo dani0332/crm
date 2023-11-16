@@ -71,7 +71,6 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $loginUserEmail = auth()->user()->email ?? '';
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
@@ -137,20 +136,27 @@ class BridgerInsightService
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             // AML Log data inserted into kyc_logs just for BridgerInsight
-                            session()->push('amlResponseCheck', isset($getDecodeContents->Records));
+                            $amlResultCount = 0;
+                            if (isset($getDecodeContents->Records[0]->Watchlist)) {
+                                $amlResultCount = collect($getDecodeContents->Records[0]->Watchlist->Matches)->filter(function ($value) {
+                                    return $value->FalsePositive == false;
+                                })->count();
+                            }
+
+                            session()->push('amlResponseCheck', $amlResultCount > 0);
                             $kycLogDetails = [
                                 'quote_request_id' => $quoteId,
                                 'quote_type_id' => $quoteTypeId,
                                 'results' => isset($getDecodeContents->Records) ? json_encode($getDecodeContents->Records) : json_encode([]),
-                                'results_found' => isset($getDecodeContents->Records[0]) ? count($getDecodeContents->Records[0]->Watchlist->Matches) : 0,
+                                'results_found' => $amlResultCount,
                                 'created_at' => Carbon::now(),
                                 'input' => $customerOrEntityName,
-                                'match_found' => isset($getDecodeContents->Records) ? 1 : 0,
+                                'match_found' => $amlResultCount > 0 ? 1 : 0,
                                 'search_type' => $customerType,
                                 'customer_code' => $memberUboDetails['code'],
                             ];
 
-                            if (! isset($getDecodeContents->Records)) {
+                            if ($amlResultCount == 0) {
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
                             }
 

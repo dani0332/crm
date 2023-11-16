@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
             MemberRelationsSeeder::class,
             GenericPermissionSeeder::class,
             AddApiLogViewToPermssion::class,
-            UpdateCustomerToHealthAndTravelMemberDetails::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
             AutofollowupSeeder::class,
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
