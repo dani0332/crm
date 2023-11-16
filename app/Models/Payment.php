@@ -7,12 +7,9 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Auditable;
-use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
 
-class Payment extends Model implements AuditableContract
-{
-    use Auditable;
+class Payment extends Model
+{    
     protected $table = 'payments';
     protected $primaryKey = 'code';
     public $incrementing = false;
