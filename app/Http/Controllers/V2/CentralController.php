@@ -14,6 +14,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\CustomerProfileRequest;
 use App\Http\Requests\DuplicateLobRequest;
 use App\Http\Requests\LeadAssignRequest;
+use App\Http\Requests\PlanDetailsRequest;
 use App\Http\Requests\UpdateLastYearPolicyRequest;
 use App\Models\Customer;
 use App\Models\Entity;
@@ -148,4 +149,15 @@ class CentralController extends Controller
     {
         return (new CentralService())->loadAvailablePlans($type, $id);
     }
+
+    public function savePlanDetails($quoteType, $code, PlanDetailsRequest $request)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        $response = $repository::where('code', $code)->update($request->validated());
+
+
+        return redirect()->back()->with('success', 'updated successfully');
+    }
+
 }

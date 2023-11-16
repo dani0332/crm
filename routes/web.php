@@ -106,6 +106,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::get('home', function () {
         return inertia('Home/Home');
     });
+
+    Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
@@ -123,6 +125,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::get('/reports/renewal-report', [ReportsController::class, 'renderRenewalReport'])->name('renewal-batch-report');
 
         Route::get('/personal-quotes/car/car-quotes-search', [\App\Http\Controllers\V2\CarQuoteController::class, 'index'])->name('car-quotes-search');
+
+
 
         if (in_array(quoteTypeCode::Pet, newUi())) {
             Route::resource('personal-quotes/pet', PetQuoteController::class)->names(generateRouteNames('pet-quotes'));

@@ -9,6 +9,7 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from "../../Components/MemberDetails.vue";
 import KycForm from "@/inertia/Components/KycForm.vue";
+import PlanDetails from '../../Components/PlanDetails.vue';
 
 defineProps({
   quote: Object,
@@ -773,6 +774,12 @@ const linkEntity = () => {
     />
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
+
+    <PlanDetails
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"

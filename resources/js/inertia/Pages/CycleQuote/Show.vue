@@ -8,6 +8,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import MemberDetails from "../../Components/MemberDetails.vue";
 import AdditionalContacts from "../PersonalQuote/Partials/AdditionalContacts.vue";
 import KycForm from "@/inertia/Components/KycForm.vue";
+import PlanDetails from '../../Components/PlanDetails.vue';
 
 defineProps({
   quote: Object,
@@ -769,6 +770,12 @@ const linkEntity = () => {
       :can="can"
       :quoteStatusesEnum="quoteStatusesEnum"
     />
+
+    <PlanDetails
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"
