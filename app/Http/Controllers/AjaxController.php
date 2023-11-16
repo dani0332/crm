@@ -11,7 +11,6 @@ use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
-use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
@@ -201,6 +200,8 @@ class AjaxController extends Controller
     public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)
     {
         try {
+            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+
             $data = $request->validated();
             $data['nationality_text'] = Nationality::where('id', $data['nationality_id'])->value('text');
             $data['country_name'] = Nationality::where('id', $data['country_of_residence'])->value('country_name');
@@ -211,13 +212,14 @@ class AjaxController extends Controller
             $data['mode_of_delivery_text'] = LookupRepository::where('code', $data['mode_of_delivery'])->where('key', LookupsEnum::MODE_OF_CONTACT)->value('text');
             $data['employment_sector_text'] = LookupRepository::where('code', $data['employment_sector'])->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->value('text');
             $data['company_position_text'] = LookupRepository::where('code', $data['company_position'])->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
+            $data['premium'] = $quote->premium;
+            $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
+            $data['product_type'] = ucfirst($quoteType) . ' Insurance';
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
-            $pdf->setPaper('A4', 'landscape');
+            $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-
-            $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
@@ -258,9 +260,9 @@ class AjaxController extends Controller
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
         try {
-            $businessQuote = BusinessQuote::with('quoteRequestEntityMapping.entity')->where('uuid', $request->quote_uuid)->first();
+            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
-            if (! isset($businessQuote->quoteRequestEntityMapping->entity)) {
+            if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
 
@@ -275,15 +277,13 @@ class AjaxController extends Controller
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
-            $pdf->setPaper('A4', 'landscape');
+            $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-
-            $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                Entity::where('id', $businessQuote->quoteRequestEntityMapping->entity->id)->update([
+                Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
                     'mobile_no' => $data['mobile_number'],
                     'email' => $data['email'],
                     'website' => $data['website'],
