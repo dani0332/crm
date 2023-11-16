@@ -6,7 +6,6 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
-use App\Jobs\BridgerDecisionUpdateJob;
 use App\Models\AML;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
@@ -88,7 +87,6 @@ class AMLService
                 'claimHistory',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::HOME->id()) {
             $quoteRequestDetails = HomeQuote::with([
                 'quoteStatus',
@@ -97,7 +95,6 @@ class AMLService
                 'possessionType',
                 'accommodationType',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::HEALTH->id()) {
             $quoteRequestDetails = HealthQuote::with([
                 'quoteStatus',
@@ -108,7 +105,6 @@ class AMLService
                 'emirate',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::LIFE->id()) {
             $quoteRequestDetails = LifeQuote::with([
                 'quoteStatus',
@@ -122,7 +118,6 @@ class AMLService
                 'currency',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::BUSINESS->id()) {
             $quoteRequestDetails = BusinessQuote::with([
                 'quoteStatus',
@@ -130,7 +125,6 @@ class AMLService
                 'customer',
                 'businessTypeOfInsurance',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::TRAVEL->id()) {
             $quoteRequestDetails = TravelQuote::with([
                 'quoteStatus',
@@ -140,7 +134,6 @@ class AMLService
                 'travelCoverFor',
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
-
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
             if ($isDataMigrated) {
                 $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
@@ -175,14 +168,15 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
+        $complianceRole = $forComplianceSuperUser ? RolesEnum::ComplianceSuperUser : RolesEnum::COMPLIANCE;
         $recipients = User::select('users.email as user_email')
             ->leftjoin('model_has_roles', 'users.id', 'model_has_roles.model_id')
             ->leftjoin('roles', 'model_has_roles.role_id', 'roles.id')
-            ->whereIn('roles.name', [RolesEnum::COMPLIANCE])->get();
+            ->whereIn('roles.name', [$complianceRole])->get();
 
         foreach ($recipients as $recipient) {
             $emailRecipients[] = $recipient->user_email;
@@ -219,12 +213,10 @@ class AMLService
         $customerType = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
 
         if ($customerType == CustomerTypeEnum::IndividualShort) {
-
             if ($quoteType->code == QuoteTypes::HEALTH->value) {
                 $customerChildDetails = HealthMemberDetail::with('nationality')->where([
                     'health_quote_request_id' => $quoteRequestId,
                 ])->get();
-
             } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
                 $customerChildDetails = TravelMemberDetail::with('nationality')->where([
                     'travel_quote_request_id' => $quoteRequestId,
@@ -251,19 +243,27 @@ class AMLService
 
     public static function updateAMLDecisionLexisNexis($request)
     {
-        \Log::info('Bridger Insight - AML Decision Update API Call');
-        $amlDescions = json_decode($request['decisonsForUpdatePortal']);
+        if (! $request->result_id) {
+            info('Bridger Insight - AML Decision Update API Call - Result Id not found');
+
+            return false;
+        }
+        info('Bridger Insight - AML Decision Update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-'));
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
 
-        foreach ($amlDescions as $resultId => $amlDescion) {
-            BridgerDecisionUpdateJob::dispatch(
-                $bridgerAPIToken,
-                $resultId,
-                $amlDescion)
-                ->delay(now()->addSeconds(5));
+        $matchResultsForUpdate = [];
+        $decisionValues = (array) json_decode($request->decisonsForUpdatePortal)[0] ?? [];
+        foreach ($decisionValues as $matchKey => $matchValue) {
+            $matchResultsForUpdate[] = [
+                'MatchID' => $matchKey,
+                'Type' => $matchValue,
+            ];
         }
 
+        $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchResultsForUpdate, $request->notes);
+
+        return true;
     }
 }
