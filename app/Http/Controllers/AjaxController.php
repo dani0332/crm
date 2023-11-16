@@ -219,7 +219,7 @@ class AjaxController extends Controller
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
-            $pdf->setPaper('A4', 'landscape');
+            $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
@@ -278,7 +278,7 @@ class AjaxController extends Controller
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
-            $pdf->setPaper('A4', 'landscape');
+            $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
             $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
