@@ -3,7 +3,7 @@ const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
-
+const isLoading = ref(false);
 const props = defineProps({
   roles: Array,
   quote: Object,
@@ -62,6 +62,7 @@ const kycForm = reactive({
 
 const onKycSubmit = () => {
   if (confirm('Are you sure you want to create and save the document?')) {
+    isLoading.value = true;
     axios
       .post(`/${props.modelType}/upload-entity-kycdoc`, kycForm)
       .then(response => {
@@ -70,8 +71,8 @@ const onKycSubmit = () => {
             title: 'KYC Document uploaded.',
             position: 'top',
           });
-          props.status(false);
-          props.buttonStatus(true);
+          // props.status(false);
+          // props.buttonStatus(true);
         } else {
           notification.error({
             title: response.data.message,
@@ -81,7 +82,8 @@ const onKycSubmit = () => {
       })
       .catch(error => {
         console.error(error.response.data);
-      });
+      })
+      .finally(() => (isLoading.value = false));
   }
 };
 
@@ -507,7 +509,13 @@ onMounted(() => {
         Cancel
       </x-button> -->
 
-      <x-button size="sm" color="orange" type="submit" class="px-6">
+      <x-button
+        :loading="isLoading"
+        size="sm"
+        color="orange"
+        type="submit"
+        class="px-6"
+      >
         Save
       </x-button>
     </div>

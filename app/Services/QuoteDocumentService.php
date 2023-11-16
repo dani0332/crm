@@ -131,7 +131,7 @@ class QuoteDocumentService extends BaseService
                 $docUuid = uniqid().rand(1, 100);
             }
 
-            return $quote->documents->create([
+            return $quote->documents()->create([
                 'doc_name' => $docName,
                 'original_name' => $originalName,
                 'doc_url' => $filePathAzure,
