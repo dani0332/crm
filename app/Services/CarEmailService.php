@@ -33,17 +33,17 @@ class CarEmailService extends BaseService
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
         $quotePlansCount = is_countable($plans) ? count($plans) : 0;
         if ($quotePlansCount > 0) {
-            info('Inside plans of count: '.$lead->uuid.'    ');
+            info('Inside plans of count: ' . $lead->uuid . '    ');
             $pdfData = [
                 'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
                 'quote_uuid' => $lead->uuid,
             ];
             $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
             if (isset($pdf['error'])) {
-                info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
+                info('Failed to generate PDF for UUID in car email service: ' . $lead->uuid . ' Error: ' . $pdf['error']);
             } else {
                 $emailData->pdfAttachment = (object) $pdf;
-                info('attaching pdf: '.$lead->uuid.'    ');
+                info('attaching pdf: ' . $lead->uuid . '    ');
             }
         }
 
@@ -51,6 +51,7 @@ class CarEmailService extends BaseService
 
         return $responseCode;
     }
+
     private function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
@@ -105,7 +106,7 @@ class CarEmailService extends BaseService
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
         //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
         //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
-        $whatsAppNumber = (!empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : "");
+        $whatsAppNumber = !empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name . ' ' . $carQuote->last_name,
             'customerName' => $carQuote->first_name . ' ' . $carQuote->last_name,
@@ -197,10 +198,8 @@ class CarEmailService extends BaseService
 
     private function getVehicleName($lead)
     {
-
         $vehicleName = '';
         if ($lead->car_make_id != null) {
-
             $carMake = CarMake::find($lead->car_make_id);
 
             if ($carMake) {
