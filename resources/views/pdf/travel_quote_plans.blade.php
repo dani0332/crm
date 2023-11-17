@@ -151,7 +151,7 @@
         .spacer {
             padding: 3px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;}
+        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;width:280px}
         .quote-info {
             text-align: right;
             vertical-align: bottom;
@@ -514,11 +514,8 @@
                             @php $return_value =   $plans[$planId]->{$feature['code']}  @endphp
 
                         @elseif($feature['type'] == 'buy')
-                            @if($plans[$planId]->discountPremium)
+
                                 @php  $return_value = `<a target="_blank" class="btn-buy" href="{{($websitURL . '/car-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId)}}" >Buy Now</a>`; @endphp
-                            @else
-                                @php $return_value = 'N/A';  @endphp
-                            @endif
 
                         @elseif(is_array($feature['type']))
                             @php $value = "Excluded";  @endphp
@@ -574,11 +571,7 @@
                     @foreach($planIds as $planId)
                         <td>
                             <p class="text-center">
-                                @if($plans[$planId]->discountPremium)
                                     <a target="_blank" class="btn-buy" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
-                                @else
-                                    N/A
-                                @endif
                             </p>
                         </td>
                     @endforeach
