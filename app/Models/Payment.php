@@ -7,9 +7,17 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 
-class Payment extends Model
-{    
+class Payment extends Model implements Auditable
+{   
+    use AuditableTrait;
+
+    protected $auditEvents = [
+       'updated',
+    ];
+
     protected $table = 'payments';
     protected $primaryKey = 'code';
     public $incrementing = false;
@@ -20,6 +28,12 @@ class Payment extends Model
         'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason'
     ];
     protected $forceDeleting = true;
+
+    public function transformAudit(array $data): array
+    {        
+        $data['old_values']['code'] = strtolower($this->code);
+        return $data;
+    }
 
     /**
      * @return bool

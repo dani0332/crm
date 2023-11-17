@@ -4,10 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use OwenIt\Auditing\Contracts\Auditable;
+use OwenIt\Auditing\Auditable as AuditableTrait;
 
-class PaymentSplits extends Model
+class PaymentSplits extends Model implements Auditable
 {
-    use HasFactory;
+    use HasFactory,AuditableTrait;
+
+    protected $auditEvents = [
+        'updated',
+    ];
 
     protected $table = 'payment_splits';
     protected $fillable = ['code', 'sr_no', 'payment_method', 'check_detail', 'payment_amount', 'due_date', 'payment_status_id', 'collection_amount', 'bank_reference_number', 'decline_reason_id',
@@ -33,5 +39,11 @@ class PaymentSplits extends Model
     public function documents()
     {
         return $this->hasMany(QuoteDocument::class, 'payment_split_id', 'id');
+    }
+
+    public function transformAudit(array $data): array
+    {        
+        $data['old_values']['code'] = strtolower($this->code);
+        return $data;
     }
 }

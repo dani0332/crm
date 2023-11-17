@@ -37,15 +37,21 @@ class AuditableController extends Controller
     }
 
     public function loadAuditLogs(Request $request)
-    {
-        return DB::table('audits')
-            ->select('audits.*', 'users.name')
-            ->join('users', 'audits.user_id', 'users.id')
-            ->where('auditable_id', $request->auditableId)
-            ->where('auditable_type', $request->auditableType)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
+    {   
+        $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
+        $query = DB::table('audits')
+        ->select('audits.*', 'users.name')
+        ->join('users', 'audits.user_id', 'users.id')
+        ->where('auditable_id', $request->auditableId)
+        ->where('auditable_type', $request->auditableType);
+        if ($request->auditableType == CarQuote::class) {
+            $code = CarQuote::where('id', $request->auditableId)->value('code');
+            $query->orWhere(function ($query) use ($code, $auditableTypes) {
+                $query->where('old_values', 'like', '%"code":"' . $code . '"%')
+                      ->whereIn('auditable_type', $auditableTypes);
+            });
+        }
+        return $query->orderBy('created_at', 'desc')->get();
     }
 
     public function loadApiLogs(Request $request)

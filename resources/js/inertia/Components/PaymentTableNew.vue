@@ -1,5 +1,4 @@
 <script setup>
-//import ToolTip from '/var/www/html/blanka/resources/js/inertia/Components/ToolTip.vue';
 import ToolTip from './../Components/ToolTip.vue';
 const notification = useNotifications('toast');
 const page = usePage();
@@ -624,38 +623,47 @@ const isCCDisabled = computed(() => {
     );*/
 });
 
-const generateCCLink = async code => {
-  try {
-    const response = await axios.post('/generate-payment-link', {
-      quoteId: props.quoteRequest.id,
-      modelType: props.quoteType,
-      paymentCode: code,
-      isInertia: true,
-    });
+const generateCCLink = async (code,splitPaymentId,paymentStatus) => {
 
-    if (response.data.success) {
-      const el = document.createElement('textarea');
-      el.value = response.data.payment_link;
-      document.body.appendChild(el);
-      el.select();
-      document.execCommand('copy');
-      document.body.removeChild(el);
-
-      notification.success({
-        title: 'Payment Link Generated',
+  if (paymentStatus==props.paymentStatusEnum.PAID){
+    notification.error({
+        title: 'Payment already \'Paid\', button deactivated for this transaction',
         position: 'top',
       });
-    } else {
+  } else {
+    try {
+      const response = await axios.post('/generate-payment-link', {
+        quoteId: props.quoteRequest.id,
+        modelType: props.quoteType,
+        paymentCode: code,
+        splitPaymentId: splitPaymentId,
+        isInertia: true,
+      });
+
+      if (response.data.success) {
+        const el = document.createElement('textarea');
+        el.value = response.data.payment_link;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+
+        notification.success({
+          title: 'Link copied to clipboard',
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: 'Payment Link Generation Failed',
+          position: 'top',
+        });
+      }
+    } catch (err) {
       notification.error({
         title: 'Payment Link Generation Failed',
         position: 'top',
       });
     }
-  } catch (err) {
-    notification.error({
-      title: 'Payment Link Generation Failed',
-      position: 'top',
-    });
   }
 };
 
@@ -995,7 +1003,11 @@ const addPayment = isValid => {
     document_detail: fileUploadModels.value,
   };
 
-  if (isCreditApprovalView.value === true) {    
+  if (isCreditApprovalView.value === true) {
+    let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
+    if(paymentMethodsForm.declined_reason != '6' && isDeclineClicked.value===true){
+       declinedCustomReason = declinedReasons.find(reason => reason.value === paymentMethodsForm.declined_reason).label;
+    }
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -1006,7 +1018,7 @@ const addPayment = isValid => {
       is_capture: isCreditCardView.value,
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
-      declined_custom_reason: paymentMethodsForm.declined_custom_reason,      
+      declined_custom_reason: declinedCustomReason,      
     };
     paymentMethodsForm
       .transform(data => viewData)
@@ -1245,7 +1257,7 @@ const getCaptureValidation = computed(() => {
         } else if (paymentSplitRec.payment_status_id===props.paymentStatusEnum.PAID) {
           return true;
         }
-    } else if ( paymentRecord.frequency==='split_payment' ){
+    } else if ( paymentRecord.frequency==='split_payments' ){
       const paymentMethodCC = paymentRecord.payment_splits.filter(item => item.payment_method.code === "CC");
       if (paymentMethodCC.length > 0) {
         let ccPaymentStatus = paymentMethodCC.filter(item => item.payment_status_id===props.paymentStatusEnum.AUTHORIZED);
@@ -1547,8 +1559,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <td>{{ formatString(splitPayment.payment_status.text) }}</td>
               <td>{{ splitPayment.payment_allocation_status !== null ? formatString(splitPayment.payment_allocation_status) : ''}}</td>
               <td>
-                <x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>
-                <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="onCopyPaymentLink(splitPayment.payment_link,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>
+                <x-button size="xs" color="primary" @click="editPaymentModal(payments[0],splitPayment.id,splitPayment.sr_no,0)" outlined >View</x-button>                
+                <x-button v-if="splitPayment.payment_method.code=='CC'" class="ml-2" size="xs" color="emerald"  @click.prevent="generateCCLink(splitPayment.code,splitPayment.sr_no,splitPayment.payment_status_id);" outlined >Copy Payment Link</x-button>                
               </td>
             </tr>
           </template>

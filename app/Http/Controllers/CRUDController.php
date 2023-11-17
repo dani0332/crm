@@ -1786,22 +1786,23 @@ class CRUDController extends Controller
         }
     }
     public function splitPaymentUpdate(Request $request)
-    {
-        if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
-            return;
+    {   
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)){
+            $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
         }
-        $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
-
-        return back()->with('success', $successMessage);
     }
 
     public function splitPaymentsApprove(Request $request)
     {        
-        if (! (Auth::user()->hasRole(RolesEnum::CarAdvisor))) {
-            return;
-        }
-        $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
-        return back()->with('success', $successMessage);
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)){
+            $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }      
     }
 
     public function updatePayment(Request $request)

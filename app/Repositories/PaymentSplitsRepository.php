@@ -46,9 +46,10 @@ class PaymentSplitsRepository
 
                 $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 if ($paymentSplitRecord) {
+                    /*
                     if ($paymentSplitRecord->payment_method == 'CC') {
                         $this->generateSplitPaymentLink($quoteID, $paymentSplitRecord->id, $request->modelType, $request->quote_id);
-                    }
+                    }*/
                     //add document references
                     if (isset($request->split_payment_details['document_detail'][$i])
                         && $paymentSplitRecord
@@ -69,11 +70,10 @@ class PaymentSplitsRepository
     }
 
     public function generateSplitPaymentLink($code, $splitPaymentId, $modelType, $quoteId)
-    {
-        $payment = Payment::where('code', '=', $code)->first();
+    {       
         $splitPayment = PaymentSplits::where(['code' => $code, 'id' => $splitPaymentId])->first();
-        //dd($payment);
-
+        $payment = $splitPayment->payment;
+       
         if (! $payment) {
             return false;
         }
@@ -218,8 +218,6 @@ class PaymentSplitsRepository
 
     public function updateSplitPaymentsApprove($request)
     {
-        //dd($request->all());
-
         $quoteModel = $this->getQuoteObject($request->modelType, $request->quote_id);
         if (! $quoteModel) {
             return response()->json(['success' => false]);
@@ -368,7 +366,7 @@ class PaymentSplitsRepository
     public function setMasterPaymentStatus($splitPaymentId)
     { 
         $splitPayment = PaymentSplits::with('payment')->find($splitPaymentId);
-        $payment = Payment::where('code', $splitPayment->code)->first();
+        $payment = $splitPayment->payment;        
         if ($payment) {
             if ($payment->frequency == 'upfront') {
                 $payment->update(
