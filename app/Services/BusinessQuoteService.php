@@ -71,6 +71,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id',
                 'bqr.renewal_import_code',
+                'bqr.kyc_decision',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
                 'c.insured_first_name',
                 'c.insured_last_name',

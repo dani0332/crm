@@ -1,5 +1,4 @@
 <script setup>
-import KycForm from "@/inertia/Components/KycForm.vue";
 import QuoteDocuments from "@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue";
 
 defineProps({
@@ -572,19 +571,12 @@ const linkEntity = () => {
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">Entity Profile</h3>
-          <KycForm
-              :roles="$page.props.rolesEnum"
-              :quote="page.props.quote"
-              :country-list="page.props.countryList"
-              :aml-quote-status="page.props.amlQuoteStatus"
-              :nationalities="page.props.nationalities"
-              :modelType="page.props.quoteType"
-              :entities="page.props.entities"
-              :legal-structure="page.props.legalStructure"
-              :id-document-type="page.props.idDocumentType"
-              :issuance-place="page.props.issuancePlace"
-              :issuing-authority="page.props.issuanceAuthorities"
-          />
+          <x-button size="sm" color="orange" v-if="quote.kyc_decision === 'Complete'">
+            KYC - Complete
+          </x-button>
+          <x-button size="sm" color="primary" v-else>
+            KYC - Pending
+          </x-button>
         </div>
         <x-divider class="mb-4 mt-1" />
         <x-form @submit="updateProfileDetails" :auto-focus="false">
