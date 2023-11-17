@@ -18,6 +18,7 @@ const props = defineProps({
   idDocumentType: Array,
   modeOfContact: Array,
   modeOfDelivery: Array,
+  professionalTitle: Array,
   employmentSectors: Array,
   residentialStatus: Array,
   companyPosition: Array,
@@ -146,6 +147,13 @@ const modeOfContactOptions = computed(() => {
 
 const modeOfDeliveryOptions = computed(() => {
   return props.modeOfDelivery.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const professionalTitleOptions = computed(() => {
+  return props.professionalTitle.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -355,11 +363,13 @@ onMounted(() => {
         :rules="[rules.isRequired]"
       />
 
-      <x-input
-        v-model="kycForm.professional_title"
-        label="Professional job title"
-        placeholder="Professional job title"
-        :rules="[rules.isRequired]"
+      <ComboBox
+          v-model="kycForm.professional_title"
+          label="Professional job title"
+          :options="professionalTitleOptions"
+          placeholder="Professional job title"
+          :single="true"
+          :rules="[rules.isRequired]"
       />
 
       <x-select

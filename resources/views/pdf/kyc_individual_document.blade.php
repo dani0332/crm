@@ -182,7 +182,7 @@
                     </tr>
                     <tr>
                         <td>Professional job title:</td>
-                        <td>{{ $data['professional_title'] }}</td>
+                        <td>{{ $data['professional_title_text'] }}</td>
                     </tr>
                     <tr>
                         <td>Employment Sector:</td>
