@@ -15,6 +15,7 @@ const props = defineProps({
   customerTypeEnum: Object,
   lookups: Object,
   legalStructure: Object,
+  entities: Array,
 });
 
 const loader = ref({
@@ -168,7 +169,12 @@ const show = ref(true);
 </script>
 
 <template>
-  <AppModal :showClose="true" :showHeader="true" v-model:modelValue="showModal">
+  <AppModal
+    :showClose="true"
+    :showHeader="true"
+    v-model:modelValue="showModal"
+    class=""
+  >
     <template #header>Update and Verify</template>
     <template #default>
       <p class="text-center mb-10">
@@ -262,15 +268,33 @@ const show = ref(true);
         />
         <x-divider class="mb-4 mt-1" />
 
-        <div class="text-right space-x-4 mt-8">
+        <div class="text-center space-x-4 mt-8">
           <x-button
             size="sm"
             color="success"
             @click.prevent="modals.insuredDetailConfirmation = true"
           >
-            Confirm
+            Submit For AML Screening
           </x-button>
         </div>
+
+        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
+        </div>
+
+        <KycEntityModal
+          :roles="$page.props.rolesEnum"
+          :quote="quoteDetails"
+          :country-list="nationalities"
+          :aml-quote-status="props.amlQuoteStatus"
+          :nationalities="nationalities"
+          :modelType="props.quoteType?.code"
+          :entities="props.entities"
+          :idDocumentType="props.lookups.id_type"
+          :legal-structure="props.lookups.legal_structure"
+          :issuance-place="props.lookups.issuance_place"
+          :issuing-authority="props.lookups.issuing_authority"
+        />
       </x-form>
     </template>
   </AppModal>
@@ -501,10 +525,39 @@ const show = ref(true);
         :memberRelations="memberRelations"
         :customerType="props.customerTypeEnum.Individual"
       />
+      <div class="flex justify-center my-5">
+        <x-button
+          size="sm"
+          color="success"
+          @click.prevent="insuredDetailsSubmit"
+          :loading="insuredFormDetails.processing"
+          class=""
+        >
+          Submit For AML Screening
+        </x-button>
+      </div>
 
       <x-divider class="mb-4 mt-4" />
 
-      <div class="text-right space-x-4 mt-8">
+      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
+      </div>
+
+      <KycIndividualModal
+        :roles="$page.props.rolesEnum"
+        :quote="quoteDetails"
+        :countryList="nationalities"
+        :amlQuoteStatus="$page.props.amlQuoteStatus"
+        :nationalities="nationalities"
+        :modelType="quoteType?.code"
+        :idDocumentType="props.lookups.id_type"
+        :modeOfContact="props.lookups.mode_of_contact"
+        :employmentSectors="props.lookups.employment_sector"
+        :residentialStatus="props.lookups.resident_status"
+        :companyPosition="props.lookups.company_position"
+      />
+
+      <!-- <div class="text-right space-x-4 mt-8">
         <x-button
           size="sm"
           color="red"
@@ -512,15 +565,7 @@ const show = ref(true);
         >
           Cancel
         </x-button>
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="insuredDetailsSubmit"
-          :loading="insuredFormDetails.processing"
-        >
-          Submit
-        </x-button>
-      </div>
+      </div> -->
     </x-form>
   </x-modal>
 </template>
