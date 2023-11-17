@@ -372,11 +372,13 @@ class AMLController extends Controller
                 $customerUpdate = $AMLCheckRequest->validated();
                 if (\request()->withFullName) {
                     $fullName = explode(' ', \request()->insured_fullname);
+                    $insuredFirstName = $fullName[0] ?? '';
+                    unset($fullName[0]);
                     $customerUpdate = [
                         'nationality_id' => $AMLCheckRequest->nationality_id,
                         'dob' => $AMLCheckRequest->dob,
-                        'insured_first_name' => $fullName[0] ?? '',
-                        'insured_last_name' => $fullName[1] ?? ''
+                        'insured_first_name' => $insuredFirstName,
+                        'insured_last_name' => implode(' ', $fullName)
                     ];
                 }
                 $customer->update($customerUpdate);
