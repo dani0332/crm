@@ -74,42 +74,9 @@ const disabledGroupBy = computed(() => {
   return filters.reportCategory != 'Sales Summary Report' ?? false;
 });
 
-const reportCategories = reactive([
-  {
-    label: 'Sales Summary Report',
-    value: 'Sales Summary Report',
-  },
-  {
-    label: 'Sales Report Detailed',
-    value: 'Sales Report Detailed',
-  },
-  {
-    label: 'Ending Policies Report',
-    value: 'Ending Policies Report',
-  },
-  {
-    label: 'Transactions Report',
-    value: 'Transactions Report',
-  },
-  {
-    label: 'Active Policies Report',
-    value: 'Active Policies Report',
-  },
-]);
+const reportCategories = ref(props.filterOptions?.reportCategories);
 
-const transactionTypes = reactive([
-  { label: 'All', value: 'All' },
-  { label: 'New Business', value: 'New Business' },
-  {
-    label: 'Existing Customer - Renewal',
-    value: 'Existing Customer - Renewal',
-  },
-  {
-    label: 'Existing Customer - New Business',
-    value: 'Existing Customer -  New Business',
-  },
-  { label: 'Endorsement', value: 'Endorsement' },
-]);
+const transactionTypes = ref(props.filterOptions?.transactionTypes)
 
 const groupBy = reactive([
   { label: 'Advisor', value: 'Advisor' },
@@ -129,26 +96,26 @@ const reportTypes = ref([
   {
     label: 'Issued Policies',
     value: 'Issued Policies',
-    report: ['Sales Summary Report', 'Sales Report Detailed'],
+    report: ['Sales Summary', 'Sales Detail'],
   },
   {
     label: 'Transaction Payments',
     value: 'Transaction Payments',
     report: [
-      'Sales Summary Report',
-      'Sales Report Detailed',
-      'Transactions Report',
+      'Sales Summary',
+      'Sales Detail',
+      'Transaction',
     ],
   },
   {
     label: 'Expiring Policies',
     value: 'Expiring Policies',
-    report: ['Ending Policies Report'],
+    report: ['Ending Policies'],
   },
   {
     label: 'Active Policies',
     value: 'Active Policies',
-    report: ['Active Policies Report'],
+    report: ['Active Policies'],
   },
 ]);
 
@@ -157,8 +124,8 @@ const onTeamChange = e => {
 
   loaders.subTeams = true;
   axios
-    .post(`/reports/fetch-advisor-by-team`, {
-      teamIds: Array.isArray(e) ? e : [e],
+    .post(`/get-sub-teams-by-team`, {
+        team_filter: Array.isArray(e) ? e : [e],
     })
     .then(res => {
       if (res.data.length > 0) {

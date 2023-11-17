@@ -3,13 +3,13 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\ManagementReportCategoriesEnum;
+use App\Enums\TransactionTypeEnum;
 use App\Models\LeadSource;
-use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class SaleSummaryReportService implements ManagementReport
 {
@@ -17,24 +17,24 @@ class SaleSummaryReportService implements ManagementReport
 
     public function getReportData(Request $request)
     {
-        $query = PersonalQuote::query()
-            ->join('quote_type', 'quote_type.id', '=', 'personal_quote.quote_type_id')
-            ->select(
-                DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
-                DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements')
-            );
+        // $query = PersonalQuote::query()
+        //     ->join('quote_type', 'quote_type.id', '=', 'personal_quote.quote_type_id')
+        //     ->select(
+        //         DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
+        //         DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements')
+        //     );
 
-        $typeCode = DB::raw('LOWER(quote_type.code)');
-        $dynamicTableName = DB::raw("CONCAT($typeCode, '_quote_request')");
+        // $typeCode = DB::raw('LOWER(quote_type.code)');
+        // $dynamicTableName = DB::raw("CONCAT($typeCode, '_quote_request')");
 
-        $query->selectRaw("$dynamicTableName AS quote_table");
+        // $query->selectRaw("$dynamicTableName AS quote_table");
 
-        $query->join($dynamicTableName, function ($join) {
-            $join->on('personal_quotes.uuid', '=', 'quote_table.uuid');
-        });
+        // $query->join($dynamicTableName, function ($join) {
+        //     $join->on('personal_quotes.uuid', '=', 'quote_table.uuid');
+        // });
 
-        dd($query->toSql());
-        $result = $query->get();
+        // dd($query->toSql());
+        // $result = $query->get();
     }
 
     public function getFilterOptions()
@@ -45,6 +45,16 @@ class SaleSummaryReportService implements ManagementReport
         $loginUserId = auth()->user()->id;
 
         $teamIds = $this->getUserTeams($loginUserId);
+
+        $reportCategories = [];
+        foreach (ManagementReportCategoriesEnum::asArray() as $value) {
+            $reportCategories[] = ['label' => $value, 'value' => $value];
+        }
+
+        $transactionTypes = [];
+        foreach (TransactionTypeEnum::asArray() as $value) {
+            $transactionTypes[] = ['label' => $value, 'value' => $value];
+        }
 
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
             ->select('name', 'id')
@@ -68,6 +78,8 @@ class SaleSummaryReportService implements ManagementReport
             'maxDays' => $maxDays,
             'leadSources' => $leadSources,
             'teams' => $teams,
+            'reportCategories' => $reportCategories,
+            'transactionTypes' => $transactionTypes,
         ];
     }
 
