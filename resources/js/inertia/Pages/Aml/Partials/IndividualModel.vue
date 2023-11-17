@@ -545,7 +545,7 @@ onMounted(() => {
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <!-- <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
           <div class="flex gap-5 mb-5 align-center">
             <p>Want to send Fullname?</p>
             <x-radio
@@ -559,7 +559,7 @@ onMounted(() => {
               label="No"
             />
           </div>
-        </dl> -->
+        </dl>
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
           <div v-if="insuredFormDetails.withFullName">
             <x-field label="Insured Full Name">
@@ -628,7 +628,7 @@ onMounted(() => {
 
           <!-- <x-field label="Country / Place of Birth">
                         <ComboBox
-                            :single="true"                            
+                            :single="true"
                             v-model="insuredFormDetails.place_of_birth"
                             placeholder="Please enter the Place of Birth of the customer as per Passport"
                             :options="nationalitiesOptions"
@@ -653,7 +653,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.residential_address"
                             placeholder="Residential Address"
                             :rules="validateCustomerFields ? [isRequired] : []"
-                            type="text"                            
+                            type="text"
                             class="w-full"
                         />
                     </x-field>
