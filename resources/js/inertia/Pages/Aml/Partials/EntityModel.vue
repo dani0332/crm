@@ -294,6 +294,7 @@ const show = ref(true);
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
+          :ubo-relation="props.lookups.ubo_relation"
         />
       </x-form>
     </template>

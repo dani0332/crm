@@ -224,7 +224,7 @@
                     <td style="width: 25%;">
                         <div>
                             Position:
-                            <span class="value">{{ $data['manager_position'] }}</span>
+                            <span class="value">{{ $data['manager_position_text'] }}</span>
                         </div>
                     </td>
                 </tr>

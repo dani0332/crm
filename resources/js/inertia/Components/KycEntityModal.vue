@@ -18,6 +18,7 @@ const props = defineProps({
   idDocumentType: Array,
   issuancePlace: Array,
   issuingAuthority: Array,
+  uboRelation: Array,
 });
 
 const rules = {
@@ -131,6 +132,13 @@ const placeOfIssuanceOptions = computed(() => {
 
 const issuingAuthorityOptions = computed(() => {
   return props.issuingAuthority.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const uboRelationOptions = computed(() => {
+  return props.uboRelation.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -427,11 +435,13 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <x-input
-        v-model="kycForm.manager_position"
-        label="Position"
-        placeholder="Position"
-        :rules="[isRequired]"
+      <ComboBox
+          v-model="kycForm.manager_position"
+          label="Position"
+          :options="uboRelationOptions"
+          placeholder="Position"
+          :single="true"
+          :rules="[isRequired]"
       />
     </div>
 
