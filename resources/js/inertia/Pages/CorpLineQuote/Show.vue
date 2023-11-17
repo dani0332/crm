@@ -19,6 +19,7 @@ defineProps({
   permissions: Object,
   paymentMethods: Object,
   insuranceProviders: Array,
+  insuranceProvidersAll: Object,
   lostReasons: Object,
   customerTypeEnum: Object,
   companyTypes: Array,
@@ -1162,6 +1163,12 @@ const linkEntity = () => {
       </x-modal>
     </div>
 
+    <PlanDetails
+    :insuranceProviders="insuranceProvidersAll"
+    :quote="quote"
+    :quoteType="page.props.quoteType"
+     />
+     
     <!-- Payments -->
     <PaymentTable
       :payments="payments"

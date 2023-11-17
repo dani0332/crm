@@ -164,7 +164,7 @@ class BridgerInsightService
                             Log::info('Bridger Insight Service - KYC Log data inserted');
 
                             if (isset($getDecodeContents->Records)) {
-                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records), $customerOrEntityName, $quoteType->text, $loginCustomerID);
+                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerID);
                                 Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                             }
                         }
