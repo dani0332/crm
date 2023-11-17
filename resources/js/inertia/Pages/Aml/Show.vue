@@ -293,9 +293,9 @@ const falsePositive = computed(() => {
               #item-address="{ EntityDetails }"
           >
               {{
-                  EntityDetails.Addresses.map(
+                  EntityDetails.Addresses ? EntityDetails.Addresses.map(
                       address => (address.City ?? '') +' '+ (address.StateProvinceDistrict ?? '') +' '+ (address.Country ?? ''),
-                  ).toString() ?? ''
+                  ).toString() : ''
               }}
           </template>
 
@@ -304,9 +304,9 @@ const falsePositive = computed(() => {
           #item-country="{ EntityDetails }"
         >
           {{
-            EntityDetails.Addresses.map(
+            EntityDetails.Addresses ? EntityDetails.Addresses.map(
               nationality => nationality.Country,
-            ).toString() ?? ''
+            ).toString() : ''
           }}
         </template>
         <template v-if="responseFrom === 'RYU'" #item-country="{ pob }">
