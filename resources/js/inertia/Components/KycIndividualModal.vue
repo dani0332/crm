@@ -291,7 +291,6 @@ onMounted(() => {
         v-model="kycForm.id_number"
         label="ID number"
         placeholder="ID number"
-        type="number"
         :rules="[isRequired]"
       />
 
