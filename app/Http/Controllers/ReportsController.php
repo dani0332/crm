@@ -164,15 +164,15 @@ class ReportsController extends Controller
 
     public function renderSaleManagementReport(Request $request)
     {
-        $reportCategory = !isset($reportCategory)  ? ManagementReportCategoriesEnum::SALE_SUMMARY  : $request->reportCategory;
+        $reportCategory = ! isset($reportCategory) ? ManagementReportCategoriesEnum::SALE_SUMMARY : $request->reportCategory;
 
-        $reportInstance =  ManagementReportServiceFactory::createStrategy($reportCategory);
+        $reportInstance = ManagementReportServiceFactory::createStrategy($reportCategory);
 
         return inertia('ManagementReport/index', [
             'reportData' => $reportInstance->getReportData($request),
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
-            'reportName' => $request->reportCategory ?? 'Sales Summary Report'
+            'reportName' => $request->reportCategory ?? 'Sales Summary Report',
         ]);
     }
 }
