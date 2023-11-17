@@ -283,6 +283,7 @@ class AMLController extends Controller
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
             'entities' => $entities,
+            'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -618,5 +619,16 @@ class AMLController extends Controller
         }
 
         return true;
+    }
+
+    private function checkAmlQuoteStatus($statusId)
+    {
+        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
+            return 2;
+        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+            return 1;
+        }
+
+        return null;
     }
 }
