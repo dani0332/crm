@@ -2,7 +2,6 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
-import KycForm from "../../Components/KycForm.vue";
 import {computed} from "vue";
 
 defineProps({
@@ -1553,21 +1552,12 @@ onMounted(() => {
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer' : 'Entity '}} Profile</h3>
-          <KycForm
-              :roles="$page.props.rolesEnum"
-              :quote="page.props.quote"
-              :country-list="page.props.countryList"
-              :aml-quote-status="page.props.amlQuoteStatus"
-              :nationalities="page.props.nationalities"
-              :modelType="quoteType"
-              :entities="page.props.entities"
-              :legal-structure="page.props.legalStructure"
-              :id-document-type="page.props.idDocumentType"
-              :mode-of-contact="page.props.modeOfContact"
-              :employment-sectors="page.props.employmentSectors"
-              :residential-status="page.props.residentialStatus"
-              :company-position="page.props.companyPosition"
-          />
+          <x-button size="sm" color="orange" v-if="quote.kyc_decision === 'Complete'">
+            KYC - Complete
+          </x-button>
+          <x-button size="sm" color="primary" v-else>
+            KYC - Pending
+          </x-button>
         </div>
           <x-divider class="mb-4 mt-1" />
           <x-form @submit="updateProfileDetails" :auto-focus="false">

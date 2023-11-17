@@ -211,9 +211,13 @@ class LookupSeeder extends Seeder
 
         if (! DB::table('lookups')->where('key', LookupsEnum::MODE_OF_DELIVERY)->first()) {
             DB::table('lookups')->insert([
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modSent', 'text' => 'Sent to customer via Email', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modDelivered', 'text' => 'Delivered to customer via Courier', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modCollected', 'text' => 'Collected by customer from office', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-car', 'text' => 'Company\'s Authorised Representative', 'created_at' => now(),
+                    'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-atp', 'text' => 'Authorised Third party', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-unkown', 'text' => 'Unknown', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-pse', 'text' => 'Policy sent via email', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-psc', 'text' => 'Policy sent via curier', 'created_at' => now(), 'updated_at' => now()],
+                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-cco', 'text' => 'Collected by customer from office', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
     }
