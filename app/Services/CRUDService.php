@@ -641,7 +641,7 @@ class CRUDService extends BaseService
             }
 
             $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
-            $customerScore =  ($paymentAuthorized>=100001)?3:(($paymentAuthorized >=55001 && $paymentAuthorized <= 100000)?2:1);
+            $customerScore +=  ($paymentAuthorized>=100001)?3:(($paymentAuthorized >=55001 && $paymentAuthorized <= 100000)?2:1);
             $customerScore += 1; // For products all product have 1
             $customerScore += 1; // payment volume for future use
             $customerScore += $paymentTopScore;
