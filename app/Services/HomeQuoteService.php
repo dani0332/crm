@@ -51,6 +51,7 @@ class HomeQuoteService extends BaseService
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
             'hqr.additional_notes',
+            'hqr.kyc_decision',
             'hqr.nationality_id',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),

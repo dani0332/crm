@@ -302,6 +302,11 @@ class AjaxController extends Controller
                     // 'manager_position' => $data['manager_position'],
                 ]);
 
+                /*QuoteMemberDetail::create([
+                    'code' => $quote->quoteRequestEntityMapping->entity->trade_license_no,
+                    'customer_type' => CustomerTypeEnum::Entity,
+                ]);*/
+
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 

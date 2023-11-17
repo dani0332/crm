@@ -79,7 +79,8 @@ class LifeQuoteService extends BaseService
                 'lqr.previous_quote_policy_premium',
                 'lqr.customer_id',
                 'lqr.parent_duplicate_quote_id',
-                'lqr.risk_score'
+                'lqr.risk_score',
+                'lqr.kyc_decision',
             )
             ->leftJoin('life_quote_request_detail as lqrd', 'lqrd.life_quote_request_id', 'lqr.id')
             ->leftJoin('currency_type as ct', 'ct.id', '=', 'lqr.sum_insured_currency_id')
