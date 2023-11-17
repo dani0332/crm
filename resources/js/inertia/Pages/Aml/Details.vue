@@ -604,6 +604,7 @@ onMounted(() => {
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
+      :entities="entities"
     />
 
     <IndividualModel
