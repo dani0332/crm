@@ -1438,7 +1438,10 @@ class CRUDController extends Controller
 
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
-
+        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType,$request->quote_uuid);
+        if($request->leadStatus == QuoteStatusEnum::TransactionApproved){
+            $this->crudService->calculateScore($plainEntity);
+        }
         // courtesy email
         $lobs = [quoteTypeCode::Business];
         if ($oldEntity->quote_status_id != $entity->quote_status_id && $entity->quote_status_id == QuoteStatusEnum::TransactionApproved && ! in_array($request->modelType, $lobs)) {
