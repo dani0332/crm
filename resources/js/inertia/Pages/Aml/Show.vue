@@ -109,7 +109,7 @@ const setSelectedOption = (e, item) => {
           quote_ref_id : props.aml.quote_request_id,
           customer_entity_name : props.aml.input,
           quote_type_text : props.aml.quote_type_text,
-          bridger_response: props.aml.results,
+          bridger_response: props.aml.results_found,
       };
 
       axios.post(`/kyc/send-bridger-response`, data)

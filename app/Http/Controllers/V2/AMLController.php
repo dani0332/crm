@@ -93,7 +93,8 @@ class AMLController extends Controller
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
-                    QuoteTypes::CYCLE,
+                    QuoteTypes::CYCLE->id(),
+                    QuoteTypes::JETSKI->id()
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -370,7 +371,7 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-                if (\request()->withFullName) {
+                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
                     $fullName = explode(' ', \request()->insured_fullname);
                     $insuredFirstName = $fullName[0] ?? '';
                     unset($fullName[0]);
@@ -606,7 +607,7 @@ class AMLController extends Controller
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
                 $request['aml_quote_url'],
                 $request['quote_ref_id'],
-                json_encode($request['bridger_response']),
+                $request['bridger_response'],
                 $request['customer_entity_name'],
                 $request['quote_type_text'],
                 auth()->user()->email,
