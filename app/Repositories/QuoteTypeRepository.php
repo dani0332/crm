@@ -22,7 +22,7 @@ class QuoteTypeRepository extends BaseRepository
 
     public function fetchAllowedQuoteForAml()
     {
-        $notAllowedQuoted = [QuoteTypeId::Yacht, QuoteTypeId::Bike, QuoteTypeId::Jetski, QuoteTypeId::Cycle];
+        $notAllowedQuoted = [];
 
         return $this->whereNotIn('id', $notAllowedQuoted)->withActive()->orderBy('sort_order')->get();
     }

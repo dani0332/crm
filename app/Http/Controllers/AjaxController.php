@@ -214,7 +214,7 @@ class AjaxController extends Controller
             $data['company_position_text'] = LookupRepository::where('code', $data['company_position'])->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
             $data['premium'] = $quote->premium;
             $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
-            $data['product_type'] = ucfirst($quoteType) . ' Insurance';
+            $data['product_type'] = ucfirst($quoteType).' Insurance';
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));

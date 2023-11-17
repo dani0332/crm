@@ -5,6 +5,7 @@ import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
 import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
+import PlanDetails from '../../Components/PlanDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import MemberDetails from "../../Components/MemberDetails.vue";
@@ -671,6 +672,13 @@ const linkEntity = () => {
       :can="can"
       :quoteStatusEnum="quoteStatusesEnum"
     />
+
+    <PlanDetails
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+     />
+
 
     <EmbeddedProducts
       :data="embeddedProducts"

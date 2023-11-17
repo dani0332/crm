@@ -164,7 +164,7 @@ class BridgerInsightService
                             Log::info('Bridger Insight Service - KYC Log data inserted');
 
                             if (isset($getDecodeContents->Records)) {
-                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records), $customerOrEntityName, $quoteType->text, $loginCustomerID);
+                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerID);
                                 Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                             }
                         }
@@ -198,13 +198,16 @@ class BridgerInsightService
         switch ($customerType) {
             case CustomerTypeEnum::Individual:
                 $dateOfBirth = explode('-', $details['dob']);
+                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
                 $payLoad = array_merge($basicConfig, [
                     'SearchInput' => [
                         'Records' => [
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Individual,
-                                    'Name' => ['First' => $details['first_name'], 'Last' => $details['last_name']],
+                                    'Name' => ($withFullName) ?
+                                        ['Full' => $details['first_name'] .' '. $details['last_name']] :
+                                        ['First' => $details['first_name'], 'Last' => $details['last_name']],
                                     'AdditionalInfo' => [
                                         ['Type' => 'DOB', 'Date' => ['Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]],
                                         ['Type' => 'Citizenship', 'Value' => isset($details['nationality']) ? $details['nationality']['text'] : ''],

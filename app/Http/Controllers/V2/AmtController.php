@@ -20,6 +20,7 @@ use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
+use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteMemberDetailsRepository;
@@ -265,6 +266,7 @@ class AmtController extends Controller
             })->values();
         }
 
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
         $countries = Nationality::all();
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
@@ -304,6 +306,7 @@ class AmtController extends Controller
             'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 
