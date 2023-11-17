@@ -15,9 +15,6 @@ const { isRequired } = useRules();
 
 const quoteTypeCodeEnum = page.props.quoteTypeCodeEnum;
 
-
-
-
 console.log("QuoteType:", props.quoteType, "UUID", props.quote.uuid);
 
 const planDetailsForm = useForm({
@@ -123,7 +120,7 @@ const rolesEnum = page.props.rolesEnum;
           <x-input
             v-model="planDetailsForm.price_vat_applicable"
             :rules="props.quoteType == quoteTypeCodeEnum.Life ? [] : [isRequired]"
-            :disabled="props.quoteType == quoteTypeCodeEnum.Life"
+            :disabled="props.quoteType == quoteTypeCodeEnum.Life && props.quoteType != quoteTypeCodeEnum.Business"
             :error="planDetailsForm.errors.price_vat_applicable"
             label="Price (VAT Applicable)"
             class="w-full"
@@ -136,7 +133,7 @@ const rolesEnum = page.props.rolesEnum;
           <x-input
             v-model="planDetailsForm.price_vat_not_applicable"
             :error="planDetailsForm.errors.price_vat_not_applicable"
-            :disabled="props.quoteType != quoteTypeCodeEnum.Life"
+            :disabled="props.quoteType != quoteTypeCodeEnum.Life && props.quoteType != quoteTypeCodeEnum.Business"
             type="number"
             label="Price (VAT not applicable)"
             class="w-full"
