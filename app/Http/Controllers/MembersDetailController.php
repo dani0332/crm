@@ -29,6 +29,7 @@ class MembersDetailController extends Controller
     {
         if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health) &&
             (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
+
             $healthMemberDetails = $request->validated();
 
             if (! in_array('health_quote_request_id', $request->validated())) {
@@ -39,10 +40,15 @@ class MembersDetailController extends Controller
             }
 
             $healthMemberCount = HealthMemberDetail::where('customer_id', $healthMemberDetails['customer_id'])->count();
+
+
             $healthMemberDetail = HealthMemberDetail::create(array_merge($healthMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$healthMemberDetails['customer_id'].'-'.++$healthMemberCount,
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
+                'is_third_party_payer' => $request->is_third_party_payer ?? false,
             ]));
+
+            
 
             $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
 
@@ -66,6 +72,7 @@ class MembersDetailController extends Controller
             $travelMemberDetail = TravelMemberDetail::create(array_merge($travelMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$travelMemberDetails['customer_id'].'-'.++$travelMemberCount,
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
+                'is_third_party_payer' => $request->is_third_party_payer ?? false,
             ]));
 
             $travelMemberDetail = $travelMemberDetail->load(['relation', 'nationality']);
@@ -110,7 +117,8 @@ class MembersDetailController extends Controller
                 $quoteMemberDetails = QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
                     'quote_type_id' => $quoteTypeId,
                     'code' => $quoteMemberCode,
-                    'is_third_party_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
+                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
+                    'is_third_party_payer' => $request->is_third_party_payer ?? false,
                 ]);
                 $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
                 $quoteObject->updated_at = Carbon::now();

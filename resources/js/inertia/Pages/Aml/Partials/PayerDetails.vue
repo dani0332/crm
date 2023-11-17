@@ -81,7 +81,7 @@ const memberForm = useForm({
   dob: null,
   relation_code: null,
   nationality_id: null,
-  is_payer: props.is_payer ?? true,
+  is_third_party_payer: true,
 });
 
 function onMemberSubmit(isValid) {
