@@ -585,7 +585,7 @@ if (! function_exists('createKycPDF')) {
 if (! function_exists('getRepositoryObject')) {
     function getRepositoryObject($quoteType)
     {
-        if(checkPersonalQuotes($quoteType)) {
+        if (checkPersonalQuotes($quoteType)) {
             $quoteType = QuoteTypes::PERSONAL->value;
         }
 

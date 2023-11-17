@@ -41,14 +41,11 @@ class MembersDetailController extends Controller
 
             $healthMemberCount = HealthMemberDetail::where('customer_id', $healthMemberDetails['customer_id'])->count();
 
-
             $healthMemberDetail = HealthMemberDetail::create(array_merge($healthMemberDetails, [
                 'code' => CustomerTypeEnum::IndividualShort.'-'.$healthMemberDetails['customer_id'].'-'.++$healthMemberCount,
                 'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 'is_third_party_payer' => $request->is_third_party_payer ?? false,
             ]));
-
-            
 
             $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
 
@@ -103,7 +100,6 @@ class MembersDetailController extends Controller
                 }
                 unset($quoteMemberDetails['customer_id']);
 
-
                 $quoteMemberCount = QuoteMemberDetail::where([
                     'customer_type' => $request->customer_type,
                     'customer_entity_id' => $customerEntityId,
@@ -112,7 +108,6 @@ class MembersDetailController extends Controller
                 $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?
                     CustomerTypeEnum::IndividualShort.'-'.$request->customer_id.'-'.(++$quoteMemberCount) :
                     CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount);
-
 
                 $quoteMemberDetails = QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
                     'quote_type_id' => $quoteTypeId,

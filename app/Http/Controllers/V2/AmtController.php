@@ -306,7 +306,7 @@ class AmtController extends Controller
             'UBORelations' => $UBORelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
-            'insuranceProviders' => $insuranceProviders
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 
