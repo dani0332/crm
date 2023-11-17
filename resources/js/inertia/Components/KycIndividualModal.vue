@@ -17,6 +17,7 @@ const props = defineProps({
   modelType: String,
   idDocumentType: Array,
   modeOfContact: Array,
+  modeOfDelivery: Array,
   employmentSectors: Array,
   residentialStatus: Array,
   companyPosition: Array,
@@ -138,6 +139,13 @@ const documentIdTypeOptions = computed(() => {
 
 const modeOfContactOptions = computed(() => {
   return props.modeOfContact.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const modeOfDeliveryOptions = computed(() => {
+  return props.modeOfDelivery.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -317,7 +325,7 @@ onMounted(() => {
       <x-select
         v-model="kycForm.mode_of_delivery"
         label="Mode of delivery"
-        :options="modeOfContactOptions"
+        :options="modeOfDeliveryOptions"
         placeholder="Mode of delivery"
         :rules="[isRequired]"
       />

@@ -791,6 +791,7 @@ onMounted(() => {
           :modelType="quoteType?.code"
           :idDocumentType="props.lookups.id_type"
           :modeOfContact="props.lookups.mode_of_contact"
+          :modeOfDelivery="props.lookups.mode_of_delivery"
           :employmentSectors="props.lookups.employment_sector"
           :residentialStatus="props.lookups.resident_status"
           :companyPosition="props.lookups.company_position"
