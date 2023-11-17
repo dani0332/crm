@@ -17,13 +17,20 @@ class SaleSummaryReportService implements ManagementReport
 
     public function getReportData(Request $request)
     {
-        return [];
-        // $groupBy = $request->groupBy;
-        // $query = PersonalQuote::query()
-        //     ->select(
-        //         DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
-        //         DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
-        //     )->get();
+        $query = PersonalQuote::query()
+        ->join('quote_type', 'quote_type.id', '=', 'personal_quote.quote_type_id')
+        ->select(
+            DB::raw('SUM(CASE WHEN COALESCE(policy_start_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
+            DB::raw('SUM(CASE WHEN send_update_ref_id is not null and send_update_type = "Financial" THEN 1 ELSE 0 END) as total_endorsements')
+        );
+
+       $typeCode = DB::raw('LOWER(quote_type.code)');
+        $dynamicTableName = DB::raw("CONCAT($typeCode, '_quote_request')");
+        $query->selectRaw("$dynamicTableName AS quote_table");
+        $query->join(DB::raw("$dynamicTableName AS quote_table"), function ($join) {
+            $join->on('personal_quotes.uuid', '=', 'quote_table.uuid');
+        });
+        $result = $query->get();
     }
 
     public function getFilterOptions()
