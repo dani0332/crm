@@ -13,10 +13,10 @@ const props = defineProps({
 });
 
 const reportComponents = {
-  'Customer Active Policies Report': ActivePolicies,
-  'Ending Policies Report': EndingPolicies,
-  'Sales Report Detailed': SalesDetail,
-  'Installment Report': Transaction,
+  'Active Policies ': ActivePolicies,
+  'Ending Policies ': EndingPolicies,
+  'Sales Detail': SalesDetail,
+  'Transaction ': Transaction,
 };
 
 const subTeams = ref([]);
@@ -71,12 +71,16 @@ const teams = computed(() => {
 });
 
 const disabledGroupBy = computed(() => {
-  return filters.reportCategory != 'Sales Summary Report' ?? false;
+  return filters.reportCategory == 'Sales Summary' ?? false;
+});
+
+const hideUmtGroup = computed(() => {
+  return filters.reportCategory == 'Active Policies' ?? false;
 });
 
 const reportCategories = ref(props.filterOptions?.reportCategories);
 
-const transactionTypes = ref(props.filterOptions?.transactionTypes)
+const transactionTypes = ref(props.filterOptions?.transactionTypes);
 
 const groupBy = reactive([
   { label: 'Advisor', value: 'Advisor' },
@@ -101,11 +105,7 @@ const reportTypes = ref([
   {
     label: 'Transaction Payments',
     value: 'Transaction Payments',
-    report: [
-      'Sales Summary',
-      'Sales Detail',
-      'Transaction',
-    ],
+    report: ['Sales Summary', 'Sales Detail', 'Transaction'],
   },
   {
     label: 'Expiring Policies',
@@ -125,7 +125,7 @@ const onTeamChange = e => {
   loaders.subTeams = true;
   axios
     .post(`/get-sub-teams-by-team`, {
-        team_filter: Array.isArray(e) ? e : [e],
+      team_filter: Array.isArray(e) ? e : [e],
     })
     .then(res => {
       if (res.data.length > 0) {
@@ -252,16 +252,15 @@ function onReset() {
       </x-field>
     </div>
     <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <x-field label="Group By">
+      <x-field label="Group By" v-if="disabledGroupBy">
         <x-select
           v-model="filters.groupBy"
           placeholder="Search by Group"
           :options="groupBy"
           class="w-full"
-          :disabled="disabledGroupBy"
         />
       </x-field>
-      <x-field label="UMT (Group By 1)">
+      <x-field label="UMT (Group By 1)" v-if="!hideUmtGroup">
         <x-select
           v-model="filters.utmFirst"
           placeholder="Search by UMT Group"
@@ -269,7 +268,7 @@ function onReset() {
           class="w-full"
         />
       </x-field>
-      <x-field label="UMT (Group By 2)">
+      <x-field label="UMT (Group By 2)" v-if="!hideUmtGroup">
         <x-select
           v-model="filters.utmSecond"
           placeholder="Search by Ecommerce"
