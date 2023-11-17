@@ -34,7 +34,7 @@ class AMLCheckRequest extends FormRequest
                 'dob' => 'required',
             ];
 
-            if ($this->withFullName) {
+            if (filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
                 $rules['insured_fullname'] = 'required|max:200';
             } else{
                 $rules['insured_first_name'] = 'required|max:200';
