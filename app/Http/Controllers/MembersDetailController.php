@@ -96,6 +96,7 @@ class MembersDetailController extends Controller
                 }
                 unset($quoteMemberDetails['customer_id']);
 
+
                 $quoteMemberCount = QuoteMemberDetail::where([
                     'customer_type' => $request->customer_type,
                     'customer_entity_id' => $customerEntityId,
@@ -105,10 +106,11 @@ class MembersDetailController extends Controller
                     CustomerTypeEnum::IndividualShort.'-'.$request->customer_id.'-'.(++$quoteMemberCount) :
                     CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount);
 
+
                 $quoteMemberDetails = QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
                     'quote_type_id' => $quoteTypeId,
                     'code' => $quoteMemberCode,
-                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
+                    'is_third_party_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
                 ]);
                 $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
                 $quoteObject->updated_at = Carbon::now();
