@@ -38,20 +38,32 @@ const insuranceProviderOptions = computed(() => {
   }));
 });
 
+const isProviderEmpty = ref(false);
+
 const submitPlanDetailsForm = isValid => {
 
-  if(!isValid) return false;
-  console.log(props.quote?.code, "LLLK");
+  if(!planDetailsForm.insurance_provider_id) isProviderEmpty.value = true;
+  else isProviderEmpty.value = false;
+
+  if(!isValid) return;
+
+  console.log(props.quote?.code, isValid, "LLLK");
 
   let url = `/personal-quotes/${props.quoteType}/${props.quote?.code}/save-plan-details`;
+
+  planDetailsForm.setError([]);
+
   console.log(url, "URL");
+
   planDetailsForm.post(url, {
     preserveScroll: true,
     onError: errors => {
 
       console.log(errors);
 
+      //planDetailsForm.errors = errors;
       planDetailsForm.setError(errors);
+
       notification.error({
         title: errors.error || 'Something went wrong',
         position: 'top',
@@ -97,7 +109,7 @@ const rolesEnum = page.props.rolesEnum;
         <div class="w-full md:w-1/5">
           <ComboBox
               :single="true"              
-              :hasError="!planDetailsForm.insurance_provider_id"
+              :hasError="isProviderEmpty"
               v-model="planDetailsForm.insurance_provider_id"                          
               placeholder="Insurance Provider"
               :options="insuranceProviderOptions"

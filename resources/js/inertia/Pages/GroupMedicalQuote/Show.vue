@@ -20,6 +20,7 @@ defineProps({
   canAddBatchNumber: Boolean,
   documentTypes: Object,
   storageUrl: String,
+  insuranceProviders: Object
 });
 
 const page = usePage();
@@ -808,6 +809,12 @@ const linkEntity = () => {
         :storageUrl="storageUrl"
         :quote="quote"
     />
+
+    <PlanDetails
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="page.props.quoteType"
+     />
 
       <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
         <div>
