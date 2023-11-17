@@ -52,6 +52,7 @@ class HomeQuoteService extends BaseService
             'hqr.quote_status_id',
             'hqr.additional_notes',
             'hqr.nationality_id',
+            'hqr.risk_score',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
