@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\Kyc;
 use App\Enums\LookupsEnum;
@@ -9,17 +10,21 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\CustomerDetail;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
+use App\Models\QuoteMemberDetail;
 use App\Repositories\LookupRepository;
+use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
@@ -36,12 +41,15 @@ class AjaxController extends Controller
     protected $healthQuoteService;
     protected $quoteDocumentService;
     protected $CRUDService;
+    protected $activityService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService)
+    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService,
+        ActivitiesService $activityService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->CRUDService = $CRUDService;
+        $this->activityService = $activityService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -225,7 +233,7 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                DB::table('customer_details')->insert([
+                CustomerDetail::create([
                     'customer_id' => $data['customer_id'],
                     'country_of_residence' => $data['country_of_residence'],
                     'place_of_birth' => $data['place_of_birth'],
@@ -244,6 +252,9 @@ class AjaxController extends Controller
                     'position_in_company' => $data['company_position'] ?? null,
                     'mode_of_contact' => $data['mode_of_contact'] ?? null,
                     'mode_of_delivery' => $data['mode_of_delivery'] ?? null,
+                    'pep' => $data['pep'] ?? null,
+                    'financial_sanctions' => $data['financial_sanctions'] ?? null,
+                    'dual_nationality' => $data['dual_nationality'] ?? null,
                 ]);
 
                 $quote->kyc_decision = Kyc::COMPLETE;
@@ -283,6 +294,7 @@ class AjaxController extends Controller
             $pdfFile = $pdf->output();
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
 
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
@@ -298,16 +310,22 @@ class AjaxController extends Controller
                     'id_issuance_date' => $data['id_issue_date'],
                     'id_expiry_date' => $data['id_expiry_date'],
                     'id_issuance_authority' => $data['issuing_authority'],
-                    // 'manager_name' => $data['manager_name'],
-                    // 'manager_nationality' => $data['manager_nationality'],
-                    // 'manager_dob' => $data['manager_dob'],
-                    // 'manager_position' => $data['manager_position'],
+                    'pep' => $data['pep'] ?? null,
+                    'financial_sanctions' => $data['financial_sanctions'] ?? null,
+                    'dual_nationality' => $data['dual_nationality'] ?? null,
                 ]);
 
-                /*QuoteMemberDetail::create([
+                QuoteMemberDetail::create([
                     'code' => $quote->quoteRequestEntityMapping->entity->trade_license_no,
                     'customer_type' => CustomerTypeEnum::Entity,
-                ]);*/
+                    'customer_entity_id' => 0, // for the time being, just for testing.
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'first_name' => $data['manager_name'],
+                    'dob' => $data['manager_dob'],
+                    'nationality_id' => $data['manager_nationality'],
+                    'relation_code' => $data['manager_position'],
+                ]);
 
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();

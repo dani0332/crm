@@ -427,14 +427,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.pep"
-          value="Yes"
+          value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.pep"
-          value="No"
+          value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -450,14 +450,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2 mt-3">
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="Yes"
+          value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="No"
+          value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -470,14 +470,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="Yes"
+          value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="No"
+          value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
