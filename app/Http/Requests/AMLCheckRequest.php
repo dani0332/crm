@@ -29,25 +29,32 @@ class AMLCheckRequest extends FormRequest
             // ],
         ];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
-            $rules = array_merge($rules, [
-                'insured_first_name' => 'required|max:200',
-                'insured_last_name' => 'required|max:200',
+            $rules = [
                 'nationality_id' => 'required',
                 'dob' => 'required',
+            ];
 
-                //                'place_of_birth' => 'required',
-                //                'country_of_residence' => 'required',
-                //                'residential_address' => 'required',
-                //                'residential_status' => 'required',
-                //                'id_type' => 'required',
-                //                'id_issuance_date' => 'required',
-                //                'mode_of_contact' => 'required',
-                //                'transaction_value' => 'required',
-                //                'mode_of_delivery' => 'required',
-                //                'employment_sector' => 'required',
-                //                'customer_tenure' => 'required',
+            if ($this->withFullName) {
+                $rules['insured_fullname'] = 'required|max:200';
+            } else{
+                $rules['insured_first_name'] = 'required|max:200';
+                $rules['insured_last_name'] = 'required|max:200';
+            }
 
-            ]);
+
+//            $rules = array_merge($rules, [
+//                'place_of_birth' => 'required',
+//                'country_of_residence' => 'required',
+//                'residential_address' => 'required',
+//                'residential_status' => 'required',
+//                'id_type' => 'required',
+//                'id_issuance_date' => 'required',
+//                'mode_of_contact' => 'required',
+//                'transaction_value' => 'required',
+//                'mode_of_delivery' => 'required',
+//                'employment_sector' => 'required',
+//                'customer_tenure' => 'required',
+//            ]);
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {

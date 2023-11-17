@@ -369,7 +369,17 @@ class AMLController extends Controller
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
-                $customer->update($AMLCheckRequest->validated());
+                $customerUpdate = $AMLCheckRequest->validated();
+                if (\request()->withFullName) {
+                    $fullName = explode(' ', \request()->insured_fullname);
+                    $customerUpdate = [
+                        'nationality_id' => $AMLCheckRequest->nationality_id,
+                        'dob' => $AMLCheckRequest->dob,
+                        'insured_first_name' => $fullName[0] ?? '',
+                        'insured_last_name' => $fullName[1] ?? ''
+                    ];
+                }
+                $customer->update($customerUpdate);
                 $customer->refresh();
                 info('Bridger Insight - Customer Updated Successfully');
 
@@ -379,6 +389,7 @@ class AMLController extends Controller
                     'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                     'nationality' => $customer->nationality->toArray() ?? [],
                     'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
+                    'with_full_name' => \request()->withFullName
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
