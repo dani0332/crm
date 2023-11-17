@@ -32,6 +32,7 @@ const planDetailsForm = useForm({
 });
 
 const insuranceProviderOptions = computed(() => {
+  console.log(props?.insuranceProviders);
   return props?.insuranceProviders?.map(provider => ({
     value: provider.id,
     label: provider.text,

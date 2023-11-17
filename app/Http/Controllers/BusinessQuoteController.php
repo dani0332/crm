@@ -246,6 +246,7 @@ class BusinessQuoteController extends Controller
             'isBetaUser' => auth()->user()->hasRole(RolesEnum::BetaUser),
             'paymentMethods' => $filteredPaymentMethods,
             'insuranceProviders' => $filteredInsuranceProviders,
+            'insuranceProvidersAll' => $insuranceProviders,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
