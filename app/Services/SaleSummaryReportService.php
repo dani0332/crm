@@ -20,17 +20,16 @@ class SaleSummaryReportService implements ManagementReport
     public function getReportData(Request $request)
     {
         return PersonalQuote::query()
-                    ->leftJoin('send_updates', 'personal_quotes.uuid', '=', 'send_updates.quote_uuid')
-                    ->leftJoin('lookups', 'send_updates.type_id', '=', 'lookups.id')
-                    ->select(
-                        DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
-                        DB::raw('SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
-                        DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) +
+            ->leftJoin('send_updates', 'personal_quotes.uuid', '=', 'send_updates.quote_uuid')
+            ->leftJoin('lookups', 'send_updates.type_id', '=', 'lookups.id')
+            ->select(
+                DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
+                DB::raw('SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
+                DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) +
                                 SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_transaction'),
-                        DB::raw('SUM(CASE WHEN 1 THEN 1 ELSE 0 END) as total_vat')
-                    )
-                    ->get();
-
+                DB::raw('SUM(CASE WHEN 1 THEN 1 ELSE 0 END) as total_vat')
+            )
+            ->get();
 
         // $typeCode = DB::raw('LOWER(quote_type.code)');
         // $dynamicTableName = DB::raw("CONCAT($typeCode, '_quote_request')");
