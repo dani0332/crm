@@ -24,13 +24,11 @@ class PlanDetailsRequest extends FormRequest
     {
         $rules = [
             'insurance_provider_id' => 'required|integer',
-            //'price_vat_applicable' => 'required|numeric',
-            //'price_vat_not_applicable' => 'required|numeric',
-            'price_with_vat' => 'nullable|numeric',
-            'insurer_quote_number' => 'required',
+            'price_with_vat' => 'required|numeric',
+            'insurer_quote_number' => 'nullable',
         ];
 
-        if (request()->quote_type == quoteTypeCode::Life) {
+        if (request()->quoteType == quoteTypeCode::Life) {
             $rules['price_vat_not_applicable'] = 'required|numeric';
         } else
         {
