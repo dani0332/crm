@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\V2;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Exports\AmtQuoteExport;
 use App\Exports\BusinessQuoteExport;
@@ -154,8 +155,7 @@ class CentralController extends Controller
     {
         $repository = getRepositoryObject($quoteType);
 
-        $response = $repository::where('code', $code)->update($request->validated());
-
+        $repository::where('code', $code)->update($request->validated());
 
         return redirect()->back()->with('success', 'updated successfully');
     }
