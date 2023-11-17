@@ -19,6 +19,7 @@ const props = defineProps({
   customerTypeEnum: Object,
   residentStatuses: Object,
   lookups: Object,
+  entities: Array,
 });
 
 // const paymentsDataArray = ref(props.quoteDetails.payments || []);
@@ -193,6 +194,8 @@ const insuredFormDetails = useForm({
 
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
   insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+  insured_fullname: (props.quoteDetails?.customer.insured_first_name +' '+ props.quoteDetails?.customer.insured_last_name)?? null,
+  withFullName: false,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -232,6 +235,7 @@ const updateCustomerDetails = () => {
 
     insured_first_name: insuredFormDetails.insured_first_name,
     insured_last_name: insuredFormDetails.insured_last_name,
+    insured_fullname: insuredFormDetails.insured_fullname,
     nationality_id: insuredFormDetails.nationality_id,
     dob: insuredFormDetails.dob,
 
@@ -284,8 +288,6 @@ const insuredDetailsSubmit = isValid => {
   }
 
   if (!isValid) return;
-
-  console.log('HERE', isValid);
 
   if (
     insuredFormDetails.customer_type == props.customerTypeEnum.Individual &&
@@ -544,7 +546,36 @@ onMounted(() => {
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
-          <x-field label="Insured First Name">
+          <div class="flex gap-5 mb-5 align-center">
+            <p>Want to send Fullname?</p>
+            <x-radio
+              v-model="insuredFormDetails.withFullName"
+              :value="true"
+              label="Yes"
+            />
+            <x-radio
+              v-model="insuredFormDetails.withFullName"
+              :value="false"
+              label="No"
+            />
+          </div>
+        </dl>
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+          <div v-if="insuredFormDetails.withFullName">
+            <x-field label="Insured Full Name">
+              <x-input
+                v-model="insuredFormDetails.insured_fullname"
+                :rules="[isRequired]"
+                placeholder="Insured Full Name"
+                type="text"
+                class="w-full"
+              />
+            </x-field>
+          </div>
+          <x-field
+            label="Insured First Name"
+            v-if="!insuredFormDetails.withFullName"
+          >
             <x-input
               v-model="insuredFormDetails.insured_first_name"
               :rules="[isRequired]"
@@ -553,7 +584,10 @@ onMounted(() => {
               class="w-full"
             />
           </x-field>
-          <x-field label="Insured Last Name">
+          <x-field
+            label="Insured Last Name"
+            v-if="!insuredFormDetails.withFullName"
+          >
             <x-input
               v-model="insuredFormDetails.insured_last_name"
               :rules="[isRequired]"
@@ -562,6 +596,7 @@ onMounted(() => {
               class="w-full"
             />
           </x-field>
+
           <x-field label="Nationality">
             <ComboBox
               :single="true"
@@ -580,7 +615,10 @@ onMounted(() => {
               class="w-full"
             />
           </x-field>
-          <div class="flex gap-5 mb-5 align-center">
+          <div
+            class="flex gap-5 mb-5 align-center"
+            :class="{ 'mt-8': insuredFormDetails.withFullName }"
+          >
             <p>Is the insured the payer?</p>
             <x-radio v-model="is_insured" :value="true" label="Yes" />
             <x-radio v-model="is_insured" :value="false" label="No" />
@@ -590,7 +628,7 @@ onMounted(() => {
 
           <!-- <x-field label="Country / Place of Birth">
                         <ComboBox
-                            :single="true"                            
+                            :single="true"
                             v-model="insuredFormDetails.place_of_birth"
                             placeholder="Please enter the Place of Birth of the customer as per Passport"
                             :options="nationalitiesOptions"
@@ -615,7 +653,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.residential_address"
                             placeholder="Residential Address"
                             :rules="validateCustomerFields ? [isRequired] : []"
-                            type="text"                            
+                            type="text"
                             class="w-full"
                         />
                     </x-field>
@@ -728,8 +766,35 @@ onMounted(() => {
           :memberRelations="memberRelations"
           :customerType="props.customerTypeEnum.Individual"
         />
+        <div class="my-5 flex justify-center">
+          <x-button
+            size="sm"
+            color="success"
+            type="submit"
+            @click="customerAmlOnly"
+          >
+            Submit For AML Screening
+          </x-button>
+        </div>
 
-        <!-- <KycEntityModal /> -->
+        <x-divider class="mb-4 mt-4" />
+        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
+        </div>
+
+        <KycIndividualModal
+          :roles="$page.props.rolesEnum"
+          :quote="quoteDetails"
+          :countryList="nationalities"
+          :amlQuoteStatus="$page.props.amlQuoteStatus"
+          :nationalities="nationalities"
+          :modelType="quoteType?.code"
+          :idDocumentType="props.lookups.id_type"
+          :modeOfContact="props.lookups.mode_of_contact"
+          :employmentSectors="props.lookups.employment_sector"
+          :residentialStatus="props.lookups.resident_status"
+          :companyPosition="props.lookups.company_position"
+        />
 
         <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
                 Payer Details
@@ -828,7 +893,15 @@ onMounted(() => {
             </section> -->
 
         <div class="text-right space-x-4 mt-8">
-          <x-button
+          <!-- <x-button
+            size="sm"
+            color="warning"
+            type="submit"
+            @click="customerAllFields"
+          >
+            Save
+          </x-button> -->
+          <!-- <x-button
             size="sm"
             color="warning"
             type="submit"
@@ -844,9 +917,7 @@ onMounted(() => {
             @click="customerAmlOnly"
           >
             Confirm
-          </x-button>
-
-          <!-- @click.prevent="insuredDetailsSubmit"  -->
+          </x-button> -->
         </div>
       </x-form>
     </x-modal>
@@ -1115,6 +1186,18 @@ onMounted(() => {
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
+        <div class="flex justify-center my-5">
+          <x-button
+            size="sm"
+            color="success"
+            type="submit"
+            @click.prevent="entityAmlOnly"
+            :loading="insuredFormDetails.processing"
+          >
+            Submit For AML Screening
+          </x-button>
+        </div>
+
         <x-divider class="mb-4 mt-4" />
 
         <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
@@ -1213,8 +1296,26 @@ onMounted(() => {
                 </dl>
             </section> -->
 
+        <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
+        </div>
+
+        <KycEntityModal
+          :roles="$page.props.rolesEnum"
+          :quote="quoteDetails"
+          :country-list="nationalities"
+          :aml-quote-status="props.amlQuoteStatus"
+          :nationalities="nationalities"
+          :modelType="props.quoteType?.code"
+          :entities="props.entities"
+          :idDocumentType="props.lookups.id_type"
+          :legal-structure="props.lookups.legal_structure"
+          :issuance-place="props.lookups.issuance_place"
+          :issuing-authority="props.lookups.issuing_authority"
+        />
+
         <div class="text-right space-x-4 mt-8">
-          <x-button
+          <!-- <x-button
             size="sm"
             color="red"
             @click.prevent="modals.entityView = false"
@@ -1229,16 +1330,7 @@ onMounted(() => {
             @click.prevent="entityAllFields"
           >
             Update Only
-          </x-button>
-          <x-button
-            size="sm"
-            color="success"
-            type="submit"
-            @click.prevent="entityAmlOnly"
-            :loading="insuredFormDetails.processing"
-          >
-            Submit
-          </x-button>
+          </x-button> -->
         </div>
       </x-form>
     </x-modal>

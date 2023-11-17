@@ -71,7 +71,6 @@ class BridgerInsightService
             $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
             $amlQuoteUrl = config('constants.APP_URL').'/kyc/aml/'.$quoteTypeId.'/details/'.$quoteRequestId;
             $bridgerEndPoint = $this->bridgerEndPoint.'/api/Lists/Search';
-            $loginUserEmail = auth()->user()->email ?? '';
             $bridgerClient = new \GuzzleHttp\Client();
             $getBasicConfiguration = $this->getBridgerXGBasicConfig();
 
@@ -131,26 +130,33 @@ class BridgerInsightService
                 } else {
                     if ($getDecodeContents) {
                         // Send Email alert to Compliance team only
-                        if (checkPersonalQuotes($quoteType->code) && (AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
+                        if (checkPersonalQuotes($quoteType->code) && (!AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
                             $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
                         }
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             // AML Log data inserted into kyc_logs just for BridgerInsight
-                            session()->push('amlResponseCheck', isset($getDecodeContents->Records));
+                            $amlResultCount = 0;
+                            if (isset($getDecodeContents->Records[0]->Watchlist)) {
+                                $amlResultCount = collect($getDecodeContents->Records[0]->Watchlist->Matches)->filter(function ($value) {
+                                    return $value->FalsePositive == false;
+                                })->count();
+                            }
+
+                            session()->push('amlResponseCheck', $amlResultCount > 0);
                             $kycLogDetails = [
                                 'quote_request_id' => $quoteId,
                                 'quote_type_id' => $quoteTypeId,
                                 'results' => isset($getDecodeContents->Records) ? json_encode($getDecodeContents->Records) : json_encode([]),
-                                'results_found' => isset($getDecodeContents->Records[0]) ? count($getDecodeContents->Records[0]->Watchlist->Matches) : 0,
+                                'results_found' => $amlResultCount,
                                 'created_at' => Carbon::now(),
                                 'input' => $customerOrEntityName,
-                                'match_found' => isset($getDecodeContents->Records) ? 1 : 0,
+                                'match_found' => $amlResultCount > 0 ? 1 : 0,
                                 'search_type' => $customerType,
                                 'customer_code' => $memberUboDetails['code'],
                             ];
 
-                            if (! isset($getDecodeContents->Records)) {
+                            if ($amlResultCount == 0) {
                                 $kycLogDetails['decision'] = AMLDecisionStatusEnum::PASS;
                             }
 
@@ -158,7 +164,7 @@ class BridgerInsightService
                             Log::info('Bridger Insight Service - KYC Log data inserted');
 
                             if (isset($getDecodeContents->Records)) {
-                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, json_encode($getDecodeContents->Records), $customerOrEntityName, $quoteType->text, $loginCustomerID);
+                                AMLService::sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType->text, $loginCustomerID);
                                 Log::info('Bridger Insight Service - AML Matched Email triggered to Compliance Team');
                             }
                         }
@@ -192,13 +198,16 @@ class BridgerInsightService
         switch ($customerType) {
             case CustomerTypeEnum::Individual:
                 $dateOfBirth = explode('-', $details['dob']);
+                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
                 $payLoad = array_merge($basicConfig, [
                     'SearchInput' => [
                         'Records' => [
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Individual,
-                                    'Name' => ['First' => $details['first_name'], 'Last' => $details['last_name']],
+                                    'Name' => ($withFullName) ?
+                                        ['Full' => $details['first_name'] .' '. $details['last_name']] :
+                                        ['First' => $details['first_name'], 'Last' => $details['last_name']],
                                     'AdditionalInfo' => [
                                         ['Type' => 'DOB', 'Date' => ['Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]],
                                         ['Type' => 'Citizenship', 'Value' => isset($details['nationality']) ? $details['nationality']['text'] : ''],

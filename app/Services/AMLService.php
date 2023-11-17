@@ -184,7 +184,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
@@ -211,7 +211,7 @@ class AMLService
             ['html' => 'AmlComplianceMail'],
             [
                 'amlUrl' => $amlQuoteUrl,
-                'resultsFound' => $getDecodeContents,
+                'resultsFound' => $amlResultCount,
                 'fullName' => $customerOrEntityName,
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
@@ -264,7 +264,7 @@ class AMLService
 
             return false;
         }
-        info('Bridger Insight - AML Decision Update API Call');
+        info('Bridger Insight - AML Decision Update API Call. AML ID: '.($request->aml_id ?? '-').' - Lexis Nexis Alert ID: '.($request->result_id ?? '-'));
 
         $bridgerInsightService = new BridgerInsightService();
         $bridgerAPIToken = $bridgerInsightService->getJWTToken();
