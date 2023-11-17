@@ -322,7 +322,6 @@ onMounted(() => {
         v-model="kycForm.id_number"
         label="Id number"
         placeholder="Id number"
-        type="number"
       />
 
       <div>
