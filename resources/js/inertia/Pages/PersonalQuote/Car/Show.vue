@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import RiskRatingScoreDetails from "../../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
 	quote: Object,
@@ -1874,10 +1875,10 @@ const linkEntity = () => {
                             <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                             <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
                         </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Risk Category</dt>
-                            <dd>{{record.risk_score==null?'N/A':record.risk_score <= 16?'Low Risk':((record.risk_score <= 31)?'Medium Risk':(record.risk_score >= 32?'High Risk':'N/A')) }}</dd>
-                        </div>
+                        <RiskRatingScoreDetails
+                            :quote="quote"
+                            :modelType="quoteType"
+                        />
                     </dl>
                     <dl v-if="record.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                         <div class="grid sm:grid-cols-2">

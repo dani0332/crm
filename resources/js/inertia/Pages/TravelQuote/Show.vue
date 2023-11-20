@@ -1,6 +1,7 @@
 <script setup>
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
   quote: Object,
@@ -706,6 +707,8 @@ const activityEdit = data => {
   activityForm.status = data.status;
 };
 
+
+
 const onActivitySubmit = isValid => {
   if (!isValid) return;
   if (activityActionEdit.value) {
@@ -907,6 +910,8 @@ const tradeLicenseEntity = reactive({
     triggeredFrom: false
 });
 
+
+
 const entityTypeChange = event => {
     if(event === 'SubEntity') {
         getParentEntityModel.value = true;
@@ -975,7 +980,7 @@ const linkEntity = () => {
 }
 
 onMounted(() => {
-    onLoadAvailablePlansData()
+    onLoadAvailablePlansData();
   if (page.props.message) {
     notification.success({
       title: page.props.message,
@@ -1332,11 +1337,10 @@ onMounted(() => {
                       </dd>
                   </div>
 
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">Risk Category</dt>
-                      <dd>{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
-                  </div>
-
+                  <RiskRatingScoreDetails
+                      :quote="quote"
+                      :modelType="'Travel'"
+                  />
               </dl>
               <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
@@ -2092,7 +2096,6 @@ onMounted(() => {
         </x-button>
       </div>
       <x-divider class="my-4" />
-
       <DataTable
         table-class-name="compact"
         :headers="activityTable"
@@ -2191,7 +2194,7 @@ onMounted(() => {
           </div>
         </x-form>
       </x-modal>
-      <x-modal v-model="modals.activityConfirm" show-close backdrop>
+      <x-modal v-model="modals.activityConfirm"  show-close backdrop>
         <template #header> Delete Activity </template>
         <p>Are you sure you want to delete this activity?</p>
         <template #actions>
@@ -2214,6 +2217,9 @@ onMounted(() => {
           </div>
         </template>
       </x-modal>
+    </div>
+    <div class="p-4 rounded shadow mb-6 bg-warning">
+
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
@@ -2245,5 +2251,12 @@ onMounted(() => {
     </div>
 
     <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
+
   </div>
 </template>
+<style>
+.border-inner tr td{
+    padding: 8px !important;
+    font-size: 10px !important;
+}
+</style>

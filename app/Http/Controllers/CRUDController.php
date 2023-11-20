@@ -1877,4 +1877,9 @@ class CRUDController extends Controller
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
+    public function riskRatingDetails($quoteType, $uuid){
+        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $response = $this->crudService->scoreBreakdown($quoteModel,$quoteType);
+        return $response;
+    }
 }
