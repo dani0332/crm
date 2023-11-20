@@ -197,8 +197,27 @@ class BridgerInsightService
         $payLoad = [];
         switch ($customerType) {
             case CustomerTypeEnum::Individual:
+<<<<<<< Updated upstream
                 $dateOfBirth = explode('-', $details['dob']);
                 $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
+=======
+                $additionalInformation = [];
+                $dateOfBirth = ($details['dob']) ? explode('-', $details['dob']) : [];
+                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
+
+                if (($details['nationality']['text'] ?? '') != '') {
+                    $additionalInformation[] = ['Type' => 'Citizenship', 'Value' => $details['nationality']['text'] ?? ''];
+                }
+
+                if (!empty($dateOfBirth) && key_exists(2, $dateOfBirth)) {
+                    $additionalInformation[] = ['Type' => 'DOB', 'Date' => [
+                        'Day' => $dateOfBirth[2],
+                        'Month' => $dateOfBirth[1],
+                        'Year' => $dateOfBirth[0]
+                    ]];
+                }
+
+>>>>>>> Stashed changes
                 $payLoad = array_merge($basicConfig, [
                     'SearchInput' => [
                         'Records' => [
