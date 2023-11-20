@@ -239,6 +239,7 @@ class AMLController extends Controller
         $lookups = Lookup::whereIn('key', [
             LookupsEnum::RESIDENT_STATUS,
             LookupsEnum::DOCUMENT_ID_TYPE,
+            LookupsEnum::ENTITY_DOCUMENT_TYPE,
             LookupsEnum::MODE_OF_CONTACT,
             LookupsEnum::MODE_OF_DELIVERY,
             LookupsEnum::EMPLOYMENT_SECTOR,
