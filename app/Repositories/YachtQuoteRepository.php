@@ -80,6 +80,7 @@ class YachtQuoteRepository extends BaseRepository
             ->with([
                 'yachtQuote',
                 'advisor',
+                'lookUp',
                 'quoteDetail.lostReason',
                 'quoteDetail.previousAdvisor',
                 'payments' => function ($q) {
@@ -96,6 +97,7 @@ class YachtQuoteRepository extends BaseRepository
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['look_up']['text'] ?? null;
 
         return $quote;
     }
