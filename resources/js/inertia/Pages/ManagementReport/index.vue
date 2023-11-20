@@ -34,7 +34,7 @@ const filters = reactive({
   utmFirst: [],
   utmSecond: [],
   includeCancelledPolicies: null,
-  groupBy: null,
+  groupBy: 'advisor',
   page: 1,
 });
 
@@ -83,11 +83,11 @@ const reportCategories = ref(props.filterOptions?.reportCategories);
 const transactionTypes = ref(props.filterOptions?.transactionTypes);
 
 const groupBy = reactive([
-  { label: 'Advisor', value: 'Advisor' },
-  { label: 'Policy Issuer', value: 'Policy Issuer' },
-  { label: 'Customer Group', value: 'Customer Group' },
-  { label: 'Insurer', value: 'Insurer' },
-  { label: 'Line of Business', value: 'Line of Business' },
+  { label: 'Advisor', value: 'advisor' },
+  { label: 'Policy Issuer', value: 'policy_issuer' },
+  { label: 'Customer Group', value: 'customer_group' },
+  { label: 'Insurer', value: 'insurer' },
+  { label: 'Line of Business', value: 'line_of_business' },
 ]);
 
 const umtGroup = reactive([
@@ -285,5 +285,9 @@ function onReset() {
       </x-button>
     </div>
   </x-form>
-  <component :reportData="props.reportData" :is="selectedReport"></component>
+  <component
+    :groupBy="filters.groupBy"
+    :reportData="props.reportData"
+    :is="selectedReport"
+  ></component>
 </template>

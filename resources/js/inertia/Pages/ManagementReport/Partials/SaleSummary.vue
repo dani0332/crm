@@ -5,13 +5,12 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  groupBy: {
+    type: String || null,
+  },
 });
 
 const tableHeader = reactive([
-  {
-    text: 'GROUP BY',
-    value: 'group_by',
-  },
   {
     text: 'Total Policies',
     value: 'total_policies',
@@ -49,6 +48,22 @@ const tableHeader = reactive([
     value: 'total_price',
   },
 ]);
+
+watchEffect(() => {
+  const headerMap = {
+    advisor: 'Advisor',
+    policy_issuer: 'Policy Issuer',
+    customer_group: 'Customer Group',
+    insurer: 'Insurer',
+    line_of_business: 'Line of Business',
+  };
+
+  const headerText = headerMap[props.groupBy] || null;
+
+  if (headerText) {
+    tableHeader.splice(0, 1, { text: headerText, value: props.groupBy });
+  }
+});
 </script>
 <template>
   <DataTable
@@ -56,7 +71,7 @@ const tableHeader = reactive([
     table-class-name=""
     :loading="loader"
     :headers="tableHeader"
-    :items="reportData.data"
+    :items="reportData.data || []"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"
