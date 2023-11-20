@@ -235,7 +235,8 @@ class AmtController extends Controller
         $record = BusinessQuote::with(
             'advisor',
             'previousAdvisor',
-            'businessQuoteRequestDetail.lostReason'
+            'businessQuoteRequestDetail.lostReason',
+            'lookUp'
         )->where([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
@@ -245,6 +246,7 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
+        $record->transaction_type_text = $data['look_up']['text'] ?? null;
         $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
