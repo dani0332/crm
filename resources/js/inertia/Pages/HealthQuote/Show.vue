@@ -1316,6 +1316,13 @@ onMounted(() => {
   isMounted.value = true;
 
 });
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
+}
+
 </script>
 
 <template>
@@ -2502,6 +2509,26 @@ onMounted(() => {
             >
               Copy
             </x-button>
+
+            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
+
+              <SelectPlan v-if="prefillPlanId != item.id"
+                      @update:updatePlanId="handleChildUpdate"
+                      :plan="item"
+                      :quoteType="quoteType"
+                      :uuid="quote.uuid" />
+
+                      <x-button
+                      v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+            </span>
+
           </div>
         </template>
       </DataTable>

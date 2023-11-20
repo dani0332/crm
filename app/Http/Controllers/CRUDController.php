@@ -776,6 +776,7 @@ class CRUDController extends Controller
             }
 
             return inertia('HomeQuote/Show', [
+                'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,

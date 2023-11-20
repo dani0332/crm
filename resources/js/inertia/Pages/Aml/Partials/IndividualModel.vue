@@ -21,7 +21,7 @@ const props = defineProps({
   lookups: Object,
   entities: Array,
   quoteAmlStatus: Number,
-  customerDetails: Object
+  customerDetails: Object,
 });
 
 // const paymentsDataArray = ref(props.quoteDetails.payments || []);
@@ -547,21 +547,21 @@ onMounted(() => {
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
-          <div class="flex gap-5 mb-5 align-center">
-            <p>Want to send Fullname?</p>
-            <x-radio
-              v-model="insuredFormDetails.withFullName"
-              :value="true"
-              label="Yes"
-            />
-            <x-radio
-              v-model="insuredFormDetails.withFullName"
-              :value="false"
-              label="No"
-            />
-          </div>
-        </dl>
+<!--        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">-->
+<!--          <div class="flex gap-5 mb-5 align-center">-->
+<!--            <p>Want to send Fullname?</p>-->
+<!--            <x-radio-->
+<!--              v-model="insuredFormDetails.withFullName"-->
+<!--              :value="true"-->
+<!--              label="Yes"-->
+<!--            />-->
+<!--            <x-radio-->
+<!--              v-model="insuredFormDetails.withFullName"-->
+<!--              :value="false"-->
+<!--              label="No"-->
+<!--            />-->
+<!--          </div>-->
+<!--        </dl>-->
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
           <div v-if="insuredFormDetails.withFullName">
             <x-field label="Insured Full Name">
@@ -1192,6 +1192,18 @@ onMounted(() => {
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
+
+        <x-divider class="mb-4 mt-4" />
+
+        <PayerDetails
+          :quoteType="quoteType"
+          :quoteDetails="quoteDetails"
+          :nationalities="nationalities"
+          :membersDetails="membersDetails"
+          :memberRelations="memberRelations"
+          :customerType="props.customerTypeEnum.Entity"
+        />
+
         <div class="flex justify-center my-5">
           <x-button
             size="sm"
@@ -1318,6 +1330,8 @@ onMounted(() => {
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
+          :entity-details="props.entityDetails"
+          :uboRelation="uboRelations"
         />
 
         <div class="text-right space-x-4 mt-8">

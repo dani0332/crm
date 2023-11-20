@@ -6,6 +6,7 @@ import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
 import RiskRatingScoreDetails from "../../../Components/RiskRatingScoreDetails.vue";
 
+
 defineProps({
 	quote: Object,
 	leadStatuses: Object,
@@ -1029,7 +1030,7 @@ const copyLink = () => {
   copy(page.props.planURL);
   if (copied)
     notification.success({
-      title: 'Link copied to clipboardd',
+      title: 'Link copied to clipboard',
       position: 'top',
     });
 };
@@ -1444,6 +1445,11 @@ const linkEntity = () => {
         }).catch(err => {
         console.log(err);
     });
+}
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
 }
 
 </script>
@@ -2847,6 +2853,27 @@ const linkEntity = () => {
                 Change Insurer
               </x-button>
             </template>
+
+            <!--  -->
+            <span v-if="hasRole(rolesEnum.CarAdvisor)">
+              <SelectPlan v-if="prefillPlanId != item.id"
+                  @update:updatePlanId="handleChildUpdate"
+                  :plan="item"
+                  :quoteType="quoteType"
+                  :uuid="quote.uuid" />
+
+              <x-button
+                  v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+            </span>
+            
+
           </div>
         </template>
       </DataTable>

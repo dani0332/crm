@@ -61,6 +61,8 @@ const dateTimeFormat = date => {
 };
 
 const notification = useNotifications('toast');
+const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
 
 const {
   isRequired,
@@ -988,6 +990,12 @@ onMounted(() => {
     });
   }
 });
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
+}
 
 </script>
 
@@ -2066,6 +2074,28 @@ onMounted(() => {
               >
                 View
               </x-button>
+
+              <span v-if="hasRole(rolesEnum.TravelAdvisor)">
+                <SelectPlan class="ml-1" v-if="prefillPlanId != item.id"
+                      @update:updatePlanId="handleChildUpdate"
+                      :plan="item"
+                      :quoteType="modelType"
+                      :uuid="quote.uuid" />
+
+                      <x-button
+                      class="ml-1"
+                      v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+              </span>
+
+              
+
             </div>
           </template>
         </DataTable>

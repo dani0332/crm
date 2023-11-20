@@ -199,7 +199,7 @@ class BridgerInsightService
             case CustomerTypeEnum::Individual:
                 $additionalInformation = [];
                 $dateOfBirth = ($details['dob']) ? explode('-', $details['dob']) : [];
-                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
+//                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
 
                 if (($details['nationality']['text'] ?? '') != '') {
                     $additionalInformation[] = ['Type' => 'Citizenship', 'Value' => $details['nationality']['text'] ?? ''];
@@ -219,9 +219,10 @@ class BridgerInsightService
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Individual,
-                                    'Name' => ($withFullName) ?
-                                        ['Full' => $details['first_name'] .' '. $details['last_name']] :
-                                        ['First' => $details['first_name'], 'Last' => $details['last_name']],
+                                    'Name' => ['Full' => $details['first_name'] .' '. $details['last_name']],
+//                                    'Name' => ($withFullName) ?
+//                                        ['Full' => $details['first_name'] .' '. $details['last_name']] :
+//                                        ['First' => $details['first_name'], 'Last' => $details['last_name']],
                                     'AdditionalInfo' => $additionalInformation,
                                     'IDs' => [
                                         ['Type' => 'Account', 'Number' => $details['code']],

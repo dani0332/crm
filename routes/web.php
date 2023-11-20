@@ -99,6 +99,13 @@ Route::get('auth/google', 'App\Http\Controllers\GoogleSocialiteController@redire
 Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@handleCallback');
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
+
+    Route::get('migrate-customer-member', function () {
+        if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
+            \App\Jobs\CustomerMemberMigrationJob::dispatch();
+        }
+    });
+
     Route::get('leadsearch', function () {
         return redirect('home');
     });
@@ -107,6 +114,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         return inertia('Home/Home');
     });
 
+    Route::post('personal-quotes/{quoteType}/{code}/update-selected-plan/{planId}', [CentralController::class, 'updateSelectedPlan'])->name('update-selected-plan');
     Route::post('personal-quotes/{quoteType}/{code}/save-plan-details', [CentralController::class, 'savePlanDetails'])->name('save-plan-details');
     Route::post('/reports/fetch-advisor-assigned-leads-data', [ReportsController::class, 'fetchAdvisorAssignedLeadsData'])->name('fetch-advisor-assigned-leads-data');
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);

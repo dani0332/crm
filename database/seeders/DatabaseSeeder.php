@@ -43,7 +43,10 @@ class DatabaseSeeder extends Seeder
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
             AddRoleForComplianceSuperUser::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
+            // UpdateCodeColumnInCustomerTable::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
+            addDubaiNowLeadSourceExemptionInAppStorage::class,
         ]);
     }
 }

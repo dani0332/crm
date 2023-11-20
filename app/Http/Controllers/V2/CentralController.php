@@ -154,7 +154,19 @@ class CentralController extends Controller
     {
         $repository = getRepositoryObject($quoteType);
 
-        $repository::where('code', $code)->update($request->validated());
+        $quote = $repository::where('code', $code)->firstOrFail();
+        $quote->update($request->validated());
+
+        return redirect()->back()->with('success', 'updated successfully');
+    }
+
+    public function updateSelectedPlan($quoteType, $uuid, $planId)
+    {
+        $repository = getRepositoryObject($quoteType);
+
+        $quote = $repository::where('uuid', $uuid)->firstOrFail();
+
+        $quote->update(['prefill_plan_id' => $planId]);
 
         return redirect()->back()->with('success', 'updated successfully');
     }

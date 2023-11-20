@@ -233,7 +233,9 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                CustomerDetail::create([
+                CustomerDetail::updateOrCreate(
+                    ['customer_id' => $data['customer_id']],
+                    [
                     'customer_id' => $data['customer_id'],
                     'country_of_residence' => $data['country_of_residence'],
                     'place_of_birth' => $data['place_of_birth'],
@@ -257,6 +259,12 @@ class AjaxController extends Controller
                     'dual_nationality' => $data['dual_nationality'] ?? null,
                 ]);
 
+                $quote->first_name = $data['first_name'];
+                $quote->last_name = $data['last_name'];
+                $quote->dob = $data['dob'];
+                $quote->email = $data['email'];
+                $quote->mobile_no = $data['mobile_number'];
+                $quote->nationality_id = $data['nationality_id'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 
@@ -316,7 +324,10 @@ class AjaxController extends Controller
                     'dual_nationality' => $data['dual_nationality'] ?? null,
                 ]);
 
-                QuoteMemberDetail::create([
+                QuoteMemberDetail::updateOrCreate([
+                    'code' => $quote->quoteRequestEntityMapping->entity->code,
+                    'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id
+                ], [
                     'code' => $quote->quoteRequestEntityMapping->entity->code,
                     'customer_type' => CustomerTypeEnum::Entity,
                     'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id,
@@ -328,6 +339,8 @@ class AjaxController extends Controller
                     'relation_code' => $data['manager_position'],
                 ]);
 
+                $quote->first_name = $data['first_name'];
+                $quote->last_name = $data['last_name'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
 
