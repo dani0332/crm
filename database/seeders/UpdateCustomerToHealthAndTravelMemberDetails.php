@@ -16,7 +16,7 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
      */
     public function run(): void
     {
-        HealthMemberDetail::whereNull(['customer_id', 'code'])->chunk(100, function ($healthMemberDetails) {
+        HealthMemberDetail::whereNull(['customer_id', 'code'])->chunkById(100, function ($healthMemberDetails) {
             foreach ($healthMemberDetails as $healthMemberDetail) {
 
                 if (! empty($healthMemberDetail->customer_id) && ! empty($healthMemberDetail->code)) {
@@ -41,7 +41,7 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
             }
         });
 
-        TravelMemberDetail::whereNull(['customer_id', 'code'])->chunk(100, function ($travelMemberDetails) {
+        TravelMemberDetail::whereNull(['customer_id', 'code'])->chunkById(100, function ($travelMemberDetails) {
             foreach ($travelMemberDetails as $travelMemberDetail) {
 
                 if (! empty($travelMemberDetail->customer_id) && ! empty($travelMemberDetail->code)) {
