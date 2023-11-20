@@ -372,17 +372,18 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
-                    $fullName = explode(' ', \request()->insured_fullname);
-                    $insuredFirstName = $fullName[0] ?? '';
-                    unset($fullName[0]);
-                    $customerUpdate = [
-                        'nationality_id' => $AMLCheckRequest->nationality_id,
-                        'dob' => $AMLCheckRequest->dob,
-                        'insured_first_name' => $insuredFirstName,
-                        'insured_last_name' => implode(' ', $fullName)
-                    ];
-                }
+//                Temporary comment this code, please don't remove it.
+//                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
+//                    $fullName = explode(' ', \request()->insured_fullname);
+//                    $insuredFirstName = $fullName[0] ?? '';
+//                    unset($fullName[0]);
+//                    $customerUpdate = [
+//                        'nationality_id' => $AMLCheckRequest->nationality_id,
+//                        'dob' => $AMLCheckRequest->dob,
+//                        'insured_first_name' => $insuredFirstName,
+//                        'insured_last_name' => implode(' ', $fullName)
+//                    ];
+//                }
                 $customer->update($customerUpdate);
                 $customer->refresh();
                 info('Bridger Insight - Customer Updated Successfully');
@@ -393,7 +394,7 @@ class AMLController extends Controller
                     'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                     'nationality' => $customer->nationality->toArray() ?? [],
                     'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
-                    'with_full_name' => \request()->withFullName
+//                    'with_full_name' => \request()->withFullName
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
