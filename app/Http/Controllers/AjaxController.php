@@ -233,7 +233,9 @@ class AjaxController extends Controller
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                CustomerDetail::create([
+                CustomerDetail::updateOrCreate(
+                    ['customer_id' => $data['customer_id']],
+                    [
                     'customer_id' => $data['customer_id'],
                     'country_of_residence' => $data['country_of_residence'],
                     'place_of_birth' => $data['place_of_birth'],
@@ -316,7 +318,10 @@ class AjaxController extends Controller
                     'dual_nationality' => $data['dual_nationality'] ?? null,
                 ]);
 
-                QuoteMemberDetail::create([
+                QuoteMemberDetail::updateOrCreate([
+                    'code' => $quote->quoteRequestEntityMapping->entity->code,
+                    'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id
+                ], [
                     'code' => $quote->quoteRequestEntityMapping->entity->code,
                     'customer_type' => CustomerTypeEnum::Entity,
                     'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id,
