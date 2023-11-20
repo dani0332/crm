@@ -154,9 +154,10 @@ class CentralController extends Controller
     {
         $repository = getRepositoryObject($quoteType);
 
-        $repository::where('code', $code)->update($request->validated());
+        $quote = $repository::where('code', $code)->firstOrFail();
+        $quote->update($request->validated());
 
         return redirect()->back()->with('success', 'updated successfully');
     }
-
+    
 }
