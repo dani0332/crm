@@ -81,13 +81,16 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchGetBy($column, $value)
     {
-        $quote = $this->where($column, $value)->with(['advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
+        $quote = $this->where($column, $value)->with([
+            'advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
             'purposeOfInsurance', 'childern', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo'])->firstOrFail();
+            'paymentStatus', 'customer.additionalContactInfo', 'lookUp',
+        ])->firstOrFail();
 
         $data = ! empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
+        $quote->transaction_type_text = $data['look_up']['text'] ?? null;
 
         return $quote;
     }

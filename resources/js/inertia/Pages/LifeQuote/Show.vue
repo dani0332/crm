@@ -592,7 +592,7 @@ const onLeadStatus = () => {
             <x-field label="Transaction Type">
               <x-input
                 type="text"
-                :value="quote.gender"
+                :value="quote.transaction_type_text"
                 class="w-full"
                 :disabled="true"
               />
