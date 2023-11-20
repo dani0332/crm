@@ -1192,6 +1192,18 @@ onMounted(() => {
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
+
+        <x-divider class="mb-4 mt-4" />
+
+        <PayerDetails
+          :quoteType="quoteType"
+          :quoteDetails="quoteDetails"
+          :nationalities="nationalities"
+          :membersDetails="membersDetails"
+          :memberRelations="memberRelations"
+          :customerType="props.customerTypeEnum.Entity"
+        />
+
         <div class="flex justify-center my-5">
           <x-button
             size="sm"
