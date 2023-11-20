@@ -43,6 +43,16 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
+const is_insured = ref(false);
+
+watch(
+  props.membersDetails,
+  () => {
+    is_insured.value = !props.uboDetails.some(x => x.is_payer);
+  },
+  { immediate: true },
+);
+
 const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: props.customerTypeEnum.Entity,
@@ -50,6 +60,8 @@ const insuredFormDetails = useForm({
 
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
   insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+  insured_fullname: props.quoteDetails?.customer.insured_fullname ?? null,
+  withFullName: false,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -183,7 +195,7 @@ const show = ref(true);
         License
       </p>
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 mb-5">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-5">
           <x-field label="Trade License No">
             <x-input
               v-model="insuredFormDetails.trade_license_no"
@@ -216,6 +228,14 @@ const show = ref(true);
               class="w-full"
             />
           </x-field>
+          <div
+            class="flex gap-5 mt-2 items-center"
+            :class="{ 'mt-8': insuredFormDetails.withFullName }"
+          >
+            <p>Is the insured the payer?</p>
+            <x-radio v-model="is_insured" :value="true" label="Yes" />
+            <x-radio v-model="is_insured" :value="false" label="No" />
+          </div>
         </dl>
         <div v-if="entityFound" class="mb-5">
           <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
@@ -482,8 +502,85 @@ const show = ref(true);
     </p>
 
     <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+        <div class="flex gap-5 mb-5 align-center">
+          <p>Want to send Fullname?</p>
+          <x-radio
+            v-model="insuredFormDetails.withFullName"
+            :value="true"
+            label="Yes"
+          />
+          <x-radio
+            v-model="insuredFormDetails.withFullName"
+            :value="false"
+            label="No"
+          />
+        </div>
+      </dl>
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
+        <div v-if="insuredFormDetails.withFullName">
+          <x-field label="Insured Full Name">
+            <x-input
+              v-model="insuredFormDetails.insured_fullname"
+              :rules="[isRequired]"
+              placeholder="Insured Full Name"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
+        </div>
+        <x-field
+          label="Insured First Name"
+          v-if="!insuredFormDetails.withFullName"
+        >
+          <x-input
+            v-model="insuredFormDetails.insured_first_name"
+            :rules="[isRequired]"
+            placeholder="Insured First Name"
+            type="text"
+            class="w-full"
+          />
+        </x-field>
+        <x-field
+          label="Insured Last Name"
+          v-if="!insuredFormDetails.withFullName"
+        >
+          <x-input
+            v-model="insuredFormDetails.insured_last_name"
+            :rules="[isRequired]"
+            placeholder="Insured Last Name"
+            type="text"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="Nationality">
+          <ComboBox
+            :single="true"
+            v-model="insuredFormDetails.nationality_id"
+            :hasError="isEmptyNationality"
+            placeholder="Select Nationality"
+            :options="nationalitiesOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Date of Birth">
+          <DatePicker
+            v-model="insuredFormDetails.dob"
+            :rules="[isRequired]"
+            placeholder="Date of Birth"
+            class="w-full"
+          />
+        </x-field>
+        <div
+          class="flex gap-5 mb-5 align-center"
+          :class="{ 'mt-8': insuredFormDetails.withFullName }"
+        >
+          <p>Is the insured the payer?</p>
+          <x-radio v-model="is_insured" :value="true" label="Yes" />
+          <x-radio v-model="is_insured" :value="false" label="No" />
+        </div>
+        <!-- <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insured First Name</dt>
           <dd>
             <x-input
@@ -524,7 +621,7 @@ const show = ref(true);
               class="w-full"
             />
           </dd>
-        </div>
+        </div> -->
       </dl>
       <x-divider class="mb-4 mt-1" />
 

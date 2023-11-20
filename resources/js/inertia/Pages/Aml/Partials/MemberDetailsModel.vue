@@ -79,6 +79,7 @@ function onEditMember(data) {
   memberForm.dob = data.dob;
   memberForm.relation_code = data.relation_code;
   memberForm.nationality_id = data.nationality_id;
+  memberForm.is_payer = data.is_payer;
 }
 
 const memberForm = useForm({
