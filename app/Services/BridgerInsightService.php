@@ -197,8 +197,22 @@ class BridgerInsightService
         $payLoad = [];
         switch ($customerType) {
             case CustomerTypeEnum::Individual:
+                $additionalInformation = [];
                 $dateOfBirth = explode('-', $details['dob']);
                 $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
+
+                if (($details['nationality']['text'] ?? '') != '') {
+                    $additionalInformation[] = ['Type' => 'Citizenship', 'Value' => $details['nationality']['text'] ?? ''];
+                }
+
+                if (!empty($dateOfBirth)) {
+                    $additionalInformation[] = ['Type' => 'DOB', 'Date' => [
+                        'Day' => $dateOfBirth[2],
+                        'Month' => $dateOfBirth[1],
+                        'Year' => $dateOfBirth[0]
+                    ]];
+                }
+
                 $payLoad = array_merge($basicConfig, [
                     'SearchInput' => [
                         'Records' => [
@@ -208,10 +222,7 @@ class BridgerInsightService
                                     'Name' => ($withFullName) ?
                                         ['Full' => $details['first_name'] .' '. $details['last_name']] :
                                         ['First' => $details['first_name'], 'Last' => $details['last_name']],
-                                    'AdditionalInfo' => [
-                                        ['Type' => 'DOB', 'Date' => ['Day' => $dateOfBirth[2], 'Month' => $dateOfBirth[1], 'Year' => $dateOfBirth[0]]],
-                                        ['Type' => 'Citizenship', 'Value' => isset($details['nationality']) ? $details['nationality']['text'] : ''],
-                                    ],
+                                    'AdditionalInfo' => $additionalInformation,
                                     'IDs' => [
                                         ['Type' => 'Account', 'Number' => $details['code']],
                                     ],
