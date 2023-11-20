@@ -18,7 +18,7 @@ const props = defineProps({
   legalStructure: Object,
   entities: Array,
   quoteAmlStatus: Number,
-  customerDetails: Object
+  customerDetails: Object,
 });
 
 const loader = ref({
@@ -678,6 +678,7 @@ const show = ref(true);
         :employmentSectors="props.lookups.employment_sector"
         :residentialStatus="props.lookups.resident_status"
         :companyPosition="props.lookups.company_position"
+        :modeOfDelivery="props.lookups.mode_of_delivery"
       />
 
       <!-- <div class="text-right space-x-4 mt-8">

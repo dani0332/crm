@@ -211,7 +211,6 @@ const onUBOSubmit = isValid => {
       </x-button>
       <x-button
         v-else
-        v-if="uboForm.entity_id"
         @click.prevent="addUBOToggle(true)"
         size="sm"
         color="orange"
