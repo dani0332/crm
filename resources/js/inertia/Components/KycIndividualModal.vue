@@ -43,12 +43,10 @@ const kycForm = reactive({
   last_name: props.quote.last_name,
   dob: convertDate(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id,
-  country_of_residence:
-    props.customerDetails?.detail?.country_of_residence ?? null,
+  country_of_residence: props.customerDetails?.detail?.country_of_residence ?? null,
   place_of_birth: props.customerDetails?.detail?.place_of_birth ?? null,
   resident_status: props.customerDetails?.detail?.residential_status ?? null,
-  residential_address:
-    props.customerDetails?.detail?.residential_address ?? null,
+  residential_address: props.customerDetails?.detail?.residential_address ?? null,
   mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   customer_tenure: props.customerDetails?.detail?.customer_tenure ?? null,
@@ -65,10 +63,8 @@ const kycForm = reactive({
   trade_license: props.customerDetails?.detail?.trade_license_no ?? null,
   company_position: props.customerDetails?.detail?.position_in_company ?? null,
   pep: props.customerDetails?.detail?.pep ?? props.amlQuoteStatus,
-  financial_sanctions:
-    props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
-  dual_nationality:
-    props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
+  financial_sanctions: props.customerDetails?.detail?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality: props.customerDetails?.detail?.dual_nationality ?? props.amlQuoteStatus,
 });
 
 const incomeSourceFields = reactive({

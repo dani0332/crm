@@ -40,15 +40,12 @@ const kycForm = reactive({
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   company_name: props.quote.company_name,
-  legal_structure: props.entityDetails?.entity?.legal_structure,
+  legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
   industry_type: null,
-  country_of_corporation:
-    props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
+  country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
   registered_address: props.entityDetails?.entity?.registered_address ?? null,
-  communication_address:
-    props.entityDetails?.entity?.communication_address ?? null,
-  mobile_number:
-    props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
+  communication_address: props.entityDetails?.entity?.communication_address ?? null,
+  mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
   email: props.entityDetails?.entity?.email ?? props.quote.email,
   website: props.entityDetails?.entity?.website,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
@@ -62,10 +59,8 @@ const kycForm = reactive({
   manager_dob: null,
   manager_position: null,
   pep: props.entityDetails?.entity?.pep ?? props.amlQuoteStatus,
-  financial_sanctions:
-    props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
-  dual_nationality:
-    props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
+  financial_sanctions: props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
 
 const onKycSubmit = () => {
