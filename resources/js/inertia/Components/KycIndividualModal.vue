@@ -50,10 +50,10 @@ const kycForm = reactive({
   mobile_number: props.quote.mobile_no,
   email: props.quote.email,
   customer_tenure: props.customerDetails?.detail?.customer_tenure ?? null,
-  id_type: props.customerDetails?.detail?.id_type ?? null,
-  id_number: props.customerDetails?.detail?.id_number ?? null,
+  id_type: props.customerDetails?.detail?.id_type ?? 'emiratesId',
+  id_number: props.customerDetails?.detail?.id_number ?? props.customerDetails?.emirates_id_number ?? null,
   id_issue_date: convertDate(props.customerDetails?.detail?.id_issuance_date),
-  id_expiry_date: convertDate(props.customerDetails?.detail?.id_expiry_date),
+  id_expiry_date: convertDate(props.customerDetails?.detail?.id_expiry_date ?? props.customerDetails?.emirates_id_expiry_date),
   mode_of_contact: props.customerDetails?.detail?.mode_of_contact ?? null,
   mode_of_delivery: props.customerDetails?.detail?.mode_of_delivery ?? null,
   income_source: props.customerDetails?.detail?.source_of_income ?? null,
@@ -189,6 +189,8 @@ onMounted(() => {
   complianceDisable.isDisable = !(
     hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
   );
+
+  changeIncomeSource(props.customerDetails?.detail?.source_of_income ?? null);
 });
 </script>
 
@@ -323,6 +325,9 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-4">
       <x-select
         v-model="kycForm.mode_of_contact"
         label="Mode of contact"
