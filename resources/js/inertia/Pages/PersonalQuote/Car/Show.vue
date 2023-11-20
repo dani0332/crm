@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import SelectPlan from './Partials/SelectPlan.vue';
 
 defineProps({
 	quote: Object,
@@ -2846,6 +2847,10 @@ const linkEntity = () => {
                 Change Insurer
               </x-button>
             </template>
+
+            
+            <SelectPlan :plan="item" :quoteType="quoteType" :uuid="quote.uuid" />
+
           </div>
         </template>
       </DataTable>
