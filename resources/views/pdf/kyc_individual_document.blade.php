@@ -182,7 +182,7 @@
                     </tr>
                     <tr>
                         <td>Professional job title:</td>
-                        <td>{{ $data['professional_title'] }}</td>
+                        <td>{{ $data['professional_title_text'] }}</td>
                     </tr>
                     <tr>
                         <td>Employment Sector:</td>
@@ -212,8 +212,8 @@
                 <tr>
                     <td>Is the customer a PEP?</td>
                     <td class="no-border" style="margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'Yes') /> &nbsp;&nbsp; <strong>Yes</strong>
-                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'No') /> &nbsp;&nbsp; <strong>No</strong>
+                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
+                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
                     </td>
                 </tr>
                 <tr>
@@ -222,15 +222,15 @@
                         prescribed terrorist organizations? <br>
                     </td>
                     <td class="no-border" style="margin-top: 18px; margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'Yes') /> &nbsp;&nbsp; <strong>Yes</strong>
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'No') /> &nbsp;&nbsp; <strong>No</strong>
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
                     </td>
                 </tr>
                 <tr>
                     <td>Does the customer have dual nationality?</td>
                     <td class="no-border" style="margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'Yes') /> &nbsp;&nbsp; <strong>Yes</strong>
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'No') /> &nbsp;&nbsp; <strong>No</strong>
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
                     </td>
                 </tr>
             </tbody>

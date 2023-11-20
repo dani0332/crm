@@ -18,8 +18,7 @@ class KycDocTypeSeeder extends Seeder
         $docType->code = DocumentTypeCode::KYCDOC;
         $docType->text = 'KYC Document';
         $docType->is_active = 1;
-        $docType->quote_type_id = QuoteTypeId::Health;
-        $docType->folder_path = 'health';
+        $docType->folder_path = 'kyc';
         $docType->accepted_files = '.pdf';
         $docType->max_files = 1;
         $docType->max_size = 5;

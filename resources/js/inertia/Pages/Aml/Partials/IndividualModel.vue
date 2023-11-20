@@ -20,6 +20,8 @@ const props = defineProps({
   residentStatuses: Object,
   lookups: Object,
   entities: Array,
+  quoteAmlStatus: Number,
+  customerDetails: Object
 });
 
 // const paymentsDataArray = ref(props.quoteDetails.payments || []);
@@ -786,14 +788,18 @@ onMounted(() => {
           :roles="$page.props.rolesEnum"
           :quote="quoteDetails"
           :countryList="nationalities"
-          :amlQuoteStatus="$page.props.amlQuoteStatus"
+          :aml-quote-status="props.quoteAmlStatus"
           :nationalities="nationalities"
           :modelType="quoteType?.code"
           :idDocumentType="props.lookups.id_type"
           :modeOfContact="props.lookups.mode_of_contact"
+          :modeOfDelivery="props.lookups.mode_of_delivery"
+          :professionalTitle="props.lookups.professional_title"
           :employmentSectors="props.lookups.employment_sector"
           :residentialStatus="props.lookups.resident_status"
           :companyPosition="props.lookups.company_position"
+          :entity-details="props.entityDetails"
+          :customer-details="props.customerDetails"
         />
 
         <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
@@ -1186,6 +1192,18 @@ onMounted(() => {
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
+
+        <x-divider class="mb-4 mt-4" />
+
+        <PayerDetails
+          :quoteType="quoteType"
+          :quoteDetails="quoteDetails"
+          :nationalities="nationalities"
+          :membersDetails="membersDetails"
+          :memberRelations="memberRelations"
+          :customerType="props.customerTypeEnum.Entity"
+        />
+
         <div class="flex justify-center my-5">
           <x-button
             size="sm"

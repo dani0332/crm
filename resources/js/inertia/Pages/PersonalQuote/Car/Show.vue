@@ -1029,7 +1029,7 @@ const copyLink = () => {
   copy(page.props.planURL);
   if (copied)
     notification.success({
-      title: 'Link copied to clipboardd',
+      title: 'Link copied to clipboard',
       position: 'top',
     });
 };

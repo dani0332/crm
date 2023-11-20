@@ -26,4 +26,6 @@ enum LookupsEnum: string
     case EMPLOYMENT_SECTOR = 'employment-sector';
     case COMPANY_POSITION = 'company-position';
     case MODE_OF_DELIVERY = 'mode-of-delivery';
+    case DELETED_MODE_OF_DELIVERY = 'mode-of-delivery-deleted';
+    case PROFESSIONAL_TITLE = 'professional-title';
 }
