@@ -34,12 +34,8 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
-<<<<<<< Updated upstream
-=======
-            MemberRelationsSeeder::class,
             GenericPermissionSeeder::class,
             AddApiLogViewToPermssion::class,
->>>>>>> Stashed changes
             AutofollowupSeeder::class,
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
