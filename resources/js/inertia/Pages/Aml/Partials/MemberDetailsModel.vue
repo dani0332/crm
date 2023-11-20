@@ -15,6 +15,11 @@ const isEmptyField = ref(false);
 const isLoading = ref(false);
 
 const members = ref(props.membersDetails);
+
+const computedMembers = computed(() => {
+  return members.value.filter(x => !x.is_third_party_payer);
+});
+
 const notification = useToast();
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
@@ -256,7 +261,7 @@ function onMemberSubmit(isValid) {
   <DataTable
     table-class-name="tablefixed compact"
     :headers="memberDetailsTable.columns"
-    :items="members || []"
+    :items="computedMembers || []"
     show-index
     border-cell
     hide-rows-per-page

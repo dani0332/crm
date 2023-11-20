@@ -17,6 +17,8 @@ const props = defineProps({
   lookups: Object,
   legalStructure: Object,
   entities: Array,
+  quoteAmlStatus: Number,
+  customerDetails: Object
 });
 
 const loader = ref({
@@ -317,7 +319,7 @@ const show = ref(true);
           :roles="$page.props.rolesEnum"
           :quote="quoteDetails"
           :country-list="nationalities"
-          :aml-quote-status="props.amlQuoteStatus"
+          :aml-quote-status="props.quoteAmlStatus"
           :nationalities="nationalities"
           :modelType="props.quoteType?.code"
           :entities="props.entities"
@@ -325,6 +327,8 @@ const show = ref(true);
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
+          :ubo-relation="props.lookups.ubo_relation"
+          :entity-details="props.entityDetails"
         />
       </x-form>
     </template>

@@ -23,13 +23,11 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerPaymentInstrument;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
 use App\Models\Lookup;
-use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -93,7 +91,8 @@ class AMLController extends Controller
                     QuoteTypes::BIKE->id(),
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
-                    QuoteTypes::CYCLE,
+                    QuoteTypes::CYCLE->id(),
+                    QuoteTypes::JETSKI->id()
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -247,6 +246,8 @@ class AMLController extends Controller
             LookupsEnum::ISSUANCE_PLACE,
             LookupsEnum::ISSUING_AUTHORITY,
             LookupsEnum::COMPANY_POSITION,
+            LookupsEnum::PROFESSIONAL_TITLE,
+            LookupsEnum::UBO_RELATION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
@@ -282,6 +283,7 @@ class AMLController extends Controller
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
             'entities' => $entities,
+            'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -290,7 +292,6 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
-        // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
@@ -369,7 +370,19 @@ class AMLController extends Controller
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
-                $customer->update($AMLCheckRequest->validated());
+                $customerUpdate = $AMLCheckRequest->validated();
+                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
+                    $fullName = explode(' ', \request()->insured_fullname);
+                    $insuredFirstName = $fullName[0] ?? '';
+                    unset($fullName[0]);
+                    $customerUpdate = [
+                        'nationality_id' => $AMLCheckRequest->nationality_id,
+                        'dob' => $AMLCheckRequest->dob,
+                        'insured_first_name' => $insuredFirstName,
+                        'insured_last_name' => implode(' ', $fullName)
+                    ];
+                }
+                $customer->update($customerUpdate);
                 $customer->refresh();
                 info('Bridger Insight - Customer Updated Successfully');
 
@@ -379,6 +392,7 @@ class AMLController extends Controller
                     'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                     'nationality' => $customer->nationality->toArray() ?? [],
                     'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
+                    'with_full_name' => \request()->withFullName
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
@@ -399,7 +413,7 @@ class AMLController extends Controller
                 } else {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
                     $updateQuote->save();
-                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningFailed);
                 }
                 session()->forget('amlResponseCheck');
             }
@@ -436,7 +450,7 @@ class AMLController extends Controller
                 } else {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
                     $updateQuote->save();
-                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningFailed);
                 }
                 session()->forget('amlResponseCheck');
             }
@@ -591,9 +605,9 @@ class AMLController extends Controller
         if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
             info('Bridger Insight : Email Triggered to Compliance Super User');
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                $request['aml_quote_url'],
+                config('constants.APP_URL'). $request['aml_quote_url'],
                 $request['quote_ref_id'],
-                json_encode($request['bridger_response']),
+                $request['bridger_response'],
                 $request['customer_entity_name'],
                 $request['quote_type_text'],
                 auth()->user()->email,
@@ -604,5 +618,16 @@ class AMLController extends Controller
         }
 
         return true;
+    }
+
+    private function checkAmlQuoteStatus($statusId)
+    {
+        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
+            return 2;
+        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+            return 1;
+        }
+
+        return null;
     }
 }

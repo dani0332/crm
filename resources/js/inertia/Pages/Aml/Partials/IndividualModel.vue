@@ -20,6 +20,8 @@ const props = defineProps({
   residentStatuses: Object,
   lookups: Object,
   entities: Array,
+  quoteAmlStatus: Number,
+  customerDetails: Object
 });
 
 // const paymentsDataArray = ref(props.quoteDetails.payments || []);
@@ -545,7 +547,7 @@ onMounted(() => {
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <!-- <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
           <div class="flex gap-5 mb-5 align-center">
             <p>Want to send Fullname?</p>
             <x-radio
@@ -559,7 +561,7 @@ onMounted(() => {
               label="No"
             />
           </div>
-        </dl> -->
+        </dl>
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
           <div v-if="insuredFormDetails.withFullName">
             <x-field label="Insured Full Name">
@@ -628,7 +630,7 @@ onMounted(() => {
 
           <!-- <x-field label="Country / Place of Birth">
                         <ComboBox
-                            :single="true"                            
+                            :single="true"
                             v-model="insuredFormDetails.place_of_birth"
                             placeholder="Please enter the Place of Birth of the customer as per Passport"
                             :options="nationalitiesOptions"
@@ -653,7 +655,7 @@ onMounted(() => {
                             v-model="insuredFormDetails.residential_address"
                             placeholder="Residential Address"
                             :rules="validateCustomerFields ? [isRequired] : []"
-                            type="text"                            
+                            type="text"
                             class="w-full"
                         />
                     </x-field>
@@ -786,14 +788,18 @@ onMounted(() => {
           :roles="$page.props.rolesEnum"
           :quote="quoteDetails"
           :countryList="nationalities"
-          :amlQuoteStatus="$page.props.amlQuoteStatus"
+          :aml-quote-status="props.quoteAmlStatus"
           :nationalities="nationalities"
           :modelType="quoteType?.code"
           :idDocumentType="props.lookups.id_type"
           :modeOfContact="props.lookups.mode_of_contact"
+          :modeOfDelivery="props.lookups.mode_of_delivery"
+          :professionalTitle="props.lookups.professional_title"
           :employmentSectors="props.lookups.employment_sector"
           :residentialStatus="props.lookups.resident_status"
           :companyPosition="props.lookups.company_position"
+          :entity-details="props.entityDetails"
+          :customer-details="props.customerDetails"
         />
 
         <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">

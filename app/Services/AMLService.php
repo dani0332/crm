@@ -7,6 +7,7 @@ use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Models\AML;
+use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthMemberDetail;
@@ -18,6 +19,7 @@ use App\Models\PetQuote;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\User;
+use App\Models\YachtQuote;
 use App\Repositories\QuoteMemberDetailsRepository;
 use Carbon\Carbon;
 use Config;
@@ -32,8 +34,13 @@ class AMLService
             $createdDate = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->firstOrFail()->created_at;
         }
 
+        $dateForNonMigratedPersonalQuotes = Carbon::parse($parseDate)->format(config('constants.DATE_FORMAT_ONLY'));
         $dataMigrationDate = match ((int) $quoteTypeId) {
+            (int) QuoteTypes::BIKE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::YACHT->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
             (int) QuoteTypes::PET->id() => Carbon::createFromFormat('Y-m-d', '2023-08-14'),
+            (int) QuoteTypes::CYCLE->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
+            (int) QuoteTypes::JETSKI->id() => Carbon::createFromFormat('Y-m-d', $dateForNonMigratedPersonalQuotes),
         };
 
         return Carbon::createFromFormat(
@@ -45,7 +52,11 @@ class AMLService
     public static function getPersonalQuoteId($quoteTypeId, $quoteRequestId)
     {
         return match ($quoteTypeId) {
-            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id
+            QuoteTypes::BIKE->id() => $quoteRequestId,
+            QuoteTypes::CYCLE->id() => $quoteRequestId,
+            QuoteTypes::JETSKI->id() => $quoteRequestId,
+            QuoteTypes::PET->id() => PetQuote::where('id', $quoteRequestId)->firstOrFail()->personal_quote_id,
+            QuoteTypes::YACHT->id() => $quoteRequestId
         };
     }
 
@@ -55,13 +66,23 @@ class AMLService
         $updateData = empty($updateData) ? ['pa_id' => auth()->id()] : $updateData;
 
         return match ($quoteTypeId) {
-            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData)
+            QuoteTypes::BIKE->id() => BikeQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::CYCLE->id() => true,
+            QuoteTypes::JETSKI->id() => true,
+            QuoteTypes::PET->id() => PetQuote::where($filterColumn, $quoteRequestId)->update($updateData),
+            QuoteTypes::YACHT->id() => YachtQuote::where($filterColumn, $quoteRequestId)->update($updateData)
         };
     }
 
     public static function getQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        $migratedQuoteTypes = [QuoteTypes::PET->id()];
+        $migratedQuoteTypes = [
+            QuoteTypes::BIKE->id(),
+            QuoteTypes::YACHT->id(),
+            QuoteTypes::PET->id(),
+            QuoteTypes::CYCLE->id(),
+            QuoteTypes::JETSKI->id()
+        ];
         $isDataMigrated = true;
         $quoteRequestDetails = [];
 
@@ -165,6 +186,46 @@ class AMLService
                     'customer.detail',
                 ])->where('id', $quoteRequestId)->firstOrFail();
             }
+        } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
+                'bikeQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+
+        } elseif ($quoteTypeId == QuoteTypes::CYCLE->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::CYCLE->id())->with([
+                'cycleQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+
+        } elseif ($quoteTypeId == QuoteTypes::YACHT->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::YACHT->id())->with([
+                'yachtQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+
+        } elseif ($quoteTypeId == QuoteTypes::JETSKI->id()) {
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::JETSKI->id())->with([
+                'jetskiQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
+
         }
 
         return $quoteRequestDetails;
@@ -184,7 +245,7 @@ class AMLService
         ], $subject, $errorEmailRecipients);
     }
 
-    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $getDecodeContents, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
+    public static function sendAMLMatchedEmailtoComplianceTeam($amlQuoteUrl, $quoteRefId, $amlResultCount, $customerOrEntityName, $quoteType, $loginUserEmail, $forComplianceSuperUser = false)
     {
         $emailRecipients = [];
         $emailSystem = Config::get('constants.emailL_sys');
@@ -211,7 +272,7 @@ class AMLService
             ['html' => 'AmlComplianceMail'],
             [
                 'amlUrl' => $amlQuoteUrl,
-                'resultsFound' => $getDecodeContents,
+                'resultsFound' => $amlResultCount,
                 'fullName' => $customerOrEntityName,
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,

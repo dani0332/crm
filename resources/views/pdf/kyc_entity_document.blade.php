@@ -224,7 +224,7 @@
                     <td style="width: 25%;">
                         <div>
                             Position:
-                            <span class="value">{{ $data['manager_position'] }}</span>
+                            <span class="value">{{ $data['manager_position_text'] }}</span>
                         </div>
                     </td>
                 </tr>
@@ -243,9 +243,9 @@
                     </td>
                     <td>
                         <div>
-                            <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'Yes')/>
+                            <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 1)/>
                             <span>YES</span>
-                            <input type="radio" class="ml-2" @checked(isset($data['pep']) && $data['pep'] == 'No')/>
+                            <input type="radio" class="ml-2" @checked(isset($data['pep']) && $data['pep'] == 2)/>
                             <span>No</span>
                         </div>
                     </td>
@@ -259,9 +259,9 @@
                         </div>
                     </td>
                     <td>
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'Yes')/>
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 1)/>
                         <span>YES</span>
-                        <input type="radio" class="ml-2" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'No')/>
+                        <input type="radio" class="ml-2" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 2)/>
                         <span>No</span>
                     </td>
                 </tr>
@@ -273,9 +273,9 @@
                         </div>
                     </td>
                     <td>
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'Yes')/>
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 1)/>
                         <span>YES</span>
-                        <input type="radio" class="ml-2" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'No')/>
+                        <input type="radio" class="ml-2" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 2)/>
                         <span>No</span>
                     </td>
                 </tr>

@@ -1,7 +1,5 @@
 <script setup>
 import MemberDetails from "../../Components/MemberDetails.vue";
-import KycForm from "@/inertia/Components/KycForm.vue";
-import LazyDocumentUploader from "@/inertia/Pages/TravelQuote/Partials/DocumentUploader.vue";
 import QuoteDocuments from "@/inertia/Pages/PersonalQuote/Partials/QuoteDocuments.vue";
 
 defineProps({
@@ -630,23 +628,12 @@ const linkEntity = () => {
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer ' : 'Entity '}} Profile</h3>
-          <KycForm
-              :roles="$page.props.rolesEnum"
-              :quote="page.props.quote"
-              :country-list="page.props.countryList"
-              :aml-quote-status="page.props.amlQuoteStatus"
-              :nationalities="page.props.nationalities"
-              :modelType="'Home'"
-              :entities="page.props.entities"
-              :legal-structure="page.props.legalStructure"
-              :id-document-type="page.props.idDocumentType"
-              :mode-of-contact="page.props.modeOfContact"
-              :employment-sectors="page.props.employmentSectors"
-              :residential-status="page.props.residentialStatus"
-              :company-position="page.props.companyPosition"
-              :issuance-place="page.props.issuancePlace"
-              :issuing-authority="page.props.issuanceAuthorities"
-          />
+          <x-button size="sm" color="orange" v-if="quote.kyc_decision === 'Complete'">
+            KYC - Complete
+          </x-button>
+          <x-button size="sm" color="primary" v-else>
+            KYC - Pending
+          </x-button>
         </div>
           <x-divider class="mb-4 mt-1" />
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -727,6 +714,11 @@ const linkEntity = () => {
                       <div class="grid sm:grid-cols-2">
                           <dt class="font-medium">ADDRESS</dt>
                           <dd>{{ quote.address }}</dd>
+                      </div>
+
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">Risk Category</dt>
+                          <dd>{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
                       </div>
                   </dl>
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
@@ -1024,7 +1016,7 @@ const linkEntity = () => {
 
     <QuoteDocuments
         :document-types="documentTypes"
-        :quote-documents="quote.documents || []"
+        :quote-documents="quoteDocuments || []"
         :storageUrl="storageUrl"
         :quote="quote"
     />

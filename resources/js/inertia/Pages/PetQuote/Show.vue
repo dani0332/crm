@@ -9,6 +9,7 @@ import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from "../../Components/MemberDetails.vue";
 import KycForm from "@/inertia/Components/KycForm.vue";
+import PlanDetails from '../../Components/PlanDetails.vue';
 
 defineProps({
   quote: Object,
@@ -232,7 +233,6 @@ const linkEntity = () => {
 <template>
   <div>
     <Head title="Pet Quotes" />
-
     <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
       <h2 class="text-xl font-semibold">Pet Detail</h2>
       <div class="flex gap-2">
@@ -531,6 +531,15 @@ const linkEntity = () => {
                               />
                           </dd>
                       </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">Risk Category</dt>
+                          <dd>{{ quote.pet_quote.risk_score==null?'N/A':quote.pet_quote.risk_score <= 16?'Low Risk':((quote.pet_quote.risk_score <= 31)?'Medium Risk':(quote.pet_quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
+                      </div>
+
+
+
+
+
                   </dl>
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                       <div class="grid sm:grid-cols-2">
@@ -773,6 +782,12 @@ const linkEntity = () => {
     />
 
     <QuotePolicy :quote="quote" :can="can" :quoteStatusEnum="quoteStatusEnum" />
+
+    <PlanDetails
+    :insuranceProviders="insuranceProviders"
+    :quote="quote"
+    :quoteType="quoteType"
+     />
 
     <EmbeddedProducts
       :data="embeddedProducts"

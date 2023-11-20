@@ -2,6 +2,7 @@
 const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
+const convertDate = date => useConvertDate(date);
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 const isLoading = ref(false);
 const props = defineProps({
@@ -10,7 +11,7 @@ const props = defineProps({
   status: Function,
   buttonStatus: Function,
   countryList: Array,
-  amlQuoteStatus: String,
+  amlQuoteStatus: Number,
   nationalities: Array,
   modelType: String,
   entities: Array,
@@ -18,6 +19,8 @@ const props = defineProps({
   idDocumentType: Array,
   issuancePlace: Array,
   issuingAuthority: Array,
+  uboRelation: Array,
+  entityDetails: Array,
 });
 
 const rules = {
@@ -37,27 +40,27 @@ const kycForm = reactive({
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   company_name: props.quote.company_name,
-  legal_structure: null,
+  legal_structure: props.entityDetails.entity?.legal_structure,
   industry_type: null,
-  country_of_corporation: 56, //Default UAE
-  registered_address: null,
-  communication_address: null,
-  mobile_number: props.quote.mobile_no,
-  email: props.quote.email,
-  website: null,
-  id_document_type: null,
-  id_number: null,
-  id_issue_date: null,
-  id_expiry_date: null,
-  place_of_issue: null,
-  issuing_authority: null,
+  country_of_corporation: props.entityDetails.entity?.country_of_corporation ?? 56, //Default UAE
+  registered_address: props.entityDetails.entity?.registered_address ?? null,
+  communication_address: props.entityDetails.entity?.communication_address ?? null,
+  mobile_number: props.entityDetails.entity?.mobile_no ?? props.quote.mobile_no,
+  email: props.entityDetails.entity?.email ?? props.quote.email,
+  website: props.entityDetails.entity?.website,
+  id_document_type: props.entityDetails.entity?.id_type ?? null,
+  id_number: props.entityDetails.entity?.id_number ?? null,
+  id_issue_date: convertDate(props.entityDetails.entity?.id_issuance_date),
+  id_expiry_date: convertDate(props.entityDetails.entity?.id_expiry_date),
+  place_of_issue: props.entityDetails.entity?.issuance_place ?? null,
+  issuing_authority: props.entityDetails.entity?.id_issuance_authority ?? null,
   manager_name: null,
   manager_nationality: null,
   manager_dob: null,
   manager_position: null,
-  pep: props.amlQuoteStatus,
-  financial_sanctions: props.amlQuoteStatus,
-  dual_nationality: props.amlQuoteStatus,
+  pep: props.entityDetails.entity?.pep ?? props.amlQuoteStatus,
+  financial_sanctions: props.entityDetails.entity?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality: props.entityDetails.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
 
 const onKycSubmit = () => {
@@ -131,6 +134,13 @@ const placeOfIssuanceOptions = computed(() => {
 
 const issuingAuthorityOptions = computed(() => {
   return props.issuingAuthority.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const uboRelationOptions = computed(() => {
+  return props.uboRelation.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -314,7 +324,6 @@ onMounted(() => {
         v-model="kycForm.id_number"
         label="Id number"
         placeholder="Id number"
-        type="number"
       />
 
       <div>
@@ -427,11 +436,13 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <x-input
-        v-model="kycForm.manager_position"
-        label="Position"
-        placeholder="Position"
-        :rules="[isRequired]"
+      <ComboBox
+          v-model="kycForm.manager_position"
+          label="Position"
+          :options="uboRelationOptions"
+          placeholder="Position"
+          :single="true"
+          :rules="[isRequired]"
       />
     </div>
 
@@ -446,14 +457,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.pep"
-          value="Yes"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.pep"
-          value="No"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -469,14 +480,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2 mt-3">
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="Yes"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="No"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -489,14 +500,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="Yes"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="No"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"

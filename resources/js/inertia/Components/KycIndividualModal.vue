@@ -12,14 +12,17 @@ const props = defineProps({
   status: Function,
   buttonStatus: Function,
   countryList: Array,
-  amlQuoteStatus: String,
+  amlQuoteStatus: Number,
   nationalities: Array,
   modelType: String,
   idDocumentType: Array,
   modeOfContact: Array,
+  modeOfDelivery: Array,
+  professionalTitle: Array,
   employmentSectors: Array,
   residentialStatus: Array,
   companyPosition: Array,
+  customerDetails: Object,
 });
 
 const rules = {
@@ -40,28 +43,28 @@ const kycForm = reactive({
   last_name: props.quote.last_name,
   dob: convertDate(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id,
-  country_of_residence: null,
-  place_of_birth: null,
-  resident_status: null,
-  residential_address: null,
+  country_of_residence: props.customerDetails.detail?.country_of_residence ?? null,
+  place_of_birth: props.customerDetails.detail?.place_of_birth ?? null,
+  resident_status: props.customerDetails.detail?.residential_status ?? null,
+  residential_address: props.customerDetails.detail?.residential_address ?? null,
   mobile_number: props.quote.mobile_no,
   email: props.quote.email,
-  customer_tenure: null,
-  id_type: null,
-  id_number: null,
-  id_issue_date: null,
-  id_expiry_date: null,
-  mode_of_contact: null,
-  mode_of_delivery: null,
-  income_source: null,
-  company_name: null,
-  professional_title: null,
-  employment_sector: null,
-  trade_license: null,
-  company_position: null,
-  pep: props.amlQuoteStatus,
-  financial_sanctions: props.amlQuoteStatus,
-  dual_nationality: props.amlQuoteStatus,
+  customer_tenure: props.customerDetails.detail?.customer_tenure ?? null,
+  id_type: props.customerDetails.detail?.id_type ?? null,
+  id_number: props.customerDetails.detail?.id_number ?? null,
+  id_issue_date: convertDate(props.customerDetails.detail?.id_issuance_date),
+  id_expiry_date: convertDate(props.customerDetails.detail?.id_expiry_date),
+  mode_of_contact: props.customerDetails.detail?.mode_of_contact ?? null,
+  mode_of_delivery: props.customerDetails.detail?.mode_of_delivery ?? null,
+  income_source: props.customerDetails.detail?.source_of_income ?? null,
+  company_name: props.customerDetails.detail?.employer_company_name ?? null,
+  professional_title: props.customerDetails.detail?.job_title ?? null,
+  employment_sector: props.customerDetails.detail?.employment_sector ?? null,
+  trade_license: props.customerDetails.detail?.trade_license_no ?? null,
+  company_position: props.customerDetails.detail?.position_in_company ?? null,
+  pep: props.customerDetails.detail?.pep ?? props.amlQuoteStatus,
+  financial_sanctions: props.customerDetails.detail?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality: props.customerDetails.detail?.dual_nationality ?? props.amlQuoteStatus,
 });
 
 const incomeSourceFields = reactive({
@@ -143,6 +146,20 @@ const modeOfContactOptions = computed(() => {
   }));
 });
 
+const modeOfDeliveryOptions = computed(() => {
+  return props.modeOfDelivery.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
+const professionalTitleOptions = computed(() => {
+  return props.professionalTitle.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
 const employmentSectorsOptions = computed(() => {
   return props.employmentSectors.map(nat => ({
     value: nat.code,
@@ -210,7 +227,7 @@ onMounted(() => {
         :rules="[isRequired]"
       />
 
-      <x-select
+      <ComboBox
         v-model="kycForm.nationality_id"
         label="Nationality"
         :options="nationalityOptions"
@@ -291,7 +308,6 @@ onMounted(() => {
         v-model="kycForm.id_number"
         label="ID number"
         placeholder="ID number"
-        type="number"
         :rules="[isRequired]"
       />
 
@@ -318,7 +334,7 @@ onMounted(() => {
       <x-select
         v-model="kycForm.mode_of_delivery"
         label="Mode of delivery"
-        :options="modeOfContactOptions"
+        :options="modeOfDeliveryOptions"
         placeholder="Mode of delivery"
         :rules="[isRequired]"
       />
@@ -348,11 +364,13 @@ onMounted(() => {
         :rules="[rules.isRequired]"
       />
 
-      <x-input
-        v-model="kycForm.professional_title"
-        label="Professional job title"
-        placeholder="Professional job title"
-        :rules="[rules.isRequired]"
+      <ComboBox
+          v-model="kycForm.professional_title"
+          label="Professional job title"
+          :options="professionalTitleOptions"
+          placeholder="Professional job title"
+          :single="true"
+          :rules="[rules.isRequired]"
       />
 
       <x-select
@@ -410,14 +428,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.pep"
-          value="Yes"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.pep"
-          value="No"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -433,14 +451,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2 mt-3">
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="Yes"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="No"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -453,14 +471,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="Yes"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="No"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"

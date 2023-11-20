@@ -126,6 +126,7 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_first_registration',
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
+                'cqr.kyc_decision',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
                 DB::raw('DATE_FORMAT(cqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
                 DB::raw('DATE_FORMAT(cqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),
@@ -142,7 +143,7 @@ class CarQuoteService extends BaseService
                 'cqr.quote_batch_id',
                 'qb.name as quote_batch_id_text',
                 'cqr.car_value_tier',
-                'cd.risk_score',
+                'cqr.risk_score',
                 DB::raw('IF(EXISTS (
                     SELECT *
                     FROM quote_request_entity_mapping
@@ -190,7 +191,6 @@ class CarQuoteService extends BaseService
             ->leftJoin('tiers as t', 't.id', '=', 'cqr.tier_id')
             ->leftJoin('quote_batches as qb', 'qb.id', '=', 'cqr.quote_batch_id')
             ->leftJoin('customer as c', 'cqr.customer_id', 'c.id')
-            ->leftJoin('customer_details as cd', 'cqr.customer_id', 'cd.customer_id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Car));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'cqr.id');

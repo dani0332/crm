@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
+use App\Models\Lookup;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -209,12 +210,15 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-        if (! DB::table('lookups')->where('key', LookupsEnum::MODE_OF_DELIVERY)->first()) {
-            DB::table('lookups')->insert([
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modSent', 'text' => 'Sent to customer via Email', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modDelivered', 'text' => 'Delivered to customer via Courier', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'modCollected', 'text' => 'Collected by customer from office', 'created_at' => now(), 'updated_at' => now()],
-            ]);
+        if(Lookup::where('key', LookupsEnum::MODE_OF_DELIVERY)->count() == 3) {
+            Lookup::where('key', LookupsEnum::MODE_OF_DELIVERY)->update(['key' => LookupsEnum::DELETED_MODE_OF_DELIVERY]);
         }
+
+        Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-car'], ['text' => 'Company\'s Authorised Representative']);
+        Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-atp'], ['text' => 'Authorised Third party']);
+        Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-unkown'], ['text' => 'Unknown']);
+        Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-pse'], ['text' => 'Policy sent via email']);
+        Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-psc'], ['text' => 'Policy sent via courier']);
+        Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-cco'], ['text' => 'Collected by customer from office']);
     }
 }

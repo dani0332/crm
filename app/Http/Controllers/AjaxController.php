@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DocumentTypeCode;
 use App\Enums\Kyc;
 use App\Enums\LookupsEnum;
@@ -9,18 +10,21 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
-use App\Models\BusinessQuote;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\CustomerDetail;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Models\Payment;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
+use App\Models\QuoteMemberDetail;
 use App\Repositories\LookupRepository;
+use App\Services\ActivitiesService;
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
@@ -37,12 +41,15 @@ class AjaxController extends Controller
     protected $healthQuoteService;
     protected $quoteDocumentService;
     protected $CRUDService;
+    protected $activityService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService)
+    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService,
+        ActivitiesService $activityService)
     {
         $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
         $this->CRUDService = $CRUDService;
+        $this->activityService = $activityService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -201,6 +208,8 @@ class AjaxController extends Controller
     public function uploadKycIndividualDocument($quoteType, KycIndividualDocRequest $request)
     {
         try {
+            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
+
             $data = $request->validated();
             $data['nationality_text'] = Nationality::where('id', $data['nationality_id'])->value('text');
             $data['country_name'] = Nationality::where('id', $data['country_of_residence'])->value('country_name');
@@ -208,21 +217,23 @@ class AjaxController extends Controller
             $data['resident_status_text'] = LookupRepository::where('code', $data['resident_status'])->where('key', LookupsEnum::RESIDENT_STATUS)->value('text');
             $data['id_type_text'] = LookupRepository::where('code', $data['id_type'])->where('key', LookupsEnum::DOCUMENT_ID_TYPE)->value('text');
             $data['mode_of_contact_text'] = LookupRepository::where('code', $data['mode_of_contact'])->where('key', LookupsEnum::MODE_OF_CONTACT)->value('text');
-            $data['mode_of_delivery_text'] = LookupRepository::where('code', $data['mode_of_delivery'])->where('key', LookupsEnum::MODE_OF_CONTACT)->value('text');
+            $data['mode_of_delivery_text'] = LookupRepository::where('code', $data['mode_of_delivery'])->where('key', LookupsEnum::MODE_OF_DELIVERY)->value('text');
             $data['employment_sector_text'] = LookupRepository::where('code', $data['employment_sector'])->where('key', LookupsEnum::EMPLOYMENT_SECTOR)->value('text');
             $data['company_position_text'] = LookupRepository::where('code', $data['company_position'])->where('key', LookupsEnum::COMPANY_POSITION)->value('text');
+            $data['professional_title_text'] = LookupRepository::where('code', $data['professional_title'])->where('key', LookupsEnum::PROFESSIONAL_TITLE)->value('text');
+            $data['premium'] = $quote->premium;
+            $data['payment_method'] = isset($quote->payments[0]) ? $quote->payments[0]->paymentMethod->name : '';
+            $data['product_type'] = ucfirst($quoteType).' Insurance';
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
-            $pdf->setPaper('A4', 'landscape');
+            $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-
-            $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
 
             if ($document) {
-                DB::table('customer_details')->insert([
+                CustomerDetail::create([
                     'customer_id' => $data['customer_id'],
                     'country_of_residence' => $data['country_of_residence'],
                     'place_of_birth' => $data['place_of_birth'],
@@ -241,6 +252,9 @@ class AjaxController extends Controller
                     'position_in_company' => $data['company_position'] ?? null,
                     'mode_of_contact' => $data['mode_of_contact'] ?? null,
                     'mode_of_delivery' => $data['mode_of_delivery'] ?? null,
+                    'pep' => $data['pep'] ?? null,
+                    'financial_sanctions' => $data['financial_sanctions'] ?? null,
+                    'dual_nationality' => $data['dual_nationality'] ?? null,
                 ]);
 
                 $quote->kyc_decision = Kyc::COMPLETE;
@@ -258,9 +272,9 @@ class AjaxController extends Controller
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
         try {
-            $businessQuote = BusinessQuote::with('quoteRequestEntityMapping.entity')->where('uuid', $request->quote_uuid)->first();
+            $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
-            if (! isset($businessQuote->quoteRequestEntityMapping->entity)) {
+            if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
 
@@ -272,18 +286,18 @@ class AjaxController extends Controller
             $data['issuance_place_text'] = LookupRepository::where('code', $data['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
             $data['document_type_text'] = LookupRepository::where('code', $data['id_document_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
             $data['issuing_authority_text'] = LookupRepository::where('code', $data['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
+            $data['manager_position_text'] = LookupRepository::where('code', $data['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
-            $pdf->setPaper('A4', 'landscape');
+            $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
-            $quote = $this->getQuoteObject($quoteType, $data['quote_uuid']);
-
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
+            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
 
             if ($document) {
-                Entity::where('id', $businessQuote->quoteRequestEntityMapping->entity->id)->update([
+                Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
                     'mobile_no' => $data['mobile_number'],
                     'email' => $data['email'],
                     'website' => $data['website'],
@@ -295,11 +309,23 @@ class AjaxController extends Controller
                     'id_number' => $data['id_number'],
                     'id_issuance_date' => $data['id_issue_date'],
                     'id_expiry_date' => $data['id_expiry_date'],
+                    'issuance_place' => $data['place_of_issue'],
                     'id_issuance_authority' => $data['issuing_authority'],
-                    // 'manager_name' => $data['manager_name'],
-                    // 'manager_nationality' => $data['manager_nationality'],
-                    // 'manager_dob' => $data['manager_dob'],
-                    // 'manager_position' => $data['manager_position'],
+                    'pep' => $data['pep'] ?? null,
+                    'financial_sanctions' => $data['financial_sanctions'] ?? null,
+                    'dual_nationality' => $data['dual_nationality'] ?? null,
+                ]);
+
+                QuoteMemberDetail::create([
+                    'code' => $quote->quoteRequestEntityMapping->entity->code,
+                    'customer_type' => CustomerTypeEnum::Entity,
+                    'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id,
+                    'quote_type_id' => $quoteTypeId,
+                    'quote_request_id' => $quote->id,
+                    'first_name' => $data['manager_name'],
+                    'dob' => $data['manager_dob'],
+                    'nationality_id' => $data['manager_nationality'],
+                    'relation_code' => $data['manager_position'],
                 ]);
 
                 $quote->kyc_decision = Kyc::COMPLETE;

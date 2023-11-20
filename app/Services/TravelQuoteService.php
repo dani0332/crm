@@ -95,7 +95,8 @@ class TravelQuoteService extends BaseService
             'direction_code',
             'coverage_code',
             'tqr.primary_member_id',
-            'cd.risk_score',
+            'tqr.risk_score',
+            'tqr.kyc_decision',
             DB::raw('IF(EXISTS (
                 SELECT *
                 FROM quote_request_entity_mapping
@@ -128,7 +129,6 @@ class TravelQuoteService extends BaseService
             ->leftJoin('travel_plan as tp', 'tp.id', '=', 'tqr.plan_id')
             ->leftJoin('payment_status as ps', 'ps.id', '=', 'tqr.payment_status_id')
             ->leftJoin('customer as c', 'tqr.customer_id', 'c.id')
-            ->leftJoin('customer_details as cd', 'tqr.customer_id', 'cd.customer_id')
             ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
                 $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Travel));
                 $entityMappingJoin->on('qrem.quote_request_id', '=', 'tqr.id');
