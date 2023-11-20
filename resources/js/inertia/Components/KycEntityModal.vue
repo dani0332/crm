@@ -52,7 +52,7 @@ const kycForm = reactive({
   id_number: props.entityDetails.entity?.id_number ?? null,
   id_issue_date: convertDate(props.entityDetails.entity?.id_issuance_date),
   id_expiry_date: convertDate(props.entityDetails.entity?.id_expiry_date),
-  place_of_issue: null,
+  place_of_issue: props.entityDetails.entity?.issuance_place ?? null,
   issuing_authority: props.entityDetails.entity?.id_issuance_authority ?? null,
   manager_name: null,
   manager_nationality: null,
