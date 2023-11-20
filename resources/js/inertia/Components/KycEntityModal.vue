@@ -52,7 +52,7 @@ const kycForm = reactive({
   id_number: props.entityDetails.entity?.id_number ?? null,
   id_issue_date: convertDate(props.entityDetails.entity?.id_issuance_date),
   id_expiry_date: convertDate(props.entityDetails.entity?.id_expiry_date),
-  place_of_issue: null,
+  place_of_issue: props.entityDetails.entity?.issuance_place ?? null,
   issuing_authority: props.entityDetails.entity?.id_issuance_authority ?? null,
   manager_name: null,
   manager_nationality: null,
@@ -457,14 +457,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.pep"
-          value="1"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.pep"
-          value="2"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -480,14 +480,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2 mt-3">
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="1"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.financial_sanctions"
-          value="2"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
@@ -500,14 +500,14 @@ onMounted(() => {
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="1"
+          :value="1"
           label="Yes"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"
         />
         <x-radio
           v-model="kycForm.dual_nationality"
-          value="2"
+          :value="2"
           label="No"
           :rules="complianceRules"
           :disabled="complianceDisable.isDisable"

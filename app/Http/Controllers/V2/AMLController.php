@@ -292,7 +292,6 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
-        // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
@@ -414,7 +413,7 @@ class AMLController extends Controller
                 } else {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
                     $updateQuote->save();
-                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningFailed);
                 }
                 session()->forget('amlResponseCheck');
             }
@@ -451,7 +450,7 @@ class AMLController extends Controller
                 } else {
                     $updateQuote->quote_status_id = QuoteStatusEnum::AMLScreeningFailed;
                     $updateQuote->save();
-                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningCleared);
+                    info('Bridger Insight Service - Update Lead Quote Status to AML Screen Failed new Escalated case Found - ID:'.QuoteStatusEnum::AMLScreeningFailed);
                 }
                 session()->forget('amlResponseCheck');
             }
