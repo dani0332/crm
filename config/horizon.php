@@ -177,7 +177,7 @@ return [
             ],
         ],
         'uat' => [
-            'supervisor-test' => [
+            'supervisor-uat' => [
                 'connection' => 'redis',
                 'queue' => 'default,renewals',
                 'balance' => 'auto',
