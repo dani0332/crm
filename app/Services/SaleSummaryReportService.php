@@ -29,7 +29,7 @@ class SaleSummaryReportService implements ManagementReport
                                 SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_transaction'),
                 DB::raw('SUM(CASE WHEN 1 THEN 1 ELSE 0 END) as total_vat')
             )
-            ->get();
+            ->simplePaginate(10)->withQueryString();
 
         // $typeCode = DB::raw('LOWER(quote_type.code)');
         // $dynamicTableName = DB::raw("CONCAT($typeCode, '_quote_request')");

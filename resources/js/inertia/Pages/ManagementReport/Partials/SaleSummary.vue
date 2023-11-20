@@ -56,7 +56,7 @@ const tableHeader = reactive([
     table-class-name=""
     :loading="loader"
     :headers="tableHeader"
-    :items="[]"
+    :items="reportData.data"
     border-cell
     :empty-message="'No Records Available'"
     :sort-by="'net_conversion'"
@@ -64,7 +64,7 @@ const tableHeader = reactive([
     hide-footer
   >
   </DataTable>
-  <!-- <Pagination
+  <Pagination
     :links="{
       next: props.reportData.next_page_url,
       prev: props.reportData.prev_page_url,
@@ -72,5 +72,5 @@ const tableHeader = reactive([
       from: props.reportData.from,
       to: props.reportData.to,
     }"
-  /> -->
+  />
 </template>

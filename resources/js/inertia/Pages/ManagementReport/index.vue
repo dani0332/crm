@@ -285,5 +285,5 @@ function onReset() {
       </x-button>
     </div>
   </x-form>
-  <component :reportData="{}" :is="selectedReport"></component>
+  <component :reportData="props.reportData" :is="selectedReport"></component>
 </template>
