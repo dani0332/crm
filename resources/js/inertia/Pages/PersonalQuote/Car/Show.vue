@@ -2854,21 +2854,24 @@ const handleChildUpdate = planId => {
             </template>
 
             <!--  -->
-            <SelectPlan v-if="prefillPlanId != item.id"
-            @update:updatePlanId="handleChildUpdate"
-            :plan="item"
-            :quoteType="quoteType"
-            :uuid="quote.uuid" />
+            <span v-if="hasRole(rolesEnum.CarAdvisor)">
+              <SelectPlan v-if="prefillPlanId != item.id"
+                  @update:updatePlanId="handleChildUpdate"
+                  :plan="item"
+                  :quoteType="quoteType"
+                  :uuid="quote.uuid" />
 
-            <x-button
-            v-else
-        size="xs"
-        color="orange"
-        outlined
-        :disabled="true"
-    >
-        Selected
-    </x-button>
+              <x-button
+                  v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+            </span>
+            
 
           </div>
         </template>

@@ -2509,21 +2509,24 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <SelectPlan v-if="prefillPlanId != item.id"
-            @update:updatePlanId="handleChildUpdate"
-            :plan="item"
-            :quoteType="quoteType"
-            :uuid="quote.uuid" />
+            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
 
-            <x-button
-            v-else
-        size="xs"
-        color="orange"
-        outlined
-        :disabled="true"
-    >
-        Selected
-    </x-button>
+              <SelectPlan v-if="prefillPlanId != item.id"
+                      @update:updatePlanId="handleChildUpdate"
+                      :plan="item"
+                      :quoteType="quoteType"
+                      :uuid="quote.uuid" />
+
+                      <x-button
+                      v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+            </span>
 
           </div>
         </template>

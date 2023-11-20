@@ -60,6 +60,8 @@ const dateTimeFormat = date => {
 };
 
 const notification = useNotifications('toast');
+const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
 
 const {
   isRequired,
@@ -2069,22 +2071,26 @@ const handleChildUpdate = planId => {
                 View
               </x-button>
 
-              <SelectPlan class="ml-1" v-if="prefillPlanId != item.id"
-            @update:updatePlanId="handleChildUpdate"
-            :plan="item"
-            :quoteType="modelType"
-            :uuid="quote.uuid" />
+              <span v-if="hasRole(rolesEnum.TravelAdvisor)">
+                <SelectPlan class="ml-1" v-if="prefillPlanId != item.id"
+                      @update:updatePlanId="handleChildUpdate"
+                      :plan="item"
+                      :quoteType="modelType"
+                      :uuid="quote.uuid" />
 
-            <x-button
-            class="ml-1"
-            v-else
-        size="xs"
-        color="orange"
-        outlined
-        :disabled="true"
-    >
-        Selected
-    </x-button>
+                      <x-button
+                      class="ml-1"
+                      v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+              </span>
+
+              
 
             </div>
           </template>
