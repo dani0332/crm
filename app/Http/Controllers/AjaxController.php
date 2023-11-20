@@ -317,9 +317,9 @@ class AjaxController extends Controller
                 ]);
 
                 QuoteMemberDetail::create([
-                    'code' => $quote->quoteRequestEntityMapping->entity->trade_license_no,
+                    'code' => $quote->quoteRequestEntityMapping->entity->code,
                     'customer_type' => CustomerTypeEnum::Entity,
-                    'customer_entity_id' => 0, // for the time being, just for testing.
+                    'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id,
                     'quote_type_id' => $quoteTypeId,
                     'quote_request_id' => $quote->id,
                     'first_name' => $data['manager_name'],
