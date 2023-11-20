@@ -15,7 +15,7 @@
         #footer {
             background-color: rgb(29 131 188);
             color: white;
-            width: 520px;
+            width: 660px;
             padding: 10px; /* Add padding to create space */
         }
 
@@ -94,7 +94,7 @@
 
 <body>
     <div id="header">
-        <img src="{{ public_path('images/im_logo_15k.png') }}" alt="Insurance Market Logo" width="500">
+        <img src="{{ public_path('images/im_logo_21k.png') }}" alt="Insurance Market Logo" width="500">
     </div>
     <hr>
 
@@ -182,7 +182,7 @@
                     </tr>
                     <tr>
                         <td>Professional job title:</td>
-                        <td>{{ $data['professional_title'] }}</td>
+                        <td>{{ $data['professional_title_text'] }}</td>
                     </tr>
                     <tr>
                         <td>Employment Sector:</td>
@@ -212,8 +212,8 @@
                 <tr>
                     <td>Is the customer a PEP?</td>
                     <td class="no-border" style="margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'Yes') /> &nbsp;&nbsp; Yes
-                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 'No') /> &nbsp;&nbsp; No
+                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
+                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
                     </td>
                 </tr>
                 <tr>
@@ -222,15 +222,15 @@
                         prescribed terrorist organizations? <br>
                     </td>
                     <td class="no-border" style="margin-top: 18px; margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'Yes') /> &nbsp;&nbsp; Yes
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 'No') /> &nbsp;&nbsp; No
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
                     </td>
                 </tr>
                 <tr>
                     <td>Does the customer have dual nationality?</td>
                     <td class="no-border" style="margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'Yes') /> &nbsp;&nbsp; Yes
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 'No') /> &nbsp;&nbsp; No
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
                     </td>
                 </tr>
             </tbody>

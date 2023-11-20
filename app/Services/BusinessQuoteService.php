@@ -71,6 +71,7 @@ class BusinessQuoteService extends BaseService
                 'bqr.customer_id',
                 'bqr.parent_duplicate_quote_id',
                 'bqr.renewal_import_code',
+                'bqr.kyc_decision',
                 DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
                 'c.insured_first_name',
                 'c.insured_last_name',
@@ -83,7 +84,7 @@ class BusinessQuoteService extends BaseService
                 'ent.company_address',
                 'qrem.entity_type_code',
                 'ent.industry_type_code',
-                'ent.emirate_of_registration_id'
+                'ent.emirate_of_registration_id',
             )
             ->leftJoin('business_type_of_insurance as bti', 'bti.id', '=', 'bqr.business_type_of_insurance_id')
             ->leftJoin('business_quote_request_detail as bqrd', 'bqrd.business_quote_request_id', '=', 'bqr.id')

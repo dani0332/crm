@@ -23,13 +23,11 @@ use App\Models\BusinessCoverType;
 use App\Models\BusinessQuoteType;
 use App\Models\CommunicationMode;
 use App\Models\Customer;
-use App\Models\CustomerPaymentInstrument;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
 use App\Models\Lookup;
-use App\Models\Payment;
 use App\Models\PersonalQuote;
 use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
@@ -248,6 +246,8 @@ class AMLController extends Controller
             LookupsEnum::ISSUANCE_PLACE,
             LookupsEnum::ISSUING_AUTHORITY,
             LookupsEnum::COMPANY_POSITION,
+            LookupsEnum::PROFESSIONAL_TITLE,
+            LookupsEnum::UBO_RELATION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
@@ -283,6 +283,7 @@ class AMLController extends Controller
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
             'entities' => $entities,
+            'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
         if ($quoteType->code == quoteTypeCode::Business) {
@@ -605,7 +606,7 @@ class AMLController extends Controller
         if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
             info('Bridger Insight : Email Triggered to Compliance Super User');
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                $request['aml_quote_url'],
+                config('constants.APP_URL'). $request['aml_quote_url'],
                 $request['quote_ref_id'],
                 $request['bridger_response'],
                 $request['customer_entity_name'],
@@ -618,5 +619,16 @@ class AMLController extends Controller
         }
 
         return true;
+    }
+
+    private function checkAmlQuoteStatus($statusId)
+    {
+        if ($statusId == QuoteStatusEnum::AMLScreeningCleared) {
+            return 2;
+        } elseif ($statusId == QuoteStatusEnum::AMLScreeningFailed) {
+            return 1;
+        }
+
+        return null;
     }
 }

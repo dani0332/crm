@@ -20,6 +20,8 @@ const props = defineProps({
   residentStatuses: Object,
   lookups: Object,
   entities: Array,
+  quoteAmlStatus: Number,
+  customerDetails: Object
 });
 
 // const paymentsDataArray = ref(props.quoteDetails.payments || []);
@@ -194,7 +196,7 @@ const insuredFormDetails = useForm({
 
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
   insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
-  insured_fullname: (props.quoteDetails?.customer.insured_first_name +' '+ props.quoteDetails?.customer.insured_last_name)?? null,
+  insured_fullname: props.quoteDetails?.customer.insured_fullname ?? null,
   withFullName: false,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
@@ -786,14 +788,18 @@ onMounted(() => {
           :roles="$page.props.rolesEnum"
           :quote="quoteDetails"
           :countryList="nationalities"
-          :amlQuoteStatus="$page.props.amlQuoteStatus"
+          :aml-quote-status="props.quoteAmlStatus"
           :nationalities="nationalities"
           :modelType="quoteType?.code"
           :idDocumentType="props.lookups.id_type"
           :modeOfContact="props.lookups.mode_of_contact"
+          :modeOfDelivery="props.lookups.mode_of_delivery"
+          :professionalTitle="props.lookups.professional_title"
           :employmentSectors="props.lookups.employment_sector"
           :residentialStatus="props.lookups.resident_status"
           :companyPosition="props.lookups.company_position"
+          :entity-details="props.entityDetails"
+          :customer-details="props.customerDetails"
         />
 
         <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">

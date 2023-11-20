@@ -126,6 +126,7 @@ class CarQuoteService extends BaseService
                 'cqr.year_of_first_registration',
                 'cqr.has_ncd_supporting_documents',
                 'cqr.back_home_license_held_for_id',
+                'cqr.kyc_decision',
                 'ulhfs.TEXT as back_home_license_held_for_id_text',
                 DB::raw('DATE_FORMAT(cqr.policy_start_date, "%d-%m-%Y") as policy_start_date'),
                 DB::raw('DATE_FORMAT(cqr.policy_issuance_date, "%d-%m-%Y") as policy_issuance_date'),

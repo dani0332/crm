@@ -604,6 +604,8 @@ onMounted(() => {
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
+      :entities="entities"
+      :quote-aml-status="page.props.quoteAmlStatus"
     />
 
     <IndividualModel
@@ -622,6 +624,8 @@ onMounted(() => {
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
       :entities="entities"
+      :quote-aml-status="page.props.quoteAmlStatus"
+      :customer-details="props.customerDetails"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
