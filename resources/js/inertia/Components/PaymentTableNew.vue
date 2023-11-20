@@ -201,6 +201,7 @@ const rules = {
 const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
+  isDeclineCustomReason.value = false;
   return true;  
 };
 

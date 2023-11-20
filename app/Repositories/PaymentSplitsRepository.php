@@ -128,6 +128,8 @@ class PaymentSplitsRepository
     public function updatePaymentSplits($request)
     {
         $paymentSplits = PaymentSplits::with('documents')->where(['code' => $request->paymentCode])->get();
+        //dd($request->all()); //payment_no
+        //dd($paymentSplits->count());
         $paymentPaidSerialNo = [];
         $splitPaymentDocumentIds = [];
         if ($paymentSplits) {
@@ -138,12 +140,18 @@ class PaymentSplitsRepository
                     continue;
                 }
                 //dd($paymentSplit->documents()->count());
+                
+                if($request->payment_no < $paymentSplits->count()) {
+                    $paymentSplit->documents()->delete();
+                    $paymentSplit->delete();
+                    continue;
+                }
+                /*
                 foreach ($paymentSplit->documents as $document) {
                     $splitPaymentDocumentIds[$paymentSplit->sr_no][] = $document->id;
                 }
-
                 $paymentSplit->documents()->delete();
-                $paymentSplit->delete();
+                $paymentSplit->delete();*/
             }
         }
 
@@ -153,31 +161,30 @@ class PaymentSplitsRepository
             }
 
             if (isset($request->split_payment_details['payment_type'][$i]) && $request->split_payment_details['payment_type'][$i] != null) {
-
-                $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
+                
                 $splitPaymentInformation = [
                     'code' => $request->paymentCode,
                     'sr_no' => $i,
                     'payment_method' => $request->split_payment_details['payment_type'][$i],
                     'check_detail' => isset($request->split_payment_details['check_detail'][$i]) ? $request->split_payment_details['check_detail'][$i] : null,
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
-                    'due_date' => $request->split_payment_details['due_date'][$i],
-                    'payment_status_id' => $childPaymentStatus,
+                    'due_date' => $request->split_payment_details['due_date'][$i],                    
                 ];
-
-                $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
-
-                if ($paymentSplitRecord->payment_method == 'CC') {
-                    $this->generateSplitPaymentLink($request->paymentCode, $paymentSplitRecord->id, $request->modelType, $request->quote_id);
+                $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $i])->first();
+                if ( !$paymentSplitRecord) {
+                    $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
+                    $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
+                    $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
+                } else {
+                    $paymentSplitRecord->update($splitPaymentInformation);
                 }
-
                 //add document references
                 if (isset($request->split_payment_details['document_detail'][$i])
                     && $paymentSplitRecord
                     && count($request->split_payment_details['document_detail'][$i])
                 ) {
                     foreach ($request->split_payment_details['document_detail'][$i] as $document) {
-
+                        /*
                         if (isset($splitPaymentDocumentIds[$i]) && in_array($document['id'], $splitPaymentDocumentIds[$i])) {
                             $quoteDocumentRec = QuoteDocument::withTrashed()->find($document['id']);
                             if ($quoteDocumentRec) {
@@ -185,9 +192,8 @@ class PaymentSplitsRepository
                                 $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
                                 $quoteDocumentRec->save();
                             }
-
                             continue;
-                        }
+                        }*/
                         $quoteDocumentRec = QuoteDocument::find($document['id']);
                         if ($quoteDocumentRec) {
                             $quoteDocumentRec->payment_split_id = $paymentSplitRecord->id;
