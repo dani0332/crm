@@ -72,7 +72,7 @@ defineProps({
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
   isCommercialVehicles: Boolean,
-  carInsuranceProviders: Array
+  carInsuranceProviders: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -338,22 +338,21 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
-``
+``;
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            availablePlansTable.data= res.data
-        })
-        .catch(err => {
-            console.log(err);
-        })
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      availablePlansTable.data = res.data;
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
-
 
 const historyDataTable = [
   { text: 'Modified At', value: 'created_at' },
@@ -364,11 +363,13 @@ const historyDataTable = [
 ];
 
 const availablePlansItems = computed(() => {
-	if (! Array.isArray(availablePlansTable.data)) {
-		return [];
-	}
-	return typeof availablePlansTable.data !== 'string' ? availablePlansTable.data : [];
-})
+  if (!Array.isArray(availablePlansTable.data)) {
+    return [];
+  }
+  return typeof availablePlansTable.data !== 'string'
+    ? availablePlansTable.data
+    : [];
+});
 
 const totalPriceVAT = computed(() => {
   let vat = 0;
@@ -1243,7 +1244,7 @@ const closeModal = v => {
 };
 onMounted(() => {
   onLoadAvailablePlansData();
-  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
+  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
 
@@ -1672,7 +1673,7 @@ const loadEmailEvents = email => {
         <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-4 w-full">
         <div class="w-full md:w-50">
           <div class="flex flex-col gap-4">
             <ComboBox
@@ -1684,6 +1685,38 @@ const loadEmailEvents = email => {
               :disabled="leadStatusDisabled"
               :options="leadStatusOptions"
             />
+            <x-field
+              label="Notes"
+              :required="
+                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+              "
+            >
+              <x-textarea
+                v-model="leadStatusForm.notes"
+                type="text"
+                placeholder="Lead Notes"
+                class="w-full"
+                :rules="
+                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
+                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
+                    ? [isRequired]
+                    : []
+                "
+                :error="leadStatusForm.errors.notes"
+                :disabled="
+                  record.quote_status_id ==
+                    quoteStatusEnum.TransactionApproved ||
+                  isCarLostStatus(record.quote_status_id)
+                "
+              />
+            </x-field>
+          </div>
+        </div>
+        <div class="w-full md:w-50">
+          <div class="flex flex-col gap-7">
             <x-field
               label="TransApp Code"
               required
@@ -1758,34 +1791,6 @@ const loadEmailEvents = email => {
               :error="leadStatusForm.errors.tier_id"
             />
             <x-field
-              label="Notes"
-              :required="
-                leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-              "
-            >
-              <x-textarea
-                v-model="leadStatusForm.notes"
-                type="text"
-                placeholder="Lead Notes"
-                class="w-full"
-                :rules="
-                  leadStatusForm.leadStatus == quoteStatusEnum.FollowupCall ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.Interested ||
-                  leadStatusForm.leadStatus == quoteStatusEnum.NoAnswer
-                    ? [isRequired]
-                    : []
-                "
-                :error="leadStatusForm.errors.notes"
-                :disabled="
-                  record.quote_status_id ==
-                    quoteStatusEnum.TransactionApproved ||
-                  isCarLostStatus(record.quote_status_id)
-                "
-              />
-            </x-field>
-            <x-field
               label="Car Sold / Uncontactable Proof"
               v-if="
                 leadStatusForm.leadStatus == quoteStatusEnum.CarSold ||
@@ -1801,6 +1806,14 @@ const loadEmailEvents = email => {
                 "
                 placeholder="Car Sold / Uncontactable Proof"
                 class="form-control w-full"
+              />
+            </x-field>
+            <x-field class="" label="Transaction Type">
+              <x-input
+                type="text"
+                value="eee"
+                class="w-full"
+                :disabled="true"
               />
             </x-field>
           </div>
@@ -2227,7 +2240,10 @@ const loadEmailEvents = email => {
             @click.prevent="copyLink"
             size="sm"
             color="emerald"
-           v-if="typeof availablePlansTable.data !== 'string' && availablePlansTable.data.length > 0"
+            v-if="
+              typeof availablePlansTable.data !== 'string' &&
+              availablePlansTable.data.length > 0
+            "
           >
             Copy Link
           </x-button>
