@@ -4,7 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
-import SelectPlan from './Partials/SelectPlan.vue';
+
 
 defineProps({
 	quote: Object,
@@ -1447,9 +1447,6 @@ const linkEntity = () => {
 }
 
 const prefillPlanId = ref(page.props.quote.prefill_plan_id);
-console.log(prefillPlanId.value, "PREFILL");
-
-
 const handleChildUpdate = planId => {
     prefillPlanId.value = planId;
 }
@@ -2862,6 +2859,16 @@ const handleChildUpdate = planId => {
             :plan="item"
             :quoteType="quoteType"
             :uuid="quote.uuid" />
+
+            <x-button
+            v-else
+        size="xs"
+        color="orange"
+        outlined
+        :disabled="true"
+    >
+        Selected
+    </x-button>
 
           </div>
         </template>
