@@ -236,7 +236,7 @@ const addTravelMember = isValid => {
         title: 'Traveler Added',
         position: 'top',
       });
-      onLoadAvailablePlansData()
+      onLoadAvailablePlansData();
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -276,7 +276,7 @@ const editTraveler = isValid => {
         title: 'Traveler Updated',
         position: 'top',
       });
-      onLoadAvailablePlansData()
+      onLoadAvailablePlansData();
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -299,7 +299,7 @@ const deleteTraveler = id => {
         title: 'Traveler Deleted',
         position: 'top',
       });
-      onLoadAvailablePlansData()
+      onLoadAvailablePlansData();
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -445,18 +445,18 @@ const onDocDelete = name => {
 };
 
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/travel/available-plans/${page.props.quote.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            availablePlansTable.data = res.data
-        })
-        .catch(err => {
-            console.log(err);
-        })
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/travel/available-plans/${page.props.quote.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      availablePlansTable.data = res.data;
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
 
 const confirmDeleteDoc = () => {
@@ -779,7 +779,7 @@ const onCopyText = text => {
 };
 
 onMounted(() => {
-    onLoadAvailablePlansData()
+  onLoadAvailablePlansData();
   if (page.props.message) {
     notification.success({
       title: page.props.message,
@@ -1120,6 +1120,14 @@ onMounted(() => {
               placeholder="Lost Reason is required"
               class="w-full"
               :error="leadStatusForm.errors.lostReason"
+            />
+          </x-field>
+          <x-field label="Transaction Type">
+            <x-input
+              type="text"
+              :value="quote.transaction_type_text"
+              class="w-full"
+              :disabled="true"
             />
           </x-field>
         </div>
@@ -1517,7 +1525,10 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
         <x-button
-          v-if="availablePlansTable.data.length > 0 && permissions.canNotApprovePayments"
+          v-if="
+            availablePlansTable.data.length > 0 &&
+            permissions.canNotApprovePayments
+          "
           size="sm"
           color="orange"
           @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
@@ -1526,7 +1537,12 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <div v-if="availablePlansTable.data && typeof availablePlansTable.data == 'string'">
+      <div
+        v-if="
+          availablePlansTable.data &&
+          typeof availablePlansTable.data == 'string'
+        "
+      >
         <p
           class="text-center text-primary-600 uppercase"
           v-if="typeof availablePlansTable.data == 'string'"
