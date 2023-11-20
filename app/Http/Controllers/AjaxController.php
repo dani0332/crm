@@ -309,6 +309,7 @@ class AjaxController extends Controller
                     'id_number' => $data['id_number'],
                     'id_issuance_date' => $data['id_issue_date'],
                     'id_expiry_date' => $data['id_expiry_date'],
+                    'issuance_place' => $data['place_of_issue'],
                     'id_issuance_authority' => $data['issuing_authority'],
                     'pep' => $data['pep'] ?? null,
                     'financial_sanctions' => $data['financial_sanctions'] ?? null,
