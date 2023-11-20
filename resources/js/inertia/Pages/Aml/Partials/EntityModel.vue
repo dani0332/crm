@@ -1,6 +1,7 @@
 <script setup>
 import UBODetailsModels from './UBODetailsModels.vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
+import PayerDetails from './PayerDetails.vue';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -266,7 +267,17 @@ const show = ref(true);
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
-        <x-divider class="mb-4 mt-1" />
+
+        <x-divider class="my-6" />
+
+        <PayerDetails
+          :quoteType="quoteType"
+          :quoteDetails="quoteDetails"
+          :nationalities="nationalities"
+          :membersDetails="membersDetails"
+          :memberRelations="memberRelations"
+          :customerType="props.customerTypeEnum.Entity"
+        />
 
         <div class="text-center space-x-4 mt-8">
           <x-button
@@ -525,6 +536,17 @@ const show = ref(true);
         :memberRelations="memberRelations"
         :customerType="props.customerTypeEnum.Individual"
       />
+      <x-divider class="my-6" />
+
+      <PayerDetails
+        :quoteType="quoteType"
+        :quoteDetails="quoteDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :memberRelations="memberRelations"
+        :customerType="props.customerTypeEnum.Entity"
+      />
+
       <div class="flex justify-center my-5">
         <x-button
           size="sm"
