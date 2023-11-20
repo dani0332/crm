@@ -1811,7 +1811,7 @@ const loadEmailEvents = email => {
             <x-field class="" label="Transaction Type">
               <x-input
                 type="text"
-                value="eee"
+                :value="record.transaction_type_text"
                 class="w-full"
                 :disabled="true"
               />

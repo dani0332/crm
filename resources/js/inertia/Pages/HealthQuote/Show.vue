@@ -1646,7 +1646,7 @@ onMounted(() => {
             <x-field class="" label="Transaction Type">
               <x-input
                 type="text"
-                value="eee"
+                :value="quote.transaction_type_text"
                 class="w-full"
                 :disabled="true"
               />
