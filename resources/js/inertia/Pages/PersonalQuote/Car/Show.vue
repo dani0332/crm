@@ -1446,6 +1446,15 @@ const linkEntity = () => {
     });
 }
 
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+console.log(prefillPlanId.value, "PREFILL");
+
+
+const handleChildUpdate = planId => {
+  console.log(planId, "PLAN ID PARENT");
+    prefillPlanId.value = planId;
+}
+
 </script>
 
 <template>
@@ -2848,8 +2857,12 @@ const linkEntity = () => {
               </x-button>
             </template>
 
-            
-            <SelectPlan :plan="item" :quoteType="quoteType" :uuid="quote.uuid" />
+            <!--  -->
+            <SelectPlan v-if="prefillPlanId != item.id"
+            @update:updatePlanId="handleChildUpdate"
+            :plan="item"
+            :quoteType="quoteType"
+            :uuid="quote.uuid" />
 
           </div>
         </template>

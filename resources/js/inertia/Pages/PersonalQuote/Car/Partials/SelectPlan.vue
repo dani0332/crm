@@ -10,12 +10,15 @@ const props = defineProps({
 const notification = useNotifications('toast');
 const isLoading = ref(false);
 
+const emit = defineEmits(['update:updatePlanId']);
+
 const updateSelectedPlan = () => {
-   
+
     isLoading.value = true;
-  axios.post(`/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan/${props.plan.id}`)
+    axios.post(`/personal-quotes/${props.quoteType}/${props.uuid}/update-selected-plan/${props.plan.id}`)
         .then(res => {
             isLoading.value = false;
+            emit('update:updatePlanId', props.plan.id);            
             console.log(res.data);
             notification.success({
                     title: "Selected plan updated",
@@ -24,6 +27,7 @@ const updateSelectedPlan = () => {
         })
         .catch(err => {
             isLoading.value = false;
+            console.log(err, "JLKJKLLLKJLKLJKLJK");
             notification.error({
                 title:  "Something went wrong",
                 position: 'top',
@@ -40,6 +44,6 @@ const updateSelectedPlan = () => {
         :loading="isLoading"
         @click.prevent="updateSelectedPlan(item)"
     >
-        Select Plan
+        Select
     </x-button>
 </template>
