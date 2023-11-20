@@ -292,7 +292,6 @@ class AMLController extends Controller
             $data['businessCommuModeText'] = CommunicationMode::where('id', $quoteRequest->business_communication_mode_id)->value('text');
         }
 
-        // dd($data, $customerDetails->toArray(), $quoteRequest->toArray());
         return inertia('Aml/Details', $data);
     }
 
