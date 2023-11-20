@@ -21,7 +21,7 @@ const props = defineProps({
   lookups: Object,
   entities: Array,
   quoteAmlStatus: Number,
-  customerDetails: Object
+  customerDetails: Object,
 });
 
 // const paymentsDataArray = ref(props.quoteDetails.payments || []);
@@ -1330,6 +1330,8 @@ onMounted(() => {
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
+          :entity-details="props.entityDetails"
+          :uboRelation="uboRelations"
         />
 
         <div class="text-right space-x-4 mt-8">

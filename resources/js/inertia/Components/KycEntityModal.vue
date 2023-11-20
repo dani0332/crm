@@ -40,27 +40,32 @@ const kycForm = reactive({
   first_name: props.quote.first_name,
   last_name: props.quote.last_name,
   company_name: props.quote.company_name,
-  legal_structure: props.entityDetails.entity?.legal_structure,
+  legal_structure: props.entityDetails?.entity?.legal_structure,
   industry_type: null,
-  country_of_corporation: props.entityDetails.entity?.country_of_corporation ?? 56, //Default UAE
-  registered_address: props.entityDetails.entity?.registered_address ?? null,
-  communication_address: props.entityDetails.entity?.communication_address ?? null,
-  mobile_number: props.entityDetails.entity?.mobile_no ?? props.quote.mobile_no,
-  email: props.entityDetails.entity?.email ?? props.quote.email,
-  website: props.entityDetails.entity?.website,
-  id_document_type: props.entityDetails.entity?.id_type ?? null,
-  id_number: props.entityDetails.entity?.id_number ?? null,
-  id_issue_date: convertDate(props.entityDetails.entity?.id_issuance_date),
-  id_expiry_date: convertDate(props.entityDetails.entity?.id_expiry_date),
-  place_of_issue: props.entityDetails.entity?.issuance_place ?? null,
-  issuing_authority: props.entityDetails.entity?.id_issuance_authority ?? null,
+  country_of_corporation:
+    props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
+  registered_address: props.entityDetails?.entity?.registered_address ?? null,
+  communication_address:
+    props.entityDetails?.entity?.communication_address ?? null,
+  mobile_number:
+    props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
+  email: props.entityDetails?.entity?.email ?? props.quote.email,
+  website: props.entityDetails?.entity?.website,
+  id_document_type: props.entityDetails?.entity?.id_type ?? null,
+  id_number: props.entityDetails?.entity?.id_number ?? null,
+  id_issue_date: convertDate(props.entityDetails?.entity?.id_issuance_date),
+  id_expiry_date: convertDate(props.entityDetails?.entity?.id_expiry_date),
+  place_of_issue: props.entityDetails?.entity?.issuance_place ?? null,
+  issuing_authority: props.entityDetails?.entity?.id_issuance_authority ?? null,
   manager_name: null,
   manager_nationality: null,
   manager_dob: null,
   manager_position: null,
-  pep: props.entityDetails.entity?.pep ?? props.amlQuoteStatus,
-  financial_sanctions: props.entityDetails.entity?.financial_sanctions ?? props.amlQuoteStatus,
-  dual_nationality: props.entityDetails.entity?.dual_nationality ?? props.amlQuoteStatus,
+  pep: props.entityDetails?.entity?.pep ?? props.amlQuoteStatus,
+  financial_sanctions:
+    props.entityDetails?.entity?.financial_sanctions ?? props.amlQuoteStatus,
+  dual_nationality:
+    props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
 
 const onKycSubmit = () => {
@@ -437,12 +442,12 @@ onMounted(() => {
       />
 
       <ComboBox
-          v-model="kycForm.manager_position"
-          label="Position"
-          :options="uboRelationOptions"
-          placeholder="Position"
-          :single="true"
-          :rules="[isRequired]"
+        v-model="kycForm.manager_position"
+        label="Position"
+        :options="uboRelationOptions"
+        placeholder="Position"
+        :single="true"
+        :rules="[isRequired]"
       />
     </div>
 
