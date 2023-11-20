@@ -198,14 +198,14 @@ class BridgerInsightService
         switch ($customerType) {
             case CustomerTypeEnum::Individual:
                 $additionalInformation = [];
-                $dateOfBirth = explode('-', $details['dob']);
+                $dateOfBirth = ($details['dob']) ? explode('-', $details['dob']) : [];
                 $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
 
                 if (($details['nationality']['text'] ?? '') != '') {
                     $additionalInformation[] = ['Type' => 'Citizenship', 'Value' => $details['nationality']['text'] ?? ''];
                 }
 
-                if (!empty($dateOfBirth)) {
+                if (!empty($dateOfBirth) && key_exists(2, $dateOfBirth)) {
                     $additionalInformation[] = ['Type' => 'DOB', 'Date' => [
                         'Day' => $dateOfBirth[2],
                         'Month' => $dateOfBirth[1],
