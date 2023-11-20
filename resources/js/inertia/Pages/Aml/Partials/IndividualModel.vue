@@ -547,21 +547,21 @@ onMounted(() => {
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
-          <div class="flex gap-5 mb-5 align-center">
-            <p>Want to send Fullname?</p>
-            <x-radio
-              v-model="insuredFormDetails.withFullName"
-              :value="true"
-              label="Yes"
-            />
-            <x-radio
-              v-model="insuredFormDetails.withFullName"
-              :value="false"
-              label="No"
-            />
-          </div>
-        </dl>
+<!--        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">-->
+<!--          <div class="flex gap-5 mb-5 align-center">-->
+<!--            <p>Want to send Fullname?</p>-->
+<!--            <x-radio-->
+<!--              v-model="insuredFormDetails.withFullName"-->
+<!--              :value="true"-->
+<!--              label="Yes"-->
+<!--            />-->
+<!--            <x-radio-->
+<!--              v-model="insuredFormDetails.withFullName"-->
+<!--              :value="false"-->
+<!--              label="No"-->
+<!--            />-->
+<!--          </div>-->
+<!--        </dl>-->
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
           <div v-if="insuredFormDetails.withFullName">
             <x-field label="Insured Full Name">
