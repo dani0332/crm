@@ -44,6 +44,7 @@ class DatabaseSeeder extends Seeder
             GenericPermissionSeeder::class,
             AddRoleForComplianceSuperUser::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
+            addDubaiNowLeadSourceExemptionInAppStorage::class,
         ]);
     }
 }
