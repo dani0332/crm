@@ -4,6 +4,7 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import SelectPlan from './Partials/SelectPlan.vue';
 
 defineProps({
 	quote: Object,
@@ -1445,6 +1446,14 @@ const linkEntity = () => {
     });
 }
 
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+console.log(prefillPlanId.value, "PREFILL");
+
+
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
+}
+
 </script>
 
 <template>
@@ -2846,6 +2855,14 @@ const linkEntity = () => {
                 Change Insurer
               </x-button>
             </template>
+
+            <!--  -->
+            <SelectPlan v-if="prefillPlanId != item.id"
+            @update:updatePlanId="handleChildUpdate"
+            :plan="item"
+            :quoteType="quoteType"
+            :uuid="quote.uuid" />
+
           </div>
         </template>
       </DataTable>
