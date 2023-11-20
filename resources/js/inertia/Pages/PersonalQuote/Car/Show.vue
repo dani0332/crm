@@ -1451,7 +1451,6 @@ console.log(prefillPlanId.value, "PREFILL");
 
 
 const handleChildUpdate = planId => {
-  console.log(planId, "PLAN ID PARENT");
     prefillPlanId.value = planId;
 }
 

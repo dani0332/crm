@@ -19,7 +19,6 @@ const updateSelectedPlan = () => {
         .then(res => {
             isLoading.value = false;
             emit('update:updatePlanId', props.plan.id);            
-            console.log(res.data);
             notification.success({
                     title: "Selected plan updated",
                     position: 'top',
@@ -27,7 +26,6 @@ const updateSelectedPlan = () => {
         })
         .catch(err => {
             isLoading.value = false;
-            console.log(err, "JLKJKLLLKJLKLJKLJK");
             notification.error({
                 title:  "Something went wrong",
                 position: 'top',
