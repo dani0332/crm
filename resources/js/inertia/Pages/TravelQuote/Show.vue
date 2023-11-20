@@ -984,6 +984,12 @@ onMounted(() => {
   }
 });
 
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
+}
+
 </script>
 
 <template>
@@ -2062,6 +2068,24 @@ onMounted(() => {
               >
                 View
               </x-button>
+
+              <SelectPlan class="ml-1" v-if="prefillPlanId != item.id"
+            @update:updatePlanId="handleChildUpdate"
+            :plan="item"
+            :quoteType="modelType"
+            :uuid="quote.uuid" />
+
+            <x-button
+            class="ml-1"
+            v-else
+        size="xs"
+        color="orange"
+        outlined
+        :disabled="true"
+    >
+        Selected
+    </x-button>
+
             </div>
           </template>
         </DataTable>
