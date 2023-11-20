@@ -531,63 +531,7 @@ const onLeadStatus = () => {
         <x-divider class="mb-4 mt-1" />
       </div>
 
-      <div class="grid sm:grid-cols-2 gap-4">
-        <x-field label="Status">
-          <x-select
-            v-model="leadStatusForm.leadStatus"
-            :options="leadStatusOptions"
-            :disabled="allowStatusUpdate"
-            placeholder="Lead Status"
-            class="w-full"
-          />
-        </x-field>
-        <x-field
-          label="TransApp Code"
-          v-if="
-            leadStatusForm.leadStatus ==
-            page.props.quoteStatusEnum.TransactionApproved
-          "
-        >
-          <x-input
-            v-model="leadStatusForm.trans_code"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-        </x-field>
-        <x-field
-          label="Lost Reason"
-          v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
-        >
-          <x-select
-            v-model="leadStatusForm.lostReason"
-            :options="
-              lostReasons?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
-        </x-field>
-
-        <x-field label="Transaction Type">
-          <textarea type="text" value="eee" class="w-full" :disabled="true" />
-        </x-field>
-        <x-field label="Notes">
-          <x-textarea
-            v-model="leadStatusForm.notes"
-            type="text"
-            placeholder="Lead Notes"
-            class="w-full"
-            :disabled="allowStatusUpdate"
-          />
-        </x-field>
-      </div>
-
-      <!-- <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
         <div class="w-full md:w-1/2">
           <div class="flex flex-col gap-4">
             <x-field label="Status">
@@ -611,39 +555,51 @@ const onLeadStatus = () => {
           </div>
         </div>
         <div class="w-full md:w-2/3">
-          <x-field
-            label="TransApp Code"
-            v-if="
-              leadStatusForm.leadStatus ==
-              page.props.quoteStatusEnum.TransactionApproved
-            "
-          >
-            <x-input
-              v-model="leadStatusForm.trans_code"
-              placeholder="TransApp Code is required"
-              class="w-full"
-              :error="leadStatusForm.errors.trans_code"
-            />
-          </x-field>
-          <x-field
-            label="Lost Reason"
-            v-if="leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost"
-          >
-            <x-select
-              v-model="leadStatusForm.lostReason"
-              :options="
-                lostReasons?.map(item => ({
-                  value: item.id,
-                  label: item.text,
-                }))
+          <div class="flex flex-col gap-4">
+            <x-field
+              label="TransApp Code"
+              v-if="
+                leadStatusForm.leadStatus ==
+                page.props.quoteStatusEnum.TransactionApproved
               "
-              placeholder="Lost Reason is required"
-              class="w-full"
-              :error="leadStatusForm.errors.lostReason"
-            />
-          </x-field>
+            >
+              <x-input
+                v-model="leadStatusForm.trans_code"
+                placeholder="TransApp Code is required"
+                class="w-full"
+                :error="leadStatusForm.errors.trans_code"
+              />
+            </x-field>
+            <x-field
+              label="Lost Reason"
+              v-if="
+                leadStatusForm.leadStatus == page.props.quoteStatusEnum.Lost
+              "
+            >
+              <x-select
+                v-model="leadStatusForm.lostReason"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+              />
+            </x-field>
+            <x-field label="Transaction Type">
+              <x-input
+                type="text"
+                :value="quote.gender"
+                class="w-full"
+                :disabled="true"
+              />
+            </x-field>
+          </div>
         </div>
-      </div> -->
+      </div>
       <div class="flex justify-end">
         <x-button
           class="mt-4"
