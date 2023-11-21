@@ -158,8 +158,62 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
       Insurance Request Response Details: {{ selectedLog.id }}
     </template>
 
-    <div class="space-x-4">
-      <table class="table">
+    <div>
+      <dl class="grid md:grid-cols-2 gap-x-1 gap-y-5">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">REF-ID:</dt>
+          <dd>{{ selectedLog.quote_uuid }}</dd>
+        </div>
+
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Call Type:</dt>
+          <dd>{{ selectedLog.call_type }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Status:</dt>
+          <dd>
+            <x-tag
+              v-if="selectedLog.status"
+              size="xs"
+              :color="selectedLog.status === 'failed' ? 'red' : 'success'"
+              class="mt-0.5 text-[10px]"
+            >
+              {{ selectedLog.status.toUpperCase() }}
+            </x-tag>
+          </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Provider Name:</dt>
+          <dd>{{ selectedLog.insurance_provider.text }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Created At:</dt>
+          <dd>{{ dateFormat(selectedLog.created_at).value }}</dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Updated At:</dt>
+          <dd>{{ dateFormat(selectedLog.updated_at).value }}</dd>
+        </div>
+      </dl>
+
+      <x-divider class="my-5" />
+      <dl class="">
+        <dt class="font-medium mb-2">Request:</dt>
+        <div
+          class="text-sm h-auto w-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
+        >
+          {{ selectedLog.request }}
+        </div>
+      </dl>
+      <dl class="mt-5">
+        <dt class="font-medium mb-2">Response:</dt>
+        <div
+          class="text-sm h-auto break-words p-3.5 bg-[#d5edfd] text-[#060404] rounded"
+        >
+          {{ selectedLog.response }}
+        </div>
+      </dl>
+      <!-- <table class="table">
         <tr class="mb-10">
           <td class="font-medium">REF-ID:</td>
           <td>{{ selectedLog.quote_uuid }}</td>
@@ -217,7 +271,7 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
           <td class="font-medium">Updated At:</td>
           <td>{{ dateFormat(selectedLog.updated_at).value }}</td>
         </tr>
-      </table>
+      </table> -->
     </div>
     <div class="text-right space-x-4 mt-12">
       <x-button size="sm" @click.prevent="modals.apiLog = false">
