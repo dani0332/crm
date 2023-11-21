@@ -107,6 +107,15 @@ function setQueryStringFilters() {
   }
 }
 
+
+watch(() => filtersForm, () => {
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+
+    isDateMandatory.value = !((urlParams.get('searchType') !== null && urlParams.get('searchField') !== null) ||
+        filtersForm.searchType === 'cdbId' && filtersForm.searchField !== '');
+}, { deep: true, immediate: true });
+
 const quoteTypeOptions = computed(() =>
   ref(
     [{ value: '', label: 'Select' }].concat(
@@ -117,6 +126,7 @@ const quoteTypeOptions = computed(() =>
     ),
   ),
 );
+
 onMounted(() => {
   setQueryStringFilters();
 });
