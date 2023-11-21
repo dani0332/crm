@@ -90,6 +90,8 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
+            info('Bridger Insight Service AML Screening API Payload : ' . json_encode($amlSearchData));
+
             try {
                 $bridgerRequest = $bridgerClient->post(
                     $bridgerEndPoint,
