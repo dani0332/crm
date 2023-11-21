@@ -23,11 +23,11 @@ class BridgerInsightService
 
     public function __construct()
     {
-        $this->bridgerEndPoint = 'https://staging.bridger.lexisnexis.eu/LN.WebServices';
-        $this->bridgerClientID = 'AFIALLCAETEST';
-        $this->bridgerUserName = 'DaniyalS01';
-        $this->bridgerPassword = 'user@1234@';
-        $this->bridgerAPIKey = '043b2bb1-2af9-46fe-add5-e6cee1e39259';
+        $this->bridgerEndPoint = config('constants.BRIDGER_ENDPOINT'); //'https://staging.bridger.lexisnexis.eu/LN.WebServices';
+        $this->bridgerClientID = config('constants.BRIDGER_CLIENTID'); //'AFIALLCAETEST';
+        $this->bridgerUserName = config('constants.BRIDGER_USERNAME'); //'DaniyalS01';
+        $this->bridgerPassword = config('constants.BRIDGER_PASSWORD'); //'user@1234@';
+        $this->bridgerAPIKey = config('constants.BRIDGER_APIKEY'); //'043b2bb1-2af9-46fe-add5-e6cee1e39259';
     }
 
     public function getJWTToken()
@@ -90,7 +90,7 @@ class BridgerInsightService
                     $customerOrEntityName = '';
             }
 
-            info('Bridger Insight Service AML Screening API Payload : ' . json_encode($amlSearchData));
+            info('Bridger Insight Service AML Screening API Payload : '.json_encode($amlSearchData));
 
             try {
                 $bridgerRequest = $bridgerClient->post(
@@ -132,7 +132,7 @@ class BridgerInsightService
                 } else {
                     if ($getDecodeContents) {
                         // Send Email alert to Compliance team only
-                        if (checkPersonalQuotes($quoteType->code) && (!AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
+                        if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
                             $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
                         }
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
@@ -201,17 +201,17 @@ class BridgerInsightService
             case CustomerTypeEnum::Individual:
                 $additionalInformation = [];
                 $dateOfBirth = ($details['dob']) ? explode('-', $details['dob']) : [];
-//                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
+                //                $withFullName = isset($details['with_full_name']) && $details['with_full_name'];
 
                 if (($details['nationality']['text'] ?? '') != '') {
                     $additionalInformation[] = ['Type' => 'Citizenship', 'Value' => $details['nationality']['text'] ?? ''];
                 }
 
-                if (!empty($dateOfBirth) && key_exists(2, $dateOfBirth)) {
+                if (! empty($dateOfBirth) && array_key_exists(2, $dateOfBirth)) {
                     $additionalInformation[] = ['Type' => 'DOB', 'Date' => [
                         'Day' => $dateOfBirth[2],
                         'Month' => $dateOfBirth[1],
-                        'Year' => $dateOfBirth[0]
+                        'Year' => $dateOfBirth[0],
                     ]];
                 }
 
@@ -221,10 +221,10 @@ class BridgerInsightService
                             [
                                 'Entity' => [
                                     'EntityType' => CustomerTypeEnum::Individual,
-                                    'Name' => ['Full' => $details['first_name'] .' '. $details['last_name']],
-//                                    'Name' => ($withFullName) ?
-//                                        ['Full' => $details['first_name'] .' '. $details['last_name']] :
-//                                        ['First' => $details['first_name'], 'Last' => $details['last_name']],
+                                    'Name' => ['Full' => $details['first_name'].' '.$details['last_name']],
+                                    //                                    'Name' => ($withFullName) ?
+                                    //                                        ['Full' => $details['first_name'] .' '. $details['last_name']] :
+                                    //                                        ['First' => $details['first_name'], 'Last' => $details['last_name']],
                                     'AdditionalInfo' => $additionalInformation,
                                     'IDs' => [
                                         ['Type' => 'Account', 'Number' => $details['code']],

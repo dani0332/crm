@@ -30,8 +30,7 @@ class PlanDetailsRequest extends FormRequest
 
         if (request()->quoteType == quoteTypeCode::Life) {
             $rules['price_vat_not_applicable'] = 'required|numeric';
-        } else
-        {
+        } else {
             $rules['price_vat_applicable'] = 'required|numeric';
         }
 
