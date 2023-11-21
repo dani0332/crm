@@ -558,30 +558,6 @@ if (! function_exists('formatLandlineDisplay')) {
     }
 }
 
-if (! function_exists('createKycPDF')) {
-    function createKycPDF()
-    {
-        try {
-            $data = [
-                'title' => 'KYC Document',
-                'quoteType' => 'Health',
-            ];
-            /*$pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-                ->loadView('pdf.kyc_document', compact('data'));*/
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-                ->loadView('pdf.kyc_document', ['data' => $data]);
-
-            // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-            $pdf->download('testing_file.pdf');
-            $pdfName = 'testingmirza.pdf';
-
-            return ['pdf' => $pdf, 'name' => $pdfName];
-        } catch (Exception $ex) {
-            info($ex->getMessage());
-        }
-    }
-}
-
 if (! function_exists('getRepositoryObject')) {
     function getRepositoryObject($quoteType)
     {
