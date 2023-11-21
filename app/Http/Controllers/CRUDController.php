@@ -821,15 +821,19 @@ class CRUDController extends Controller
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
-
-            $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-            })->map(function ($paymentMethod) {
-                return [
-                    'value' => $paymentMethod->code,
-                    'label' => $paymentMethod->name,
-                ];
-            })->values();
+            
+            if (auth()->user()->hasRole(RolesEnum::BetaUser) ) {
+                $paymentMethods = $this->lookupService->getPaymentMethods();
+            } else {
+                $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                    return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+                })->map(function ($paymentMethod) {
+                    return [
+                        'value' => $paymentMethod->code,
+                        'label' => $paymentMethod->name,
+                    ];
+                })->values();
+            }
 
             if (! empty($insuranceProviders)) {
 
@@ -884,6 +888,8 @@ class CRUDController extends Controller
                 'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::HealthManager),
                 'embeddedProducts' => $embeddedProducts,
                 'quoteType' => QuoteTypes::HEALTH,
+                'paymentTooltipEnum' => PaymentTooltip::asArray(),
+                'storageUrl' => storageUrl(),
                 'can' => [
                     'approve_payments' => auth()->user()->can(PermissionsEnum::ApprovePayments),
                     'edit_payments' => auth()->user()->can(PermissionsEnum::PaymentsEdit),

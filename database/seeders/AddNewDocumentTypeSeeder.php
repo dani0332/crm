@@ -27,5 +27,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+
+        $documentTypesCount = DocumentType::get()->where('code', 'HPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'HPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'health',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 3,
+                'send_to_customer' => true,
+                'sort_order' => 4,
+                'is_required' => 0,
+            ]);
+        }
     }
 }

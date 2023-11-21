@@ -1964,7 +1964,6 @@ const loadEmailEvents = email => {
 	<PaymentTableNew 
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Car"
-			:quote="record"
 			:payments="payments"
 			:paymentDocument="page.props.documentTypes.find(item => item.code === 'CPD')"
 			:quoteRequest="paymentEntityModel"

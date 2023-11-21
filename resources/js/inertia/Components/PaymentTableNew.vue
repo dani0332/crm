@@ -18,11 +18,10 @@ const props = defineProps({
   paymentDocument: Object,
   quoteRequest: Object,
   paymentMethods: Array,
-  quote: Object,
   quoteType: String,
   storageUrl: String,
 });
-console.log('QUOTEREQUEST='+JSON.stringify(props.quote));
+console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -1013,7 +1012,7 @@ const addPayment = isValid => {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
       plan_id: props.quoteRequest.plan.id,
-      customer_id: props.quote.customer_id,      
+      customer_id: props.quoteRequest.customer_id,      
       collection_amount: collectionAmountModels.value,      
       is_declined: isDeclineClicked.value,
       is_capture: isCreditCardView.value,
@@ -1043,7 +1042,7 @@ const addPayment = isValid => {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
       plan_id: props.quoteRequest.plan.id,
-      customer_id: props.quote.customer_id,
+      customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
       splitPaymentId: paymentMethodsForm.splitPaymentId,
@@ -1140,8 +1139,8 @@ const approvePayment = payment => {
 };
 
 const documentForm = useForm({
-  quote_id: props.quote.id || null,
-  quote_uuid: props.quote.code || null,
+  quote_id: props.quoteRequest.id || null,
+  quote_uuid: props.quoteRequest.code || null,
   quote_type_id: null,
   document_type_code: null,
   file: null,
@@ -1152,7 +1151,7 @@ const deleteDocument = (docName,count) => {
     `/documents/delete`,
     {
       docName: docName,
-      quoteId: props.quote.id,
+      quoteId: props.quoteRequest.id,
     },
     {
       preserveScroll: true,
@@ -1166,7 +1165,7 @@ const deleteDocument = (docName,count) => {
 };
 
 const uploadDocument = (doc, files, count) => {
-  let url = '/quotes/car/documents/store-multiple';
+  let url = '/quotes/'+props.quoteType+'/documents/store-multiple';
 
   if (files.length == 0) return;
 

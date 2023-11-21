@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
@@ -41,14 +42,17 @@ defineProps({
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
 });
 
 const page = usePage();
-
+console.log("haf"+JSON.stringify(page.props.documentTypes));
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
+const rolesEnum = page.props.rolesEnum;
 const dateFormat = date =>
   date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
 
@@ -1703,7 +1707,19 @@ onMounted(() => {
       </div>
     </div>
 
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Health"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.find(item => item.code === 'HPD')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
+      v-else
       :payments="payments"
       :can="can"
       :isBetaUser="isBetaUser"
