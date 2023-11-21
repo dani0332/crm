@@ -101,7 +101,7 @@ const setSelectedOption = (e, item) => {
 
   if (index != -1) amlResults.value[index].decision = e;
 
-  if(e === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.ComplianceSuperUser)) {
+  if(e === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.ComplianceSuperUser) && props.responseFrom === 'Bridger') {
 
       // Send Bridger Response to Compliance Super User when Decision True Match
       let data = {
@@ -134,6 +134,7 @@ const isTrue = computed(() => {
 const falsePositive = computed(() => {
   return amlResults.value.every(x => x.decision == 'FalsePositive');
 });
+
 </script>
 
 <template>
@@ -324,7 +325,7 @@ const falsePositive = computed(() => {
           {{ aml.search_type }}
         </template>
       </DataTable>
-      <div v-if="amlResults.length" class="flex justify-end">
+      <div v-if="responseFrom === 'Bridger' && amlResults.length" class="flex justify-end">
         <x-button
           class="mt-2 ml-2"
           color="emerald"

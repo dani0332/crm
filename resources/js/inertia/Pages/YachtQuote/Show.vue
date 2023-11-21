@@ -8,6 +8,7 @@ import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import KycForm from "@/inertia/Components/KycForm.vue";
 import PlanDetails from '../../Components/PlanDetails.vue';
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
   quote: Object,
@@ -430,11 +431,13 @@ const linkEntity = () => {
                           </dd>
                       </div>
 
+                      <RiskRatingScoreDetails
+                          :quote="quote.yacht_quote"
+                          :modelType="quoteType"
+                      />
 
-                      <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium">Risk Category</dt>
-                          <dd>{{ quote.yacht_quote.risk_score==null?'N/A':quote.yacht_quote.risk_score <= 16?'Low Risk':((quote.yacht_quote.risk_score <= 31)?'Medium Risk':(quote.yacht_quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
-                      </div>
+
+
                   </dl>
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                       <div class="grid sm:grid-cols-2">

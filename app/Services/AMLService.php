@@ -81,7 +81,7 @@ class AMLService
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id()
+            QuoteTypes::JETSKI->id(),
         ];
         $isDataMigrated = true;
         $quoteRequestDetails = [];

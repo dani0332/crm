@@ -3,6 +3,7 @@ import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import {computed} from "vue";
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
   quote: Object,
@@ -722,10 +723,11 @@ watch(
   },
 );
 
+const listQuotePlansFiltered = ref([]);
 
-const listQuotePlansFiltered = computed(() => {
-    return plansTable.data.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden))
-})
+watchEffect(() => {
+    listQuotePlansFiltered.value = plansTable.data.slice().sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
@@ -1662,10 +1664,10 @@ const handleChildUpdate = planId => {
                           <dt class="font-medium">MEMBER CATEGORY</dt>
                           <dd>{{ quote.member_category_id_text }}</dd>
                       </div>
-                      <div class="grid sm:grid-cols-2">
-                          <dt class="font-medium">Risk Category</dt>
-                          <dd>{{ quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
-                      </div>
+                      <RiskRatingScoreDetails
+                          :quote="quote"
+                          :modelType="quoteType"
+                      />
                   </dl>
                   <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                       <div class="grid sm:grid-cols-2">
@@ -2373,7 +2375,7 @@ const handleChildUpdate = planId => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
-          <x-tag size="sm">{{ plansTable.data.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
           <x-button-group v-if="selectedPlans.length > 0" size="sm">

@@ -31,6 +31,8 @@ const loader = ref({
 });
 
 const isEmptyNationality = ref(false);
+const industryTypeCode = ref(false);
+const emirateRegistrationId = ref(false);
 
 const emit = defineEmits(['update:modelValue', 'loaded']);
 const notification = useToast();
@@ -206,12 +208,12 @@ const insuredFormDetails = useForm({
   company_name: props.entityDetails?.entity?.company_name,
   company_address: props.entityDetails?.entity?.company_address,
   entity_type_code: props.entityDetails?.entity?.entity_type_code ?? 'Parent',
-  industry_type_code: props.entityDetails?.entity?.industry_type_code,
+  industry_type_code: props.entityDetails?.entity?.industry_type_code ?? null,
   emirate_of_registration_id:
-    props.entityDetails?.entity?.emirate_of_registration_id,
+    props.entityDetails?.entity?.emirate_of_registration_id ?? null,
 });
 
-const submitQuoteUpdateForm = () => {
+const submitQuoteUpdateForm = isValid => {
   insuredFormDetails.get(`${props.quoteDetails.id}/quoteUpdate`, {
     preserveScroll: true,
     onError: errors => {
@@ -229,7 +231,7 @@ const submitQuoteUpdateForm = () => {
   });
 };
 
-const updateCustomerDetails = () => {
+const updateCustomerDetails = isValid => {
   let customerDetailData = {
     customer_id: insuredFormDetails.customer_id,
     customer_type: insuredFormDetails.customer_type,
@@ -280,15 +282,15 @@ const updateCustomerDetails = () => {
 };
 
 const insuredDetailsSubmit = isValid => {
-  if (
-    insuredFormDetails.nationality_id == null &&
-    validateCustomerFields.value == false
-  ) {
-    isEmptyNationality.value = true;
+  if (insuredFormDetails.customer_type === props.customerTypeEnum.Entity) {
+    industryTypeCode.value = insuredFormDetails.industry_type_code === null;
+    emirateRegistrationId.value =
+      insuredFormDetails.emirate_of_registration_id === null;
   } else {
-    isEmptyNationality.value = false;
+    isEmptyNationality.value =
+      insuredFormDetails.nationality_id === null &&
+      validateCustomerFields.value === false;
   }
-
   if (!isValid) return;
 
   if (
@@ -1024,6 +1026,7 @@ onMounted(() => {
               placeholder="Select Industry Type"
               :options="industryTypeOptions"
               class="w-full"
+              :hasError="industryTypeCode"
             />
           </x-field>
 
@@ -1035,12 +1038,13 @@ onMounted(() => {
               placeholder="Select Emirate of Registration"
               :options="emirateRegistrationOptions"
               class="w-full"
+              :hasError="emirateRegistrationId"
             />
           </x-field>
 
           <!-- new fields -->
 
-          <x-field label="Legal Structure">
+          <!-- <x-field label="Legal Structure">
             <ComboBox
               :single="true"
               :hasError="
@@ -1133,7 +1137,7 @@ onMounted(() => {
               :options="idIssuanceAuthorityOptions"
               class="w-full"
             />
-          </x-field>
+          </x-field> -->
         </dl>
         <x-divider class="mb-4 mt-1" />
         <template v-if="entityDetailsFound">
@@ -1209,13 +1213,11 @@ onMounted(() => {
             size="sm"
             color="success"
             type="submit"
-            @click.prevent="entityAmlOnly"
             :loading="insuredFormDetails.processing"
           >
             Submit For AML Screening
           </x-button>
         </div>
-
         <x-divider class="mb-4 mt-4" />
 
         <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
