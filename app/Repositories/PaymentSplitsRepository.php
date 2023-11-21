@@ -233,8 +233,7 @@ class PaymentSplitsRepository
             $firstPayment = $quoteModel->payments()->first();
             $firstPayment->update([
                 'decline_reason_id' => $request->declined_reason,
-                'decline_custom_reason' => $request->declined_custom_reason,
-                'payment_status_id' => PaymentStatusEnum::DECLINED,
+                'decline_custom_reason' => $request->declined_custom_reason,                
                 'updated_by' => Auth::user()->id,            
             ]);
             $successMessage = 'Transaction declined';

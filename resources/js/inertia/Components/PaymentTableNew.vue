@@ -39,6 +39,7 @@ const splitPaymentNo = ref(0);
 const isApproveClicked = ref(false);
 const isApproveConfirm = ref(false);
 const isDeclineClicked = ref(false);
+const isDeclinedReasonError = ref(false);
 const isDeclineCustomReason = ref(false);
 const isApprovePaymentError = ref(false);
 const showDiscountOptions = ref(true);
@@ -201,6 +202,7 @@ const handleDeclinedChange = () => {
   isDeclineClicked.value = true;
   isApproveClicked.value = false;
   isDeclineCustomReason.value = false;
+  paymentMethodsForm.declined_reason = '';
   return true;  
 };
 
@@ -305,6 +307,7 @@ const frequencyTypes = [
 ];
 
 const declinedReasons = [
+  { value: '', label: 'Select Reason'},
   { value: '1', label: props.paymentTooltipEnum.DECLINED_REASON_1},
   { value: '2', label: props.paymentTooltipEnum.DECLINED_REASON_2},
   { value: '3', label: props.paymentTooltipEnum.DECLINED_REASON_3},
@@ -762,7 +765,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   approveErrorMessage.value = "";
   isCreditPaymentInvalid.value = [];
   isCreditPaymentInvalidError.value = [];
-
+  paymentMethodsForm.declined_custom_reason = '';
   if(sr_no>0){
     splitPaymentNo.value = sr_no;
     isFieldReadonly.value = true;
@@ -915,7 +918,7 @@ const validateCapturePayment = (isValid) => {
         
         if (parseFloat(collectionAmountModels.value[i]) > parseFloat(splitAmountModels.value[i])) {          
           isCreditPaymentInvalid.value[i] = true;
-          isCreditPaymentInvalidError.value[i] = "Amount is grater than payable";                
+          isCreditPaymentInvalidError.value[i] = "Capture amount should not exceed total amount";                
         }
       }      
     }        
@@ -1037,7 +1040,14 @@ const addPayment = isValid => {
     return;
   }
 
-  if (paymentMethodsForm.status === 'view') {    
+  if (paymentMethodsForm.status === 'view') {   
+    if(isDeclineClicked.value === true && paymentMethodsForm.declined_reason === ''){
+      isDeclinedReasonError.value = true;
+      return;
+    } else {
+      isDeclinedReasonError.value = false;
+    }
+    
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -1318,7 +1328,7 @@ const getCaptureValidation = computed(() => {
 const alertCapture = () => {  
   let errorMsg = 'Pending payment';
   if(props.payments[0].is_approved===1){
-    errorMsg = 'Payment already approved';   
+    errorMsg = 'Transaction already approved';   
   }
   notification.error({
       title: errorMsg,
@@ -1537,7 +1547,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                       </x-button>
                       <x-button v-if="getCaptureOption==='approve'" size="xs" color="orange" outlined 
                       @click="getCaptureValidation ? editPaymentModal(item, 0, 0, 2) : alertCapture()">
-                          Approval
+                          Approve
                       </x-button>
                     </template>
                 </template>
@@ -2031,8 +2041,11 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <div class="w-1/5 px-2">
               
               <x-tooltip v-if="isCreditApprovalView">
-                <span class="text-sm">
-                  CAPTURED AMOUNT <sup v-if="isCreditCardView" class="text-red-500">*</sup>
+                <span v-if="isCreditCardView" class="text-sm">
+                  CAPTURE AMOUNT <sup class="text-red-500">*</sup>
+                </span>
+                <span v-else class="text-sm">
+                  COLLECTED AMOUNT 
                 </span>
                 <template #tooltip>
                   <span>{{ paymentTooltipEnum.CAPTURE_AMOUNT }}</span>                  
@@ -2355,7 +2368,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="px-2">
                 
                 <x-field label="DECLINE REASON" required>
-                    <select                  
+                    <select
+                      :class="{'custom-select-error': isDeclinedReasonError}"                  
                       class="custom-select"
                       v-model="paymentMethodsForm.declined_reason"
                       :options="declinedReasons"
@@ -2366,6 +2380,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                           <option :value="option.value">{{ option.label }}</option>                
                       </template>
                   </select>
+                  <p v-if="isDeclinedReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 </x-field>
               </div>
               <div v-if="isDeclineCustomReason" class="px-2">                
@@ -2403,9 +2418,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 
                 <div>
                 <x-tooltip class="tooltip-display">
-                    <x-field label="COLLECTION AMOUNT" required></x-field>
+                    <x-field label="COLLECTED AMOUNT" required></x-field>
                     <template #tooltip>
-                     <span>{{ paymentTooltipEnum.PAYMENT_ADD_DELETE_DOCUMENT }}</span>
+                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_AMOUNT }}</span>
                   </template>
                 </x-tooltip>
                 <x-field class="w-full">
@@ -2562,14 +2577,18 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <span class="font-bold">Previous</span>
             </div>
             <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
-              <div class="flex items-center space-x-2  cursor-pointer" @click="zoomIn">
-                <span class="text-gray-600 font-bold">&#43;</span> 
-                <span class="font-bold">Zoom In</span>
-              </div>
+              
               <div class="flex items-center space-x-2  cursor-pointer" @click="zoomOut">
                 <span class="text-gray-600 font-bold">&#8722;</span> 
                 <span class="font-bold">Zoom Out</span>
               </div>
+              
+              
+              <div class="flex items-center space-x-2  cursor-pointer" @click="zoomIn">
+                <span class="text-gray-600 font-bold">&#43;</span> 
+                <span class="font-bold">Zoom In</span>
+              </div>
+             
             </div>
             <div class="flex items-center space-x-2  cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
               <span class="text-gray-600 font-bold">&#8594;</span> 
@@ -2579,11 +2598,11 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
         <x-divider class="mb-4 mt-1" />
         <div class="modal-body">           
-            <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="text-center">
-                <div class="scrollable-container">  
-                <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />          
-            </div>
-            </div>
+          <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
+              <div class="scrollable-container text-center">  
+                  <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />          
+              </div>
+          </div>
             <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
               <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
             </div>
