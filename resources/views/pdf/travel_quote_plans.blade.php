@@ -108,7 +108,12 @@
             border: 1px solid #bfbfbf;
         }
         thead > tr > th:first-child {
-            max-width: 10%;
+            max-width: 30%;
+        }
+        tr th:first-child, tr td:first-child{
+            width: 400px;
+            min-width: 400px;
+            max-width: 400px;
         }
         td > p, th > p {
             padding: 4px;
@@ -134,8 +139,11 @@
         .bg-light-blue {
             border: 1px solid #bfbfbf;
             background: #EFF6FF;
-            padding: 8px;
+            padding: 1px 8px;
             color: #252525;
+        }
+        .bg-light-blue p{
+            padding: 1px !important;
         }
         .text-black{color: #000000;}
         .provider {
@@ -151,7 +159,7 @@
         .spacer {
             padding: 3px;
         }
-        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;width:280px}
+        .alfred { text-align: right;padding-right: 0;vertical-align: bottom;border-left: none;border-top: none;width:400px;min-width:400px}
         .quote-info {
             text-align: right;
             vertical-align: bottom;
@@ -258,6 +266,7 @@
         tr:has(td) {
             display: none;
         }
+
 
     </style>
 </head>
@@ -385,7 +394,7 @@
     <footer>
         <table class="tbl-footer">
             <div style="float: left;">
-                    <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:public_path('image/alfred-theme.png')}}">
+                 <img style="height: 110px; border-radius: 50%;" src="{{$quote->advisor?->profile_photo_path != null?$quote->advisor?->profile_photo_path:public_path('image/alfred-theme.png')}}">
             </div>
             <div style="float: left; margin-left: 10px; margin-top: 20px">
                 @if(isset($quote->advisor->name) && !empty($quote->advisor->name))
@@ -414,11 +423,13 @@
 
     {{-- PDF Page Inner Content --}}
     <main>
-        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;">
+        <table class="table-fixed text-center tbl-plans" style="position: relative;top: 100px;margin-bottom: 130px;table-layout: fixed">
             <thead>
                 <tr>
-                    <th class="alfred" >
+                    <th class="alfred" style="width:500px;min-width: 500px" >
+                        <span style="width:400px;min-width: 400px">
                         <img src="{{public_path('images/alfred.png')}}"  />
+                            </span>
                     </th>
                     @foreach($planIds as $planId)
                     <th class="provider" style="border: solid 1px #bfbfbf;">
@@ -436,16 +447,14 @@
                     </th>
                     @endforeach
                 </tr>
-
                 {{-- buy now row --}}
                 <tr>
-                    <th class="bg-light-blue" style="width:100px;max-width: 200px">
+                    <th class="bg-light-blue" style="width: 25% !important;">
                         <p class="quote-info">Travel insurance comparison for: <b>{{ $quote->first_name  }} {{$quote->last_name}}</b></p>
                     </th>
                     @foreach($planIds as $planId)
                         <th rowspan="4">
                             <p class="text-center">
-
                                     <a target="_blank" class="btn-buy" href="{{($websitURL . '/travel-insurance/quote/' . $quote->uuid .  '/payment/?providerCode=' . $plans[$planId]->providerCode . '&planId=' . $planId . ( (isset($plans[$planId]->addons['coPayment']['id']) ? ('&selectedCopayId=' . $plans[$planId]->addons['coPayment']['id']) : '') ) )}}" >Buy Now</a>
                                 @if($plans[$planId]->discountPremium)
                                 @else
@@ -456,7 +465,6 @@
                 </tr>
             <tr>
                 <th class="bg-light-blue" >
-
                     <p class="quote-info">Main Country: <b>N/A</b></p>
                 </th>
             </tr>
