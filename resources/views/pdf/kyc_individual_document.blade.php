@@ -7,22 +7,29 @@
     <title>KYC Individual</title>
     <link rel="stylesheet" href="{{ public_path('css/font-family-inter.css') }}">
     <style>
+        body {
+            font-family: 'DejaVu Sans', serif !important;
+            padding: 0;
+        }
+
         #header {
             margin-top: -34px;
             text-align: center;
         }
 
         #footer {
+            margin: 100px -50px 0 -45px !important;
             background-color: rgb(29 131 188);
             color: white;
-            width: 660px;
-            padding: 10px; /* Add padding to create space */
+            width: 800px !important;
+            position: fixed;
+            bottom: 0;
         }
 
-        #footer>h6 {
+        #footer > h6 {
             margin: 0;
             font-weight: 400;
-            font-size: 7px;
+            font-size: 9px;
         }
 
         .main-heading {
@@ -43,7 +50,7 @@
         }
 
         .pl-6 {
-            padding-left: 6px;
+            padding-left: 8px;
         }
 
         .text-center {
@@ -51,21 +58,21 @@
         }
 
         table {
-            border-spacing: 3px;
+            border-spacing: 10px;
         }
 
         tr td {
-            font-size: 9px;
+            font-size: 10px;
             color: #44475C;
         }
 
         tr td:first-child {
             padding-left: 10px;
             font-weight: 500;
-            padding-right: 50px;
+            padding-right: 80px;
         }
 
-        tr td:nth-child(2) {
+        .custom-table tr td:nth-child(2) {
             background: #ffffff;
             border-style: solid;
             border-color: #1d83bc;
@@ -73,11 +80,15 @@
             color: black;
             font-weight: 500;
             padding-left: 5px;
-            width: 320px;
+            width: 420px;
         }
 
         .no-border {
             border-style: none !important;
+        }
+
+        .float-right {
+            float: right !important;
         }
 
         @media print {
@@ -102,7 +113,7 @@
         <p class="main-heading">KYC Form</p>
         <p class="sub-heading">Personal Information:</p>
 
-        <table>
+        <table class="custom-table">
             <tbody>
                 <tr>
                     <td>Account opening number:</td>
@@ -169,38 +180,38 @@
 
         <span>
             <span class="sub-heading" style="margin-right: 90px;">Source of income:</span>
-            <input type="radio" @checked($data['income_source'] == 'employed') /> &nbsp;&nbsp; <strong>Employed</strong>
-            <input type="radio" @checked($data['income_source'] == 'business') /> &nbsp;&nbsp; <strong>Business Owner or Partner</strong>
+            <input type="radio" style="margin-bottom: -5px !important;" @checked($data['income_source'] == 'employed') /> &nbsp;&nbsp; <strong style="font-size: 10px;">Employed</strong>
+            <input type="radio" style="margin-bottom: -5px !important; margin-left: 10px;" @checked($data['income_source'] == 'business') /> &nbsp;&nbsp; <strong style="font-size: 10px;">Business Owner or Partner</strong>
         </span>
 
-        <table>
+        <table class="custom-table">
             <tbody>
-                @if($data['income_source'] == 'employed')
+                @if ($data['income_source'] == 'employed')
                     <tr>
-                        <td>Employer:</td>
-                        <td>{{ $data['company_name'] }}</td>
+                        <td style="padding-right: 100px !important;">Employer:</td>
+                        <td style="margin-left: 100px;">{{ $data['company_name'] }}</td>
                     </tr>
                     <tr>
-                        <td>Professional job title:</td>
-                        <td>{{ $data['professional_title_text'] }}</td>
+                        <td style="padding-right: 100px !important;">Professional job title:</td>
+                        <td style="margin-left: 100px;">{{ $data['professional_title_text'] }}</td>
                     </tr>
                     <tr>
-                        <td>Employment Sector:</td>
-                        <td>{{ $data['employment_sector_text'] }}</td>
+                        <td style="padding-right: 100px !important;">Employment Sector:</td>
+                        <td style="margin-left: 100px;">{{ $data['employment_sector_text'] }}</td>
                     </tr>
                 @endif
-                @if($data['income_source'] == 'business')
+                @if ($data['income_source'] == 'business')
                     <tr>
-                        <td>Company name:</td>
-                        <td>{{ $data['company_name'] }}</td>
+                        <td style="padding-right: 100px !important;">Company name:</td>
+                        <td style="margin-left: 100px;">{{ $data['company_name'] }}</td>
                     </tr>
                     <tr>
-                        <td>Trade License#:</td>
-                        <td>{{ $data['trade_license'] }}</td>
+                        <td style="padding-right: 100px !important;">Trade License#:</td>
+                        <td style="margin-left: 100px;">{{ $data['trade_license'] }}</td>
                     </tr>
                     <tr>
-                        <td>Position in company:</td>
-                        <td>{{ $data['company_position_text'] }}</td>
+                        <td style="padding-right: 100px !important;">Position in company:</td>
+                        <td style="margin-left: 100px;">{{ $data['company_position_text'] }}</td>
                     </tr>
                 @endif
             </tbody>
@@ -211,9 +222,17 @@
             <tbody>
                 <tr>
                     <td>Is the customer a PEP?</td>
-                    <td class="no-border" style="margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
-                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
+                    <td class="no-border">
+                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 1) />
+                    </td>
+                    <td>
+                        <strong>Yes</strong>
+                    </td>
+                    <td>
+                        <input type="radio" @checked(isset($data['pep']) && $data['pep'] == 2) />
+                    </td>
+                    <td>
+                        <strong>No</strong>
                     </td>
                 </tr>
                 <tr>
@@ -221,50 +240,67 @@
                         financial sanctions/or connected with <br>
                         prescribed terrorist organizations? <br>
                     </td>
-                    <td class="no-border" style="margin-top: 18px; margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
-                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
+                    <td class="no-border">
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 1) />
+                    </td>
+                    <td>
+                        <strong>Yes</strong>
+                    </td>
+                    <td>
+                        <input type="radio" @checked(isset($data['financial_sanctions']) && $data['financial_sanctions'] == 2) />
+                    </td>
+                    <td>
+                        <strong>No</strong>
                     </td>
                 </tr>
                 <tr>
                     <td>Does the customer have dual nationality?</td>
-                    <td class="no-border" style="margin-left: 50px;">
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 1) /> &nbsp;&nbsp; <strong>Yes</strong>
-                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 2) /> &nbsp;&nbsp; <strong>No</strong>
+                    <td class="no-border">
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 1) />
+                    </td>
+                    <td>
+                        <strong>Yes</strong>
+                    </td>
+                    <td>
+                        <input type="radio" @checked(isset($data['dual_nationality']) && $data['dual_nationality'] == 2) />
+                    </td>
+                    <td>
+                        <strong>No</strong>
                     </td>
                 </tr>
             </tbody>
         </table>
     </div>
 
-    <p>This is the KYC information we have on record for you as per the Central Bank of the UAE Regulations. If any
+    <p style="font-size: 11px;">This is the KYC information we have on record for you as per the Central Bank of the UAE
+        Regulations. If any
         updates are
         required, please contact your insurance advisor.</p>
-    <p>
-        <i>This KYC was authorized on DD/MM/YY at HH:MM:SS. IP Address: XXX.XXX.XXX.XX</i>
+    <p style="font-size: 11px;">
+        <i>This KYC was authorized on {{ date('d/m/y') }} at {{ date('H:i:s') }}.</i>
     </p>
 
     <div id="footer">
-        <h5 class="text-center">InsuranceMarket.ae is the registered trademark of AFIA Insurance Brokerage Services LLC
-        </h5>
+        <h5 class="text-center" style="padding-top: 5px;">InsuranceMarket.ae is the registered trademark of AFIA
+            Insurance Brokerage Services LLC</h5>
         <h6 class="pl-6">
             <u>UAE Central Bank</u> Registration number 85
         </h6>
         <h6 class="pl-6">
             Registered member of the <u>Emirates Insurance Association</u>
-            <span style="float: right; margin-right: 6px;">27th floor, Control Tower, Motor City</span>
+            <span class="float-right" style="margin-right: 20px;">27th floor, Control Tower, Motor City</span>
         </h6>
         <h6 class="pl-6">
             <u>Department of Economy & Tourism in Dubai</u> Trade License number 238534
-            <span style="float: right; margin-right: 6px;">Dubai, United Arab Emirates, PO Box - 26423</span>
+            <span class="float-right" style="margin-right: -165px;">Dubai, United Arab Emirates, PO Box - 26423</span>
         </h6>
         <h6 class="pl-6">
             Holder of Health Insurance Intermediary Permit ID Number BRK-00003 from <u>Dubai Health Authority</u>
-            <span style="float: right; margin-right: 6px;">Tel: 800 ALFRED (800 253 733)</span>
+            <span class="float-right" style="margin-right: -20px;">Tel: 800 ALFRED (800 253 733)</span>
         </h6>
         <h6 class="pl-6" style="padding-bottom: 5px;">
             Registered member of <u>Insurance Business Group</u> under the <u>Dubai Chamber of Commerce and Industry</u>
-            <span style="float: right; margin-right: 6px;">insurancemarket.ae</span>
+            <span class="float-right" style="margin-right: -102px;">insurancemarket.ae</span>
         </h6>
     </div>
 </body>
