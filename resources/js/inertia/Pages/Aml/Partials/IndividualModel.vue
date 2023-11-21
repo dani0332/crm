@@ -282,7 +282,7 @@ const updateCustomerDetails = isValid => {
 };
 
 const insuredDetailsSubmit = isValid => {
-  if (insuredFormDetails.customer_type == props.customerTypeEnum.Entity) {
+  if (insuredFormDetails.customer_type === props.customerTypeEnum.Entity) {
     industryTypeCode.value = insuredFormDetails.industry_type_code === null;
     emirateRegistrationId.value =
       insuredFormDetails.emirate_of_registration_id === null;
@@ -298,7 +298,7 @@ const insuredDetailsSubmit = isValid => {
     validateCustomerFields.value == true
   ) {
     //validate all fields and update only
-    // updateCustomerDetails();
+    updateCustomerDetails();
   }
 
   if (
@@ -310,7 +310,7 @@ const insuredDetailsSubmit = isValid => {
   }
 
   if (insuredFormDetails.customer_type == props.customerTypeEnum.Entity) {
-    // submitQuoteUpdateForm();
+    submitQuoteUpdateForm();
   }
 };
 
