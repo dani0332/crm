@@ -1439,8 +1439,8 @@ class CRUDController extends Controller
 
         $oldEntity = $this->crudService->getEntityByUUID($request->quote_uuid, $request->modelType);
         $entity = $this->crudService->updateQuoteStatus($request);
-        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType,$request->quote_uuid);
-        if($request->leadStatus == QuoteStatusEnum::TransactionApproved){
+        $plainEntity = $this->crudService->getLeadPlainEntityByUUID($request->modelType, $request->quote_uuid);
+        if ($request->leadStatus == QuoteStatusEnum::TransactionApproved) {
             $this->crudService->calculateScore($plainEntity);
         }
         // courtesy email
@@ -1878,9 +1878,11 @@ class CRUDController extends Controller
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
     }
-    public function riskRatingDetails($quoteType, $uuid){
+    public function riskRatingDetails($quoteType, $uuid)
+    {
         $quoteModel = $this->getQuoteObject($quoteType, $uuid);
-        $response = $this->crudService->scoreBreakdown($quoteModel,$quoteType);
+        $response = $this->crudService->scoreBreakdown($quoteModel, $quoteType);
+
         return $response;
     }
 }

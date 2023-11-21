@@ -25,7 +25,7 @@ class QuoteMemberDetail extends Model
 
     public function getDobAttribute($value)
     {
-        return !empty($value) ? Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')) : $value;
+        return ! empty($value) ? Carbon::parse($value)->format(config('constants.DATE_FORMAT_ONLY')) : $value;
     }
 
     /**

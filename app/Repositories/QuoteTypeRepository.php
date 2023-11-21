@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\QuoteTypeId;
 use App\Models\QuoteType;
 
 class QuoteTypeRepository extends BaseRepository

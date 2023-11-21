@@ -10,7 +10,6 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
-use App\Enums\QuoteTypes;
 use App\Http\Requests\KycEntityDocRequest;
 use App\Http\Requests\KycIndividualDocRequest;
 use App\Models\CarMake;
@@ -31,7 +30,6 @@ use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use PDF;
 
 class AjaxController extends Controller
@@ -236,28 +234,28 @@ class AjaxController extends Controller
                 CustomerDetail::updateOrCreate(
                     ['customer_id' => $data['customer_id']],
                     [
-                    'customer_id' => $data['customer_id'],
-                    'country_of_residence' => $data['country_of_residence'],
-                    'place_of_birth' => $data['place_of_birth'],
-                    'residential_status' => $data['resident_status'],
-                    'residential_address' => $data['residential_address'],
-                    'customer_tenure' => $data['customer_tenure'],
-                    'id_type' => $data['id_type'],
-                    'id_number' => $data['id_number'],
-                    'id_issuance_date' => $data['id_issue_date'],
-                    'id_expiry_date' => $data['id_expiry_date'],
-                    'source_of_income' => $data['income_source'],
-                    'employer_company_name' => $data['company_name'],
-                    'job_title' => $data['professional_title'] ?? null,
-                    'employment_sector' => $data['employment_sector'] ?? null,
-                    'trade_license_no' => $data['trade_license'] ?? null,
-                    'position_in_company' => $data['company_position'] ?? null,
-                    'mode_of_contact' => $data['mode_of_contact'] ?? null,
-                    'mode_of_delivery' => $data['mode_of_delivery'] ?? null,
-                    'pep' => $data['pep'] ?? null,
-                    'financial_sanctions' => $data['financial_sanctions'] ?? null,
-                    'dual_nationality' => $data['dual_nationality'] ?? null,
-                ]);
+                        'customer_id' => $data['customer_id'],
+                        'country_of_residence' => $data['country_of_residence'],
+                        'place_of_birth' => $data['place_of_birth'],
+                        'residential_status' => $data['resident_status'],
+                        'residential_address' => $data['residential_address'],
+                        'customer_tenure' => $data['customer_tenure'],
+                        'id_type' => $data['id_type'],
+                        'id_number' => $data['id_number'],
+                        'id_issuance_date' => $data['id_issue_date'],
+                        'id_expiry_date' => $data['id_expiry_date'],
+                        'source_of_income' => $data['income_source'],
+                        'employer_company_name' => $data['company_name'],
+                        'job_title' => $data['professional_title'] ?? null,
+                        'employment_sector' => $data['employment_sector'] ?? null,
+                        'trade_license_no' => $data['trade_license'] ?? null,
+                        'position_in_company' => $data['company_position'] ?? null,
+                        'mode_of_contact' => $data['mode_of_contact'] ?? null,
+                        'mode_of_delivery' => $data['mode_of_delivery'] ?? null,
+                        'pep' => $data['pep'] ?? null,
+                        'financial_sanctions' => $data['financial_sanctions'] ?? null,
+                        'dual_nationality' => $data['dual_nationality'] ?? null,
+                    ]);
 
                 $quote->first_name = $data['first_name'];
                 $quote->last_name = $data['last_name'];
@@ -326,7 +324,7 @@ class AjaxController extends Controller
 
                 QuoteMemberDetail::updateOrCreate([
                     'code' => $quote->quoteRequestEntityMapping->entity->code,
-                    'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id
+                    'customer_entity_id' => $quote->quoteRequestEntityMapping->entity->id,
                 ], [
                     'code' => $quote->quoteRequestEntityMapping->entity->code,
                     'customer_type' => CustomerTypeEnum::Entity,
