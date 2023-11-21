@@ -72,7 +72,7 @@ defineProps({
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
   isCommercialVehicles: Boolean,
-  carInsuranceProviders: Array
+  carInsuranceProviders: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -338,22 +338,21 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
-``
+``;
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            availablePlansTable.data= res.data
-        })
-        .catch(err => {
-            console.log(err);
-        })
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      availablePlansTable.data = res.data;
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
-
 
 const historyDataTable = [
   { text: 'Modified At', value: 'created_at' },
@@ -364,11 +363,13 @@ const historyDataTable = [
 ];
 
 const availablePlansItems = computed(() => {
-	if (! Array.isArray(availablePlansTable.data)) {
-		return [];
-	}
-	return typeof availablePlansTable.data !== 'string' ? availablePlansTable.data : [];
-})
+  if (!Array.isArray(availablePlansTable.data)) {
+    return [];
+  }
+  return typeof availablePlansTable.data !== 'string'
+    ? availablePlansTable.data
+    : [];
+});
 
 const totalPriceVAT = computed(() => {
   let vat = 0;
@@ -1243,7 +1244,7 @@ const closeModal = v => {
 };
 onMounted(() => {
   onLoadAvailablePlansData();
-  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
+  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
 
@@ -2227,7 +2228,10 @@ const loadEmailEvents = email => {
             @click.prevent="copyLink"
             size="sm"
             color="emerald"
-           v-if="typeof availablePlansTable.data !== 'string' && availablePlansTable.data.length > 0"
+            v-if="
+              typeof availablePlansTable.data !== 'string' &&
+              availablePlansTable.data.length > 0
+            "
           >
             Copy Link
           </x-button>

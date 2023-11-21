@@ -50,14 +50,29 @@ class AuditableController extends Controller
 
     public function loadApiLogs(Request $request)
     {
-        if ($request->auditableType == CarQuote::class) {
-            $uuid = CarQuote::where('id', $request->auditableId)->value('uuid');
+        
+        // if ($request->auditableType == CarQuote::class) {
+        //     $uuid = CarQuote::where('id', $request->auditableId)->value('uuid');
 
-            return InsurerRequestResponse::with('insuranceProvider')
+        //     return InsurerRequestResponse::with('insuranceProvider')
+        //         ->select('*')
+        //         ->where('insurer_request_response.quote_uuid', $uuid)
+        //         ->orderByDesc('insurer_request_response.created_at')
+        //         ->get();
+        // }
+
+        if ($request->auditableType == CarQuote::class) {
+            $query = InsurerRequestResponse::with('insuranceProvider')
                 ->select('*')
-                ->where('insurer_request_response.quote_uuid', $uuid)
-                ->orderByDesc('insurer_request_response.created_at')
-                ->get();
+                ->where('insurer_request_response.quote_uuid', CarQuote::where('id', $request->auditableId)->value('uuid'))
+                ->orderByDesc('insurer_request_response.created_at');
+        
+                // dd($request->all());
+            if ($request->insurance_provider) {
+                $query->where('insurer_request_response.provider_id', $request->insurance_provider);
+            }
+        
+            return $query->get();
         }
     }
 

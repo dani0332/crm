@@ -14,16 +14,18 @@ const props = defineProps({
   },
 });
 
+const page = usePage();
+const insuranceProviderId = ref(null);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
   apiLog: false,
 });
 
 const selectedLog = ref({});
-const selectLog = (item) => {
-    selectedLog.value = item;    
-  	modals.apiLog = true;
-}
+const selectLog = item => {
+  selectedLog.value = item;
+  modals.apiLog = true;
+};
 
 const apiLogs = reactive({
   loading: false,
@@ -39,24 +41,34 @@ const apiLogs = reactive({
   ],
 });
 
-const onLoadAuditLogData = async () => {
+const onLoadAuditLogData = async (hasinsuranceId = true) => {
+  if (!hasinsuranceId) insuranceProviderId.value = null;
   apiLogs.loading = true;
-
-  let data = {
-    auditableType: props.type,
-    auditableId: props.id,
-    jsonData: true,
-  };
 
   let url = '/insurer-logs';
 
-  if (props.quoteType != undefined) {
-    data = {
-      auditable_id: props.id,
-      quote_type: props.quoteType,
-      jsonData: true,
-    };    
-  }
+  let data = {
+    ...(props.quoteType === undefined
+      ? { auditableType: props.type, auditableId: props.id }
+      : { quote_type: props.quoteType, auditable_id: props.id }),
+    jsonData: true,
+    insurance_provider: insuranceProviderId.value ?? null,
+  };
+
+  // let data = {
+  //   auditableType: props.type,
+  //   auditableId: props.id,
+  //   jsonData: true,
+  //   insurance_provider: insuranceProviders.value ?? null,
+  // };
+
+  // if (props.quoteType != undefined) {
+  //   data = {
+  //     auditable_id: props.id,
+  //     quote_type: props.quoteType,
+  //     jsonData: true,
+  //   };
+  // }
 
   axios
     .post(url, data)
@@ -89,95 +101,161 @@ const onLoadAuditLogData = async () => {
         Load API Logs
       </x-button>
     </div>
-    <DataTable
-      v-else
-      table-class-name="compact tablefixed"
-      :headers="apiLogs.table"
-      :items="apiLogs.data || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="apiLogs.data?.length < 15"
-    >
-      
-      <template #item-status="{ status }">
-        <x-tag v-if="status" size="xs" :color="status === 'failed' ? 'red' : 'primary'" class="mt-0.5 text-[10px]">
+    <div v-else>
+      <div class="flex items-center gap-4 my-3">
+        <x-field class="flex-1" label="Insurance Provider">
+          <ComboBox
+            :single="true"
+            class="w-full"
+            v-model="insuranceProviderId"
+            :options="
+              $page.props.insuranceProviders.map(item => ({
+                value: item.id,
+                label: item.text,
+              }))
+            "
+          />
+        </x-field>
+        <x-button
+          size="sm"
+          color="orange"
+          @click="onLoadAuditLogData"
+          :loading="apiLogs.loading"
+          class="h-10 mt-3"
+        >
+          Search
+        </x-button>
+        <x-button
+          size="sm"
+          color="primary"
+          @click="onLoadAuditLogData(false)"
+          class="h-10 mt-3"
+        >
+          Reset
+        </x-button>
+      </div>
+      <DataTable
+        table-class-name="compact tablefixed"
+        :headers="apiLogs.table"
+        :items="apiLogs.data || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="apiLogs.data?.length < 15"
+      >
+        <template #item-status="{ status }">
+          <x-tag
+            v-if="status"
+            size="xs"
+            :color="status === 'failed' ? 'red' : 'primary'"
+            class="mt-0.5 text-[10px]"
+          >
             <p>{{ status.toUpperCase() }}</p>
-        </x-tag>					
-      </template>    
-      <template #item-created_at="{ created_at }">
-        {{ dateFormat(created_at).value }}
-      </template>
-      <template #item-action="item">
-        <x-button size="xs" color="primary" outlined @click.prevent="selectLog(item)">
-							View
-				</x-button>						
-			</template>
-    </DataTable>
-  </div> 
-  
-   
+          </x-tag>
+        </template>
+        <template #item-created_at="{ created_at }">
+          {{ dateFormat(created_at).value }}
+        </template>
+        <template #item-action="item">
+          <x-button
+            size="xs"
+            color="primary"
+            outlined
+            @click.prevent="selectLog(item)"
+          >
+            View
+          </x-button>
+        </template>
+      </DataTable>
+    </div>
+  </div>
+
   <x-modal v-model="modals.apiLog" size="lg" show-close backdrop>
     <template #header>
-        Insurance Request Response Details: {{ selectedLog.id }}
+      Insurance Request Response Details: {{ selectedLog.id }}
     </template>
-    
+
     <div class="space-x-4">
-        <table class="table">
-            <tr class="mb-10">
-                <td class="font-medium">REF-ID:</td>
-                <td>{{ selectedLog.quote_uuid }}</td>
-            </tr>
-            <tr class="mb-10">
-                <td class="font-medium">Call Type:</td>
-                <td>{{ selectedLog.call_type }}</td>
-            </tr>
-            <tr>
-                <td class="font-medium">Status:</td>
-                <td>
-                  <x-tag v-if="selectedLog.status" size="xs" :color="selectedLog.status === 'failed' ? 'red' : 'primary'" class="mt-0.5 text-[10px]">
-                      {{ selectedLog.status.toUpperCase() }}
-                  </x-tag>					
-                </td>
-            </tr>
-            <tr>
-                <td class="font-medium">Provider Name:</td>
-                <td>{{ selectedLog.insurance_provider.text }}</td>
-            </tr>
-            <tr>
-                <td class="font-medium" colspan="2">Request:</td>               
-            </tr>
-            <tr>
-                <td colspan="2">
-                    <div style="font-size:14px; background-color: #d5edfd; color: rgb(6, 4, 4); height: 200px; width: 700px; overflow-y: auto; padding: 10px;">
-                      {{ selectedLog.request }}
-                    </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="font-medium" colspan="2">Response:</td>               
-            </tr>
-            <tr>                
-                <td colspan="2">
-                  <div style="font-size:14px; background-color: #d5edfd; color: rgb(6, 4, 4); height: 200px; width: 700px; overflow-y: auto; padding: 10px;">
-                    {{ selectedLog.response }}
-                  </div>
-                </td>
-            </tr>
-            <tr>
-                <td class="font-medium">Created At:</td>
-                <td>{{ dateFormat(selectedLog.created_at).value }}</td>
-            </tr>
-            <tr>
-                <td class="font-medium">Updated At:</td>
-                <td>{{ dateFormat(selectedLog.updated_at).value }}</td>
-            </tr>
-        </table>
+      <table class="table">
+        <tr class="mb-10">
+          <td class="font-medium">REF-ID:</td>
+          <td>{{ selectedLog.quote_uuid }}</td>
+        </tr>
+        <tr class="mb-10">
+          <td class="font-medium">Call Type:</td>
+          <td>{{ selectedLog.call_type }}</td>
+        </tr>
+        <tr>
+          <td class="font-medium">Status:</td>
+          <td>
+            <x-tag
+              v-if="selectedLog.status"
+              size="xs"
+              :color="selectedLog.status === 'failed' ? 'red' : 'primary'"
+              class="mt-0.5 text-[10px]"
+            >
+              {{ selectedLog.status.toUpperCase() }}
+            </x-tag>
+          </td>
+        </tr>
+        <tr>
+          <td class="font-medium">Provider Name:</td>
+          <td>{{ selectedLog.insurance_provider.text }}</td>
+        </tr>
+        <tr>
+          <td class="font-medium" colspan="2">Request:</td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <div
+              style="
+                font-size: 14px;
+                background-color: #d5edfd;
+                color: rgb(6, 4, 4);
+                height: 200px;
+                width: 700px;
+                overflow-y: auto;
+                padding: 10px;
+              "
+            >
+              {{ selectedLog.request }}
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="font-medium" colspan="2">Response:</td>
+        </tr>
+        <tr>
+          <td colspan="2">
+            <div
+              style="
+                font-size: 14px;
+                background-color: #d5edfd;
+                color: rgb(6, 4, 4);
+                height: 200px;
+                width: 700px;
+                overflow-y: auto;
+                padding: 10px;
+              "
+            >
+              {{ selectedLog.response }}
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="font-medium">Created At:</td>
+          <td>{{ dateFormat(selectedLog.created_at).value }}</td>
+        </tr>
+        <tr>
+          <td class="font-medium">Updated At:</td>
+          <td>{{ dateFormat(selectedLog.updated_at).value }}</td>
+        </tr>
+      </table>
     </div>
     <div class="text-right space-x-4 mt-12">
-        <x-button size="sm" @click.prevent="modals.apiLog = false">
-            Close
-        </x-button>
+      <x-button size="sm" @click.prevent="modals.apiLog = false">
+        Close
+      </x-button>
     </div>
-</x-modal>  
+  </x-modal>
 </template>
