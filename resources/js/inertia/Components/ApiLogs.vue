@@ -14,7 +14,6 @@ const props = defineProps({
   },
 });
 
-const page = usePage();
 const insuranceProviderId = ref(null);
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
 const modals = reactive({
@@ -54,22 +53,6 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
     jsonData: true,
     insurance_provider: insuranceProviderId.value ?? null,
   };
-
-  // let data = {
-  //   auditableType: props.type,
-  //   auditableId: props.id,
-  //   jsonData: true,
-  //   insurance_provider: insuranceProviders.value ?? null,
-  // };
-
-  // if (props.quoteType != undefined) {
-  //   data = {
-  //     auditable_id: props.id,
-  //     quote_type: props.quoteType,
-  //     jsonData: true,
-  //   };
-  // }
-
   axios
     .post(url, data)
     .then(res => {
@@ -147,7 +130,7 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
           <x-tag
             v-if="status"
             size="xs"
-            :color="status === 'failed' ? 'red' : 'primary'"
+            :color="status === 'failed' ? 'red' : 'success'"
             class="mt-0.5 text-[10px]"
           >
             <p>{{ status.toUpperCase() }}</p>
@@ -191,7 +174,7 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
             <x-tag
               v-if="selectedLog.status"
               size="xs"
-              :color="selectedLog.status === 'failed' ? 'red' : 'primary'"
+              :color="selectedLog.status === 'failed' ? 'red' : 'success'"
               class="mt-0.5 text-[10px]"
             >
               {{ selectedLog.status.toUpperCase() }}
@@ -208,15 +191,7 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
         <tr>
           <td colspan="2">
             <div
-              style="
-                font-size: 14px;
-                background-color: #d5edfd;
-                color: rgb(6, 4, 4);
-                height: 200px;
-                width: 700px;
-                overflow-y: auto;
-                padding: 10px;
-              "
+              class="text-sm h-[200px] w-[700px] overflow-y-auto p-2.5 bg-[#d5edfd] text-[#060404]"
             >
               {{ selectedLog.request }}
             </div>
@@ -228,15 +203,7 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
         <tr>
           <td colspan="2">
             <div
-              style="
-                font-size: 14px;
-                background-color: #d5edfd;
-                color: rgb(6, 4, 4);
-                height: 200px;
-                width: 700px;
-                overflow-y: auto;
-                padding: 10px;
-              "
+              class="text-sm h-[200px] w-[700px] overflow-y-auto p-2.5 bg-[#d5edfd] text-[#060404]"
             >
               {{ selectedLog.response }}
             </div>
