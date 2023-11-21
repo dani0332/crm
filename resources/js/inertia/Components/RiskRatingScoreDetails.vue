@@ -43,7 +43,7 @@ const riskRatingScore = quote => {
                             <tbody class="vue3-easy-data-table__body border-inner">
                             <tr v-for="scoreList in scoreBreakdown">
                                 <td class=" w-50 z-10 text-left p-0">{{scoreList.text}}</td>
-                                <td class="text-left w-30 p-0" >{{scoreList.value}}</td>
+                                <td class="text-left w-30 p-0 capitalize" >{{scoreList.value}}</td>
                                 <td class="text-left w-20 p-0">{{scoreList.score}}</td>
                             </tr>
                             <tr >
