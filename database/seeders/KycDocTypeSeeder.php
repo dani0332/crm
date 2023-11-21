@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Enums\DocumentTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Models\DocumentType;
 use Illuminate\Database\Seeder;
 

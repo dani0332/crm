@@ -38,6 +38,8 @@ let availableFilters = {
   page: 1,
 };
 
+const isDateMandatory = ref(true);
+const isSearchValueRequired = ref(false);
 const filtersForm = useForm({
   quoteType: null,
   searchType: '',
@@ -55,6 +57,11 @@ function onReset() {
     onBefore: () => (loader.table = true),
     onSuccess: () => (loader.table = false),
   });
+}
+
+function checkDateValidation() {
+    isDateMandatory.value = !(filtersForm.searchType === 'cdbId');
+    isSearchValueRequired.value = filtersForm.searchType !== '';
 }
 
 function onSubmit(isValid) {
@@ -100,6 +107,15 @@ function setQueryStringFilters() {
   }
 }
 
+
+watch(() => filtersForm, () => {
+    let queryString = window.location.search;
+    let urlParams = new URLSearchParams(queryString);
+
+    isDateMandatory.value = !((urlParams.get('searchType') !== null && urlParams.get('searchField') !== null) ||
+        filtersForm.searchType === 'cdbId' && filtersForm.searchField !== '');
+}, { deep: true, immediate: true });
+
 const quoteTypeOptions = computed(() =>
   ref(
     [{ value: '', label: 'Select' }].concat(
@@ -110,6 +126,7 @@ const quoteTypeOptions = computed(() =>
     ),
   ),
 );
+
 onMounted(() => {
   setQueryStringFilters();
 });
@@ -143,6 +160,7 @@ onMounted(() => {
             { value: 'id', label: 'AML ID' },
           ]"
           class="w-full"
+          @update:model-value="checkDateValidation"
         />
         <x-input
           v-model="filtersForm.searchField"
@@ -150,6 +168,7 @@ onMounted(() => {
           name="code"
           label="Search Value"
           class="w-full"
+          :rules="isSearchValueRequired ? [isRequired] : []"
           placeholder="Search Value"
         />
 
@@ -169,7 +188,7 @@ onMounted(() => {
           name="created_at_end"
           label="Created Date Start"
           class="w-full"
-          :rules="[isRequired]"
+          :rules="isDateMandatory ? [isRequired] : []"
           :customError="filtersForm.errors.amlCreatedStartDate"
         />
         <DatePicker
@@ -177,7 +196,7 @@ onMounted(() => {
           name="created_at_end"
           label="Created Date End"
           class="w-full"
-          :rules="[isRequired]"
+          :rules="isDateMandatory ? [isRequired] : []"
           :customError="filtersForm.errors.amlCreatedEndDate"
         />
       </div>
