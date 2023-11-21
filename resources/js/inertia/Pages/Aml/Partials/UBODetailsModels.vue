@@ -61,6 +61,10 @@ const UBODetailsTable = reactive({
       value: 'relation',
     },
     {
+      text: 'Is this member is payer?',
+      value: 'is_payer',
+    },
+    {
       text: 'Action',
       value: 'action',
     },
@@ -78,6 +82,7 @@ const uboForm = useForm({
   dob: null,
   relation_code: null,
   nationality_id: null,
+  is_payer: props.is_payer ?? false,
 });
 
 function onEditUBO(data) {
@@ -90,6 +95,7 @@ function onEditUBO(data) {
   uboForm.dob = data.dob;
   uboForm.relation_code = data.relation_code;
   uboForm.nationality_id = data.nationality_id;
+  uboForm.is_payer = data.is_payer;
 }
 
 const onUBOSubmit = isValid => {
@@ -144,11 +150,7 @@ const onUBOSubmit = isValid => {
         <h3 class="font-semibold text-primary-800 text-lg mb-3">
           Add UBO Details
         </h3>
-        <x-button
-          @click.prevent="addUBOToggle"
-          size="sm"
-          color="red"
-        >
+        <x-button @click.prevent="addUBOToggle" size="sm" color="red">
           Hide
         </x-button>
       </div>
@@ -209,7 +211,6 @@ const onUBOSubmit = isValid => {
       </x-button>
       <x-button
         v-else
-        v-if="uboForm.entity_id"
         @click.prevent="addUBOToggle(true)"
         size="sm"
         color="orange"
@@ -238,6 +239,14 @@ const onUBOSubmit = isValid => {
     </template>
     <template #item-nationality="{ nationality }">
       {{ nationality?.text }}
+    </template>
+    <template #item-is_payer="{ is_payer }">
+      <div class="flex gap-2">
+        <x-checkbox
+          :modelValue="is_payer == 0 ? false : true"
+          color="primary"
+        />
+      </div>
     </template>
     <template #item-action="item">
       <div class="flex gap-2">

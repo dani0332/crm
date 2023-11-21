@@ -1,6 +1,7 @@
 <script setup>
 import UBODetailsModels from './UBODetailsModels.vue';
 import MemberDetailsModel from './MemberDetailsModel.vue';
+import PayerDetails from './PayerDetails.vue';
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -17,7 +18,7 @@ const props = defineProps({
   legalStructure: Object,
   entities: Array,
   quoteAmlStatus: Number,
-  customerDetails: Object
+  customerDetails: Object,
 });
 
 const loader = ref({
@@ -44,6 +45,16 @@ const nationalitiesOptions = computed(() => {
   }));
 });
 
+const is_insured = ref(false);
+
+watch(
+  props.membersDetails,
+  () => {
+    is_insured.value = !props.uboDetails.some(x => x.is_payer);
+  },
+  { immediate: true },
+);
+
 const insuredFormDetails = useForm({
   customer_id: props.quoteDetails.customer_id,
   customer_type: props.customerTypeEnum.Entity,
@@ -51,6 +62,8 @@ const insuredFormDetails = useForm({
 
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
   insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
+  insured_fullname: props.quoteDetails?.customer.insured_fullname ?? null,
+  withFullName: false,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -184,7 +197,7 @@ const show = ref(true);
         License
       </p>
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-        <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4 mb-5">
+        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 mb-5">
           <x-field label="Trade License No">
             <x-input
               v-model="insuredFormDetails.trade_license_no"
@@ -217,6 +230,14 @@ const show = ref(true);
               class="w-full"
             />
           </x-field>
+          <div
+            class="flex gap-5 mt-2 items-center"
+            :class="{ 'mt-8': insuredFormDetails.withFullName }"
+          >
+            <p>Is the insured the payer?</p>
+            <x-radio v-model="is_insured" :value="true" label="Yes" />
+            <x-radio v-model="is_insured" :value="false" label="No" />
+          </div>
         </dl>
         <div v-if="entityFound" class="mb-5">
           <dl class="grid md:grid-cols-3 gap-x-6 gap-y-4">
@@ -268,7 +289,17 @@ const show = ref(true);
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
-        <x-divider class="mb-4 mt-1" />
+
+        <x-divider class="my-6" />
+
+        <PayerDetails
+          :quoteType="quoteType"
+          :quoteDetails="quoteDetails"
+          :nationalities="nationalities"
+          :membersDetails="membersDetails"
+          :memberRelations="memberRelations"
+          :customerType="props.customerTypeEnum.Entity"
+        />
 
         <div class="text-center space-x-4 mt-8">
           <x-button
@@ -292,7 +323,7 @@ const show = ref(true);
           :nationalities="nationalities"
           :modelType="props.quoteType?.code"
           :entities="props.entities"
-          :idDocumentType="props.lookups.id_type"
+          :idDocumentType="props.lookups.entity_document_type"
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
@@ -475,8 +506,85 @@ const show = ref(true);
     </p>
 
     <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
+      <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
+        <div class="flex gap-5 mb-5 align-center">
+          <p>Want to send Fullname?</p>
+          <x-radio
+            v-model="insuredFormDetails.withFullName"
+            :value="true"
+            label="Yes"
+          />
+          <x-radio
+            v-model="insuredFormDetails.withFullName"
+            :value="false"
+            label="No"
+          />
+        </div>
+      </dl>
       <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-        <div class="grid sm:grid-cols-2">
+        <div v-if="insuredFormDetails.withFullName">
+          <x-field label="Insured Full Name">
+            <x-input
+              v-model="insuredFormDetails.insured_fullname"
+              :rules="[isRequired]"
+              placeholder="Insured Full Name"
+              type="text"
+              class="w-full"
+            />
+          </x-field>
+        </div>
+        <x-field
+          label="Insured First Name"
+          v-if="!insuredFormDetails.withFullName"
+        >
+          <x-input
+            v-model="insuredFormDetails.insured_first_name"
+            :rules="[isRequired]"
+            placeholder="Insured First Name"
+            type="text"
+            class="w-full"
+          />
+        </x-field>
+        <x-field
+          label="Insured Last Name"
+          v-if="!insuredFormDetails.withFullName"
+        >
+          <x-input
+            v-model="insuredFormDetails.insured_last_name"
+            :rules="[isRequired]"
+            placeholder="Insured Last Name"
+            type="text"
+            class="w-full"
+          />
+        </x-field>
+
+        <x-field label="Nationality">
+          <ComboBox
+            :single="true"
+            v-model="insuredFormDetails.nationality_id"
+            :hasError="isEmptyNationality"
+            placeholder="Select Nationality"
+            :options="nationalitiesOptions"
+            class="w-full"
+          />
+        </x-field>
+        <x-field label="Date of Birth">
+          <DatePicker
+            v-model="insuredFormDetails.dob"
+            :rules="[isRequired]"
+            placeholder="Date of Birth"
+            class="w-full"
+          />
+        </x-field>
+        <div
+          class="flex gap-5 mb-5 align-center"
+          :class="{ 'mt-8': insuredFormDetails.withFullName }"
+        >
+          <p>Is the insured the payer?</p>
+          <x-radio v-model="is_insured" :value="true" label="Yes" />
+          <x-radio v-model="is_insured" :value="false" label="No" />
+        </div>
+        <!-- <div class="grid sm:grid-cols-2">
           <dt class="font-medium">Insured First Name</dt>
           <dd>
             <x-input
@@ -517,7 +625,7 @@ const show = ref(true);
               class="w-full"
             />
           </dd>
-        </div>
+        </div> -->
       </dl>
       <x-divider class="mb-4 mt-1" />
 
@@ -529,6 +637,17 @@ const show = ref(true);
         :memberRelations="memberRelations"
         :customerType="props.customerTypeEnum.Individual"
       />
+      <x-divider class="my-6" />
+
+      <PayerDetails
+        :quoteType="quoteType"
+        :quoteDetails="quoteDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :memberRelations="memberRelations"
+        :customerType="props.customerTypeEnum.Entity"
+      />
+
       <div class="flex justify-center my-5">
         <x-button
           size="sm"
@@ -559,6 +678,7 @@ const show = ref(true);
         :employmentSectors="props.lookups.employment_sector"
         :residentialStatus="props.lookups.resident_status"
         :companyPosition="props.lookups.company_position"
+        :modeOfDelivery="props.lookups.mode_of_delivery"
       />
 
       <!-- <div class="text-right space-x-4 mt-8">

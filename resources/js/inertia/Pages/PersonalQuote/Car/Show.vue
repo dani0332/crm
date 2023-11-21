@@ -4,6 +4,8 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import RiskRatingScoreDetails from "../../../Components/RiskRatingScoreDetails.vue";
+
 
 defineProps({
 	quote: Object,
@@ -1028,7 +1030,7 @@ const copyLink = () => {
   copy(page.props.planURL);
   if (copied)
     notification.success({
-      title: 'Link copied to clipboardd',
+      title: 'Link copied to clipboard',
       position: 'top',
     });
 };
@@ -1443,6 +1445,11 @@ const linkEntity = () => {
         }).catch(err => {
         console.log(err);
     });
+}
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
 }
 
 </script>
@@ -1874,10 +1881,10 @@ const linkEntity = () => {
                             <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
                             <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
                         </div>
-                        <div class="grid sm:grid-cols-2">
-                            <dt class="font-medium">Risk Category</dt>
-                            <dd>{{record.risk_score==null?'N/A':record.risk_score <= 16?'Low Risk':((record.risk_score <= 31)?'Medium Risk':(record.risk_score >= 32?'High Risk':'N/A')) }}</dd>
-                        </div>
+                        <RiskRatingScoreDetails
+                            :quote="quote"
+                            :modelType="quoteType"
+                        />
                     </dl>
                     <dl v-if="record.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                         <div class="grid sm:grid-cols-2">
@@ -2846,6 +2853,27 @@ const linkEntity = () => {
                 Change Insurer
               </x-button>
             </template>
+
+            <!--  -->
+            <span v-if="hasRole(rolesEnum.CarAdvisor)">
+              <SelectPlan v-if="prefillPlanId != item.id"
+                  @update:updatePlanId="handleChildUpdate"
+                  :plan="item"
+                  :quoteType="quoteType"
+                  :uuid="quote.uuid" />
+
+              <x-button
+                  v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+            </span>
+            
+
           </div>
         </template>
       </DataTable>

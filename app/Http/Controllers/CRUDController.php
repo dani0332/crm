@@ -776,6 +776,7 @@ class CRUDController extends Controller
             }
 
             return inertia('HomeQuote/Show', [
+                'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
                 'amlQuoteStatus' => $amlQuoteStatus,
                 'countryList' => $countries,
@@ -1876,5 +1877,10 @@ class CRUDController extends Controller
     private function getCarMakeDropdown()
     {
         return CarMake::select('id', 'text', 'code')->where('is_active', true)->get();
+    }
+    public function riskRatingDetails($quoteType, $uuid){
+        $quoteModel = $this->getQuoteObject($quoteType, $uuid);
+        $response = $this->crudService->scoreBreakdown($quoteModel,$quoteType);
+        return $response;
     }
 }

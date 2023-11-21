@@ -1,6 +1,7 @@
 <script setup>
 import MemberDetails from "../../Components/MemberDetails.vue";
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
   quote: Object,
@@ -714,10 +715,10 @@ const linkEntity = () => {
                       <dt class="font-medium">IS SMOKER</dt>
                       <dd>{{ quote.is_smoker ? 'Yes' : 'No' }}</dd>
                   </div>
-                  <div class="grid sm:grid-cols-2">
-                      <dt class="font-medium">Risk Category</dt>
-                      <dd>{{quote.risk_score==null?'N/A':quote.risk_score <= 16?'Low Risk':((quote.risk_score <= 31)?'Medium Risk':(quote.risk_score >= 32?'High Risk':'N/A')) }}</dd>
-                  </div>
+                  <RiskRatingScoreDetails
+                      :quote="quote"
+                      :modelType="'Life'"
+                  />
               </dl>
               <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
                     <div class="grid sm:grid-cols-2">
@@ -934,7 +935,7 @@ const linkEntity = () => {
       :canAddBatchNumber="canAddBatchNumber"
     />
 
-    
+
     <PlanDetails
     :insuranceProviders="insuranceProviders"
     :quote="quote"
