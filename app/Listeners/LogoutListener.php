@@ -31,6 +31,7 @@ class LogoutListener
             User::where('id', $event->user->id)->update(['status' => UserStatusEnum::UNAVAILABLE, 'logout_at' => now()]);
             info("User with ID: {$event->user->id} and email : {$event->user->email } status changed to unavailable.");
         } else {
+            info("Logout event fired but no user found.");
             return;
         }
     }
