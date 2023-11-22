@@ -275,8 +275,13 @@ class BridgerInsightService
             'ResultID' => $resultId,
             'State' => [
                 'MatchStates' => $decisions,
-                'Note' => $notes,
             ],
+            'AddedtoAcceptedList' => false,
+            'AlertState' => 'Open',
+            'Division' => 'Default Division',
+            'AssignedTo' => ['Administrator'],
+            'Note' => $notes,
+
         ];
 
         try {
