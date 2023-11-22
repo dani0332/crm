@@ -176,7 +176,7 @@ class CentralService
             case quoteTypeCode::Car:
                 return app(CarQuoteService::class)->getPlans($id);
             case quoteTypeCode::Travel:
-                return app(TravelQuoteService::class)->listQuotePlans($id);
+                return app(TravelQuoteService::class)->sortedPlansList($id);
             case quoteTypeCode::Health:
                 $listQuotePlans = [];
                 $quotePlans = app(HealthQuoteService::class)->getQuotePlans($id);
