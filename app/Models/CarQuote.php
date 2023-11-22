@@ -259,7 +259,7 @@ class CarQuote extends BaseModel
 
     public function customerMembers()
     {
-        return $this->morphMany(CustomerMembers::class, 'quoteable');
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
     public function scopeRelationWhere($query, $isGetList, $filters)

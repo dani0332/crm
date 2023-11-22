@@ -34,7 +34,7 @@ class MemberDetailRequest extends FormRequest
         ];
 
         if (strtolower(request()->quote_type) == strtolower(quoteTypeCode::Health)) {
-            $rules['health_quote_request_id'] = 'sometimes|required';
+            $rules['quote_request_id'] = 'sometimes|required';
             $rules['gender'] = 'sometimes|required';
             $rules['emirate_of_your_visa_id'] = 'nullable';
             $rules['member_category_id'] = 'nullable';

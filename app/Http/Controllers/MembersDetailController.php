@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
@@ -66,108 +67,9 @@ class MembersDetailController extends Controller
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
-            return redirect()->back(302, ['status' => true, 'message' => 'Updated', 'data' => $quoteMemberDetails]);
+            if (isset($request->from_aml_model))
+                return response()->json(['status' => true, 'message' => 'Updated', 'data' => $quoteMemberDetails]);
         }
-
-
-
-
-//        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health) &&
-//            (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
-//
-//            $healthMemberDetails = $request->validated();
-//
-//            if (! in_array('health_quote_request_id', $request->validated())) {
-//                $healthMemberDetails = array_merge([
-//                    'health_quote_request_id' => $request->quote_request_id,
-//                ], $healthMemberDetails);
-//                unset($healthMemberDetails['quote_request_id']);
-//            }
-//
-//            $healthMemberCount = HealthMemberDetail::where('customer_id', $healthMemberDetails['customer_id'])->count();
-//
-//            $healthMemberDetail = HealthMemberDetail::create(array_merge($healthMemberDetails, [
-//                'code' => CustomerTypeEnum::IndividualShort.'-'.$healthMemberDetails['customer_id'].'-'.++$healthMemberCount,
-//                'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
-//                'is_third_party_payer' => $request->is_third_party_payer ?? false,
-//            ]));
-//
-//            $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
-//
-//            HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
-//
-//            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $healthMemberDetail]);
-//
-//        } elseif (strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) &&
-//            (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
-//
-//            $travelMemberDetails = $request->validated();
-//
-//            if (! in_array('travel_quote_request_id', $request->validated())) {
-//                $travelMemberDetails = array_merge([
-//                    'travel_quote_request_id' => $request->quote_request_id,
-//                ], $travelMemberDetails);
-//                unset($travelMemberDetails['quote_request_id']);
-//            }
-//
-//            $travelMemberCount = TravelMemberDetail::where('customer_id', $travelMemberDetails['customer_id'])->count();
-//            $travelMemberDetail = TravelMemberDetail::create(array_merge($travelMemberDetails, [
-//                'code' => CustomerTypeEnum::IndividualShort.'-'.$travelMemberDetails['customer_id'].'-'.++$travelMemberCount,
-//                'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
-//                'is_third_party_payer' => $request->is_third_party_payer ?? false,
-//            ]));
-//
-//            $travelMemberDetail = $travelMemberDetail->load(['relation', 'nationality']);
-//
-//            TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
-//
-//            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $travelMemberDetail]);
-//
-//        } else {
-//            $quoteMemberDetails = $request->validated();
-//            $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
-//
-//            if ($quoteObject) {
-//                $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));
-//
-//                if ($request->customer_type == CustomerTypeEnum::Individual) {
-//                    $customerEntityId = $request->customer_id;
-//                    $quoteMemberDetails = array_merge($quoteMemberDetails, [
-//                        'customer_entity_id' => $customerEntityId,
-//                        'customer_type' => CustomerTypeEnum::Individual,
-//                    ]);
-//                } else {
-//                    $customerEntityId = $request->entity_id;
-//                    $quoteMemberDetails = array_merge($quoteMemberDetails, [
-//                        'customer_entity_id' => $customerEntityId,
-//                        'customer_type' => CustomerTypeEnum::Entity,
-//                    ]);
-//                }
-//                unset($quoteMemberDetails['customer_id']);
-//
-//                $quoteMemberCount = QuoteMemberDetail::where([
-//                    'customer_type' => $request->customer_type,
-//                    'customer_entity_id' => $customerEntityId,
-//                ])->count();
-//
-//                $quoteMemberCode = ($request->customer_type == CustomerTypeEnum::Individual) ?
-//                    CustomerTypeEnum::IndividualShort.'-'.$request->customer_id.'-'.(++$quoteMemberCount) :
-//                    CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount);
-//
-//                $quoteMemberDetails = QuoteMemberDetail::updateOrCreate(array_merge($quoteMemberDetails), [
-//                    'quote_type_id' => $quoteTypeId,
-//                    'code' => $quoteMemberCode,
-//                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
-//                    'is_third_party_payer' => $request->is_third_party_payer ?? false,
-//                ]);
-//                $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
-//                $quoteObject->updated_at = Carbon::now();
-//                $quoteObject->save();
-//
-//                return response()->json(['status' => true, 'message' => 'Updated', 'data' => $quoteMemberDetails]);
-//
-//            }
-//        }
 
         return redirect()->back();
     }
@@ -229,93 +131,9 @@ class MembersDetailController extends Controller
 
             $memberDetail = $memberDetail->load(['relation', 'nationality']);
 
-            return redirect()->back(302, ['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
+            if (isset($request->from_aml_model))
+                return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
         }
-
-//        if (strtolower($request->quote_type) == strtolower(quoteTypeCode::Health) &&
-//            (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
-//            $healthMemberDetails = $request->validated();
-//
-//            if (! in_array('health_quote_request_id', $request->validated())) {
-//                $healthMemberDetails = array_merge([
-//                    'health_quote_request_id' => $request->quote_request_id,
-//                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
-//                ], $healthMemberDetails);
-//                unset($healthMemberDetails['quote_request_id']);
-//            }
-//
-//            $healthMemberDetail = HealthMemberDetail::findOrFail($id);
-//            $healthMemberDetail->update($healthMemberDetails);
-//
-//            $healthMemberData = $request->only(['gender', 'dob', 'nationality_id', 'emirate_of_your_visa_id', 'member_category_id', 'salary_band_id']);
-//            HealthQuote::where('primary_member_id', $id)->update($healthMemberData);
-//
-//            $heathLeadData = ['quote_updated_at' => Carbon::now()];
-//            if ($request->update_lead_against_member) {
-//                $heathLeadData = array_merge($heathLeadData, $healthMemberData);
-//            }
-//
-//            HealthQuote::find($healthMemberDetails['health_quote_request_id'])->update($heathLeadData);
-//
-//            $healthMemberDetail = $healthMemberDetail->load(['relation', 'nationality']);
-//
-//            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $healthMemberDetail]);
-//
-//        } elseif (strtolower($request->quote_type) == strtolower(quoteTypeCode::Travel) &&
-//            (isset($request->customer_type) && $request->customer_type == CustomerTypeEnum::Individual)) {
-//            $travelMemberDetails = $request->validated();
-//
-//            if (! in_array('travel_quote_request_id', $request->validated())) {
-//                $travelMemberDetails = array_merge([
-//                    'travel_quote_request_id' => $request->quote_request_id,
-//                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
-//                ], $travelMemberDetails);
-//                unset($travelMemberDetails['quote_request_id']);
-//            }
-//
-//            $travelMemberDetail = TravelMemberDetail::findOrFail($id);
-//            $travelMemberDetail->update($travelMemberDetails);
-//
-//            TravelQuote::find($travelMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
-//            TravelQuote::where('primary_member_id', $id)->update(['dob' => $travelMemberDetails['dob']]);
-//
-//            $travelMemberDetail = $travelMemberDetail->load(['relation', 'nationality']);
-//
-//            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $travelMemberDetail]);
-//
-//        } else {
-//            $quoteMemberDetails = $request->validated();
-//            $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
-//            $quoteTypeId = collect(QuoteTypeId::getOptions())->search(ucfirst($request->quote_type));
-//
-//            if ($request->customer_type == CustomerTypeEnum::Individual) {
-//                $customerEntityId = $request->customer_id;
-//                $quoteMemberDetails = array_merge($quoteMemberDetails, [
-//                    'customer_entity_id' => $customerEntityId,
-//                    'customer_type' => CustomerTypeEnum::Individual,
-//                ]);
-//            } else {
-//                $customerEntityId = $request->entity_id;
-//                $quoteMemberDetails = array_merge($quoteMemberDetails, [
-//                    'customer_entity_id' => $customerEntityId,
-//                    'customer_type' => CustomerTypeEnum::Entity,
-//                ]);
-//            }
-//
-//            $memberDetail = QuoteMemberDetail::findOrFail($id);
-//            $memberDetail->update(array_merge($quoteMemberDetails,
-//                [
-//                    'quote_type_id' => $quoteTypeId,
-//                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1 ? true : false,
-//                ]));
-//            $quoteObject->updated_at = Carbon::now();
-//            $quoteObject->save();
-//
-//            $memberDetail = $memberDetail->load(['relation', 'nationality']);
-//
-//            return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
-//
-//        }
 
         return redirect()->back();
     }
@@ -332,7 +150,7 @@ class MembersDetailController extends Controller
         $memberDetails = CustomerMembers::findOrFail($explode[2] ?? '');
 
         if (strtolower($explode[1] ?? '') == strtolower(quoteTypeCode::Health) && ($explode[0] ?? '') == CustomerTypeEnum::Individual) {
-            HealthQuote::find($memberDetails->quote_request_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
+            HealthQuote::find($memberDetails->quote_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
         }
 
         $quoteObject = $this->getQuoteObject(strtolower($explode[1] ?? ''), $memberDetails->quote_id);
@@ -343,22 +161,5 @@ class MembersDetailController extends Controller
 
         return redirect()->back();
 
-//        if (strtolower($explode[1]) == strtolower(quoteTypeCode::Health) && $explode[0] == CustomerTypeEnum::Individual) {
-//            $data = HealthMemberDetail::find($explode[2]);
-//            if ($data) {
-//                HealthQuote::find($data->health_quote_request_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
-//                $data->delete();
-//            }
-//        } else {
-//            $memberDetails = QuoteMemberDetail::findOrFail($explode[2]);
-//            $memberDetails->delete();
-//
-//            $quoteObject = $this->getQuoteObject(strtolower($explode[1]), $memberDetails->quote_request_id);
-//            $quoteObject->updated_at = Carbon::now();
-//            $quoteObject->save();
-//
-//        }
-//
-//        return redirect()->back();
     }
 }

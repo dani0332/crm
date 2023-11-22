@@ -379,7 +379,7 @@ const memberForm = useForm({
   salary_band_id: null,
   emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
-  health_quote_request_id: page.props.quote.id,
+  quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
   first_name: null,
   relation_code: null,
@@ -478,7 +478,7 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(`/members/${confirmDeleteData.member}`, {
+  memberForm.delete(`/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({

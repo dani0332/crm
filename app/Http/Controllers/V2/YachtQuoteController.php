@@ -14,6 +14,7 @@ use App\Http\Requests\YachtQuoteRequest;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
@@ -21,7 +22,6 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
@@ -97,7 +97,7 @@ class YachtQuoteController extends Controller
         $quote = YachtQuoteRepository::getBy('uuid', $uuid);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
-        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypes::YACHT->id());
+        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::YACHT->name);
         $quote->load('documents.createdBy');
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::YACHT->id())->get();
