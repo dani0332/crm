@@ -5,7 +5,6 @@ use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
 use App\Models\HealthQuote;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -555,30 +554,6 @@ if (! function_exists('formatLandlineDisplay')) {
         $landline = removeCountryCode($landline);
 
         return preg_replace('/^(\d{2})(\d{3})(\d{4})$/', '$1 $2 $3', $landline);
-    }
-}
-
-if (! function_exists('createKycPDF')) {
-    function createKycPDF()
-    {
-        try {
-            $data = [
-                'title' => 'KYC Document',
-                'quoteType' => 'Health',
-            ];
-            /*$pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-                ->loadView('pdf.kyc_document', compact('data'));*/
-            $pdf = PDF::setOption(['isHtml5ParserEnabled' => true, 'dpi' => 150])
-                ->loadView('pdf.kyc_document', ['data' => $data]);
-
-            // generate pdf with file name e.g. InsuranceMarket.ae™ Motor Insurance Comparison for Rahul.pdf
-            $pdf->download('testing_file.pdf');
-            $pdfName = 'testingmirza.pdf';
-
-            return ['pdf' => $pdf, 'name' => $pdfName];
-        } catch (Exception $ex) {
-            info($ex->getMessage());
-        }
     }
 }
 

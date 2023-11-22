@@ -93,7 +93,7 @@ function onEditMember(data) {
     memberForm.dob = data.dob;
     memberForm.relation_code = data.relation_code;
     memberForm.nationality_id = data.nationality_id;
-    memberForm.quote_request_id = data.quote_request_id;
+    memberForm.quote_request_id = data.quote_id;
     memberForm.quote_type = props.quote_type;
 }
 const onMemberSubmit = isValid => {
@@ -137,7 +137,7 @@ const memberDelete = id => {
     confirmDeleteData.member = id;
 };
 const memberDeleteConfirmed = () => {
-    memberForm.delete(`/members/${props.quote_type}-${confirmDeleteData.member}`, {
+    memberForm.delete(`/members/${props.quote.customer_type}-${props.quote_type}-${confirmDeleteData.member}`, {
         preserveScroll: true,
         onSuccess: () => {
             notification.success({

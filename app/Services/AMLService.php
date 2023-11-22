@@ -10,17 +10,15 @@ use App\Models\AML;
 use App\Models\BikeQuote;
 use App\Models\BusinessQuote;
 use App\Models\CarQuote;
-use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
-use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use App\Models\User;
 use App\Models\YachtQuote;
-use App\Repositories\QuoteMemberDetailsRepository;
+use App\Repositories\CustomerMembersRepository;
 use Carbon\Carbon;
 use Config;
 use Illuminate\Support\Facades\Mail;
@@ -81,7 +79,7 @@ class AMLService
             QuoteTypes::YACHT->id(),
             QuoteTypes::PET->id(),
             QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id()
+            QuoteTypes::JETSKI->id(),
         ];
         $isDataMigrated = true;
         $quoteRequestDetails = [];
@@ -286,36 +284,9 @@ class AMLService
 
     public static function getMemberOrUBODetails($request, $quoteType, $quoteRequestId)
     {
-        $customerChildDetails = [];
-        $customerType = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::EntityShort : CustomerTypeEnum::IndividualShort;
+        $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
-        if ($customerType == CustomerTypeEnum::IndividualShort) {
-            if ($quoteType->code == QuoteTypes::HEALTH->value) {
-                $customerChildDetails = HealthMemberDetail::with('nationality')->where([
-                    'health_quote_request_id' => $quoteRequestId,
-                ])->get();
-            } elseif ($quoteType->code == QuoteTypes::TRAVEL->value) {
-                $customerChildDetails = TravelMemberDetail::with('nationality')->where([
-                    'travel_quote_request_id' => $quoteRequestId,
-                ])->get();
-            } else {
-                $customerChildDetails = QuoteMemberDetailsRepository::with('nationality')->where([
-                    'customer_type' => CustomerTypeEnum::Individual,
-                    'quote_type_id' => $quoteType->id,
-                    'quote_request_id' => $quoteRequestId,
-                ])->get();
-            }
-        }
-
-        if ($customerType == CustomerTypeEnum::EntityShort) {
-            $customerChildDetails = QuoteMemberDetailsRepository::with('nationality')->where([
-                'customer_type' => CustomerTypeEnum::Entity,
-                'quote_type_id' => $quoteType->id,
-                'quote_request_id' => $quoteRequestId,
-            ])->get();
-        }
-
-        return $customerChildDetails;
+        return CustomerMembersRepository::getBy('quote_id', $quoteRequestId, $quoteType->code, $membersFor);
     }
 
     public static function updateAMLDecisionLexisNexis($request)

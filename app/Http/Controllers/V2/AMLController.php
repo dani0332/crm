@@ -8,7 +8,6 @@ use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -25,7 +24,6 @@ use App\Models\CommunicationMode;
 use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\Entity;
-use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -33,13 +31,12 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
-use App\Models\TravelMemberDetail;
 use App\Models\UAEAMLListUploads;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
@@ -92,7 +89,7 @@ class AMLController extends Controller
                     QuoteTypes::YACHT->id(),
                     QuoteTypes::PET->id(),
                     QuoteTypes::CYCLE->id(),
-                    QuoteTypes::JETSKI->id()
+                    QuoteTypes::JETSKI->id(),
                 ])) {
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
@@ -207,16 +204,9 @@ class AMLController extends Controller
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
+        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            $membersDetail = HealthMemberDetail::with(['relation', 'nationality'])->where('health_quote_request_id', $quoteRequest->id)->get();
-        } elseif ($quoteTypeId == QuoteTypeId::Travel) {
-            $membersDetail = TravelMemberDetail::with(['relation', 'nationality'])->where('travel_quote_request_id', $quoteRequest->id)->get();
-        } else {
-            $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId);
-        }
-
-        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $nationalities = NationalityRepository::withActive()->get();
@@ -372,18 +362,18 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-//                Temporary comment this code, please don't remove it.
-//                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
-//                    $fullName = explode(' ', \request()->insured_fullname);
-//                    $insuredFirstName = $fullName[0] ?? '';
-//                    unset($fullName[0]);
-//                    $customerUpdate = [
-//                        'nationality_id' => $AMLCheckRequest->nationality_id,
-//                        'dob' => $AMLCheckRequest->dob,
-//                        'insured_first_name' => $insuredFirstName,
-//                        'insured_last_name' => implode(' ', $fullName)
-//                    ];
-//                }
+                //                Temporary comment this code, please don't remove it.
+                //                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
+                //                    $fullName = explode(' ', \request()->insured_fullname);
+                //                    $insuredFirstName = $fullName[0] ?? '';
+                //                    unset($fullName[0]);
+                //                    $customerUpdate = [
+                //                        'nationality_id' => $AMLCheckRequest->nationality_id,
+                //                        'dob' => $AMLCheckRequest->dob,
+                //                        'insured_first_name' => $insuredFirstName,
+                //                        'insured_last_name' => implode(' ', $fullName)
+                //                    ];
+                //                }
                 $customer->update($customerUpdate);
                 $customer->refresh();
                 info('Bridger Insight - Customer Updated Successfully');
@@ -394,7 +384,7 @@ class AMLController extends Controller
                     'dob' => Carbon::parse($customer->dob)->format(config('constants.DATE_FORMAT_ONLY')),
                     'nationality' => $customer->nationality->toArray() ?? [],
                     'code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id,
-//                    'with_full_name' => \request()->withFullName
+                    //                    'with_full_name' => \request()->withFullName
                 ];
 
                 foreach ($getMemberOrUBODetails as $memberDetail) {
@@ -607,7 +597,7 @@ class AMLController extends Controller
         if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
             info('Bridger Insight : Email Triggered to Compliance Super User');
             AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                config('constants.APP_URL'). $request['aml_quote_url'],
+                config('constants.APP_URL').$request['aml_quote_url'],
                 $request['quote_ref_id'],
                 $request['bridger_response'],
                 $request['customer_entity_name'],

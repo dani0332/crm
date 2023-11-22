@@ -379,7 +379,7 @@ const memberForm = useForm({
   salary_band_id: null,
   emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
-  health_quote_request_id: page.props.quote.id,
+  quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
   first_name: null,
   relation_code: null,
@@ -478,7 +478,7 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(`/members/${confirmDeleteData.member}`, {
+  memberForm.delete(`/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
@@ -723,10 +723,11 @@ watch(
   },
 );
 
+const listQuotePlansFiltered = ref([]);
 
-const listQuotePlansFiltered = computed(() => {
-    return plansTable.data.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden))
-})
+watchEffect(() => {
+    listQuotePlansFiltered.value = plansTable.data.slice().sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
@@ -2374,7 +2375,7 @@ const handleChildUpdate = planId => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
-          <x-tag size="sm">{{ plansTable.data.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
           <x-button-group v-if="selectedPlans.length > 0" size="sm">

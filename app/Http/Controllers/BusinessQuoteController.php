@@ -20,9 +20,9 @@ use App\Models\BusinessQuote;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
@@ -174,7 +174,7 @@ class BusinessQuoteController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Corpline);
         $companyType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
-        $UBODetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id(), CustomerTypeEnum::Entity);
+        $UBODetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
