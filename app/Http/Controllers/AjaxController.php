@@ -15,6 +15,7 @@ use App\Http\Requests\KycIndividualDocRequest;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
+use App\Models\Customer;
 use App\Models\CustomerDetail;
 use App\Models\Entity;
 use App\Models\Nationality;
@@ -266,6 +267,18 @@ class AjaxController extends Controller
                 $quote->nationality_id = $data['nationality_id'];
                 $quote->kyc_decision = Kyc::COMPLETE;
                 $quote->save();
+
+                $customer = Customer::find($request->customer_id);
+
+                $customer->insured_first_name = $data['first_name'];
+                $customer->insured_last_name = $data['last_name'];
+
+                if ($data['id_type'] == Kyc::DOCUMENT_TYPE_EMIRATES) {
+                    $customer->emirates_id_number = $data['id_number'];
+                    $customer->emirates_id_expiry_date = $data['id_expiry_date'];
+                }
+
+                $customer->update();
 
                 return response()->json(['success' => true]);
             }
