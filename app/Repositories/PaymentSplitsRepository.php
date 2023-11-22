@@ -342,13 +342,14 @@ class PaymentSplitsRepository
             //dd($documentNumberForReciept);
 
         } elseif ($request->is_declined) {
+            $splitPayment = PaymentSplits::find($request->splitPaymentId);
             $paymentInformation = [
-                'declined_reason_id' => $request->declined_reason,
-                'declined_custom_reason' => $request->declined_custom_reason,
+                'decline_reason_id' => $request->declined_reason,
+                'decline_custom_reason' => $request->declined_custom_reason,
                 'payment_status_id' => PaymentStatusEnum::DECLINED,
                 'updated_by' => $request->user()->id,
             ];
-            PaymentSplits::find($request->splitPaymentId)->update($paymentInformation);
+            $splitPayment->update($paymentInformation);
             $successMessage = 'Payment Declined';
         }
 
