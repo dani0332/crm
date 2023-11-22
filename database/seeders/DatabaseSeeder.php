@@ -34,9 +34,12 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
+            AutofollowupSeeder::class,
             addReassignmentTime::class,
             // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
+            EmbeddedProductRoleAndPermissionSeeder::class,
+            addDubaiNowLeadSourceExemptionInAppStorage::class,
         ]);
     }
 }

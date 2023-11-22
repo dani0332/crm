@@ -37,16 +37,22 @@ class CarAllocationService extends AllocationService
 {
     public function fetchLead($quoteId)
     {
+        // Check if Dubai Now exclusion should be applied
+        $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+
+        // List of exempted lead sources
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
+
+        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
+        }
+
         // Create a query to retrieve a car lead based on the provided quote ID and filters.
-        $query = CarQuote::where('uuid', $quoteId)
+        return CarQuote::where('uuid', $quoteId)
             ->whereNotIn('quote_status_id', [QuoteStatusEnum::Fake, QuoteStatusEnum::Duplicate])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
-            ->where('is_renewal_tier_email_sent', 0);
-
-        info('Query for getting lead is : '.getQueryForLogWithBindings($query)); // calling generic function to print query with bindings
-
-        // Retrieve the first matching car lead from the query or return null if none is found.
-        return $query->first();
+            ->whereNotIn('source', $exemptedLeadSources)
+            ->where('is_renewal_tier_email_sent', 0)->first();
     }
 
     public function getTier($tierId)
@@ -77,8 +83,6 @@ class CarAllocationService extends AllocationService
             info('car value as per valuation engine for GIG is '.$carValue.' for lead : '.$carLead->uuid);
             $tiersQuery->where('min_price', '<=', $carValue)->where('max_price', '>=', $carValue);
         }
-
-        info('At the end tier query for is : '.json_encode($tiersQuery->toSql()));
     }
 
     public function getExcludedUserIds()
@@ -111,8 +115,6 @@ class CarAllocationService extends AllocationService
 
     public function getPlanAndYear($carLead): array
     {
-        info('Started searching tier for car lead: '.json_encode($carLead->code));
-
         // Retrieve car quote plans with specific conditions.
         $plans = CarQuotePlanDetail::where('quote_uuid', $carLead->uuid)
             ->where('is_rating_available', true)
@@ -121,9 +123,7 @@ class CarAllocationService extends AllocationService
         // Calculate the year of manufacture that is 15 years ago from the current date.
         $yearOfManufacture = now()->subYear(15)->year;
 
-        info('yearOfManufacture is: '.$yearOfManufacture);
-
-        info('Number of plans found are: '.count($plans));
+        info('yearOfManufacture is: '.$yearOfManufacture.' and number of plans found are: '.count($plans));
 
         return [$plans, $yearOfManufacture];
     }
@@ -163,8 +163,6 @@ class CarAllocationService extends AllocationService
 
         // Check if the car's year of manufacture is newer than 15 years.
         if ($carLead->year_of_manufacture < $yearOfManufacture) {
-            info('Inside year of manufacture block, and car year of manufacture is: '.$carLead->year_of_manufacture);
-
             // Check if more than one plan is found against the car lead.
             if (count($plans) > 0) {
                 info('More than one plan found against car lead: '.$carLead->uuid);
@@ -186,8 +184,6 @@ class CarAllocationService extends AllocationService
                 }
             }
         } else {
-            info('Inside year of manufacture older block, and car year of manufacture is: '.$carLead->year_of_manufacture);
-
             // Determine the tier based on a value and return the first matching tier.
             $this->getTierBasedOnValue($carLead, $tiersQuery);
 
@@ -221,8 +217,6 @@ class CarAllocationService extends AllocationService
 
             // If eligible users are found, log the results and return them.
             if ($eligibleUsers && count($eligibleUsers) > 0) {
-                info('Result of available users are: '.json_encode(collect($eligibleUsers)->pluck('user_id')));
-
                 return $eligibleUsers->toArray();
             }
         }
@@ -308,8 +302,6 @@ class CarAllocationService extends AllocationService
                 DB::raw('group_concat(rule_users.user_id) AS leadSourceUsers')
             );
 
-        info('lead source records: '.json_encode($records->get()));
-
         return $records->get();
     }
 
@@ -333,8 +325,6 @@ class CarAllocationService extends AllocationService
     {
         // Extract user IDs from the eligible user data and convert them to an array.
         $availableUserIds = collect($eligibleUsers)->pluck('user_id')->toArray();
-
-        info('Tier eligible users are: '.json_encode($availableUserIds));
 
         if (count($rules) > 0) {
             // If there are rules, retrieve user IDs from the rule records.
@@ -481,18 +471,28 @@ class CarAllocationService extends AllocationService
         $from = now()->subDay()->setTime(12, 30)->format(config('constants.DB_DATE_FORMAT_MATCH'));
         info('Leads will be picked up in reassignment from : '.$from.' until : '.now()->toDateTimeString());
 
+        // Check if Dubai Now exclusion should be applied
+        $shouldIncludeDubaiNow = $this->getAppStorageValueByKey(ApplicationStorageEnums::APPLY_DUBAI_NOW_EXCLUSION) == 1;
+
+        // List of exempted lead sources
+        $exemptedLeadSources = [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD];
+
+        // Add Dubai Now to exempted lead sources if $shouldIncludeDubaiNow is true
+        if ($shouldIncludeDubaiNow) {
+            $exemptedLeadSources[] = LeadSourceEnum::DUBAI_NOW;
+        }
+
         // Get the Tier R
         $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
         // Query to fetch leads
         $leads = CarQuote::whereBetween('created_at', [$from, now()])
-            ->whereNotIn('source', [LeadSourceEnum::IMCRM, LeadSourceEnum::RENEWAL_UPLOAD])
+            ->whereNotIn('source', $exemptedLeadSources)
             ->where('quote_status_id', QuoteStatusEnum::NewLead)
             ->where('is_renewal_tier_email_sent', 0);
 
         // Filter by advisor ID if provided , which mean reassignment is going to run for a single advisor
         if ($advisorId != 0) {
-            info('Inside reassignment single run and advisor selected is : '.$advisorId);
             $leads->where('advisor_id', $advisorId);
         } else {
             // If advisor ID is not provided, get unavailable advisors and filter leads by them
@@ -533,8 +533,6 @@ class CarAllocationService extends AllocationService
 
     public function updateLeadTier($lead, $tier): void
     {
-        info('login users not found for selected lead so will try to assign only tier for lead : '.$lead->uuid);
-
         CarQuote::where('id', $lead->id)->update([
             'tier_id' => $tier->id,
         ]);

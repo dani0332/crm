@@ -3,10 +3,12 @@
 namespace App\Repositories;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;
 use App\Models\CarQuote;
 use App\Models\InsuranceProvider;
+use App\Models\QuoteStatusLog;
 use App\Traits\CentralTrait;
 use Illuminate\Support\Facades\DB;
 
@@ -57,8 +59,7 @@ class CarQuoteRepository extends BaseRepository
             $query->where('cqr.renewal_batch', request()->renewal_batch);
         }
 
-        return $query->orderBy(DB::raw(' IF (clql.status = "'.GenericRequestEnum::PENDING.'", 0, 1) '))
-            ->simplePaginate()->withQueryString();
+        return $query->simplePaginate()->withQueryString();
     }
 
     /*
@@ -112,5 +113,47 @@ class CarQuoteRepository extends BaseRepository
         ];
 
         return Ken::request('/save-manual-car-quote-plan', 'post', $payLoad);
+    }
+
+    /**
+     * update quote status
+     *
+     * @return void
+     */
+    public function fetchUpdateQuoteStatus($data)
+    {
+        return DB::transaction(function () use ($data) {
+            $quote = $this->where('uuid', $data['quote_uuid'])->first();
+
+            $previousStatusId = $quote->quote_status_id;
+
+            $quote->update(['quote_status_id' => $data['quote_status_id']]);
+
+            QuoteStatusLog::create([
+                'quote_type_id' => QuoteTypeId::Car,
+                'quote_request_id' => $quote->id,
+                'current_quote_status_id' => $data['quote_status_id'],
+                'previous_quote_status_id' => $previousStatusId,
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            return $quote;
+        });
+    }
+
+    /**
+     * @return null
+     */
+    public function fetchFollowupStarted($data)
+    {
+        $quote = $this->fetchUpdateQuoteStatus($data);
+
+        //set followup id coming from kyo
+        $quote->carQuoteRequestDetail->updateOrCreate(
+            ['car_quote_request_id' => $quote->id],
+            ['followup_id' => $data['followup_id']]
+        );
+
+        return $quote;
     }
 }

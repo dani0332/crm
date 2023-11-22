@@ -8,6 +8,7 @@ use App\Enums\HealthTeamType;
 use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\RolesEnum;
 use App\Enums\UserStatusEnum;
 use App\Jobs\CammyJob;
 use App\Jobs\GetQuotePlansJob;
@@ -29,7 +30,6 @@ class HealthAllocationService extends AllocationService
             ->where('quote_status_id', QuoteStatusEnum::Qualified)
             ->whereNotNull('health_quote_request.price_starting_from')
             ->whereNull('health_quote_request.advisor_id');
-        info('query for health lead : '.$quoteId.' is : '.$query->toSql().' and bindings are : '.json_encode($query->getBindings()));
 
         return $query->first();
     }
@@ -111,12 +111,16 @@ class HealthAllocationService extends AllocationService
         info('trying to get advisors for team : '.$leadTeam.' with current status as '.$status);
 
         return User::join('lead_allocation as la', 'la.user_id', '=', 'users.id')
+            ->join('model_has_roles as mhr', 'mhr.model_id', '=', 'users.id')
+            ->join('roles as r', 'r.id', '=', 'mhr.role_id')
             ->join('teams as t', 't.id', '=', 'users.sub_team_id')
             ->where('users.status', $status)
             ->where(function ($query) {
                 $query->whereRaw('la.allocation_count < la.max_capacity')
                     ->orWhere('la.max_capacity', '=', -1);
             })
+            ->whereIn('r.name', [RolesEnum::EBPAdvisor, RolesEnum::RMAdvisor])
+            ->where('users.is_active', true)
             ->where('t.name', $leadTeam)
             ->orderBy('la.last_allocated', 'asc')->first();
     }
@@ -151,7 +155,7 @@ class HealthAllocationService extends AllocationService
 
     public function updateQuoteDetail($leadId)
     {
-        info('about to update car quote detail record for : '.$leadId);
+        info('about to update health quote detail record for : '.$leadId);
 
         $quoteDetail = HealthQuoteRequestDetail::where('health_quote_request_id', $leadId)->first();
         $oldAdvisorAssignedDate = '';

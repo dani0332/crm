@@ -24,7 +24,6 @@ defineProps({
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
-  listQuotePlans: Array,
   activities: Array,
   customerAdditionalContacts: Array,
   ecomTravelInsuranceQuoteUrl: String,
@@ -38,6 +37,7 @@ defineProps({
   paymentMethods: Object,
   insuranceProviders: Array,
   embeddedProducts: Array,
+  canAddBatchNumber: Boolean,
 });
 
 const page = usePage();
@@ -137,6 +137,7 @@ const travelFields = computed(() => {
     'previous_quote_policy_premium',
     'previous_policy_expiry_date',
     'policy_start_date',
+    'renewal_batch',
   ];
   let fields = {};
   Object.keys(page.props.fieldsToDisplay).map(field => {
@@ -235,6 +236,7 @@ const addTravelMember = isValid => {
         title: 'Traveler Added',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -274,6 +276,7 @@ const editTraveler = isValid => {
         title: 'Traveler Updated',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -296,6 +299,7 @@ const deleteTraveler = id => {
         title: 'Traveler Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -440,6 +444,21 @@ const onDocDelete = name => {
   confirmDeleteData.docs = name;
 };
 
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/travel/available-plans/${page.props.quote.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            availablePlansTable.data = res.data
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
+
 const confirmDeleteDoc = () => {
   quoteDocumentsTable.isLoading = true;
   router.post(
@@ -514,6 +533,7 @@ const emailStatusesTableColumns = computed(() => {
 });
 
 const availablePlansTable = reactive({
+  data: [],
   columns: [
     {
       text: 'Provider Name',
@@ -759,6 +779,7 @@ const onCopyText = text => {
 };
 
 onMounted(() => {
+    onLoadAvailablePlansData()
   if (page.props.message) {
     notification.success({
       title: page.props.message,
@@ -1024,30 +1045,17 @@ onMounted(() => {
           </div>
         </dl>
       </div>
-
-      <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">
-          Last Year's Policy Details
-        </h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY NUMBER</dt>
-            <dd>{{ quote.previous_quote_policy_number }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY PRICE</dt>
-            <dd>{{ quote.previous_quote_policy_premium }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PREVIOUS POLICY EXPIRY DATE</dt>
-            <dd>{{ quote.previous_policy_expiry_date }}</dd>
-          </div>
-        </dl>
-      </div>
     </div>
+
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Travel"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1509,7 +1517,7 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">Available Plans</h3>
         <x-button
-          v-if="listQuotePlans.length > 0 && permissions.canNotApprovePayments"
+          v-if="availablePlansTable.data.length > 0 && permissions.canNotApprovePayments"
           size="sm"
           color="orange"
           @click.prevent="onCopyText(ecomTravelInsuranceQuoteUrl + quote.uuid)"
@@ -1518,23 +1526,23 @@ onMounted(() => {
         </x-button>
       </div>
 
-      <div v-if="listQuotePlans && typeof listQuotePlans == 'string'">
+      <div v-if="availablePlansTable.data && typeof availablePlansTable.data == 'string'">
         <p
           class="text-center text-primary-600 uppercase"
-          v-if="typeof listQuotePlans == 'string'"
+          v-if="typeof availablePlansTable.data == 'string'"
         >
-          {{ listQuotePlans }}
+          {{ availablePlansTable.data }}
         </p>
       </div>
       <div v-else>
         <DataTable
           table-class-name="tablefixed compact"
           :headers="availablePlansTable.columns"
-          :items="listQuotePlans || []"
+          :items="availablePlansTable.data || []"
           border-cell
           hide-rows-per-page
           :rows-per-page="15"
-          :hide-footer="listQuotePlans.length < 15"
+          :hide-footer="availablePlansTable.data.length < 15"
         >
           <template #item-providerName="item">
             <span class="text-primary-600 uppercase">{{
@@ -1713,15 +1721,14 @@ onMounted(() => {
       </x-modal>
     </div>
 
-      <customerAdditionalContacts
-          quoteType="Travel"
-          :customerId="quote.customer_id"
-          :quoteId="quote.id"
-          :contacts="customerAdditionalContacts"
-          :quoteEmail="quote.email"
-          :quoteMobile="quote.mobile_no"
-
-      />
+    <customerAdditionalContacts
+      quoteType="Travel"
+      :customerId="quote.customer_id"
+      :quoteId="quote.id"
+      :contacts="customerAdditionalContacts"
+      :quoteEmail="quote.email"
+      :quoteMobile="quote.mobile_no"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
       <div>

@@ -35,14 +35,18 @@ class ApiController extends Controller
 
             info('API assignLeads called with request params as : '.json_encode($request->all()));
 
+            if (config('constants.DISABLE_LEAD_ALLOCATION_ENDPOINT') == 1) {
+                info('------ Lead allocation ended for lead with Lead allocation endpoint disabled ------');
+
+                return response()->json(['error' => 'Lead allocation endpoint disabled'], 503);
+            }
+
             if ($request->has('quoteUUID') && $request->has('quoteTypeId')) {
 
                 $allocationType = $request->input('quoteTypeId');
                 $allocationId = $request->input('quoteUUID');
 
-                info('------ Lead allocation started for lead : '.$allocationId.' ------');
-
-                info('API endpoint is called for quote uuid: '.$allocationId.' with quote type id: '.$allocationType);
+                info('------ Lead allocation with api started for lead : '.$allocationId.' with quote type id'.$allocationType.' ------');
 
                 $allocationStrategy = AllocationFactory::createStrategy($allocationType, $allocationId);
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanType;
+use App\Enums\quoteTypeCode;
 use App\Enums\UserStatusEnum;
 use App\Models\ApplicationStorage;
 use App\Models\CarMake;
@@ -21,7 +22,7 @@ class CarEmailService extends BaseService
         $this->sendEmailCustomerService = $sendEmailCustomerService;
     }
 
-    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId)
+    public function sendCarOCBIntroEmail($plans, $lead, $tierR, $previousAdvisorId, $carQuoteService)
     {
         $plans = $this->executePlansSelectionLogic($plans);
 
@@ -30,11 +31,27 @@ class CarEmailService extends BaseService
 
         // Build email data
         $emailData = $this->buildEmailData($lead, $plans, $previousAdvisorId, $tierR->id);
+        $quotePlansCount = is_countable($plans) ? count($plans) : 0;
+        if ($quotePlansCount > 0) {
+            info('Inside plans of count: '.$lead->uuid.'    ');
+            $pdfData = [
+                'plan_ids' => collect($plans)->take(5)->pluck('id')->toArray(),
+                'quote_uuid' => $lead->uuid,
+            ];
+            $pdf = $carQuoteService->exportPlansPdf(quoteTypeCode::Car, $pdfData, json_decode(json_encode(['quotes' => ['plans' => $plans], 'isDataSorted' => true])));
+            if (isset($pdf['error'])) {
+                info('Failed to generate PDF for UUID in car email service: '.$lead->uuid.' Error: '.$pdf['error']);
+            } else {
+                $emailData->pdfAttachment = (object) $pdf;
+                info('attaching pdf: '.$lead->uuid.'    ');
+            }
+        }
 
         $responseCode = $this->sendEmailCustomerService->sendLMSIntroEmail($emailTemplateId, $emailData, 'lms-intro-email');
 
         return $responseCode;
     }
+
     private function buildNoPlansEmailData($carQuote, $previousAdvisor, $tierRId)
     {
         $advisor = User::where('id', $carQuote->advisor_id)->first();
@@ -65,8 +82,10 @@ class CarEmailService extends BaseService
                 'providerCode' => strtolower($plan->providerCode),
                 'benefits' => $this->getPlanBenefits($plan),
                 'buyNowLink' => $this->getPlanBuyNowLink($plan, $carQuote->uuid),
+                'isRenewal' => ($plan->isRenewal ?? false),
             ];
         }
+
         $emailData = $this->buildCommonEmailData($carQuote, $advisor, $previousAdvisor);
         $emailData->plans = $insurerPlans;
         $emailData->totalPlans = count($insurerPlans);
@@ -77,7 +96,6 @@ class CarEmailService extends BaseService
             $emailData->policyNumber = $carQuote->previous_quote_policy_number;
             $carbonDate = Carbon::parse($carQuote->previous_policy_expiry_date)->format('jS F Y');
             $emailData->renewalDueDate = $carbonDate;
-
         }
 
         return $emailData;
@@ -86,14 +104,16 @@ class CarEmailService extends BaseService
     private function buildCommonEmailData($carQuote, $advisor, $previousAdvisor)
     {
         $documentUrl = $this->getAppStorageValueByKey(ApplicationStorageEnums::LMS_INTRO_EMAIL_ATTACHMENT_URL);
-
+        //$whatsAppNumber = ! empty($advisor->mobile_no) ? str_replace(['+', ' ', '0'], '', $advisor->mobile_no) : '';
+        //$whatsAppNumber = '971'.ltrim($whatsAppNumber, '0');
+        $whatsAppNumber = ! empty($advisor->mobile_no) ? formatMobileNo($advisor->mobile_no) : '';
         $emailData = (object) [
             'clientFullName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerName' => $carQuote->first_name.' '.$carQuote->last_name,
             'customerEmail' => $carQuote->email,
-            'mobilePhone' => $advisor->mobile_no,
-            'whatsAppNumber' => ! empty($advisor->mobile_no) ? str_replace('+', '', $advisor->mobile_no) : '',
-            'landLine' => $advisor->landline_no,
+            'mobilePhone' => (! empty($advisor->mobile_no) ? formatMobileNoDisplay($advisor->mobile_no) : ''),
+            'whatsAppNumber' => $whatsAppNumber,
+            'landLine' => (! empty($advisor->landline_no) ? formatLandlineDisplay($advisor->landline_no) : ''),
             'advisorEmail' => $advisor->email,
             'advisorName' => $advisor->name,
             'documentUrl' => [$documentUrl],
@@ -146,7 +166,7 @@ class CarEmailService extends BaseService
             }, false);
 
             // If at least one option was selected, include this addon in the benefits.
-            if ($shouldInclude) {
+            if ($shouldInclude && $addon->text !== 'Priority repair, 12 free car washes, VIP lane for RTA testing and more with AG cars') {
                 $planAddons[] = [
                     'value' => $addon->text,
                 ];
@@ -178,10 +198,8 @@ class CarEmailService extends BaseService
 
     private function getVehicleName($lead)
     {
-
         $vehicleName = '';
         if ($lead->car_make_id != null) {
-
             $carMake = CarMake::find($lead->car_make_id);
 
             if ($carMake) {
@@ -239,7 +257,7 @@ class CarEmailService extends BaseService
         }
     }
 
-    private function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
+    public function buildEmailData($lead, $plans, $previousAdvisor, $tierRId)
     {
         if (count($plans) == 0) {
             // No plans with available ratings, build email data for the specific case

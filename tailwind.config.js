@@ -1,6 +1,6 @@
-const indielayer = require('@indielayer/ui/tailwind.preset');
+import indielayer from '@indielayer/ui/tailwind.preset';
 
-module.exports = {
+export default {
   presets: [indielayer()],
   content: [
     './resources/**/*.blade.php',
@@ -79,9 +79,4 @@ module.exports = {
       },
     },
   },
-  plugins: [
-    require('@tailwindcss/forms')({
-      strategy: 'class',
-    }),
-  ],
 };

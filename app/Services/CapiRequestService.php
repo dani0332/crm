@@ -53,9 +53,7 @@ class CapiRequestService
                             $carQuoteDetail->advisor_assigned_date = now();
                             $carQuoteDetail->advisor_assigned_by_id = auth()->id();
                             $carQuoteDetail->save();
-                            info('---- updateCarLeadDetailRecord - update done for advisor data and by id');
                         } else {
-                            info('---- updateCarLeadDetailRecord - record not found creating new entry');
                             CarQuoteRequestDetail::create([
                                 'car_quote_request_id' => $carQuote->id,
                                 'advisor_assigned_date' => now(),

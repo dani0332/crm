@@ -407,3 +407,19 @@ border-primary animate-spin;
   border-color: rgb(28, 124, 178) transparent transparent transparent;
   transform: rotate(90deg);
 }
+
+.x-popover-container.max-h-72 {
+  @apply !max-h-48;
+}
+
+.arrow-l-dark .x-popover-container::after {
+  content: '';
+  position: absolute;
+  top: 100%; /* Change 'top' to move the arrow to the top position */
+  left: 50%; /* Center the arrow horizontally */
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgb(55 65 81) transparent transparent transparent;
+  transform: rotate(360deg);
+}

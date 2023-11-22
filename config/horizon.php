@@ -176,8 +176,8 @@ return [
                 'timeout' => 60,
             ],
         ],
-        'test' => [
-            'supervisor-test' => [
+        'uat' => [
+            'supervisor-uat' => [
                 'connection' => 'redis',
                 'queue' => 'default,renewals',
                 'balance' => 'auto',
@@ -187,8 +187,8 @@ return [
                 'timeout' => 60,
             ],
         ],
-        'uat' => [
-            'supervisor-test' => [
+        'uat2' => [
+            'supervisor-uat2' => [
                 'connection' => 'redis',
                 'queue' => 'default,renewals',
                 'balance' => 'auto',

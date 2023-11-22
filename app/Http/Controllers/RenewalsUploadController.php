@@ -211,7 +211,6 @@ class RenewalsUploadController extends Controller
             'azureStorageUrl' => $azureStorageUrl,
             'azureStorageContainer' => $azureStorageContainer,
         ]);
-
     }
 
     /**
@@ -246,7 +245,6 @@ class RenewalsUploadController extends Controller
             'EnumGenericYes' => GenericRequestEnum::Yes,
             'EnumSkipPlansNonGCC' => SkipPlansEnum::NON_GCC,
         ]);
-
     }
 
     public function updateRenewals()
@@ -308,7 +306,6 @@ class RenewalsUploadController extends Controller
             'process' => $process,
             'batch' => $batch,
         ]);
-
     }
 
     public function batchDetail($batch)
@@ -358,11 +355,17 @@ class RenewalsUploadController extends Controller
 
     public function validationFailed($id)
     {
-        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])->get();
+        $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
+            ->with('renewalUploadLead')
+            ->whereIn('status', [RenewalProcessStatuses::BAD_DATA, RenewalProcessStatuses::VALIDATION_FAILED])
+            ->simplePaginate()->withQueryString();
 
         $batch_id = $id;
 
-        return view('renewals.validation_failed', compact('renewalLeads'), compact('batch_id'));
+        return inertia('Renewals/ValidationFailed', [
+            'renewalLeads' => $renewalLeads,
+            'batchId' => $batch_id,
+        ]);
     }
 
     public function downloadValidationFailed($id)
@@ -377,11 +380,14 @@ class RenewalsUploadController extends Controller
         $renewalLeads = RenewalQuoteProcess::where('renewals_upload_lead_id', $id)
             ->with('renewalUploadLead')
             ->whereIn('status', [RenewalProcessStatuses::VALIDATED, RenewalProcessStatuses::PROCESSED, RenewalProcessStatuses::PLANS_FETCHED, RenewalProcessStatuses::EMAIL_SENT])
-            ->get();
+            ->simplePaginate()->withQueryString();
 
         $batch_id = $id;
 
-        return view('renewals.validation_passed', compact('renewalLeads'), compact('batch_id'));
+        return inertia('Renewals/ValidationPassed', [
+            'renewalLeads' => $renewalLeads,
+            'batchId' => $batch_id,
+        ]);
     }
 
     public function viewQuoteRedirect($renewalProcessId, $leadId)
@@ -455,5 +461,4 @@ class RenewalsUploadController extends Controller
 
         return redirect('/');
     }
-
 }

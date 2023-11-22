@@ -22,7 +22,6 @@ use Maatwebsite\Excel\Facades\Excel;
 class CentralController extends Controller
 {
     use GenericQueriesAllLobs;
-
     public function createDuplicate(DuplicateLobRequest $request)
     {
         $response = (new CentralService())->saveDuplicateLeads($request->validated());
@@ -88,7 +87,6 @@ class CentralController extends Controller
 
             default:
                 return false;
-
         }
     }
 
@@ -115,5 +113,10 @@ class CentralController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Last Year Policy Detail has been updated.');
+    }
+
+    public function loadAvailablePlans($type, $id)
+    {
+        return (new CentralService())->loadAvailablePlans($type, $id);
     }
 }
