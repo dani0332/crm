@@ -2,6 +2,8 @@
 
 namespace App\Listeners;
 
+use App\Enums\UserStatusEnum;
+use App\Models\User;
 use Illuminate\Auth\Events\Logout;
 
 class LogoutListener
@@ -24,7 +26,13 @@ class LogoutListener
      */
     public function handle(Logout $event)
     {
-        // Causing Sentry Error, disabling for now
-        // info("User with ID: {$event->user->id} and email : {$event->user->email } logged out.");
+        if ($event->user) {
+            info("User with ID: {$event->user->id} and email : {$event->user->email } logged out.");
+            User::where('id', $event->user->id)->update(['status' => UserStatusEnum::UNAVAILABLE, 'logout_at' => now()]);
+            info("User with ID: {$event->user->id} and email : {$event->user->email } status changed to unavailable.");
+        }
+        else {
+            return;
+        }
     }
 }
