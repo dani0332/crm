@@ -1,4 +1,5 @@
 <script setup>
+import { watchEffect } from 'vue';
 import ActivePolicies from './Partials/ActivePolicies.vue';
 import EndingPolicies from './Partials/EndingPolicies.vue';
 import SalesDetail from './Partials/SalesDetail.vue';
@@ -23,18 +24,20 @@ const subTeams = ref([]);
 
 const { isRequired } = useRules();
 
-const filters = reactive({
-  reportCategory: props.reportName,
+let filters = reactive({
+  reportCategory: props.defaultFilters.reportName,
+  reportType: 'Issued Policies',
+  policyIssuanceDate: props.defaultFilters.policyIssuanceDate,
+  paymentDueDate: [new Date(), new Date()],
+  policyExpiredDate: [new Date(), new Date()],
   createdAt: [new Date(), new Date()],
-  reportType: null,
+  transactionType: [],
   teams: [],
   subTeams: [],
-  transactionType: [],
   leadSources: [],
-  utmFirst: [],
-  utmSecond: [],
   includeCancelledPolicies: null,
   groupBy: 'advisor',
+  utmGroupBy: [],
   page: 1,
 });
 
@@ -48,7 +51,6 @@ let selectedReport = computed(
 );
 
 const computedReportTypes = computed(() => {
-  filters.reportType = null;
   const filterCondition = filters.reportCategory ?? null;
 
   return filterCondition
@@ -76,6 +78,22 @@ const disabledGroupBy = computed(() => {
 
 const hideUmtGroup = computed(() => {
   return filters.reportCategory == 'Active Policies' ?? false;
+});
+
+const showPaymentDueDate = computed(() => {
+  return filters.reportType == 'Transaction Payments' ?? false;
+});
+
+const showIssuanceDate = computed(() => {
+  return filters.reportType == 'Issued Policies' ?? false;
+});
+
+const showExpiryDate = computed(() => {
+  return filters.reportType == 'Expiring Policies' ?? false;
+});
+
+const showDateTo = computed(() => {
+  return filters.reportType == 'Active Policies' ?? false;
 });
 
 const reportCategories = ref(props.filterOptions?.reportCategories);
@@ -118,6 +136,23 @@ const reportTypes = ref([
     report: ['Active Policies'],
   },
 ]);
+
+watch(
+  () => filters.reportCategory,
+  (newReportCategory, oldReportCategory) => {
+    // This function will only run when reportCategory changes
+    console.log(newReportCategory);
+
+    // Your logic to update reportType based on reportCategory
+    let selectedReport = reportTypes.value.find(x =>
+      x.report.includes(newReportCategory),
+    );
+
+    if (selectedReport) {
+      filters.reportType = selectedReport.value;
+    }
+  },
+);
 
 const onTeamChange = e => {
   if (e.length == 0) return;
@@ -190,9 +225,42 @@ function onReset() {
           :rules="[isRequired]"
         />
       </x-field>
-      <x-field label="Create Date" required>
+      <x-field v-if="showIssuanceDate" label="Policy Issuance Date" required>
         <DatePicker
           v-model="filters.createdAt"
+          placeholder="Select Start & End Date"
+          range
+          :max-range="92"
+          size="sm"
+          model-type="yyyy-MM-dd"
+          :rules="[isRequired]"
+        />
+      </x-field>
+      <x-field v-if="showPaymentDueDate" label="Payment Due Date" required>
+        <DatePicker
+          v-model="filters.paymentDueDate"
+          placeholder="Select Start & End Date"
+          range
+          :max-range="92"
+          size="sm"
+          model-type="yyyy-MM-dd"
+          :rules="[isRequired]"
+        />
+      </x-field>
+      <x-field v-if="showExpiryDate" label="Policy Expiry Date" required>
+        <DatePicker
+          v-model="filters.policyExpiredDate"
+          placeholder="Select Start & End Date"
+          range
+          :max-range="92"
+          size="sm"
+          model-type="yyyy-MM-dd"
+          :rules="[isRequired]"
+        />
+      </x-field>
+      <x-field v-if="showDateTo" label="Date To" required>
+        <DatePicker
+          v-model="filters.date_to"
           placeholder="Select Start & End Date"
           range
           :max-range="92"
@@ -260,18 +328,10 @@ function onReset() {
           class="w-full"
         />
       </x-field>
-      <x-field label="UMT (Group By 1)" v-if="!hideUmtGroup">
+      <x-field label="UTM" v-if="!hideUmtGroup">
         <x-select
-          v-model="filters.utmFirst"
-          placeholder="Search by UMT Group"
-          :options="umtGroup"
-          class="w-full"
-        />
-      </x-field>
-      <x-field label="UMT (Group By 2)" v-if="!hideUmtGroup">
-        <x-select
-          v-model="filters.utmSecond"
-          placeholder="Search by Ecommerce"
+          v-model="filters.utmGroupBy"
+          placeholder="Search by UTM Group"
           :options="umtGroup"
           class="w-full"
         />
