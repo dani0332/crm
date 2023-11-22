@@ -343,6 +343,10 @@ class TravelQuoteService extends BaseService
             }
         }
 
+        if (isset($request->source) && $request->source != '') {
+            $this->query->where('tqr.source', $request->source);
+        }
+
         foreach ($searchProperties as $item) {
             if (! empty($request[$item]) && $item != 'created_at') {
                 if ($request[$item] == 'null') {

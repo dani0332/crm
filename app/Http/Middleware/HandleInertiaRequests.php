@@ -68,7 +68,7 @@ class HandleInertiaRequests extends Middleware
             'cdnPath' => config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/',
             'appEnv' => config('constants.APP_ENV'),
             'pusherKey' => config('constants.VITE_PUSHER_APP_KEY'),
-            'epLink' => env('EMBEDDED_PAYMENT_LINK'),
+            'epLink' => config('constants.AFIA_WEBSITE_DOMAIN'),
         ];
     }
 
@@ -408,7 +408,7 @@ class HandleInertiaRequests extends Middleware
             });
         }
 
-        if (auth()->user()->hasAnyRole([RolesEnum::Admin, RolesEnum::BetaUser, RolesEnum::Engineering])) {
+        if (auth()->user()->can(PermissionsEnum::EmbeddedProductView)) {
             $nav = $nav->add('Embedded Products', url('embedded-products'));
         }
 

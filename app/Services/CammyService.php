@@ -55,7 +55,7 @@ class CammyService
                         'provider' => $plan->providerName,
                         'premium' => '',
                         'features' => $features->toArray(),
-                        'logo' => $plan->logo,
+                        'logo' => $plan->logo ?? '',
                         'planLink' => $plan->planLink ?? '',
                     ]);
                 }
@@ -77,9 +77,7 @@ class CammyService
                     'fromEmail' => isset($lead->advisor) ? $lead->advisor->email : 'no-reply@alert.insurancemarket.email',
                     'toEmail' => $lead->email,
                     'cc' => '',
-                    // 'cc' => 'afiaretailmedical@insurancemarket.ae',
                     'bcc' => optional($lead->advisor)->email,
-                    // 'bcc' => 'newleadpool@insurancemarket.ae,'.optional($lead->advisor)->email,
                     'advisor' => ['name' => optional($lead->advisor)->name, 'email' => optional($lead->advisor)->email, 'phone' => optional($lead->advisor)->mobile_no],
                     'comparePlansLink' => config('constants.AFIA_WEBSITE_DOMAIN').'/health-insurance/quote/'.$lead->uuid.'/compare',
                     'plans' => $plans->toArray(),

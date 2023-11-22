@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
@@ -149,6 +150,11 @@ class SendEmailCustomerService extends BaseService
                     'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
                     'name' => $emailData->pdfAttachment->name,
                 ];
+            }
+            if ($emailData->advisorEmailAddress == null || $emailData->advisorName == null) {
+                $emailData->advisorEmailAddress = DefaultAdvisorEnum::ADVISOREMAIL;
+                $emailData->advisorName = DefaultAdvisorEnum::ADVISORNAME;
+                $emailData->advisorMobileNo = DefaultAdvisorEnum::ADVISORMOBILENO;
             }
 
             $body = [
@@ -483,6 +489,12 @@ class SendEmailCustomerService extends BaseService
                         'name' => basename($emailAttachment),
                     ];
                 }
+            }
+            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+                $attachments[] = [
+                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                    'name' => $emailData->pdfAttachment->name,
+                ];
             }
 
             $bcc = [[

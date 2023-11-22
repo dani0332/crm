@@ -217,6 +217,7 @@ const onActivitySubmit = isValid => {
   axios
     .post(url, paymentForm)
     .then(res => {
+        modals.cancelPayment = false;
       notification.success('Processed');
     })
     .catch(err => {

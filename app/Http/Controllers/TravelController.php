@@ -14,12 +14,14 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
+use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\RenewalsUploadService;
 use App\Services\TravelQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -30,6 +32,7 @@ use RuntimeException;
 class TravelController extends Controller
 {
     protected $travelQuoteService;
+    private $renewalQuoteService;
     protected $lookupService;
     protected $crudService;
     protected $genericModel;
@@ -40,9 +43,11 @@ class TravelController extends Controller
     /**
      * TravelController constructor.
      */
-    public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService)
+    public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService,
+        RenewalsUploadService $renewalQuoteService)
     {
         $this->travelQuoteService = $travelQuoteService;
+        $this->renewalQuoteService = $renewalQuoteService;
         $this->genericModel = $this->travelQuoteService->getGenericModel(self::TYPE);
         $this->lookupService = $lookupService;
         $this->crudService = $crudService;
@@ -427,5 +432,20 @@ class TravelController extends Controller
         return inertia('TravelQuote/Cards', [
             'quotes' => array_values($leadStatuses),
         ]);
+    }
+
+    public function uploadRenewals()
+    {
+        return inertia('TravelQuote/Upload');
+    }
+
+    /**
+     * process upload and create import.
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
+    {
+        return $this->renewalQuoteService->travelRenewalsUploadCreate($request->validated());
     }
 }
