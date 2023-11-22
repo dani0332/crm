@@ -30,8 +30,7 @@ class LogoutListener
             info("User with ID: {$event->user->id} and email : {$event->user->email } logged out.");
             User::where('id', $event->user->id)->update(['status' => UserStatusEnum::UNAVAILABLE, 'logout_at' => now()]);
             info("User with ID: {$event->user->id} and email : {$event->user->email } status changed to unavailable.");
-        }
-        else {
+        } else {
             return;
         }
     }
