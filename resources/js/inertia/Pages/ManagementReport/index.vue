@@ -25,13 +25,16 @@ const subTeams = ref([]);
 const { isRequired } = useRules();
 
 let filters = reactive({
-  reportCategory: props.defaultFilters.reportName,
+  reportCategory: props.defaultFilters.reportCategory,
   reportType: 'Issued Policies',
-  policyIssuanceDate: props.defaultFilters.policyIssuanceDate,
+  policyIssuanceDate: props.defaultFilters.policyIssuanceDate ?? [
+    new Date(),
+    new Date(),
+  ],
   paymentDueDate: [new Date(), new Date()],
   policyExpiredDate: [new Date(), new Date()],
-  createdAt: [new Date(), new Date()],
-  transactionType: [],
+  createdAt: new Date(),
+  transactionType: props.defaultFilters.transactionType ?? [],
   teams: [],
   subTeams: [],
   leadSources: [],
@@ -227,7 +230,7 @@ function onReset() {
       </x-field>
       <x-field v-if="showIssuanceDate" label="Policy Issuance Date" required>
         <DatePicker
-          v-model="filters.createdAt"
+          v-model="filters.policyIssuanceDate"
           placeholder="Select Start & End Date"
           range
           :max-range="92"
@@ -260,10 +263,9 @@ function onReset() {
       </x-field>
       <x-field v-if="showDateTo" label="Date To" required>
         <DatePicker
-          v-model="filters.date_to"
-          placeholder="Select Start & End Date"
-          range
-          :max-range="92"
+          :single="true"
+          v-model="filters.createdAt"
+          placeholder="Select Date"
           size="sm"
           model-type="yyyy-MM-dd"
           :rules="[isRequired]"
