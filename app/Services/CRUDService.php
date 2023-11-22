@@ -643,10 +643,10 @@ class CRUDService extends BaseService
                 }
             }
 
-                $customerDetail = $quote->customer->customerDetail;
-                $jobScore = in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
-                $scoreList[] = ['score'=>$jobScore,'text'=>'Profession - Professional Job Title','value'=>str_replace("-", ' ', $customerDetail->job_title)];
-                $customerScore +=$jobScore;
+            $customerDetail = $quote->customer->customerDetail;
+            $jobScore = in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $jobScore, 'text' => 'Profession - Professional Job Title', 'value' => str_replace('-', ' ', $customerDetail->job_title)];
+            $customerScore += $jobScore;
 
             // Nationality
             $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
@@ -664,29 +664,29 @@ class CRUDService extends BaseService
             $customerScore += $paymentTopScore;
             $scoreList[] = ['score' => $paymentTopScore, 'text' => 'Mode of Payment', 'value' => $paymentMethod];
 
-                $residentScore = in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
-                $scoreList[] = ['score'=>$residentScore,'text'=>'Resident Status','value'=>preg_replace("/[A-Z]/", ' ' . "$0", $customerDetail->residential_status)];
-                $customerScore += $residentScore;
+            $residentScore = in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $residentScore, 'text' => 'Resident Status', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->residential_status)];
+            $customerScore += $residentScore;
 
             $scoreList[] = ['score' => 1, 'text' => 'Transaction Volume', 'value' => 1];
             $customerScore += 1; // payment volume for future use
 
+            $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $deliveryModeScore, 'text' => 'Mode Of Delivery', 'value' => Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
+            $customerScore += $deliveryModeScore;
 
-                $deliveryModeScore = in_array(strtolower($customerDetail->mode_of_delivery), Kyc::MODE_OF_DELIVERY_THREE_RATING) ? 3 : 1;
-                $scoreList[] = ['score'=>$deliveryModeScore,'text'=>'Mode Of Delivery','value'=>Kyc::MODE_OF_DELIVERY[$customerDetail->mode_of_delivery]];
-                $customerScore += $deliveryModeScore;
+            $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
+            $scoreList[] = ['score' => $contactScore, 'text' => 'Mode Of Contact', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->mode_of_contact)];
+            $customerScore += $contactScore;
 
-                $contactScore = in_array(strtolower($customerDetail->mode_of_contact), Kyc::MODE_OF_CONTACT_THREE_RATING) ? 3 : 1;
-                $scoreList[] = ['score'=>$contactScore,'text'=>'Mode Of Contact','value'=>preg_replace("/[A-Z]/", ' ' . "$0", $customerDetail->mode_of_contact)];
-                $customerScore += $contactScore;
+            $empScore = in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $empScore, 'text' => 'Employment Sector', 'value' => preg_replace('/[A-Z]/', ' '.'$0', $customerDetail->employment_sector)];
+            $customerScore += $empScore;
 
-                $empScore = in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->employment_sector), Kyc::EMPLOYMENT_SECTOR_TWO_RATING) ? 2 : 1);
-                $scoreList[] = ['score'=>$empScore,'text'=>'Employment Sector','value'=>preg_replace("/[A-Z]/", ' ' . "$0", $customerDetail->employment_sector)];
-                $customerScore += $empScore;
+            $tenScore = in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
+            $scoreList[] = ['score' => $tenScore, 'text' => 'Customer Tenure with IM', 'value' => $customerDetail->customer_tenure];
+            $customerScore += $tenScore;
 
-                $tenScore = in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->customer_tenure), Kyc::TENURE_TWO_RATING) ? 2 : 1);
-                $scoreList[] = ['score'=>$tenScore,'text'=>'Customer Tenure with IM','value'=>$customerDetail->customer_tenure];
-                $customerScore += $tenScore;
             return $scoreList;
 
         }
