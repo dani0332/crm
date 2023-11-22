@@ -24,8 +24,6 @@ defineProps({
   memberCategories: Array,
   emailStatuses: Array,
   isAdmin: Boolean,
-  listQuotePlans: Array,
-  listSeniorQuotePlans: Array,
   activities: Array,
   customerAdditionalContacts: Array,
   ecomTravelInsuranceQuoteUrl: String,
@@ -455,7 +453,8 @@ const onLoadAvailablePlansData = async () => {
     axios
         .post(url, data)
         .then(res => {
-            availablePlansTable.data = res.data
+            availablePlansTable.data = res.data.normalPlans
+            availableSeniorPlansTable.data = res.data.seniorPlans
         })
         .catch(err => {
             console.log(err);
@@ -536,6 +535,36 @@ const emailStatusesTableColumns = computed(() => {
 });
 
 const availablePlansTable = reactive({
+  data: [],
+  columns: [
+    {
+      text: 'Provider Name',
+      value: 'providerName',
+    },
+    {
+      text: 'Plan Name',
+      value: 'name',
+    },
+    {
+      text: 'Travel Type',
+      value: 'travelType',
+    },
+    {
+      text: 'Actual Price',
+      value: 'actualPremium',
+    },
+    {
+      text: 'Price with VAT',
+      value: 'discountPremium',
+    },
+    {
+      text: 'Action',
+      value: 'action',
+    },
+  ],
+});
+
+const availableSeniorPlansTable = reactive({
   data: [],
   columns: [
     {
@@ -1528,8 +1557,8 @@ onMounted(() => {
           Copy Link
         </x-button>
       </div>
-      <h6 v-if="$props.aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
-        Travel Plans for {{ $props.travelers.length - $props.aboveAgeMembers }} member age 18-64
+      <h6 v-if="aboveAgeMembers > 0" class="font-semibold text-primary-600 text-ms mb-1">
+        Travel Plans for {{ travelers.length - aboveAgeMembers }} member age 18-64
       </h6>
 
       <div v-if="availablePlansTable.data && typeof availablePlansTable.data == 'string'">
@@ -1578,27 +1607,19 @@ onMounted(() => {
         </DataTable>
       </div>
 
-      <div v-if="$props.aboveAgeMembers > 0" class="mt-5">
+      <div v-if="aboveAgeMembers > 0" class="mt-5">
         <h6 class="font-semibold text-primary-600 text-ms mb-1">
-          Travel Plans for {{ $props.aboveAgeMembers }} Member age above 65
+          Travel Plans for {{ aboveAgeMembers }} Member age above 65
         </h6>
-        <div v-if="listSeniorQuotePlans && typeof listSeniorQuotePlans == 'string'">
-          <p
-              class="text-center text-primary-600 uppercase"
-              v-if="typeof listSeniorQuotePlans == 'string'"
-          >
-            {{ listSeniorQuotePlans }}
-          </p>
-        </div>
-        <div v-else>
+        <div>
           <DataTable
               table-class-name="tablefixed compact"
-              :headers="availablePlansTable.columns"
-              :items="listSeniorQuotePlans || []"
+              :headers="availableSeniorPlansTable.columns"
+              :items="availableSeniorPlansTable.data || []"
               border-cell
               hide-rows-per-page
               :rows-per-page="15"
-              :hide-footer="listSeniorQuotePlans.length < 15"
+              :hide-footer="availableSeniorPlansTable.data.length < 15"
           >
             <template #item-providerName="item">
             <span class="text-primary-600 uppercase">{{
