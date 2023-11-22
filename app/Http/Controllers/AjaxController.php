@@ -6,18 +6,18 @@ use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypeId;
+use App\Enums\RolesEnum;
 use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\Payment;
+use App\Models\PaymentSplits;
 use App\Models\PaymentStatusLog;
 use App\Models\PersonalQuote;
 use App\Services\HealthQuoteService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use App\Enums\RolesEnum;
-use App\Models\PaymentSplits;
 
 class AjaxController extends Controller
 {
@@ -114,7 +114,7 @@ class AjaxController extends Controller
     public function generatePaymentLink(Request $request)
     {
         if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
-            return $this->generateSplitPaymentLink($request);           
+            return $this->generateSplitPaymentLink($request);
         } else {
             $payment = Payment::where('code', '=', $request->paymentCode)->first();
             if (! $payment) {
@@ -173,8 +173,8 @@ class AjaxController extends Controller
         $payment = $splitPayment->payment;
         $modelType = $request->modelType;
         $quoteId = $request->quoteId;
-       
-        if (! $payment) { 
+
+        if (! $payment) {
             return response()->json(['success' => false]);
         }
         if ($splitPayment->payment_link != null && now() < Carbon::parse($splitPayment->payment_link_created_at)->addDays(3)) {
@@ -194,7 +194,7 @@ class AjaxController extends Controller
                 'quoteTypeId' => $quoteTypeId,
             ];
             $paymentLinkURL = $paymentLink.'?'.http_build_query($paymentParams);
-            
+
             $invoiceRequestData = [
                 'firstName' => $quoteModel->first_name,
                 'lastName' => $quoteModel->last_name,

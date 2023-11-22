@@ -821,8 +821,8 @@ class CRUDController extends Controller
 
                 $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
             });
-            
-            if (auth()->user()->hasRole(RolesEnum::BetaUser) ) {
+
+            if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
                 $paymentMethods = $this->lookupService->getPaymentMethods();
             } else {
                 $paymentMethods = $paymentMethods->filter(function ($paymentMethod) {
@@ -1792,9 +1792,10 @@ class CRUDController extends Controller
         }
     }
     public function splitPaymentUpdate(Request $request)
-    {   
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)){
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+
             return back()->with('success', $successMessage);
         } else {
             return back()->with('error', 'You are not authorized');
@@ -1802,13 +1803,14 @@ class CRUDController extends Controller
     }
 
     public function splitPaymentsApprove(Request $request)
-    {        
-        if (auth()->user()->can(PermissionsEnum::ApprovePayments)){
+    {
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
             $successMessage = $this->paymentSplitsRepository->updateSplitPaymentsApprove($request);
+
             return back()->with('success', $successMessage);
         } else {
             return back()->with('error', 'You are not authorized');
-        }      
+        }
     }
 
     public function updatePayment(Request $request)

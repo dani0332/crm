@@ -7,17 +7,16 @@ use App\Enums\PaymentStatusEnum;
 use App\Enums\RolesEnum;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use OwenIt\Auditing\Contracts\Auditable;
 use OwenIt\Auditing\Auditable as AuditableTrait;
+use OwenIt\Auditing\Contracts\Auditable;
 
 class Payment extends Model implements Auditable
-{   
+{
     use AuditableTrait;
 
     protected $auditEvents = [
-       'updated',
+        'updated',
     ];
-
     protected $table = 'payments';
     protected $primaryKey = 'code';
     public $incrementing = false;
@@ -25,13 +24,14 @@ class Payment extends Model implements Auditable
     protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount',
         'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
         'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date',
-        'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason'
+        'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason',
     ];
     protected $forceDeleting = true;
 
     public function transformAudit(array $data): array
-    {        
+    {
         $data['old_values']['code'] = strtolower($this->code);
+
         return $data;
     }
 

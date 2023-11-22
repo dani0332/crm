@@ -679,10 +679,11 @@ watch(
   },
 );
 
+const listQuotePlansFiltered = ref([]);
 
-const listQuotePlansFiltered = computed(() => {
-    return plansTable.data.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden))
-})
+watchEffect(() => {
+    listQuotePlansFiltered.value = plansTable.data.slice().sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
@@ -1822,7 +1823,7 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
-          <x-tag size="sm">{{ plansTable.data.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
           <x-button-group v-if="selectedPlans.length > 0" size="sm">

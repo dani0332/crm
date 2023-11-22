@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->string('code',25)->change();
+            $table->string('code', 25)->change();
         });
 
         Schema::table('payment_splits', function (Blueprint $table) {
-            $table->string('code',25)->change();
+            $table->string('code', 25)->change();
         });
     }
 
@@ -24,5 +24,6 @@ return new class extends Migration
      * Reverse the migrations.
      */
     public function down(): void
-    {}
+    {
+    }
 };
