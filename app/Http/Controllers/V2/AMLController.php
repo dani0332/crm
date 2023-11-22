@@ -8,7 +8,6 @@ use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -25,7 +24,6 @@ use App\Models\CommunicationMode;
 use App\Models\Customer;
 use App\Models\Emirate;
 use App\Models\Entity;
-use App\Models\HealthMemberDetail;
 use App\Models\KycLog;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -33,13 +31,12 @@ use App\Models\QuoteRequestEntityMapping;
 use App\Models\QuoteStatus;
 use App\Models\QuoteType;
 use App\Models\SanctionListDownloads;
-use App\Models\TravelMemberDetail;
 use App\Models\UAEAMLListUploads;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
 use App\Services\BridgerInsightService;
@@ -207,16 +204,9 @@ class AMLController extends Controller
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
+        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
-        if ($quoteTypeId == QuoteTypeId::Health) {
-            $membersDetail = HealthMemberDetail::with(['relation', 'nationality'])->where('health_quote_request_id', $quoteRequest->id)->get();
-        } elseif ($quoteTypeId == QuoteTypeId::Travel) {
-            $membersDetail = TravelMemberDetail::with(['relation', 'nationality'])->where('travel_quote_request_id', $quoteRequest->id)->get();
-        } else {
-            $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId);
-        }
-
-        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quoteRequest->id, $quoteTypeId, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $nationalities = NationalityRepository::withActive()->get();

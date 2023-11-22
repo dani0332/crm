@@ -46,11 +46,11 @@ use App\Models\QuoteDocument;
 use App\Models\Tier;
 use App\Models\User;
 use App\Repositories\AuditRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
@@ -486,6 +486,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        abort_if(! $record, 404);
         $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
         if ($record->customer_type == AmlSearchType::ENTITY) {
             $entities = Entity::all();
@@ -502,7 +503,6 @@ class CRUDController extends Controller
         }
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
 
-        abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
@@ -679,11 +679,11 @@ class CRUDController extends Controller
             $leadDocsStoragePath = createCdnUrl('');
             $kyoEndPoint = config('constants.KYO_END_POINT');
             $isBetaUser = auth()->user()->hasRole(RolesEnum::BetaUser);
-            $UBOsDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Car, CustomerTypeEnum::Entity);
+            $UBOsDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::CAR->name, CustomerTypeEnum::Entity);
             $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-            $membersDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::CAR->id());
+            $membersDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::CAR->name);
             $customerTypeEnum = CustomerTypeEnum::asArray();
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $nationalities = NationalityRepository::withActive()->get();
@@ -737,11 +737,11 @@ class CRUDController extends Controller
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
             $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::HOME->id(), $record->id);
-            $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::HOME->id());
+            $membersDetail = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::HOME->name);
             $payments->load(['paymentStatus', 'paymentStatusLog', 'paymentMethod', 'insuranceProvider']);
             $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
             $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Home);
-            $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Home, CustomerTypeEnum::Entity);
+            $uboDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::HOME->name, CustomerTypeEnum::Entity);
             $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
             $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
@@ -844,8 +844,8 @@ class CRUDController extends Controller
                 }
             }
 
-            $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Health, CustomerTypeEnum::Entity);
-            $membersDetail = $this->healthQuoteService->getMembersDetail($record->id);
+            $uboDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::HEALTH->name, CustomerTypeEnum::Entity);
+            $membersDetail = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::HEALTH->name);
             $memberCategories = $this->lookupService->getMemberCategories();
             $salaryBands = $this->lookupService->getSalaryBands();
             $ecomDetails = $this->healthQuoteService->getEcomDetails($record);

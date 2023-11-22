@@ -230,6 +230,7 @@ const emiratesOptions = computed(() => {
 
 const travelerForm = useForm({
     travel_quote_request_id: page.props.quote.id,
+    quote_type: page.props.modelType,
     first_name: null,
     dob: '',
     nationality_id: null,
@@ -2094,7 +2095,7 @@ const handleChildUpdate = planId => {
               </x-button>
               </span>
 
-              
+
 
             </div>
           </template>

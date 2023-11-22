@@ -196,17 +196,6 @@ const falsePositive = computed(() => {
             <dt class="font-medium">Search Type</dt>
             <dd>{{ aml.search_type }}</dd>
           </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Screenshot</dt>
-            <dd>
-              <img
-                v-if="aml.screenshot"
-                :src="aml.screenshot"
-                alt="IMCRM"
-                class="w-auto"
-              />
-            </dd>
-          </div>
         </dl>
       </div>
       <div class="mt-6">

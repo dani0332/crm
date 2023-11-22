@@ -16,6 +16,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -23,7 +24,6 @@ use App\Repositories\LifeQuoteRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
@@ -100,7 +100,7 @@ class LifeQuoteController extends Controller
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
         $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $membersDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypes::LIFE->id());
+        $membersDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::LIFE->name);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $nationalities = NationalityRepository::withActive()->get();
@@ -111,7 +111,7 @@ class LifeQuoteController extends Controller
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
-        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypeId::Life, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 

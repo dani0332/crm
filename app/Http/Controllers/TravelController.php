@@ -22,11 +22,11 @@ use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
@@ -178,7 +178,7 @@ class TravelController extends Controller
         $fields = array_diff_key($fields, array_flip($removeFields));
 
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
-        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypeId::Travel, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
@@ -224,7 +224,7 @@ class TravelController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
+            'travelers' => CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name),
             'ecomDetails' => $ecomDetails,
             'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
