@@ -172,7 +172,6 @@ class ReportsController extends Controller
             'reportData' => $reportInstance->getReportData($request),
             'filterOptions' => $reportInstance->getFilterOptions(),
             'defaultFilters' => $reportInstance->getDefaultFilters(),
-            'reportName' => $request->reportCategory ?? 'Sales Summary',
         ]);
     }
 }

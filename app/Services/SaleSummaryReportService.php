@@ -10,6 +10,7 @@ use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Strategies\ManagementReport;
 use App\Traits\TeamHierarchyTrait;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,29 +20,46 @@ class SaleSummaryReportService implements ManagementReport
 
     public function getReportData(Request $request)
     {
-        return PersonalQuote::query()
+        $filters = [
+            'reportCategory' => $request->reportCategory,
+            'reportType' => $request->reportType,
+            'policyIssuanceDate' => $request->policyIssuanceDate,
+            'paymentDueDate' => $request->paymentDueDate,
+            'policyExpiredDate' => $request->policyExpiredDate,
+            'createdAt' => $request->createdAt,
+            'transactionType' => $request->transactionType,
+            'teams' => $request->teams,
+            'subTeams' => $request->subTeams,
+            'leadSource' => $request->leadSource,
+            'includeCancelPolicies' => $request->includeCancelPolicies,
+            'groupBy' => $request->groupBy,
+            'utmGroupBy' => $request->utmGroupBy,
+            'page' => $request->page,
+        ];
+
+        $query = PersonalQuote::query()
             ->leftJoin('send_updates', 'personal_quotes.uuid', '=', 'send_updates.quote_uuid')
             ->leftJoin('lookups', 'send_updates.type_id', '=', 'lookups.id')
+            ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
+            ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
+
+            ->join('payments', 'personal_quotes.code', '=', 'payments.code')
             ->select(
                 DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
                 DB::raw('SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_endorsements'),
-                DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) +
-                                SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_transaction'),
-                DB::raw('SUM(CASE WHEN 1 THEN 1 ELSE 0 END) as total_vat')
+                DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) + SUM(CASE WHEN send_updates.id IS NOT NULL AND lookups.code = "Financial" THEN 1 ELSE 0 END) as total_transaction'),
+                DB::raw('SUM(price_vat_applicable) as price_vat_applicable'),
+                DB::raw('(SUM(price_vat_applicable)* 0.05)  as total_vat'),
+                DB::raw('SUM(price_vat_not_applicable) as price_vat_not_applicable'),
+                DB::raw('SUM(payments.discount_value) as discount'),
+                DB::raw('(SUM(payments.commission_vat_applicable) ) as commission_vat_applicable'),
+                DB::raw('(SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + (SUM(price_vat_applicable)* 0.05))  - SUM(payments.discount_value) as total_price'),
             )
-            ->simplePaginate(10)->withQueryString();
+            ->groupBy('users.name');
 
-        // $typeCode = DB::raw('LOWER(quote_type.code)');
-        // $dynamicTableName = DB::raw("CONCAT($typeCode, '_quote_request')");
+        $this->applyFilters($query, $filters);
 
-        // $query->selectRaw("$dynamicTableName AS quote_table");
-
-        // $query->join($dynamicTableName, function ($join) {
-        //     $join->on('personal_quotes.uuid', '=', 'quote_table.uuid');
-        // });
-
-        // dd($query->toSql());
-        // $result = $query->get();
+        return $query->simplePaginate(10)->withQueryString();
     }
 
     public function getFilterOptions()
@@ -92,11 +110,54 @@ class SaleSummaryReportService implements ManagementReport
 
     public function getDefaultFilters()
     {
-        // implementation goes here
+        $dateFormat = config('constants.DATE_FORMAT_ONLY');
+        $reportCategory = ManagementReportCategoriesEnum::SALE_SUMMARY;
+        $policyIssuanceDate = [
+            Carbon::parse(now())->startOfDay()->format($dateFormat),
+            Carbon::parse(now())->endOfDay()->format($dateFormat),
+        ];
+
+        return [
+            'policyIssuanceDate' => $policyIssuanceDate,
+            'reportCategory' => $reportCategory,
+        ];
     }
 
     public function applyFilters($query, $filters)
     {
-        // implementation goes here
+        if (isset($filters['policyIssuanceDate'])) {
+            $query->whereBetween('policy_issuance_date', $filters['policyIssuanceDate']);
+        }
+        if (isset($filters['paymentDueDate'])) {
+            $query->whereBetween('payments.payment_due_date', $filters['paymentDueDate']);
+        }
+        if (isset($filters['policyExpiredDate'])) {
+            $query->whereBetween('policy_expired_date', $filters['policyExpiredDate']);
+        }
+        if (isset($filters['createdAt'])) {
+            $query->whereBetween('created_at', $filters['createdAt']);
+        }
+        if (isset($filters['transactionType'])) {
+            $query->where('transaction_type', $filters['transactionType']);
+        }
+        if (isset($filters['teams'])) {
+            $query->whereIn('team_id', $filters['teams']);
+        }
+        if (isset($filters['subTeams'])) {
+            $query->whereIn('sub_team_id', $filters['subTeams']);
+        }
+        if (isset($filters['leadSource'])) {
+            $query->whereIn('lead_source', $filters['leadSource']);
+        }
+        if (isset($filters['includeCancelPolicies'])) {
+            $query->where('is_cancelled', $filters['includeCancelPolicies']);
+        }
+        if (isset($filters['groupBy'])) {
+            $query->groupBy($filters['groupBy']);
+        }
+        if (isset($filters['utmGroupBy'])) {
+            $query->groupBy($filters['utmGroupBy']);
+        }
+
     }
 }
