@@ -21,7 +21,6 @@ const tableHeader = [
     { text: 'Quote Type', value: 'quote_type_text' },
     { text: 'Ref-ID', value: 'cdb_id' },
     { text: 'Input', value: 'input' },
-    { text: 'Screenshot', value: 'screenshot' },
     { text: 'Created At', value: 'created_at' },
     { text: 'Updated At', value: 'updated_at' },
 ];
@@ -230,11 +229,6 @@ onMounted(() => {
         >
           {{ item.cdb_id }}
         </Link>
-      </template>
-      <template #item-screenshot="{ screenshot }">
-        <a :href="screenshot" download>
-          <img :src="screenshot" alt="IMCRM" class="w-10 h-10" />
-        </a>
       </template>
     </DataTable>
 
