@@ -486,6 +486,7 @@ class CRUDController extends Controller
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
+        abort_if(! $record, 404);
         $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
         if ($record->customer_type == AmlSearchType::ENTITY) {
             $entities = Entity::all();
@@ -502,7 +503,6 @@ class CRUDController extends Controller
         }
         $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
 
-        abort_if(! $record, 404);
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
             abort(403, 'Unauthorized action.');
