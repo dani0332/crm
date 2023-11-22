@@ -39,8 +39,8 @@ const rules = {
 const kycForm = reactive({
   quote_uuid: props.quote.uuid,
   customer_id: props.quote.customer_id,
-  first_name: props.quote.first_name,
-  last_name: props.quote.last_name,
+  first_name: props.quote?.customer.insured_first_name ?? props.quote.first_name,
+  last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
   dob: convertDate(props.quote.dob) || '',
   nationality_id: props.quote.nationality_id,
   country_of_residence: props.customerDetails?.detail?.country_of_residence ?? 56,
