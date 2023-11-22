@@ -128,34 +128,34 @@ class SaleSummaryReportService implements ManagementReport
         if (isset($filters['policyIssuanceDate'])) {
             $query->whereBetween('policy_issuance_date', $filters['policyIssuanceDate']);
         }
-        if(isset($filters['paymentDueDate'])){
+        if (isset($filters['paymentDueDate'])) {
             $query->whereBetween('payments.payment_due_date', $filters['paymentDueDate']);
         }
-        if(isset($filters['policyExpiredDate'])){
+        if (isset($filters['policyExpiredDate'])) {
             $query->whereBetween('policy_expired_date', $filters['policyExpiredDate']);
         }
-        if(isset($filters['createdAt'])){
+        if (isset($filters['createdAt'])) {
             $query->whereBetween('created_at', $filters['createdAt']);
         }
-        if(isset($filters['transactionType'])){
+        if (isset($filters['transactionType'])) {
             $query->where('transaction_type', $filters['transactionType']);
         }
-        if(isset($filters['teams'])){
+        if (isset($filters['teams'])) {
             $query->whereIn('team_id', $filters['teams']);
         }
-        if(isset($filters['subTeams'])){
+        if (isset($filters['subTeams'])) {
             $query->whereIn('sub_team_id', $filters['subTeams']);
         }
-        if(isset($filters['leadSource'])){
+        if (isset($filters['leadSource'])) {
             $query->whereIn('lead_source', $filters['leadSource']);
         }
-        if(isset($filters['includeCancelPolicies'])){
+        if (isset($filters['includeCancelPolicies'])) {
             $query->where('is_cancelled', $filters['includeCancelPolicies']);
         }
-        if(isset($filters['groupBy'])){
+        if (isset($filters['groupBy'])) {
             $query->groupBy($filters['groupBy']);
         }
-        if(isset($filters['utmGroupBy'])){
+        if (isset($filters['utmGroupBy'])) {
             $query->groupBy($filters['utmGroupBy']);
         }
 
