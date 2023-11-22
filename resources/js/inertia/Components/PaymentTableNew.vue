@@ -1006,11 +1006,20 @@ const addPayment = isValid => {
     document_detail: fileUploadModels.value,
   };
 
-  if (isCreditApprovalView.value === true) {
-    let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
+
+  let declinedCustomReason= paymentMethodsForm.declined_custom_reason;
+  if (paymentMethodsForm.status === 'view' || isCreditApprovalView.value === true) { 
+    if(isDeclineClicked.value === true && paymentMethodsForm.declined_reason === ''){
+      isDeclinedReasonError.value = true; return;
+    } else {
+      isDeclinedReasonError.value = false;
+    }    
     if(paymentMethodsForm.declined_reason != '6' && isDeclineClicked.value===true){
-       declinedCustomReason = declinedReasons.find(reason => reason.value === paymentMethodsForm.declined_reason).label;
+      declinedCustomReason = declinedReasons.find(reason => reason.value === paymentMethodsForm.declined_reason).label;
     }
+  }
+
+  if (isCreditApprovalView.value === true) {   
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -1041,13 +1050,6 @@ const addPayment = isValid => {
   }
 
   if (paymentMethodsForm.status === 'view') {   
-    if(isDeclineClicked.value === true && paymentMethodsForm.declined_reason === ''){
-      isDeclinedReasonError.value = true;
-      return;
-    } else {
-      isDeclinedReasonError.value = false;
-    }
-    
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
@@ -1060,7 +1062,7 @@ const addPayment = isValid => {
       is_approved: isApproveClicked.value,
       declined_reason: paymentMethodsForm.declined_reason,
       approved_document_model: approvedDocumentModel.value,
-      declined_custom_reason: paymentMethodsForm.declined_custom_reason,      
+      declined_custom_reason: declinedCustomReason,      
     };
     paymentMethodsForm
       .transform(data => viewData)

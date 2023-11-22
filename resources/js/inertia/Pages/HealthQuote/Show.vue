@@ -2440,6 +2440,6 @@ onMounted(() => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\HealthQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
   </div>
 </template>
