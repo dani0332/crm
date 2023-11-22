@@ -472,7 +472,7 @@ onMounted(() => {
     </div>
 
     <div class="grid md:grid-cols-2 gap-4">
-      <x-label> Does the customer have dual nationality </x-label>
+      <x-label> Does the customer have dual nationality?</x-label>
       <div class="grid md:grid-cols-2">
         <x-radio
           v-model="kycForm.dual_nationality"
