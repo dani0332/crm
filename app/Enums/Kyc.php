@@ -27,6 +27,7 @@ final class Kyc extends Enum
     const EMPLOYMENT_SECTOR_THREE_RATING = ['freezone'];
     const TRANSACTION_VOLUME_TWO_RATING = ['3', '4'];
     const TRANSACTION_VOLUME_THREE_RATING = ['5'];
+    const DOCUMENT_TYPE_EMIRATES = 'emiratesId';
     const MODE_OF_DELIVERY = [
         'mod-delivery-car' => 'Company Authorised Representative',
         'mod-delivery-atp' => 'Authorised Third party',
