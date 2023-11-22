@@ -41,6 +41,8 @@ class SaleSummaryReportService implements ManagementReport
             ->leftJoin('send_updates', 'personal_quotes.uuid', '=', 'send_updates.quote_uuid')
             ->leftJoin('lookups', 'send_updates.type_id', '=', 'lookups.id')
             ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
+            ->leftJoin('user_team', 'users.id', '=', 'user_teams.user_id')
+            ->leftJoin('teams', 'user_teams.team_id', '=', 'teams.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
 
             ->join('payments', 'personal_quotes.code', '=', 'payments.code')
@@ -135,10 +137,10 @@ class SaleSummaryReportService implements ManagementReport
             $query->whereBetween('policy_expired_date', $filters['policyExpiredDate']);
         }
         if (isset($filters['createdAt'])) {
-            $query->whereBetween('created_at', $filters['createdAt']);
+            $query->whereBetween('personal_quotes.created_at', $filters['createdAt']);
         }
         if (isset($filters['transactionType'])) {
-            $query->where('transaction_type', $filters['transactionType']);
+            $query->where('personal_quotes.transaction_type_id', $filters['transactionType']);
         }
         if (isset($filters['teams'])) {
             $query->whereIn('team_id', $filters['teams']);
