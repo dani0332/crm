@@ -32,15 +32,7 @@ use App\Traits\GenericQueriesAllLobs;
 
 class BikeQuoteController extends Controller
 {
-    protected $crudService;
-    protected $lookupService;
     use GenericQueriesAllLobs;
-
-    public function __construct(CRUDService $crudService, LookupService $lookupService)
-    {
-        $this->crudService = $crudService;
-        $this->lookupService = $lookupService;
-    }
 
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
@@ -134,22 +126,23 @@ class BikeQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
-
-        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $crudService = app(CRUDService::class);
+        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
+        $lookupService = app(LookupService::class);
         $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
         if ($quote->customer_type == AmlSearchType::ENTITY) {
             $entities = Entity::all();
-            $legalStructure = $this->lookupService->getLegalStructure();
-            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
-            $issuancePlace = $this->lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+            $legalStructure = $lookupService->getLegalStructure();
+            $idDocumentType = $lookupService->getEntityDocumentTypes();
+            $issuancePlace = $lookupService->getIssuancePlaces();
+            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
         } else {
-            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $this->lookupService->getModeOfContact();
-            $employmentSectors = $this->lookupService->getEmploymentSector();
-            $residentialStatus = $this->lookupService->getResidentialStatus();
-            $companyPosition = $this->lookupService->getCompanyPosition();
+            $idDocumentType = $lookupService->getIndividualDocumentTypes();
+            $modeOfContact = $lookupService->getModeOfContact();
+            $employmentSectors = $lookupService->getEmploymentSector();
+            $residentialStatus = $lookupService->getResidentialStatus();
+            $companyPosition = $lookupService->getCompanyPosition();
         }
 
         return inertia('BikeQuote/Show', [

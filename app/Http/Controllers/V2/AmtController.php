@@ -40,30 +40,7 @@ use Illuminate\Support\Facades\Redirect;
 
 class AmtController extends Controller
 {
-    protected $businessQuoteService;
-    protected $crudService;
-    protected $lookupService;
-    protected $customerService;
-    protected $dropdownSourceService;
-    protected $activityService;
-
     use RolePermissionConditions;
-
-    public function __construct(
-        BusinessQuoteService $businessQuoteService,
-        CRUDService $crudService,
-        LookupService $lookupService,
-        CustomerService $customerService,
-        DropdownSourceService $dropdownSourceService,
-        ActivitiesService $activityService
-    ) {
-        $this->businessQuoteService = $businessQuoteService;
-        $this->crudService = $crudService;
-        $this->lookupService = $lookupService;
-        $this->customerService = $customerService;
-        $this->dropdownSourceService = $dropdownSourceService;
-        $this->activityService = $activityService;
-    }
 
     /**
      * Display a listing of the resource.
@@ -111,8 +88,8 @@ class AmtController extends Controller
             $data->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         $this->whereBasedOnRole($data, 'bqr');
-
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $dropdownSourceService = app(DropdownSourceService::class);
+        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -224,7 +201,8 @@ class AmtController extends Controller
             'number_of_employees' => 'required',
             'brief_details' => 'required',
         ]);
-        $record = $this->businessQuoteService->saveBusinessQuote($request);
+        $businessQuoteService = app(BusinessQuoteService::class);
+        $record = $businessQuoteService->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
@@ -242,6 +220,7 @@ class AmtController extends Controller
      */
     public function show($id)
     {
+        $crudService = app(CRUDService::class);
         $record = BusinessQuoteRepository::getBy([
             'uuid' => $id,
             'business_type_of_insurance_id' => quoteBusinessTypeCode::getId(quoteBusinessTypeCode::groupMedical),
@@ -251,11 +230,13 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
-        $quoteDetails = $this->businessQuoteService->getDetailEntity($record->id);
+        $businessQuoteService = app(BusinessQuoteService::class);
+        $quoteDetails = $businessQuoteService->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-        $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
-        $customerAdditionalContacts = $this->customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
+        $customerService = app(CustomerService::class);
+        $customerAdditionalContacts = $customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $UBODetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id(), CustomerTypeEnum::Entity);
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
@@ -268,12 +249,13 @@ class AmtController extends Controller
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BUSINESS->id());
         $countries = Nationality::all();
-        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
+        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($record->quote_status_id);
         $entities = Entity::all();
-        $legalStructure = $this->lookupService->getLegalStructure();
-        $idDocumentType = $this->lookupService->getEntityDocumentTypes();
-        $issuancePlace = $this->lookupService->getIssuancePlaces();
-        $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+        $lookupService = app(LookupService::class);
+        $legalStructure = $lookupService->getLegalStructure();
+        $idDocumentType = $lookupService->getEntityDocumentTypes();
+        $issuancePlace = $lookupService->getIssuancePlaces();
+        $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
 
@@ -292,7 +274,7 @@ class AmtController extends Controller
             'quoteDetails' => $quoteDetails,
             'quoteTypeId' => QuoteTypeId::Business,
             'allowedDuplicateLOB' => $allowedDuplicateLOB,
-            'genderOptions' => $this->crudService->getGenderOptions(),
+            'genderOptions' => $crudService->getGenderOptions(),
             'typeCode' => quoteTypeCode::GroupMedical,
             'lostReasons' => $lostReasons,
             'quoteStatuses' => $quoteStatuses,
@@ -365,7 +347,8 @@ class AmtController extends Controller
     public function cardsView(Request $request)
     {
         $quotes = [];
-        $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $dropdownSourceService = app(DropdownSourceService::class);
+        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $leadStatuses = $leadStatuses->filter(function ($item) {
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;

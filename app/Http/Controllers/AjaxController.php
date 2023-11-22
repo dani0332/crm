@@ -25,7 +25,6 @@ use App\Models\QuoteMemberDetail;
 use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
-use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -36,18 +35,11 @@ class AjaxController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    protected $healthQuoteService;
     protected $quoteDocumentService;
-    protected $CRUDService;
-    protected $activityService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService,
-        ActivitiesService $activityService)
+    public function __construct(QuoteDocumentService $quoteDocumentService)
     {
-        $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
-        $this->CRUDService = $CRUDService;
-        $this->activityService = $activityService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -127,7 +119,8 @@ class AjaxController extends Controller
         $paymentLog->save();
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
-        $this->CRUDService->calculateScore($quoteModel);
+        $crudServ = app(CRUDService::class);
+        $crudServ->calculateScore($quoteModel);
 
         return response()->json(['success' => true]);
     }
@@ -277,6 +270,8 @@ class AjaxController extends Controller
 
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
+        $acrivityService = app(ActivitiesService::class);
+        $quoteTypeId = $acrivityService->getQuoteTypeId(strtolower($quoteType));
         try {
             $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
 
@@ -300,7 +295,9 @@ class AjaxController extends Controller
             $pdfFile = $pdf->output();
 
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
-            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
+            $acrivityService = app(ActivitiesService::class);
+            $quoteTypeId = $acrivityService->getQuoteTypeId(strtolower($quoteType));
+           // $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
 
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
