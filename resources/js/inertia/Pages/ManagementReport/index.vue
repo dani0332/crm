@@ -144,7 +144,6 @@ watch(
   () => filters.reportCategory,
   (newReportCategory, oldReportCategory) => {
     // This function will only run when reportCategory changes
-    console.log(newReportCategory);
 
     // Your logic to update reportType based on reportCategory
     let selectedReport = reportTypes.value.find(x =>
