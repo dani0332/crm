@@ -111,7 +111,7 @@
 
 <body>
     <div id="header">
-        <img src="{{ public_path('images/logo_for_kyc.png') }}" alt="Insurance Market Logo" width="500">
+        <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/logo_for_kyc.png')))}}" alt="Insurance Market Logo" width="300">
     </div>
     <hr>
 

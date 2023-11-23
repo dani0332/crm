@@ -219,7 +219,7 @@ class AjaxController extends Controller
             $data['product_type'] = ucfirst($quoteType).' Insurance';
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
-            $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
+            $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
@@ -300,7 +300,7 @@ class AjaxController extends Controller
             $data['manager_position_text'] = LookupRepository::where('code', $data['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
             $data['product_type'] = QuoteType::where('code', ucfirst($quoteType))->value('text');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
-            $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
+            $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
