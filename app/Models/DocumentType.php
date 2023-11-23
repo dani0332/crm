@@ -12,6 +12,7 @@ class DocumentType extends Model implements AuditableContract
     use Auditable, HasFactory;
 
     protected $table = 'document_types';
+    public $timestamps = false;
 
     public function getCreatedAtAttribute($table)
     {
@@ -33,5 +34,12 @@ class DocumentType extends Model implements AuditableContract
     public function scopeByQuoteTypeId($query, $quoteTypeId)
     {
         return $query->where('quote_type_id', $quoteTypeId);
+    }
+
+    public static function findOrCreate($code)
+    {
+        $obj = static::where('code', $code)->first();
+
+        return $obj ?: new static;
     }
 }
