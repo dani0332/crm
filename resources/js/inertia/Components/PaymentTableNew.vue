@@ -114,6 +114,7 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   const nextFile = () => {
     if (currentFileIndex.value < filesTest.value.length - 1) {
       currentFileIndex.value++;
+      zoomLevel.value = 1;
     }      
   };
 
@@ -138,6 +139,7 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   const previousFile = () => {
     if (currentFileIndex.value > 0) {
       currentFileIndex.value--;
+      zoomLevel.value = 1;
     }      
   };
 
@@ -146,6 +148,7 @@ const onCopyPaymentLink = (paymentLink,paymentStatus) => {
   });
 
   const closeInnerModal = () => {
+    zoomLevel.value = 1;
     isGalleryModelOpen.value = false;      
   };
 
@@ -895,7 +898,18 @@ const validateViewPayment = (isValid) => {
     approveErrorMessage.value = "Collected amount should not exceed total amount.";
     isApprovePaymentError.value = true;
     return true;
-  }  
+  }
+
+  if (paymentMethodsForm.collection_type==='insurer') {  
+    if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
+    || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
+        isApprovedDocumentNotUploaded.value = true;
+        return true;
+      } else {        
+        isApprovedDocumentNotUploaded.value = false;
+      }      
+  }
+
   if(isApproveConfirm.value === false && isValid) {
     isApproveConfirm.value = true;
     return true;
@@ -911,14 +925,16 @@ const validateCapturePayment = (isValid) => {
       for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
         //isCreditPaymentInvalid.value[i] = false;
         console.log('INNN11'+JSON.stringify(collectionAmountModels.value[i]));
-        if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
-          isCreditPaymentInvalid.value[i] = true;
-          isCreditPaymentInvalidError.value[i] = "This field is required";
-        }       
         
-        if (parseFloat(collectionAmountModels.value[i]) > parseFloat(splitAmountModels.value[i])) {          
-          isCreditPaymentInvalid.value[i] = true;
-          isCreditPaymentInvalidError.value[i] = "Capture amount should not exceed total amount";                
+        if (paymentMethodsModels.value[i] === 'CC'){
+          if (collectionAmountModels.value[i]===null || collectionAmountModels.value[i]===undefined){
+            isCreditPaymentInvalid.value[i] = true;
+            isCreditPaymentInvalidError.value[i] = "This field is required";
+          }
+          if (parseFloat(collectionAmountModels.value[i]) > parseFloat(splitAmountModels.value[i])) {          
+            isCreditPaymentInvalid.value[i] = true;
+            isCreditPaymentInvalidError.value[i] = "Capture amount should not exceed total amount";                
+          }
         }
       }      
     }        
@@ -931,32 +947,17 @@ const validateCapturePayment = (isValid) => {
   return false;
 }
 
-const validateApprovedDocument = () => {  
-  if (paymentMethodsForm.collection_type==='insurer') {  
-    if (approvedDocumentModel.value[splitPaymentNo.value]===undefined 
-    || approvedDocumentModel.value[splitPaymentNo.value].length===0 ) {
-        isApprovedDocumentNotUploaded.value = true;
-        return true;
-      } else {
-        isApprovedDocumentNotUploaded.value = false;
-      }      
-    }
-    return false;
-}
-
 const addPayment = isValid => {  
   
   if(isCreditApprovalView.value === true && isDeclineClicked.value === false){
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
-    if (validateViewPayment(isValid)) return;
-    if (validateApprovedDocument()) return;
+    if (validateViewPayment(isValid)) return;    
   } else {
     console.log('INNN22');
     if (validatePaymentOption()) return;  
   }  
-  if (!isValid) return; 
-  
+  if (!isValid) return;  
 
   //define main payment method
   let mainPaymentMethod = 'CR';
@@ -1285,7 +1286,7 @@ const getCaptureValidation = computed(() => {
       } else {
         let ipPaymentStatus = paymentRecord.payment_splits.filter(item => item.payment_method.code === "IP");
         if (ipPaymentStatus.length > 0) {
-          let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PENDING);
+          let ipPending = ipPaymentStatus.filter(item => item.payment_status_id===props.paymentStatusEnum.PAID);
           if( ipPending.length===ipPaymentStatus.length ) {
             return true;
           } 
@@ -1338,7 +1339,7 @@ const alertCapture = () => {
     });
 };
 
-const getCaptureOption = computed(() => {
+const getCaptureOption = computed(() => {  
   if ( props.payments.length>0 ) {
     const paymentMethodCC = props.payments[0].payment_splits.filter(item => item.payment_method.code === "CC");
     if (paymentMethodCC.length > 0) {
@@ -1365,8 +1366,11 @@ const providerName = computed(() => {
 
 const providerId = computed(() => {
   const plan = props.quoteRequest.plan;
+  console.log('TRAVELPLAN='+JSON.stringify(props.quoteRequest));
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
+  } else if (plan && plan.provider_id) {
+    return plan.provider_id;
   }
   return null;
 });
@@ -2282,7 +2286,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                         class="w-full"
                         :class="{'custom-select-error': isCreditPaymentInvalid[count]}"                                           
                       />
-                      <p v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400 mt-1">{{  isCreditPaymentInvalidError[count] }}</p>
+                      <p v-if="isCreditPaymentInvalid[count]" class="text-sm text-red-500 dark:text-red-400">{{  isCreditPaymentInvalidError[count] }}</p>
                     </template> 
                   </div>
                   <div class="w-1/5 px-2" v-else>
@@ -2563,54 +2567,57 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
       </template>
       </x-form>
-    <div class="modal-overlay" v-if="isGalleryModelOpen">
-      <div class="modal-container">
-        <div class="modal-header">
-            <div class="flex items-center justify-between">
-            <div class="text-lg font-bold mb-2">Document Viewer</div>
-            <div class="flex items-center space-x-2 cursor-pointer" @click="closeInnerModal">
-              <span class="text-gray-600 font-bold">&#10006;</span>
-            </div>
-          </div>
-          <x-divider class="mb-4 mt-1" />
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2  cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
-              <span class="text-gray-600 font-bold">&#8592;</span> 
-              <span class="font-bold">Previous</span>
-            </div>
-            <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
-              
-              <div class="flex items-center space-x-2  cursor-pointer" @click="zoomOut">
-                <span class="text-gray-600 font-bold">&#8722;</span> 
-                <span class="font-bold">Zoom Out</span>
-              </div>
-              
-              
-              <div class="flex items-center space-x-2  cursor-pointer" @click="zoomIn">
-                <span class="text-gray-600 font-bold">&#43;</span> 
-                <span class="font-bold">Zoom In</span>
-              </div>
-             
-            </div>
-            <div class="flex items-center space-x-2  cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
-              <span class="text-gray-600 font-bold">&#8594;</span> 
-              <span class="font-bold">Next</span>
-            </div>
+     
+      <div class="modal-overlay" v-if="isGalleryModelOpen">
+       
+    <div class="modal-container">
+      <div class="modal-header text-lg">
+        <div class="flex items-center justify-between">
+          <div class="text-lg font-bold mb-2">Document Viewer</div>
+          <div class="flex items-center space-x-2 cursor-pointer" @click="closeInnerModal">
+            <span class="text-gray-600 font-bold">
+            <a :href="storageUrl + currentFile.doc_url" download="document.png" target="_blank" class="flex items-center space-x-2 cursor-pointer">
+              &#8615;
+            </a></span>
+            <span class="text-gray-600 font-bold">&#10006;</span>
           </div>
         </div>
         <x-divider class="mb-4 mt-1" />
-        <div class="modal-body">           
-          <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
-              <div class="scrollable-container text-center">  
-                  <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />          
-              </div>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2 cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
+            <span class="text-gray-600 font-bold">&#8592;</span>
+            <span class="font-bold">Previous</span>
           </div>
-            <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
-              <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
+          <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
+            <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
+              <span class="text-gray-600 font-bold">&#8722;</span>              
             </div>
-        </div>        
+            
+            <div class="flex flex-initial w-24 justify-center"><span class="text-gray-600 font-bold">{{ zoomLevel * 100 }}%</span></div>
+            
+            <div class="flex items-center space-x-2 cursor-pointer" @click="zoomIn">
+              <span class="text-gray-600 font-bold">&#43;</span>              
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
+            <span class="text-gray-600 font-bold">&#8594;</span>
+            <span class="font-bold">Next</span>
+          </div>
+        </div>
+      </div>
+      <x-divider class="mb-4 mt-1" />
+      <div class="modal-body">
+        <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
+          <div class="overflow-auto h-full w-screen justify-center ">
+            <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
+          </div>
+        </div>
+        <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
+          <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
+        </div>
       </div>
     </div>
+  </div>
     </x-modal>    
   </div>
 </template>
@@ -2620,7 +2627,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   @media (min-width: 768px) {
     overflow-x: auto; 
   }
-  @media (min-height: 500px) {
+  @media (min-height: 600px) {
     overflow-y: auto; 
   }
 }

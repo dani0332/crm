@@ -43,5 +43,22 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+       
+       $documentTypesCount = DocumentType::get()->where('code', 'TPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'TPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'travel',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 8,
+                'send_to_customer' => true,
+                'sort_order' => 4,
+                'is_required' => 0,
+            ]);
+        }
+        
     }
 }

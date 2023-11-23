@@ -1,4 +1,5 @@
 <script setup>
+import PaymentTableNew from './../../Components/PaymentTableNew.vue';
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 
@@ -38,6 +39,8 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   canAddBatchNumber: Boolean,
+  paymentTooltipEnum: Object,
+  storageUrl: String,
 });
 
 const page = usePage();
@@ -53,6 +56,12 @@ const dateTimeFormat = date => {
 };
 
 const notification = useNotifications('toast');
+
+const permissionEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
+const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
+const can = permission => useCan(permission);
 
 const {
   isRequired,
@@ -1503,7 +1512,19 @@ onMounted(() => {
       </x-modal>
     </div>
 
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			quoteType="Travel"
+			:payments="payments"
+			:paymentDocument="documentTypes.QUOTE.find(item => item.code === 'TPD')"
+			:quoteRequest="quoteRequest"
+			:paymentStatusEnum="enums.paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <PaymentTable
+      v-else
       :payments="payments"
       :can="permissions"
       :isBetaUser="isBetaUser"
@@ -1758,6 +1779,6 @@ onMounted(() => {
       />
     </div>
 
-    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" />
+    <AuditLogs :type="'App\\Models\\TravelQuote'" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code"/>
   </div>
 </template>

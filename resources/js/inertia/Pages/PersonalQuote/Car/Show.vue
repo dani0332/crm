@@ -74,7 +74,7 @@ defineProps({
   carPlanTypeEnum: Object,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
-paymentTooltipEnum: Object,
+  paymentTooltipEnum: Object,
 });
 const page = usePage();
 const notification = useNotifications('toast');

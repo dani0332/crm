@@ -13,6 +13,7 @@ use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
+use App\Enums\PaymentTooltip;
 use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
@@ -99,15 +100,20 @@ class TravelController extends Controller
 
         $paymentEntityModel = $this->{strtolower($this->genericModel->modelType).'QuoteService'}->getEntityPlain($record->id);
         $payments = $paymentEntityModel->payments;
-        $paymentMethods = $this->lookupService->getPaymentMethods();
-        $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
-            return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
-        })->map(function ($paymentMethod) {
-            return [
-                'value' => $paymentMethod->code,
-                'label' => $paymentMethod->name,
-            ];
-        })->values();
+        $paymentMethods = $this->lookupService->getPaymentMethods();        
+
+        if (auth()->user()->hasRole(RolesEnum::BetaUser)) {
+            $filteredPaymentMethods = $paymentMethods;
+        } else {
+            $filteredPaymentMethods = $paymentMethods->filter(function ($paymentMethod) {
+                return $paymentMethod->code == PaymentMethodsEnum::CreditCard;
+            })->map(function ($paymentMethod) {
+                return [
+                    'value' => $paymentMethod->code,
+                    'label' => $paymentMethod->name,
+                ];
+            })->values();
+        }
 
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
@@ -192,6 +198,8 @@ class TravelController extends Controller
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::TravelManager),
             'message' => session('message'),
             'quoteType' => QuoteTypes::TRAVEL,
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'storageUrl' => storageUrl(),
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
