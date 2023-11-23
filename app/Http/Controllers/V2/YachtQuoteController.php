@@ -30,7 +30,6 @@ use App\Services\LookupService;
 
 class YachtQuoteController extends Controller
 {
-
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */

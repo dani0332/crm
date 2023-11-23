@@ -135,8 +135,6 @@ class PetQuoteController extends Controller
             $companyPosition = $lookupService->getCompanyPosition();
         }
 
-
-
         return inertia('PetQuote/Show', [
             'amlQuoteStatus' => $amlQuoteStatus,
             'countryList' => $countries,

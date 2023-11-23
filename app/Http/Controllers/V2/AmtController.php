@@ -25,7 +25,6 @@ use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\QuoteStatusRepository;
-use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
 use App\Services\CRUDService;
 use App\Services\CustomerService;
@@ -234,7 +233,6 @@ class AmtController extends Controller
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
         $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
         $UBODetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
-
 
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();

@@ -31,7 +31,6 @@ use App\Services\LookupService;
 
 class CycleQuoteController extends Controller
 {
-
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
