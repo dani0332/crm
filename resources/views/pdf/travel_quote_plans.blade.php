@@ -407,7 +407,7 @@
                     <p class="text-left text-white text-xl mar">Mobile number: {{ formatMobileNumber($quote->advisor->mobile_no) }} <span class="text-white" style="margin-top:3px"><img style="height:20px;" src="{{ public_path('images/whatsapp-small.png') }}"></span></p>
                 @endif
                 @if(isset($quote->advisor->landline_no) && !empty($quote->advisor->landline_no))
-                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">0{{ formatLandlineNumber($quote->advisor->landline_no) }}</a></p>
+                    <p class="text-left text-white text-xl">Direct Line: <a class="text-white" href="tel:{{ $quote->advisor->landline_no }}">{{ $quote->advisor->landline_no }}</a></p>
                 @endif
 
             </div>
