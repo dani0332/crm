@@ -2076,7 +2076,8 @@ const handleChildUpdate = planId => {
                 View
               </x-button>
 
-              <span v-if="hasRole(rolesEnum.TravelAdvisor)">
+              <!-- v-if="hasRole(rolesEnum.TravelAdvisor)" hide for now -->
+              <span v-if="true == false">
                 <SelectPlan class="ml-1" v-if="prefillPlanId != item.id"
                       @update:updatePlanId="handleChildUpdate"
                       :plan="item"
