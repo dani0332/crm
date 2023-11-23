@@ -21,5 +21,6 @@ class CompanyTypeSeeder extends Seeder
         Lookup::updateOrCreate(['key' => 'company-type', 'code' => 'Construction'], ['text' => 'Construction']);
         Lookup::updateOrCreate(['key' => 'company-type', 'code' => 'FoodBeverages'], ['text' => 'Food & Beverages']);
         Lookup::updateOrCreate(['key' => 'company-type', 'code' => 'ServiceProvider'], ['text' => 'Service Provider']);
+        Lookup::updateOrCreate(['key' => 'company-type', 'code' => 'others'], ['text' => 'Others']);
     }
 }
