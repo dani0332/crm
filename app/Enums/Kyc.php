@@ -27,12 +27,13 @@ final class Kyc extends Enum
     const EMPLOYMENT_SECTOR_THREE_RATING = ['freezone'];
     const TRANSACTION_VOLUME_TWO_RATING = ['3', '4'];
     const TRANSACTION_VOLUME_THREE_RATING = ['5'];
+    const DOCUMENT_TYPE_EMIRATES = 'emiratesId';
     const MODE_OF_DELIVERY = [
-        'mod-delivery-car'=>'Company Authorised Representative',
-        'mod-delivery-atp'=>'Authorised Third party',
-        'mod-delivery-unkown'=>'Unknown',
-        'mod-delivery-pse'=>'Policy sent via email',
-        'mod-delivery-psc'=>'Policy sent via courier',
-        'mod-delivery-cco'=>'Collected by customer from office'
+        'mod-delivery-car' => 'Company Authorised Representative',
+        'mod-delivery-atp' => 'Authorised Third party',
+        'mod-delivery-unkown' => 'Unknown',
+        'mod-delivery-pse' => 'Policy sent via email',
+        'mod-delivery-psc' => 'Policy sent via courier',
+        'mod-delivery-cco' => 'Collected by customer from office',
     ];
 }

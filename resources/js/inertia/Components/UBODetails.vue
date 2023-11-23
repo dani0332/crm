@@ -102,7 +102,7 @@ function onEditUBO(data) {
     UBOForm.dob = data.dob;
     UBOForm.relation_code = data.relation_code;
     UBOForm.nationality_id = data.nationality_id;
-    UBOForm.quote_request_id = data.quote_request_id;
+    UBOForm.quote_request_id = data.quote_id;
     UBOForm.quote_type = props.quote_type;
 }
 

@@ -82,6 +82,7 @@ const memberForm = useForm({
   relation_code: null,
   nationality_id: null,
   is_third_party_payer: true,
+  from_aml_model: true
 });
 
 function onMemberSubmit(isValid) {

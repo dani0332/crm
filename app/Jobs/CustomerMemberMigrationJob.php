@@ -4,8 +4,10 @@ namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
 use App\Models\HealthMemberDetail;
+use App\Models\HealthQuote;
 use App\Models\KycLog;
 use App\Models\TravelMemberDetail;
+use App\Models\TravelQuote;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -112,11 +114,11 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });
 
-        KycLog::withTrashed()->chunk(100, function ($kycLogs) {
+        KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
             foreach ($kycLogs as $kycLog) {
                 if ($kycLog->match_found != null && $kycLog->match_found == 0) {
                     $kycLog->update([
-                        'decision' => 'Pass',
+                        'decision' => 'RYU',
                     ]);
                 }
             }

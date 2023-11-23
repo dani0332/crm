@@ -257,6 +257,11 @@ class CarQuote extends BaseModel
         return $this->hasOne(User::class, 'email', 'updated_by')->select(['id', 'email', 'name']);
     }
 
+    public function customerMembers()
+    {
+        return $this->morphMany(CustomerMembers::class, 'quote');
+    }
+
     public function scopeRelationWhere($query, $isGetList, $filters)
     {
         if (Auth::user()->hasRole('pa') && $isGetList) {

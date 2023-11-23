@@ -13,7 +13,7 @@ class UpdateCodeColumnInCustomerTable extends Seeder
      */
     public function run(): void
     {
-        Customer::whereNull('code')->chunk(100, function ($customers) {
+        Customer::whereNull('code')->chunkById(100, function ($customers) {
             foreach ($customers as $customer) {
 
                 if (! empty($customer->code)) {

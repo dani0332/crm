@@ -6,7 +6,6 @@ use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
-use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
@@ -15,6 +14,7 @@ use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CycleQuoteRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
@@ -23,7 +23,6 @@ use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
@@ -116,7 +115,7 @@ class CycleQuoteController extends Controller
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::CYCLE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-        $membersDetail = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypes::CYCLE->id());
+        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::CYCLE->name);
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::CYCLE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::CYCLE->value);
@@ -136,7 +135,7 @@ class CycleQuoteController extends Controller
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::CYCLE->value, $quote->code);
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::CYCLE->id(), $quote->id);
-        $uboDetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $quote->id, QuoteTypeId::Cycle, CustomerTypeEnum::Entity);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 

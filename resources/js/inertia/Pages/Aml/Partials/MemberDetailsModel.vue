@@ -98,6 +98,7 @@ const memberForm = useForm({
   relation_code: null,
   nationality_id: null,
   is_payer: props.is_payer ?? false,
+  from_aml_model: true
 });
 
 function onMemberSubmit(isValid) {

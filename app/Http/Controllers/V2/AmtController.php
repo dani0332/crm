@@ -19,11 +19,11 @@ use App\Models\Entity;
 use App\Models\GroupMedicalType;
 use App\Models\Nationality;
 use App\Repositories\BusinessQuoteRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\InsuranceProviderRepository;
 use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
-use App\Repositories\QuoteMemberDetailsRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Services\ActivitiesService;
 use App\Services\BusinessQuoteService;
@@ -88,8 +88,7 @@ class AmtController extends Controller
             $data->where('bqr.advisor_id', Auth::user()->id);    // fetch leads assigned to the user
         }
         $this->whereBasedOnRole($data, 'bqr');
-        $dropdownSourceService = app(DropdownSourceService::class);
-        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $advisors = DB::table('users as u')
             ->join('model_has_roles as mr', 'mr.model_id', '=', 'u.id')
@@ -235,9 +234,10 @@ class AmtController extends Controller
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);
-        $customerService = app(CustomerService::class);
-        $customerAdditionalContacts = $customerService->getAdditionalContacts($record->customer_id, $record->mobile_no);
-        $UBODetails = QuoteMemberDetailsRepository::getBy('quote_request_id', $record->id, QuoteTypes::BUSINESS->id(), CustomerTypeEnum::Entity);
+        $customerAdditionalContacts = app(CustomerService::class)->getAdditionalContacts($record->customer_id, $record->mobile_no);
+        $UBODetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::BUSINESS->name, CustomerTypeEnum::Entity);
+
+
         $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
         $UBORelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
@@ -347,8 +347,7 @@ class AmtController extends Controller
     public function cardsView(Request $request)
     {
         $quotes = [];
-        $dropdownSourceService = app(DropdownSourceService::class);
-        $leadStatuses = $dropdownSourceService->getDropdownSource('quote_status_id', QuoteTypeId::Business);
+        $leadStatuses = app(DropdownSourceService::class)->getDropdownSource('quote_status_id', QuoteTypeId::Business);
 
         $leadStatuses = $leadStatuses->filter(function ($item) {
             return $item->text == quoteStatusCode::NEWLEAD || $item->text == quoteStatusCode::QUOTED || $item->text == quoteStatusCode::FOLLOWEDUP || $item->text == quoteStatusCode::NEGOTIATION || $item->text == quoteStatusCode::PAYMENTPENDING || $item->text == quoteStatusCode::APPLICATION_PENDING || $item->text == quoteStatusCode::PLOICY_DOCUMENTS_PENDING || $item->text == quoteStatusCode::TRANSACTIONAPPROVED;
