@@ -213,65 +213,6 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
           {{ selectedLog.response }}
         </div>
       </dl>
-      <!-- <table class="table">
-        <tr class="mb-10">
-          <td class="font-medium">REF-ID:</td>
-          <td>{{ selectedLog.quote_uuid }}</td>
-        </tr>
-        <tr class="mb-10">
-          <td class="font-medium">Call Type:</td>
-          <td>{{ selectedLog.call_type }}</td>
-        </tr>
-        <tr>
-          <td class="font-medium">Status:</td>
-          <td>
-            <x-tag
-              v-if="selectedLog.status"
-              size="xs"
-              :color="selectedLog.status === 'failed' ? 'red' : 'success'"
-              class="mt-0.5 text-[10px]"
-            >
-              {{ selectedLog.status.toUpperCase() }}
-            </x-tag>
-          </td>
-        </tr>
-        <tr>
-          <td class="font-medium">Provider Name:</td>
-          <td>{{ selectedLog.insurance_provider.text }}</td>
-        </tr>
-        <tr>
-          <td class="font-medium" colspan="2">Request:</td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <div
-              class="text-sm h-[200px] w-[700px] overflow-y-auto p-2.5 bg-[#d5edfd] text-[#060404]"
-            >
-              {{ selectedLog.request }}
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="font-medium" colspan="2">Response:</td>
-        </tr>
-        <tr>
-          <td colspan="2">
-            <div
-              class="text-sm h-[200px] w-[700px] overflow-y-auto p-2.5 bg-[#d5edfd] text-[#060404]"
-            >
-              {{ selectedLog.response }}
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="font-medium">Created At:</td>
-          <td>{{ dateFormat(selectedLog.created_at).value }}</td>
-        </tr>
-        <tr>
-          <td class="font-medium">Updated At:</td>
-          <td>{{ dateFormat(selectedLog.updated_at).value }}</td>
-        </tr>
-      </table> -->
     </div>
     <div class="text-right space-x-4 mt-12">
       <x-button size="sm" @click.prevent="modals.apiLog = false">
