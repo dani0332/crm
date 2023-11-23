@@ -120,6 +120,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\TravelQuote')
                    ->where(['quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id])->first();
 
+               info('tqr old primary_member_id: '.$travelQuote->primary_member_id. 'tqr new primary_member_id:'. $customerMemberKey['id']);
                $travelQuote->update([
                    'primary_member_id' => $customerMemberKey['id']
                ]);
