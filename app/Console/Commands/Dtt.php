@@ -75,15 +75,19 @@ class Dtt extends Command
                 //         ->orWhereNotNull('previous_quote_policy_number')
                 //         ->orWhereNotNull('mobile_no');
                 // })
-                ->where(function ($q) {
-                    $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
-                        ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
-                })
+
+                ->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
+                ->where('payment_status_id', '!=', PaymentStatusEnum::CAPTURED)
+                // ->where(function ($q) {
+                //     $q->whereNotIn('quote_status_id', [QuoteStatusEnum::PolicyIssued, QuoteStatusEnum::TransactionApproved])
+                //         ->orWhere('payment_status_id', '!=', PaymentStatusEnum::CAPTURED);
+                // })
                 ->groupBy(['email', 'car_make_id', 'car_model_id', 'year_of_manufacture'])
                 ->orderBy('id', 'DESC')
                 ->get();
 
-            info('------createRevivedQuotes leads count --' . count($leads));
+            // dd(count($leads));
+            info('------CarRevivalLeadsCreationJob count --' . count($leads));
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
                 info('------isTierR --' . !$isTierR);
@@ -91,7 +95,7 @@ class Dtt extends Command
                     $jobs[] = new CarRevivalLeadsCreationJob($carLead);
                 }
             }
-            $logPrefix = '------fn: createRevivedQuotes QuoteCreation started------';
+            $logPrefix = '------CarRevivalLeadsCreationJob------';
             info($logPrefix);
 
             if ($jobs != null && count($jobs)) {

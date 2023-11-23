@@ -142,19 +142,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             $emailData->customerEmail = 'nouman.hussain@insurancemarket.ae';
 
             info('CarRevivalLeadsCreationJob: EmailData ' . json_encode($emailData));
-
-            // $emailData = (object) [
-            //     'quoteId' => $carQuote->id,
-            //     'templateId' => $emailTemplateId,
-            //     'customerName' => $customerName,
-            //     'customerEmail' => $carQuote->email,
-            //     'buttonUrl' => config('constants.ECOM_CAR_INSURANCE_QUOTE_URL') . $carQuote->uuid,
-            //     'subject' => $customerName . "'s" . ' Car Insurance with Alfred ' . $carQuote->code,
-            // ];
-
-
-            // $responseCode = $this->sendEmailCustomerService->sendRenewalsOcbEmail($emailTemplateId, $emailData, 'car-quote-one-click-buy-batch');
-
+            
             $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
 
             info('CarRevivalLeadsCreationJob: emailResponse ' . json_encode($response));
