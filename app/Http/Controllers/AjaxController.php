@@ -119,8 +119,11 @@ class AjaxController extends Controller
         $paymentLog->save();
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
-        $crudServ = app(CRUDService::class);
-        $crudServ->calculateScore($quoteModel);
+
+//        $crudServ = app(CRUDService::class);
+//        $crudServ->calculateScore($quoteModel);
+
+        app(CRUDService::class)->calculateScore($quoteModel);
 
         return response()->json(['success' => true]);
     }
@@ -270,15 +273,11 @@ class AjaxController extends Controller
 
     public function uploadKycEntityDocument($quoteType, KycEntityDocRequest $request)
     {
-        $acrivityService = app(ActivitiesService::class);
-        $quoteTypeId = $acrivityService->getQuoteTypeId(strtolower($quoteType));
         try {
             $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-
             if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
-
             $data = $request->validated();
             $data['industry_type_code'] = Entity::where('id', $data['industry_type'])->value('industry_type_code');
             $data['corporation_country'] = Nationality::where('id', $data['country_of_corporation'])->value('country_name');
@@ -289,16 +288,11 @@ class AjaxController extends Controller
             $data['issuing_authority_text'] = LookupRepository::where('code', $data['issuing_authority'])->where('key', LookupsEnum::ISSUING_AUTHORITY)->value('text');
             $data['manager_position_text'] = LookupRepository::where('code', $data['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
-
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
-            $acrivityService = app(ActivitiesService::class);
-            $quoteTypeId = $acrivityService->getQuoteTypeId(strtolower($quoteType));
-           // $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
-
+            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
                     'mobile_no' => $data['mobile_number'],

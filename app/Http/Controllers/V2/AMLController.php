@@ -307,8 +307,7 @@ class AMLController extends Controller
             $clientFullName = $updateQuoteStatusResp[4];
             if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
                 info('Bridger Insight - Decision update Email triggered to Compliance Team');
-                $checkAmlService = app(CheckAmlService::class);
-                $checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
             if (isset(request()->decisonsForUpdatePortal)) {
