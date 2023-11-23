@@ -128,15 +128,15 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });
 
-        KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
-            foreach ($kycLogs as $kycLog) {
-                if ($kycLog->match_found != null && $kycLog->match_found == 0) {
-                    $kycLog->update([
-                        'decision' => 'RYU',
-                    ]);
-                }
-            }
-        });
+        // KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
+        //     foreach ($kycLogs as $kycLog) {
+        //         if ($kycLog->match_found != null && $kycLog->match_found == 0) {
+        //             $kycLog->update([
+        //                 'decision' => 'RYU',
+        //             ]);
+        //         }
+        //     }
+        // });
 
         info('total duplicates: '.$this->totalDuplicate);
 
