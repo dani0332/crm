@@ -1,5 +1,7 @@
 <script setup>
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const convertDate = date => useConvertDate(date);
@@ -179,15 +181,26 @@ const complianceDisable = reactive({
 });
 
 const complianceRules = computed(() => {
-  return hasRole(props.roles.COMPLIANCE) ||
-    hasRole(props.roles.ComplianceSuperUser)
+  // return hasRole(props.roles.COMPLIANCE) ||
+  //   hasRole(props.roles.ComplianceSuperUser)
+  //   ? [rules.isRequired]
+  //   : [];
+
+  return can(permissionsEnum.AMLDecisionUpdate) ||
+    can(permissionsEnum.AMLDecisionUpdateTrueMatch)
     ? [rules.isRequired]
     : [];
 });
 
 onMounted(() => {
+  // complianceDisable.isDisable = !(
+  //   hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
+  // );
+
+  console.log(complianceDisable.isDisable);
   complianceDisable.isDisable = !(
-    hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
+    can(permissionsEnum.AMLDecisionUpdate) ||
+    can(permissionsEnum.AMLDecisionUpdateTrueMatch)
   );
 
   changeIncomeSource(props.customerDetails?.detail?.source_of_income ?? null);
