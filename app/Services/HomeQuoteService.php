@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\DatabaseColumnsString;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Models\HomeQuote;
 use App\Models\HomeQuoteRequestDetail;
 use App\Traits\AddPremiumAllLobs;
@@ -49,6 +51,9 @@ class HomeQuoteService extends BaseService
             'hqr.ilivein_accommodation_type_id',
             'hqr.quote_status_id',
             'hqr.additional_notes',
+            'hqr.kyc_decision',
+            'hqr.nationality_id',
+            'hqr.risk_score',
             'qs.text as quote_status_id_text',
             DB::raw('DATE_FORMAT(hqr.created_at, "%d-%m-%y %H:%i") as created_at'),
             DB::raw('DATE_FORMAT(hqr.updated_at, "%d-%m-%y %H:%i") as updated_at'),
@@ -59,10 +64,12 @@ class HomeQuoteService extends BaseService
             'hqr.payment_status_id',
             'u.name as advisor_id_text',
             'hqr.previous_advisor_id',
+            DB::raw('DATE_FORMAT(hqr.dob, "%d-%m-%Y") as dob'),
             'uadv.name AS previous_advisor_id_text',
             'hat.TEXT AS ilivein_accommodation_type_id_text',
             'hqr.iam_possesion_type_id',
             'hpt.TEXT AS iam_possesion_type_id_text',
+            'n.TEXT AS nationality_id_text',
             'hqrd.transapp_code',
             'hqrd.notes',
             'ls.text as lost_reason',
@@ -74,16 +81,40 @@ class HomeQuoteService extends BaseService
             'hqr.previous_quote_policy_premium',
             'hqr.customer_id',
             'hqr.parent_duplicate_quote_id',
-            'hqr.renewal_import_code'
+            'hqr.renewal_import_code',
+            DB::raw('IF(EXISTS (
+                SELECT *
+                FROM quote_request_entity_mapping
+                WHERE quote_type_id = '.QuoteTypeId::Home.' AND quote_request_id = hqr.id),
+                "'.CustomerTypeEnum::Entity.'", "'.CustomerTypeEnum::Individual.'")
+            as customer_type'),
+            'c.insured_first_name',
+            'c.insured_last_name',
+            'c.emirates_id_number',
+            'c.emirates_id_expiry_date',
+            'qrem.entity_id',
+            'ent.code as entity_code',
+            'ent.trade_license_no',
+            'ent.company_name',
+            'ent.company_address',
+            'qrem.entity_type_code',
+            'ent.industry_type_code',
+            'ent.emirate_of_registration_id'
         )
+            ->leftJoin('nationality as n', 'n.id', '=', 'hqr.nationality_id')
             ->leftJoin('home_quote_request_detail as hqrd', 'hqrd.home_quote_request_id', '=', 'hqr.id')
             ->leftJoin('lost_reasons as ls', 'ls.id', '=', 'hqrd.lost_reason_id')
             ->leftJoin('users as uadv', 'uadv.id', '=', 'hqr.previous_advisor_id')
             ->leftJoin('home_accommodation_type as hat', 'hat.id', '=', 'hqr.ilivein_accommodation_type_id')
             ->leftJoin('home_possession_type as hpt', 'hpt.id', '=', 'hqr.iam_possesion_type_id')
             ->leftJoin('quote_status as qs', 'qs.id', '=', 'hqr.quote_status_id')
-            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id');
-
+            ->leftJoin('users as u', 'u.id', '=', 'hqr.advisor_id')
+            ->leftJoin('customer as c', 'hqr.customer_id', 'c.id')
+            ->leftJoin('quote_request_entity_mapping as qrem', function ($entityMappingJoin) {
+                $entityMappingJoin->on('qrem.quote_type_id', '=', DB::raw(QuoteTypeId::Home));
+                $entityMappingJoin->on('qrem.quote_request_id', '=', 'hqr.id');
+            })
+            ->leftJoin('entities as ent', 'qrem.entity_id', '=', 'ent.id');
     }
 
     public function getEntity($id)

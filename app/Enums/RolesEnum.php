@@ -85,6 +85,7 @@ final class RolesEnum extends Enum
     public const CarManager = 'CAR_MANAGER';
     public const LeadPool = 'LEAD_POOL';
     public const COMPLIANCE = 'COMPLIANCE';
+    public const ComplianceSuperUser = 'COMPLIANCE_SUPER_USER';
     public const AML = 'AML';
     public const BikeAdvisor = 'BIKE_ADVISOR';
     public const BikeManager = 'BIKE_MANAGER';
@@ -99,5 +100,6 @@ final class RolesEnum extends Enum
     public const SeniorManagement = 'SENIOR_MANAGEMENT';
     public const Accounts = 'ACCOUNTS';
     public const CallDesk = 'CALL_DESK';
+    public const NRA = 'NON_RETAIL_ACCOUNTS';
     public const EpAdmin = 'EP_ADMIN';
 }

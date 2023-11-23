@@ -1,6 +1,7 @@
 <script setup>
 defineProps({
   quote: Object,
+  quoteDocuments: Object,
   documentTypes: Object,
   storageUrl: String,
 });
@@ -125,7 +126,7 @@ const uploadFile = (doc, files) => {
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Documents
-        <x-tag size="sm">{{ quote.documents?.length || 0 }}</x-tag>
+        <x-tag size="sm">{{ quoteDocuments.length || 0 }}</x-tag>
       </h3>
       <div class="flex gap-2">
         <x-button @click.prevent="modals.doc = true" size="sm" color="orange">
@@ -137,11 +138,11 @@ const uploadFile = (doc, files) => {
     <DataTable
       table-class-name="compact"
       :headers="quoteDocumentsTable.columns"
-      :items="quote.documents || []"
+      :items="quoteDocuments || []"
       border-cell
       hide-rows-per-page
       :rows-per-page="15"
-      :hide-footer="quote.documents?.length < 15"
+      :hide-footer="quoteDocuments.length < 15"
     >
       <template #item-original_name="item">
         <a
@@ -202,7 +203,7 @@ const uploadFile = (doc, files) => {
             @change="uploadFile(documentType, $event)"
           />
           <a
-            v-for="quoteDocument in quote.documents.filter(
+            v-for="quoteDocument in quoteDocuments.filter(
               d => d.document_type_code == documentType.code,
             )"
             :key="quoteDocument.id"
