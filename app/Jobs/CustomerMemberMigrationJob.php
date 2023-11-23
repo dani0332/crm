@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
+use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\KycLog;
