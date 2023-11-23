@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\ApplicationStorage;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +14,7 @@ class DttOCBNewBusinessSeeder extends Seeder
     public function run(): void
     {
         $ocbNewBusinessSingleMultiple = ApplicationStorage::where('key_name', 'OCB_NEW_BUSINESS_SINGLE_MULTIPLE_PLANS')->first();
-        if (!$ocbNewBusinessSingleMultiple) {
+        if (! $ocbNewBusinessSingleMultiple) {
             DB::table('application_storage')->insert([
                 'key_name' => 'OCB_NEW_BUSINESS_SINGLE_MULTIPLE_PLANS',
                 'value' => '551',
@@ -25,7 +24,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $ocbNewBusinessSingleMultiple = ApplicationStorage::where('key_name', 'OCB_NEW_BUSINESS_ZERO_PLANS')->first();
-        if (!$ocbNewBusinessSingleMultiple) {
+        if (! $ocbNewBusinessSingleMultiple) {
             DB::table('application_storage')->insert([
                 'key_name' => 'OCB_NEW_BUSINESS_ZERO_PLANS',
                 'value' => '552',
@@ -37,7 +36,7 @@ class DttOCBNewBusinessSeeder extends Seeder
 
         // FOLLOWUP WITHOUT PLAN
         $DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN')->first();
-        if (!$DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN) {
+        if (! $DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_TWO_DAYS_FOLLOWUP_WITHOUT_PLAN',
                 'value' => '544',
@@ -47,7 +46,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN')->first();
-        if (!$DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN) {
+        if (! $DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN',
                 'value' => '545',
@@ -57,7 +56,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN')->first();
-        if (!$DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN) {
+        if (! $DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN',
                 'value' => '546',
@@ -67,7 +66,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN')->first();
-        if (!$DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN) {
+        if (! $DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITHOUT_PLAN',
                 'value' => '547',
@@ -77,7 +76,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN')->first();
-        if (!$DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN) {
+        if (! $DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITHOUT_PLAN',
                 'value' => '548',
@@ -89,8 +88,8 @@ class DttOCBNewBusinessSeeder extends Seeder
 
         // FOLLOWUP WITH PLAN
 
-          $DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN')->first();
-        if (!$DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN) {
+        $DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN')->first();
+        if (! $DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_TWO_DAYS_FOLLOWUP_WITH_PLAN',
                 'value' => '536',
@@ -100,7 +99,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN')->first();
-        if (!$DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN) {
+        if (! $DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN',
                 'value' => '538',
@@ -110,7 +109,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN')->first();
-        if (!$DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN) {
+        if (! $DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN',
                 'value' => '539',
@@ -120,7 +119,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN')->first();
-        if (!$DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN) {
+        if (! $DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN',
                 'value' => '540',
@@ -130,7 +129,7 @@ class DttOCBNewBusinessSeeder extends Seeder
             ]);
         }
         $DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN = ApplicationStorage::where('key_name', 'DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN')->first();
-        if (!$DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN) {
+        if (! $DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN) {
             DB::table('application_storage')->insert([
                 'key_name' => 'DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN',
                 'value' => '541',

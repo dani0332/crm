@@ -10,11 +10,10 @@ use App\Models\ApplicationStorage;
 use App\Models\CarQuote;
 use App\Models\DttRevival;
 use App\Models\Tier;
-use App\Models\User;
 use App\Services\CarEmailService;
 use App\Services\CarQuoteService;
-use App\Services\UserService;
 use App\Services\SendEmailCustomerService;
+use App\Services\UserService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Sammyjo20\LaravelHaystack\Models\Haystack;
@@ -70,13 +69,13 @@ class DttFollowUp extends Command
                 'RPLMB24F',
                 'S2JGMPWH',
                 '77BFX6KQ',
-                '6PV4BNVM'
+                '6PV4BNVM',
             ])->get();
 
             foreach ($unreplied as $item) {
                 $created_at = $item->created_at;
                 $lead = CarQuote::where('uuid', $item->uuid)->first();
-                if (!empty($created_at) && !in_array($lead->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])) {
+                if (! empty($created_at) && ! in_array($lead->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])) {
 
                     $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                     $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
@@ -84,32 +83,29 @@ class DttFollowUp extends Command
                     $afterTwentyDays = Carbon::parse($created_at)->addDays(20)->startOfDay();
                     $afterTwentyeightDays = Carbon::parse($created_at)->addDays(28)->startOfDay();
 
-
                     $listQuotePlans = $this->carQuoteService->getPlans($item->uuid, true, true);
 
                     $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
-                    info('carRevivalFollowUpEmailJob: Plan count is  ' . $quotePlansCount . ' for lead ' . $item->uuid);
+                    info('carRevivalFollowUpEmailJob: Plan count is  '.$quotePlansCount.' for lead '.$item->uuid);
 
                     $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
                     $listQuotePlans = (is_string($listQuotePlans)) ? [] : $listQuotePlans;
 
                     $previousAdvisor = null;
-                    if (!empty($lead->previous_advisor_id)) {
+                    if (! empty($lead->previous_advisor_id)) {
                         $previousAdvisor = $this->userService->getUserById($lead->previous_advisor_id);
                     }
                     $emailData = (new CarEmailService($this->sendEmailCustomerService))->buildEmailData($lead, $listQuotePlans, $previousAdvisor, $tierR->id);
 
-
-
-                    $emailData->customer = (object)['firstName' => $lead->first_name, 'lastName' => $lead->last_name];
+                    $emailData->customer = (object) ['firstName' => $lead->first_name, 'lastName' => $lead->last_name];
 
                     $emailData->advisorName = 'Alfred';
                     $emailData->advisorEmail = 'askalfred@insurancemarket.ae';
                     // $emailData->customerEmail = 'nouman.hussain@insurancemarket.ae';
                     $emailData->id = $item->id;
-                    info('carRevivalFollowUpEmailJob: EmailData ' . json_encode($emailData));
+                    info('carRevivalFollowUpEmailJob: EmailData '.json_encode($emailData));
 
                     if ($today->eq($afterTwoDays)) {
 
@@ -120,7 +116,7 @@ class DttFollowUp extends Command
                         }
                         $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                         $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                        $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                         $leads[] = $emailData;
                     }
                     if ($today->eq($afterSevenDays)) {
@@ -130,8 +126,8 @@ class DttFollowUp extends Command
                             $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
                         }
                         $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId  =  (int) $emailTemplateId;
-                        $emailData->subject  = 'Reminder: Purchase Your Motor Policy ' . $lead->code;
+                        $emailData->templateId = (int) $emailTemplateId;
+                        $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                         $leads[] = $emailData;
                     }
                     if ($today->eq($aftertThirteenDays)) {
@@ -141,8 +137,8 @@ class DttFollowUp extends Command
                             $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITHOUT_PLAN;
                         }
                         $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
-                        $emailData->templateId =  (int) $emailTemplateId;
-                        $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today ' . $lead->code;
+                        $emailData->templateId = (int) $emailTemplateId;
+                        $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
                         $leads[] = $emailData;
                     }
                     if ($today->eq($afterTwentyDays)) {
@@ -153,7 +149,7 @@ class DttFollowUp extends Command
                         }
                         $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                         $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today ' . $lead->code;
+                        $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
                         $leads[] = $emailData;
                     }
                     if ($today->eq($afterTwentyeightDays)) {
@@ -164,7 +160,7 @@ class DttFollowUp extends Command
                         }
                         $emailTemplateId = ApplicationStorage::where('key_name', $key)->value('value');
                         $emailData->templateId = (int) $emailTemplateId;
-                        $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now ' . $lead->code;
+                        $emailData->subject = 'Final Reminder: Secure Your Motor Policy Now '.$lead->code;
                         $leads[] = $emailData;
                     }
                 }
@@ -182,13 +178,13 @@ class DttFollowUp extends Command
                     ->addJobs($jobs)
 
                     ->then(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' all jobs completed successfully ------');
+                        info('------'.$logPrefix.' all jobs completed successfully ------');
                     })
                     ->catch(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' one of batch is failed.------');
+                        info('------'.$logPrefix.' one of batch is failed.------');
                     })
                     ->finally(function () use ($logPrefix) {
-                        info('------' . $logPrefix . ' everything done ------');
+                        info('------'.$logPrefix.' everything done ------');
                     })
                     ->allowFailures()
                     ->withDelay(2)
@@ -197,7 +193,7 @@ class DttFollowUp extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : ' . $exception->getMessage());
+            info('DTT Exception : '.$exception->getMessage());
         }
     }
 }
