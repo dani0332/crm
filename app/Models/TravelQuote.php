@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Config;
@@ -60,7 +61,7 @@ class TravelQuote extends Model implements AuditableContract
 
     public function travelCoverFor()
     {
-        return $this->belongsTo(TravelCoverFor::class);
+        return $this->belongsTo(TravelCoverFor::class, 'travel_cover_for_id');
     }
 
     public function regionCoverFor()
@@ -93,6 +94,11 @@ class TravelQuote extends Model implements AuditableContract
         return $this->belongsTo(PaymentStatus::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function getPreviousPolicyExpiryDateAttribute($table)
     {
         $date_time_format = Config::get('constants.datetime_format');
@@ -100,8 +106,9 @@ class TravelQuote extends Model implements AuditableContract
         return $this->asDateTime($table)->timezone(config('app.timezone'))->format($date_time_format);
     }
 
-    public function customer()
+    public function quoteRequestEntityMapping()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->where('quote_type_id', QuoteTypeId::Travel);
     }
 }

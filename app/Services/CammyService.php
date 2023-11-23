@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationStorageEnums;
 use App\Enums\QuoteTypeId;
+use App\Models\ApplicationStorage;
 use Exception;
 
 class CammyService
@@ -20,6 +22,13 @@ class CammyService
 
     public function sync($lead, $trigger)
     {
+        $isCammyFollowupEnabled = ApplicationStorage::where('key_name', ApplicationStorageEnums::ENABLE_CAMMY_FOLLOWUP)->first();
+        if ($isCammyFollowupEnabled && $isCammyFollowupEnabled->value == 0 || ! $isCammyFollowupEnabled) {
+            info('Cammy Service Disabled');
+
+            return false;
+        }
+
         if (! $lead || ! $trigger) {
             info('Cammy Service - Failed - Lead or Trigger not provided');
 
@@ -55,7 +64,7 @@ class CammyService
                         'provider' => $plan->providerName,
                         'premium' => '',
                         'features' => $features->toArray(),
-                        'logo' => $plan->logo,
+                        'logo' => $plan->logo ?? '',
                         'planLink' => $plan->planLink ?? '',
                     ]);
                 }

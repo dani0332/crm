@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             RuleTypeSeeder::class,
             CommercialMakeModelKeywordsPermissionsSeeder::class,
             FetchRuleDetailsTableRecordsFromRuleLeadSourceSeeder::class,
+            ApplicationStorageSeeder::class,
             // SlabsTableSeeder::class,
             // AddPersonalLobsProducts::class,
             addTeamThresholdViewPermission::class,
@@ -34,15 +35,16 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
-            GenericPermissionSeeder::class,
+            MemberRelationsSeeder::class,
             AddApiLogViewToPermssion::class,
             AutofollowupSeeder::class,
             addReassignmentTime::class,
-            // AddApiLogViewToPermssion::class,
             GenericPermissionSeeder::class,
+            AddRoleForComplianceSuperUser::class,
             UpdateCustomerToHealthAndTravelMemberDetails::class,
             UpdateCodeColumnInCustomerTable::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
+            addDubaiNowLeadSourceExemptionInAppStorage::class,
         ]);
     }
 }
