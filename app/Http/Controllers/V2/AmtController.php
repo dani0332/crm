@@ -200,8 +200,7 @@ class AmtController extends Controller
             'number_of_employees' => 'required',
             'brief_details' => 'required',
         ]);
-        $businessQuoteService = app(BusinessQuoteService::class);
-        $record = $businessQuoteService->saveBusinessQuote($request);
+        $record = app(BusinessQuoteService::class)->saveBusinessQuote($request);
         if (isset($record->message) && str_contains($record->message, 'Error')) {
             return Redirect::back()->with('message', $record->message)->withInput();
         } else {
@@ -229,8 +228,7 @@ class AmtController extends Controller
         $data = $record->toArray();
         $record->lost_reason = $data['business_quote_request_detail']['lost_reason']['text'] ?? null;
         $record->previous_advisor_id_text = $data['previous_advisor']['name'] ?? null;
-        $businessQuoteService = app(BusinessQuoteService::class);
-        $quoteDetails = $businessQuoteService->getDetailEntity($record->id);
+        $quoteDetails = app(BusinessQuoteService::class)->getDetailEntity($record->id);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BUSINESS->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $allowedDuplicateLOB = $crudService->getAllowedDuplicateLOB('Group Medical', $record->code);

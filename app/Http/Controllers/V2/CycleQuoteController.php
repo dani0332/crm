@@ -138,9 +138,7 @@ class CycleQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-
-        $crudService = app(CRUDService::class);
-        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
         $lookupService = app(LookupService::class);
         $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;

@@ -125,8 +125,7 @@ class BikeQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
-        $crudService = app(CRUDService::class);
-        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
         $lookupService = app(LookupService::class);
         $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;

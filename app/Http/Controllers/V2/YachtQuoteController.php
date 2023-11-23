@@ -113,8 +113,7 @@ class YachtQuoteController extends Controller
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
-        $crudService = app(CRUDService::class);
-        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
         $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
         $lookupService = app(LookupService::class);

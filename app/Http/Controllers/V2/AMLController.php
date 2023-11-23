@@ -282,10 +282,7 @@ class AMLController extends Controller
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
-        //$updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
-
-        $quoteStatusService = app(QuoteStatusService::class);
-        $updateQuoteStatusResp = $quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
+        $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
 
         if ($updateQuoteStatusResp == 'false') {
             return redirect()->back()->with('message', 'Quote Status is not updated');
