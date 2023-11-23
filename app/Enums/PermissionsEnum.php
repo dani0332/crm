@@ -97,6 +97,7 @@ final class PermissionsEnum extends Enum
     const VehicleValuationList = 'vehicle-valuation-list';
     const AMLList = 'aml-list';
     const AMLDecisionUpdate = 'aml-decision-update';
+    const AMLDecisionUpdateTrueMatch = 'aml-decision-update-true-match';
     const TeleMarketingList = 'telemarketing-list';
     const TeleMarketingCreate = 'telemarketing-create';
     const TeleMarketingEdit = 'telemarketing-edit';
