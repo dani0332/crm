@@ -6,6 +6,7 @@ const props = defineProps({
   membersDetails: Object,
   memberRelations: Object,
   customerType: String,
+  entity_id: Number,
 });
 
 const { isRequired } = useRules();
@@ -76,6 +77,7 @@ const memberForm = useForm({
   customer_type: props.customerType,
   quote_request_id: props.quoteDetails.id,
   customer_id: props.quoteDetails.customer_id,
+  entity_id: props.entity_id ?? null,
   id: null,
   first_name: null,
   dob: null,
