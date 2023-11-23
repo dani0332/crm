@@ -122,9 +122,6 @@ class AjaxController extends Controller
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
 
-//        $crudServ = app(CRUDService::class);
-//        $crudServ->calculateScore($quoteModel);
-
         app(CRUDService::class)->calculateScore($quoteModel);
 
         return response()->json(['success' => true]);
