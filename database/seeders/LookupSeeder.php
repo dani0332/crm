@@ -305,7 +305,6 @@ class LookupSeeder extends Seeder
             ]);
         }
 
-
         if (Lookup::where('key', LookupsEnum::MODE_OF_DELIVERY)->count() == 3) {
             Lookup::where('key', LookupsEnum::MODE_OF_DELIVERY)->update(['key' => LookupsEnum::DELETED_MODE_OF_DELIVERY]);
         }

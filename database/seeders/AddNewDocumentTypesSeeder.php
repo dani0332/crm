@@ -23,7 +23,7 @@ class AddNewDocumentTypesSeeder extends Seeder
                 'accepted_files' => '.pdf',
                 'max_files' => 1,
                 'max_size' => 5,
-                'is_required' => 0
+                'is_required' => 0,
             ]);
         }
     }
