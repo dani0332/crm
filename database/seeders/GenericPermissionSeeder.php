@@ -22,6 +22,8 @@ class GenericPermissionSeeder extends Seeder
             ['name' => PermissionsEnum::DATA_EXTRACTION],
             ['name' => PermissionsEnum::CAR_SOLD_LIST,            'role' => RolesEnum::MarketingOperations],
             ['name' => PermissionsEnum::CAR_UNCONTACTABLE_LIST,   'role' => RolesEnum::MarketingOperations],
+            ['name' => PermissionsEnum::AMLDecisionUpdate,        'role' => RolesEnum::COMPLIANCE],
+            ['name' => PermissionsEnum::AMLDecisionUpdateTrueMatch, 'role' => RolesEnum::ComplianceSuperUser],
         ];
 
         foreach ($permissions as $permission) {
@@ -68,6 +70,17 @@ class GenericPermissionSeeder extends Seeder
             if (! $role->hasPermissionTo(PermissionsEnum::PaymentsEdit)) {
                 $role->givePermissionTo(PermissionsEnum::PaymentsEdit);
             }
+        }
+
+        // Add Compliance Permission to Admin
+        $role = Role::where('name', RolesEnum::Admin)->first();
+
+        if (! $role->hasPermissionTo(PermissionsEnum::AMLDecisionUpdate)) {
+            $role->givePermissionTo(PermissionsEnum::AMLDecisionUpdate);
+        }
+
+        if (! $role->hasPermissionTo(PermissionsEnum::AMLDecisionUpdateTrueMatch)) {
+            $role->givePermissionTo(PermissionsEnum::AMLDecisionUpdateTrueMatch);
         }
     }
 }

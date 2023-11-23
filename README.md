@@ -7,7 +7,7 @@ IMCRM is developed on Laravel using PHP 8.0.1 or above, MariaDB 10.x or above.
 
 URLs: 
 
-- [Live](https://imcrm.alfred.ae/)
+- [Live](https://imcrm.alfred.ae/) 
 - [Stage](https://imcrmstage.alfred.ae/)
 - [UAT](https://imcrmuat.alfred.ae)
 - [DEV](https://imcrmdev.alfred.ae) [DEV1](https://imcrmdev01.alfred.ae) [DEV2](https://imcrmdev02.alfred.ae)
@@ -34,7 +34,7 @@ Once you have doppler CLI installed on your local machine, run the following com
 - ```doppler run -- php artisan <any command>``` will run the laravel commands using your doppler configured profile.
 
 **Assets Configuration**
-This repository use Laravel Mix to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
+This repository use Laravel Vite to build assets like CSS and JavaScript, use the following commands once modifying these files. Yarn will be our default package manager.
 
 - Run ```yarn``` so all the necassary packages are installed 
 - Run ```yarn prod``` to generate a production build
@@ -44,6 +44,7 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 - Prod - 15
 - Stage - 2
 - UAT - 3
+- UAT2 - 5
 - DEV - 4
 - DEV01 - 7 
 - DEV02 - 8
@@ -53,12 +54,7 @@ This repository use Laravel Mix to build assets like CSS and JavaScript, use the
 - ```develop``` branch is the main coding branch where new branches will be generated from, and PRs will be merged into. Same branch is connected with stage for testing and QA.
 - ```main``` branch is used for production deployments.
 
-## Cypress test instructions
+## Database Migration
+This project is not used for running migrations.
 
-To run Cypress tests on local machine:
-- Make sure you have cypress installed, if not install cypress using command ```yarn add cypress --dev``` (BTW it is already added in package.json file, so just do ```yarn```)
-- Change baseUrl i.e. localhost, beta, prod etc in cypress.config.js file (residing at home directory)
-- Run cypress runner using command ```yarn cypress open```
-- Select e2e tests and then any browser i.e. chrome. 
-- Try running your desired test. 
-- After running "hover" over the ran cypress commands in order to see what test the cypress exactly ran.
+This repo is integrated with [dhalsim](https://github.com/InsuranceMarket-ae/dhalsim); on each env deployment, the relelvant branch from dhalsim is triggered to run the migrations from before blanka deployment.
