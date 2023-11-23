@@ -296,8 +296,9 @@ const show = ref(true);
           :quoteType="quoteType"
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
-          :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :membersDetails="uboDetails"
+          :memberRelations="uboRelations"
+          :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
 

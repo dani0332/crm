@@ -236,7 +236,7 @@ function onMemberSubmit(isValid) {
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         Member Details
-        <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
+        <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
       </h3>
       <x-button
         v-if="addMember"
