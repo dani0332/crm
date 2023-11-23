@@ -40,6 +40,7 @@ class MemberDetailRequest extends FormRequest
             $rules['member_category_id'] = 'nullable';
             $rules['salary_band_id'] = 'nullable';
             $rules['modelType'] = '';
+            $rules['last_name'] = 'nullable';
         }
 
         return $rules;

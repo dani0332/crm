@@ -55,6 +55,17 @@ class MembersDetailController extends Controller
                 CustomerTypeEnum::IndividualShort.'-'.$request->customer_id.'-'.(++$quoteMemberCount) :
                 CustomerTypeEnum::EntityShort.'-'.$request->entity_id.'-'.(++$quoteMemberCount);
 
+            if ($quoteMemberDetails['first_name'] == null && $quoteMemberDetails['last_name'] == null) {
+                $quoteMemberCount = CustomerMembers::where([
+                    'customer_type' => $request->customer_type,
+                    'customer_entity_id' => $customerEntityId,
+                    'first_name' => 'Member',
+                ])->count();
+
+                $quoteMemberDetails['first_name'] = 'Member';
+                $quoteMemberDetails['last_name'] = (++$quoteMemberCount);
+            }
+
             $quoteMemberDetails = CustomerMembers::updateOrCreate(array_merge($quoteMemberDetails), [
                 'quote_type' => ltrim($quoteModel, "'\'"),
                 'code' => $quoteMemberCode,
