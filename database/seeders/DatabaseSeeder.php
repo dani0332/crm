@@ -45,7 +45,7 @@ class DatabaseSeeder extends Seeder
             UpdateCodeColumnInCustomerTable::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
             addDubaiNowLeadSourceExemptionInAppStorage::class,
-            addAmlDecisionUpdatePermission::class
+            addAmlDecisionUpdatePermission::class,
         ]);
     }
 }

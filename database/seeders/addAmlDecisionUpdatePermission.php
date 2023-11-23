@@ -29,7 +29,6 @@ class addAmlDecisionUpdatePermission extends Seeder
             );
         }
 
-
         $complianceRole = Role::where('name', RolesEnum::COMPLIANCE)->first();
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $complianceRole->id)->where('permission_id', $permission->id)->first();
         if ($rolePermission === null) {
