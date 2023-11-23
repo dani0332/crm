@@ -108,7 +108,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                         'relation_code' => $tqrmd->relation_code ?? null,
                         'created_at' => now(),
                         'updated_at' => now(),
-                        'old_primary_member_id' => $tqrmd->id
+                        'old_primary_member_id' => $tqrmd->id,
                     ]);
                 } else {
                     $this->totalDuplicate++;
@@ -117,15 +117,15 @@ class CustomerMemberMigrationJob implements ShouldQueue
         });
 
         TravelQuote::whereNotNull('primary_member_id')->chunkById(500, function ($travelQuotes) {
-           foreach ($travelQuotes as $travelQuote) {
-               $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\TravelQuote')
-                   ->where(['quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id])->first();
+            foreach ($travelQuotes as $travelQuote) {
+                $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\TravelQuote')
+                    ->where(['quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id])->first();
 
-               info('tqr old primary_member_id: '.$travelQuote->primary_member_id. 'tqr new primary_member_id:'. $customerMemberKey['id']);
-               $travelQuote->update([
-                   'primary_member_id' => $customerMemberKey['id']
-               ]);
-           }
+                info('tqr old primary_member_id: '.$travelQuote->primary_member_id.'tqr new primary_member_id:'.$customerMemberKey['id']);
+                $travelQuote->update([
+                    'primary_member_id' => $customerMemberKey['id'],
+                ]);
+            }
         });
 
         KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
