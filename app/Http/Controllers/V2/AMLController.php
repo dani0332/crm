@@ -233,6 +233,7 @@ class AMLController extends Controller
             LookupsEnum::COMPANY_POSITION,
             LookupsEnum::PROFESSIONAL_TITLE,
             LookupsEnum::UBO_RELATION,
+            LookupsEnum::COMPANY_TYPE,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key

@@ -2511,8 +2511,8 @@ const handleChildUpdate = planId => {
               Copy
             </x-button>
 
-            <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
-
+            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
+            <span v-if="true == false">
               <SelectPlan v-if="prefillPlanId != item.id"
                       @update:updatePlanId="handleChildUpdate"
                       :plan="item"

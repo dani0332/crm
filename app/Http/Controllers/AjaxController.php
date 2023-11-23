@@ -290,9 +290,9 @@ class AjaxController extends Controller
                 return response()->json(['message' => 'Trade License not found.']);
             }
             $data = $request->validated();
-            $data['industry_type_code'] = Entity::where('id', $data['industry_type'])->value('industry_type_code');
             $data['corporation_country'] = Nationality::where('id', $data['country_of_corporation'])->value('country_name');
             $data['manager_country'] = Nationality::where('id', $data['manager_nationality'])->value('text');
+            $data['industry_type_text'] = LookupRepository::where('code', $data['industry_type'])->where('key', LookupsEnum::COMPANY_TYPE)->value('text');
             $data['legal_structure_text'] = LookupRepository::where('code', $data['legal_structure'])->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
             $data['issuance_place_text'] = LookupRepository::where('code', $data['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
             $data['document_type_text'] = LookupRepository::where('code', $data['id_document_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
@@ -311,6 +311,7 @@ class AjaxController extends Controller
                     'email' => $data['email'],
                     'website' => $data['website'],
                     'legal_structure' => $data['legal_structure'],
+                    'industry_type_code' => $data['industry_type'],
                     'country_of_corporation' => $data['country_of_corporation'],
                     'registered_address' => $data['registered_address'],
                     'communication_address' => $data['communication_address'],

@@ -10,6 +10,9 @@ const page = usePage();
 const notification = useToast();
 const rolesEnum = page.props.rolesEnum;
 const hasRole = role => useHasRole(role);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
+
 const amlResults = ref(props.amlResults);
 const loader = reactive({
   table: false,
@@ -325,7 +328,7 @@ const falsePositive = computed(() => {
           False Positive
         </x-button>
         <x-button
-          v-if="hasRole(rolesEnum.ComplianceSuperUser)"
+          v-if="can(permissionsEnum.AMLDecisionUpdateTrueMatch)"
           class="mt-2 ml-2"
           color="orange"
           size="sm"
@@ -337,7 +340,7 @@ const falsePositive = computed(() => {
           True Match - Reject Risk
         </x-button>
         <x-button
-          v-if="hasRole(rolesEnum.ComplianceSuperUser)"
+          v-if="can(permissionsEnum.AMLDecisionUpdateTrueMatch)"
           class="mt-2 ml-2"
           color="red"
           size="sm"

@@ -1,5 +1,7 @@
 <script setup>
 const page = usePage();
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const convertDate = date => useConvertDate(date);
@@ -21,6 +23,7 @@ const props = defineProps({
   issuingAuthority: Array,
   uboRelation: Array,
   entityDetails: Array,
+  industryType: Array,
 });
 
 const rules = {
@@ -41,7 +44,7 @@ const kycForm = reactive({
   last_name: props.quote.last_name,
   company_name: props.quote.company_name,
   legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
-  industry_type: null,
+  industry_type: props.entityDetails?.entity?.industry_type_code ?? null,
   country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
   registered_address: props.entityDetails?.entity?.registered_address ?? null,
   communication_address: props.entityDetails?.entity?.communication_address ?? null,
@@ -125,6 +128,13 @@ const legalStructureOptions = computed(() => {
   }));
 });
 
+const industryTypeOptions = computed(() => {
+  return props.industryType.map(nat => ({
+    value: nat.code,
+    label: nat.text,
+  }));
+});
+
 const placeOfIssuanceOptions = computed(() => {
   return props.issuancePlace.map(nat => ({
     value: nat.code,
@@ -158,15 +168,24 @@ const complianceDisable = reactive({
 });
 
 const complianceRules = computed(() => {
-  return hasRole(props.roles.COMPLIANCE) ||
-    hasRole(props.roles.ComplianceSuperUser)
+  // return hasRole(props.roles.COMPLIANCE) ||
+  //   hasRole(props.roles.ComplianceSuperUser)
+  //   ? [rules.isRequired]
+  //   : [];
+
+  return can(permissionsEnum.AMLDecisionUpdate) ||
+    can(permissionsEnum.AMLDecisionUpdateTrueMatch)
     ? [rules.isRequired]
     : [];
 });
 
 onMounted(() => {
+  // complianceDisable.isDisable = !(
+  //   hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
+  // );
   complianceDisable.isDisable = !(
-    hasRole(props.roles.COMPLIANCE) || hasRole(props.roles.ComplianceSuperUser)
+    can(permissionsEnum.AMLDecisionUpdate) ||
+    can(permissionsEnum.AMLDecisionUpdateTrueMatch)
   );
 });
 </script>
@@ -230,7 +249,7 @@ onMounted(() => {
       <x-select
         v-model="kycForm.industry_type"
         label="Industry type"
-        :options="entitiesOptions"
+        :options="industryTypeOptions"
         placeholder="Industry type"
         :single="true"
         :rules="[isRequired]"
