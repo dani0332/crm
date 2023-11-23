@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
+use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\KycLog;
@@ -107,10 +108,23 @@ class CustomerMemberMigrationJob implements ShouldQueue
                         'relation_code' => $tqrmd->relation_code ?? null,
                         'created_at' => now(),
                         'updated_at' => now(),
+                        'old_primary_member_id' => $tqrmd->id,
                     ]);
                 } else {
                     $this->totalDuplicate++;
                 }
+            }
+        });
+
+        TravelQuote::whereNotNull('primary_member_id')->chunkById(500, function ($travelQuotes) {
+            foreach ($travelQuotes as $travelQuote) {
+                $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\TravelQuote')
+                    ->where(['quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id])->first();
+
+                info('tqr old primary_member_id: '.$travelQuote->primary_member_id.'tqr new primary_member_id:'.$customerMemberKey['id']);
+                $travelQuote->update([
+                    'primary_member_id' => $customerMemberKey['id'],
+                ]);
             }
         });
 
