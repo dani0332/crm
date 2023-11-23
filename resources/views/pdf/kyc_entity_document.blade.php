@@ -151,7 +151,7 @@
                 </tr>
                 <tr>
                     <td>Business Activity:</td>
-                    <td>{{ $data['industry_type_code'] }}</td>
+                    <td>{{ $data['industry_type_text'] }}</td>
                 </tr>
                 <tr>
                     <td>Country of incorporation:</td>

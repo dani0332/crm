@@ -329,6 +329,7 @@ const show = ref(true);
           :issuing-authority="props.lookups.issuing_authority"
           :ubo-relation="props.lookups.ubo_relation"
           :entity-details="props.entityDetails"
+          :industry-type="props.lookups.company_type"
         />
       </x-form>
     </template>

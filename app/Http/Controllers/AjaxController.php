@@ -27,7 +27,6 @@ use App\Models\QuoteType;
 use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
-use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -38,18 +37,11 @@ class AjaxController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    protected $healthQuoteService;
     protected $quoteDocumentService;
-    protected $CRUDService;
-    protected $activityService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService,
-        ActivitiesService $activityService)
+    public function __construct(QuoteDocumentService $quoteDocumentService)
     {
-        $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
-        $this->CRUDService = $CRUDService;
-        $this->activityService = $activityService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -129,7 +121,8 @@ class AjaxController extends Controller
         $paymentLog->save();
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
-        $this->CRUDService->calculateScore($quoteModel);
+
+        app(CRUDService::class)->calculateScore($quoteModel);
 
         return response()->json(['success' => true]);
     }
@@ -293,15 +286,13 @@ class AjaxController extends Controller
     {
         try {
             $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-
             if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
-
             $data = $request->validated();
-            $data['industry_type_code'] = Entity::where('id', $data['industry_type'])->value('industry_type_code');
             $data['corporation_country'] = Nationality::where('id', $data['country_of_corporation'])->value('country_name');
             $data['manager_country'] = Nationality::where('id', $data['manager_nationality'])->value('text');
+            $data['industry_type_text'] = LookupRepository::where('code', $data['industry_type'])->where('key', LookupsEnum::COMPANY_TYPE)->value('text');
             $data['legal_structure_text'] = LookupRepository::where('code', $data['legal_structure'])->where('key', LookupsEnum::LEGAL_STRUCTURE)->value('text');
             $data['issuance_place_text'] = LookupRepository::where('code', $data['place_of_issue'])->where('key', LookupsEnum::ISSUANCE_PLACE)->value('text');
             $data['document_type_text'] = LookupRepository::where('code', $data['id_document_type'])->where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->value('text');
@@ -309,20 +300,18 @@ class AjaxController extends Controller
             $data['manager_position_text'] = LookupRepository::where('code', $data['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
             $data['product_type'] = QuoteType::where('code', ucfirst($quoteType))->value('text');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
-
             $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
-            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
-
+            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
                     'mobile_no' => $data['mobile_number'],
                     'email' => $data['email'],
                     'website' => $data['website'],
                     'legal_structure' => $data['legal_structure'],
+                    'industry_type_code' => $data['industry_type'],
                     'country_of_corporation' => $data['country_of_corporation'],
                     'registered_address' => $data['registered_address'],
                     'communication_address' => $data['communication_address'],

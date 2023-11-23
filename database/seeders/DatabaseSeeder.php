@@ -21,7 +21,6 @@ class DatabaseSeeder extends Seeder
             // CarLostStorageSeeder::class,
             // AddPersonalLobsProducts::class,
             // addCarQuoteNewStatuses::class,
-            // LookupSeeder::class,
             // CommercialKeywordsSeeder::class,
             RuleTypeSeeder::class,
             CommercialMakeModelKeywordsPermissionsSeeder::class,
@@ -35,18 +34,16 @@ class DatabaseSeeder extends Seeder
             addTeamAllocationThresholdViewPermission::class,
             addQuoteAllocationSwitch::class,
             CreateAndAssignSubTeamsToAdvisors::class,
-            MemberRelationsSeeder::class,
             AddApiLogViewToPermssion::class,
             AutofollowupSeeder::class,
             addReassignmentTime::class,
             GenericPermissionSeeder::class,
-            DttOCBNewBusinessSeeder::class,
-            AddRoleForComplianceSuperUser::class,
-            UpdateCustomerToHealthAndTravelMemberDetails::class,
-            UpdateCodeColumnInCustomerTable::class,
             EmbeddedProductRoleAndPermissionSeeder::class,
             addDubaiNowLeadSourceExemptionInAppStorage::class,
-            addAmlDecisionUpdatePermission::class
+            LookupSeeder::class,
+            AddNewDocumentTypesSeeder::class,
+            UpdateCustomerToHealthAndTravelMemberDetails::class,
+            DttOCBNewBusinessSeeder::class,
         ]);
     }
 }
