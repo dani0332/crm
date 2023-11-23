@@ -7,6 +7,12 @@
     <title>KYC Individual</title>
     <link rel="stylesheet" href="{{ public_path('css/font-family-inter.css') }}">
     <style>
+        @font-face {
+            font-family: 'DejaVu Sans';
+            font-style: normal;
+            font-weight: normal;
+        }
+
         body {
             font-family: 'DejaVu Sans', serif !important;
             padding: 0;

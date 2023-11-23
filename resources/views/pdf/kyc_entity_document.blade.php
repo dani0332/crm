@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KYC Entity</title>
     <style>
+        @font-face {
+            font-family: 'DejaVu Sans';
+            font-style: normal;
+            font-weight: normal;
+        }
+
         body {
             font-family: 'DejaVu Sans', serif !important;
         }
@@ -88,8 +94,8 @@
             border-width: 0.1px;
             color: black;
             font-weight: 500;
-            padding: 5px 30px 5px 5px;
-            width: 150px;
+            padding: 3px 20px 3px 5px;
+            width: 160px;
             height: 20px;
         }
 
