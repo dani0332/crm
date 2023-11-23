@@ -16,7 +16,7 @@ class addAmlDecisionUpdatePermission extends Seeder
      */
     public function run(): void
     {
-        //
+        // Need to refactor this code.
         $permission = Permission::findOrCreate(PermissionsEnum::AMLDecisionUpdate, 'web');
         $adminRole = Role::where('name', RolesEnum::Admin)->first();
         $rolePermission = DB::table('role_has_permissions')->where('role_id', $adminRole->id)->where('permission_id', $permission->id)->first();

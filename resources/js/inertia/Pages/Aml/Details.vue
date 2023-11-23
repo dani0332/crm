@@ -37,6 +37,8 @@ const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
+const can = permission => useCan(permission);
+const permissionsEnum = page.props.permissionsEnum;
 
 const loader = reactive({
   table: false,
@@ -68,7 +70,7 @@ const payersTableHeader = [
   { text: 'PAID BY', value: 'paid_by' },
 ];
 
-if (hasRole(rolesEnum.COMPLIANCE)) {
+if (can(permissionsEnum.AMLDecisionUpdate)) {
   tableHeader.push({ text: 'Action', value: 'action' });
 }
 
