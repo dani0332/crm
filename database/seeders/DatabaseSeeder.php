@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
             addDubaiNowLeadSourceExemptionInAppStorage::class,
             LookupSeeder::class,
             AddNewDocumentTypesSeeder::class,
-            UpdateCustomerToHealthAndTravelMemberDetails::class,
+            // UpdateCustomerToHealthAndTravelMemberDetails::class,
         ]);
     }
 }
