@@ -84,7 +84,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                 $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\HealthQuote')
                     ->where(['quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
 
-                if ( $customerMemberKey ) {
+                if ($customerMemberKey) {
                     info('hqr old primary_member_id: '.$healthQuote->primary_member_id.' - hqr new primary_member_id:'.$customerMemberKey['id']);
                     $healthQuote->update([
                         'primary_member_id' => $customerMemberKey['id'],
@@ -145,15 +145,15 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });
 
-//        KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
-//            foreach ($kycLogs as $kycLog) {
-//                if ($kycLog->match_found != null && $kycLog->match_found == 0) {
-//                    $kycLog->update([
-//                        'decision' => 'RYU',
-//                    ]);
-//                }
-//            }
-//        });
+        //        KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
+        //            foreach ($kycLogs as $kycLog) {
+        //                if ($kycLog->match_found != null && $kycLog->match_found == 0) {
+        //                    $kycLog->update([
+        //                        'decision' => 'RYU',
+        //                    ]);
+        //                }
+        //            }
+        //        });
 
         info('total duplicates: '.$this->totalDuplicate);
 
