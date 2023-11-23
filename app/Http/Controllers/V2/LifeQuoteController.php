@@ -2,24 +2,45 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AmlSearchType;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
+use App\Models\Emirate;
+use App\Models\Entity;
+use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\LifeQuoteRepository;
+use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
+use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
+use App\Services\CRUDService;
+use App\Services\LookupService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller
 {
+    protected $crudService;
+    protected $lookupService;
+
+    public function __construct(CRUDService $crudService, LookupService $lookupService)
+    {
+        $this->crudService = $crudService;
+        $this->lookupService = $lookupService;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -75,20 +96,30 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
-
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
-
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
+        $membersDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::LIFE->name);
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
+        $nationalities = NationalityRepository::withActive()->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::LIFE->id(), $quote->id);
-
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $activities = ActivityRepository::where([
             'quote_type_id' => QuoteTypes::LIFE->id(),
             'quote_request_id' => $quote->id,
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
+
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::LIFE->name, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
 
         $activitiesData = [];
         foreach ($activities as $activity) {
@@ -108,8 +139,41 @@ class LifeQuoteController extends Controller
             ];
         }
 
+        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($quote->quote_status_id);
+        $countries = Nationality::all();
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
+        if ($quote->customer_type == AmlSearchType::ENTITY) {
+            $entities = Entity::all();
+            $legalStructure = $this->lookupService->getLegalStructure();
+            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
+            $issuancePlace = $this->lookupService->getIssuancePlaces();
+            $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
+        } else {
+            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
+            $modeOfContact = $this->lookupService->getModeOfContact();
+            $employmentSectors = $this->lookupService->getEmploymentSector();
+            $residentialStatus = $this->lookupService->getResidentialStatus();
+            $companyPosition = $this->lookupService->getCompanyPosition();
+        }
+
+        $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
+
         return inertia('LifeQuote/Show', [
+            'documentTypes' => $documentTypes,
+            'storageUrl' => storageUrl(),
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'modeOfContact' => $modeOfContact,
+            'employmentSectors' => $employmentSectors,
+            'residentialStatus' => $residentialStatus,
+            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::LIFE,
+            'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
             'quote' => $quote,
             'activities' => $activitiesData,
@@ -121,6 +185,14 @@ class LifeQuoteController extends Controller
             'modelType' => QuoteTypes::LIFE,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::LifeManager),
             'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'membersDetails' => $membersDetails,
+            'industryType' => $industryType,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
         ]);
     }
 
