@@ -357,7 +357,7 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-                //                Temporary comment this code, please don't remove it.
+                // Temporary comment this code, please don't remove it.
                 //                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
                 //                    $fullName = explode(' ', \request()->insured_fullname);
                 //                    $insuredFirstName = $fullName[0] ?? '';
