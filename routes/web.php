@@ -100,7 +100,6 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
-   
     Route::get('leadsearch', function () {
         return redirect('home');
     });
