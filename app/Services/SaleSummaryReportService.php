@@ -81,7 +81,7 @@ class SaleSummaryReportService implements ManagementReport
 
         $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES)
             ->get()
-            ->map(fn($item) => ['label' => $item->text, 'value' => $item->id])
+            ->map(fn ($item) => ['label' => $item->text, 'value' => $item->id])
             ->prepend(['label' => 'All', 'value' => ''], 'value')
             ->sortBy('label')
             ->values()
@@ -128,7 +128,6 @@ class SaleSummaryReportService implements ManagementReport
             'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
         ];
     }
-
 
     public function applyFilters($query, $filters)
     {
