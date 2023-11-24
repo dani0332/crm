@@ -7,9 +7,6 @@ use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\KycLog;
-use App\Models\TravelMemberDetail;
-use App\Models\TravelQuote;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -90,19 +87,16 @@ class CustomerMemberMigrationJob implements ShouldQueue
 
         HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
             foreach ($healthQuotes as $healthQuote) {
-                $customerMemberKey = CustomerMembers::
-                    where(['quote_type' => HealthQuote::class, 'quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
+                $customerMemberKey = CustomerMembers::where(['quote_type' => HealthQuote::class, 'quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
 
                 if ($customerMemberKey) {
-                    info('hqr quoteId: ' . $healthQuote->id . ' old primary_member_id: '.$healthQuote->primary_member_id.' - hqr new primary_member_id:'.$customerMemberKey->id);
+                    info('hqr quoteId: '.$healthQuote->id.' old primary_member_id: '.$healthQuote->primary_member_id.' - hqr new primary_member_id:'.$customerMemberKey->id);
                     $healthQuote->update([
                         'primary_member_id' => $customerMemberKey->id,
                     ]);
                 }
             }
         });
-
-
 
         //        KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
         //            foreach ($kycLogs as $kycLog) {

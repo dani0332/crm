@@ -4,12 +4,9 @@ namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
-use App\Models\HealthQuote;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -23,7 +20,6 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 7200;
     public $backoff = 200;
-
     private $totalDuplicate = 0;
 
     /**
@@ -33,7 +29,6 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
     {
         //
     }
-
 
     /**
      * Execute the job.
@@ -88,11 +83,11 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
 
                 //whereHasMorph('quote', '\\App\\Models\\TravelQuote')
                 $customerMemberKey = CustomerMembers::where([
-                    'quote_type' => TravelQuote::class, 'quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id
+                    'quote_type' => TravelQuote::class, 'quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id,
                 ])->first();
 
                 if ($customerMemberKey) {
-                    info('tqr quote id: ' . $travelQuote->id . ' old primary_member_id: '.$travelQuote->primary_member_id.' - tqr new primary_member_id:'.$customerMemberKey->id);
+                    info('tqr quote id: '.$travelQuote->id.' old primary_member_id: '.$travelQuote->primary_member_id.' - tqr new primary_member_id:'.$customerMemberKey->id);
                     $travelQuote->update([
                         'primary_member_id' => $customerMemberKey->id,
                     ]);
