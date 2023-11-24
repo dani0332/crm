@@ -219,7 +219,6 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Construction', 'text' => 'Construction', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'FoodBeverages', 'text' => 'Food & Beverages', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'ServiceProvider', 'text' => 'Service Provider', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'others', 'text' => 'Others', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 
@@ -315,5 +314,7 @@ class LookupSeeder extends Seeder
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-pse'], ['text' => 'Policy sent via email']);
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-psc'], ['text' => 'Policy sent via courier']);
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-cco'], ['text' => 'Collected by customer from office']);
+
+        Lookup::updateOrCreate(['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'entity-company-others'], ['text' => 'Others']);
     }
 }
