@@ -107,6 +107,7 @@ class DttFollowUp extends Command
                     $emailData->id = $item->id;
                     info('carRevivalFollowUpEmailJob: EmailData '.json_encode($emailData));
 
+                    // after two days
                     if ($today->eq($afterTwoDays)) {
 
                         if ($quotePlansCount > 0) {
@@ -119,6 +120,7 @@ class DttFollowUp extends Command
                         $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                         $leads[] = $emailData;
                     }
+                    // after seven days
                     if ($today->eq($afterSevenDays)) {
                         if ($quotePlansCount > 0) {
                             $key = ApplicationStorageEnums::DTT_AFTER_SEVEN_DAYS_FOLLOWUP_WITH_PLAN;
@@ -130,6 +132,7 @@ class DttFollowUp extends Command
                         $emailData->subject = 'Reminder: Purchase Your Motor Policy '.$lead->code;
                         $leads[] = $emailData;
                     }
+                    // after thirteen days
                     if ($today->eq($aftertThirteenDays)) {
                         if ($quotePlansCount > 0) {
                             $key = ApplicationStorageEnums::DTT_AFTER_THIRTEEN_DAYS_FOLLOWUP_WITH_PLAN;
@@ -141,6 +144,7 @@ class DttFollowUp extends Command
                         $emailData->subject = 'Friendly Reminder: Secure Your Motor Policy Today '.$lead->code;
                         $leads[] = $emailData;
                     }
+                    // after twenty days
                     if ($today->eq($afterTwentyDays)) {
                         if ($quotePlansCount > 0) {
                             $key = ApplicationStorageEnums::DTT_AFTER_TWENTY_DAYS_FOLLOWUP_WITH_PLAN;
@@ -152,6 +156,7 @@ class DttFollowUp extends Command
                         $emailData->subject = 'Gentle Reminder: Secure Your Motor Policy Today '.$lead->code;
                         $leads[] = $emailData;
                     }
+                    // after twentyeight days
                     if ($today->eq($afterTwentyeightDays)) {
                         if ($quotePlansCount > 0) {
                             $key = ApplicationStorageEnums::DTT_AFTER_TWENTYEIGHT_DAYS_FOLLOWUP_WITH_PLAN;
@@ -166,7 +171,8 @@ class DttFollowUp extends Command
                 }
             }
 
-            // dd($leads);
+            info('------carRevivalFollowUpEmailJob count --'.count($leads));
+
             $jobs = [];
             foreach ($leads as $item) {
                 $jobs[] = new CarRevivalFollowUpEmailJob($item);
