@@ -144,13 +144,6 @@ class RenewalBatchReportService extends BaseService
         $batches = RenewalBatch::query()
             ->select('name', 'start_date', 'end_date', 'id');
 
-        // if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
-        //     && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
-        //     $batches = $batches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
-        //         $qry->where('advisor_id', $authUserId);
-        //     });
-        // }
-
         $batches = $batches->orderBy('id')
             ->get()
             ->keyBy('name')
@@ -168,10 +161,13 @@ class RenewalBatchReportService extends BaseService
             $isBDM = true;
         }
 
-        $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->select('id')->first()->id;
-        if (in_array($corpTeamId, $authUserTeamsIds)) {
-            $isMCR = true;
-        }
+        $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->select('id')->first();
+        if ( $corpTeamId ) {
+            $corpTeamId = $corpTeamId->id;
+            if (in_array($corpTeamId, $authUserTeamsIds)) {
+                $isMCR = true;
+            }
+        };
 
         $renewalsTeamId = Team::where('name', TeamNameEnum::RENEWALS)->select('id')->first()->id;
         if (in_array($renewalsTeamId, $authUserTeamsIds)) {
@@ -226,12 +222,7 @@ class RenewalBatchReportService extends BaseService
          * get batches
          */
         $renewalBatches = RenewalBatch::select('name');
-        // if ($authUserIsAdvisor && ! $authUserIsManager && ! $authUserIsRenewalsManager
-        //     && ! $authUserIsDeputyManager && ! $authUserIsCEO && ! $authUserIsAccounts) {
-        //     $renewalBatches = $renewalBatches->whereHas('segmentAdvisors', function ($qry) use ($authUserId) {
-        //         $qry->where('advisor_id', $authUserId);
-        //     });
-        // }
+        
         /**
          * Get volume and value segment advisors list
          */
@@ -266,11 +257,14 @@ class RenewalBatchReportService extends BaseService
             $teamUsersIdsString = ! empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
         }
 
-        $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->select('id')->first()->id;
-        if (in_array($corpTeamId, $authUserTeamsIds)) {
-            $teamUsersIds = $this->getUsersByTeamIds([$corpTeamId])->pluck('id')->toArray();
-            $teamUsersIdsString = ! empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
-        }
+        $corpTeamId = Team::where('name', TeamNameEnum::MOTOR_COOPERATE_RENEWALS)->select('id')->first();
+        if ($corpTeamId) {
+            $corpTeamId = $corpTeamId->id;
+            if (in_array($corpTeamId, $authUserTeamsIds)) {
+                $teamUsersIds = $this->getUsersByTeamIds([$corpTeamId])->pluck('id')->toArray();
+                $teamUsersIdsString = ! empty($teamUsersIds) ? implode(',', $teamUsersIds) : '0';
+            }
+        };
 
         $renewalsTeamId = Team::where('name', TeamNameEnum::RENEWALS)->select('id')->first()->id;
         if (in_array($renewalsTeamId, $authUserTeamsIds)) {
