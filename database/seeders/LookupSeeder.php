@@ -314,7 +314,5 @@ class LookupSeeder extends Seeder
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-pse'], ['text' => 'Policy sent via email']);
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-psc'], ['text' => 'Policy sent via courier']);
         Lookup::updateOrCreate(['key' => LookupsEnum::MODE_OF_DELIVERY, 'code' => 'mod-delivery-cco'], ['text' => 'Collected by customer from office']);
-
-        Lookup::updateOrCreate(['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'entity-company-others'], ['text' => 'Others']);
     }
 }
