@@ -50,10 +50,8 @@ class CustomerMemberMigrationJob implements ShouldQueue
                     ->where('code', $hqrmd->code)
                     ->exists();
 
-                info('hqrmd id: '.$hqrmd->id);
-                info('isDuplicate: '.$isDuplicate);
-
                 if (! $isDuplicate) {
+                    info('hqrmd id: '.$hqrmd->id);
                     DB::table('customer_members')->insert([
                         'quote_type' => HealthQuote::class,
                         'quote_id' => $hqrmd->health_quote_request_id ?? null,
@@ -74,6 +72,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                         'old_primary_member_id' => $hqrmd->id,
                     ]);
                 } else {
+                    info('isDuplicate: '.$isDuplicate);
                     $this->totalDuplicate++;
                 }
             }
@@ -102,10 +101,8 @@ class CustomerMemberMigrationJob implements ShouldQueue
                     ->where('code', $tqrmd->code)
                     ->exists();
 
-                info('tqrmd id: '.$tqrmd->id);
-                info('isDuplicate: '.$isDuplicate);
-
                 if (! $isDuplicate) {
+                    info('tqrmd id: '.$tqrmd->id);
                     DB::table('customer_members')->insert([
                         'quote_type' => TravelQuote::class,
                         'quote_id' => $tqrmd->travel_quote_request_id ?? null,
@@ -126,6 +123,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                         'old_primary_member_id' => $tqrmd->id,
                     ]);
                 } else {
+                    info('isDuplicate: '.$isDuplicate);
                     $this->totalDuplicate++;
                 }
             }
