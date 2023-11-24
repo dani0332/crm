@@ -123,8 +123,4 @@ class CustomerMemberMigrationJob implements ShouldQueue
         info('customer member migration job completed');
     }
 
-    public function middleware()
-    {
-        return [(new WithoutOverlapping('CustomerMemberMigrationJob'))->dontRelease()];
-    }
 }
