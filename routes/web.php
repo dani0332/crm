@@ -100,12 +100,6 @@ Route::get('google/callback', 'App\Http\Controllers\GoogleSocialiteController@ha
 
 Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
-    Route::get('migrate-customer-member', function () {
-        if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
-            \App\Jobs\CustomerMemberMigrationJob::dispatch();
-        }
-    });
-
     Route::get('leadsearch', function () {
         return redirect('home');
     });
