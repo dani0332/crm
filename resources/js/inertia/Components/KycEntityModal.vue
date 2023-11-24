@@ -137,28 +137,28 @@ const entitiesOptions = computed(() => {
 });
 
 const legalStructureOptions = computed(() => {
-  return props.legalStructure.map(nat => ({
+  return props.legalStructure?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const industryTypeOptions = computed(() => {
-  return props.industryType.map(nat => ({
+  return props.industryType?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const placeOfIssuanceOptions = computed(() => {
-  return props.issuancePlace.map(nat => ({
+  return props.issuancePlace?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const issuingAuthorityOptions = computed(() => {
-  return props.issuingAuthority.map(nat => ({
+  return props.issuingAuthority?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
