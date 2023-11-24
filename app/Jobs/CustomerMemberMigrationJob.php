@@ -20,8 +20,8 @@ use Illuminate\Support\Facades\DB;
 class CustomerMemberMigrationJob implements ShouldQueue
 {
     public $tries = 1;
-    public $timeout = 10800;
-    public $backoff = 10900;
+    public $timeout = 7200;
+    public $backoff = 10;
     private $totalDuplicate = 0;
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
