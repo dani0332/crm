@@ -6,9 +6,7 @@ use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -22,7 +20,6 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
     public $tries = 2;
     public $timeout = 7200;
     public $backoff = 200;
-
     private $totalDuplicate = 0;
 
     /**
@@ -33,17 +30,12 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
         //
     }
 
-    public function retryUntil()
-    {
-        return Carbon::now()->addHours(2);
-    }
-
     /**
      * Execute the job.
      */
     public function handle(): void
     {
-        TravelMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($travelMemberDetails) {
+        /*TravelMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($travelMemberDetails) {
 
             foreach ($travelMemberDetails as $tqrmd) {
 
@@ -84,20 +76,25 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
                 $tqrmd->update(['is_migrated' => true]);
 
             }
+        });*/
+
+        TravelQuote::whereNotNull('primary_member_id')->orderBy('id', 'desc')->chunkById(1000, function ($travelQuotes) {
+            foreach ($travelQuotes as $travelQuote) {
+
+                //whereHasMorph('quote', '\\App\\Models\\TravelQuote')
+                $customerMemberKey = CustomerMembers::where([
+                    'quote_type' => TravelQuote::class, 'quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id,
+                ])->first();
+
+                if ($customerMemberKey) {
+                    info('tqr quote id: '.$travelQuote->id.' old primary_member_id: '.$travelQuote->primary_member_id.' - tqr new primary_member_id:'.$customerMemberKey->id);
+                    $travelQuote->update([
+                        'primary_member_id' => $customerMemberKey->id,
+                    ]);
+                }
+            }
         });
 
-//        TravelQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($travelQuotes) {
-//            foreach ($travelQuotes as $travelQuote) {
-//                $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\TravelQuote')
-//                    ->where(['quote_id' => $travelQuote->id, 'old_primary_member_id' => $travelQuote->primary_member_id])->first();
-//
-//                if ($customerMemberKey) {
-//                    info('tqr old primary_member_id: '.$travelQuote->primary_member_id.' - tqr new primary_member_id:'.$customerMemberKey['id']);
-//                    $travelQuote->update([
-//                        'primary_member_id' => $customerMemberKey['id'],
-//                    ]);
-//                }
-//            }
-//        });
+        info('travel primary member migration completed');
     }
 }
