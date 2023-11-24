@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
-use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\KycLog;
 use App\Models\TravelMemberDetail;
@@ -40,43 +39,6 @@ class CustomerMemberMigrationJob1 implements ShouldQueue
     public function handle(): void
     {
         info('customer member migration job started');
-
-//        HealthMemberDetail::chunk(1000, function ($healthMemberDetails) {
-//            foreach ($healthMemberDetails as $hqrmd) {
-//                $isDuplicate = DB::table('customer_members')
-//                    ->where('quote_id', $hqrmd->health_quote_request_id)
-//                    ->where('quote_type', HealthQuote::class)
-//                    ->where('customer_entity_id', $hqrmd->customer_id)
-//                    ->where('code', $hqrmd->code)
-//                    ->exists();
-//
-//                if (! $isDuplicate) {
-//                    info('hqrmd id: '.$hqrmd->id);
-//                    DB::table('customer_members')->insert([
-//                        'quote_type' => HealthQuote::class,
-//                        'quote_id' => $hqrmd->health_quote_request_id ?? null,
-//                        'customer_entity_id' => $hqrmd->customer_id ?? null,
-//                        'customer_type' => CustomerTypeEnum::Individual,
-//                        'code' => $hqrmd->code ?? null,
-//                        'first_name' => $hqrmd->first_name ?? null,
-//                        'last_name' => $hqrmd->last_name ?? null,
-//                        'gender' => $hqrmd->gender ?? null,
-//                        'dob' => $hqrmd->dob ?? null,
-//                        'nationality_id' => $hqrmd->nationality_id ?? null,
-//                        'member_category_id' => $hqrmd->member_category_id ?? null,
-//                        'salary_band_id' => $hqrmd->salary_band_id ?? null,
-//                        'emirate_of_your_visa_id' => $hqrmd->emirate_of_your_visa_id ?? null,
-//                        'relation_code' => $hqrmd->relation_code ?? null,
-//                        'created_at' => now(),
-//                        'updated_at' => now(),
-//                        'old_primary_member_id' => $hqrmd->id,
-//                    ]);
-//                } else {
-//                    info('isDuplicate: '.$isDuplicate);
-//                    $this->totalDuplicate++;
-//                }
-//            }
-//        });
 
         HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
             foreach ($healthQuotes as $healthQuote) {
