@@ -78,7 +78,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
 //            }
 //        });
 
-        HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
+        HealthQuote::whereNotNull('primary_member_id')->where('primary_member_id', '>', 3050)->chunkById(1000, function ($healthQuotes) {
             foreach ($healthQuotes as $healthQuote) {
                 $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\HealthQuote')
                     ->where(['quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
