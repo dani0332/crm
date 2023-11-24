@@ -66,7 +66,22 @@ const kycForm = reactive({
   dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
 
-const onKycSubmit = () => {
+const isNationalityEmpty = ref(false);
+const isPositionEmpty = ref(false);
+const isIssuingAuthorityEmpty = ref(false);
+
+const onKycSubmit = isValid => {
+  if (!kycForm.manager_nationality) isNationalityEmpty.value = true;
+  else isNationalityEmpty.value = false;
+
+  if (!kycForm.manager_position) isPositionEmpty.value = true;
+  else isPositionEmpty.value = false;
+
+  if (!kycForm.issuing_authority) isIssuingAuthorityEmpty.value = true;
+  else isIssuingAuthorityEmpty.value = false;
+
+  if(!isValid) return;
+
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
     axios
@@ -343,6 +358,7 @@ onMounted(() => {
         v-model="kycForm.id_number"
         label="Id number"
         placeholder="Id number"
+        :rules="[isRequired]"
       />
 
       <div>
@@ -421,7 +437,7 @@ onMounted(() => {
           :options="issuingAuthorityOptions"
           placeholder="ID issuing authority"
           :single="true"
-          :rules="[isRequired]"
+          :hasError="isIssuingAuthorityEmpty"
         />
       </div>
     </div>
@@ -446,7 +462,7 @@ onMounted(() => {
         :options="nationalityOptions"
         placeholder="Nationality"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isNationalityEmpty"
       />
 
       <DatePicker
@@ -461,7 +477,7 @@ onMounted(() => {
         :options="uboRelationOptions"
         placeholder="Position"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isPositionEmpty"
       />
     </div>
 
