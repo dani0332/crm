@@ -64,12 +64,6 @@ class DttFollowUp extends Command
             $unreplied = DttRevival::where([
                 ['reply_received', 0],
                 ['is_assigned', 0],
-            ])->whereIn('uuid', [
-                'L5NV9VCV',
-                'RPLMB24F',
-                'S2JGMPWH',
-                '77BFX6KQ',
-                '6PV4BNVM',
             ])->get();
 
             foreach ($unreplied as $item) {
