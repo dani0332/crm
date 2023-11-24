@@ -17,19 +17,20 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerMemberMigrationJob implements ShouldQueue
 {
-    public $tries = 2;
+    public $tries = 1;
     public $timeout = 7200;
     public $backoff = 200;
     private $totalDuplicate = 0;
+    private $quoteIdStartFrom = null;
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    public function __construct()
+    public function __construct($quoteIdStartFrom)
     {
-        //
+        $this->quoteIdStartFrom = $quoteIdStartFrom;
     }
 
     /**
@@ -38,6 +39,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
     public function handle(): void
     {
         info('customer member migration job started');
+
 
         /*HealthMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($healthMemberDetails) {
 
@@ -85,7 +87,15 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });*/
 
-        HealthQuote::whereNotNull('primary_member_id')->orderBy('id', 'desc')->chunkById(1000, function ($healthQuotes) {
+
+
+        $query = HealthQuote::whereNotNull('primary_member_id')->orderBy('id', 'desc');
+
+        if($this->quoteIdStartFrom) {
+            $query->where('id', '>', $this->quoteIdStartFrom);
+        }
+
+        $query->chunkById(1000, function ($healthQuotes) {
             foreach ($healthQuotes as $healthQuote) {
                 $customerMemberKey = CustomerMembers::where(['quote_type' => HealthQuote::class, 'quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
 

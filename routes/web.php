@@ -102,7 +102,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('migrate-customer-member', function () {
         if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
-            \App\Jobs\CustomerMemberMigrationJob::dispatch();
+            $quoteIdStartFrom = request()->start_from ?? 0;
+            \App\Jobs\CustomerMemberMigrationJob::dispatch($quoteIdStartFrom);
         }
     });
 
