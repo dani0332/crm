@@ -20,8 +20,8 @@ use Illuminate\Support\Facades\DB;
 class CustomerMemberMigrationJob implements ShouldQueue
 {
     public $tries = 1;
-    public $timeout = 2000;
-    public $backoff = 4000;
+    public $timeout = 10800;
+    public $backoff = 10900;
     private $totalDuplicate = 0;
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -41,45 +41,44 @@ class CustomerMemberMigrationJob implements ShouldQueue
     {
         info('customer member migration job started');
 
-        HealthMemberDetail::chunk(1000, function ($healthMemberDetails) {
-            foreach ($healthMemberDetails as $hqrmd) {
-                $isDuplicate = DB::table('customer_members')
-                    ->where('quote_id', $hqrmd->health_quote_request_id)
-                    ->where('quote_type', HealthQuote::class)
-                    ->where('customer_entity_id', $hqrmd->customer_id)
-                    ->where('code', $hqrmd->code)
-                    ->exists();
+//        HealthMemberDetail::chunk(1000, function ($healthMemberDetails) {
+//            foreach ($healthMemberDetails as $hqrmd) {
+//                $isDuplicate = DB::table('customer_members')
+//                    ->where('quote_id', $hqrmd->health_quote_request_id)
+//                    ->where('quote_type', HealthQuote::class)
+//                    ->where('customer_entity_id', $hqrmd->customer_id)
+//                    ->where('code', $hqrmd->code)
+//                    ->exists();
+//
+//                if (! $isDuplicate) {
+//                    info('hqrmd id: '.$hqrmd->id);
+//                    DB::table('customer_members')->insert([
+//                        'quote_type' => HealthQuote::class,
+//                        'quote_id' => $hqrmd->health_quote_request_id ?? null,
+//                        'customer_entity_id' => $hqrmd->customer_id ?? null,
+//                        'customer_type' => CustomerTypeEnum::Individual,
+//                        'code' => $hqrmd->code ?? null,
+//                        'first_name' => $hqrmd->first_name ?? null,
+//                        'last_name' => $hqrmd->last_name ?? null,
+//                        'gender' => $hqrmd->gender ?? null,
+//                        'dob' => $hqrmd->dob ?? null,
+//                        'nationality_id' => $hqrmd->nationality_id ?? null,
+//                        'member_category_id' => $hqrmd->member_category_id ?? null,
+//                        'salary_band_id' => $hqrmd->salary_band_id ?? null,
+//                        'emirate_of_your_visa_id' => $hqrmd->emirate_of_your_visa_id ?? null,
+//                        'relation_code' => $hqrmd->relation_code ?? null,
+//                        'created_at' => now(),
+//                        'updated_at' => now(),
+//                        'old_primary_member_id' => $hqrmd->id,
+//                    ]);
+//                } else {
+//                    info('isDuplicate: '.$isDuplicate);
+//                    $this->totalDuplicate++;
+//                }
+//            }
+//        });
 
-                info('hqrmd id: '.$hqrmd->id);
-                info('isDuplicate: '.$isDuplicate);
-
-                if (! $isDuplicate) {
-                    DB::table('customer_members')->insert([
-                        'quote_type' => HealthQuote::class,
-                        'quote_id' => $hqrmd->health_quote_request_id ?? null,
-                        'customer_entity_id' => $hqrmd->customer_id ?? null,
-                        'customer_type' => CustomerTypeEnum::Individual,
-                        'code' => $hqrmd->code ?? null,
-                        'first_name' => $hqrmd->first_name ?? null,
-                        'last_name' => $hqrmd->last_name ?? null,
-                        'gender' => $hqrmd->gender ?? null,
-                        'dob' => $hqrmd->dob ?? null,
-                        'nationality_id' => $hqrmd->nationality_id ?? null,
-                        'member_category_id' => $hqrmd->member_category_id ?? null,
-                        'salary_band_id' => $hqrmd->salary_band_id ?? null,
-                        'emirate_of_your_visa_id' => $hqrmd->emirate_of_your_visa_id ?? null,
-                        'relation_code' => $hqrmd->relation_code ?? null,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                        'old_primary_member_id' => $hqrmd->id,
-                    ]);
-                } else {
-                    $this->totalDuplicate++;
-                }
-            }
-        });
-
-        HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
+        HealthQuote::whereNotNull('primary_member_id')->where('primary_member_id', '>', 3050)->chunkById(1000, function ($healthQuotes) {
             foreach ($healthQuotes as $healthQuote) {
                 $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\HealthQuote')
                     ->where(['quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
@@ -102,10 +101,8 @@ class CustomerMemberMigrationJob implements ShouldQueue
                     ->where('code', $tqrmd->code)
                     ->exists();
 
-                info('tqrmd id: '.$tqrmd->id);
-                info('isDuplicate: '.$isDuplicate);
-
                 if (! $isDuplicate) {
+                    info('tqrmd id: '.$tqrmd->id);
                     DB::table('customer_members')->insert([
                         'quote_type' => TravelQuote::class,
                         'quote_id' => $tqrmd->travel_quote_request_id ?? null,
@@ -126,6 +123,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
                         'old_primary_member_id' => $tqrmd->id,
                     ]);
                 } else {
+                    info('isDuplicate: '.$isDuplicate);
                     $this->totalDuplicate++;
                 }
             }
