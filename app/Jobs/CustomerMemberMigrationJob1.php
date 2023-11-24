@@ -5,7 +5,6 @@ namespace App\Jobs;
 use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
-use App\Models\KycLog;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use Illuminate\Bus\Queueable;
@@ -19,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class CustomerMemberMigrationJob1 implements ShouldQueue
 {
     public $tries = 1;
-    public $timeout = 10800;
+    public $timeout = 9800;
     public $backoff = 10900;
     private $totalDuplicate = 0;
 
@@ -104,16 +103,6 @@ class CustomerMemberMigrationJob1 implements ShouldQueue
                 }
             }
         });
-
-        //        KycLog::withTrashed()->chunkById(100, function ($kycLogs) {
-        //            foreach ($kycLogs as $kycLog) {
-        //                if ($kycLog->match_found != null && $kycLog->match_found == 0) {
-        //                    $kycLog->update([
-        //                        'decision' => 'RYU',
-        //                    ]);
-        //                }
-        //            }
-        //        });
 
         info('total duplicates: '.$this->totalDuplicate);
 
