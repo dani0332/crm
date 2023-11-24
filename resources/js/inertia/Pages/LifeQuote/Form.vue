@@ -7,7 +7,7 @@ const props = defineProps({
   currency: Object,
   purposeOfInsurance: Object,
   maritalStatus: Object,
-  childern: Object,
+    children: Object,
   typeOfInsurance: Object,
   numberOfYears: Object,
   flash: Object,
@@ -189,7 +189,7 @@ function onSubmit(isValid) {
           <x-select
             v-model="quoteForm.children_id"
             :options="
-              childern.map(item => ({
+              children.map(item => ({
                 value: item.id,
                 label: item.text,
               }))

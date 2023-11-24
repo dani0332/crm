@@ -344,9 +344,9 @@ function getUniqueCode($limit)
 {
     return strtoupper(substr(base_convert(sha1(uniqid(mt_rand())), 16, 36), 0, $limit));
 }
-function get_dob_date_format()
+function dateFormat($date): string
 {
-    return 'Y-m-d';
+    return date(env('DATE_DISPLAY_FORMAT'), strtotime($date));
 }
 
 /**
@@ -436,6 +436,7 @@ if (! function_exists('newUi')) {
             quoteTypeCode::Cycle,
             quoteTypeCode::Bike,
             quoteTypeCode::Yacht,
+            quoteTypeCode::Aml,
         ];
     }
 }
@@ -553,5 +554,18 @@ if (! function_exists('formatLandlineDisplay')) {
         $landline = removeCountryCode($landline);
 
         return preg_replace('/^(\d{2})(\d{3})(\d{4})$/', '$1 $2 $3', $landline);
+    }
+}
+
+if (! function_exists('getRepositoryObject')) {
+    function getRepositoryObject($quoteType)
+    {
+        if (checkPersonalQuotes($quoteType)) {
+            $quoteType = QuoteTypes::PERSONAL->value;
+        }
+
+        $quoteType = ucfirst($quoteType);
+
+        return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
     }
 }
