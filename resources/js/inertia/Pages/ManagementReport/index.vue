@@ -112,9 +112,9 @@ const groupBy = reactive([
 ]);
 
 const umtGroup = reactive([
-  { label: 'UMT Source', value: 'UMT Source' },
-  { label: 'UMT Medium', value: 'UMT Medium' },
-  { label: 'UMT Campaign', value: 'UMT Campaign' },
+  { label: 'UTM Source', value: 'UTM Source' },
+  { label: 'UTM Medium', value: 'UTM Medium' },
+  { label: 'UTM Campaign', value: 'UTM Campaign' },
 ]);
 
 const reportTypes = ref([

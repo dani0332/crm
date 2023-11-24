@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\GenericRequestEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
-use App\Enums\TransactionTypeEnum;
+use App\Enums\ManagementReportTypeEnum;
 use App\Models\LeadSource;
+use App\Models\Lookup;
 use App\Models\PersonalQuote;
 use App\Models\Team;
 use App\Strategies\ManagementReport;
@@ -41,10 +43,9 @@ class SaleSummaryReportService implements ManagementReport
             ->leftJoin('send_updates', 'personal_quotes.uuid', '=', 'send_updates.quote_uuid')
             ->leftJoin('lookups', 'send_updates.type_id', '=', 'lookups.id')
             ->leftJoin('users', 'personal_quotes.advisor_id', '=', 'users.id')
-            ->leftJoin('user_team', 'users.id', '=', 'user_teams.user_id')
-            ->leftJoin('teams', 'user_teams.team_id', '=', 'teams.id')
+            ->leftJoin('user_team', 'users.id', '=', 'user_team.user_id')
+            ->leftJoin('teams', 'user_team.team_id', '=', 'teams.id')
             ->join('quote_type', 'personal_quotes.quote_type_id', '=', 'quote_type.id')
-
             ->join('payments', 'personal_quotes.code', '=', 'payments.code')
             ->select(
                 DB::raw('SUM(CASE WHEN COALESCE(policy_issuance_date, policy_number) IS NOT NULL THEN 1 ELSE 0 END) as total_policies'),
@@ -78,10 +79,13 @@ class SaleSummaryReportService implements ManagementReport
             $reportCategories[] = ['label' => $value, 'value' => $value];
         }
 
-        $transactionTypes = [];
-        foreach (TransactionTypeEnum::asArray() as $value) {
-            $transactionTypes[] = ['label' => $value, 'value' => $value];
-        }
+        $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES)
+            ->get()
+            ->map(fn($item) => ['label' => $item->text, 'value' => $item->id])
+            ->prepend(['label' => 'All', 'value' => ''], 'value')
+            ->sortBy('label')
+            ->values()
+            ->toArray();
 
         $teams = Team::whereIn('id', $teamIds->pluck('id'))
             ->select('name', 'id')
@@ -113,53 +117,59 @@ class SaleSummaryReportService implements ManagementReport
     public function getDefaultFilters()
     {
         $dateFormat = config('constants.DATE_FORMAT_ONLY');
-        $reportCategory = ManagementReportCategoriesEnum::SALE_SUMMARY;
-        $policyIssuanceDate = [
+        $defaultDate = [
             Carbon::parse(now())->startOfDay()->format($dateFormat),
             Carbon::parse(now())->endOfDay()->format($dateFormat),
         ];
 
         return [
-            'policyIssuanceDate' => $policyIssuanceDate,
-            'reportCategory' => $reportCategory,
+            'policyIssuanceDate' => $defaultDate,
+            'reportCategory' => ManagementReportCategoriesEnum::SALE_SUMMARY,
+            'reportType' => ManagementReportTypeEnum::ISSUED_POLICIES,
         ];
     }
 
+
     public function applyFilters($query, $filters)
     {
-        if (isset($filters['policyIssuanceDate'])) {
-            $query->whereBetween('policy_issuance_date', $filters['policyIssuanceDate']);
-        }
-        if (isset($filters['paymentDueDate'])) {
-            $query->whereBetween('payments.payment_due_date', $filters['paymentDueDate']);
-        }
-        if (isset($filters['policyExpiredDate'])) {
-            $query->whereBetween('policy_expired_date', $filters['policyExpiredDate']);
-        }
-        if (isset($filters['createdAt'])) {
-            $query->whereBetween('personal_quotes.created_at', $filters['createdAt']);
-        }
-        if (isset($filters['transactionType'])) {
-            $query->where('personal_quotes.transaction_type_id', $filters['transactionType']);
-        }
-        if (isset($filters['teams'])) {
-            $query->whereIn('team_id', $filters['teams']);
-        }
-        if (isset($filters['subTeams'])) {
-            $query->whereIn('sub_team_id', $filters['subTeams']);
-        }
-        if (isset($filters['leadSource'])) {
-            $query->whereIn('lead_source', $filters['leadSource']);
-        }
-        if (isset($filters['includeCancelPolicies'])) {
-            $query->where('is_cancelled', $filters['includeCancelPolicies']);
-        }
-        if (isset($filters['groupBy'])) {
-            $query->groupBy($filters['groupBy']);
-        }
-        if (isset($filters['utmGroupBy'])) {
-            $query->groupBy($filters['utmGroupBy']);
-        }
+        $dateFilter = function ($fieldName, $filterKey) use ($query, $filters) {
+            $dateRange = $filters[$filterKey] ?? [
+                Carbon::parse(now())->startOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
+                Carbon::parse(now())->endOfDay()->format(config('constants.DATE_FORMAT_ONLY')),
+            ];
+            if (isset($filters[$filterKey])) {
+                $query->whereBetween($fieldName, $dateRange);
+            }
+        };
 
+        switch ($filters['reportCategory']) {
+            case ManagementReportCategoriesEnum::SALE_SUMMARY:
+            case ManagementReportCategoriesEnum::SALE_DETAIL:
+                if ($filters['reportType'] == ManagementReportTypeEnum::ISSUED_POLICIES) {
+                    $dateFilter('personal_quotes.policy_issuance_date', 'policyIssuanceDate');
+                } elseif ($filters['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                    $dateFilter('payments.payment_due_date', 'paymentDueDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::ENDING_POLICIES:
+                if ($filters['reportType'] == ManagementReportTypeEnum::EXPIRING_POLICIES) {
+                    $dateFilter('payments.policy_expiry_date', 'policyExpiredDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::TRANSACTION:
+                if ($filters['reportType'] == ManagementReportTypeEnum::TRANSACTION_PAYMENTS) {
+                    $dateFilter('payments.payment_due_date', 'paymentDueDate');
+                }
+                break;
+
+            case ManagementReportCategoriesEnum::ACTIVE_POLICIES:
+                if ($filters['reportType'] == ManagementReportTypeEnum::ACTIVE_POLICIES) {
+                    $dateFilter('personal_quotes.created_at', 'createdAt');
+                }
+                break;
+        }
     }
+
 }
