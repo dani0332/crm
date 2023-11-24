@@ -42,7 +42,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
     {
         info('customer member migration job started');
 
-        HealthMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($healthMemberDetails) {
+        /*HealthMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($healthMemberDetails) {
 
             foreach ($healthMemberDetails as $hqrmd) {
 
@@ -86,21 +86,21 @@ class CustomerMemberMigrationJob implements ShouldQueue
                     'is_migrated' => true,
                 ]);
             }
-        });
+        });*/
 
-//        HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
-//            foreach ($healthQuotes as $healthQuote) {
-//                $customerMemberKey = CustomerMembers::whereHasMorph('quote', '\\App\\Models\\HealthQuote')
-//                    ->where(['quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
-//
-//                if ($customerMemberKey) {
-//                    info('hqr old primary_member_id: '.$healthQuote->primary_member_id.' - hqr new primary_member_id:'.$customerMemberKey['id']);
-//                    $healthQuote->update([
-//                        'primary_member_id' => $customerMemberKey['id'],
-//                    ]);
-//                }
-//            }
-//        });
+        HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
+            foreach ($healthQuotes as $healthQuote) {
+                $customerMemberKey = CustomerMembers::
+                    where(['quote_type' => HealthQuote::class, 'quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
+
+                if ($customerMemberKey) {
+                    info('hqr quoteId: ' . $healthQuote->id . ' old primary_member_id: '.$healthQuote->primary_member_id.' - hqr new primary_member_id:'.$customerMemberKey->id);
+                    $healthQuote->update([
+                        'primary_member_id' => $customerMemberKey->id,
+                    ]);
+                }
+            }
+        });
 
 
 

@@ -33,7 +33,7 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
     {
         //
     }
-    
+
 
     /**
      * Execute the job.
