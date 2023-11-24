@@ -42,6 +42,11 @@ const UBORelationOptions = computed(() => {
     }));
 });
 
+const uboMembers = ref(props.uboDetails);
+const computedUboMembers = computed(() => {
+    return uboMembers.value.filter(x => !x.is_third_party_payer);
+});
+
 const isLoading = ref(false);
 const UBOActionEdit = ref(false);
 const UBODetailsTable = reactive({
@@ -176,7 +181,7 @@ const UBODeleteConfirmed = () => {
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
                 UBO Details
-                <x-tag size="sm">{{ UBOsDetails.length || 0 }}</x-tag>
+                <x-tag size="sm">{{ computedUboMembers.length || 0 }}</x-tag>
             </h3>
             <x-button
                 v-if="page.props.quote?.quote_request_entity_mapping?.entity_id ?? page.props.quote.entity_id"
@@ -188,7 +193,7 @@ const UBODeleteConfirmed = () => {
         <DataTable
             table-class-name="tablefixed compact"
             :headers="UBODetailsTable.columns"
-            :items="UBOsDetails || []"
+            :items="computedUboMembers || []"
             show-index
             border-cell
             hide-rows-per-page
