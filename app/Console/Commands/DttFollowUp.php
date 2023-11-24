@@ -193,7 +193,7 @@ class DttFollowUp extends Command
                 info('------No lead Found------');
             }
         } catch (\Exception $exception) {
-            info('DTT Exception : '.$exception->getMessage());
+            info('DTT followup email Exception : '.$exception->getMessage());
         }
     }
 }
