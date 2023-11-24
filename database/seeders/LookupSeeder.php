@@ -219,7 +219,6 @@ class LookupSeeder extends Seeder
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'Construction', 'text' => 'Construction', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'FoodBeverages', 'text' => 'Food & Beverages', 'created_at' => now(), 'updated_at' => now()],
                 ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'ServiceProvider', 'text' => 'Service Provider', 'created_at' => now(), 'updated_at' => now()],
-                ['key' => LookupsEnum::COMPANY_TYPE, 'code' => 'others', 'text' => 'Others', 'created_at' => now(), 'updated_at' => now()],
             ]);
         }
 

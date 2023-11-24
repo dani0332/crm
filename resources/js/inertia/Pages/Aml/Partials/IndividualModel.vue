@@ -1334,6 +1334,7 @@ onMounted(() => {
           :issuing-authority="props.lookups.issuing_authority"
           :entity-details="props.entityDetails"
           :uboRelation="uboRelations"
+          :industry-type="props.industryType"
         />
 
         <div class="text-right space-x-4 mt-8">
