@@ -17,7 +17,7 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public $tries = 2;
+    public $tries = 1;
     public $timeout = 7200;
     public $backoff = 200;
     private $totalDuplicate = 0;
@@ -35,9 +35,11 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
      */
     public function handle(): void
     {
-        /*TravelMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($travelMemberDetails) {
+        TravelMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($travelMemberDetails) {
 
             foreach ($travelMemberDetails as $tqrmd) {
+
+                info('tra migration: travel quoteId: ' . $tqrmd->travel_quote_request_id . ' customerId: ' . $tqrmd->customer_id . ' code: ' . $tqrmd->code);
 
                 $isDuplicate = DB::table('customer_members')
                     ->where('quote_id', $tqrmd->travel_quote_request_id)
@@ -47,7 +49,7 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
                     ->exists();
 
                 if (! $isDuplicate) {
-                    info('tqrmd id: '.$tqrmd->id);
+                    info('tra migration: not duplicate creating record for tqrmd id: '.$tqrmd->id);
                     DB::table('customer_members')->insert([
                         'quote_type' => TravelQuote::class,
                         'quote_id' => $tqrmd->travel_quote_request_id ?? null,
@@ -69,16 +71,19 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
                     ]);
 
                 } else {
-                    info('isDuplicate: '.$isDuplicate);
+                    info('tra migration: duplicate found isDuplicate: '.$isDuplicate);
                     $this->totalDuplicate++;
                 }
 
                 $tqrmd->update(['is_migrated' => true]);
 
             }
-        });*/
+        });
 
-        TravelQuote::whereNotNull('primary_member_id')->orderBy('id', 'desc')->chunkById(1000, function ($travelQuotes) {
+        info('total Duplicate found: '.$this->totalDuplicate);
+
+        TravelQuote::whereNotNull('primary_member_id')->orderBy('id', 'asc')->where('id', '>', 83533)->chunkById(1000, function ($travelQuotes) {
+
             foreach ($travelQuotes as $travelQuote) {
 
                 //whereHasMorph('quote', '\\App\\Models\\TravelQuote')
