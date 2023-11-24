@@ -2,11 +2,13 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\CustomerTypeEnum;
 use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use App\Models\TravelMemberDetail;
 use App\Models\TravelQuote;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class runmigration extends Command
 {
@@ -75,7 +77,6 @@ class runmigration extends Command
                     ]);
                 } else {
                     info('isDuplicate: '.$isDuplicate);
-                    $this->totalDuplicate++;
                 }
             }
         });
@@ -103,8 +104,6 @@ class runmigration extends Command
         //                }
         //            }
         //        });
-
-        info('total duplicates: '.$this->totalDuplicate);
 
         info('customer member migration job completed');
     }
