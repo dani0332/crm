@@ -136,8 +136,6 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             $emailData->advisorName = 'Alfred';
             $emailData->advisorEmail = 'askalfred@insurancemarket.ae';
 
-            $emailData->customerEmail = 'nouman.hussain@insurancemarket.ae';
-
             info('CarRevivalLeadsCreationJob: EmailData '.json_encode($emailData));
 
             $response = $this->sendEmailCustomerService->sendDttEmail($emailData, 'car-quote-one-click-buy-batch');
