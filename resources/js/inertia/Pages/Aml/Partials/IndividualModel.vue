@@ -1135,6 +1135,7 @@ onMounted(() => {
           :issuing-authority="props.lookups.issuing_authority"
           :entity-details="props.entityDetails"
           :uboRelation="uboRelations"
+          :industry-type="props.industryType"
         />
       </x-form>
     </x-modal>
