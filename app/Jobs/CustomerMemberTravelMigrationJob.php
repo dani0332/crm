@@ -36,9 +36,6 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
     public function handle(): void
     {
 
-        if(isset(request()->travel_member) && request()->travel_member == 1)
-        {
-
             TravelMemberDetail::where('is_migrated', false)->orderBy('id', 'desc')->chunk(1000, function ($travelMemberDetails) {
 
                 foreach ($travelMemberDetails as $tqrmd) {
@@ -85,11 +82,8 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
             });
 
             info('total Duplicate found: '.$this->totalDuplicate);
-        }
 
 
-        if(isset(request()->primary_member) && request()->primary_member == 1)
-        {
             TravelQuote::whereNotNull('primary_member_id')->orderBy('id', 'asc')->where('id', '>', 113754)->chunkById(1000, function ($travelQuotes) {
 
                 foreach ($travelQuotes as $travelQuote) {
@@ -107,9 +101,6 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
                     }
                 }
             });
-
-
-        }
 
 
         info('travel primary member migration completed');
