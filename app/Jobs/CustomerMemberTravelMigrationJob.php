@@ -84,7 +84,7 @@ class CustomerMemberTravelMigrationJob implements ShouldQueue
             info('total Duplicate found: '.$this->totalDuplicate);
 
 
-            TravelQuote::whereNotNull('primary_member_id')->orderBy('id', 'asc')->where('id', '>', 113754)->chunkById(1000, function ($travelQuotes) {
+            TravelQuote::whereNotNull('primary_member_id')->orderBy('id', 'asc')->where('id', '>', 118839)->chunkById(1000, function ($travelQuotes) {
 
                 foreach ($travelQuotes as $travelQuote) {
 
