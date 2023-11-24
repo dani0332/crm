@@ -85,7 +85,7 @@ class CustomerMemberMigrationJob implements ShouldQueue
             }
         });*/
 
-        HealthQuote::whereNotNull('primary_member_id')->chunkById(1000, function ($healthQuotes) {
+        HealthQuote::whereNotNull('primary_member_id')->orderBy('id', 'desc')->chunkById(1000, function ($healthQuotes) {
             foreach ($healthQuotes as $healthQuote) {
                 $customerMemberKey = CustomerMembers::where(['quote_type' => HealthQuote::class, 'quote_id' => $healthQuote->id, 'old_primary_member_id' => $healthQuote->primary_member_id])->first();
 
