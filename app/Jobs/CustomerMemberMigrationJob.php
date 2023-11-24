@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class CustomerMemberMigrationJob implements ShouldQueue
 {
     public $tries = 1;
-    public $timeout = 7200;
+    public $timeout = 14400;
     public $backoff = 200;
     private $totalDuplicate = 0;
     private $quoteIdStartFrom = null;
