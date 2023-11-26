@@ -136,14 +136,15 @@ class PaymentSplitsRepository
             foreach ($paymentSplits as $paymentSplit) {
                 if ($paymentSplit->payment_status_id == PaymentStatusEnum::PAID) {
                     $paymentPaidSerialNo[] = $paymentSplit->sr_no;
+
                     continue;
                 }
                 //dd($paymentSplit->documents()->count());
 
-                if ( ($request->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $request->payment_no)                    
-                {
+                if (($request->payment_no < $paymentSplits->count()) && $paymentSplit->sr_no > $request->payment_no) {
                     $paymentSplit->documents()->delete();
                     $paymentSplit->delete();
+
                     continue;
                 }
                 /*

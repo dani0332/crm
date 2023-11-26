@@ -23,7 +23,7 @@ class Payment extends Model implements Auditable
     protected $keyType = 'string';
     protected $fillable = ['code', 'payment_status_id', 'plan_id', 'captured_amount',
         'captured_at', 'authorized_at', 'payment_methods_code', 'insurance_provider_id', 'created_by',
-        'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date',
+        'updated_by', 'is_approved', 'reference', 'collection_type', 'payment_link', 'total_payments', 'credit_approval', 'frequency', 'discount_type', 'discount_reason', 'custom_reason', 'notes', 'total_price', 'collection_date', 'payer_name', 'paid_by',
         'discount_value', 'total_amount', 'payment_allocation_status', 'decline_reason_id', 'decline_custom_reason',
     ];
     protected $forceDeleting = true;
@@ -119,6 +119,15 @@ class Payment extends Model implements Auditable
     public function paymentStatusLogs()
     {
         return $this->hasMany(PaymentStatusLog::class, 'payment_code', 'code');
+    }
+
+    public function getCustomerPaymentInstrument()
+    {
+        return $this->belongsTo(
+            CustomerPaymentInstrument::class,
+            'customer_payment_instrument_id',
+            'id'
+        );
     }
 
     public function getCreatedAtAttribute($date)

@@ -48,7 +48,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                     if ($childPayment->payment_status_id == 10) { //if paid
                         $collectionAmount = $childPayment->captured_amount;
                     }
-                    
+
                     PaymentSplits::create([
                         'sr_no' => $payment_sr_no,
                         'code' => $code,

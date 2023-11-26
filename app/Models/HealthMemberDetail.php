@@ -30,7 +30,7 @@ class HealthMemberDetail extends Model
 
     public function nationality()
     {
-        return $this->hasOne(Nationality::class, 'id', 'nationality_id');
+        return $this->belongsTo(Nationality::class, 'nationality_id');
     }
 
     public function salaryBand()
@@ -38,13 +38,19 @@ class HealthMemberDetail extends Model
         return $this->belongsTo(SalaryBand::class, 'salary_band_id', 'id');
     }
 
+    public function relation()
+    {
+        return $this->belongsTo(Lookup::class, 'relation_code', 'code');
+    }
+
     public function getDobAttribute($value)
     {
-        return Carbon::parse($value)->format('Y-m-d');
+        return ! empty($value) ? Carbon::parse($value)->format('Y-m-d') : $value;
     }
 
     public function documents()
     {
         return $this->hasMany(QuoteDocument::class, 'member_detail_id');
     }
+
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\TiersEnum;
 use App\Models\ApplicationStorage;
@@ -9,6 +10,7 @@ use App\Models\CarMake;
 use App\Models\CarModel;
 use App\Models\CarModelDetail;
 use App\Models\InsuranceProvider;
+use App\Models\Lookup;
 use App\Models\LostReasons;
 use App\Models\MemberCategory;
 use App\Models\Nationality;
@@ -136,5 +138,50 @@ class LookupService extends BaseService
     public function getNationalities()
     {
         return Nationality::select('id', 'text')->where('is_active', true)->orderBy('text')->get();
+    }
+
+    public function getLegalStructure()
+    {
+        return Lookup::where('key', LookupsEnum::LEGAL_STRUCTURE)->get();
+    }
+
+    public function getIndividualDocumentTypes()
+    {
+        return Lookup::where('key', LookupsEnum::DOCUMENT_ID_TYPE)->get();
+    }
+
+    public function getEntityDocumentTypes()
+    {
+        return Lookup::where('key', LookupsEnum::ENTITY_DOCUMENT_TYPE)->get();
+    }
+
+    public function getModeOfContact()
+    {
+        return Lookup::where('key', LookupsEnum::MODE_OF_CONTACT)->get();
+    }
+
+    public function getEmploymentSector()
+    {
+        return Lookup::where('key', LookupsEnum::EMPLOYMENT_SECTOR)->get();
+    }
+
+    public function getResidentialStatus()
+    {
+        return Lookup::where('key', LookupsEnum::RESIDENT_STATUS)->get();
+    }
+
+    public function getCompanyPosition()
+    {
+        return Lookup::where('key', LookupsEnum::COMPANY_POSITION)->get();
+    }
+
+    public function getIssuancePlaces()
+    {
+        return Lookup::where('key', LookupsEnum::ISSUANCE_PLACE)->get();
+    }
+
+    public function getIssuanceAuthorities()
+    {
+        return Lookup::where('key', LookupsEnum::ISSUING_AUTHORITY)->get();
     }
 }

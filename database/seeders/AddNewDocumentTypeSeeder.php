@@ -43,8 +43,8 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-       
-       $documentTypesCount = DocumentType::get()->where('code', 'TPD')->count();
+
+        $documentTypesCount = DocumentType::get()->where('code', 'TPD')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
                 'code' => 'TPD',
@@ -59,6 +59,6 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
-        
+
     }
 }
