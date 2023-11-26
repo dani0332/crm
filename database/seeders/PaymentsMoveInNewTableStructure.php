@@ -14,8 +14,8 @@ class PaymentsMoveInNewTableStructure extends Seeder
     public function run(): void
     {
         // NEED VERIFICATION AT THE END
-        //$payments = Payment::all();
-        $payments = Payment::where('code', 'CAR-GTUKFY49')->orderBy('created_at')->get();
+        $payments = Payment::all();
+        //$payments = Payment::where('code', 'CAR-GTUKFY49')->orderBy('created_at')->get();
 
         foreach ($payments as $payment) {
             // Extract the code and check if it has child payments
@@ -48,6 +48,7 @@ class PaymentsMoveInNewTableStructure extends Seeder
                     if ($childPayment->payment_status_id == 10) { //if paid
                         $collectionAmount = $childPayment->captured_amount;
                     }
+                    
                     PaymentSplits::create([
                         'sr_no' => $payment_sr_no,
                         'code' => $code,

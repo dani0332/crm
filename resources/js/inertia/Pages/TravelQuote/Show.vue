@@ -1511,7 +1511,6 @@ onMounted(() => {
         </template>
       </x-modal>
     </div>
-
     <PaymentTableNew 
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Travel"

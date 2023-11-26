@@ -345,11 +345,20 @@ const discountReasons = [
 ];
 
 const handleDeclinedReasonChange = () => {
+  if (paymentMethodsForm.declined_reason !== ''){
+    isDeclinedReasonError.value = false;
+  }  
   if(paymentMethodsForm.declined_reason === '6'){
     isDeclineCustomReason.value = true;
   }else{
     isDeclineCustomReason.value = false;
   }
+};
+
+const handleCancelChanges = () => {
+  isDeclineClicked.value=!isDeclineClicked.value;
+  isApproveClicked.value=false;
+  isDeclinedReasonError.value=false;
 };
 
 const handlePaymentOptions = (count) => {
@@ -498,8 +507,9 @@ const calculateDueDates = () => {
     }
   } else if(paymentMethodsForm.frequency === 'quarterly'){
     dueDateModels.value[1] = paymentMethodsForm.collection_date;
+    
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) {
-      const nextDueDate = new Date(dueDateModels.value[i - 1]);
+      const nextDueDate = new Date(paymentMethodsForm.collection_date);
       if (i === 2) {
         nextDueDate.setDate(nextDueDate.getDate() + 90);
       } else if (i === 3) {
@@ -1856,12 +1866,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </x-field>
           </div>         
           
-          <x-field v-if="isCustomReasonEnabled" label="CUSTOM REASON" class="w-full">
+          <x-field v-if="isCustomReasonEnabled" label="CUSTOM REASON" required class="w-full">
             <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>
             <x-input
                 v-if="!isFieldReadonly"
-                class="w-full"
-                v-model="paymentMethodsForm.custom_reason"                  
+                class="w-full mt-1"
+                v-model="paymentMethodsForm.custom_reason"
+                :rules="[rules.isRequired]"                
               />
           </x-field>          
           <div v-if="showDiscountOptions">
@@ -2357,11 +2368,11 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <div class="w-full grid">
         <x-field>
           <label v-if="!isViewEnabled">NOTES</label>
-          <p v-if="isFieldReadonly">{{ paymentMethodsForm.notes }}</p>
+          <p v-if="(isFieldReadonly && isViewEnabled) || isCreditApprovalView">{{ paymentMethodsForm.notes }}</p>
           <x-input
-            v-if="!isFieldReadonly"
+            v-if="!isViewEnabled && !isCreditApprovalView"
             class="w-full"
-            v-model="paymentMethodsForm.notes"          
+            v-model="paymentMethodsForm.notes"       
           />
         </x-field>
       </div>
@@ -2517,7 +2528,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <template v-else-if="isCreditApprovalView || (paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC')" >
             <div v-if="isCreditApprovalView || (splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
-                <x-button size="sm" @click="isDeclineClicked=!isDeclineClicked;isApproveClicked=false">
+                <x-button size="sm" @click="handleCancelChanges">
                   Cancel
                 </x-button>
               </div>            
@@ -2567,70 +2578,60 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
       </template>
       </x-form>
-     
-      <div class="modal-overlay" v-if="isGalleryModelOpen">
-       
-    <div class="modal-container">
-      <div class="modal-header text-lg">
-        <div class="flex items-center justify-between">
-          <div class="text-lg font-bold mb-2">Document Viewer</div>
-          <div class="flex items-center space-x-2 cursor-pointer" @click="closeInnerModal">
-            <span class="text-gray-600 font-bold">
-            <a :href="storageUrl + currentFile.doc_url" download="document.png" target="_blank" class="flex items-center space-x-2 cursor-pointer">
-              &#8615;
-            </a></span>
-            <span class="text-gray-600 font-bold">&#10006;</span>
+    
+    <div class="modal-overlay" v-if="isGalleryModelOpen">        
+      <div class="modal-container">
+        <div class="modal-header text-lg">
+          <div class="flex items-center justify-between">
+            <div class="text-lg font-bold mb-2">{{ currentFile.original_name}}</div>            
+            <div class="flex items-center space-x-2 cursor-pointer">
+              <span class="text-gray-600 font-bold" v-if="currentFile.doc_mime_type === 'image/jpegg' || currentFile.doc_mime_type === 'image/png2'">
+              <a :href="storageUrl + currentFile.doc_url" download="document.png" target="_blank" class="flex items-center space-x-2 cursor-pointer">
+                &#8615;
+              </a></span>           
+              <span @click="closeInnerModal" class="text-gray-600 font-bold">&#10006;</span>
+            </div>
+          </div>
+          <x-divider class="mb-4 mt-1" />
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2 cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
+              <span class="text-gray-600 font-bold">&#8592;</span>
+              <span class="font-bold">Previous</span>
+            </div>
+            <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
+              <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
+                <span class="text-gray-600 font-bold">&#8722;</span>              
+              </div>
+              
+              <div class="flex flex-initial w-24 justify-center"><span class="text-gray-600 font-bold">{{ zoomLevel * 100 }}%</span></div>
+              
+              <div class="flex items-center space-x-2 cursor-pointer" @click="zoomIn">
+                <span class="text-gray-600 font-bold">&#43;</span>              
+              </div>
+            </div>
+            <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
+              <span class="text-gray-600 font-bold">&#8594;</span>
+              <span class="font-bold">Next</span>
+            </div>
           </div>
         </div>
         <x-divider class="mb-4 mt-1" />
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2 cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
-            <span class="text-gray-600 font-bold">&#8592;</span>
-            <span class="font-bold">Previous</span>
-          </div>
-          <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
-            <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
-              <span class="text-gray-600 font-bold">&#8722;</span>              
-            </div>
-            
-            <div class="flex flex-initial w-24 justify-center"><span class="text-gray-600 font-bold">{{ zoomLevel * 100 }}%</span></div>
-            
-            <div class="flex items-center space-x-2 cursor-pointer" @click="zoomIn">
-              <span class="text-gray-600 font-bold">&#43;</span>              
+        <div class="modal-body">
+          <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
+            <div class="overflow-auto h-full w-screen justify-center ">
+              <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
             </div>
           </div>
-          <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
-            <span class="text-gray-600 font-bold">&#8594;</span>
-            <span class="font-bold">Next</span>
+          <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
+            <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
           </div>
         </div>
       </div>
-      <x-divider class="mb-4 mt-1" />
-      <div class="modal-body">
-        <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
-          <div class="overflow-auto h-full w-screen justify-center ">
-            <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
-          </div>
-        </div>
-        <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
-          <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
-        </div>
-      </div>
-    </div>
   </div>
     </x-modal>    
   </div>
 </template>
 <style scoped>
-.scrollable-container {
-  overflow: hidden;
-  @media (min-width: 768px) {
-    overflow-x: auto; 
-  }
-  @media (min-height: 600px) {
-    overflow-y: auto; 
-  }
-}
 .tooltip-display {
   display: inherit;
 } 

@@ -236,6 +236,8 @@ class PaymentSplitsRepository
                 'decline_custom_reason' => $request->declined_custom_reason,
                 'updated_by' => Auth::user()->id,
             ]);
+            $quoteModel->quote_status_id = QuoteStatusEnum::TransactionDeclined;
+            $quoteModel->save();
             $successMessage = 'Transaction declined';
         } else {
             $totalCapturedPayment = 0;
