@@ -90,7 +90,7 @@ defineProps({
         <x-divider class="mb-4 mt-1" />
       </div>
 
-      <div v-for="item in embeddedProduct.placements" class="text-sm">
+      <div v-for="item in embeddedProduct.placements" class="text-sm" :key="item">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">Lob</dt>
@@ -107,7 +107,7 @@ defineProps({
         <x-divider class="mb-4 mt-1" />
       </div>
 
-      <div v-for="item in embeddedProduct.prices" class="text-sm">
+      <div v-for="item in embeddedProduct.prices" class="text-sm" :key="item.price">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div
             v-if="embeddedProduct.pricing_type == 2"

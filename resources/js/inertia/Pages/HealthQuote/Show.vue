@@ -1385,7 +1385,7 @@ const sectionExpanded = computed(() => {
       </x-form>
     </x-modal>
 
-    <x-divider class="my-4" />
+    <!-- <x-divider class="my-4" /> -->
     <div
       v-if="!$page.props.can.isAdvisor"
       class="p-4 rounded shadow mb-6 bg-primary-50/50 saad"
@@ -1450,7 +1450,7 @@ const sectionExpanded = computed(() => {
     <div class="p-4 rounded shadow mb-6 bg-white">
       <x-collapse :expanded="sectionExpanded" show-icon>
         <div class="flex justify-between items-center flex-wrap gap-2">
-          <h3 class="text-xl font-semibold text-primary-800">Health Detail</h3>
+          <h3 class="text-lg font-semibold text-primary-800">Health Detail</h3>
         </div>
         <template #content>
           <div class="flex gap-2 mb-3 justify-end">
@@ -1459,7 +1459,9 @@ const sectionExpanded = computed(() => {
             </x-button>
 
             <Link :href="route('health.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div"> Health List </x-button>
+              <x-button size="sm" color="primary" tag="div">
+                Health List
+              </x-button>
             </Link>
 
             <Link :href="route('health.edit', quote.uuid)">
@@ -1547,12 +1549,12 @@ const sectionExpanded = computed(() => {
               </div>
             </dl>
           </div>
-    
+
           <div class="mt-6">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
           </div>
-    
+
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
@@ -1600,7 +1602,7 @@ const sectionExpanded = computed(() => {
               Profile
             </h3>
           </div>
-          <x-divider class="mb-4 mt-1" v-if="!collapsed"/>
+          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
         </template>
         <template #content>
           <div class="flex mb-3 justify-end">
@@ -1611,7 +1613,9 @@ const sectionExpanded = computed(() => {
             >
               KYC - Complete
             </x-button>
-            <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+            <x-button size="sm" color="primary" v-else>
+              KYC - Pending
+            </x-button>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
@@ -1716,7 +1720,9 @@ const sectionExpanded = computed(() => {
                 <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -1826,6 +1832,7 @@ const sectionExpanded = computed(() => {
         </template>
       </x-collapse>
     </div>
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -1908,74 +1915,77 @@ const sectionExpanded = computed(() => {
       v-if="quote.customer_type == page.props.customerTypeEnum.Individual"
       class="p-4 rounded shadow mb-6 bg-white"
     >
-    <x-collapse :expanded="sectionExpanded" show-icon>
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Member Details
-          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
-        </h3>
-      </div>
-      <template #content>
-        <div class="flex mb-3 justify-end">
-          <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
-            Add Member
-          </x-button>
+      <x-collapse :expanded="sectionExpanded" show-icon>
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">
+            Member Details
+            <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+          </h3>
         </div>
-        
-        <DataTable
-          table-class-name="tablefixed compact"
-          :headers="memberDetailsTable.columns"
-          :items="membersDetail || []"
-          show-index
-          border-cell
-          hide-rows-per-page
-          hide-footer
-        >
-          <template #item-index="{ index, code }">
-            <div>{{ code ?? 'Member ' + index }}</div>
-          </template>
-          <template #item-gender="{ gender }">
-            {{ genderText(gender).value }}
-          </template>
-          <template #item-dob="{ dob }">
-            {{ dateFormat(dob) }}
-          </template>
-          <template #item-relation="{ relation }">
-            {{ relation?.text }}
-          </template>
-          <template #item-nationality="{ nationality }">
-            {{ nationality?.text }}
-          </template>
-          <template #item-emirate="{ emirate }">
-            {{ emirate?.text }}
-          </template>
-          <template #item-member_category_id="{ member_category_id }">
-            {{ memberCategoryText(member_category_id).value }}
-          </template>
-          <template #item-action="item">
-            <div class="flex gap-2">
-              <x-button
-                size="xs"
-                color="primary"
-                outlined
-                @click.prevent="onEditMember(item)"
-              >
-                Edit
-              </x-button>
-              <x-button
-                size="xs"
-                color="error"
-                outlined
-                @click.prevent="memberDelete(item.id)"
-              >
-                Delete
-              </x-button>
-            </div>
-          </template>
-        </DataTable>
-      </template>
-    </x-collapse>
+        <template #content>
+          <div class="flex mb-3 justify-end">
+            <x-button
+              @click.prevent="onAddMemberModal"
+              size="sm"
+              color="orange"
+            >
+              Add Member
+            </x-button>
+          </div>
 
+          <DataTable
+            table-class-name="tablefixed compact"
+            :headers="memberDetailsTable.columns"
+            :items="membersDetail || []"
+            show-index
+            border-cell
+            hide-rows-per-page
+            hide-footer
+          >
+            <template #item-index="{ index, code }">
+              <div>{{ code ?? 'Member ' + index }}</div>
+            </template>
+            <template #item-gender="{ gender }">
+              {{ genderText(gender).value }}
+            </template>
+            <template #item-dob="{ dob }">
+              {{ dateFormat(dob) }}
+            </template>
+            <template #item-relation="{ relation }">
+              {{ relation?.text }}
+            </template>
+            <template #item-nationality="{ nationality }">
+              {{ nationality?.text }}
+            </template>
+            <template #item-emirate="{ emirate }">
+              {{ emirate?.text }}
+            </template>
+            <template #item-member_category_id="{ member_category_id }">
+              {{ memberCategoryText(member_category_id).value }}
+            </template>
+            <template #item-action="item">
+              <div class="flex gap-2">
+                <x-button
+                  size="xs"
+                  color="primary"
+                  outlined
+                  @click.prevent="onEditMember(item)"
+                >
+                  Edit
+                </x-button>
+                <x-button
+                  size="xs"
+                  color="error"
+                  outlined
+                  @click.prevent="memberDelete(item.id)"
+                >
+                  Delete
+                </x-button>
+              </div>
+            </template>
+          </DataTable>
+        </template>
+      </x-collapse>
 
       <x-modal v-model="modals.member" size="lg" show-close backdrop>
         <template #header>
@@ -2112,7 +2122,9 @@ const sectionExpanded = computed(() => {
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Customer Additional Contacts
-            <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+            <x-tag size="sm">{{
+              customerAdditionalContacts.length || 0
+            }}</x-tag>
           </h3>
         </div>
         <template #content>
@@ -2154,7 +2166,6 @@ const sectionExpanded = computed(() => {
           </DataTable>
         </template>
       </x-collapse>
-
 
       <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
         <template #header> Add Additional Contacts </template>
@@ -2371,6 +2382,7 @@ const sectionExpanded = computed(() => {
       :paymentMethods="paymentMethods"
       :insuranceProviders="insuranceProviders"
       :quote="quote"
+      :expanded="sectionExpanded"
     />
 
     <!-- <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
@@ -2741,6 +2753,7 @@ const sectionExpanded = computed(() => {
         </div>
       </x-modal>
     </div>
+    
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"

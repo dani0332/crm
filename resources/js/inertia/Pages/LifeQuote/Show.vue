@@ -1293,6 +1293,7 @@ const sectionExpanded = computed(() => {
         </template>
       </x-collapse>
     </div>
+    
     <AuditLogs
       :type="'App\\Models\\LifeQuote'"
       :id="$page.props.quote.id"

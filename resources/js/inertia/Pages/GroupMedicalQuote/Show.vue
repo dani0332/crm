@@ -728,6 +728,7 @@ const sectionExpanded = computed(() => {
         </template>
       </x-collapse>
     </div>
+
     <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Search Entity by Parent Entity Trade License No
@@ -757,6 +758,7 @@ const sectionExpanded = computed(() => {
         </x-button>
       </div>
     </x-modal>
+    
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number

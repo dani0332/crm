@@ -1989,7 +1989,7 @@ const sectionExpanded = computed(() => {
     </x-modal>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse expanded show-icon>
+      <x-collapse :expanded="sectionExpanded" show-icon>
         <template #default="{ collapsed }">
           <div>
             <h3 class="font-semibold text-primary-800 text-lg mb-4">
