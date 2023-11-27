@@ -627,7 +627,7 @@ class CRUDService extends BaseService
     {
         $scoreList = [];
         $customerScore = 0;
-        if (count($quote->payments) > 0 && isset($quote->customer)) {
+        if ($quote->payments->first() && isset($quote->customer)) {
             $paymentTopScore = 0;
             $paymentMethod = '';
             $paymentAuthorized = 0;
@@ -695,7 +695,8 @@ class CRUDService extends BaseService
     }
     public function calculateScore($quote)
     {
-        if (count($quote->payments) > 0 && isset($quote->customer)) {
+
+        if ($quote->payments->first() && isset($quote->customer)) {
             $paymentTopScore = 0;
             $paymentAuthorized = 0;
             foreach ($quote->payments as $payment) {
