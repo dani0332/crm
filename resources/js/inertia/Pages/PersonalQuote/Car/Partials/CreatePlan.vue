@@ -8,6 +8,8 @@ const props = defineProps({
 
 const page = usePage();
 
+const emit = defineEmits(['onLoadAvailablePlansData']);
+
 const isEmptyField = ref(false);
 
 const { isRequired, isNumber } = useRules();
@@ -95,6 +97,7 @@ const creatQuotePlan = isValid => {
         title: 'Car Quote Plan created successfully',
         position: 'top',
       });
+      emit("onLoadAvailablePlansData")
     },
   });
 };
