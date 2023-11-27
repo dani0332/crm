@@ -589,7 +589,7 @@ class AMLController extends Controller
 
     public function sendBridgerResponse(Request $request)
     {
-        info('Bridger Insight : Email Triggered to Compliance Super User');
+        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: ' .$request['quote_ref_id']. ' - Email triggered by: ' .auth()->user()->email);
         AMLService::sendAMLMatchedEmailtoComplianceTeam(
             config('constants.APP_URL').$request['aml_quote_url'],
             $request['quote_ref_id'],
