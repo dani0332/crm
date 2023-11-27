@@ -627,6 +627,7 @@ class CRUDService extends BaseService
     {
         $scoreList = [];
         $customerScore = 0;
+        $this->calculateScore($quote);
         if (isset($quote->payments[0])) {
             $paymentTopScore = 0;
             $paymentMethod = '';
@@ -693,8 +694,8 @@ class CRUDService extends BaseService
     }
     public function calculateScore($quote)
     {
-
-        if (isset($quote->payments[0])) {
+        $quote->customer->nationality = null;
+        if (isset($quote->payments[0]) && isset($quote->customer)) {
             $paymentTopScore = 0;
             $paymentAuthorized = 0;
             foreach ($quote->payments as $payment) {
@@ -706,8 +707,9 @@ class CRUDService extends BaseService
                     $paymentAuthorized += $payment->premium_authorized;
                 }
             }
-
-            $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            if(isset($quote->customer->nationality)) {
+                $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+            }
             $customerScore += ($paymentAuthorized >= 100001) ? 3 : (($paymentAuthorized >= 55001 && $paymentAuthorized <= 100000) ? 2 : 1);
             $customerScore += 1; // For products all product have 1
             $customerScore += 1; // payment volume for future use
