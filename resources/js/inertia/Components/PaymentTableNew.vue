@@ -25,6 +25,7 @@ console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
+const isCustomDiscountReasonEnabled = ref(false);
 const isDiscountEnabled = ref(false);
 const isDiscountReasonEnabled = ref(false);
 const isCheckDetailsEnabled = ref([]);
@@ -87,7 +88,7 @@ const calculateTotalAmount = () => {
   } else {
     totalAmount.value = totalPrice.value - discount;    
   }
-  calculatePaymentBreakup();  
+  calculatePaymentBreakup(false);  
 }
 
 const { copy, copied } = useClipboard();
@@ -341,8 +342,17 @@ const discountReasons = [
   { value: 'promotional_campaign_discount', label: 'Promotional campaign discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_PROMOTIONAL },
   { value: 'loyalty_reward_discount', label: 'Loyalty reward discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_LOYALTY },
   { value: 'competitive_pricing_discount', label: 'Competitive pricing discount', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_COMPETITIVE },
-  { value: 'custom_discount_reason', label: 'Custom discount reason', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_CUSTOM_REASON },  
+  { value: 'discount_custom_reason', label: 'Custom discount reason', tooltip: props.paymentTooltipEnum.DISCOUNT_REASON_LIST_CUSTOM_REASON },  
 ];
+
+const handleDiscountReasonChange = () => {
+  isDiscountReasonError.value=false
+  isCustomDiscountReasonEnabled.value=false;
+  if (paymentMethodsForm.discount_reason === 'discount_custom_reason' ){
+    paymentMethodsForm.discount_custom_reason = '';
+    isCustomDiscountReasonEnabled.value=true;
+  }
+}
 
 const handleDeclinedReasonChange = () => {
   if (paymentMethodsForm.declined_reason !== ''){
@@ -439,6 +449,7 @@ const resetDiscount = () => {
   discountValue.value = 0;
   paymentMethodsForm.discount_reason = '';
   handleDiscountChange();
+  handleDiscountReasonChange();
   calculateTotalAmount();
 };
 
@@ -470,12 +481,24 @@ const handleDiscountChange = () => {
     isDiscountReasonEnabled.value = false;
   }
 
-  if(paymentMethodsForm.discount === 'employee_discount'){
-    discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
+  if(paymentMethodsForm.discount === 'employee_discount'){    
+    if( props.quoteType === 'Health' ) {
+      discountValue.value = (totalPrice.value * (5 / 100)).toFixed(2); 
+    } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
+      discountValue.value = (totalPrice.value * (15 / 100)).toFixed(2); 
+    } else {
+      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); // for car
+    }
   }
 
   if(paymentMethodsForm.discount === 'family_employee_discount'){
-    discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
+    if( props.quoteType === 'Health' ) {
+      discountValue.value = (totalPrice.value * (2.5 / 100)).toFixed(2); 
+    } else if( props.quoteType === 'Home' || props.quoteType === 'Travel' ) {
+      discountValue.value = (totalPrice.value * (12.5 / 100)).toFixed(2); 
+    } else {
+      discountValue.value = (totalPrice.value * (7.5 / 100)).toFixed(2); // for car
+    }
   }
   calculateTotalAmount();
 };
@@ -529,7 +552,7 @@ const calculateDueDates = () => {
 
 }
 
-const calculatePaymentBreakup = () => {  
+const calculatePaymentBreakup = (changeMethod = true) => {  
 
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
   console.log('azhar9991='+perInstallmentPrice);
@@ -541,12 +564,12 @@ const calculatePaymentBreakup = () => {
     if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
       continue;
     }
-    splitAmountModels.value[i] = perInstallmentPrice;
-    if(i>1){
+    splitAmountModels.value[i] = perInstallmentPrice;    
+    if(i>1 && changeMethod){
       paymentMethodsModels.value[i] = '';
     }    
   }
-  calculateDueDates(); //SLOWSDOWN
+ calculateDueDates(); 
 }
 
 const  formatDate = (date) =>  {
@@ -817,6 +840,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   }*/
  
   paymentMethodsForm.custom_reason= payment.custom_reason;  
+  paymentMethodsForm.discount_custom_reason= payment.discount_custom_reason;  
   paymentMethodsForm.notes= payment.notes;
   paymentMethodsForm.total_amount= payment.total_amount; // after discount calculation
   paymentMethodsForm.total_price= payment.total_price;
@@ -828,6 +852,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   handleFrequencyChange(false);
   handleApprovalReasonChange();
   handleDiscountChange();
+  handleDeclinedReasonChange();
   calculateTotalAmount();
   
   console.log('azhar200='+JSON.stringify(payment.payment_splits));
@@ -999,6 +1024,7 @@ const addPayment = isValid => {
     discount: paymentMethodsForm.discount,
     discount_reason: paymentMethodsForm.discount_reason,
     custom_reason: paymentMethodsForm.custom_reason,
+    discount_custom_reason: paymentMethodsForm.discount_custom_reason,
     collection_date: paymentMethodsForm.collection_date,
     notes: paymentMethodsForm.notes,
     total_amount: totalAmount.value, // after discount calculation
@@ -1935,7 +1961,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   v-model="paymentMethodsForm.discount_reason"
                   :options="discountReasons"
                   :rules="[rules.isRequired]"
-                  @change="isDiscountReasonError=false"                  
+                  @change="handleDiscountReasonChange"                  
                   >
                   <template v-for="option in discountReasons" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
@@ -1943,7 +1969,18 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </select>
               <p v-if="isDiscountReasonError" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
             </x-field>
-          </div> 
+          </div>
+          
+          <x-field v-if="isCustomDiscountReasonEnabled" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
+            <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>
+            <x-input
+                v-if="!isFieldReadonly"
+                class="w-full mt-1"
+                v-model="paymentMethodsForm.discount_custom_reason"
+                :rules="[rules.isRequired]"                
+              />
+          </x-field>
+
             <div v-if="isDiscountEnabled">
               <x-tooltip v-if="!isFieldReadonly">
                 <x-field label="DISCOUNT VALUE" class="w-full" required></x-field>

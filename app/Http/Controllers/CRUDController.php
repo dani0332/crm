@@ -1765,6 +1765,7 @@ class CRUDController extends Controller
                 'notes' => ! empty($request->notes) ? $request->notes : null,
                 'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
                 'discount_reason' => $request->discount_reason,
+                'discount_custom_reason' => $request->discount_custom_reason,
                 'discount_type' => $request->discount,
                 'frequency' => $request->frequency,
                 'credit_approval' => $request->credit_approval,
@@ -1846,6 +1847,16 @@ class CRUDController extends Controller
         }
     }
 
+    public function splitPaymentUpdate(Request $request)
+    {   
+        if (auth()->user()->can(PermissionsEnum::ApprovePayments)){
+            $successMessage = $this->paymentSplitsRepository->updatePaymentStatus($request);
+            return back()->with('success', $successMessage);
+        } else {
+            return back()->with('error', 'You are not authorized');
+        }
+    }
+    
     public function splitPaymentsApprove(Request $request)
     {
         if (auth()->user()->can(PermissionsEnum::ApprovePayments)) {
@@ -1869,6 +1880,7 @@ class CRUDController extends Controller
                 'notes' => ! empty($request->notes) ? $request->notes : null,
                 'custom_reason' => ! empty($request->custom_reason) ? $request->custom_reason : null,
                 'discount_reason' => $request->discount_reason,
+                'discount_custom_reason' => $request->discount_custom_reason,
                 'discount_type' => $request->discount,
                 'frequency' => $request->frequency,
                 'credit_approval' => $request->credit_approval,
