@@ -1924,7 +1924,7 @@ const sectionExpanded = computed(() => {
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Member Details
-            <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+            <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
           </h3>
         </div>
         <template #content>
@@ -1941,7 +1941,7 @@ const sectionExpanded = computed(() => {
           <DataTable
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
-            :items="membersDetail || []"
+            :items="computedMembers || []"
             show-index
             border-cell
             hide-rows-per-page
