@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Enums\CustomerTypeEnum;
+use App\Models\Customer;
 use App\Models\HealthMemberDetail;
 use App\Models\HealthQuote;
 use App\Models\TravelMemberDetail;
@@ -16,9 +17,20 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
      */
     public function run(): void
     {
-        HealthMemberDetail::whereNull(['customer_id', 'code'])->chunkById(100, function ($healthMemberDetails) {
-            foreach ($healthMemberDetails as $healthMemberDetail) {
+        // Update Customer Code into Customer Table
+        // Customer::whereNull('code')->chunkById(100, function ($customers) {
+        //     foreach ($customers as $customer) {
+        //         if (! empty($customer->code)) {
+        //             continue;
+        //         }
 
+        //         $customer->update(['code' => CustomerTypeEnum::IndividualShort.'-'.$customer->id]);
+        //     }
+        // });
+
+        // Update Customer ID and Member Code into Health Members Table
+        HealthMemberDetail::whereNull(['customer_id', 'code'])->chunkById(500, function ($healthMemberDetails) {
+            foreach ($healthMemberDetails as $healthMemberDetail) {
                 if (! empty($healthMemberDetail->customer_id) && ! empty($healthMemberDetail->code)) {
                     continue;
                 }
@@ -41,9 +53,9 @@ class UpdateCustomerToHealthAndTravelMemberDetails extends Seeder
             }
         });
 
-        TravelMemberDetail::whereNull(['customer_id', 'code'])->chunkById(100, function ($travelMemberDetails) {
+        // Update Customer ID and Member Code into Travel Members Table
+        TravelMemberDetail::whereNull(['customer_id', 'code'])->chunkById(500, function ($travelMemberDetails) {
             foreach ($travelMemberDetails as $travelMemberDetail) {
-
                 if (! empty($travelMemberDetail->customer_id) && ! empty($travelMemberDetail->code)) {
                     continue;
                 }

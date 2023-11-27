@@ -50,9 +50,6 @@ use Illuminate\Http\Request;
 
 class AMLController extends Controller
 {
-    protected $checkAmlService;
-    protected $quoteStatusService;
-    protected $sanctionListService;
     use GenericQueriesAllLobs;
 
     /**
@@ -60,12 +57,9 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService, SanctionListService $sanctionListService)
+    public function __construct()
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
-        $this->checkAmlService = $checkAmlService;
-        $this->quoteStatusService = $quoteStatusService;
-        $this->sanctionListService = $sanctionListService;
     }
 
     /**
@@ -144,7 +138,7 @@ class AMLController extends Controller
                 ) {
                     $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedStartDate));
                     $amlEndDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedEndDate));
-                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$amlCreatedDate.'" AND "'.$amlEndDate.'"');
+                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedDate, $amlEndDate]);
                 }
 
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
@@ -214,9 +208,9 @@ class AMLController extends Controller
         $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
         $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
-
-        $nationalityList = $this->sanctionListService->fetchNationality();
-        $yearsList = $this->sanctionListService->years();
+        $sanctionListService = app(SanctionListService::class);
+        $nationalityList = $sanctionListService->fetchNationality();
+        $yearsList = $sanctionListService->years();
         $firstAmlLogResults = $amlRecordFetch->first()->results_found ?? 0;
         $latestAmlLogResults = $amlRecordFetch->latest()->first()->results_found ?? 0;
         $getAMLNumRows = $amlRecordFetch->count();
@@ -289,7 +283,7 @@ class AMLController extends Controller
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
-        $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
+        $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
 
         if ($updateQuoteStatusResp == 'false') {
             return redirect()->back()->with('message', 'Quote Status is not updated');
@@ -301,7 +295,7 @@ class AMLController extends Controller
             $clientFullName = $updateQuoteStatusResp[4];
             if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
                 info('Bridger Insight - Decision update Email triggered to Compliance Team');
-                $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
             if (isset(request()->decisonsForUpdatePortal)) {
@@ -363,7 +357,7 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-                //                Temporary comment this code, please don't remove it.
+                // Temporary comment this code, please don't remove it.
                 //                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
                 //                    $fullName = explode(' ', \request()->insured_fullname);
                 //                    $insuredFirstName = $fullName[0] ?? '';

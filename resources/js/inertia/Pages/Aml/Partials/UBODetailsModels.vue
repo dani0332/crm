@@ -14,6 +14,12 @@ const props = defineProps({
 const { isRequired } = useRules();
 const isEmptyField = ref(false);
 
+const uboMembers = ref(props.uboDetails);
+const computedUboMembers = computed(() => {
+    return uboMembers.value.filter(x => !x.is_third_party_payer);
+});
+
+
 const notification = useToast();
 const loader = ref({
   form: false,
@@ -114,6 +120,18 @@ const onUBOSubmit = isValid => {
           position: 'top',
         });
         uboForm.reset();
+          if (res.status) {
+              let { data } = res.data;
+
+              let index = uboMembers.value.findIndex(x => x.id == data.id);
+              if (index != -1) {
+                  uboMembers.value[index] = {
+                      ...data,
+                      nationality: data.nationality,
+                      relation: data.relation,
+                  };
+              }
+          }
       })
       .catch(err => {
         notification.error({
@@ -132,6 +150,15 @@ const onUBOSubmit = isValid => {
         });
         uboForm.reset();
         addUBODetails.value = false;
+          if (res.status) {
+              let { data } = res.data;
+
+              uboMembers.value.push({
+                  ...data,
+                  nationality: data.nationality,
+                  relation: data.relation,
+              });
+          }
       })
       .catch(err => {
         notification.error({
@@ -199,7 +226,7 @@ const onUBOSubmit = isValid => {
     <div class="flex justify-between items-center mb-4">
       <h3 class="font-semibold text-primary-800 text-lg">
         UBO Details
-        <x-tag size="sm">{{ uboDetails.length || 0 }}</x-tag>
+        <x-tag size="sm">{{ computedUboMembers.length || 0 }}</x-tag>
       </h3>
       <x-button
         v-if="addUBODetails"
@@ -223,7 +250,7 @@ const onUBOSubmit = isValid => {
   <DataTable
     table-class-name="tablefixed compact"
     :headers="UBODetailsTable.columns"
-    :items="uboDetails || []"
+    :items="computedUboMembers || []"
     show-index
     border-cell
     hide-rows-per-page

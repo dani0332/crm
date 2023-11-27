@@ -6,6 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KYC Entity</title>
     <style>
+        @font-face {
+            font-family: 'DejaVu Sans';
+            font-style: normal;
+            font-weight: normal;
+        }
+
         body {
             font-family: 'DejaVu Sans', serif !important;
         }
@@ -88,8 +94,8 @@
             border-width: 0.1px;
             color: black;
             font-weight: 500;
-            padding: 5px 30px 5px 5px;
-            width: 150px;
+            padding: 3px 20px 3px 5px;
+            width: 160px;
             height: 20px;
         }
 
@@ -115,7 +121,7 @@
 
 <body>
     <div id="header">
-        <img src="{{ public_path('images/im_logo_21k.png') }}" alt="Insurance Market Logo" width="500">
+        <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/logo_for_kyc.png')))}}" alt="Insurance Market Logo" width="300">
     </div>
     <hr>
 
@@ -277,7 +283,7 @@
         updates are
         required, please contact your insurance advisor.</p>
     <p style="font-size: 11px;">
-        <i>This KYC was authorized on {{ date('d/m/y') }} at {{ date('H:i:s') }}.</i>
+        <i>This KYC was authorized on {{ date('d/m/y') }} at {{ date('H:i:s') }}. IP Address: {{ request()->ip() }}</i>
     </p>
 
     <div id="footer">

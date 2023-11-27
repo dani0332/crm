@@ -27,7 +27,6 @@ use App\Models\QuoteType;
 use App\Repositories\LookupRepository;
 use App\Services\ActivitiesService;
 use App\Services\CRUDService;
-use App\Services\HealthQuoteService;
 use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
@@ -38,18 +37,11 @@ class AjaxController extends Controller
 {
     use GenericQueriesAllLobs;
 
-    protected $healthQuoteService;
     protected $quoteDocumentService;
-    protected $CRUDService;
-    protected $activityService;
 
-    public function __construct(HealthQuoteService $healthQuoteService, QuoteDocumentService $quoteDocumentService, CRUDService $CRUDService,
-        ActivitiesService $activityService)
+    public function __construct(QuoteDocumentService $quoteDocumentService)
     {
-        $this->healthQuoteService = $healthQuoteService;
         $this->quoteDocumentService = $quoteDocumentService;
-        $this->CRUDService = $CRUDService;
-        $this->activityService = $activityService;
     }
 
     public function carModelBasedOnCarMake(Request $request)
@@ -129,7 +121,8 @@ class AjaxController extends Controller
         $paymentLog->save();
         $quoteModel->quote_status_id = QuoteStatusEnum::TransactionApproved;
         $quoteModel->save();
-        $this->CRUDService->calculateScore($quoteModel);
+
+        app(CRUDService::class)->calculateScore($quoteModel);
 
         return response()->json(['success' => true]);
     }
@@ -226,7 +219,7 @@ class AjaxController extends Controller
             $data['product_type'] = ucfirst($quoteType).' Insurance';
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
 
-            $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'));
+            $pdf = PDF::loadView('pdf.kyc_individual_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
 
@@ -293,11 +286,9 @@ class AjaxController extends Controller
     {
         try {
             $quote = $this->getQuoteObject($quoteType, $request->quote_uuid);
-
             if (! isset($quote->quoteRequestEntityMapping)) {
                 return response()->json(['message' => 'Trade License not found.']);
             }
-
             $data = $request->validated();
             $data['corporation_country'] = Nationality::where('id', $data['country_of_corporation'])->value('country_name');
             $data['manager_country'] = Nationality::where('id', $data['manager_nationality'])->value('text');
@@ -309,14 +300,11 @@ class AjaxController extends Controller
             $data['manager_position_text'] = LookupRepository::where('code', $data['manager_position'])->where('key', LookupsEnum::UBO_RELATION)->value('text');
             $data['product_type'] = QuoteType::where('code', ucfirst($quoteType))->value('text');
             $data['document_type_code'] = DocumentTypeCode::KYCDOC;
-
-            $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'));
+            $pdf = PDF::loadView('pdf.kyc_entity_document', compact('data'))->setOptions(['defaultFont' => 'DejaVu Sans']);
             $pdf->setPaper('A4');
             $pdfFile = $pdf->output();
-
             $document = $this->quoteDocumentService->uploadQuoteDocument($pdfFile, $data, $quote, true);
-            $quoteTypeId = $this->activityService->getQuoteTypeId(strtolower($quoteType));
-
+            $quoteTypeId = app(ActivitiesService::class)->getQuoteTypeId(strtolower($quoteType));
             if ($document) {
                 Entity::where('id', $quote->quoteRequestEntityMapping->entity->id)->update([
                     'mobile_no' => $data['mobile_number'],
