@@ -34,7 +34,7 @@ class KycEntityDocRequest extends FormRequest
             'communication_address' => 'required',
             'mobile_number' => 'required',
             'email' => 'required',
-            'website' => 'required',
+            'website' => 'string',
             'id_document_type' => 'required',
             'id_number' => 'required',
             'id_issue_date' => 'required',
