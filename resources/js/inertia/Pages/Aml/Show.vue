@@ -104,7 +104,7 @@ const setSelectedOption = (e, item) => {
 
   if (index != -1) amlResults.value[index].decision = e;
 
-  if(e === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.ComplianceSuperUser) && props.responseFrom === 'Bridger') {
+  if(e === props.amlDecisionStatusCode.TRUE_MATCH && props.responseFrom === 'Bridger') {
 
       // Send Bridger Response to Compliance Super User when Decision True Match
       let data = {
