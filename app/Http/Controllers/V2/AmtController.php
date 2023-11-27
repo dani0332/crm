@@ -335,7 +335,7 @@ class AmtController extends Controller
             'group_medical_type_id' => 'required',
             'premium' => 'required',
         ]);
-        $this->crudService->updateModelByType('business', $request, $id);
+        app(CRUDService::class)->updateModelByType('business', $request, $id);
 
         return redirect('medical/amt/'.$id)->with('success', 'Lead has been updated');
     }
