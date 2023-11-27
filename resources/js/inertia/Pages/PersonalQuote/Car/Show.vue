@@ -1434,7 +1434,6 @@ const linkEntity = () => {
                 customerProfileForm.company_address = response.company_address;
                 customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
                 customerProfileForm.industry_type_code = response.industry_type_code;
-                // customerProfileForm.emirate_of_registration_id = response.emirate_of_registration_id;
 
                 notification.success({
                     title: res.data.message,
