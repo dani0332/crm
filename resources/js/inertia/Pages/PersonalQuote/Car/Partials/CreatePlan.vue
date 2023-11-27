@@ -70,7 +70,7 @@ const setCarPlans = () => {
     .then(({ data }) => {
       insuranceProviderPlanOptions.value = data.map(plan => ({
         value: plan.id,
-        label: plan.text,
+        label: plan.plan_name,
       }));
       page.processing = false;
     })
