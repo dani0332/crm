@@ -252,7 +252,7 @@ class AMLService
             $emailRecipients[] = $recipient->user_email;
         }
 
-        info('AML Email trigger to Role:('.$complianceRole.') & Email Recipients: '.json_encode($emailRecipients));
+        info('AML Email trigger to Role:('.$complianceRole.')');
 
         if (strtolower($emailSystem) == EnvEnum::PRODUCTION) {
             $fromEmail = config('constants.MAIL_FROM_ADDRESS_AML');
