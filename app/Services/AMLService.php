@@ -275,8 +275,12 @@ class AMLService
                 'quoteTypeName' => $quoteType,
                 'quoteCdbId' => $quoteRefId,
             ],
-            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail) {
-                $message->to($emailRecipients)->cc($loginUserEmail)->subject($emailSubject);
+            function ($message) use ($emailSubject, $emailRecipients, $fromName, $fromEmail, $loginUserEmail, $forComplianceSuperUser) {
+                $message->to($emailRecipients);
+                if (in_array($loginUserEmail, $emailRecipients) || !$forComplianceSuperUser) {
+                    $message->cc($loginUserEmail);
+                }
+                $message->subject($emailSubject);
                 $message->from($fromEmail, $fromName);
             }
         );
