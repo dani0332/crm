@@ -136,8 +136,8 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY') . ' 00:00:00', strtotime($request->amlCreatedStartDate));
-                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY') . ' 23:59:59', strtotime($request->amlCreatedEndDate));
+                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($request->amlCreatedStartDate));
+                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($request->amlCreatedEndDate));
                     $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedDate, $amlEndDate]);
                 }
 
@@ -589,7 +589,7 @@ class AMLController extends Controller
 
     public function sendBridgerResponse(Request $request)
     {
-        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: ' .$request['quote_ref_id']. ' - Email triggered by: ' .auth()->user()->email);
+        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
         AMLService::sendAMLMatchedEmailtoComplianceTeam(
             config('constants.APP_URL').$request['aml_quote_url'],
             $request['quote_ref_id'],
