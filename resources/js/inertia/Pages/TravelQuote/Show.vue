@@ -221,6 +221,11 @@ const memberRelationOptions = computed(() => {
   }));
 });
 
+const traveler_members = ref(page.props.travelers);
+const computedTravelers = computed(() => {
+  return traveler_members.value.filter(x => !x.is_third_party_payer);
+});
+
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
@@ -1068,9 +1073,11 @@ const sectionExpanded = computed(() => {
               Duplicate Lead
             </x-button>
             <Link :href="route('travel.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div"> Travel List </x-button>
+              <x-button size="sm" color="primary" tag="div">
+                Travel List
+              </x-button>
             </Link>
-  
+
             <Link
               v-if="permissions.canEditQuote == true"
               :href="route('travel.edit', quote.uuid)"
@@ -1109,7 +1116,7 @@ const sectionExpanded = computed(() => {
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
                 <dd>{{ field?.value }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt>
                   <x-tooltip position="bottom">
@@ -1140,7 +1147,7 @@ const sectionExpanded = computed(() => {
                   }}
                 </dt>
               </div>
-    
+
               <div
                 v-if="
                   enums.travelQuoteEnum.TRAVEL_UAE_INBOUND ==
@@ -1209,7 +1216,9 @@ const sectionExpanded = computed(() => {
                 </dt>
                 <dt class="font-medium">
                   {{
-                    quote.start_date ? quote.start_date : quote.policy_start_date
+                    quote.start_date
+                      ? quote.start_date
+                      : quote.policy_start_date
                   }}
                 </dt>
               </div>
@@ -1260,7 +1269,9 @@ const sectionExpanded = computed(() => {
                     <template #tooltip>Region Cover</template>
                   </x-tooltip>
                 </dt>
-                <dt class="font-medium">{{ quote.region_cover_for_id_text }}</dt>
+                <dt class="font-medium">
+                  {{ quote.region_cover_for_id_text }}
+                </dt>
               </div>
             </dl>
           </div>
@@ -1292,7 +1303,9 @@ const sectionExpanded = computed(() => {
             >
               KYC - Complete
             </x-button>
-            <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+            <x-button size="sm" color="primary" v-else>
+              KYC - Pending
+            </x-button>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -1375,11 +1388,13 @@ const sectionExpanded = computed(() => {
                     />
                   </dd>
                 </div>
-    
+
                 <RiskRatingScoreDetails :quote="quote" :modelType="'Travel'" />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -1575,7 +1590,7 @@ const sectionExpanded = computed(() => {
         <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Member Details
-            <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+            <x-tag size="sm">{{ computedTravelers.length || 0 }}</x-tag>
           </h3>
         </div>
         <template #content>
@@ -1588,25 +1603,27 @@ const sectionExpanded = computed(() => {
           <DataTable
             table-class-name="tablefixed compact"
             :headers="travelerTable.columns"
-            :items="travelers || []"
+            :items="computedTravelers || []"
             border-cell
             hide-rows-per-page
             :rows-per-page="15"
-            :hide-footer="travelers.length < 15"
+            :hide-footer="computedTravelers.length < 15"
             show-index
           >
             <template #item-index="{ index, code }">
               <div>{{ code ?? 'Member ' + index }}</div>
             </template>
-            <template #item-dob="{ dob }"> {{ dateFormat(dob).value }} </template>
-    
+            <template #item-dob="{ dob }">
+              {{ dateFormat(dob).value }}
+            </template>
+
             <template #item-relation="{ relation }">
               {{ relation?.text }}
             </template>
             <template #item-nationality="{ nationality }">
               {{ nationality?.text }}
             </template>
-    
+
             <template #item-action="item">
               <div class="flex gap-2">
                 <x-button
@@ -2143,7 +2160,9 @@ const sectionExpanded = computed(() => {
             <x-button
               size="sm"
               color="red"
-              v-if="displaySendPolicyButton && permissions.notProductionApproval"
+              v-if="
+                displaySendPolicyButton && permissions.notProductionApproval
+              "
               @click="sendPolicyToClient"
             >
               Send Policy
@@ -2187,7 +2206,7 @@ const sectionExpanded = computed(() => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(travelers)"
+          :members="memberDataDocs(computedTravelers)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"

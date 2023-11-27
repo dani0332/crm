@@ -3159,8 +3159,9 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
       :link="record.uuid"
       :code="record.code"
       :quote="record"
-      :expanded="sectionExpanded"
       :modelType="quoteType"
+      :paymentStatusEnum="paymentStatusEnum"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">

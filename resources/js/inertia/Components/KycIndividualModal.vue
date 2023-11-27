@@ -44,7 +44,7 @@ const kycForm = reactive({
   first_name: props.quote?.customer.insured_first_name ?? props.quote.first_name,
   last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
   dob: convertDate(props.quote.dob) || '',
-  nationality_id: props.quote.nationality_id,
+  nationality_id: props.quote.nationality_id ?? null,
   country_of_residence: props.customerDetails?.detail?.country_of_residence ?? 56,
   place_of_birth: props.customerDetails?.detail?.place_of_birth ?? null,
   resident_status: props.customerDetails?.detail?.residential_status ?? 'uaeResident',
@@ -84,7 +84,18 @@ function changeIncomeSource(val) {
   }
 }
 
-const onKycSubmit = () => {
+const isNationalityEmpty = ref(false);
+const isPlaceOfBirthEmpty = ref(false);
+
+const onKycSubmit = isValid => {
+  if (!kycForm.nationality_id) isNationalityEmpty.value = true;
+  else isNationalityEmpty.value = false;
+
+  if (!kycForm.place_of_birth) isPlaceOfBirthEmpty.value = true;
+  else isPlaceOfBirthEmpty.value = false;
+
+  if(!isValid) return;
+
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
     axios
@@ -248,7 +259,7 @@ onMounted(() => {
         :options="nationalityOptions"
         placeholder="Nationality"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isNationalityEmpty"
       />
 
       <ComboBox
@@ -266,7 +277,7 @@ onMounted(() => {
         :options="countryList"
         placeholder="Place of birth"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isPlaceOfBirthEmpty"
       />
 
       <x-select

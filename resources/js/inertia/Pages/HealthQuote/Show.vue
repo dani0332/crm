@@ -333,6 +333,11 @@ const onLeadStatus = () => {
   );
 };
 
+const members = ref(page.props.membersDetail);
+const computedMembers = computed(() => {
+  return members.value.filter(x => !x.is_third_party_payer);
+});
+
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -498,8 +503,8 @@ const memberDeleteConfirmed = () => {
   );
 };
 
-const memberDataDocs = membersDetail => {
-  return membersDetail
+const memberDataDocs = computedMembers => {
+  return computedMembers
     .map(member => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
@@ -2662,7 +2667,7 @@ const sectionExpanded = computed(() => {
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
-          :members="membersDetail"
+          :members="computedMembers"
           :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
@@ -2753,7 +2758,7 @@ const sectionExpanded = computed(() => {
         </div>
       </x-modal>
     </div>
-    
+
     <EmbeddedProducts
       :data="embeddedProducts"
       :link="quote.uuid"
@@ -2827,7 +2832,7 @@ const sectionExpanded = computed(() => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(membersDetail)"
+          :members="memberDataDocs(computedMembers)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"
