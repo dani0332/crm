@@ -50,7 +50,7 @@ const kycForm = reactive({
   communication_address: props.entityDetails?.entity?.communication_address ?? null,
   mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
   email: props.entityDetails?.entity?.email ?? props.quote.email,
-  website: props.entityDetails?.entity?.website,
+  website: props.entityDetails?.entity?.website ?? null,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
   id_number: props.entityDetails?.entity?.id_number ?? null,
   id_issue_date: convertDate(props.entityDetails?.entity?.id_issuance_date),
