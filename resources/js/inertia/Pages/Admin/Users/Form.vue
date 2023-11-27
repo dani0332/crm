@@ -180,7 +180,7 @@ onMounted(() => setInitialState());
   <x-divider class="my-4" />
   <div class="flex justify-center mb-5" v-if="isEdit">
     <img
-      v-if="user && user.profile_photo_path"
+      v-if="user && user?.profile_photo_path"
       class="rounded-full"
       :src="user.profile_photo_path"
       alt=""
@@ -294,31 +294,36 @@ onMounted(() => setInitialState());
       </x-field>
     </div>
     <div class="grid sm:grid-cols-2 gap-4" v-if="isEdit">
-      <x-field label="PERMISSIONS">
-        <ComboBox
-          :multiple="true"
-          v-model="userForm.permissions"
-          :options="
-            props.permissions.map(x => ({
-              value: x.id,
-              label: x.name,
-            }))
-          "
-        />
-      </x-field>
-      <x-field label="PRIMARY PRODUCT">
-        <x-select
-          v-model="userForm.primary_product"
-          :options="
-            props.products.map(item => ({
-              value: item.id,
-              label: item.name,
-            }))
-          "
-          class="w-full"
-        >
-        </x-select>
-      </x-field>
+      <div
+        class="grid sm:grid-cols-2 gap-4"
+        v-if="isEdit && hasRole(rolesEnum.ADMIN)"
+      >
+        <x-field label="PERMISSIONS">
+          <ComboBox
+            :multiple="true"
+            v-model="userForm.permissions"
+            :options="
+              props.permissions.map(x => ({
+                value: x.id,
+                label: x.name,
+              }))
+            "
+          />
+        </x-field>
+        <x-field label="PRIMARY PRODUCT">
+          <x-select
+            v-model="userForm.primary_product"
+            :options="
+              props.products.map(item => ({
+                value: item.id,
+                label: item.name,
+              }))
+            "
+            class="w-full"
+          >
+          </x-select>
+        </x-field>
+      </div>
     </div>
     <div class="grid sm:grid-cols-1 gap-4 mt-4">
       <x-field label="MANAGER">

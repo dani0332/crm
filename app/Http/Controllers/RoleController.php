@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use DataTables;
 use DB;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
@@ -25,26 +24,39 @@ class RoleController extends Controller
      */
     public function index(Request $request)
     {
-        $date_time_format = config('constants.datetime_format');
-        if ($request->ajax()) {
-            $data = Role::select('*')->orderBy('created_at', 'desc');
+        $query = Role::select('*')->orderBy('created_at', 'desc');
 
-            return Datatables::of($data)
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('roles.actions', compact('row'))->render();
-                })
-                ->rawColumns(['action'])
-                ->editColumn('created_at', function ($q) use ($date_time_format) {
-                    return date($date_time_format, strtotime($q->created_at));
-                })
-                ->editColumn('updated_at', function ($q) use ($date_time_format) {
-                    return date($date_time_format, strtotime($q->updated_at));
-                })
-                ->make(true);
+        if ($request->has('name')) {
+            $query = $query->where('name', $request->name);
         }
 
-        return view('roles.view');
+        $roles = $query->simplePaginate();
+
+        return inertia('Admin/Roles/Index', [
+            'roles' => $roles,
+
+        ]);
+        // return view('roles.view');
+        // $date_time_format = config('constants.datetime_format');
+        // if ($request->ajax()) {
+        //     $data = Role::select('*')->orderBy('created_at', 'desc');
+
+        //     return Datatables::of($data)
+        //         ->addIndexColumn()
+        //         ->addColumn('action', function ($row) {
+        //             return view('roles.actions', compact('row'))->render();
+        //         })
+        //         ->rawColumns(['action'])
+        //         ->editColumn('created_at', function ($q) use ($date_time_format) {
+        //             return date($date_time_format, strtotime($q->created_at));
+        //         })
+        //         ->editColumn('updated_at', function ($q) use ($date_time_format) {
+        //             return date($date_time_format, strtotime($q->updated_at));
+        //         })
+        //         ->make(true);
+        // }
+
+        // return view('roles.view');
     }
 
     /**
@@ -56,7 +68,13 @@ class RoleController extends Controller
     {
         $permission = Permission::get();
 
-        return view('roles.add', compact('permission'));
+        return inertia('Admin/Roles/Form', [
+            'permissions' => $permission,
+
+        ]);
+        // $permission = Permission::get();
+
+        // return view('roles.add', compact('permission'));
     }
 
     /**
@@ -72,11 +90,19 @@ class RoleController extends Controller
         ]);
         $role = Role::create(['name' => $request->input('name')]);
         $role->syncPermissions($request->input('permission'));
-        if (isset($request->return_to_view)) {
-            return redirect('admin/roles/'.$role->id)->with('success', 'Role has been stored');
-        }
 
-        return redirect()->back()->with('success', 'Role has been updated');
+        return redirect(route('roles.show', $role->id))->with('success', 'Role has been stored');
+        // $this->validate($request, [
+        //     'name' => 'required|unique:roles,name',
+        //     'permission' => 'required',
+        // ]);
+        // $role = Role::create(['name' => $request->input('name')]);
+        // $role->syncPermissions($request->input('permission'));
+        // if (isset($request->return_to_view)) {
+        //     return redirect('admin/roles/' . $role->id)->with('success', 'Role has been stored');
+        // }
+
+        // return redirect()->back()->with('success', 'Role has been updated');
     }
 
     /**
@@ -92,7 +118,18 @@ class RoleController extends Controller
             ->where('role_has_permissions.role_id', $id)->get();
         $permission = Permission::get();
 
-        return view('roles.show', compact('role', 'rolePermissions', 'permission'));
+        return inertia('Admin/Roles/Show', [
+            'permission' => $permission,
+            'rolePermissions' => $rolePermissions,
+            'role' => $role,
+
+        ]);
+        // $role = Role::find($id);
+        // $rolePermissions = Permission::join('role_has_permissions', 'role_has_permissions.permission_id', '=', 'permissions.id')
+        //     ->where('role_has_permissions.role_id', $id)->get();
+        // $permission = Permission::get();
+
+        // return view('roles.show', compact('role', 'rolePermissions', 'permission'));
     }
 
     /**
@@ -108,7 +145,17 @@ class RoleController extends Controller
         $rolePermissions = DB::table('role_has_permissions')->where('role_has_permissions.role_id', $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')->all();
 
-        return view('roles.edit', compact('role', 'permission', 'rolePermissions'));
+        return inertia('Admin/Roles/Form', [
+            'permissions' => $permission,
+            'rolePermissions' => $rolePermissions,
+            'role' => $role,
+        ]);
+        // $role = Role::find($id);
+        // $permission = Permission::orderBy('name')->get();
+        // $rolePermissions = DB::table('role_has_permissions')->where('role_has_permissions.role_id', $id)
+        //     ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')->all();
+
+        // return view('roles.edit', compact('role', 'permission', 'rolePermissions'));
     }
 
     /**
@@ -127,9 +174,10 @@ class RoleController extends Controller
         $role->name = $request->input('name');
         $role->save();
         $role->syncPermissions($request->input('permission'));
-        if (isset($request->return_to_view)) {
-            return redirect('admin/roles/'.$role->id)->with('success', 'Role has been updated');
-        }
+        return redirect(route('roles.show', $role->id))->with('success', 'Role has been updated');
+        // if (isset($request->return_to_view)) {
+        //     return redirect('admin/roles/' . $role->id)->with('success', 'Role has been updated');
+        // }
     }
 
     /**
@@ -141,7 +189,8 @@ class RoleController extends Controller
     public function destroy($id)
     {
         DB::table('roles')->where('id', $id)->delete();
-
         return redirect()->route('roles.index')->with('message', 'Role has been deleted');
+
+        // return redirect()->route('roles.index')->with('message', 'Role has been deleted');
     }
 }
