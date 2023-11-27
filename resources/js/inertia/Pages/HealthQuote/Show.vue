@@ -1918,19 +1918,19 @@ const handleChildUpdate = planId => {
 
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
-            <input type="hidden" :value="memberForm.id" />
-              <x-input
-                  maxLength="60"
-                  v-model="memberForm.first_name"
-                  label="First Name"
-                  placeholder="First Name"
-              />
-              <x-input
-                  maxLength="60"
-                  v-model="memberForm.last_name"
-                  label="Last Name"
-                  placeholder="Last Name"
-              />
+          <input type="hidden" :value="memberForm.id" />
+            <x-input
+                maxLength="60"
+                v-model="memberForm.first_name"
+                label="First Name"
+                placeholder="First Name"
+            />
+            <x-input
+                maxLength="60"
+                v-model="memberForm.last_name"
+                label="Last Name"
+                placeholder="Last Name"
+            />
             <ComboBox
               v-model="memberForm.nationality_id"
               label="Nationality"
