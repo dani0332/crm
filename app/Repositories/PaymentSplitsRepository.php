@@ -171,12 +171,17 @@ class PaymentSplitsRepository
                     'payment_amount' => $request->split_payment_details['split_amount'][$i],
                     'due_date' => $request->split_payment_details['due_date'][$i],
                 ];
+                $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
+                $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
                 $paymentSplitRecord = PaymentSplits::where(['code' => $request->paymentCode, 'sr_no' => $i])->first();
-                if (! $paymentSplitRecord) {
-                    $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
-                    $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
+                if (! $paymentSplitRecord) {                    
                     $paymentSplitRecord = PaymentSplits::create($splitPaymentInformation);
                 } else {
+                    /*
+                    if ($paymentSplitRecord->payment_status_id == PaymentStatusEnum::CREDIT_APPROVED) {
+                        $childPaymentStatus = $this->getChildPaymentStatus($request->split_payment_details['payment_type'][$i]);
+                        $splitPaymentInformation['payment_status_id'] = $childPaymentStatus;
+                    }*/
                     $paymentSplitRecord->update($splitPaymentInformation);
                 }
                 //add document references

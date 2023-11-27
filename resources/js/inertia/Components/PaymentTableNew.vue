@@ -371,6 +371,14 @@ const handleCancelChanges = () => {
   isDeclinedReasonError.value=false;
 };
 
+const handleNoButtonChange = () => {
+  isApproveClicked.value = !isApproveClicked.value; 
+  isApproveConfirm.value = !isApproveConfirm.value;
+  paymentMethodsForm.collection_amount = '';
+  isDeclinedReasonError.value=false;
+  isApprovePaymentError.value = false;
+};
+
 const handlePaymentOptions = (count) => {
   isPaymentMetodNotSelected.value[count] = false;
   if( paymentMethodsModels.value[count] === 'CHQ' || paymentMethodsModels.value[count] === 'PDC' ) {
@@ -432,13 +440,11 @@ const handleApprovalReasonChange = () => {
   }
 };
 
-
-
 const resetCreditApproval = () => {
   paymentMethodsForm.credit_approval = '';
   isCustomReasonEnabled.value = false;  
   handleApprovalReasonChange();
-  handleFrequencyChange();
+  handleFrequencyChange(false);
 };
 
 const resetDiscount = () => {
@@ -728,6 +734,7 @@ const addPaymentModal = () => {
   showDiscountOptions.value = true;
   isDiscountReasonError.value = false;
   isPaymentMetodNotSelected.value[1] = false;
+  isDocumentNotUploaded.value = [];
 
   if (totalPrice.value > 0 && props.quoteRequest.plan) {
     totalAmount.value = totalPrice.value;
@@ -946,6 +953,7 @@ const validateViewPayment = (isValid) => {
   }
 
   if(isApproveConfirm.value === false && isValid) {
+    isApprovePaymentError.value = false;
     isApproveConfirm.value = true;
     return true;
   }
@@ -2481,7 +2489,8 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     <x-input
                       class="w-full"
                       v-model="paymentMethodsForm.collection_amount"
-                      :rules="[rules.isRequired,rules.amount]"         
+                      :rules="[rules.isRequired,rules.amount]"
+                      @keyup="isApprovePaymentError=false"        
                     />
                   </x-field>
                 </div> 
@@ -2551,7 +2560,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <div class="w-full text-right">Do you wish to proceed with payment confirmation?</div>
             <div class="w-full flex justify-end">
               <div class="mr-4">
-                <x-button size="sm" @click="isApproveClicked = !isApproveClicked; isApproveConfirm=!isApproveConfirm">
+                <x-button size="sm" @click="handleNoButtonChange">
                   No
                 </x-button>
               </div>
