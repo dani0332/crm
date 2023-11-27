@@ -627,7 +627,6 @@ class CRUDService extends BaseService
     {
         $scoreList = [];
         $customerScore = 0;
-        $this->calculateScore($quote);
         if (isset($quote->payments[0])) {
             $paymentTopScore = 0;
             $paymentMethod = '';
@@ -650,9 +649,11 @@ class CRUDService extends BaseService
             $customerScore += $jobScore;
 
             // Nationality
-            $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
-            $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
-            $customerScore += $nationalityScore;
+            if(isset($quote->customer->nationality)) {
+                $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
+                $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
+                $customerScore += $nationalityScore;
+            }
             // Product type
             $customerScore += 1; // For products all product have 1
             $scoreList[] = ['score' => 1, 'text' => 'Product -Insurance Type', 'value' => $type];
@@ -694,7 +695,6 @@ class CRUDService extends BaseService
     }
     public function calculateScore($quote)
     {
-        $quote->customer->nationality = null;
         if (isset($quote->payments[0]) && isset($quote->customer)) {
             $paymentTopScore = 0;
             $paymentAuthorized = 0;
@@ -716,7 +716,7 @@ class CRUDService extends BaseService
             $customerScore += $paymentTopScore;
 
             $customerDetail = $quote->customer->customerDetail;
-            if ($customerDetail) {
+            if (isset($customerDetail)) {
 
                 $customerScore += in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_THREE_RATING) ? 3 : (in_array(strtolower($customerDetail->job_title), Kyc::PROFESSION_TWO_RATING) ? 2 : 1);
                 $customerScore += in_array(strtolower($customerDetail->residential_status), Kyc::RESIDENT_STATUS_THREE_RATING) ? 3 : 1;
