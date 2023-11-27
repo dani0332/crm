@@ -572,6 +572,7 @@ class CRUDService extends BaseService
                         'reason' => $request->reason,
                         'amount' => $request->amount,
                         'created_by' => auth()->user()->email,
+                        'is_manager_approved' => 1,
 
                     ]);
                     $data = [
