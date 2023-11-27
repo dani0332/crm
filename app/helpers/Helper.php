@@ -576,16 +576,25 @@ if (! function_exists('getCustomerMemberName')) {
     function getCustomerMemberName($id)
     {
         $customerMember = CustomerMembers::find($id);
-        if ($customerMember->first_name == null && $customerMember->last_name == null) {
-            $quoteMemberCount = CustomerMembers::where([
-                'customer_type' => $customerMember->customer_type,
-                'first_name' => GenericRequestEnum::MEMBER,
-            ])->count();
-            $customerMember->first_name = GenericRequestEnum::MEMBER;
-            $customerMember->last_name = (++$quoteMemberCount);
-            $customerMember->save();
+        if ($customerMember) {
+            if ($customerMember->first_name == null && $customerMember->last_name == null) {
+                $quoteMemberCount = CustomerMembers::where([
+                    'customer_type' => $customerMember->customer_type,
+                    'first_name' => GenericRequestEnum::MEMBER,
+                ])->count();
+                $customerMember->first_name = GenericRequestEnum::MEMBER;
+                $customerMember->last_name = (++$quoteMemberCount);
+                $customerMember->save();
+            }
+
+            return $customerMember->first_name.' '.$customerMember->last_name;
+        } else {
+            $healthQuote = HealthQuote::find($id);
+            if ($healthQuote) {
+                return $healthQuote->first_name.' '.$healthQuote->last_name;
+            }
         }
 
-        return $customerMember->first_name.' '.$customerMember->last_name;
+        return 'Price';
     }
 }
