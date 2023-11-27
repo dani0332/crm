@@ -7,6 +7,12 @@
     <title>KYC Individual</title>
     <link rel="stylesheet" href="{{ public_path('css/font-family-inter.css') }}">
     <style>
+        @font-face {
+            font-family: 'DejaVu Sans';
+            font-style: normal;
+            font-weight: normal;
+        }
+
         body {
             font-family: 'DejaVu Sans', serif !important;
             padding: 0;
@@ -105,7 +111,7 @@
 
 <body>
     <div id="header">
-        <img src="{{ public_path('images/im_logo_21k.png') }}" alt="Insurance Market Logo" width="500">
+        <img src="{{'data:image/png;base64,'.base64_encode(file_get_contents(public_path('images/logo_for_kyc.png')))}}" alt="Insurance Market Logo" width="300">
     </div>
     <hr>
 

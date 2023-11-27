@@ -22,24 +22,20 @@ class AMLCheckRequest extends FormRequest
      */
     public function rules(): array
     {
-        $rules = [
-            // 'payment_Details' => [
-            //     'required',
-            //     'array',
-            // ],
-        ];
         if ($this->customer_type == CustomerTypeEnum::Individual) {
             $rules = [
                 'nationality_id' => 'required',
                 'dob' => 'required',
+                'insured_first_name' => 'required|max:200',
+                'insured_last_name' => 'required|max:200',
             ];
 
-            if (filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
-                $rules['insured_fullname'] = 'required|max:200';
-            } else {
-                $rules['insured_first_name'] = 'required|max:200';
-                $rules['insured_last_name'] = 'required|max:200';
-            }
+            //            if (filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
+            //                $rules['insured_fullname'] = 'required|max:200';
+            //            } else {
+            //                $rules['insured_first_name'] = 'required|max:200';
+            //                $rules['insured_last_name'] = 'required|max:200';
+            //            }
 
             //            $rules = array_merge($rules, [
             //                'place_of_birth' => 'required',
@@ -57,14 +53,13 @@ class AMLCheckRequest extends FormRequest
         }
 
         if ($this->customer_type == CustomerTypeEnum::Entity) {
-            $rules = array_merge($rules, [
+            $rules = [
                 'trade_license_no' => 'required|max:200',
                 'company_name' => 'required|max:200',
                 'company_address' => 'required',
                 'entity_type_code' => 'nullable',
                 'industry_type_code' => 'nullable',
                 'emirate_of_registration_id' => 'nullable',
-
                 // 'legal_structure' => 'required',
                 // 'country_of_corporation' => 'required',
                 // 'website' => 'required',
@@ -73,7 +68,7 @@ class AMLCheckRequest extends FormRequest
                 // 'id_expiry_date' => 'required',
                 // 'id_issuance_place' => 'required',
                 // 'id_issuance_authority' => 'required',
-            ]);
+            ];
         }
 
         return $rules;
