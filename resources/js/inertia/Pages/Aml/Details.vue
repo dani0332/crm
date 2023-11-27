@@ -592,7 +592,7 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="quoteType.code === quoteTypeCodeEnum.Business"
+      v-if="entityDetails.entity"
       v-model="modals.insuranceForm"
       :quoteType="quoteType"
       :quoteDetails="quoteRequest"
