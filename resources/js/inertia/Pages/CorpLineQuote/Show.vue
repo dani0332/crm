@@ -932,85 +932,92 @@ const linkEntity = () => {
       modelType="Business"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
-        <div class="w-full md:w-1/2">
-          <div class="flex flex-col gap-4">
-            <x-select
-              v-model="leadStatusForm.leadStatus"
-              label="STATUS"
-              :options="leadStatusOptions"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-              placeholder="Lead Status"
-              class="w-full"
-            />
-            <x-textarea
-              v-model="leadStatusForm.notes"
-              type="text"
-              label="NOTES"
-              placeholder="Lead Notes"
-              class="w-full"
-              :disabled="
-                quote.quote_status_id ==
-                enums.quoteStatusEnum.TransactionApproved
-              "
-            />
+      <x-collapse :expanded="sectionExpanded" show-icon>
+        <template #default="{ collapsed }">
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead Status</h3>
+            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
           </div>
-        </div>
-        <div class="w-full md:w-2/3">
-          <x-input
-            v-if="
-              leadStatusForm.leadStatus ==
-              enums.quoteStatusEnum.TransactionApproved
-            "
-            :disabled="
-              quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-            "
-            v-model="leadStatusForm.trans_code"
-            label="TRANSAPP CODE"
-            placeholder="TransApp Code is required"
-            class="w-full"
-            :error="leadStatusForm.errors.trans_code"
-          />
-          <x-select
-            v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
-            v-model="leadStatusForm.lostReason"
-            label="LOST REASON"
-            :options="
-              lostReasons?.map(item => ({
-                value: item.id,
-                label: item.text,
-              }))
-            "
-            placeholder="Lost Reason is required"
-            class="w-full"
-            :error="leadStatusForm.errors.lostReason"
-          />
-        </div>
-      </div>
-      <div class="flex justify-end">
-        <x-button
-          class="mt-4"
-          color="emerald"
-          size="sm"
-          :loading="leadStatusForm.processing"
-          @click.prevent="onLeadStatus"
-          :disabled="
-            quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
-          "
-        >
-          Change Status
-        </x-button>
-      </div>
+        </template>
+        <template #content>
+          <div class="flex flex-wrap md:flex-nowrap gap-6 w-full">
+            <div class="w-full md:w-1/2">
+              <div class="flex flex-col gap-4">
+                <x-select
+                  v-model="leadStatusForm.leadStatus"
+                  label="STATUS"
+                  :options="leadStatusOptions"
+                  :disabled="
+                    quote.quote_status_id ==
+                    enums.quoteStatusEnum.TransactionApproved
+                  "
+                  placeholder="Lead Status"
+                  class="w-full"
+                />
+                <x-textarea
+                  v-model="leadStatusForm.notes"
+                  type="text"
+                  label="NOTES"
+                  placeholder="Lead Notes"
+                  class="w-full"
+                  :disabled="
+                    quote.quote_status_id ==
+                    enums.quoteStatusEnum.TransactionApproved
+                  "
+                />
+              </div>
+            </div>
+            <div class="w-full md:w-2/3">
+              <x-input
+                v-if="
+                  leadStatusForm.leadStatus ==
+                  enums.quoteStatusEnum.TransactionApproved
+                "
+                :disabled="
+                  quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+                "
+                v-model="leadStatusForm.trans_code"
+                label="TRANSAPP CODE"
+                placeholder="TransApp Code is required"
+                class="w-full"
+                :error="leadStatusForm.errors.trans_code"
+              />
+              <x-select
+                v-if="leadStatusForm.leadStatus == enums.quoteStatusEnum.Lost"
+                v-model="leadStatusForm.lostReason"
+                label="LOST REASON"
+                :options="
+                  lostReasons?.map(item => ({
+                    value: item.id,
+                    label: item.text,
+                  }))
+                "
+                placeholder="Lost Reason is required"
+                class="w-full"
+                :error="leadStatusForm.errors.lostReason"
+              />
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <x-button
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="leadStatusForm.processing"
+              @click.prevent="onLeadStatus"
+              :disabled="
+                quote.quote_status_id == enums.quoteStatusEnum.TransactionApproved
+              "
+            >
+              Change Status
+            </x-button>
+          </div>
+        </template>
+      </x-collapse>
     </div>
 
     <QuoteDocuments
@@ -1021,16 +1028,22 @@ const linkEntity = () => {
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Lead Activities
-          <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
-        </h3>
-        <x-button size="sm" color="orange" @click.prevent="addActivity">
-          Add Activity
-        </x-button>
-      </div>
-      <x-divider class="my-4" />
+      <x-collapse :expanded="sectionExpanded" show-icon>
+        <template #default="{ collapsed }">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="font-semibold text-primary-800 text-lg">
+              Lead Activities
+              <x-tag size="sm">{{ activities.length || 0 }}</x-tag>
+            </h3>
+          </div>
+          <x-divider class="my-4" v-if="!collapsed" />
+        </template>
+        <template #content>
+          <div class="mb-4 flex justify-end">
+            <x-button size="sm" color="orange" @click.prevent="addActivity">
+              Add Activity
+            </x-button>
+          </div>
 
       <DataTable
         table-class-name="compact"
@@ -1073,6 +1086,8 @@ const linkEntity = () => {
           </div>
         </template>
       </DataTable>
+</template>
+</x-collapse>
       <x-modal v-model="modals.activity" size="lg" show-close backdrop>
         <template #header>
           {{ activityActionEdit ? 'Edit' : 'Add' }} Lead Activity
@@ -1172,36 +1187,43 @@ const linkEntity = () => {
       :quote="quote"
     />
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <div v-if="historyData === null" class="text-center py-3">
-        <x-button
-          size="sm"
-          color="primary"
-          outlined
-          @click.prevent="onLoadHistoryData"
-          :loading="historyLoading"
-        >
-          Load History Data
-        </x-button>
-      </div>
-      <DataTable
-        v-else
-        table-class-name="compact"
-        :headers="historyDataTable"
-        :items="historyData || []"
-        border-cell
-        hide-rows-per-page
-        :rows-per-page="15"
-        :hide-footer="historyData.length < 15"
-      />
+      <x-collapse :expanded="sectionExpanded" show-icon>
+        <template #default="{ collapsed }">
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Lead History</h3>
+            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
+          </div>
+        </template>
+        <template #content>
+          <div v-if="historyData === null" class="text-center py-3">
+            <x-button
+              size="sm"
+              color="primary"
+              outlined
+              @click.prevent="onLoadHistoryData"
+              :loading="historyLoading"
+            >
+              Load History Data
+            </x-button>
+          </div>
+          <DataTable
+            v-else
+            table-class-name="compact"
+            :headers="historyDataTable"
+            :items="historyData || []"
+            border-cell
+            hide-rows-per-page
+            :rows-per-page="15"
+            :hide-footer="historyData.length < 15"
+          />
+        </template>
+      </x-collapse>
     </div>
 
     <AuditLogs
       :type="'App\\Models\\BusinessQuote'"
       :id="$page.props.quote.id"
+      :expanded="sectionExpanded"
     />
   </div>
 </template>

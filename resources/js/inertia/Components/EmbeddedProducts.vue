@@ -28,6 +28,11 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true,
+  },
 });
 
 const modals = reactive({
@@ -241,111 +246,115 @@ const hasAnyRole = roles => useHasAnyRole(roles);
     "
     class="p-4 rounded shadow mb-6 bg-white"
   >
-    <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-      <h3 class="font-semibold text-primary-800 text-lg">
-        Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
-      </h3>
-      <div class="flex flex-wrap gap-3">
-        <x-button
-          v-if="selectedEp.length > 0"
-          size="sm"
-          @click.prevent="onCopyText()"
-        >
-          Copy Payment Link
-        </x-button>
+    <x-collapse :expanded="expanded" show-icon>
+      <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          Embedded Products <x-tag size="sm">{{ props.data.length || 0 }}</x-tag>
+        </h3>
       </div>
-    </div>
-    <DataTable
-      table-class-name="tablefixed"
-      :headers="epTable.columns"
-      :items="props.data || []"
-      border-cell
-      hide-rows-per-page
-      hide-footer
-    >
-      <template #item-code="{ short_code }">
-        {{ short_code + '-' + props.code }}
-      </template>
-
-      <template #item-prices="{prices}">
-
-        <div v-if="prices.length > 0" class="flex gap-3">
-
-
-            <x-tag color="primary" v-for="priceItem  in prices">
-                <x-checkbox
-
-                    v-if="priceItem.transactions[0]?.is_selected == '1'"
-                    @change="toggleProduct(priceItem, $event)"
-                    :model-value="true"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
-
-                />
-                <x-checkbox
-
-                    v-else
-                    @change="toggleProduct(priceItem, $event)"
-                    color="primary"
-                    :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
-                />
-              {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
-            </x-tag>
-
-        </div>
-
-      </template>
-
-      <template #item-ep_status="{ ep_status }"> N/A </template>
-
-      <template #item-payment_status="{ prices }">
-        {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
-      </template>
-
-      <template #item-updated_at="{ updated_at }">
-        {{ dateFormat(updated_at) }}
-      </template>
-
-      <template #item-actions="item">
-        <div class="flex flex-col gap-1">
+      <template #content>
+        <div class="flex flex-wrap gap-3 justify-end mb-4">
           <x-button
-            size="xs"
-            color="emerald"
-            :disabled="!item.send_document_button"
-            :loading="sendDocumentLoader"
-            @click.prevent="sendDcoument(item.id)"
+            v-if="selectedEp.length > 0"
+            size="sm"
+            @click.prevent="onCopyText()"
           >
-            Send Documents
-          </x-button>
-          <x-button
-            size="xs"
-            color="#ff5e00"
-            :disabled="!item.send_document_button"
-            :loading="downloadLoader"
-            @click.prevent="downloadDcoument(item.id)"
-          >
-            Download Certificate
-          </x-button>
-          <x-button
-            size="xs"
-            color="primary"
-            :href="ppDoc(item.company_documents)"
-            target="_blank"
-            :disabled="ppDoc(item.company_documents) === ''"
-          >
-            Download Product Wordings
-          </x-button>
-          <x-button
-            size="xs"
-            color="#ff5e00"
-            :disabled="checkTransactionExist(item)"
-            @click.prevent="cancelPaymentForm(item)"
-          >
-            Cancel Payments
+            Copy Payment Link
           </x-button>
         </div>
+        <DataTable
+          table-class-name="tablefixed"
+          :headers="epTable.columns"
+          :items="props.data || []"
+          border-cell
+          hide-rows-per-page
+          hide-footer
+        >
+          <template #item-code="{ short_code }">
+            {{ short_code + '-' + props.code }}
+          </template>
+    
+          <template #item-prices="{prices}">
+    
+            <div v-if="prices.length > 0" class="flex gap-3">
+    
+    
+                <x-tag color="primary" v-for="priceItem  in prices">
+                    <x-checkbox
+    
+                        v-if="priceItem.transactions[0]?.is_selected == '1'"
+                        @change="toggleProduct(priceItem, $event)"
+                        :model-value="true"
+                        color="primary"
+                        :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+    
+                    />
+                    <x-checkbox
+    
+                        v-else
+                        @change="toggleProduct(priceItem, $event)"
+                        color="primary"
+                        :disabled="priceItem.transactions[0]?.payment_status_id == 4 || priceItem.transactions[0]?.payment_status_id == 6 || priceItem.transactions[0]?.payment_status_id == 12"
+                    />
+                  {{ (parseFloat(priceItem.price) + (priceItem.price * 5) / 100).toFixed(2) }}
+                </x-tag>
+    
+            </div>
+    
+          </template>
+    
+          <template #item-ep_status="{ ep_status }"> N/A </template>
+    
+          <template #item-payment_status="{ prices }">
+            {{ paymentStatus(prices[0]?.transactions[0]?.payment_status_id) }}
+          </template>
+    
+          <template #item-updated_at="{ updated_at }">
+            {{ dateFormat(updated_at) }}
+          </template>
+    
+          <template #item-actions="item">
+            <div class="flex flex-col gap-1">
+              <x-button
+                size="xs"
+                color="emerald"
+                :disabled="!item.send_document_button"
+                :loading="sendDocumentLoader"
+                @click.prevent="sendDcoument(item.id)"
+              >
+                Send Documents
+              </x-button>
+              <x-button
+                size="xs"
+                color="#ff5e00"
+                :disabled="!item.send_document_button"
+                :loading="downloadLoader"
+                @click.prevent="downloadDcoument(item.id)"
+              >
+                Download Certificate
+              </x-button>
+              <x-button
+                size="xs"
+                color="primary"
+                :href="ppDoc(item.company_documents)"
+                target="_blank"
+                :disabled="ppDoc(item.company_documents) === ''"
+              >
+                Download Product Wordings
+              </x-button>
+              <x-button
+                size="xs"
+                color="#ff5e00"
+                :disabled="checkTransactionExist(item)"
+                @click.prevent="cancelPaymentForm(item)"
+              >
+                Cancel Payments
+              </x-button>
+            </div>
+          </template>
+        </DataTable>
       </template>
-    </DataTable>
+    </x-collapse>
     <x-modal v-model="modals.cancelPayment" size="lg" show-close backdrop>
       <template #header> Cancel Payment </template>
 

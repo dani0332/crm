@@ -12,6 +12,11 @@ const props = defineProps({
     required: false,
     type: String,
   },
+  expanded: {
+    required: false,
+    type: Boolean,
+    default: true
+  }
 });
 
 const dateFormat = date => useDateFormat(date, 'DD-MM-YYYY h:mm:ss a');
@@ -74,46 +79,52 @@ const onLoadAuditLogData = async () => {
 
 <template>
   <div class="p-4 rounded shadow mb-6 bg-white">
-    <div>
-      <h3 class="font-semibold text-primary-800 text-lg">API Logs</h3>
-      <x-divider class="mb-4 mt-1" />
-    </div>
-    <div class="text-center py-3" v-if="apiLogs.data === null">
-      <x-button
-        size="sm"
-        color="primary"
-        outlined
-        @click.prevent="onLoadAuditLogData"
-        :loading="apiLogs.loading"
-      >
-        Load API Logs
-      </x-button>
-    </div>
-    <DataTable
-      v-else
-      table-class-name="compact tablefixed"
-      :headers="apiLogs.table"
-      :items="apiLogs.data || []"
-      border-cell
-      hide-rows-per-page
-      :rows-per-page="15"
-      :hide-footer="apiLogs.data?.length < 15"
-    >
-      
-      <template #item-status="{ status }">
-        <x-tag v-if="status" size="xs" :color="status === 'failed' ? 'red' : 'primary'" class="mt-0.5 text-[10px]">
-            <p>{{ status.toUpperCase() }}</p>
-        </x-tag>					
-      </template>    
-      <template #item-created_at="{ created_at }">
-        {{ dateFormat(created_at).value }}
+    <x-collapse :expanded="expanded" show-icon>
+      <template #default="{ collapsed }">
+        <div>
+          <h3 class="font-semibold text-primary-800 text-lg mb-4">API Logs</h3>
+          <x-divider class="mb-4 mt-1" v-if="!collapsed" />
+        </div>
       </template>
-      <template #item-action="item">
-        <x-button size="xs" color="primary" outlined @click.prevent="selectLog(item)">
-							View
-				</x-button>						
-			</template>
-    </DataTable>
+      <template #content>
+        <div class="text-center py-3" v-if="apiLogs.data === null">
+          <x-button
+            size="sm"
+            color="primary"
+            outlined
+            @click.prevent="onLoadAuditLogData"
+            :loading="apiLogs.loading"
+          >
+            Load API Logs
+          </x-button>
+        </div>
+        <DataTable
+          v-else
+          table-class-name="compact tablefixed"
+          :headers="apiLogs.table"
+          :items="apiLogs.data || []"
+          border-cell
+          hide-rows-per-page
+          :rows-per-page="15"
+          :hide-footer="apiLogs.data?.length < 15"
+        >
+          
+          <template #item-status="{ status }">
+            <x-tag v-if="status" size="xs" :color="status === 'failed' ? 'red' : 'primary'" class="mt-0.5 text-[10px]">
+                <p>{{ status.toUpperCase() }}</p>
+            </x-tag>					
+          </template>    
+          <template #item-created_at="{ created_at }">
+            {{ dateFormat(created_at).value }}
+          </template>
+          <template #item-action="item">
+            <x-button size="xs" color="primary" outlined @click.prevent="selectLog(item)">
+                  View
+            </x-button>						
+          </template>
+        </DataTable>
+      </template>
+    </x-collapse>
   </div> 
   
    

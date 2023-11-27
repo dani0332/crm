@@ -1,0 +1,585 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Enums\QuoteTypeId;
+use App\Models\Lookup;
+use Illuminate\Support\Str;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class AddSendUpdatesCategoriesInLookups extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $data = $this->getGenericData();
+
+        $allLOBs = $this->getAllLOBs();
+
+        foreach ($data as $option) {
+            $parentOption = Lookup::create([
+                'key' => $option['name'],
+                'code' => Str::slug(Str::limit($option['name'], 20)),
+                'text' => $option['tooltip'],
+                'parent_id' => null,
+            ]);
+
+            foreach ($option['types'] as $type) {
+                $typeCategory = Lookup::create([
+                    'key' => $type['name'],
+                    'code' => Str::slug(Str::limit($type['name'], 20)),
+                    'text' => $type['tooltip'],
+                    'parent_id' => $parentOption->id,
+                ]);
+
+                foreach ($type['subTypes'] as $lob => $subTypes) {
+                    $quoteTypeId = $allLOBs[$lob];
+
+                    foreach ($subTypes as $subType) {
+                        Lookup::create([
+                            'quote_type_id' => $quoteTypeId,
+                            'key' => $subType['name'],
+                            'code' => Str::slug(Str::limit($subType['name'], 20)),
+                            'text' => $subType['tooltip'],
+                            'parent_id' => $typeCategory->id
+                        ]);
+                    }
+                }
+            }
+        }
+    }
+
+    private function getAllLOBs()
+    {
+        return QuoteTypeId::getOptions();
+    }
+
+    private function getGenericData()
+    {
+        return [
+            [
+                'name' => 'Endorsement',
+                'tooltip' => 'Modifying or amending an existing policy. This includes actions like Additional cover and requesting corrections for any details in the existing policy from the Insurer.',
+                'types' => [
+                    [
+                        'name' => 'Endorsement financial',
+                        'tooltip' => 'Modifications or revisions to an existing policy that result in financial implications. This encompasses actions like adding extra coverage, midterm addition or removal of members, and extending the policy duration. There is involvement of collection an additional amount or a refund of a certain amount in the policy.',
+                        'subTypes' => $this->getEndorsementFinancialSubTypes()
+                    ],
+                    [
+                        'name' => 'Endorsement non financial',
+                        'tooltip' => 'Modifications or alterations made to an existing policy without any associated financial effects. This includes actions such as name amendments, details to be updated and requests for certificates of insurance. Here, there is no involvement of collecting or refunding any amount.',
+                        'subTypes' => $this->getEndorsementNonFinancialSubTypes()
+                    ],
+                ]
+            ],
+            [
+                'name' => 'Cancellation from inception',
+                'tooltip' => 'With this option, policyholders can request the cancellation of their insurance policy from the inception date. This means the policy will be considered null and void as if it was never in effect.',
+                'types' => [
+                    [
+                        'name' => 'Cancellation from inception',
+                        'tooltip' => 'With this option, policyholders can request the cancellation of their insurance policy from the inception date. This means the policy will be considered null and void as if it was never in effect',
+                        'subTypes' => $this->getCancellationFromInceptionSubTypes()
+                    ],
+                    [
+                        'name' => 'Cancellation from inception and reissuance',
+                        'tooltip' => 'To cancel the insurance policy from the inception date and subsequently reissue a new policy as required. This is typically used if we started a policy with an incorrect inception date, there is a change in the insurer selected and an update to the covers included in the policy.',
+                        'subTypes' => $this->getCancellationFromReissuanceSubTypes()
+                    ],
+                ]
+            ],
+            [
+                'name' => 'Correction of policy',
+                'tooltip' => "To rectify errors or inaccuracies in insurance policy, ensuring that the policy details align with the customer intended coverage. It's a valuable feature for maintaining accurate and up-to-date policies",
+                'types' => [
+                    [
+                        'name' => 'Correction of policy upload',
+                        'tooltip' => "This feature enables advisors to rectify any errors or inaccuracies in insurance policy documents. It ensures that the policy documentation is accurate and up to date. This could include scenarios where we sent the incorrect policy documents to the client, which belonged to another client.",
+                        'subTypes' => []
+                    ],
+                    [
+                        'name' => 'Correction of policy details',
+                        'tooltip' => 'To correct errors or inaccuracies in the insurance policy documents, ensuring that the policy information is accurate and aligned with their coverage needs.',
+                        'subTypes' => []
+                    ],
+                ]
+            ]
+        ];
+    }
+
+    private function getEndorsementFinancialSubTypes()
+    {
+        return [
+            'Car' => [
+                [
+                    'name' => 'Add optional cover',
+                    'tooltip' => "To include an additional coverage option such for a rental car, Oman cover, GCC cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs"
+                ],
+                [
+                    'name' => 'Change of Emirate',
+                    'tooltip' => "Refers to the process of updating or modifying the Emirate of Registration, as per the policyholder."
+                ],
+                [
+                    'name' => 'Change in seating capacity',
+                    'tooltip' => "Indicates that you can modify the seating capacity of the insured vehicle. This change is typically made to ensure that the policy accurately reflects the vehicle's specifications. Please update the seating capacity information accurately to maintain policy accuracy."
+                ],
+                [
+                    'name' => 'Policy period extension',
+                    'tooltip' => "To extend the duration or terms of their existing or current insurance policy beyond the original expiration date, providing continuous coverage."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "Select this if policyholders wish to terminate their insurance coverage before the policy ends. This is often chosen in situations like selling the car, exporting the car outside of the UAE or experiencing a total loss claim on their vehicle. Ensure to verify the reason with the policyholder and select accordingly."
+                ],
+            ],
+            'Bike' => [
+                [
+                    'name' => 'Add optional cover ',
+                    'tooltip' => "To include an additional coverage option such for Oman cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs"
+                ],
+                [
+                    'name' => 'Change of Emirate',
+                    'tooltip' => "Refers to the process of updating or modifying the Emirate of Registration, as per the policyholder."
+                ],
+                [
+                    'name' => 'Change in seating capacity',
+                    'tooltip' => "Indicates that you can modify the seating capacity of the insured vehicle. This change is typically made to ensure that the policy accurately reflects the vehicle's specifications. Please update the seating capacity information accurately to maintain policy accuracy"
+                ],
+                [
+                    'name' => 'Policy period extension',
+                    'tooltip' => "To extend the duration or terms of their existing or current insurance policy beyond the original expiration date, providing continuous coverage."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "Select this if policyholders wish to terminate their insurance coverage before the policy ends. This is often chosen in situations like selling the bike, exporting it outside of the UAE or experiencing a total loss claim on their vehicle. Ensure to verify the reason with the policyholder and select accordingly."
+                ],
+            ],
+            'Health' => [
+                [
+                    'name' => 'Midterm addition of member',
+                    'tooltip' => "To add new member(s) to their health insurance policy during the policy term, ensuring comprehensive coverage for their needs. This may involve collection of an additional premium amount, please check with the insurer."
+                ],
+                [
+                    'name' => 'Midterm deletion of member',
+                    'tooltip' => "Removing member(s) from their health insurance policy before the policy's scheduled expiration date offers flexibility in managing their coverage. This may lead to a credit due to the policyholder."
+                ],
+                [
+                    'name' => 'Midterm declaration',
+                    'tooltip' => "To add a declaration of a pre-existing or new medical condition during the policy term. This can lead to collection of an additional premium amount from the policyholder, please check with the Insurer."
+                ],
+                [
+                    'name' => 'Marital status change',
+                    'tooltip' => "To update their marital status during their health insurance policy term, ensuring coverage alignment with their current life circumstances. This will involve an additional premium to be collected from the policyholder, please check with the insurer."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "This option allows policyholders to terminate their insurance before its scheduled end date. Common reasons include leaving the country, obtaining a new insurance policy elsewhere (e.g., a new employer), or the unfortunate event of the policyholder's passing. Always confirm the reason before processing."
+                ],
+            ],
+            'Travel' => [
+                [
+                    'name' => 'Change in travel duration',
+                    'tooltip' => "This endorsement allows policyholders to modify the number of travel days their insurance covers. It's an essential feature for travelers whose plans may change after purchasing their policy. This may involve an additional premium; please check with the insurer accordingly."
+                ],
+                [
+                    'name' => 'Change travel dates',
+                    'tooltip' => "This is to modify the travel dates originally outlined in their insurance policy. It offers flexibility to accommodate changes in travel plans, ensuring coverage aligns with the new itinerary. Additional premium amount may be required from the policyholder to incorporate these changes, please check with the insurer on the same."
+                ],
+                [
+                    'name' => 'Correction of age bond',
+                    'tooltip' => "This endorsement allows policyholders correct the age bond to reflect the correct age information. This may involve an additional premium; please check with the insurer accordingly."
+                ],
+                [
+                    'name' => 'Add member',
+                    'tooltip' => "This endorsement allows policyholders to include an additional insured member in their travel insurance policy, which may require an extra premium"
+                ],
+                [
+                    'name' => 'Delete member',
+                    'tooltip' => "This endorsement allows policyholders to remove an insured member from their travel insurance policy if needed. This may lead to a credit due to the policyholder."
+                ],
+            ],
+            'Life' => [
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "This option allows policyholders to terminate their insurance before its scheduled end date. Common reasons include leaving the country, obtaining a new insurance policy elsewhere (e.g., a new employer), or the premium payments has lapsed from the policyholder. Always confirm the reason before processing."
+                ],
+                [
+                    'name' => 'Reinstatement',
+                    'tooltip' => "Reinstatement refers to the act of bringing a lapsed or suspended life insurance policy back into active status. Ensure all conditions are met and necessary documentation is provided before proceeding with the reinstatement process. Be aware that additional payments may be required to fully reinstate the policy."
+                ],
+            ],
+            'Home' => [
+                [
+                    'name' => 'Additional Cover',
+                    'tooltip' => "Opt for this when you wish to add extra protection or coverages to the existing home insurance policy, such as new items or increased risk factors not originally included.
+                    Note: Adding additional cover may result in a premium increase, which will need to be collected from the policyholder."
+                ],
+                [
+                    'name' => 'Increase the sum insured',
+                    'tooltip' => "Select this when you want to enhance the total amount for which your home is insured, possibly due to home improvements or acquisition of valuable items.
+                    Be aware: Increasing the sum insured will likely incur additional premiums that must be collected from the policyholder."
+                ],
+                [
+                    'name' => 'Decrease the sum insured',
+                    'tooltip' => "Choose this option if you wish to reduce the overall amount for which your home is covered. This could be in scenarios where certain insured items are no longer in possession or if the property value has depreciated."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "This selection is for instances when a policyholder opts to terminate their home insurance before its scheduled expiration. Reasons might include selling the property, transitioning to a different insurer, or other personal circumstances. Ensure all conditions are met for a midterm cancellation."
+                ],
+            ],
+            'Pet' => [
+                [
+                    'name' => 'Additional Cover',
+                    'tooltip' => "Choose this option to incorporate extra protection or benefits to the existing pet insurance. This could be due to new health concerns, additional pets, or other evolving needs of the policyholder's pet.
+                    Keep in mind: Opting for additional cover might lead to an increase in premium, to be collected from the policyholder."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "Select this if the policyholder wishes to terminate the pet insurance before its intended expiration date. This may be due to various reasons such as the pet's unfortunate passing, rehoming, or a change in the owner's circumstances. Remember, depending on the terms, some fees or penalties might apply for midterm cancellations."
+                ],
+            ],
+            'Cycle' => [
+                [
+                    'name' => 'Additional Cover',
+                    'tooltip' => "Opt for this when the policyholder seeks to bolster their bicycle protection. This could be to cover additional accessories, specific events or races, or due to upgrades made to the cycle.
+                    Remember: Enhancing or adding covers may result in a higher premium amount, to be collected from the policyholder."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "Choose this option if the policyholder wants to terminate the cycle insurance before its scheduled end date. This can arise from selling the bicycle, switching to a different insurer, or other personal circumstances. Certain terms may apply, including potential fees or penalties for midterm cancellations."
+                ],
+            ],
+            'Yacht' => [
+                [
+                    'name' => 'Additional Cover',
+                    'tooltip' => "To add additional cover to enhance the insurance protection and receive additional benefits as per the selected coverage"
+                ],
+                [
+                    'name' => 'Policy period extension',
+                    'tooltip' => "To extend the duration or terms of their existing or current insurance policy beyond the original expiration date, providing continuous coverage."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "To have the flexibility to cancel their insurance policy before the scheduled expiration date. It's a valuable option for those who need to make changes to their coverage during the policy term."
+                ],
+            ],
+            'MotorFleet' => [
+                [
+                    'name' => 'Additional vehicle',
+                    'tooltip' => "To add additional vehicle to extend the coverage and ensure multiple vehicles are protected under the same insurance plan."
+                ],
+                [
+                    'name' => 'Deletion of vehicle',
+                    'tooltip' => "To delete the vehicle from the policy coverage if it is no longer needed or if no longer owned by the company."
+                ],
+                [
+                    'name' => 'Add optional cover',
+                    'tooltip' => "To include an additional coverage option such for a rental car, Oman cover, GCC cover, Personal accident benefit covers, roadside assistance, etc. to enhance protection as per the policyholder's specific needs."
+                ],
+                [
+                    'name' => 'Change of Emirate',
+                    'tooltip' => "Refers to the process of updating or modifying the Emirate of Registration, as per the policyholder."
+                ],
+                [
+                    'name' => 'Change in seating capacity',
+                    'tooltip' => "Indicates that you can modify the seating capacity of the insured vehicle. This change is typically made to ensure that the policy accurately reflects the vehicle's specifications. Please update the seating capacity information accurately to maintain policy accuracy."
+                ],
+                [
+                    'name' => 'Policy period extension',
+                    'tooltip' => "To extend the duration or terms of their existing or current insurance policy beyond the original expiration date, providing continuous coverage."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "Select this if policyholders wish to terminate their insurance coverage before the policy ends. This is often chosen in situations like selling the car, exporting the car outside of the UAE or experiencing a total loss claim on their vehicle. Ensure to verify the reason with the policyholder and select accordingly."
+                ],
+            ],
+            'GroupMedical' => [
+                [
+                    'name' => 'Midterm addition of member',
+                    'tooltip' => "To add new member(s) to their health insurance policy during the policy term, ensuring comprehensive coverage for their needs. This may involve collection of an additional premium amount, please check with the insurer."
+                ],
+                [
+                    'name' => 'Midterm deletion of member',
+                    'tooltip' => "Removing member(s) from their health insurance policy before the policy's scheduled expiration date offers flexibility in managing their coverage. This may lead to a credit due to the policyholder."
+                ],
+                [
+                    'name' => 'Midterm declaration',
+                    'tooltip' => "To add a declaration of a pre-existing or new medical condition during the policy term. This can lead to collection of an additional premium amount from the policyholder, please check with the Insurer."
+                ],
+                [
+                    'name' => 'Marital status change',
+                    'tooltip' => "To update their marital status during their health insurance policy term, ensuring coverage alignment with their current life circumstances. This will involve an additional premium to be collected from the policyholder, please check with the insurer."
+                ],
+                [
+                    'name' => 'Midterm policy cancellation',
+                    'tooltip' => "This option allows policyholders to terminate their insurance before its scheduled end date. Common reasons include leaving the country, obtaining a new insurance policy elsewhere (e.g., a new employer), or the unfortunate event of the policyholder's passing. Always confirm the reason before processing."
+                ],
+                [
+                    'name' => 'Plan upgrade',
+                    'tooltip' => "To upgrade member's coverage by changing their category, a copy of promotion letter is necessary. This is accessible only for group medical policies that have two or more categories. This will involve an additional premium to be collected from the policyholder, please check with the insurer."
+                ],
+                [
+                    'name' => 'Sub-group creation',
+                    'tooltip' => "To add new member(s) into their existing health insurance policy, particularly those from a sister company, that requires to establish a sub-group within the group medical insurance policy.. This will involve an additional premium to be collected from the policyholder, please check with the insurer."
+                ],
+            ],
+            // 'Corpline' => [
+            //     // 
+            // ],
+            // 'Jetski' => [
+            //     // 
+            // ]
+        ];
+    }
+
+    private function getEndorsementNonFinancialSubTypes()
+    {
+        return [
+            'Car' => [
+                [
+                    'name' => 'Change in seating capacity (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Change of Emirates (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Bike' => [
+                [
+                    'name' => 'Change in seating capacity (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Change of Emirates (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Health' => [
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Emirates ID update',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Marital status change (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Quote request',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for active member list',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for certificate of continuity',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for certificate of insurance',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for ecard copy',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Waive off waiting period applied',
+                    'tooltip' => ''
+                ],
+            ],
+            'Travel' => [
+                [
+                    'name' => 'Change travel dates (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Life' => [
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Home' => [
+                [
+                    'name' => 'Change of address',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Pet' => [
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Cycle' => [
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'Yacht' => [
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'MotorFleet' => [
+                [
+                    'name' => 'Change in seating capacity (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Change of Emirates (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+            ],
+            'GroupMedical' => [
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Emirates ID update',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Marital status change (with no financial impact)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Quote request',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for active member list',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for certificate of continuity',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for certificate of insurance',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for ecard copy',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for statement of account (SOA)',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for tax invoice',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Request for travel certificate',
+                    'tooltip' => ''
+                ],
+                [
+                    'name' => 'Waive off waiting period applied',
+                    'tooltip' => ''
+                ],
+            ],
+            // 'Corpline' => [
+            //     // 
+            // ],
+            // 'Jetski' => [
+            //     // 
+            // ]
+        ];
+    }
+
+    private function getCancellationFromInceptionSubTypes()
+    {
+        $data = [
+            [
+                'name' => 'Delays/Unhappy with insurer',
+                'tooltip' => "Requires cancellation due to the delays or issues related to communication, processing, or services provided by the selected insurer."
+            ],
+            [
+                'name' => 'Unhappy with our service',
+                'tooltip' => "Requires cancellation due to the delays or issues related to communication, processing, or services we provided."
+            ],
+        ];
+
+        $allLOBs = $this->getAllLOBs();
+
+        $subTypes = [];
+
+        foreach ($allLOBs as $lob) {
+            $subTypes[$lob] = $data;
+        }
+
+        return $subTypes;
+    }
+
+    private function getCancellationFromReissuanceSubTypes()
+    {
+        $data = [
+            [
+                'name' => 'Change in inception date',
+                'tooltip' => "Requires cancellation and reissuance of the policy due to a change in the policy's start date.
+                Example: Policy is issued with the start date as of today. Client has gotten back to us to request a change in the start date to a later date (future date) because of any reason, like, they have an existing policy until then."
+            ],
+            [
+                'name' => 'Change in expiry date / Extension of policy',
+                'tooltip' => "Requires cancellation and re-issuance due to a policy's expiry date change.
+                Example: Travel date extension of a trip, which has the same start date however, extension is made to the end date of the trip."
+            ],
+            [
+                'name' => 'Change in insurer',
+                'tooltip' => "Requires cancellation and re-issuance due to a change of provider.
+                Example: Client still needs to receive the benefits of the chosen insurer and hence wants to change their Insurer due to a delay. This change may involve a debit amount due or credit to the client."
+            ],
+            [
+                'name' => 'Change in cover',
+                'tooltip' => "Requires cancellation and re-issuance due to a change of cover. 
+                Example: Policy is not yet started, and the client now wants to add a cover, this would involve a cancellation of the current policy and re-issuance of the new policy with the cover(s) added accordingly."
+            ],
+        ];
+
+        $allLOBs = $this->getAllLOBs();
+
+        $subTypes = [];
+
+        foreach ($allLOBs as $lob) {
+            $subTypes[$lob] = $data;
+        }
+
+        return $subTypes;
+    }
+}

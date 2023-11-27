@@ -735,6 +735,7 @@ const linkEntity = () => {
       modelType="Cycle"
       :quote="quote"
       :canAddBatchNumber="canAddBatchNumber"
+      :expanded="sectionExpanded"
     />
 
     <QuoteActivities
@@ -743,6 +744,7 @@ const linkEntity = () => {
       :activities="activities"
       :advisors="advisors"
       :quote-type="quoteType"
+      :expanded="sectionExpanded"
     />
 
     <QuotePayments
@@ -761,6 +763,7 @@ const linkEntity = () => {
       :quote-statuses="quoteStatuses"
       :lost-reasons="lostReasons"
       :quote-status-enum="quoteStatusEnum"
+      :expanded="sectionExpanded"
     />
 
     <QuoteDocuments
@@ -768,6 +771,7 @@ const linkEntity = () => {
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
       :quote="quote"
+      :expanded="sectionExpanded"
     />
 
     <QuotePolicy
@@ -788,10 +792,11 @@ const linkEntity = () => {
       :code="quote.code"
       :quote="quote"
       :modelType="quoteType"
+      :expanded="sectionExpanded"
     />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :expanded="sectionExpanded" />
 
-    <LeadHistory :quote="$page.props.quote" />
+    <LeadHistory :quote="$page.props.quote" :expanded="sectionExpanded" />
   </div>
 </template>
