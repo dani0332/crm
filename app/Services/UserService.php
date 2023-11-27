@@ -27,10 +27,10 @@ class UserService extends BaseService
         $user->landline_no = $request->landline_no;
         $user->password = bcrypt($request->password);
         $user->is_active = true;
-        if ($request->sub_team_id != '0') {
+        if ((!empty($request->additionalTeams) && $request->sub_team_id != '0')) {
             $user->sub_team_id = $request->sub_team_id;
         }
-        if (isset($request->additionalTeams)) {
+        if (!empty($request->additionalTeams) && isset($request->additionalTeams)) {
             if (count((array) $request->additionalTeams) > 0) {
                 $user->additional_team_ids = implode(',', $request->additionalTeams);
             } else {
