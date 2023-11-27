@@ -237,6 +237,7 @@ class UserController extends Controller
         if (isset($user->additional_team_ids)) {
             $selectedAdditionalTeams = array_map('intval', explode(',', $user->additional_team_ids));
         }
+        
         $products = $this->getAllProducts();
 
         $userTeamIds = $this->getUserTeams($user->id)->pluck('id')->toArray();

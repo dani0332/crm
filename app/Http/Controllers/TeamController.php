@@ -7,7 +7,6 @@ use App\Models\Team;
 use App\Services\TeamService;
 use App\Traits\TeamHierarchyTrait;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 
 class TeamController extends Controller
 {
@@ -25,26 +24,18 @@ class TeamController extends Controller
      */
     public function index(Request $request)
     {
-        $gridData = Team::with('parent')->whereNotNull('type');
+        $query = Team::with('parent')->whereNotNull('type');
 
-        if ($request->ajax()) {
-            if (isset($request->name) && ! empty($request->name)) {
-                $name = $request->name;
-                $gridData = $gridData->where(function ($query) use ($name) {
-                    $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
-                });
-            }
-
-            return DataTables::of($gridData->get()->sortBy('parent.name'))
-                ->addIndexColumn()
-                ->addColumn('action', function ($row) {
-                    return view('teams.view')->render();
-                })
-                ->rawColumns(['action'])
-                ->make(true);
+        if (isset($request->name) && !empty($request->name)) {
+            $name = $request->name;
+            $query->whereRaw('LOWER(name) LIKE ?', [strtolower("%{$name}%")]);
         }
+        $teams = $query->simplePaginate();
 
-        return view('teams.view');
+        return inertia('Admin/Teams/Index', [
+            'teams' => $teams,
+
+        ]);
     }
 
     /**
@@ -56,7 +47,9 @@ class TeamController extends Controller
     {
         $products = $this->teamService->getTeams();
 
-        return view('teams.add', compact('products'));
+        return inertia('Admin/Teams/Form', [
+            'products' => $products,
+        ]);
     }
 
     /**
@@ -89,10 +82,10 @@ class TeamController extends Controller
         $team->save();
 
         if (isset($request->return_to_view)) {
-            return redirect('generic/team/'.$team->id)->with('success', 'Team has been stored');
+            return redirect('generic/team/' . $team->id)->with('success', 'Team has been stored');
         }
 
-        return redirect()->back()->with('success', 'Team has been stored');
+        return redirect(route('team.show', $team->id))->with('success', 'Team has been stored');
     }
 
     /**
@@ -101,9 +94,13 @@ class TeamController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function show(Team $team)
+    public function show($id)
     {
-        return view('teams.show', compact('team'));
+        $data = Team::where('id', $id)->first();
+        $data->parent_team_id = $this->teamService->getTeamNameById($data->parent_team_id);
+        return inertia('Admin/Teams/Show', [
+            'team' => $data,
+        ]);
     }
 
     /**
@@ -116,7 +113,10 @@ class TeamController extends Controller
     {
         $products = $this->teamService->getTeams();
 
-        return view('teams.edit', compact('team', 'products'));
+        return inertia('Admin/Teams/Form', [
+            'products' => $products,
+            'team' => $team,
+        ]);
     }
 
     /**
@@ -139,23 +139,19 @@ class TeamController extends Controller
 
         $team = Team::where('id', $id)->first();
         if (! $team) {
-            return redirect('generic/team/'.$team->id)->with('message', 'Team not found');
+            return redirect()->back()->with('message', 'Team not found');
         }
         if (isset($request->type) && $request->type == TeamTypeEnum::TEAM || $request->type == TeamTypeEnum::SUB_TEAM) {
             $team->parent_team_id = $request->parent_team_id;
         }
         $team->name = $request->name;
         $team->type = $request->type;
-        $team->is_active = $request->is_active == 'on' ? 1 : 0;
+        $team->is_active = $request->is_active == true ? 1 : 0;
         $team->slabs_count = $request->get('slabs_count');
         $team->created_at = now();
         $team->updated_at = now();
         $team->save();
 
-        if (isset($request->return_to_view)) {
-            return redirect('generic/team/'.$team->id)->with('success', 'Team has been updated');
-        }
-
-        return redirect()->back()->with('success', 'Team has been updated');
+        return redirect(route('team.show', $team->id))->with('success', 'Team has been updated');
     }
 }
