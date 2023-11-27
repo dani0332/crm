@@ -3044,6 +3044,7 @@ const handleChildUpdate = planId => {
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
+      :paymentStatusEnum="paymentStatusEnum"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
