@@ -49,7 +49,7 @@ class BusinessQuoteRepository extends BaseRepository
         )), function ($query) {
             $query->where('advisor_id', auth()->user()->id);
         })
-            ->filter(! $forExport)
+            ->filter(!$forExport)
             ->withFakeLeadCriteria()
             ->orderBy('created_at', 'desc');
 
@@ -67,6 +67,7 @@ class BusinessQuoteRepository extends BaseRepository
                 'previousAdvisor',
                 'businessQuoteRequestDetail.lostReason',
                 'customer',
+                'lookUp',
                 'quoteRequestEntityMapping' => function ($entityMapping) {
                     $entityMapping->with('entity');
                 },
@@ -75,8 +76,8 @@ class BusinessQuoteRepository extends BaseRepository
                 },
             ])
             ->select([
-                $this->getTable().'.*',
-                \DB::raw('("'.CustomerTypeEnum::Entity.'") as customer_type'),
+                $this->getTable() . '.*',
+                \DB::raw('("' . CustomerTypeEnum::Entity . '") as customer_type'),
             ])
             ->firstOrFail();
 
@@ -85,6 +86,6 @@ class BusinessQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::BUSINESS->value).'-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::BUSINESS->value) . '-quote', 'post', $dataArr);
     }
 }
