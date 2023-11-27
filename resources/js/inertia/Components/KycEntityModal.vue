@@ -16,7 +16,6 @@ const props = defineProps({
   amlQuoteStatus: Number,
   nationalities: Array,
   modelType: String,
-  entities: Array,
   legalStructure: Array,
   idDocumentType: Array,
   issuancePlace: Array,
@@ -126,13 +125,6 @@ const nationalityOptions = computed(() => {
   return props.nationalities.map(nat => ({
     value: nat.id,
     label: nat.text,
-  }));
-});
-
-const entitiesOptions = computed(() => {
-  return props.entities.map(nat => ({
-    value: nat.id,
-    label: nat.industry_type_code,
   }));
 });
 

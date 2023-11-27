@@ -650,7 +650,7 @@ class CRUDService extends BaseService
             $customerScore += $jobScore;
 
             // Nationality
-            if(isset($quote->customer->nationality)) {
+            if (isset($quote->customer->nationality)) {
                 $nationalityScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
                 $scoreList[] = ['score' => $nationalityScore, 'text' => 'Nationality', 'value' => $quote->customer->nationality->country_name];
                 $customerScore += $nationalityScore;
@@ -709,7 +709,7 @@ class CRUDService extends BaseService
                     $paymentAuthorized += $payment->premium_authorized;
                 }
             }
-            if(isset($quote->customer->nationality)) {
+            if (isset($quote->customer->nationality)) {
                 $customerScore = in_array(strtolower($quote->customer->nationality->country_name), Kyc::COUNTRY_NATIONALITY_FOUR_RATING) ? 4 : 1;
             }
             $customerScore += ($paymentAuthorized >= 100001) ? 3 : (($paymentAuthorized >= 55001 && $paymentAuthorized <= 100000) ? 2 : 1);
