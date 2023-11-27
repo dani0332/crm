@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use App\Enums\CustomerTypeEnum;
+use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Facades\Capi;
@@ -40,7 +42,7 @@ class LifeQuoteRepository extends BaseRepository
             'othersInfo' => $data['others_info'],
             'source' => config('constants.SOURCE_NAME'),
             'referenceUrl' => config('constants.APP_URL'),
-            'advisorId' => (! auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
+            'advisorId' => (!auth()->user()->hasRole(RolesEnum::Admin)) ? auth()->user()->id : null,
         ];
 
         $response = Capi::request('/api/v1-save-life-quote', 'post', $lifeData);
@@ -83,11 +85,27 @@ class LifeQuoteRepository extends BaseRepository
     {
         $quote = $this->where($column, $value)->with([
             'advisor', 'quoteStatus', 'nationality', 'previousAdvisor', 'lifeQuoteRequestDetail.lostReason',
-            'purposeOfInsurance', 'childern', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
-            'paymentStatus', 'customer.additionalContactInfo', 'lookUp',
-        ])->firstOrFail();
+            'purposeOfInsurance', 'children', 'currency', 'insuranceTenure', 'numberOfYears', 'maritalStatus',
+            'paymentStatus', 'customer.additionalContactInfo', 'lookUp', 'quoteRequestEntityMapping' => function ($entityMapping) {
+                $entityMapping->with('entity');
+            }
+        ])
+            ->with([
+                'documents' => function ($q) {
+                    $q->with('createdBy')->orderBy('created_at', 'desc');
+                },
+            ])
+            ->select([
+                'life_quote_request.*',
+                \DB::raw('IF(EXISTS (
+                    SELECT *
+                    FROM quote_request_entity_mapping
+                    WHERE quote_type_id = ' . QuoteTypeId::Life . ' AND quote_request_id = life_quote_request.id),
+                    "' . CustomerTypeEnum::Entity . '", "' . CustomerTypeEnum::Individual . '")
+                as customer_type'),
+            ])->firstOrFail();
 
-        $data = ! empty($quote) ? $quote->toArray() : [];
+        $data = !empty($quote) ? $quote->toArray() : [];
         $quote->lost_reason = $data['quote_detail']['lost_reason']['text'] ?? null;
         $quote->previous_advisor_id_text = $data['quote_detail']['previous_advisor']['name'] ?? null;
         $quote->transaction_type_text = $data['look_up']['text'] ?? null;
@@ -107,7 +125,7 @@ class LifeQuoteRepository extends BaseRepository
             'currency' => CurrencyTypeRepository::withActive()->get(),
             'purposeOfInsurance' => PurposeOfInsuranceRepository::withActive()->get(),
             'maritalStatus' => MaritalStatusRepository::withActive()->get(),
-            'childern' => LifeChildrenRepository::withActive()->get(),
+            'children' => LifeChildrenRepository::withActive()->get(),
             'typeOfInsurance' => LifeInsuranceTenureRepository::withActive()->get(),
             'numberOfYears' => LifeNumberOfYearsRepository::withActive()->get(),
 
@@ -125,6 +143,6 @@ class LifeQuoteRepository extends BaseRepository
 
     public function fetchCreateDuplicate(array $dataArr): object
     {
-        return Capi::request('/api/v1-save-'.strtolower(QuoteTypes::LIFE->value).'-quote', 'post', $dataArr);
+        return Capi::request('/api/v1-save-' . strtolower(QuoteTypes::LIFE->value) . '-quote', 'post', $dataArr);
     }
 }
