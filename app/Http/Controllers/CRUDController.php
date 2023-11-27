@@ -646,6 +646,12 @@ class CRUDController extends Controller
                     $carInsuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Car);
                 }
             }
+
+            $sendUpdateOptions = [];
+
+            // if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+                $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
+            // }
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
@@ -689,7 +695,7 @@ class CRUDController extends Controller
             $nationalities = NationalityRepository::withActive()->get();
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'amlQuoteStatus', 'entities', 'legalStructure', 'idDocumentType', 'issuancePlace', 'issuanceAuthorities', 'modeOfContact', 'employmentSectors', 'residentialStatus', 'companyPosition', 'countries',
+                'amlQuoteStatus', 'sendUpdateOptions', 'entities', 'legalStructure', 'idDocumentType', 'issuancePlace', 'issuanceAuthorities', 'modeOfContact', 'employmentSectors', 'residentialStatus', 'companyPosition', 'countries',
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',

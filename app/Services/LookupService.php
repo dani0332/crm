@@ -184,4 +184,18 @@ class LookupService extends BaseService
     {
         return Lookup::where('key', LookupsEnum::ISSUING_AUTHORITY)->get();
     }
+
+    function getSendUpdateOptions($quoteTypeId) 
+    {
+        return Lookup::where([
+            'code' => LookupsEnum::SEND_UPDATE_CODE,
+            'parent_id' => null
+        ])->with('childs', function ($query) use ($quoteTypeId) { 
+            $query->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id')
+            ->with('childs', function ($query) use ($quoteTypeId) {
+                $query->where('quote_type_id', $quoteTypeId)->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id');
+            });
+        })->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id')->get();
+
+    }
 }

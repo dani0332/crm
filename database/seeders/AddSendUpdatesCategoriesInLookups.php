@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteTypeId;
 use App\Models\Lookup;
 use Illuminate\Support\Str;
@@ -16,13 +17,13 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
     public function run(): void
     {
         $data = $this->getGenericData();
-
+        
         $allLOBs = $this->getAllLOBs();
 
         foreach ($data as $option) {
             $parentOption = Lookup::create([
                 'key' => $option['name'],
-                'code' => Str::slug(Str::limit($option['name'], 20)),
+                'code' => LookupsEnum::SEND_UPDATE_CODE,
                 'text' => $option['tooltip'],
                 'parent_id' => null,
             ]);
@@ -36,11 +37,15 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                 ]);
 
                 foreach ($type['subTypes'] as $lob => $subTypes) {
-                    $quoteTypeId = $allLOBs[$lob];
+                    $item = $allLOBs->where('name', '=', $lob)->first();
 
+                    if (! $item) {
+                        continue;
+                    }
+                    
                     foreach ($subTypes as $subType) {
                         Lookup::create([
-                            'quote_type_id' => $quoteTypeId,
+                            'quote_type_id' => $item['id'],
                             'key' => $subType['name'],
                             'code' => Str::slug(Str::limit($subType['name'], 20)),
                             'text' => $subType['tooltip'],
@@ -54,7 +59,14 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
 
     private function getAllLOBs()
     {
-        return QuoteTypeId::getOptions();
+        return collect(QuoteTypeId::getOptions())->map(function ($value, $key) {
+            return [
+                'id' => $key,
+                'name' => $value
+            ];
+        })->filter(function ($item) {
+            return $item['id'] <= 11;
+        });
     }
 
     private function getGenericData()
@@ -328,9 +340,52 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'tooltip' => "To add new member(s) into their existing health insurance policy, particularly those from a sister company, that requires to establish a sub-group within the group medical insurance policy.. This will involve an additional premium to be collected from the policyholder, please check with the insurer."
                 ],
             ],
-            // 'Corpline' => [
-            //     // 
-            // ],
+            'Corpline' => [
+                [
+                    'name' => 'Addition of location of practice for medical professionals',
+                    'tooltip' => 'This allows you to add new practice locations for medical professionals. Ensure accurate details are provided to maintain comprehensive coverage. This may involve collection of an additional premium amount, please check with the insurer.'
+                ],
+                [
+                    'name' => 'Additional Cover',
+                    'tooltip' => 'To add additional cover to enhance the insurance protection and receive additional benefits as per the selected coverage This may involve collection of an additional premium amount, please check with the insurer.'
+                ],
+                [
+                    'name' => 'Additional location',
+                    'tooltip' => 'This is to include an additional location or property under their coverage. It offers the flexibility to extend protection to new assets or places beyond the initial policy terms. This may involve collection of an additional premium amount, please check with the insurer.'
+                ],
+                [
+                    'name' => 'Employee addition',
+                    'tooltip' => "This is to add additional employees to their workers' compensation coverage. It ensures that all eligible workers are included in the policy, providing comprehensive protection for the workforce. This may involve collection of an additional premium amount, please check with the insurer."
+                ],
+                [
+                    'name' => 'Employee deletion',
+                    'tooltip' => "This is to delete employees to their workers' compensation coverage. It ensures that all eligible workers are included in the policy, providing comprehensive protection for the workforce. This may lead to a credit due to the policyholder."
+                ],
+                [
+                    'name' => 'Extension for maintenance period',
+                    'tooltip' => 'Extend the maintenance period as necessary. This allows to prolong the period during which maintenance and support services are provided. This may involve collection of an additional premium amount, please check with the insurer.'
+                ],
+                [
+                    'name' => 'Increase / Change of limit of indemnity and limit of liability required',
+                    'tooltip' => "Modify or enhance the policy's limit of indemnity and limit of liability as required. Depending on the changes made, a credit or an additional payment maybe due to the policyholder."
+                ],
+                [
+                    'name' => 'Increase in estimated annual fees / turnover',
+                    'tooltip' => "Update on the estimated annual fees or turnover to reflect changes in your business. Accurate information ensures adequate coverage. This may involve collection of an additional premium amount, please check with the insurer."
+                ],
+                [
+                    'name' => 'Increase in sum Insured',
+                    'tooltip' => 'Increase the insured amount for your policy here. Review and adjust the sum insured as needed to match your evolving needs. This may involve collection of an additional premium amount, please check with the insurer.'
+                ],
+                [
+                    'name' => 'Midterm Policy Cancellation',
+                    'tooltip' => "To have the flexibility to cancel their insurance policy before the scheduled expiration date. It's a valuable option for those who need to make changes to their coverage during the policy term."
+                ],
+                [
+                    'name' => 'Policy period extension',
+                    'tooltip' => "To extend the duration or terms of their existing or current insurance policy beyond the original expiration date, providing continuous coverage. This may involve collection of an additional premium amount, please check with the insurer."
+                ],
+            ],
             // 'Jetski' => [
             //     // 
             // ]
@@ -514,9 +569,24 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     'tooltip' => ''
                 ],
             ],
-            // 'Corpline' => [
-            //     // 
-            // ],
+            'Corpline' => [
+                [
+                    'name' => 'Add additional insured',
+                    'tooltip' => 'Include additional insured parties to the policy. This extends coverage to other individuals or entities as specified, broadening the protection provided by the policy.'
+                ],
+                [
+                    'name' => 'Addition of clauses',
+                    'tooltip' => 'Add new clauses to your policy as needed. This allows you to specify additional terms or conditions that are relevant to your coverage.'
+                ],
+                [
+                    'name' => 'Change of address',
+                    'tooltip' => 'Update customer address information within their policy.'
+                ],
+                [
+                    'name' => 'Correction and amendments',
+                    'tooltip' => 'To modify particular details or correct any inaccuracies within the policy records supplied by the insurer, these are the fields that can be updated without any financial implications. If there is a requirement to change customer name, policy number, start date, or end date in IMCRM, kindly reach out to the non retail accounts team to rectify these policy details in the IMCRM system after sending the update to the customer.'
+                ],
+            ],
             // 'Jetski' => [
             //     // 
             // ]
@@ -541,7 +611,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
         $subTypes = [];
 
         foreach ($allLOBs as $lob) {
-            $subTypes[$lob] = $data;
+            $subTypes[$lob['name']] = $data;
         }
 
         return $subTypes;
@@ -577,7 +647,7 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
         $subTypes = [];
 
         foreach ($allLOBs as $lob) {
-            $subTypes[$lob] = $data;
+            $subTypes[$lob['name']] = $data;
         }
 
         return $subTypes;

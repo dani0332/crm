@@ -81,6 +81,7 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
+  sendUpdateOptions: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -3274,10 +3275,12 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     </div>
 
     <SendUpdates
-      v-if="showSendUpdate"
+      v-if="true || showSendUpdate"
       :showAddButton="true"
-      :reportableType="'Car'"
-      :reportableId="1"
+      :reportableType="quoteType"
+      :reportableId="quote.id"
+      :options="sendUpdateOptions"
+      :data="[]"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
