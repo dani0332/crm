@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
+use App\Enums\GenericRequestEnum;
 use App\Enums\quoteTypeCode;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\CustomerMembers;
@@ -59,10 +60,10 @@ class MembersDetailController extends Controller
                 $quoteMemberCount = CustomerMembers::where([
                     'customer_type' => $request->customer_type,
                     'customer_entity_id' => $customerEntityId,
-                    'first_name' => 'Member',
+                    'first_name' => GenericRequestEnum::MEMBER,
                 ])->count();
 
-                $quoteMemberDetails['first_name'] = 'Member';
+                $quoteMemberDetails['first_name'] = GenericRequestEnum::MEMBER;
                 $quoteMemberDetails['last_name'] = (++$quoteMemberCount);
             }
 

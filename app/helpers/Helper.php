@@ -1,9 +1,11 @@
 <?php
 
+use App\Enums\GenericRequestEnum;
 use App\Enums\IMCRMSearchTypesEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
 use App\Models\CustomerAdditionalInfo;
+use App\Models\CustomerMembers;
 use App\Models\HealthQuote;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -567,5 +569,23 @@ if (! function_exists('getRepositoryObject')) {
         $quoteType = ucfirst($quoteType);
 
         return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
+    }
+}
+
+if (! function_exists('getCustomerMemberName')) {
+    function getCustomerMemberName($id)
+    {
+        $customerMember = CustomerMembers::find($id);
+        if ($customerMember->first_name == null && $customerMember->last_name == null) {
+            $quoteMemberCount = CustomerMembers::where([
+                'customer_type' => $customerMember->customer_type,
+                'first_name' => GenericRequestEnum::MEMBER,
+            ])->count();
+            $customerMember->first_name = GenericRequestEnum::MEMBER;
+            $customerMember->last_name = (++$quoteMemberCount);
+            $customerMember->save();
+        }
+
+        return $customerMember->first_name.' '.$customerMember->last_name;
     }
 }
