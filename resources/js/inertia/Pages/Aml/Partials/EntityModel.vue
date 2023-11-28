@@ -471,6 +471,7 @@ const show = ref(true);
         :idDocumentType="props.lookups.id_type"
         :modeOfContact="props.lookups.mode_of_contact"
         :employmentSectors="props.lookups.employment_sector"
+        :professional-title="props.lookups.professional_title"
         :residentialStatus="props.lookups.resident_status"
         :companyPosition="props.lookups.company_position"
         :modeOfDelivery="props.lookups.mode_of_delivery"
