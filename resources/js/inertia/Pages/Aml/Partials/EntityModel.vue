@@ -16,7 +16,6 @@ const props = defineProps({
   customerTypeEnum: Object,
   lookups: Object,
   legalStructure: Object,
-  entities: Array,
   quoteAmlStatus: Number,
   customerDetails: Object,
 });
@@ -321,7 +320,6 @@ const show = ref(true);
           :aml-quote-status="props.quoteAmlStatus"
           :nationalities="nationalities"
           :modelType="props.quoteType?.code"
-          :entities="props.entities"
           :idDocumentType="props.lookups.entity_document_type"
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
