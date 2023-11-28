@@ -457,6 +457,7 @@ const onMemberSubmit = isValid => {
         });
         memberForm.reset();
         onLoadAvailablePlansData();
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -471,6 +472,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         onLoadAvailablePlansData();
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -495,9 +497,7 @@ const memberDeleteConfirmed = () => {
           position: 'top',
         });
         onLoadAvailablePlansData();
-      },
-      onFinish: () => {
-        modals.memberConfirm = false;
+        location.reload();
       },
     },
   );
@@ -1998,14 +1998,7 @@ const handleChildUpdate = planId => {
               label="DOB"
               :hasError="memberFieldReq.dob"
             />
-            <x-select
-              v-model="memberForm.member_category_id"
-              label="Member Category"
-              :options="memberCategoriesOptions"
-              :rules="[isRequired]"
-              placeholder="Select Member Category"
-              class="w-full"
-            />
+
             <x-select
               v-model="memberForm.relation_code"
               label="Relation"
