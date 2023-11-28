@@ -82,7 +82,7 @@ class UpdateCustomerMemberMissingData implements ShouldQueue
                 $this->iteratedRecords++;
             } else {
 
-                info('Quote Details Fetch Failed - '.'Quote Model:'.$quoteModel.' Quote Type ID: '.$this->quoteTypeId.' - Ref-ID:'.$customerMember->quote_id. ' - Customer Member ID:'.$customerMember->id);
+                info('Quote Details Fetch Failed - '.'Quote Model:'.$quoteModel.' Quote Type ID: '.$this->quoteTypeId.' - Ref-ID:'.$customerMember->quote_id.' - Customer Member ID:'.$customerMember->id);
                 $this->iteratedRecords++;
             }
         }
