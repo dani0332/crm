@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
@@ -63,6 +64,9 @@ class MembersDetailController extends Controller
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
@@ -126,6 +130,9 @@ class MembersDetailController extends Controller
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 ]));
 
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
