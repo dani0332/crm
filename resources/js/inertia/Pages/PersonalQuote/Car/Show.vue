@@ -1434,7 +1434,6 @@ const linkEntity = () => {
                 customerProfileForm.company_address = response.company_address;
                 customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
                 customerProfileForm.industry_type_code = response.industry_type_code;
-                customerProfileForm.emirate_of_registration_id = response.emirate_of_registration_id;
 
                 notification.success({
                     title: res.data.message,
@@ -2872,7 +2871,7 @@ const handleChildUpdate = planId => {
                   Selected
               </x-button>
             </span>
-            
+
 
           </div>
         </template>
@@ -2967,6 +2966,7 @@ const handleChildUpdate = planId => {
           :available-plans="availablePlansItems"
           @success="onCreatePlan"
           @error="onPlanError"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->
@@ -3044,6 +3044,7 @@ const handleChildUpdate = planId => {
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
+      :paymentStatusEnum="paymentStatusEnum"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
