@@ -26,8 +26,6 @@ const props = defineProps({
   }
 })
 
-console.log('options', props.options);
-
 const sendUpdatesTable = reactive({
   headers: [
     { text: 'SU-REF ID', value: 'ref_id' },
@@ -140,7 +138,7 @@ const goBack = () => {
             <x-button color="primary" class="py-8 px-6 rounded-xl" @click="setOption('step2', option)">
               {{ option.title }}
             </x-button>
-            <template #tooltip> {{ option.description }} </template>
+            <template #tooltip> <div>{{ option.description }}</div> </template>
           </x-tooltip>
         </template>
       </div>
@@ -152,22 +150,27 @@ const goBack = () => {
             <x-button color="primary" class="py-8 px-6 rounded-xl" @click="setOption('step3', category)">
               {{ category.title }}
             </x-button>
-            <template #tooltip> {{ category.description }} </template>
+            <template #tooltip> <div>{{ category.description }}</div> </template>
           </x-tooltip>
         </template>
       </div>
 
       <!-- modal 3 -->
-      <div class="w-full flex gap-5 text-center mb-10" v-else-if="modals.step === 'step3' && state.childCategory.childs.length > 0">
-        <x-field :label="state.childCategory.title" required>
-          <x-select
-            v-model="state.option"
-            :options="state.childCategory.childs.map(item => ({ label: item.title, value: item.id }))"
-            :rules="[isRequired]"
-            placeholder="Select Reason"
-            class="w-full"
-          />
-        </x-field>
+      <div class="w-full flex gap-5 mb-10" v-else-if="modals.step === 'step3' && state.childCategory.childs.length > 0">
+        <div class="flex flex-col gap-2 flex-grow w-75">
+          <x-field :label="state.childCategory.title" required>
+            <x-select
+              v-model="state.option"
+              :options="state.childCategory.childs.map(item => ({ label: item.title, value: item.id }))"
+              :rules="[isRequired]"
+              placeholder="Select Reason"
+              class="w-full"
+            />
+          </x-field>
+          <div class="flex justify-end mt-2">
+            <x-button class="" size="sm" color="primary" @click="addUpdate">Add Update</x-button>  
+          </div>
+        </div>
       </div>
     </x-modal>
   </div>
