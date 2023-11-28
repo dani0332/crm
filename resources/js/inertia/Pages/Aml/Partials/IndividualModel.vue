@@ -19,7 +19,6 @@ const props = defineProps({
   customerTypeEnum: Object,
   residentStatuses: Object,
   lookups: Object,
-  entities: Array,
   quoteAmlStatus: Number,
   customerDetails: Object,
 });
@@ -1128,7 +1127,6 @@ onMounted(() => {
           :aml-quote-status="props.amlQuoteStatus"
           :nationalities="nationalities"
           :modelType="props.quoteType?.code"
-          :entities="props.entities"
           :idDocumentType="props.lookups.id_type"
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"

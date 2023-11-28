@@ -240,7 +240,6 @@ class AMLController extends Controller
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
-        $entities = Entity::all();
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $data = [
@@ -268,7 +267,6 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
-            'entities' => $entities,
             'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
