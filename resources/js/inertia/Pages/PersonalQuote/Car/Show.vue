@@ -1419,37 +1419,32 @@ const searchByTradeLicense = trigger => {
 };
 
 const linkEntity = () => {
-  let entityDetails = {
-    quote_type_id: page.props.quoteTypeId,
-    quote_request_id: page.props.record.id,
-    entity_id: tradeLicenseEntity.entity_id,
-    triggeredFrom: tradeLicenseEntity.triggeredFrom,
-  };
-  axios
-    .post(route('link-entity-details'), entityDetails)
-    .then(res => {
-      if (res.data.status) {
-        let response = res.data.response;
+    let entityDetails = {
+        quote_type_id: page.props.quoteTypeId,
+        quote_request_id: page.props.record.id,
+        entity_id: tradeLicenseEntity.entity_id,
+        triggeredFrom: tradeLicenseEntity.triggeredFrom
+    };
+    axios.post(route('link-entity-details'), entityDetails)
+        .then(res => {
+            if(res.data.status) {
+                let response = res.data.response;
 
-        // Append Entity data in fields
-        customerProfileForm.trade_license_no = response.trade_license_no;
-        customerProfileForm.company_name = response.company_name;
-        customerProfileForm.company_address = response.company_address;
-        customerProfileForm.entity_type_code =
-          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
-        customerProfileForm.industry_type_code = response.industry_type_code;
-        customerProfileForm.emirate_of_registration_id =
-          response.emirate_of_registration_id;
+                // Append Entity data in fields
+                customerProfileForm.trade_license_no = response.trade_license_no;
+                customerProfileForm.company_name = response.company_name;
+                customerProfileForm.company_address = response.company_address;
+                customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+                customerProfileForm.industry_type_code = response.industry_type_code;
 
-        notification.success({
-          title: res.data.message,
-          position: 'top',
-        });
-        entityDetailsFound.value = false;
-      }
-    })
-    .catch(err => {
-      console.log(err);
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+                entityDetailsFound.value = false;
+            }
+        }).catch(err => {
+        console.log(err);
     });
 };
 
@@ -2965,7 +2960,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
                 </template>
     
                 <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
-                <span v-if="true == false">
+                <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
                   <SelectPlan
                     v-if="prefillPlanId != item.id"
                     @update:updatePlanId="handleChildUpdate"
