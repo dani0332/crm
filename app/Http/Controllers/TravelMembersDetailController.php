@@ -39,8 +39,6 @@ class TravelMembersDetailController extends Controller
                     'quote_id' => $request->travel_quote_request_id ?? '',
                 ]);
 
-                TravelQuote::find($quoteMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
-
             } else {
                 $customerEntityId = $request->entity_id;
                 $quoteMemberDetails = array_merge($quoteMemberDetails, [
@@ -102,7 +100,7 @@ class TravelMembersDetailController extends Controller
     public function update(TravelMemberDetailRequest $request, $id)
     {
         $quoteMemberDetails = $request->validated();
-        $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id);
+        $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->travel_quote_request_id);
 
         if ($quoteObject) {
             $quoteModel = $this->getModelObject(strtolower($request->quote_type));
@@ -137,7 +135,6 @@ class TravelMembersDetailController extends Controller
             $travelMemberData = $request->only(['dob', 'nationality_id']);
 
             TravelQuote::where('primary_member_id', $id)->update($travelMemberData);
-            TravelQuote::find($quoteMemberDetails['travel_quote_request_id'])->update(['quote_updated_at' => Carbon::now()]);
 
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
@@ -160,7 +157,7 @@ class TravelMembersDetailController extends Controller
     {
         $data = CustomerMembers::find($id);
         if ($data) {
-            TravelQuote::find($data->quote_id)->update(['quote_updated_at' => Carbon::now(), 'primary_member_id' => null]);
+            TravelQuote::find($data->quote_id)->update(['primary_member_id' => null]);
             $data->delete();
         }
 

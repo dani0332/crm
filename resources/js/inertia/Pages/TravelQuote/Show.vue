@@ -289,7 +289,6 @@ const submitTraveler = isValid => {
 
 const addTravelMember = isValid => {
   if (!isValid) return;
-  // '/travelers'
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -300,8 +299,18 @@ const addTravelMember = isValid => {
         title: 'Member Added',
         position: 'top',
       });
-      onLoadAvailablePlansData();
+      onLoadAvailablePlansData()
+      location.reload();
     },
+      onError: (errors) => {
+          Object.keys(errors).forEach(function(key) {
+              notification.error({
+                  title: errors[key],
+                  position: 'top',
+              });
+          });
+          return false;
+      },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
@@ -349,8 +358,18 @@ const editTraveler = isValid => {
         title: 'Member Updated',
         position: 'top',
       });
-      onLoadAvailablePlansData();
+      onLoadAvailablePlansData()
+      location.reload();
     },
+      onError: (errors) => {
+          Object.keys(errors).forEach(function(key) {
+              notification.error({
+                  title: errors[key],
+                  position: 'top',
+              });
+          });
+          return false;
+      },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
@@ -375,7 +394,8 @@ const deleteTraveler = id => {
         title: 'Member Deleted',
         position: 'top',
       });
-      onLoadAvailablePlansData();
+      onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       travelerTable.processing = false;

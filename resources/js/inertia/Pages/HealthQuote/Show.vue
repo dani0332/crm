@@ -456,7 +456,8 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
-        onLoadAvailablePlansData();
+        onLoadAvailablePlansData()
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -470,7 +471,8 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
-        onLoadAvailablePlansData();
+        onLoadAvailablePlansData()
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -485,22 +487,20 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(
-    `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
-    {
-      preserveScroll: true,
-      onSuccess: () => {
-        notification.success({
-          title: 'Member Deleted',
-          position: 'top',
-        });
-        onLoadAvailablePlansData();
-      },
-      onFinish: () => {
-        modals.memberConfirm = false;
-      },
+  memberForm.delete(`/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Member Deleted',
+        position: 'top',
+      });
+      onLoadAvailablePlansData()
+      location.reload();
     },
-  );
+    onFinish: () => {
+      modals.memberConfirm = false;
+    },
+  });
 };
 
 const memberDataDocs = computedMembers => {
@@ -2045,14 +2045,7 @@ const sectionExpanded = computed(() => {
               label="DOB"
               :hasError="memberFieldReq.dob"
             />
-            <x-select
-              v-model="memberForm.member_category_id"
-              label="Member Category"
-              :options="memberCategoriesOptions"
-              :rules="[isRequired]"
-              placeholder="Select Member Category"
-              class="w-full"
-            />
+
             <x-select
               v-model="memberForm.relation_code"
               label="Relation"
