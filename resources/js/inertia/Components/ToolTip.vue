@@ -23,7 +23,7 @@ defineProps({
   <div>
     <div :class="class">
       <span class="relative group text-sm">
-        <x-field :label="title" class="w-full mb-3" :required="required"></x-field>
+        <span class="border-b border-dotted border-red-500 text-sm">{{ title }} </span><sup v-if="required" class="text-red-500 ml-1">*</sup>       
       <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs">
           <div class="dark">
             <div class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border  border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs">
