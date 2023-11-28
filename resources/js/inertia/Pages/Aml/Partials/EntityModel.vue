@@ -427,6 +427,7 @@ const show = ref(true);
         :quoteType="quoteType"
         :nationalities="nationalities"
         :membersDetails="membersDetails"
+        :memberRelations="props.lookups.member_relation"
         :customerType="props.customerTypeEnum.Individual"
       />
       <x-divider class="my-6" />
