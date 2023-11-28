@@ -16,7 +16,6 @@ const props = defineProps({
   amlQuoteStatus: Number,
   nationalities: Array,
   modelType: String,
-  entities: Array,
   legalStructure: Array,
   idDocumentType: Array,
   issuancePlace: Array,
@@ -50,7 +49,7 @@ const kycForm = reactive({
   communication_address: props.entityDetails?.entity?.communication_address ?? null,
   mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
   email: props.entityDetails?.entity?.email ?? props.quote.email,
-  website: props.entityDetails?.entity?.website,
+  website: props.entityDetails?.entity?.website ?? null,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
   id_number: props.entityDetails?.entity?.id_number ?? null,
   id_issue_date: convertDate(props.entityDetails?.entity?.id_issuance_date),
@@ -126,13 +125,6 @@ const nationalityOptions = computed(() => {
   return props.nationalities.map(nat => ({
     value: nat.id,
     label: nat.text,
-  }));
-});
-
-const entitiesOptions = computed(() => {
-  return props.entities.map(nat => ({
-    value: nat.id,
-    label: nat.industry_type_code,
   }));
 });
 
