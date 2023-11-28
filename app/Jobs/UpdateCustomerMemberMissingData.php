@@ -57,7 +57,7 @@ class UpdateCustomerMemberMissingData implements ShouldQueue
                         'quote_request_id' => $quoteRequestDetails->id])
                         ->first();
 
-                    if ($quoteRequestMapping) {
+                    if ($quoteRequestMapping && isset($quoteRequestMapping->entity_id)) {
                         info('Updating Entity Member - Entity-ID:'.$quoteRequestMapping->entity_id ?? '');
                         $entityCodeExplode = explode('-', $customerMember->code);
                         $entityCodeExplode[1] = $quoteRequestMapping->entity_id;
@@ -83,7 +83,6 @@ class UpdateCustomerMemberMissingData implements ShouldQueue
                 $customerMember->refresh();
                 $this->iteratedRecords++;
             } else {
-
                 info('Quote Details Fetch Failed - '.'Quote Model:'.$quoteModel.' Quote Type ID: '.$this->quoteTypeId.' - Ref-ID:'.$customerMember->quote_id.' - Customer Member ID:'.$customerMember->id);
                 $this->iteratedRecords++;
             }
