@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\CustomerTypeEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypes;
 use App\Http\Requests\MemberDetailRequest;
 use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
@@ -63,6 +64,9 @@ class MembersDetailController extends Controller
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
+            if (in_array(ucwords(strtolower($request->quote_type)), [QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value])) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 

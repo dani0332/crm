@@ -303,6 +303,7 @@ const addTravelMember = isValid => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -352,6 +353,7 @@ const editTraveler = isValid => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       travelerTable.addTraveler = false;
@@ -378,6 +380,7 @@ const deleteTraveler = id => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       travelerTable.processing = false;
