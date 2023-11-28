@@ -116,7 +116,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
 
     Route::get('set-customer-member-records', function () {
         if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
-            dd('Job Working in Progress - Not allowed to hit this job right now.');
             \App\Jobs\UpdateCustomerMemberMissingData::dispatch();
         }
     });
