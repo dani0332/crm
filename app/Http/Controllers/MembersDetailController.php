@@ -64,7 +64,7 @@ class MembersDetailController extends Controller
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
-            if (in_array(ucwords(strtolower($request->quote_type)), [QuoteTypes::HEALTH->value, QuoteTypes::TRAVEL->value])) {
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
                 $quoteObject->quote_updated_at = Carbon::now();
             }
             $quoteObject->updated_at = Carbon::now();
@@ -130,6 +130,9 @@ class MembersDetailController extends Controller
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 ]));
 
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
