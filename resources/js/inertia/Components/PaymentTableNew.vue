@@ -394,7 +394,7 @@ const handleCollectionTypeChange = () => {
 
   paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IN_PL', 'PPR', 'CA', 'MP', 'PP'].includes(item.value));    
   if (paymentMethodsForm.collection_type === 'insurer') {    
-    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CC', 'BT', 'CSH'].includes(item.value));
+    paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['CC', 'BT', 'CHQ', 'CSH'].includes(item.value));
     paymentMethodsModels.value[1] = 'IP';
   } else {
     paymentTypesFiltered.value = paymentTypesFiltered.value.filter(item => !['IP'].includes(item.value));
@@ -2664,7 +2664,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         <x-divider class="mb-4 mt-1" />
         <div class="modal-body">
           <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
-            <div class="overflow-auto h-full w-screen justify-center ">
+            <div class="overflow-auto justify-center ">
               <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
             </div>
           </div>
@@ -2710,7 +2710,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 }
 /* Modal body */
 .modal-body {
-  padding: 20px 0;
+  padding: 10px 0;
 }
 /* Modal footer */
 .modal-footer {
