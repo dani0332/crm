@@ -31,7 +31,6 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
-  entities: Object,
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -593,7 +592,7 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="quoteType.code === quoteTypeCodeEnum.Business"
+      v-if="entityDetails.entity"
       v-model="modals.insuranceForm"
       :quoteType="quoteType"
       :quoteDetails="quoteRequest"
@@ -605,7 +604,6 @@ onMounted(() => {
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
-      :entities="entities"
       :quote-aml-status="page.props.quoteAmlStatus"
     />
 
@@ -624,7 +622,6 @@ onMounted(() => {
       :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
-      :entities="entities"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
     />

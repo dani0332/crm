@@ -59,7 +59,7 @@ function onReset() {
 }
 
 function checkDateValidation() {
-    isDateMandatory.value = !(filtersForm.searchType === 'cdbId');
+    isDateMandatory.value = filtersForm.searchType === '';
     isSearchValueRequired.value = filtersForm.searchType !== '';
 }
 
@@ -112,7 +112,7 @@ watch(() => filtersForm, () => {
     let urlParams = new URLSearchParams(queryString);
 
     isDateMandatory.value = !((urlParams.get('searchType') !== null && urlParams.get('searchField') !== null) ||
-        filtersForm.searchType === 'cdbId' && filtersForm.searchField !== '');
+        filtersForm.searchType !== '' && filtersForm.searchField !== '');
 }, { deep: true, immediate: true });
 
 const quoteTypeOptions = computed(() =>
