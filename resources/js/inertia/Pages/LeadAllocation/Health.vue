@@ -1,0 +1,408 @@
+<script setup>
+const props = defineProps({
+  data: {
+    type: Array,
+    default: () => [],
+  },
+  totalAssignedLeadCount: {
+    type: Number,
+    default: 0,
+  },
+  availableUsers: {
+    type: Number,
+    default: 0,
+  },
+  unAvailableUsers: {
+    type: Number,
+    default: 0,
+  },
+  isAutoAllocationWorking: {
+    type: Number,
+    default: 0,
+  },
+});
+
+const page = usePage();
+const hasRole = role => useHasRole(role);
+const hasAnyRole = role => useHasAnyRole(role);
+const rolesEnum = page.props.rolesEnum;
+
+const canManage = ref(props.isAutoAllocationWorking === 1 ? true : false);
+const leadData = ref([
+  {
+    id: 0,
+    userId: 0,
+    status: '1',
+    loading: false,
+    reset: false,
+  },
+]);
+
+const statusModal = reactive({
+  show: false,
+  loader: false,
+  data: {
+    id: 0,
+    userId: 0,
+    reason: 1,
+    loader: false,
+  },
+});
+
+const confirmModal = reactive({
+  show: false,
+  title: '',
+  type: 1,
+  status: 1,
+  loader: false,
+});
+
+const loader = reactive({
+  submit: false,
+  table: false,
+});
+
+const statusText = statusId =>
+  ({
+    1: 'Online',
+    2: 'Offline',
+    3: 'Unavailable',
+    4: 'Sick',
+    5: 'On leave',
+  }[parseInt(statusId)] || 'Unavailable');
+
+const currentRow = id => {
+  const row = leadData?.value.find(item => item.id === id);
+  return row?.capEdit;
+};
+
+const editCap = id => {
+  if (
+    hasAnyRole([rolesEnum.Admin, rolesEnum.LeadPool, rolesEnum.Engineering])
+  ) {
+    const row = leadData?.value.find(item => item.id === id);
+    row.capEdit = true;
+  }
+};
+
+const updateCap = (value, id) => {
+  const row = leadData?.value.find(item => item.id === id);
+  row.cap = value;
+};
+
+const resetCap = (id, maxCapacity) => {
+  const row = leadData?.value.find(item => item.id === id);
+  row.cap = maxCapacity;
+  row.capEdit = false;
+};
+
+const isCapChanged = computed(() => {
+  return leadData?.value.some(item => item.capEdit);
+});
+
+const onToggleStatus = (status, id, userId) => {
+  statusModal.data.id = id;
+  statusModal.data.userId = userId;
+  if (status) {
+    statusModal.data.reason = 1;
+    onStatusSubmit();
+  } else {
+    statusModal.data.reason = 3;
+    statusModal.show = true;
+  }
+};
+
+const toggleOption = (value, type) => {
+  confirmModal.type = type;
+  confirmModal.status = value ? 1 : 0;
+  confirmModal.title = 'Health Lead Allocation';
+  confirmModal.show = true;
+};
+
+const onConfirmClose = event => {
+  if (!event) {
+    if (confirmModal.type === 1) {
+      canManage.value = !canManage.value;
+    }
+    confirmModal.show = false;
+  }
+};
+
+const onUpdateConfirm = async () => {
+  confirmModal.loader = true;
+  const url = '/lead-allocation/toggle-lead-allocation-job-status';
+  await axios
+    .post(url)
+    .then(res => {
+      router.reload({
+        preserveScroll: true,
+        preserveState: true,
+      });
+    })
+    .finally(() => {
+      confirmModal.loader = false;
+      confirmModal.show = false;
+    });
+};
+
+const tableHeader = ref([
+  { text: 'UserId', value: 'userId', sortable: true },
+  { text: 'Name', value: 'userName', width: '240' },
+  { text: 'Team Type', value: 'teamName', sortable: true },
+  {
+    text: 'Total Assigned Leads',
+    value: 'allocation_count',
+    sortable: true,
+  },
+  { text: 'Last Allocations', value: 'last_allocated', sortable: true },
+  { text: 'Max Cap Limit', value: 'max_capacity', sortable: true },
+  { text: 'Status', value: 'is_available', sortable: true, width: '100' },
+]);
+
+const onStatusSubmit = async () => {
+  statusModal.loader = true;
+  const item = leadData.value.find(item => item.id === statusModal.data.id);
+  item.loading = true;
+  await axios
+    .post('/lead-allocation/update-availability', {
+      userId: statusModal.data.userId,
+      id: statusModal.data.id,
+      reason: statusModal.data.reason,
+    })
+    .then(res => {
+      router.reload({
+        only: ['data'],
+        preserveScroll: true,
+        preserveState: true,
+      });
+    })
+    .finally(() => {
+      statusModal.loader = false;
+      item.loading = false;
+      statusModal.show = false;
+    });
+};
+
+const onStatusModalClose = event => {
+  const item = leadData.value.find(item => item.id === statusModal.data.id);
+  if (!event) {
+    item.reset = true;
+    setTimeout(() => {
+      item.reset = false;
+    }, 300);
+    statusModal.show = false;
+  }
+};
+
+const onSubmitChanges = async () => {
+  loader.submit = true;
+  const max_cap = leadData?.value
+    .filter(item => item.capEdit && item.cap !== item.maxCapacity)
+    .map(item => {
+      return {
+        userId: item.userId,
+        max_cap: item.cap,
+        id: item.id,
+        team_type: 'health',
+      };
+    })[0];
+  await axios
+    .post('/lead-allocation/update-availability', max_cap)
+    .then(() => {
+      router.get('/lead-allocation', {
+        replace: true,
+        preserveScroll: true,
+        preserveState: true,
+      });
+    })
+    .finally(() => {
+      loader.submit = false;
+    });
+};
+
+onMounted(() => {
+  leadData.value = props.data.map(item => {
+    return {
+      id: item.id,
+      userId: item.userId,
+      cap: item.max_capacity,
+      capEdit: false,
+      status: item.is_available,
+    };
+  });
+});
+</script>
+<template>
+  <Head title="Health Lead Allocation" />
+  <div class="flex justify-between items-center">
+    <div class="flex gap-1" v-if="hasAnyRole([rolesEnum.Admin])">
+      <h2 class="text-lg font-semibold">Health Lead Allocation Management</h2>
+      <x-toggle
+        v-model="canManage"
+        color="emerald"
+        size="lg"
+        @update:model-value="toggleOption($event, 1)"
+      />
+    </div>
+  </div>
+  <x-divider class="my-4" />
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-5 my-6">
+    <div class="labox border-green-500">
+      <h3>Team</h3>
+      <p>Health</p>
+    </div>
+    <div class="labox border-primary-500">
+      <h3>Assigned Lead Count</h3>
+      <p>{{ totalAssignedLeadCount ?? 0 }}</p>
+    </div>
+    <div class="labox border-yellow-500">
+      <h3>Available / UnAvailable</h3>
+      <p>{{ availableUsers }} / {{ unAvailableUsers }}</p>
+    </div>
+    <div class="labox border-yellow-500">
+      <h3>Total Advisors</h3>
+      <p>{{ unAvailableUsers + availableUsers ?? 0 }}</p>
+    </div>
+    <TransitionGroup name="fade">
+      <div v-if="isCapChanged" class="col-span-2">
+        <x-alert type="info" light>For Unlimited Capactiy Add ( -1 )</x-alert>
+      </div>
+      <div v-if="isCapChanged" class="col-span-2">
+        <x-button
+          color="emerald"
+          :loading="loader.submit"
+          block
+          @click="onSubmitChanges"
+        >
+          Save Cap Changes
+        </x-button>
+      </div>
+    </TransitionGroup>
+  </div>
+  <DataTable
+    id="car-lead-allocation"
+    table-class-name="compact"
+    :loading="loader.table"
+    :headers="tableHeader"
+    :items="props.data || []"
+    :sort-by="'userName'"
+    :sort-type="'asc'"
+    :rows-per-page="999"
+    border-cell
+    hide-rows-per-page
+    hide-footer
+  >
+    <template #item-max_capacity="{ max_capacity, id }">
+      <div v-if="!currentRow(id)" @click="editCap(id)">
+        {{ max_capacity }}
+      </div>
+      <div v-else class="flex gap-1">
+        <x-input
+          type="number"
+          :value="max_capacity"
+          class="w-16"
+          @update:model-value="updateCap($event, id)"
+        />
+        <x-button
+          icon="reset"
+          size="sm"
+          ghost
+          @click="resetCap(id, max_capacity)"
+        />
+      </div>
+    </template>
+    <template #item-is_available="{ is_available, id, userId }">
+      <div class="flex flex-col gap-1.5 items-center">
+        <x-tag
+          size="xs"
+          :color="
+            ['emerald', 'red', 'gray', 'yellow', 'yellow', 'gray'][
+              +is_available - 1
+            ]
+          "
+        >
+          {{ statusText(is_available) }}
+        </x-tag>
+
+        <ItemToggler
+          v-if="
+            hasAnyRole([
+              rolesEnum.Admin,
+              rolesEnum.LeadPool,
+              rolesEnum.Engineering,
+            ])
+          "
+          :is-active="parseInt(leadData.find(item => item.id === id)?.status)"
+          :disabled="!canManage"
+          :id="id"
+          @toggle="onToggleStatus($event.active, id, userId)"
+          :loading="leadData.find(item => item.id === id)?.loading"
+          :refresh="leadData.find(item => item.id === id)?.reset"
+        />
+      </div>
+    </template>
+    <template #item-last_allocated="{ last_allocated }">
+      <div class="text-center">
+        {{ new Date(last_allocated * 1000).toLocaleString() }}
+      </div>
+    </template>
+  </DataTable>
+
+  <x-modal
+    v-model="statusModal.show"
+    show-close
+    backdrop
+    @update:model-value="onStatusModalClose($event)"
+  >
+    <template #header> Select Reason of Unavailability </template>
+    <x-select
+      placeholder="Select Reason"
+      :options="[
+        { value: 3, label: 'Temp. Unavailable' },
+        { value: 4, label: 'Sick' },
+        { value: 5, label: 'On Leave' },
+      ]"
+      class="w-full mb-28"
+      v-model="statusModal.data.reason"
+    />
+
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button size="sm" ghost @click.prevent="onStatusModalClose(false)">
+          Cancel
+        </x-button>
+        <x-button
+          size="sm"
+          color="primary"
+          :loading="statusModal.loader"
+          @click="onStatusSubmit"
+        >
+          Submit
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
+
+  <x-modal
+    v-model="confirmModal.show"
+    show-close
+    backdrop
+    @update:model-value="onConfirmClose($event)"
+  >
+    <template #header> Status Change </template>
+    <p>
+      Are you sure you want to change
+      <strong>{{ confirmModal.title }}</strong> status?
+    </p>
+    <template #actions>
+      <div class="text-right space-x-4">
+        <x-button size="sm" ghost @click.prevent="onConfirmClose(false)">
+          Cancel
+        </x-button>
+        <x-button size="sm" color="primary" @click.prevent="onUpdateConfirm">
+          Yes, confirmed!
+        </x-button>
+      </div>
+    </template>
+  </x-modal>
+</template>

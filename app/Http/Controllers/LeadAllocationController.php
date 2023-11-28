@@ -54,13 +54,20 @@ class LeadAllocationController extends Controller
                     $unAvailableUsers++;
                 }
             }
-            if ($request->ajax()) {
-                return Datatables::of($data)
-                    ->addIndexColumn()
-                    ->make(true);
-            }
+            // if ($request->ajax()) {
+            //     return Datatables::of($data)
+            //         ->addIndexColumn()
+            //         ->make(true);
+            // }
 
-            return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
+            return inertia('LeadAllocation/Health', [
+                'totalAssignedLeadCount' => $totalAssignedLeadCount,
+                'availableUsers' => $availableUsers,
+                'unAvailableUsers' => $unAvailableUsers,
+                'isAutoAllocationWorking' => (int) $isAutoAllocationWorking,
+                'data' => $data,
+            ]);
+            // return view('user.lead-allocation', compact(['totalAssignedLeadCount', 'availableUsers', 'unAvailableUsers', 'isAutoAllocationWorking']));
         } else {
             abort(403, 'Unauthorized action.');
         }
