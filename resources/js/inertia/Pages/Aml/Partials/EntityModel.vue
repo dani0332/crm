@@ -11,8 +11,6 @@ const props = defineProps({
   nationalities: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   customerTypeEnum: Object,
   lookups: Object,
   legalStructure: Object,
@@ -282,7 +280,7 @@ const show = ref(true);
           :quoteType="quoteType"
           :nationalities="nationalities"
           :uboDetails="uboDetails"
-          :uboRelations="uboRelations"
+          :uboRelations="props.lookups.ubo_relation"
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
@@ -294,7 +292,7 @@ const show = ref(true);
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="uboDetails"
-          :memberRelations="uboRelations"
+          :memberRelations="props.lookups.ubo_relation"
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
@@ -429,7 +427,6 @@ const show = ref(true);
         :quoteType="quoteType"
         :nationalities="nationalities"
         :membersDetails="membersDetails"
-        :memberRelations="memberRelations"
         :customerType="props.customerTypeEnum.Individual"
       />
       <x-divider class="my-6" />
@@ -439,7 +436,7 @@ const show = ref(true);
         :quoteDetails="quoteDetails"
         :nationalities="nationalities"
         :membersDetails="membersDetails"
-        :memberRelations="memberRelations"
+        :memberRelations="props.lookups.member_relation"
         :customerType="props.customerTypeEnum.Entity"
       />
 
