@@ -168,7 +168,7 @@ const goBack = () => {
             />
           </x-field>
           <div class="flex justify-end mt-2">
-            <x-button class="" size="sm" color="primary" @click="addUpdate">Add Update</x-button>  
+            <x-button size="sm" color="primary" @click="addUpdate">Add Update</x-button>  
           </div>
         </div>
       </div>
