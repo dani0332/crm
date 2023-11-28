@@ -19,7 +19,6 @@ const props = defineProps({
   customerTypeEnum: Object,
   residentStatuses: Object,
   lookups: Object,
-  entities: Array,
   quoteAmlStatus: Number,
   customerDetails: Object,
 });
@@ -625,7 +624,7 @@ onMounted(() => {
           :idDocumentType="props.lookups.id_type"
           :modeOfContact="props.lookups.mode_of_contact"
           :modeOfDelivery="props.lookups.mode_of_delivery"
-          :professionalTitle="props.lookups.professional_title"
+          :professional-title="props.lookups.professional_title"
           :employmentSectors="props.lookups.employment_sector"
           :residentialStatus="props.lookups.resident_status"
           :companyPosition="props.lookups.company_position"
@@ -1128,7 +1127,6 @@ onMounted(() => {
           :aml-quote-status="props.amlQuoteStatus"
           :nationalities="nationalities"
           :modelType="props.quoteType?.code"
-          :entities="props.entities"
           :idDocumentType="props.lookups.id_type"
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
