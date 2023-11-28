@@ -59,13 +59,11 @@ class UpdateCustomerMemberMissingData implements ShouldQueue
 
                     if ($quoteRequestMapping) {
                         info('Updating Entity Member - Entity-ID:'.$quoteRequestMapping->entity_id ?? '');
-                        if ($quoteRequestMapping) {
-                            $entityCodeExplode = explode('-', $customerMember->code);
-                            $entityCodeExplode[1] = $quoteRequestMapping->entity_id;
+                        $entityCodeExplode = explode('-', $customerMember->code);
+                        $entityCodeExplode[1] = $quoteRequestMapping->entity_id;
 
-                            $customerMember->customer_entity_id = $quoteRequestMapping->entity_id;
-                            $customerMember->code = implode('-', $entityCodeExplode);
-                        }
+                        $customerMember->customer_entity_id = $quoteRequestMapping->entity_id;
+                        $customerMember->code = implode('-', $entityCodeExplode);
                     } else {
                         info('Entity Not found against member. Customer Member ID:' . $customerMember->id);
                     }
