@@ -626,32 +626,30 @@ const handleFrequencyChange = (noPaymentUpdate=true) => {
   isPaymentNoEnabled.value = false;
   if (paymentMethodsForm.frequency === 'monthly') {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '12';
-    calculatePaymentBreakup();
+    paymentMethodsForm.payment_no = '12';    
   } else if (paymentMethodsForm.frequency === 'quarterly') {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '4';
-    calculatePaymentBreakup();
+    paymentMethodsForm.payment_no = '4';    
   } else if (paymentMethodsForm.frequency === 'semi_annual') {
     resetPaymentMethod = true;
-    paymentMethodsForm.payment_no = '2';
-    calculatePaymentBreakup();
+    paymentMethodsForm.payment_no = '2';    
   } else if (paymentMethodsForm.frequency === 'split_payments') {
     isPaymentNoEnabled.value = true;
     if(noPaymentUpdate){
-      paymentMethodsForm.payment_no = '1';
+      paymentMethodsForm.payment_no = '2';
     }
-    //paymentMethodsForm.payment_no = '1';
-    totalPayments.value.splice(-7);    
+    totalPayments.value.splice(-7);
+    totalPayments.value.splice(0, 1);     
   } else if (paymentMethodsForm.frequency === 'custom') {
     isPaymentNoEnabled.value = true;
     if(noPaymentUpdate){
-      paymentMethodsForm.payment_no = '1';
+      paymentMethodsForm.payment_no = '2';
     }
+    totalPayments.value.splice(0, 1);      
   } else {
-    paymentMethodsForm.payment_no = '1';
-    calculatePaymentBreakup();
+    paymentMethodsForm.payment_no = '1';    
   }
+  calculatePaymentBreakup();
   if (paymentMethodsModels.value[1]==='CC' && resetPaymentMethod){
     paymentMethodsModels.value[1] = 'BT';
   }    
@@ -1675,7 +1673,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <x-tooltip v-if="!isFieldReadonly">
             <x-field label="TOTAL PRICE" class="w-full"></x-field>
             <template #tooltip>
-               <span>{{ formatAmount(paymentTooltipEnum.TOTAL_PRICE) }}</span>
+               <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
             </template>
           </x-tooltip> 
           <x-field v-else label="TOTAL PRICE" class="w-full"></x-field>          
@@ -2309,7 +2307,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                             class="w-full mt-2"
                             v-if = "isCheckDetailsEnabled[count] && (paymentMethodsModels[count] === 'CHQ' || paymentMethodsModels[count] === 'PDC')"
                             v-model="checkDetailModels[count]"
-                            placeholder="Cheque Details"
+                            placeholder="Cheque Number"
                             :rules="[rules.isRequired]"      
                           />
                         <template #tooltip>
