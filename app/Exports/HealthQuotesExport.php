@@ -15,7 +15,8 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
 {
     use Exportable;
 
-    protected $genderOptions;
+    private $genderOptions;
+
     public function __construct($query)
     {
         $this->genderOptions = app(CRUDService::class)->getGenderOptions();
