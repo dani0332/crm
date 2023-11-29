@@ -105,7 +105,7 @@ class HealthQuote extends Model implements AuditableContract
      */
     public function members()
     {
-        return $this->hasMany(HealthMemberDetail::class, 'health_quote_request_id');
+        return $this->morphMany(CustomerMembers::class, 'quote');
     }
 
     public function payments()
