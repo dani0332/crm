@@ -68,6 +68,7 @@ use App\Http\Controllers\V2\LifeQuoteController;
 use App\Http\Controllers\V2\PersonalPlanController;
 use App\Http\Controllers\V2\PersonalQuoteController;
 use App\Http\Controllers\V2\PetQuoteController;
+use App\Http\Controllers\V2\SendUpdateLogController;
 use App\Http\Controllers\V2\YachtQuoteController;
 use App\Http\Controllers\ValuationController;
 use App\Http\Controllers\VehicleDepreciationController;
@@ -438,6 +439,8 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::post('link-entity-details', [V2AMLController::class, 'linkEntityDetails'])->name('link-entity-details');
         Route::post('send-bridger-response', [V2AMLController::class, 'sendBridgerResponse'])->name('send-bridger-response');
     });
+
+    Route::resource('send-update-logs', SendUpdateLogController::class);
 
     Route::group(['prefix' => 'medical'], function () {
         if (in_array('Business', newUi())) {

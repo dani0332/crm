@@ -12,6 +12,10 @@ const props = defineProps({
     default: ''
   },
   reportableUuid: {
+    type: String,
+    required: true
+  },
+  reportableId: {
     type: Number,
     required: true
   },
@@ -25,6 +29,8 @@ const props = defineProps({
     required: true
   }
 })
+
+const page = usePage();
 
 const sendUpdatesTable = reactive({
   headers: [
@@ -42,32 +48,35 @@ const modals = reactive({
   show: false
 })
 
-const state = reactive({
+const form = useForm({
   parentCategory: null,
   childCategory: null,
-  option: null
+  option: null,
+  reportable_type: props.reportableType,
+  reportable_uuid: props.reportableUuid,
+  reportable_id: props.reportableId,
+  status: page.props.sendUpdateEnum.NEW_REQUEST
 })
 
-const resetState = () => {
-    state.parentCategory = null,
-    state.childCategory =  null,
-    state.option = null
-    modals.step = 'step1'
+const resetForm = () => {
+  form.parentCategory = null,
+  form.childCategory =  null,
+  form.option = null
+  modals.step = 'step1'
 }
 
 const setOption = (step_next, value) => {
-  console.log('value', value);
   switch (step_next) {
     case 'step1':
-      state.parentCategory = null;
+      form.parentCategory = null;
       modals.step = step_next
       break;
     case 'step2':
-      state.parentCategory = value
+      form.parentCategory = value
       modals.step = step_next
       break;
     case 'step3':
-      state.childCategory = value
+      form.childCategory = value
       modals.step = step_next
       break;
   
@@ -81,11 +90,27 @@ const setOption = (step_next, value) => {
 const goBack = () => {
   if (modals.step === 'step2') {
     modals.step = 'step1'
-    state.parentCategory = null;
+    form.parentCategory = null;
   } else if (modals.step === 'step3') {
     modals.step = 'step2'
-    state.childCategory = null;
+    form.childCategory = null;
   }
+}
+
+const onAddUpdate = () => {
+  form
+    .transform(data => ({
+      ...data,
+      model_type: data.reportable_type,
+      reportable_type: `App\\Models\\${data.reportable_type}`
+    }))
+    .post(`/send-update-logs`, {
+      onSuccess: () => {
+        modals.show = false
+        resetForm()
+        // sendUpdatesTable.data = [...sendUpdatesTable.data, form.data]
+      }    
+    })
 }
 
 </script>
@@ -121,7 +146,7 @@ const goBack = () => {
         </DataTable>
       </template>
     </x-collapse>
-    <x-modal v-model="modals.show" size="xl" show-close backdrop @update:modelValue="resetState">
+    <x-modal v-model="modals.show" size="xl" show-close backdrop @update:modelValue="resetForm">
       <template #header>
         <div class="flex gap-3">
           <x-icon icon="prev" size="md" class="text-primary-800 mt-1 cursor-pointer" @click="goBack" v-if="modals.step !== 'step1'"/>
@@ -145,7 +170,7 @@ const goBack = () => {
 
       <!-- modal 2 -->
       <div class="w-full flex gap-5 justify-center text-center mb-10" v-else-if="modals.step === 'step2'">
-        <template v-for="category in state.parentCategory?.childs" :key="category.title">
+        <template v-for="category in form.parentCategory?.childs" :key="category.title">
           <x-tooltip position="bottom" class="arrow-t">
             <x-button color="primary" class="py-8 px-6 rounded-xl" @click="setOption('step3', category)">
               {{ category.title }}
@@ -156,19 +181,27 @@ const goBack = () => {
       </div>
 
       <!-- modal 3 -->
-      <div class="w-full flex gap-5 mb-10" v-else-if="modals.step === 'step3' && state.childCategory.childs.length > 0">
+      <div class="w-full flex gap-5 mb-10" v-else-if="modals.step === 'step3' && form.childCategory.childs.length > 0">
         <div class="flex flex-col gap-2 flex-grow w-75">
-          <x-field :label="state.childCategory.title" required>
+          <x-field :label="form.childCategory.title" required>
             <x-select
-              v-model="state.option"
-              :options="state.childCategory.childs.map(item => ({ label: item.title, value: item.id }))"
+              v-model="form.option"
+              :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id }))"
               :rules="[isRequired]"
               placeholder="Select Reason"
               class="w-full"
             />
           </x-field>
           <div class="flex justify-end mt-2">
-            <x-button size="sm" color="primary" @click="addUpdate">Add Update</x-button>  
+            <x-button 
+              size="sm" 
+              color="primary" 
+              @click="onAddUpdate"
+              :disabled="form.processing"
+              :loading="form.processing"
+            >
+              Add Update
+            </x-button>  
           </div>
         </div>
       </div>
