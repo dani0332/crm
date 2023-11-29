@@ -25,6 +25,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const {isRequired} = useRules();
+
 const modals = reactive({
   member: false,
 });

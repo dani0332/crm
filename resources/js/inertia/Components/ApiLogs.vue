@@ -45,8 +45,15 @@ const apiLogs = reactive({
   ],
 });
 
-const onLoadAuditLogData = async (hasinsuranceId = true) => {
-  if (!hasinsuranceId) insuranceProviderId.value = null;
+const filteredLogs = computed(() => {
+  if (insuranceProviderId.value != null)
+    return apiLogs.data.filter(
+      item => item.insurance_provider.id == insuranceProviderId.value,
+    );
+  else return apiLogs.data;
+});
+
+const onLoadAuditLogData = async () => {
   apiLogs.loading = true;
 
   let url = '/insurer-logs';
@@ -56,7 +63,6 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
       ? { auditableType: props.type, auditableId: props.id }
       : { quote_type: props.quoteType, auditable_id: props.id }),
     jsonData: true,
-    insurance_provider: insuranceProviderId.value ?? null,
   };
   axios
     .post(url, data)

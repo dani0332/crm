@@ -43,6 +43,7 @@ const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 
 const industryTypeOptions = computed(() => {
   return page.props.industryType.map(indType => ({
@@ -238,6 +239,13 @@ const sectionExpanded = computed(() => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
             <div>
               <x-tooltip position="bottom">
                 <label
