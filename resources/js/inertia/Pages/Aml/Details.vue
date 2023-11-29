@@ -9,11 +9,8 @@ const props = defineProps({
   entityDetails: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   customerTypeEnum: Object,
   businessTypeCode: Object,
   businessCoverTypeText: Array,
@@ -31,7 +28,6 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
-  entities: Object,
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -95,7 +91,6 @@ const dateToYear = date => {
 
 onMounted(() => {
   // paymentsRef.value = page.props.quoteRequest.payments;
-  // console.log(paymentsRef.value);
 });
 </script>
 
@@ -594,7 +589,7 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="quoteType.code === quoteTypeCodeEnum.Business"
+      v-if="entityDetails.entity"
       v-model="modals.insuranceForm"
       :quoteType="quoteType"
       :quoteDetails="quoteRequest"
@@ -602,11 +597,8 @@ onMounted(() => {
       :nationalities="nationalities"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
-      :entities="entities"
       :quote-aml-status="page.props.quoteAmlStatus"
     />
 
@@ -618,14 +610,10 @@ onMounted(() => {
       :entityDetails="entityDetails"
       :nationalities="nationalities"
       :emirates="emirates"
-      :industryType="industryType"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
-      :entities="entities"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
     />

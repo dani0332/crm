@@ -35,7 +35,6 @@ use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
-use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -50,9 +49,6 @@ use Illuminate\Http\Request;
 
 class AMLController extends Controller
 {
-    protected $checkAmlService;
-    protected $quoteStatusService;
-    protected $sanctionListService;
     use GenericQueriesAllLobs;
 
     /**
@@ -60,12 +56,9 @@ class AMLController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function __construct(CheckAmlService $checkAmlService, QuoteStatusService $quoteStatusService, SanctionListService $sanctionListService)
+    public function __construct()
     {
         $this->middleware('permission:aml-list', ['only' => ['index']]);
-        $this->checkAmlService = $checkAmlService;
-        $this->quoteStatusService = $quoteStatusService;
-        $this->sanctionListService = $sanctionListService;
     }
 
     /**
@@ -142,9 +135,9 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedStartDate));
-                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedEndDate));
-                    $dataAml->whereRaw('DATE(kyc_logs.created_at) BETWEEN "'.$amlCreatedDate.'" AND "'.$amlEndDate.'"');
+                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($request->amlCreatedStartDate));
+                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($request->amlCreatedEndDate));
+                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedDate, $amlEndDate]);
                 }
 
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
@@ -207,16 +200,13 @@ class AMLController extends Controller
         $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
         $uboDetails = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $nationalities = NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
-        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
         $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
-
-        $nationalityList = $this->sanctionListService->fetchNationality();
-        $yearsList = $this->sanctionListService->years();
+        $sanctionListService = app(SanctionListService::class);
+        $nationalityList = $sanctionListService->fetchNationality();
+        $yearsList = $sanctionListService->years();
         $firstAmlLogResults = $amlRecordFetch->first()->results_found ?? 0;
         $latestAmlLogResults = $amlRecordFetch->latest()->first()->results_found ?? 0;
         $getAMLNumRows = $amlRecordFetch->count();
@@ -239,13 +229,14 @@ class AMLController extends Controller
             LookupsEnum::COMPANY_POSITION,
             LookupsEnum::PROFESSIONAL_TITLE,
             LookupsEnum::UBO_RELATION,
+            LookupsEnum::COMPANY_TYPE,
+            LookupsEnum::MEMBER_RELATION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
-        $entities = Entity::all();
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
         $data = [
@@ -254,11 +245,8 @@ class AMLController extends Controller
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
-            'memberRelations' => $memberRelations,
-            'uboRelations' => $uboRelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
-            'industryType' => $industryType,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'kycLogs' => $kycLogs,
             'quoteStatusCode' => $quoteStatusCode,
@@ -273,7 +261,6 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
-            'entities' => $entities,
             'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
@@ -288,7 +275,7 @@ class AMLController extends Controller
 
     public function quoteStatusUpdate($quoteTypeId, $quoteRequestId, $quoteStatusType)
     {
-        $updateQuoteStatusResp = $this->quoteStatusService->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
+        $updateQuoteStatusResp = app(QuoteStatusService::class)->updateQuoteStatus($quoteTypeId, $quoteRequestId, $quoteStatusType, \request()->toArray());
 
         if ($updateQuoteStatusResp == 'false') {
             return redirect()->back()->with('message', 'Quote Status is not updated');
@@ -300,7 +287,7 @@ class AMLController extends Controller
             $clientFullName = $updateQuoteStatusResp[4];
             if (auth()->user()->hasRole(RolesEnum::COMPLIANCE)) {
                 info('Bridger Insight - Decision update Email triggered to Compliance Team');
-                $this->checkAmlService->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
+                app(CheckAmlService::class)->sendAMLQuoteStatusChangeNotification($quoteTypeId, $quoteRequestId, $quoteStatusText, $quoteCdbId, $quoteTypeText, $quotePaID, $clientFullName);
             }
             // Update Decision on Lexis Nexis Portal
             if (isset(request()->decisonsForUpdatePortal)) {
@@ -362,7 +349,7 @@ class AMLController extends Controller
                 info('Bridger Insight - Customer type : Individual');
                 $customer = Customer::with('nationality')->findOrFail($AMLCheckRequest->customer_id);
                 $customerUpdate = $AMLCheckRequest->validated();
-                //                Temporary comment this code, please don't remove it.
+                // Temporary comment this code, please don't remove it.
                 //                if ( filter_var(\request()->withFullName, FILTER_VALIDATE_BOOLEAN)) {
                 //                    $fullName = explode(' ', \request()->insured_fullname);
                 //                    $insuredFirstName = $fullName[0] ?? '';
@@ -594,22 +581,18 @@ class AMLController extends Controller
 
     public function sendBridgerResponse(Request $request)
     {
-        if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
-            info('Bridger Insight : Email Triggered to Compliance Super User');
-            AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                config('constants.APP_URL').$request['aml_quote_url'],
-                $request['quote_ref_id'],
-                $request['bridger_response'],
-                $request['customer_entity_name'],
-                $request['quote_type_text'],
-                auth()->user()->email,
-                true
-            );
+        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
+        AMLService::sendAMLMatchedEmailtoComplianceTeam(
+            config('constants.APP_URL').$request['aml_quote_url'],
+            $request['quote_ref_id'],
+            $request['bridger_response'],
+            $request['customer_entity_name'],
+            $request['quote_type_text'],
+            auth()->user()->email,
+            true
+        );
 
-            return response()->json(['message' => 'Email Triggered to Compliance Super User']);
-        }
-
-        return true;
+        return response()->json(['message' => 'Email Triggered to Compliance Super User']);
     }
 
     private function checkAmlQuoteStatus($statusId)

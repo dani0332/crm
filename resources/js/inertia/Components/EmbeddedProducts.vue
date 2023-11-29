@@ -28,6 +28,10 @@ const props = defineProps({
     type: Object,
     default: {},
   },
+    paymentStatusEnum: {
+        type: Array,
+        default: () => [],
+    },
 });
 
 const modals = reactive({
@@ -37,7 +41,6 @@ const modals = reactive({
 const { isRequired, isEmail, isNumber, isMobileNo } = useRules();
 
 const cancelPaymentForm = item => {
-    console.log('item',item);
   paymentForm.reset();
   paymentForm.embedded_id = item.id;
   paymentForm.quote_id = props.quote.id;
@@ -183,7 +186,7 @@ let paymentLink = page.props.epLink + '/car-insurance/quote/'+props.quote.uuid+'
 };
 
 const paymentStatus = id => {
-  const enums = usePage().props?.enums?.paymentStatusEnum || {};
+  const enums = props.paymentStatusEnum || {};
   const item = Object.keys(enums).find(key => enums[key] === id);
   return item ? item : 'N/A';
 };

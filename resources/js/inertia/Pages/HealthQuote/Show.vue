@@ -333,6 +333,11 @@ const onLeadStatus = () => {
   );
 };
 
+const members = ref(page.props.membersDetail);
+const computedMembers = computed(() => {
+    return members.value.filter(x => !x.is_third_party_payer);
+});
+
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -450,6 +455,7 @@ const onMemberSubmit = isValid => {
         });
         memberForm.reset();
         onLoadAvailablePlansData()
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -464,6 +470,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         onLoadAvailablePlansData()
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -486,6 +493,7 @@ const memberDeleteConfirmed = () => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       modals.memberConfirm = false;
@@ -493,8 +501,8 @@ const memberDeleteConfirmed = () => {
   });
 };
 
-const memberDataDocs = membersDetail => {
-  return membersDetail
+const memberDataDocs = computedMembers => {
+  return computedMembers
     .map(member => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
@@ -1556,8 +1564,6 @@ const handleChildUpdate = planId => {
       </div>
     </div>
 
-
-
       <div class="p-4 rounded shadow mb-6 bg-white">
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer' : 'Entity '}} Profile</h3>
@@ -1851,7 +1857,7 @@ const handleChildUpdate = planId => {
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Member Details
-          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
         </h3>
         <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
           Add Member
@@ -1861,7 +1867,7 @@ const handleChildUpdate = planId => {
       <DataTable
         table-class-name="tablefixed compact"
         :headers="memberDetailsTable.columns"
-        :items="membersDetail || []"
+        :items="computedMembers || []"
         show-index
         border-cell
         hide-rows-per-page
@@ -1963,14 +1969,7 @@ const handleChildUpdate = planId => {
               label="DOB"
               :hasError="memberFieldReq.dob"
             />
-            <x-select
-              v-model="memberForm.member_category_id"
-              label="Member Category"
-              :options="memberCategoriesOptions"
-              :rules="[isRequired]"
-              placeholder="Select Member Category"
-              class="w-full"
-            />
+
             <x-select
               v-model="memberForm.relation_code"
               label="Relation"
@@ -2550,7 +2549,7 @@ const handleChildUpdate = planId => {
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
-          :members="membersDetail"
+          :members="computedMembers"
           :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
@@ -2705,7 +2704,7 @@ const handleChildUpdate = planId => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(membersDetail)"
+          :members="memberDataDocs(computedMembers)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"

@@ -2,6 +2,7 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
+import {computed} from "vue";
 
 defineProps({
   quote: Object,
@@ -221,6 +222,12 @@ const memberRelationOptions = computed(() => {
     }));
 });
 
+const traveler_members = ref(page.props.travelers);
+const  computedTravelers= computed(() => {
+    return traveler_members.value.filter(x => !x.is_third_party_payer);
+});
+
+
 const emiratesOptions = computed(() => {
     return page.props.emirates.map(em => ({
         value: em.id,
@@ -284,7 +291,6 @@ const submitTraveler = isValid => {
 
 const addTravelMember = isValid => {
   if (!isValid) return;
-  // '/travelers'
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -296,7 +302,17 @@ const addTravelMember = isValid => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
+      onError: (errors) => {
+          Object.keys(errors).forEach(function(key) {
+              notification.error({
+                  title: errors[key],
+                  position: 'top',
+              });
+          });
+          return false;
+      },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
@@ -345,7 +361,17 @@ const editTraveler = isValid => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
+      onError: (errors) => {
+          Object.keys(errors).forEach(function(key) {
+              notification.error({
+                  title: errors[key],
+                  position: 'top',
+              });
+          });
+          return false;
+      },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
@@ -371,6 +397,7 @@ const deleteTraveler = id => {
         position: 'top',
       });
       onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -1533,7 +1560,7 @@ const handleChildUpdate = planId => {
           <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
               <h3 class="font-semibold text-primary-800 text-lg">
                   Member Details
-                  <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
+                  <x-tag size="sm">{{ computedTravelers.length || 0 }}</x-tag>
               </h3>
               <div class="flex flex-wrap gap-3">
                   <x-button size="sm" color="orange" @click.prevent="onAddTraveler">
@@ -1544,11 +1571,11 @@ const handleChildUpdate = planId => {
           <DataTable
               table-class-name="tablefixed compact"
               :headers="travelerTable.columns"
-              :items="travelers || []"
+              :items="computedTravelers || []"
               border-cell
               hide-rows-per-page
               :rows-per-page="15"
-              :hide-footer="travelers.length < 15"
+              :hide-footer="computedTravelers.length < 15"
               show-index
           >
               <template #item-index="{ index, code }">
@@ -1980,7 +2007,7 @@ const handleChildUpdate = planId => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(travelers)"
+          :members="memberDataDocs(computedTravelers)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"

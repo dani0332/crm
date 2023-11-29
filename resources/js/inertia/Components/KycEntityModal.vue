@@ -16,13 +16,13 @@ const props = defineProps({
   amlQuoteStatus: Number,
   nationalities: Array,
   modelType: String,
-  entities: Array,
   legalStructure: Array,
   idDocumentType: Array,
   issuancePlace: Array,
   issuingAuthority: Array,
   uboRelation: Array,
   entityDetails: Array,
+  industryType: Array,
 });
 
 const rules = {
@@ -43,13 +43,13 @@ const kycForm = reactive({
   last_name: props.quote.last_name,
   company_name: props.quote.company_name,
   legal_structure: props.entityDetails?.entity?.legal_structure ?? null,
-  industry_type: null,
+  industry_type: props.entityDetails?.entity?.industry_type_code ?? null,
   country_of_corporation: props.entityDetails?.entity?.country_of_corporation ?? 56, //Default UAE
   registered_address: props.entityDetails?.entity?.registered_address ?? null,
   communication_address: props.entityDetails?.entity?.communication_address ?? null,
   mobile_number: props.entityDetails?.entity?.mobile_no ?? props.quote.mobile_no,
   email: props.entityDetails?.entity?.email ?? props.quote.email,
-  website: props.entityDetails?.entity?.website,
+  website: props.entityDetails?.entity?.website ?? null,
   id_document_type: props.entityDetails?.entity?.id_type ?? null,
   id_number: props.entityDetails?.entity?.id_number ?? null,
   id_issue_date: convertDate(props.entityDetails?.entity?.id_issuance_date),
@@ -65,7 +65,22 @@ const kycForm = reactive({
   dual_nationality: props.entityDetails?.entity?.dual_nationality ?? props.amlQuoteStatus,
 });
 
-const onKycSubmit = () => {
+const isNationalityEmpty = ref(false);
+const isPositionEmpty = ref(false);
+const isIssuingAuthorityEmpty = ref(false);
+
+const onKycSubmit = isValid => {
+  if (!kycForm.manager_nationality) isNationalityEmpty.value = true;
+  else isNationalityEmpty.value = false;
+
+  if (!kycForm.manager_position) isPositionEmpty.value = true;
+  else isPositionEmpty.value = false;
+
+  if (!kycForm.issuing_authority) isIssuingAuthorityEmpty.value = true;
+  else isIssuingAuthorityEmpty.value = false;
+
+  if(!isValid) return;
+
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
     axios
@@ -113,29 +128,29 @@ const nationalityOptions = computed(() => {
   }));
 });
 
-const entitiesOptions = computed(() => {
-  return props.entities.map(nat => ({
-    value: nat.id,
-    label: nat.industry_type_code,
+const legalStructureOptions = computed(() => {
+  return props.legalStructure?.map(nat => ({
+    value: nat.code,
+    label: nat.text,
   }));
 });
 
-const legalStructureOptions = computed(() => {
-  return props.legalStructure.map(nat => ({
+const industryTypeOptions = computed(() => {
+  return props.industryType?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const placeOfIssuanceOptions = computed(() => {
-  return props.issuancePlace.map(nat => ({
+  return props.issuancePlace?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const issuingAuthorityOptions = computed(() => {
-  return props.issuingAuthority.map(nat => ({
+  return props.issuingAuthority?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -241,7 +256,7 @@ onMounted(() => {
       <x-select
         v-model="kycForm.industry_type"
         label="Industry type"
-        :options="entitiesOptions"
+        :options="industryTypeOptions"
         placeholder="Industry type"
         :single="true"
         :rules="[isRequired]"
@@ -335,6 +350,7 @@ onMounted(() => {
         v-model="kycForm.id_number"
         label="Id number"
         placeholder="Id number"
+        :rules="[isRequired]"
       />
 
       <div>
@@ -413,7 +429,7 @@ onMounted(() => {
           :options="issuingAuthorityOptions"
           placeholder="ID issuing authority"
           :single="true"
-          :rules="[isRequired]"
+          :hasError="isIssuingAuthorityEmpty"
         />
       </div>
     </div>
@@ -438,7 +454,7 @@ onMounted(() => {
         :options="nationalityOptions"
         placeholder="Nationality"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isNationalityEmpty"
       />
 
       <DatePicker
@@ -453,7 +469,7 @@ onMounted(() => {
         :options="uboRelationOptions"
         placeholder="Position"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isPositionEmpty"
       />
     </div>
 

@@ -11,15 +11,11 @@ const props = defineProps({
   entityDetails: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   customerTypeEnum: Object,
   residentStatuses: Object,
   lookups: Object,
-  entities: Array,
   quoteAmlStatus: Number,
   customerDetails: Object,
 });
@@ -90,7 +86,7 @@ const emirateRegistrationOptions = computed(() => {
 });
 
 const industryTypeOptions = computed(() => {
-  return props.industryType.map(indType => ({
+  return props?.lookups?.company_type.map(indType => ({
     value: indType.code,
     label: indType.text,
   }));
@@ -198,8 +194,6 @@ const insuredFormDetails = useForm({
 
   insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
   insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
-  insured_fullname: props.quoteDetails?.customer.insured_fullname ?? null,
-  withFullName: false,
   nationality_id: props.quoteDetails?.customer.nationality_id ?? null,
   dob: props.quoteDetails?.customer.dob ?? null,
 
@@ -239,7 +233,6 @@ const updateCustomerDetails = isValid => {
 
     insured_first_name: insuredFormDetails.insured_first_name,
     insured_last_name: insuredFormDetails.insured_last_name,
-    insured_fullname: insuredFormDetails.insured_fullname,
     nationality_id: insuredFormDetails.nationality_id,
     dob: insuredFormDetails.dob,
 
@@ -262,7 +255,6 @@ const updateCustomerDetails = isValid => {
       customerDetailData,
     )
     .then(res => {
-      console.log(res, 'RESPONSE');
       if (res.status) {
         notification.success({
           title: 'Customer Details Updated',
@@ -395,128 +387,6 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
-const payerNameRef = ref(null);
-
-const insurerFullName = computed(() => {
-  return (
-    insuredFormDetails.insured_first_name +
-    ' ' +
-    insuredFormDetails.insured_last_name
-  );
-});
-
-const paidByRef = ref('third-party');
-
-// new update function
-// const updateInsuredAndPaymentsDetails = () => {
-//     linkLoader.value = true;
-//     let entityDetails = {
-//         quote_type_id: props.quoteType.id,
-//         quote_request_id: props.quoteDetails.id,
-//         entity_id: tradeLicenseEntity.entity_id,
-//         payment_Details: paymentDetailsRef.value
-//     };
-//     axios
-//         .post(route('insuredPayerDetailsUpdate'), entityDetails)
-//         .then(res => {
-//             if (res.data.status) {
-
-//                 notification.success({
-//                     title: res.data.message,
-//                     position: 'top',
-//                 });
-//             }else{
-//                 notification.error({
-//                     title: res.data.message,
-//                     position: 'top',
-//                 });
-//             }
-//             linkLoader.value = false;
-
-//         })
-//         .catch(err => {
-//             console.log(err);
-//         })
-// }
-
-//faisal
-// const customerDetailsForm = useForm({
-
-//     customer_id: props.quoteDetails.customer_id,
-//     customer_type: props.customerTypeEnum.Individual,
-//     quote_type: props.quoteType.code,
-
-//     insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
-//     insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
-//     nationality_id:  null,//props.quoteDetails?.customer.nationality_id ??
-//     dob: props.quoteDetails?.customer.dob ?? null,
-
-//     place_of_birth: props.quoteDetails?.customer?.detail?.place_of_birth ?? null,
-//     country_of_residence: props.quoteDetails?.customer?.detail?.country_of_residence ?? null,
-//     residential_address: props.quoteDetails?.customer?.detail?.residential_address ?? null,
-//     residential_status: props.quoteDetails?.customer?.detail?.residential_status ?? null,
-//     id_type: props.quoteDetails?.customer?.detail?.id_type ?? null,
-//     id_issuance_date: props.quoteDetails?.customer?.detail?.id_issuance_date ?? null,
-//     mode_of_contact: props.quoteDetails?.customer?.detail?.mode_of_contact ?? null,
-//     transaction_value: props.quoteDetails?.customer?.detail?.transaction_value ?? null,
-//     mode_of_delivery: props.quoteDetails?.customer?.detail?.mode_of_delivery ?? null,
-//     employment_sector: props.quoteDetails?.customer?.detail?.employment_sector ?? null,
-//     customer_tenure: props.quoteDetails?.customer?.detail?.customer_tenure ?? null,
-// });
-
-//faisal
-// const updateCustomerDetails = () => {
-
-//     //submit form manually
-
-//     console.log(myForm.value);
-
-//     //validate customerDetailsForm manually
-//     validateCustomerFields.value = true;
-
-//     if (myForm.refs.value.validate()) {
-//         console.log("VALIDATED");
-//     }
-//     else{
-//         console.log("FAILED");
-//     }
-
-//     // console.log(isValid, ":VALID");
-
-//     // customerDetailsForm.post(`${props.quoteDetails.id}/update-customer-details`, {
-//     //     preserveScroll: true,
-//     //     onError: errors => {
-//     //         notification.error({
-//     //             title: errors.error || 'Customer update failed',
-//     //             position: 'top',
-//     //         });
-//     //     },
-//     //     onSuccess: () => {
-//     //         notification.success({
-//     //             title: 'Customer update failed',
-//     //             position: 'top',
-//     //         });
-
-//     //     },
-//     // });
-
-// }
-
-const updateDetails = () => {
-  // console.log("update clicked");
-  // console.log(paymentDetailsRef.value);
-  // updateInsuredAndPaymentsDetails(paymentDetailsRef);
-};
-
-// watch(
-//   () => insurerFullName,
-//   val => {
-//     if (payerNameRef.value == val) {
-//       paidByRef.value = 'self';
-//     }
-//   }
-// );
-
 const is_insured = ref(false);
 
 watch(
@@ -527,15 +397,6 @@ watch(
   { immediate: true },
 );
 
-onMounted(() => {
-  // paymentDetailsRef.value = props.quoteDetails.payments.map(payment => ({
-  //     paymentCode : payment.code,
-  //     paymentMethod: payment.payment_method.name,
-  //     payerName: payment.get_customer_payment_instrument?.card_holder_name ?? '',
-  //     paymentAmount: payment.captured_amount,
-  //     paidBy: 'self',
-  // }));
-});
 </script>
 
 <template>
@@ -549,36 +410,9 @@ onMounted(() => {
       </p>
 
       <x-form @submit="insuredDetailsSubmit" :auto-focus="false">
-<!--        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">-->
-<!--          <div class="flex gap-5 mb-5 align-center">-->
-<!--            <p>Want to send Fullname?</p>-->
-<!--            <x-radio-->
-<!--              v-model="insuredFormDetails.withFullName"-->
-<!--              :value="true"-->
-<!--              label="Yes"-->
-<!--            />-->
-<!--            <x-radio-->
-<!--              v-model="insuredFormDetails.withFullName"-->
-<!--              :value="false"-->
-<!--              label="No"-->
-<!--            />-->
-<!--          </div>-->
-<!--        </dl>-->
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4 items-center">
-          <div v-if="insuredFormDetails.withFullName">
-            <x-field label="Insured Full Name">
-              <x-input
-                v-model="insuredFormDetails.insured_fullname"
-                :rules="[isRequired]"
-                placeholder="Insured Full Name"
-                type="text"
-                class="w-full"
-              />
-            </x-field>
-          </div>
           <x-field
             label="Insured First Name"
-            v-if="!insuredFormDetails.withFullName"
           >
             <x-input
               v-model="insuredFormDetails.insured_first_name"
@@ -590,7 +424,6 @@ onMounted(() => {
           </x-field>
           <x-field
             label="Insured Last Name"
-            v-if="!insuredFormDetails.withFullName"
           >
             <x-input
               v-model="insuredFormDetails.insured_last_name"
@@ -621,132 +454,11 @@ onMounted(() => {
           </x-field>
           <div
             class="flex gap-5 mb-5 align-center"
-            :class="{ 'mt-8': insuredFormDetails.withFullName }"
           >
             <p>Is the insured the payer?</p>
             <x-radio v-model="is_insured" :value="true" label="Yes" />
             <x-radio v-model="is_insured" :value="false" label="No" />
           </div>
-
-          <!-- new fields -->
-
-          <!-- <x-field label="Country / Place of Birth">
-                        <ComboBox
-                            :single="true"
-                            v-model="insuredFormDetails.place_of_birth"
-                            placeholder="Please enter the Place of Birth of the customer as per Passport"
-                            :options="nationalitiesOptions"
-                            :hasError="!insuredFormDetails.place_of_birth && validateCustomerFields"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Country of Residence">
-                        <ComboBox
-                            :single="true"
-                            v-model="insuredFormDetails.country_of_residence"
-                            placeholder="Country of Residence"
-                            :options="nationalitiesOptions"
-                            :hasError="!insuredFormDetails.country_of_residence && validateCustomerFields"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Residential Address">
-                        <x-input
-                            v-model="insuredFormDetails.residential_address"
-                            placeholder="Residential Address"
-                            :rules="validateCustomerFields ? [isRequired] : []"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Resident Status">
-                        <ComboBox
-                            :single="true"
-                            v-model="insuredFormDetails.residential_status"
-                            placeholder="Resident Status"
-                            :options="residentStatusOptions"
-                            :hasError="!insuredFormDetails.residential_status && validateCustomerFields"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="ID Type">
-                        <ComboBox
-                            :single="true"
-                            :hasError="!insuredFormDetails.id_type && validateCustomerFields"
-                            v-model="insuredFormDetails.id_type"
-                            placeholder="Please specify the type of ID received from the customer "
-                            :options="idTypeOptions"
-                            class="w-full"
-                        />
-                    </x-field>
-
-
-                    <x-field label="ID Issue Date">
-                        <DatePicker
-                            v-model="insuredFormDetails.id_issuance_date"
-                            :rules="validateCustomerFields ? [isRequired] : []"
-                            placeholder="ID Issue Date"
-                            class="w-full"
-                        />
-                    </x-field>
-
-
-                    <x-field label="Mode Of Contact">
-                        <ComboBox
-                            :single="true"
-                            v-model="insuredFormDetails.mode_of_contact"
-                            :hasError="!insuredFormDetails.mode_of_contact && validateCustomerFields"
-                            placeholder="Please specify the mode of contact with this customer"
-                            :options="modeOfContactOptions"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Transaction Value">
-                        <x-input
-                            v-model="insuredFormDetails.transaction_value"
-                            placeholder="Transaction Value"
-                            :rules="validateCustomerFields ? [isRequired] : []"
-                            type="number"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Mode Of Delivery">
-                        <ComboBox
-                            :single="true"
-                            v-model="insuredFormDetails.mode_of_delivery"
-                            :hasError="!insuredFormDetails.mode_of_delivery && validateCustomerFields"
-                            placeholder="Please select the mode of delivery of the policy documents"
-                            :options="modeOfDeliveryOptions"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Employment Sector">
-                        <ComboBox
-                            :single="true"
-                            :hasError="!insuredFormDetails.employment_sector && validateCustomerFields"
-                            v-model="insuredFormDetails.employment_sector"
-                            placeholder="Employment Sector"
-                            :options="employmentSectorOptions"
-                            class="w-full"
-                        />
-                    </x-field>
-
-                    <x-field label="Customer Tenure">
-                        <x-input
-                            v-model="insuredFormDetails.customer_tenure"
-                            placeholder="Customer Tenure"
-                            :rules="validateCustomerFields ? [isRequired] : []"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field> -->
         </dl>
 
         <x-divider class="mb-4 mt-1" />
@@ -756,7 +468,7 @@ onMounted(() => {
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Individual"
         />
 
@@ -767,7 +479,7 @@ onMounted(() => {
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Individual"
         />
         <div class="my-5 flex justify-center">
@@ -796,137 +508,13 @@ onMounted(() => {
           :idDocumentType="props.lookups.id_type"
           :modeOfContact="props.lookups.mode_of_contact"
           :modeOfDelivery="props.lookups.mode_of_delivery"
-          :professionalTitle="props.lookups.professional_title"
+          :professional-title="props.lookups.professional_title"
           :employmentSectors="props.lookups.employment_sector"
           :residentialStatus="props.lookups.resident_status"
           :companyPosition="props.lookups.company_position"
           :entity-details="props.entityDetails"
           :customer-details="props.customerDetails"
         />
-
-        <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
-                Payer Details
-            </h3>
-
-            <section v-if="paymentsDataArray.length > 0">
-                <dl v-for="(payment, index) in paymentsDataArray" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                    <x-field label="Payment ID:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentCode"
-                            placeholder="Payment ID"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Payment Method:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentMethod"
-                            placeholder="Payment Method"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
-                        <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                            />
-                        </template>
-                        <template v-else>
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                            />
-                        </template>
-                    </x-field>
-                    <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
-                        <x-input
-                            v-model="insurerFullName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-else>
-                        <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Total Amount:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentAmount"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            placeholder="Total Amount"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Paid By:">
-                        <ComboBox
-                            v-model="paymentDetailsRef[index].paidBy"
-                            :single="true"
-                            :rules="[isRequired]"
-                            placeholder="Select Paid by"
-                            :options="[
-                                {label: 'Self', value: 'self'},
-                                {label: 'Third Party', value: 'third-party'}
-                            ]"
-                            selected="self"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <br/>
-                    <x-divider class="mb-4 mt-4"/>
-                    <x-divider class="mb-4 mt-4"/>
-                </dl>
-            </section> -->
-
-        <div class="text-right space-x-4 mt-8">
-          <!-- <x-button
-            size="sm"
-            color="warning"
-            type="submit"
-            @click="customerAllFields"
-          >
-            Save
-          </x-button> -->
-          <!-- <x-button
-            size="sm"
-            color="warning"
-            type="submit"
-            @click="customerAllFields"
-          >
-            Update Only
-          </x-button>
-
-          <x-button
-            size="sm"
-            color="success"
-            type="submit"
-            @click="customerAmlOnly"
-          >
-            Confirm
-          </x-button> -->
-        </div>
       </x-form>
     </x-modal>
 
@@ -1041,103 +629,6 @@ onMounted(() => {
               :hasError="emirateRegistrationId"
             />
           </x-field>
-
-          <!-- new fields -->
-
-          <!-- <x-field label="Legal Structure">
-            <ComboBox
-              :single="true"
-              :hasError="
-                !insuredFormDetails.legal_structure && validateEntityFields
-              "
-              v-model="insuredFormDetails.legal_structure"
-              placeholder="Legal Structure"
-              :options="legalStructureOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="Country of Incorporation">
-            <ComboBox
-              :single="true"
-              :hasError="
-                !insuredFormDetails.country_of_corporation &&
-                validateEntityFields
-              "
-              v-model="insuredFormDetails.country_of_corporation"
-              placeholder="Country of Incorporation"
-              :options="nationalitiesOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="Website">
-            <x-input
-              v-model="insuredFormDetails.website"
-              placeholder="Please enter the official website of the entity here"
-              type="text"
-              :rules="validateEntityFields ? [isRequired] : []"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID / Document Type">
-            <ComboBox
-              :single="true"
-              :hasError="
-                !insuredFormDetails.entity_id_type && validateEntityFields
-              "
-              v-model="insuredFormDetails.entity_id_type"
-              placeholder="Please specify the type of ID received from the customer "
-              :options="idTypeOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID / Document Issue Date">
-            <DatePicker
-              v-model="insuredFormDetails.entity_id_issuance_date"
-              placeholder="Please specify the issuance date of the ID collected"
-              :rules="validateEntityFields ? [isRequired] : []"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID / Document Expiry Date">
-            <DatePicker
-              v-model="insuredFormDetails.id_expiry_date"
-              placeholder="Please specify the Expiry date of the ID collected"
-              class="w-full"
-              :rules="validateEntityFields ? [isRequired] : []"
-            />
-          </x-field>
-
-          <x-field label="Place of Issue">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.id_issuance_place"
-              :hasError="
-                !insuredFormDetails.id_issuance_place && validateEntityFields
-              "
-              placeholder="Place of Issue"
-              :options="idIssuancePlanceOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID Issue Authority">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.id_issuance_authority"
-              :hasError="
-                !insuredFormDetails.id_issuance_authority &&
-                validateEntityFields
-              "
-              placeholder="ID Issue Authority"
-              :options="idIssuanceAuthorityOptions"
-              class="w-full"
-            />
-          </x-field> -->
         </dl>
         <x-divider class="mb-4 mt-1" />
         <template v-if="entityDetailsFound">
@@ -1192,7 +683,7 @@ onMounted(() => {
           :quoteType="quoteType"
           :nationalities="nationalities"
           :uboDetails="uboDetails"
-          :uboRelations="uboRelations"
+          :uboRelations="props.lookups.ubo_relation"
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
@@ -1204,7 +695,7 @@ onMounted(() => {
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Entity"
         />
 
@@ -1220,102 +711,6 @@ onMounted(() => {
         </div>
         <x-divider class="mb-4 mt-4" />
 
-        <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
-                Payer Details
-            </h3>
-
-            <section v-if="paymentsDataArray.length > 0">
-                <dl v-for="(payment, index) in paymentsDataArray" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                    <x-field label="Payment ID:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentCode"
-                            placeholder="Payment ID"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Payment Method:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentMethod"
-                            placeholder="Payment Method"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
-                        <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                            />
-                        </template>
-                        <template v-else>
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                            />
-                        </template>
-                    </x-field>
-                    <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
-                        <x-input
-                            v-model="insurerFullName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-else>
-                        <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Total Amount:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentAmount"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            placeholder="Total Amount"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Paid By:">
-                        <ComboBox
-                            v-model="paymentDetailsRef[index].paidBy"
-                            :single="true"
-                            :rules="[isRequired]"
-                            placeholder="Select Paid by"
-                            :options="[
-                                {label: 'Self', value: 'self'},
-                                {label: 'Third Party', value: 'third-party'}
-                            ]"
-                            selected="self"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <br/>
-                    <x-divider class="mb-4 mt-4"/>
-                    <x-divider class="mb-4 mt-4"/>
-                </dl>
-            </section> -->
-
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
         </div>
@@ -1327,33 +722,14 @@ onMounted(() => {
           :aml-quote-status="props.amlQuoteStatus"
           :nationalities="nationalities"
           :modelType="props.quoteType?.code"
-          :entities="props.entities"
           :idDocumentType="props.lookups.id_type"
           :legal-structure="props.lookups.legal_structure"
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
           :entity-details="props.entityDetails"
-          :uboRelation="uboRelations"
+          :uboRelation="props.lookups.ubo_relation"
+          :industry-type="props.lookups.company_type"
         />
-
-        <div class="text-right space-x-4 mt-8">
-          <!-- <x-button
-            size="sm"
-            color="red"
-            @click.prevent="modals.entityView = false"
-          >
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="orange"
-            type="submit"
-            :loading="insuredFormDetails.processing"
-            @click.prevent="entityAllFields"
-          >
-            Update Only
-          </x-button> -->
-        </div>
       </x-form>
     </x-modal>
   </div>

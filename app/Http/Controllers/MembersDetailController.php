@@ -35,14 +35,14 @@ class MembersDetailController extends Controller
                 $quoteMemberDetails = array_merge($quoteMemberDetails, [
                     'customer_entity_id' => $customerEntityId,
                     'customer_type' => CustomerTypeEnum::Individual,
-                    'quote_id' => $request->quote_request_id
+                    'quote_id' => $request->quote_request_id,
                 ]);
             } else {
                 $customerEntityId = $request->entity_id;
                 $quoteMemberDetails = array_merge($quoteMemberDetails, [
                     'customer_entity_id' => $customerEntityId,
                     'customer_type' => CustomerTypeEnum::Entity,
-                    'quote_id' => $request->quote_request_id
+                    'quote_id' => $request->quote_request_id,
                 ]);
             }
             unset($quoteMemberDetails['customer_id']);
@@ -64,11 +64,15 @@ class MembersDetailController extends Controller
             ]);
 
             $quoteMemberDetails = $quoteMemberDetails->load(['relation', 'nationality']);
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
-            if (isset($request->from_aml_model))
+            if (isset($request->from_aml_model)) {
                 return response()->json(['status' => true, 'message' => 'Updated', 'data' => $quoteMemberDetails]);
+            }
         }
 
         return redirect()->back();
@@ -126,13 +130,17 @@ class MembersDetailController extends Controller
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 ]));
 
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
             $quoteObject->updated_at = Carbon::now();
             $quoteObject->save();
 
             $memberDetail = $memberDetail->load(['relation', 'nationality']);
 
-            if (isset($request->from_aml_model))
+            if (isset($request->from_aml_model)) {
                 return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
+            }
         }
 
         return redirect()->back();
