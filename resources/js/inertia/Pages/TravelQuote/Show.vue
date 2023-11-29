@@ -1627,8 +1627,9 @@ const handleChildUpdate = planId => {
                   <div class="grid md:grid-cols-2 gap-4">
                       <x-input
                           v-model="travelerForm.first_name"
-                          label="Member Name"
+                          label="Member Name*"
                           placeholder="Member Name"
+                          :rules="[isRequired]"
                       />
                       <ComboBox
                           v-model="travelerForm.nationality_id"
@@ -1640,8 +1641,9 @@ const handleChildUpdate = planId => {
                       />
                       <DatePicker
                           v-model="travelerForm.dob"
-                          label="Date of Birth"
+                          label="Date of Birth*"
                           :hasError="travelerFieldReq.dob"
+                          :rules="[isRequired]"
                       />
                       <x-select
                           v-model="travelerForm.relation_code"
