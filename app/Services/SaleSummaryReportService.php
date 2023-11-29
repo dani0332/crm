@@ -6,6 +6,8 @@ use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\ManagementReportCategoriesEnum;
 use App\Enums\ManagementReportTypeEnum;
+use App\Enums\QuoteStatusEnum;
+use App\Enums\TransactionTypeEnum;
 use App\Models\LeadSource;
 use App\Models\Lookup;
 use App\Models\PersonalQuote;
@@ -58,11 +60,26 @@ class SaleSummaryReportService implements ManagementReport
                 DB::raw('(SUM(payments.commission_vat_applicable) ) as commission_vat_applicable'),
                 DB::raw('(SUM(price_vat_applicable) + SUM(price_vat_not_applicable) + (SUM(price_vat_applicable)* 0.05))  - SUM(payments.discount_value) as total_price'),
             )
-            ->groupBy('users.name');
+            ->when($request->groupBy, function ($query, $groupBy) {
+                return $query->groupBy($this->resolveGroupByColumn($groupBy));
+            });
 
         $this->applyFilters($query, $filters);
 
         return $query->simplePaginate(10)->withQueryString();
+    }
+
+    private function resolveGroupByColumn($groupBy)
+    {
+        $mapping = [
+            'policy_issuer' => 'payments.policy_issuer_id',
+            'customer_group' => 'personal_quotes.customer_id',
+            'insurer' => 'payments.insurer_id',
+            'advisor' => 'users.name',
+            'line_of_business' => 'quote_type.code',
+        ];
+
+        return $mapping[$groupBy] ?? $groupBy;
     }
 
     public function getFilterOptions()
@@ -168,6 +185,54 @@ class SaleSummaryReportService implements ManagementReport
                     $dateFilter('personal_quotes.created_at', 'createdAt');
                 }
                 break;
+        }
+
+        if (isset($filters['transactionType'])) {
+            $transactionTypes = Lookup::where('key', LookupsEnum::TRANSACTION_TYPES)->get();
+
+            switch ($filters['transactionType']) {
+                case TransactionTypeEnum::ENDORSEMENT:
+                    $typeCode = TransactionTypeEnum::ENDORSEMENT;
+                    break;
+                case TransactionTypeEnum::NEW_BUSINESS:
+                    $typeCode = TransactionTypeEnum::NEW_BUSINESS;
+                    break;
+                case TransactionTypeEnum::EXISTING_CUSTOMER_RENEWAL:
+                    $typeCode = TransactionTypeEnum::EXISTING_CUSTOMER_RENEWAL;
+                    break;
+                case TransactionTypeEnum::EXISTING_CUSTOMER_NEW_BUSINESS:
+                    $typeCode = TransactionTypeEnum::EXISTING_CUSTOMER_NEW_BUSINESS;
+                    break;
+                default:
+                    $typeCode = null;
+                    break;
+            }
+
+            if ($typeCode !== null) {
+                $typeId = $transactionTypes->where('code', $typeCode)->first()->id;
+                $query->where('payments.type_id', $typeId);
+            }
+        }
+
+        if(isset($filters['teams']) && !empty($filters['teams'])){
+            $query->whereIn('teams.id', $filters['teams']);
+        }
+
+        if(isset($filters['subTeams']) && !empty($filters['subTeams'])){
+            $query->whereIn('users.sub_team_id', $filters['subTeams']);
+        }
+
+        if(isset($filters['leadSource']) && !empty($filters['leadSource'])){
+            $query->whereIn('personal_quotes.source', $filters['leadSource']);
+        }
+
+        if(isset($filters['includeCancelPolicies']) && !empty($filters['includeCancelPolicies'])){
+            if($filters['includeCancelPolicies'] == "Yes"){
+                $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyCancelled);
+            }
+            else{
+                $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyBooked);
+            }
         }
     }
 
