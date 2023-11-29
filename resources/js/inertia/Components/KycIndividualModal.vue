@@ -44,7 +44,7 @@ const kycForm = reactive({
   first_name: props.quote?.customer.insured_first_name ?? props.quote.first_name,
   last_name: props.quote?.customer.insured_last_name ?? props.quote.last_name,
   dob: convertDate(props.quote.dob) || '',
-  nationality_id: props.quote.nationality_id,
+  nationality_id: props.quote.nationality_id ?? null,
   country_of_residence: props.customerDetails?.detail?.country_of_residence ?? 56,
   place_of_birth: props.customerDetails?.detail?.place_of_birth ?? null,
   resident_status: props.customerDetails?.detail?.residential_status ?? 'uaeResident',
@@ -84,7 +84,18 @@ function changeIncomeSource(val) {
   }
 }
 
-const onKycSubmit = () => {
+const isNationalityEmpty = ref(false);
+const isPlaceOfBirthEmpty = ref(false);
+
+const onKycSubmit = isValid => {
+  if (!kycForm.nationality_id) isNationalityEmpty.value = true;
+  else isNationalityEmpty.value = false;
+
+  if (!kycForm.place_of_birth) isPlaceOfBirthEmpty.value = true;
+  else isPlaceOfBirthEmpty.value = false;
+
+  if(!isValid) return;
+
   if (confirm('Are you sure you want to create and save the document?')) {
     isLoading.value = true;
     axios
@@ -114,63 +125,63 @@ const onKycSubmit = () => {
 };
 
 const countryList = computed(() => {
-  return props.countryList.map(nat => ({
+  return props.countryList?.map(nat => ({
     value: nat.id,
     label: nat.country_name,
   }));
 });
 
 const nationalityOptions = computed(() => {
-  return props.nationalities.map(nat => ({
+  return props.nationalities?.map(nat => ({
     value: nat.id,
     label: nat.text,
   }));
 });
 
 const residentialStatusOptions = computed(() => {
-  return props.residentialStatus.map(nat => ({
+  return props.residentialStatus?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const documentIdTypeOptions = computed(() => {
-  return props.idDocumentType.map(nat => ({
+  return props.idDocumentType?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const modeOfContactOptions = computed(() => {
-  return props.modeOfContact.map(nat => ({
+  return props.modeOfContact?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const modeOfDeliveryOptions = computed(() => {
-  return props.modeOfDelivery.map(nat => ({
+  return props.modeOfDelivery?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const professionalTitleOptions = computed(() => {
-  return props.professionalTitle.map(nat => ({
+  return props.professionalTitle?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const employmentSectorsOptions = computed(() => {
-  return props.employmentSectors.map(nat => ({
+  return props.employmentSectors?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
 });
 
 const companyPositionOptions = computed(() => {
-  return props.companyPosition.map(nat => ({
+  return props.companyPosition?.map(nat => ({
     value: nat.code,
     label: nat.text,
   }));
@@ -248,7 +259,7 @@ onMounted(() => {
         :options="nationalityOptions"
         placeholder="Nationality"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isNationalityEmpty"
       />
 
       <ComboBox
@@ -266,7 +277,7 @@ onMounted(() => {
         :options="countryList"
         placeholder="Place of birth"
         :single="true"
-        :rules="[isRequired]"
+        :hasError="isPlaceOfBirthEmpty"
       />
 
       <x-select

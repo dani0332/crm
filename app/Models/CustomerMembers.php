@@ -2,8 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\quoteTypeCode;
-use App\Enums\QuoteTypes;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CustomerMembers extends Model
 {
-    use HasFactory, GenericQueriesAllLobs;
+    use GenericQueriesAllLobs, HasFactory;
 
     protected $guarded = ['id'];
 

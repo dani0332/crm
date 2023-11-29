@@ -20,6 +20,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const {isRequired} = useRules();
+
 const modals = reactive({
     member: false,
 });
@@ -39,6 +41,12 @@ const memberRelationOptions = computed(() => {
         label: relation.text,
     }));
 });
+
+const members = ref(props.membersDetails);
+const computedMembers = computed(() => {
+    return members.value.filter(x => !x.is_third_party_payer);
+});
+
 const memberActionEdit = ref(false);
 const memberDetailsTable = reactive({
     isLoading: false,
@@ -157,7 +165,7 @@ const memberDeleteConfirmed = () => {
         <div class="flex justify-between items-center mb-4">
             <h3 class="font-semibold text-primary-800 text-lg">
                 Member Details
-                <x-tag size="sm">{{ membersDetails.length || 0 }}</x-tag>
+                <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
             </h3>
             <x-button @click.prevent="addMemberModal" size="sm" color="orange">
                 Add Member
@@ -167,7 +175,7 @@ const memberDeleteConfirmed = () => {
         <DataTable
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
-            :items="membersDetails || []"
+            :items="computedMembers || []"
             show-index
             border-cell
             hide-rows-per-page
@@ -217,8 +225,9 @@ const memberDeleteConfirmed = () => {
                     <input type="hidden" :value="memberForm.id" />
                     <x-input
                         v-model="memberForm.first_name"
-                        label="Member Name"
+                        label="Member Name*"
                         placeholder="Member Name"
+                        :rules="[isRequired]"
                     />
                     <ComboBox
                         v-model="memberForm.nationality_id"
@@ -230,8 +239,9 @@ const memberDeleteConfirmed = () => {
                     />
                     <DatePicker
                         v-model="memberForm.dob"
-                        label="DOB"
+                        label="DOB*"
                         :hasError="memberFieldReq.dob"
+                        :rules="[isRequired]"
                     />
                     <x-select
                         v-model="memberForm.relation_code"

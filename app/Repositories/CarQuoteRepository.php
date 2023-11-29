@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\GenericRequestEnum;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Facades\Ken;

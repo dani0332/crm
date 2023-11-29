@@ -9,16 +9,14 @@ const props = defineProps({
   entityDetails: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   customerTypeEnum: Object,
   businessTypeCode: Object,
   businessCoverTypeText: Array,
   businessCommuModeText: Array,
   kycLogs: Array,
+  kycStatus: String,
   quoteStatusCode: { type: [Object, String] },
   isCurrentUserFromCompliance: { type: [Array, Number] },
   isCurrentUserFromPaAml: { type: [Array, Number] },
@@ -31,7 +29,6 @@ const props = defineProps({
   customerDetails: Object,
   amlDecisionStatusEnum: Object,
   lookups: Object,
-  entities: Object,
 });
 const page = usePage();
 const rolesEnum = page.props.rolesEnum;
@@ -95,7 +92,6 @@ const dateToYear = date => {
 
 onMounted(() => {
   // paymentsRef.value = page.props.quoteRequest.payments;
-  // console.log(paymentsRef.value);
 });
 </script>
 
@@ -594,20 +590,17 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="quoteType.code === quoteTypeCodeEnum.Business"
-      v-model="modals.insuranceForm"
-      :quoteType="quoteType"
-      :quoteDetails="quoteRequest"
-      :entityDetails="entityDetails"
-      :nationalities="nationalities"
-      :membersDetails="membersDetails"
-      :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
-      :customerTypeEnum="customerTypeEnum"
-      :lookups="lookups"
-      :entities="entities"
-      :quote-aml-status="page.props.quoteAmlStatus"
+        v-if="props.kycStatus === 'Entity'"
+        v-model="modals.insuranceForm"
+        :quoteType="quoteType"
+        :quoteDetails="quoteRequest"
+        :entityDetails="entityDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :uboDetails="uboDetails"
+        :customerTypeEnum="customerTypeEnum"
+        :lookups="lookups"
+        :quote-aml-status="page.props.quoteAmlStatus"
     />
 
     <IndividualModel
@@ -618,14 +611,10 @@ onMounted(() => {
       :entityDetails="entityDetails"
       :nationalities="nationalities"
       :emirates="emirates"
-      :industryType="industryType"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
-      :entities="entities"
       :quote-aml-status="page.props.quoteAmlStatus"
       :customer-details="props.customerDetails"
     />
