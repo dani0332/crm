@@ -21,7 +21,7 @@ const props = defineProps({
   quoteType: String,
   storageUrl: String,
 });
-console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
+console.log('QUOTEREQUEST='+JSON.stringify(props.paymentDocument));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -934,7 +934,7 @@ const paymentMethodsForm = useForm({
 });
 
 const validateViewPayment = (isValid) => {  
-  
+  let amountExceeded = false;
   if (parseFloat(splitAmountModels.value[splitPaymentNo.value]) > parseFloat(paymentMethodsForm.collection_amount)) {
     approveErrorMessage.value = "The entered amount is smaller than the total amount.";
     isApprovePaymentError.value = true;
@@ -942,9 +942,10 @@ const validateViewPayment = (isValid) => {
   }
 
   if (parseFloat(paymentMethodsForm.collection_amount) > parseFloat(splitAmountModels.value[splitPaymentNo.value])) {
-    approveErrorMessage.value = "Collected amount should not exceed total amount.";
+    approveErrorMessage.value = "Collected amount exceeds total amount, do you still want to continue?";
     isApprovePaymentError.value = true;
-    return true;
+    amountExceeded = true;
+    //return true;
   }
 
   if (paymentMethodsForm.collection_type==='insurer') {  
@@ -958,7 +959,9 @@ const validateViewPayment = (isValid) => {
   }
 
   if(isApproveConfirm.value === false && isValid) {
-    isApprovePaymentError.value = false;
+    if (!amountExceeded) {
+      isApprovePaymentError.value = false;
+    }
     isApproveConfirm.value = true;
     return true;
   }
@@ -1678,7 +1681,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           </div>
           <div>
           <x-tooltip v-if="!isFieldReadonly">
-            <span class="border-b border-dotted border-red-500 text-sm">TOTAL PRICE</span>
+            <span class="border-b-2 border-dotted border-black text-sm">TOTAL PRICE</span>
             <template #tooltip>
                <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
             </template>
@@ -1687,7 +1690,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <x-field class="w-full">
               <span v-if="isFieldReadonly">
                 <x-tooltip>  
-                  <span class="border-b border-dotted border-red-500 text-sm">{{ formatAmount(totalPrice) }}</span>
+                  <span class="border-b-2 border-dotted border-black text-sm">{{ formatAmount(totalPrice) }}</span>
                     <template #tooltip>
                   <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
                 </template>
@@ -1732,7 +1735,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           </div>
           <div>
           <x-tooltip v-if="!isFieldReadonly">
-            <span class="border-b border-dotted border-red-500 text-sm">PROVIDER NAME</span>           
+            <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>           
             <template #tooltip>
                 <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
                 <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
@@ -1742,7 +1745,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <x-field class="w-full">
               <span v-if="isFieldReadonly">
                 <x-tooltip>
-                  <span class="border-b border-dotted border-red-500 text-sm">{{ providerName }}</span>
+                  <span class="border-b-2 border-dotted border-black text-sm">{{ providerName }}</span>
                   <template #tooltip>
                       <span>{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>                      
                   </template>    
@@ -1789,7 +1792,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
           <div>
           <x-tooltip v-if="!isFieldReadonly">
-            <span class="border-b border-dotted border-red-500 text-sm">PLAN NAME</span>
+            <span class="border-b-2 border-dotted border-black text-sm">PLAN NAME</span>
             <template #tooltip>
                 <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>
                 <span v-else >{{ paymentTooltipEnum.PLAN_NAME }}</span>
@@ -1799,7 +1802,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <x-field class="w-full">
               <span v-if="isFieldReadonly">                
                 <x-tooltip>
-                  <span class="border-b border-dotted border-red-500 text-sm">{{ getPlanName }}</span>
+                  <span class="border-b-2 border-dotted border-black text-sm">{{ getPlanName }}</span>
                   <template #tooltip>
                       <span>{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>                      
                   </template>            
@@ -1846,7 +1849,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
            </div>
           <div>
           <x-tooltip v-if="!isFieldReadonly">
-            <span class="border-b border-dotted border-red-500 text-sm">PAYMENT STATUS</span>            
+            <span class="border-b-2 border-dotted border-black text-sm">PAYMENT STATUS</span>            
             <template #tooltip>
                 <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
             </template>
@@ -1855,7 +1858,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <x-field class="w-full">
               <span v-if="isFieldReadonly">
                 <x-tooltip>
-                  <span class="border-b border-dotted border-red-500 text-sm">{{ formatString(masterPaymentStatus) }}</span>
+                  <span class="border-b-2 border-dotted border-black text-sm">{{ formatString(masterPaymentStatus) }}</span>
                   <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
                   </template>
@@ -1908,14 +1911,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <span v-if="isFieldReadonly">{{ paymentMethodsForm.custom_reason }}</span>
             <x-input
                 v-if="!isFieldReadonly"
-                class="w-full mt-1"
+                class="w-full"
                 v-model="paymentMethodsForm.custom_reason"
                 :rules="[rules.isRequired]"                
               />
           </x-field>          
           <div v-if="showDiscountOptions">
             <x-tooltip v-if="!isFieldReadonly">
-              <span class="border-b border-dotted border-red-500 text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
+              <span class="border-b-2 border-dotted border-black text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
               <template #tooltip>
                   <span>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
               </template>
@@ -1924,7 +1927,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <x-field class="w-full">
             <span v-if="isFieldReadonly">              
               <x-tooltip>
-                <span class="border-b border-dotted border-red-500 text-sm">{{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}</span>
+                <span class="border-b-2 border-dotted border-black text-sm">{{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}</span>
                 <template #tooltip>
                     <span>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>                    
                 </template>
@@ -1950,7 +1953,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </x-field>            
           </div>
           
-          <div v-if="isDiscountReasonEnabled" class="mt-3">
+          <div v-if="isDiscountReasonEnabled" class="">
             <ToolTip
               v-if="!isFieldReadonly"
               title="DISCOUNT REASON"
@@ -1983,7 +1986,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </x-field>
           </div>
           
-          <x-field v-if="isCustomDiscountReasonEnabled" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full mt-4">
+          <x-field v-if="isCustomDiscountReasonEnabled" label="CUSTOM DISCOUNT REASON" :required="!isFieldReadonly" class="w-full">
             <span v-if="isFieldReadonly">{{ paymentMethodsForm.discount_custom_reason }}</span>
             <x-input
                 v-if="!isFieldReadonly"
@@ -2070,7 +2073,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <div class="flex w-full">
             <div class="w-1/6 px-2 text-center">
               <span class="relative group text-sm">
-                <span class="border-b border-dotted border-red-500 text-sm">PAYMENT NO</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                <span class="border-b-2 border-dotted border-black text-sm">PAYMENT NO</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
                   <div class="absolute text-left hidden group-hover:block transform transition-transform z-40 h-fit _popoverContent_1wc81_3 top-full bottom-0 _popoverBottom_1wc81_14 left-1/2 right-full -translate-x-1/2 max-w-xs">
                   <div class="dark">
                     <div class="x-popover-container block w-full bg-white dark:bg-gray-700 shadow-lg rounded-md border  border-gray-200 dark:border-gray-800 p-2 text-white text-sm w-max max-w-xs">
@@ -2085,7 +2088,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <div class="w-1/5 px-2">
               <x-tooltip>
                 <span class="text-sm  ">
-                  <span class="border-b border-dotted border-red-500 text-sm">PAYMENT METHOD</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm">PAYMENT METHOD</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
                 </span>
                 <template #tooltip>
                   <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.PAYMENT_METHOD_VIEW }}</span>
@@ -2096,7 +2099,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <div class="w-1/5 px-2">
               <x-tooltip>
                 <span class="text-sm  ">
-                  <span class="border-b border-dotted border-red-500 text-sm">TOTAL AMOUNT</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm">TOTAL AMOUNT</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
                 </span>
                 <template #tooltip>
                   <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.TOTAL_AMOUNT_SPLIT_VIEW }}</span>
@@ -2108,10 +2111,10 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               
               <x-tooltip v-if="isCreditApprovalView">
                 <span v-if="isCreditCardView" class="text-sm">
-                  <span class="border-b border-dotted border-red-500 text-sm">CAPTURE AMOUNT</span> <sup class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm">CAPTURE AMOUNT</span> <sup class="text-red-500">*</sup>
                 </span>
                 <span v-else class="text-sm">
-                  <span class="border-b border-dotted border-red-500 text-sm">COLLECTED AMOUNT</span> 
+                  <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span> 
                 </span>
                 <template #tooltip>
                   <span>{{ paymentTooltipEnum.CAPTURE_AMOUNT }}</span>                  
@@ -2120,7 +2123,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               
               <x-tooltip v-else >
                 <span class="text-sm">
-                  <span class="border-b border-dotted border-red-500 text-sm">DUE DATE</span> <sup v-if="!isViewEnabled" class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm">DUE DATE</span> <sup v-if="!isViewEnabled" class="text-red-500">*</sup>
                 </span>
                 <template #tooltip>
                   <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.DUE_DATE_VIEW }}</span>
@@ -2131,7 +2134,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <div class="w-1/5 px-2">
               <x-tooltip>
                 <span class="text-sm  ">
-                  <span class="border-b border-dotted border-red-500 text-sm">DOCUMENTS</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
+                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENTS</span> <sup v-if="!isViewEnabled && !isCreditApprovalView" class="text-red-500">*</sup>
                 </span>
                 <template #tooltip>
                   <span v-if="isFieldReadonly" >{{ paymentTooltipEnum.DOCUMENTS_VIEW }}</span>
@@ -2181,7 +2184,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">                
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">CC PAYMENT STATUS INFO</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT STATUS INFO</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_PAYMENT_STATUS }}</span>
@@ -2191,7 +2194,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">CC PAYMENT ID</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT ID</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_ID }}</span>
@@ -2201,7 +2204,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">CC PAYMENT GATEWAY</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">CC PAYMENT GATEWAY</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_CC_GATEWAY }}</span>
@@ -2211,7 +2214,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">DIGITAL WALLET</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">DIGITAL WALLET</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_WALLET }}</span>
@@ -2222,10 +2225,10 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
             <div class="flex w-full custombreak pt-1 pb-5" >
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_status_info !== null ? splitPaymentRecord.cc_payment_status_info : '' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : '' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : '' }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : '' }}</div>
+              <div class="w-1/5 px-2">{{ (splitPaymentRecord.cc_payment_status_info !== null) ? splitPaymentRecord.cc_payment_status_info : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_id !== null ? splitPaymentRecord.cc_payment_id : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.cc_payment_gateway !== null ? splitPaymentRecord.cc_payment_gateway : 'N/A' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.digital_wallet !== null ? splitPaymentRecord.digital_wallet : 'N/A' }}</div>
             </div> 
 
             <div class="flex w-full custombreak" >
@@ -2233,7 +2236,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">SAGE RECIEPT ID</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">SAGE RECIEPT ID</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_SAGE_RECIPT }}</span>
@@ -2243,7 +2246,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">PAYMENT STATUS</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">PAYMENT STATUS</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_STATUS }}</span>
@@ -2253,7 +2256,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">PAYMENT ALLOCATION STATUS</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">PAYMENT ALLOCATION STATUS</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_ALLO_STATUS }}</span>
@@ -2263,7 +2266,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <div class="w-1/5 px-2">
                 <x-tooltip>
                   <span class="text-sm  ">
-                    <span class="border-b border-dotted border-red-500 text-sm">COLLECTED AMOUNT</span>
+                    <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT</span>
                   </span>
                   <template #tooltip>
                     <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_TEXT }}</span>
@@ -2274,9 +2277,9 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
             <div class="flex w-full custombreak pb-5" >
               <div class="w-1/6 px-2 text-center"></div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : '' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.sage_reciept_id !== null ? splitPaymentRecord.sage_reciept_id : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ formatString(splitPaymentRecord.payment_status.text) }}</div>
-              <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : '' }}</div>
+              <div class="w-1/5 px-2">{{ splitPaymentRecord.payment_allocation_status !== null ? formatString(splitPaymentRecord.payment_allocation_status) : 'N/A' }}</div>
               <div class="w-1/5 px-2">{{ splitPaymentRecord.collection_amount !== null ? formatAmount(splitPaymentRecord.collection_amount) : '0.00' }}</div>
             </div>            
 
@@ -2364,14 +2367,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   <div class="w-1/5 px-2 mb-2">
                     <x-tooltip v-if="!readOnlyPayments[count]">
                           <Dropzone
-                          :id="paymentDocument.id"
+                          :id="paymentDocument[0].id"
                           multiple="true"
                           customDisplay="true"
-                          :accept="paymentDocument.accepted_files"
-                          :max-files="paymentDocument.max_files"
-                          :max-size="paymentDocument.max_size"
+                          :accept="paymentDocument[0].accepted_files"
+                          :max-files="paymentDocument[0].max_files"
+                          :max-size="paymentDocument[0].max_size"
                           :loading="documentForm.processing"
-                          @change="uploadDocument(paymentDocument, $event, count)"                          
+                          @change="uploadDocument(paymentDocument[0], $event, count)"                          
                         />
                       <template #tooltip>
                         <span>{{ paymentTooltipEnum.DOCUMENTS_UPLOAD }}</span>
@@ -2484,7 +2487,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 
                 <div>
                 <x-tooltip class="tooltip-display">
-                    <span class="border-b border-dotted border-red-500 text-sm">COLLECTED AMOUNT <sup class="text-red-500">*</sup></span>       
+                    <span class="border-b-2 border-dotted border-black text-sm">COLLECTED AMOUNT <sup class="text-red-500">*</sup></span>       
                     <template #tooltip>
                      <span>{{ paymentTooltipEnum.PAYMENT_VIEW_COLLECTED_AMOUNT }}</span>
                   </template>
@@ -2501,7 +2504,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </div>
               <div class="w-1/2 px-2" v-if="paymentMethodsModels[splitPaymentNo]=='BT' || paymentMethodsModels[splitPaymentNo]=='CHQ'">                
                 <x-tooltip>
-                  <span class="border-b border-dotted border-red-500 text-sm">BANK REFERENCE NUMBER <sup class="text-red-500">*</sup></span>   
+                  <span class="border-b-2 border-dotted border-black text-sm">BANK REFERENCE NUMBER <sup class="text-red-500">*</sup></span>   
                   <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
                 </template>
@@ -2516,21 +2519,21 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </div>
               <div class="w-1/3 px-2">
                 <x-tooltip>
-                  <span class="border-b border-dotted border-red-500 text-sm">DOCUMENT <sup v-if="paymentMethodsForm.collection_type==='insurer'" class="text-red-500">*</sup></span>   
+                  <span class="border-b-2 border-dotted border-black text-sm">DOCUMENT <sup v-if="paymentMethodsForm.collection_type==='insurer'" class="text-red-500">*</sup></span>   
                 <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_DOCUMENTS }}</span>
                 </template>
                 </x-tooltip>
                 <x-field>
                 <Dropzone
-                  :id="paymentDocument.id"
+                  :id="paymentDocument[1].id"
                   customDisplay="true"
                   multiple="true"
-                  :accept="paymentDocument.accepted_files"
-                  :max-files="paymentDocument.max_files"
-                  :max-size="paymentDocument.max_size"
+                  :accept="paymentDocument[1].accepted_files"
+                  :max-files="paymentDocument[1].max_files"
+                  :max-size="paymentDocument[1].max_size"
                   :loading="documentForm.processing"
-                  @change="uploadDocument(paymentDocument, $event, splitPaymentNo)"                  
+                  @change="uploadDocument(paymentDocument[1], $event, splitPaymentNo)"                  
                 />
                 <p v-if="isApprovedDocumentNotUploaded" class="text-sm text-red-500 dark:text-red-400 mt-1">This field is required</p>
                 </x-field>

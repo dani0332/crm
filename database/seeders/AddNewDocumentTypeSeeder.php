@@ -27,6 +27,21 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+       $documentTypesCount = DocumentType::get()->where('code', 'CPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'CPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'car',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 1,
+                'send_to_customer' => true,
+                'sort_order' => 4,
+                'is_required' => 0,
+            ]);
+        }
 
         $documentTypesCount = DocumentType::get()->where('code', 'HPD')->count();
         if (! $documentTypesCount) {
@@ -43,12 +58,43 @@ class AddNewDocumentTypeSeeder extends Seeder
                 'is_required' => 0,
             ]);
         }
+        $documentTypesCount = DocumentType::get()->where('code', 'HPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'HPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'health',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 3,
+                'send_to_customer' => true,
+                'sort_order' => 4,
+                'is_required' => 0,
+            ]);
+        }
+        
 
         $documentTypesCount = DocumentType::get()->where('code', 'TPD')->count();
         if (! $documentTypesCount) {
             \DB::table('document_types')->insert([
                 'code' => 'TPD',
                 'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'travel',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 8,
+                'send_to_customer' => true,
+                'sort_order' => 4,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'TPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'TPDR',
+                'text' => 'Receipt',
                 'max_files' => 15,
                 'max_size' => 30,
                 'folder_path' => 'travel',

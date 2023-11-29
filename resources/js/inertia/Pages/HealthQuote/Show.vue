@@ -2283,7 +2283,7 @@ const handleChildUpdate = planId => {
 			v-if="hasRole(rolesEnum.BetaUser)"
 			quoteType="Health"
 			:payments="payments"
-			:paymentDocument="documentTypes.QUOTE.find(item => item.code === 'HPD')"
+			:paymentDocument="documentTypes.QUOTE.filter(item => item.code === 'HPD' || item.code === 'HPDR')"
 			:quoteRequest="quoteRequest"
 			:paymentStatusEnum="paymentStatusEnum"
 			:paymentTooltipEnum="paymentTooltipEnum"
