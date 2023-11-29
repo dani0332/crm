@@ -1020,9 +1020,13 @@ class CarQuoteService extends BaseService
     public function getOcbDetails($uuid)
     {
         $carQuote = CarQuote::select(
-            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id',
+            ['id', 'code', 'uuid', 'advisor_id', 'first_name', 'last_name', 'email', 'car_make_id', 'customer_id',
                 'car_model_id', 'currently_insured_with', 'quote_status_id', 'payment_status_id', 'policy_number', 'renewal_expiry_date', 'previous_quote_policy_number', 'previous_policy_expiry_date']
-        )->with(['advisor', 'carMake', 'carModel'])
+        )->with(['advisor', 'carMake', 'carModel', 'customer' => function ($q) {
+            $q->select('id', 'first_name', 'last_name')->with(['additionalContacts' => function ($q) {
+                $q->where('key', 'email');
+            }]);
+        }])
             ->where('uuid', $uuid)->first();
 
         $plans = $this->getPlans($carQuote->uuid, true, true);
