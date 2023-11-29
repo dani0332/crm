@@ -16,6 +16,7 @@ const props = defineProps({
   businessCoverTypeText: Array,
   businessCommuModeText: Array,
   kycLogs: Array,
+  kycStatus: String,
   quoteStatusCode: { type: [Object, String] },
   isCurrentUserFromCompliance: { type: [Array, Number] },
   isCurrentUserFromPaAml: { type: [Array, Number] },
@@ -589,17 +590,17 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="entityDetails.entity"
-      v-model="modals.insuranceForm"
-      :quoteType="quoteType"
-      :quoteDetails="quoteRequest"
-      :entityDetails="entityDetails"
-      :nationalities="nationalities"
-      :membersDetails="membersDetails"
-      :uboDetails="uboDetails"
-      :customerTypeEnum="customerTypeEnum"
-      :lookups="lookups"
-      :quote-aml-status="page.props.quoteAmlStatus"
+        v-if="props.kycStatus === 'Entity'"
+        v-model="modals.insuranceForm"
+        :quoteType="quoteType"
+        :quoteDetails="quoteRequest"
+        :entityDetails="entityDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :uboDetails="uboDetails"
+        :customerTypeEnum="customerTypeEnum"
+        :lookups="lookups"
+        :quote-aml-status="page.props.quoteAmlStatus"
     />
 
     <IndividualModel
