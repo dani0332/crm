@@ -20,6 +20,7 @@ const docForm = useForm({
   file: null,
 });
 
+
 const uploadFile = (doc, memberId, files) => {
   if (files.length == 0) return;
   isUploading.value = true;
@@ -32,7 +33,7 @@ const uploadFile = (doc, memberId, files) => {
       member_detail_id: memberId || null,
       file: files[0].file,
     }))
-    .post('/quotes/health/documents/store', {
+    .post('/quotes/travel/documents/store', {
       preserveScroll: true,
       preserveState: true,
       only: ['quoteDocuments'],
