@@ -71,7 +71,6 @@ class HealthQuoteService extends BaseService
             'hqr.source',
             'hqr.additional_notes',
             DB::raw('DATE_FORMAT(hqr.dob, "%d-%m-%Y") as dob'),
-            DB::raw('TIMESTAMPDIFF(YEAR, hqr.dob, CURDATE()) AS age_bands'),
             'hqr.gender',
             'hqr.has_dental',
             'hqr.health_team_type',

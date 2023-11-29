@@ -4,6 +4,7 @@ namespace App\Exports;
 
 use App\Services\CRUDService;
 use App\Services\HealthQuoteService;
+use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -88,7 +89,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->device,
             $this->genderOptions[$quote->gender],
             $quote->nationality_id_text,
-            $quote->age_bands,
+            Carbon::parse($quote->dob)->age,
             $quote->emirate_of_your_visa_id_text,
             $quote->member_category_id_text,
             $quote->salary_band_id_text,
