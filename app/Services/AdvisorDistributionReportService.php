@@ -57,7 +57,6 @@ class AdvisorDistributionReportService extends BaseService
         } else {
             if (! auth()->user()->hasRole(RolesEnum::LeadPool)) {
                 $userIds = $this->walkTree(auth()->user()->id);
-                info('user ids for advisor conversion report are : '.json_encode($userIds));
                 $query = $query->whereIn('car_quote_request.advisor_id', $userIds);
             }
         }
@@ -128,11 +127,9 @@ class AdvisorDistributionReportService extends BaseService
         $query->whereBetween('car_quote_request_detail.advisor_assigned_date', [$startDate, $endDate]);
 
         if (isset($filters->tiers) && count($filters->tiers) > 0) {
-            info('tiersFilter are : '.json_encode($filters->tiers));
             $query->whereIn('car_quote_request.tier_id', $filters->tiers);
         }
         if (isset($filters->teams) && count($filters->teams) > 0) {
-            info('teamsFilter are : '.json_encode($filters->teams));
             $value = $filters->teams;
             $query->whereIn('users.id', function ($query) use ($value) {
                 $query->distinct()

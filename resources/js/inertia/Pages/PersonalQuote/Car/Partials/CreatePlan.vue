@@ -3,10 +3,12 @@ const notification = useNotifications('toast');
 const props = defineProps({
   record: Object,
   insuranceProviders: Array,
-  listQuotePlans: Object,
+  availablePlans: Array
 });
 
 const page = usePage();
+
+const emit = defineEmits(['onLoadAvailablePlansData']);
 
 const isEmptyField = ref(false);
 
@@ -21,18 +23,9 @@ const quotePlansTable = reactive({
   ],
 });
 
-const quotePlansTableData = computed(() => {
-  if (!Array.isArray(page.props.listQuotePlans)) {
-    return [];
-  }
-  return typeof page.props.listQuotePlans !== 'string'
-    ? page.props.listQuotePlans
-    : [];
-});
-
 const totalPriceVAT = computed(() => {
   let vat = 0;
-  quotePlansTableData?.value.forEach(item => {
+  props.availablePlans?.value.forEach(item => {
     item.addons.forEach(addon => {
       addon.carAddonOption.forEach(option => {
         if (option.isSelected && option.price != 0) {
@@ -50,6 +43,7 @@ const addPlanForm = useForm({
   is_create: 1,
   repair_type_comp: '',
   insurance_provider_id: '',
+  insurer_quote_no: '',
   car_plan_id: null,
   actual_premium: null,
   car_value: null,
@@ -61,6 +55,7 @@ const insuranceProviderOptions = computed(() => {
     value: provider.id,
     label: provider.text,
   }));
+
 });
 
 const insuranceProviderPlanOptions = ref([]);
@@ -102,6 +97,7 @@ const creatQuotePlan = isValid => {
         title: 'Car Quote Plan created successfully',
         position: 'top',
       });
+      emit("onLoadAvailablePlansData")
     },
   });
 };
@@ -201,6 +197,17 @@ const getAddonVat = item => {
           />
         </x-field>
       </div>
+      <div class="w-full md:w-1/3">
+        <x-field label="Insurer Quote Number" required>
+          <x-input
+            v-model="addPlanForm.insurer_quote_no"
+            :rules="[isRequired]"
+            class="w-full"
+            placeholder="Enter Insurer Quote Number"
+            maxlength="50"
+          />
+        </x-field>
+      </div>
     </div>
 
     <div class="text-right space-x-4">
@@ -220,7 +227,7 @@ const getAddonVat = item => {
   <DataTable
     table-class-name="tablefixed compact"
     :headers="quotePlansTable.columns"
-    :items="quotePlansTableData || []"
+    :items="props.availablePlans || []"
     show-index
     border-cell
     fixed-checkbox

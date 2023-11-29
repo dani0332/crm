@@ -2,6 +2,8 @@
 import LazyDocumentUploader from './Partials/DocumentUploader.vue';
 import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
+import {computed} from "vue";
+import RiskRatingScoreDetails from "../../Components/RiskRatingScoreDetails.vue";
 
 defineProps({
   quote: Object,
@@ -9,11 +11,11 @@ defineProps({
   ecomDetails: Object,
   membersDetail: Array,
   memberCategories: Array,
+  memberRelations: Array,
   salaryBands: Array,
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: Array,
   quoteDocuments: Object,
   documentTypes: Object,
   cdnPath: String,
@@ -23,6 +25,7 @@ defineProps({
   lostReasons: Array,
   quoteStatusEnum: Object,
   modelType: String,
+  quoteTypeId: Number,
   notProductionApproval: Boolean,
   allowedDuplicateLOB: Array,
   permissions: Object,
@@ -38,6 +41,10 @@ defineProps({
   insuranceProviders: Array,
   embeddedProducts: Array,
   healthPlanTypes: Array,
+  customerTypeEnum: Object,
+  industryType: Object,
+  UBORelations: Array,
+  UBOsDetails: Array,
   canAddBatchNumber: Boolean,
   paymentLink: String,
   quoteType: String,
@@ -47,10 +54,11 @@ const page = usePage();
 
 const notification = useToast();
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
-  date ? useDateFormat(date, 'DD-MM-YYYY HH:mm:ss').value : '-';
+  date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const fixedValue = number => {
   if (number == Math.floor(number)) {
@@ -192,11 +200,25 @@ const nationalityOptions = computed(() => {
   }));
 });
 
+const industryTypeOptions = computed(() => {
+    return page.props.industryType.map(indType => ({
+        value: indType.code,
+        label: indType.text,
+    }));
+});
+
 const memberCategoriesOptions = computed(() => {
   return page.props.memberCategories.map(cat => ({
     value: cat.id,
     label: cat.text,
   }));
+});
+
+const memberRelationOptions = computed(() => {
+    return page.props.memberRelations.map(relation => ({
+        value: relation.code,
+        label: relation.text,
+    }));
 });
 
 const emiratesOptions = computed(() => {
@@ -296,21 +318,33 @@ const onLeadStatus = () => {
     {
       preserveScroll: true,
       onError: errors => {
-        console.log(errors);
+          notification.error({ title: errors.value, position: 'top' });
       },
-      onSuccess: () => {
-        notification.success({
-          title: 'Lead Status Updated',
-          position: 'top',
-        });
+      onSuccess: response => {
+          const flash_messages = response.props.flash;
+          if(!flash_messages){
+              notification.success({
+                  title: 'Lead Status Updated',
+                  position: 'top',
+              });
+          }
       },
     },
   );
 };
 
+const members = ref(page.props.membersDetail);
+const computedMembers = computed(() => {
+    return members.value.filter(x => !x.is_third_party_payer);
+});
+
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
+      {
+          text: 'Member Name',
+          value: 'first_name',
+      },
     {
       text: 'Gender',
       value: 'gender',
@@ -319,6 +353,10 @@ const memberDetailsTable = reactive({
       text: 'DOB',
       value: 'dob',
     },
+      {
+          text: 'Relation',
+          value: 'relation',
+      },
     {
       text: 'Nationality',
       value: 'nationality',
@@ -342,17 +380,31 @@ const memberForm = useForm({
   id: null,
   gender: null,
   dob: null,
-  nationality_id: page.props.membersDetail.length
-    ? null
-    : page.props.quote.nationality_id,
+  nationality_id: page.props.membersDetail.length ? null : page.props.quote.nationality_id,
   salary_band_id: null,
-  emirate_of_your_visa_id: page.props.membersDetail.length
-    ? null
-    : page.props.quote.emirate_of_your_visa_id,
+  emirate_of_your_visa_id: page.props.membersDetail.length ? null : page.props.quote.emirate_of_your_visa_id,
   member_category_id: null,
-  health_quote_request_id: page.props.quote.id,
+  quote_request_id: page.props.quote.id,
   update_lead_against_member: null,
+  first_name: null,
+  relation_code: null,
+  quote_type: page.props.modelType,
+  customer_id: page.props.quote.customer_id,
+  customer_type: page.props.quote.customer_type
 });
+
+
+
+const rules = {
+  isEmail: v =>
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(v) ||
+      'E-mail must be valid',
+  isRequired: v => !!v || 'This field is required',
+  allowEmpty: v => true || 'This field is required',
+  isPhone: v =>
+      /^[\+]?[(]?[0-9]{3}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,10}$/im.test(v) ||
+      'Phone must be valid',
+};
 
 function onEditMember(data) {
   memberActionEdit.value = true;
@@ -365,6 +417,8 @@ function onEditMember(data) {
   memberForm.emirate_of_your_visa_id = data.emirate_of_your_visa_id;
   memberForm.member_category_id = data.member_category_id;
   memberForm.salary_band_id = data.salary_band_id;
+  memberForm.first_name = data.first_name;
+  memberForm.relation_code = data.relation_code;
   memberForm.update_lead_against_member = data.index === 1;
 }
 
@@ -400,6 +454,8 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
+        onLoadAvailablePlansData()
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -413,6 +469,8 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
+        onLoadAvailablePlansData()
+        location.reload();
       },
       onFinish: () => {
         modals.member = false;
@@ -427,13 +485,15 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(`/members/${confirmDeleteData.member}`, {
+  memberForm.delete(`/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`, {
     preserveScroll: true,
     onSuccess: () => {
       notification.success({
         title: 'Member Deleted',
         position: 'top',
       });
+      onLoadAvailablePlansData()
+      location.reload();
     },
     onFinish: () => {
       modals.memberConfirm = false;
@@ -441,8 +501,8 @@ const memberDeleteConfirmed = () => {
   });
 };
 
-const memberDataDocs = membersDetail => {
-  return membersDetail
+const memberDataDocs = computedMembers => {
+  return computedMembers
     .map(member => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
@@ -455,6 +515,7 @@ const planDataTable = ref();
 
 const plansTable = reactive({
   isLoading: false,
+  data: [],
   columns: [
     {
       text: 'Provider Name',
@@ -491,15 +552,32 @@ const plansTable = reactive({
   ],
 });
 
+
+const onLoadAvailablePlansData = async () => {
+    let data = {
+        jsonData: true,
+    };
+    let url = `/quotes/health/available-plans/${page.props.quote.uuid}`;
+    axios
+        .post(url, data)
+        .then(res => {
+            plansTable.data= res.data.length > 0 ? res?.data[0] : []
+            getSmallestCopayRateAsDefaultValue();
+        })
+        .catch(err => {
+            console.log(err);
+        })
+};
+
 const planClicked = plan => {
   selectedPlan.value = plan;
   modals.plan = true;
 };
 
 const onExportPlans = () => {
-  if (selectedPlans.value.length < 3 || selectedPlans.value.length > 5) {
+  if (selectedPlans.value.length < 1 || selectedPlans.value.length > 5) {
     notification.error({
-      title: 'Please select 3 to 5 plans to download PDF.',
+      title: 'Please select 1 to 5 plans to download PDF.',
       position: 'top',
     });
     return;
@@ -593,7 +671,7 @@ const onCreatePlan = () => {
   router.reload({
     preserveState: true,
     preserveScroll: true,
-    only: ['listQuotePlans'],
+    only: ['plansTable.data'],
     onStart: () => {
       modals.createPlan = false;
     },
@@ -653,16 +731,16 @@ watch(
   },
 );
 
-const plansData = ref(page.props.listQuotePlans);
+const listQuotePlansFiltered = ref([]);
 
-const listQuotePlansFiltered = ref(
-  plansData.value.sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden)),
-);
+watchEffect(() => {
+    listQuotePlansFiltered.value = plansTable.data.slice().sort((a, b) => Number(!b.isHidden) - Number(!a.isHidden));
+});
 
 const onPlanFiltersSubmit = () => {
   const filters = cleanObj(planFilters);
   planFiltersCount.value = Object.keys(filters).length;
-  listQuotePlansFiltered.value = page.props.listQuotePlans.filter(plan => {
+  listQuotePlansFiltered.value = plansTable.data.filter(plan => {
     let isManualPlan = planFilters.manual_plan;
     let isCurrentlyOnline = planFilters.current_online;
     let network = planFilters.network;
@@ -705,7 +783,7 @@ const onPlanFiltersReset = () => {
   planFilters.network = [];
   planFilters.manual_plan = null;
   planFilters.current_online = null;
-  listQuotePlansFiltered.value = page.props.listQuotePlans;
+  listQuotePlansFiltered.value = plansTable.data;
   modals.planFilters = false;
   planFiltersCount.value = 0;
   planDataTable.value.updatePage(1);
@@ -724,11 +802,11 @@ const getSmallestCopayRateAsDefaultValue = () => {
   let smallestCopayValue = 0;
   let defaultCopayId = 0;
   let smallestCopayVAT = 0;
-  plansData.value.forEach(element => {
+  plansTable.data.forEach(element => {
     element.ratesPerCopay.forEach(function callback(value, index) {
       if (index == 0) {
         smallestCopayValue = Number(value.premium);
-        smallestCopayVAT = Number(value.vat);
+        smallestCopayVAT = Number(value.vat)
         defaultCopayId = value.healthPlanCoPaymentId;
       } else if (value.premium < smallestCopayValue) {
         smallestCopayValue = Number(value.premium);
@@ -929,7 +1007,6 @@ const activityDeleteConfirmed = () => {
 };
 
 // additional contact
-
 const additionalContactTable = [
   { text: 'Type', value: 'key' },
   { text: 'Value', value: 'value' },
@@ -1111,15 +1188,152 @@ const sendPolicyToClient = () => {
   }
 };
 
+const isProfileUpdateAllow = computed(() => {
+    return hasAnyRole([
+        page.props.rolesEnum.PA,
+        page.props.rolesEnum.OE,
+        page.props.rolesEnum.NRA
+    ]);
+});
+
+const customerProfileForm = useForm({
+    customer_id: page.props.quote.customer_id,
+    customer_type: page.props.quote.customer_type,
+    quote_type: page.props.modelType,
+    quote_type_id: page.props.quoteTypeId,
+    quote_request_id: page.props.quote.id,
+
+    insured_first_name: page.props.quote.insured_first_name || '',
+    insured_last_name: page.props.quote.insured_last_name || '',
+    emirates_id_number: page.props.quote.emirates_id_number || null,
+    emirates_id_expiry_date: page.props.quote.emirates_id_expiry_date || null,
+
+    entity_id: page.props.quote.entity_id ?? null,
+    trade_license_no: page.props.quote.trade_license_no ?? null,
+    company_name: page.props.quote.company_name ?? null,
+    company_address: page.props.quote.company_address ?? null,
+    entity_type_code: page.props.quote.entity_type_code ?? 'Parent',
+    industry_type_code: page.props.quote.industry_type_code ?? null,
+    emirate_of_registration_id: page.props.quote.emirate_of_registration_id ?? null,
+});
+
+const updateProfileDetails = isValid => {
+    if (!isValid) return;
+
+    customerProfileForm.post(route('update-customer-profile'), {
+        preserveScroll: true,
+        onSuccess: () => {
+            notification.success({
+                title: 'Customer profile details update Successfully',
+                position: 'top',
+            });
+        },
+        onError: errors => {
+            Object.keys(errors).forEach(function(key) {
+                notification.error({
+                    title: errors[key],
+                    position: 'top',
+                });
+            });
+        },
+    });
+}
+
+const entityDetailsFound = ref(false);
+const getParentEntityModel = ref(false);
+const tradeLicenseEntity = reactive({
+    entity_id: null,
+    trade_license: null,
+    company_name: null,
+    company_address: null,
+    triggeredFrom: false
+});
+
+const entityTypeChange = event => {
+    if(event === 'SubEntity') {
+        getParentEntityModel.value = true;
+    }
+}
+
+const searchByTradeLicense = trigger => {
+    let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
+    axios.get(url)
+        .then(res => {
+            if(res.data.status) {
+                let response = res.data.response;
+                entityDetailsFound.value = true;
+                tradeLicenseEntity.entity_id = response.id;
+                tradeLicenseEntity.trade_license = response.trade_license_no;
+                tradeLicenseEntity.company_name = response.company_name;
+                tradeLicenseEntity.company_address = response.company_address;
+                tradeLicenseEntity.triggeredFrom = (trigger === 'SubEntity');
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+
+            } else {
+                notification.error({
+                    title: res.data.message,
+                    position: 'top',
+                });
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+};
+
+const linkEntity = () => {
+    let entityDetails = {
+        quote_type_id: page.props.quoteTypeId,
+        quote_request_id: page.props.quote.id,
+        entity_id: tradeLicenseEntity.entity_id,
+        triggeredFrom: tradeLicenseEntity.triggeredFrom
+    };
+    axios.post(route('link-entity-details'), entityDetails)
+        .then(res => {
+            if(res.data.status) {
+                let response = res.data.response;
+
+                // Append Entity data in fields
+                customerProfileForm.trade_license_no = response.trade_license_no;
+                customerProfileForm.company_name = response.company_name;
+                customerProfileForm.company_address = response.company_address;
+                customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+                customerProfileForm.industry_type_code = response.industry_type_code;
+                customerProfileForm.emirate_of_registration_id = response.emirate_of_registration_id;
+
+                notification.success({
+                    title: res.data.message,
+                    position: 'top',
+                });
+                entityDetailsFound.value = false;
+            }
+        }).catch(err => {
+        console.log(err);
+    });
+}
+
 onMounted(() => {
+  onLoadAvailablePlansData()
   const isHealthAdvisor = page.props.advisors.find(
     a => a.id == page.props.quote.advisor_id,
   );
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
-  getSmallestCopayRateAsDefaultValue();
   isMounted.value = true;
+
 });
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+
+const handleChildUpdate = planId => {
+    prefillPlanId.value = planId;
+}
+
 </script>
+
 <template>
   <div>
     <Head title="Health Detail" />
@@ -1254,6 +1468,10 @@ onMounted(() => {
             <div>{{ quote.code }}</div>
           </div>
           <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">CUSTOMER TYPE</dt>
+              <dd>{{ quote.customer_type }}</dd>
+          </div>
+          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CREATED DATE</dt>
             <dd>{{ quote.created_at }}</dd>
           </div>
@@ -1310,60 +1528,6 @@ onMounted(() => {
       </div>
 
       <div class="mt-6">
-        <h3 class="font-semibold text-primary-800">Customer Profile</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-
-      <div class="text-sm">
-        <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
-            <dd>{{ quote.first_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
-            <dd>{{ quote.last_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MOBILE NUMBER</dt>
-            <dd>{{ quote.mobile_no }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
-            <dd>{{ quote.email }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">GENDER</dt>
-            <dd>{{ genderText(quote.gender).value }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MARITAL STATUS</dt>
-            <dd>{{ quote.marital_status_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NATIONALITY</dt>
-            <dd>{{ quote.nationality_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ quote.dob }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMIRATE OF VISA</dt>
-            <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">MEMBER CATEGORY</dt>
-            <dd>{{ quote.member_category_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">SALARY BAND</dt>
-            <dd>{{ quote.salary_band_id_text }}</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="mt-6">
         <h3 class="font-semibold text-primary-800">Quote Details</h3>
         <x-divider class="mb-4 mt-1" />
       </div>
@@ -1393,28 +1557,307 @@ onMounted(() => {
             <dd>{{ quote.details }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">Additional Notes</dt>
+            <dt class="font-medium">ADDITIONAL NOTES</dt>
             <dd>{{ quote.additional_notes }}</dd>
           </div>
         </dl>
       </div>
     </div>
 
-    <LastYearPolicyDetail
-      v-if="
-        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
-        quote.source == $page.props.leadSource.INSLY
-      "
-      modelType="Health"
-      :quote="quote"
-      :canAddBatchNumber="canAddBatchNumber"
-    />
+      <div class="p-4 rounded shadow mb-6 bg-white">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-primary-800 text-lg">{{ quote.customer_type == page.props.customerTypeEnum.Individual ? 'Customer' : 'Entity '}} Profile</h3>
+          <x-button size="sm" color="orange" v-if="quote.kyc_decision === 'Complete'">
+            KYC - Complete
+          </x-button>
+          <x-button size="sm" color="primary" v-else>
+            KYC - Pending
+          </x-button>
+        </div>
+          <x-divider class="mb-4 mt-1" />
+          <x-form @submit="updateProfileDetails" :auto-focus="false">
+              <div class="text-sm">
+                  <dl v-if="quote.customer_type === page.props.customerTypeEnum.Individual" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">FIRST NAME</dt>
+                          <dd>{{ quote.first_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">LAST NAME</dt>
+                          <dd>{{ quote.last_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">INSURED FIRST NAME</dt>
+                          <dd>
+                              <x-input
+                                  v-model="customerProfileForm.insured_first_name"
+                                  :rules="[isRequired]"
+                                  placeholder="INSURED FIRST NAME"
+                                  class="w-full"
+                                  :disabled="!isProfileUpdateAllow"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">INSURED LAST NAME</dt>
+                          <dd>
+                              <x-input
+                                  v-model="customerProfileForm.insured_last_name"
+                                  :rules="[isRequired]"
+                                  placeholder="INSURED LAST NAME"
+                                  class="w-full"
+                                  :disabled="!isProfileUpdateAllow"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">MOBILE NUMBER</dt>
+                          <dd>{{ quote.mobile_no }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMAIL</dt>
+                          <dd>{{ quote.email }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">NATIONALITY</dt>
+                          <dd>{{ quote.nationality_id_text }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">DATE OF BIRTH</dt>
+                          <dd>{{ quote.dob }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMIRATES ID NUMBER</dt>
+                          <dd>
+                              <x-input
+                                  v-model="customerProfileForm.emirates_id_number"
+                                  :rules="[isRequired]"
+                                  placeholder="EMIRATES ID NUMBER"
+                                  class="w-full"
+                                  :disabled="!isProfileUpdateAllow"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+                          <dd>
+                              <DatePicker
+                                  v-model="customerProfileForm.emirates_id_expiry_date"
+                                  :rules="[isRequired]"
+                                  placeholder="EMIRATES ID EXPIRY DATE"
+                                  :disabled="!isProfileUpdateAllow"
+                                  :min-date="new Date()"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMIRATE OF VISA</dt>
+                          <dd>{{ quote.emirate_of_your_visa_id_text }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">GENDER</dt>
+                          <dd>{{ genderText(quote.gender).value }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">MARITAL STATUS</dt>
+                          <dd>{{ quote.marital_status_id_text }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">SALARY BAND</dt>
+                          <dd>{{ quote.salary_band_id_text }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">MEMBER CATEGORY</dt>
+                          <dd>{{ quote.member_category_id_text }}</dd>
+                      </div>
+                      <RiskRatingScoreDetails
+                          :quote="quote"
+                          :modelType="quoteType"
+                      />
+                  </dl>
+                  <dl v-if="quote.customer_type === page.props.customerTypeEnum.Entity" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">FIRST NAME</dt>
+                          <dd>{{ quote.first_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">LAST NAME</dt>
+                          <dd>{{ quote.last_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">MOBILE NUMBER</dt>
+                          <dd>{{ quote.mobile_no }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMAIL</dt>
+                          <dd>{{ quote.email }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">COMPANY NAME</dt>
+                          <dd>{{ customerProfileForm.company_name }}</dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">TRADE LICENSE NO</dt>
+                          <dd>
+                              <x-input
+                                  v-model="customerProfileForm.trade_license_no"
+                                  placeholder="TRADE LICENSE NO"
+                                  type="text"
+                                  class="w-full"
+                              />
+                              <x-button
+                                  @click.prevent="searchByTradeLicense"
+                                  size="xs"
+                                  color="primary"
+                              >
+                                  Search
+                              </x-button>
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+                          <dd>
+                              <ComboBox
+                                  v-model="customerProfileForm.emirate_of_registration_id"
+                                  :single="true"
+                                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                                  :options="emiratesOptions"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">COMPANY ADDRESS</dt>
+                          <dd>
+                              <x-input
+                                  v-model="customerProfileForm.company_address"
+                                  placeholder="COMPANY ADDRESS"
+                                  type="text"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">INDUSTRY TYPE</dt>
+                          <dd>
+                              <ComboBox
+                                  :single="true"
+                                  v-model="customerProfileForm.industry_type_code"
+                                  placeholder="SELECT INDUSTRY TYPE"
+                                  :options="industryTypeOptions"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                      <div class="grid sm:grid-cols-2">
+                          <dt class="font-medium">ENTITY TYPE</dt>
+                          <dd>
+                              <ComboBox
+                                  @update:modelValue="entityTypeChange($event)"
+                                  :single="true"
+                                  v-model:modelValue="customerProfileForm.entity_type_code"
+                                  placeholder="SELECT ENTITY TYPE"
+                                  :options="[
+                                    {label: 'Parent', value: 'Parent'},
+                                    {label: 'Sub Entity', value: 'SubEntity'}
+                                ]"
+                                  class="w-full"
+                              />
+                          </dd>
+                      </div>
+                  </dl>
+                  <div class="flex justify-end">
+                      <x-button
+                          v-if="isProfileUpdateAllow"
+                          class="mt-4"
+                          color="emerald"
+                          size="sm"
+                          :loading="customerProfileForm.processing"
+                          type="submit"
+                      >
+                          Update Profile
+                      </x-button>
+                  </div>
+              </div>
+          </x-form>
+      </div>
+      <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
+          <h3 class="font-semibold text-center text-lg mb-10">Search Entity by Parent Entity Trade License No</h3>
+          <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Parent Entity Trade License No</dt>
+                  <dd>
+                      <x-input
+                          v-model="customerProfileForm.trade_license_no"
+                          placeholder="TRADE LICENSE NO"
+                          type="text"
+                          class="w-full"
+                      />
+                  </dd>
+              </div>
+          </dl>
+          <div class="flex justify-end">
+              <x-button
+                  class="mt-4"
+                  color="primary"
+                  size="sm"
+                  :loading="customerProfileForm.processing"
+                  @click.prevent="searchByTradeLicense('SubEntity')"
+              >
+                  Search
+              </x-button>
+          </div>
+      </x-modal>
+      <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
+          <h3 class="font-semibold text-center text-lg mb-10">Entity found with the entered Trade License number</h3>
+          <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Trade License No</dt>
+                  <dd>
+                      <x-input
+                          v-model="tradeLicenseEntity.trade_license"
+                          placeholder="TRADE LICENSE NO"
+                          type="text"
+                          class="w-full"
+                          disabled
+                      />
+                  </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Company Name</dt>
+                  <dd>
+                      <x-input
+                          v-model="tradeLicenseEntity.company_name"
+                          placeholder="Company Name"
+                          type="text"
+                          class="w-full"
+                          disabled
+                      />
+                  </dd>
+              </div>
+              <div class="grid sm:grid-cols-2">
+                  <dt class="font-medium">Company Address</dt>
+                  <dd>
+                      <x-input
+                          v-model="tradeLicenseEntity.company_address"
+                          placeholder="Company Address"
+                          type="text"
+                          class="w-full"
+                          disabled
+                      />
+                  </dd>
+              </div>
+              <div class="text-left space-x-4" >
+                  <x-button size="sm" color="orange" @click.prevent="linkEntity"> Link </x-button>
+              </div>
+          </dl>
+      </x-modal>
 
-    <div class="p-4 rounded shadow mb-6 bg-white">
+    <div v-if="quote.customer_type == page.props.customerTypeEnum.Individual" class="p-4 rounded shadow mb-6 bg-white">
       <div class="flex justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Member Details
-          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
         </h3>
         <x-button @click.prevent="onAddMemberModal" size="sm" color="orange">
           Add Member
@@ -1424,14 +1867,14 @@ onMounted(() => {
       <DataTable
         table-class-name="tablefixed compact"
         :headers="memberDetailsTable.columns"
-        :items="membersDetail || []"
+        :items="computedMembers || []"
         show-index
         border-cell
         hide-rows-per-page
         hide-footer
       >
-        <template #item-index="{ index }">
-          <div>Member {{ index }}</div>
+        <template #item-index="{ index, code }">
+          <div> {{ code ?? 'Member ' + index }}</div>
         </template>
         <template #item-gender="{ gender }">
           {{ genderText(gender).value }}
@@ -1439,6 +1882,9 @@ onMounted(() => {
         <template #item-dob="{ dob }">
           {{ dateFormat(dob) }}
         </template>
+          <template #item-relation="{ relation }">
+              {{ relation?.text }}
+          </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
         </template>
@@ -1478,7 +1924,11 @@ onMounted(() => {
         <x-form @submit="onMemberSubmit" :auto-focus="false">
           <div class="grid md:grid-cols-2 gap-4 md:pb-16">
             <input type="hidden" :value="memberForm.id" />
-
+              <x-input
+                  v-model="memberForm.first_name"
+                  label="Member Name"
+                  placeholder="Member Name"
+              />
             <ComboBox
               v-model="memberForm.nationality_id"
               label="Nationality"
@@ -1514,13 +1964,19 @@ onMounted(() => {
               placeholder="Select Gender"
               class="w-full"
             />
-
             <DatePicker
               v-model="memberForm.dob"
               label="DOB"
               :hasError="memberFieldReq.dob"
             />
 
+            <x-select
+              v-model="memberForm.relation_code"
+              label="Relation"
+              :options="memberRelationOptions"
+              placeholder="Select Relation"
+              class="w-full"
+            />
             <x-select
               v-model="memberForm.salary_band_id"
               label="Salary Band"
@@ -1572,6 +2028,139 @@ onMounted(() => {
         </template>
       </x-modal>
     </div>
+
+    <UBODetails
+      v-if="quote.customer_type == page.props.customerTypeEnum.Entity"
+      :quote="quote"
+      :UBOsDetails="UBOsDetails"
+      :nationalities="nationalities"
+      :UBORelations="UBORelations"
+      :quote_type="page.props.modelType"
+        />
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+            <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                <h3 class="font-semibold text-primary-800 text-lg">
+                    Customer Additional Contacts
+                    <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
+                </h3>
+                <x-button
+                    size="sm"
+                    color="orange"
+                    @click.prevent="
+                      additionalContact.reset();
+                    modals.addContact = true;
+                    "
+                >
+                    Add Additional Contacts
+                </x-button>
+            </div>
+
+            <DataTable
+                table-class-name="compact"
+                :headers="additionalContactTable"
+                :items="customerAdditionalContacts || []"
+                border-cell
+                hide-rows-per-page
+                hide-footer
+            >
+                <template #item-key="{ key }">
+                    <span v-if="key === 'email'"> Email Address </span>
+                    <span v-else> Mobile Number </span>
+                </template>
+                <template #item-action="item">
+                    <x-button
+                        size="xs"
+                        color="emerald"
+                        outlined
+                        @click.prevent="additionalContactPrimary(item)"
+                    >
+                        Make Primary
+                    </x-button>
+                </template>
+            </DataTable>
+
+            <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
+                <template #header> Add Additional Contacts </template>
+
+                <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
+                    <div class="grid gap-4">
+                        <x-select
+                            v-model="additionalContact.additional_contact_type"
+                            label="Type"
+                            :options="[
+                              { value: 'email', label: 'Email' },
+                              { value: 'mobile_no', label: 'Mobile Number' },
+                            ]"
+                            :rules="[isRequired]"
+                            placeholder="Select Type"
+                            class="w-full"
+                        />
+
+                        <x-input
+                            v-model="additionalContact.additional_contact_val"
+                            label="Value"
+                            :rules="[
+                              isRequired,
+                              additionalContact.additional_contact_type === 'email'
+                                ? isEmail
+                                : isNumber,
+                            ]"
+                            class="w-full"
+                        />
+                    </div>
+
+                    <div class="text-right space-x-4 mt-12">
+                        <x-button size="sm" @click.prevent="modals.addContact = false">
+                            Cancel
+                        </x-button>
+
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            :loading="additionalContact.processing"
+                            type="submit"
+                        >
+                            Save
+                        </x-button>
+                    </div>
+                </x-form>
+            </x-modal>
+
+            <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
+                <template #header> Primary Additional Contact </template>
+                <p>Are you sure you want to make this information as Primary?</p>
+                <template #actions>
+                    <div class="text-right space-x-4">
+                        <x-button
+                            size="sm"
+                            ghost
+                            @click.prevent="modals.contactPrimaryConfirm = false"
+                        >
+                            Cancel
+                        </x-button>
+                        <x-button
+                            size="sm"
+                            color="emerald"
+                            @click.prevent="additionalContactPrimaryConfirmed"
+                            :loading="contactLoader"
+                        >
+                            Confirm
+                        </x-button>
+                    </div>
+                </template>
+            </x-modal>
+        </div>
+
+    <LastYearPolicyDetail
+      v-if="
+        quote.source == $page.props.leadSource.RENEWAL_UPLOAD ||
+        quote.source == $page.props.leadSource.INSLY
+      "
+      modelType="Health"
+      :quote="quote"
+      :canAddBatchNumber="canAddBatchNumber"
+    />
 
     <div class="p-4 rounded shadow mb-6 bg-primary-50/25">
       <div>
@@ -1785,7 +2374,7 @@ onMounted(() => {
       <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
         <h3 class="font-semibold text-primary-800 text-lg">
           Available Plans
-          <x-tag size="sm">{{ listQuotePlans.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ listQuotePlansFiltered.length || 0 }}</x-tag>
         </h3>
         <div class="flex flex-wrap gap-3">
           <x-button-group v-if="selectedPlans.length > 0" size="sm">
@@ -1814,7 +2403,7 @@ onMounted(() => {
           </x-button>
 
           <x-button
-            v-if="listQuotePlans.length > 0"
+            v-if="plansTable.data.length > 0"
             size="sm"
             color="orange"
             @click.prevent="
@@ -1831,7 +2420,7 @@ onMounted(() => {
             :show="planFiltersCount > 0"
           >
             <x-button
-              v-if="listQuotePlans.length > 0"
+              v-if="plansTable.data.length > 0"
               size="sm"
               color="primary"
               @click.prevent="modals.planFilters = true"
@@ -1920,6 +2509,26 @@ onMounted(() => {
             >
               Copy
             </x-button>
+
+            <!-- v-if="hasRole(page.props.rolesEnum.HealthAdvisor)", hide it for now -->
+            <span v-if="true == false">
+              <SelectPlan v-if="prefillPlanId != item.id"
+                      @update:updatePlanId="handleChildUpdate"
+                      :plan="item"
+                      :quoteType="quoteType"
+                      :uuid="quote.uuid" />
+
+                      <x-button
+                      v-else
+                  size="xs"
+                  color="orange"
+                  outlined
+                  :disabled="true"
+              >
+                  Selected
+              </x-button>
+            </span>
+
           </div>
         </template>
       </DataTable>
@@ -1932,6 +2541,7 @@ onMounted(() => {
           :plan="selectedPlan"
           :genders="genderOptions"
           @copay-update="onSelectedCopay"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
 
@@ -1939,7 +2549,7 @@ onMounted(() => {
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
-          :members="membersDetail"
+          :members="computedMembers"
           :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
@@ -1970,7 +2580,6 @@ onMounted(() => {
             select-all
             deselect-all
           />
-
           <div>
             <x-tooltip position="right" class="arrow-l">
               <label
@@ -2036,7 +2645,7 @@ onMounted(() => {
       :link="quote.uuid"
       :code="quote.code"
       :quote="quote"
-      :modelType="quoteType"
+      :modelType="modelType"
       :paymentLink="paymentLink"
     />
 
@@ -2095,7 +2704,7 @@ onMounted(() => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(membersDetail)"
+          :members="memberDataDocs(computedMembers)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"
@@ -2254,120 +2863,6 @@ onMounted(() => {
               @click.prevent="activityDeleteConfirmed"
             >
               Delete
-            </x-button>
-          </div>
-        </template>
-      </x-modal>
-    </div>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">
-          Customer Additional Contacts
-          <x-tag size="sm">{{ customerAdditionalContacts.length || 0 }}</x-tag>
-        </h3>
-        <x-button
-          size="sm"
-          color="orange"
-          @click.prevent="
-            additionalContact.reset();
-            modals.addContact = true;
-          "
-        >
-          Add Additional Contacts
-        </x-button>
-      </div>
-
-      <DataTable
-        table-class-name="compact"
-        :headers="additionalContactTable"
-        :items="customerAdditionalContacts || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-      >
-        <template #item-key="{ key }">
-          <span v-if="key === 'email'"> Email Address </span>
-          <span v-else> Mobile Number </span>
-        </template>
-        <template #item-action="item">
-          <x-button
-            size="xs"
-            color="emerald"
-            outlined
-            @click.prevent="additionalContactPrimary(item)"
-          >
-            Make Primary
-          </x-button>
-        </template>
-      </DataTable>
-
-      <x-modal v-model="modals.addContact" size="lg" show-close backdrop>
-        <template #header> Add Additional Contacts </template>
-
-        <x-form @submit="onAdditionalContactSubmit" :auto-focus="false">
-          <div class="grid gap-4">
-            <x-select
-              v-model="additionalContact.additional_contact_type"
-              label="Type"
-              :options="[
-                { value: 'email', label: 'Email' },
-                { value: 'mobile_no', label: 'Mobile Number' },
-              ]"
-              :rules="[isRequired]"
-              placeholder="Select Type"
-              class="w-full"
-            />
-
-            <x-input
-              v-model="additionalContact.additional_contact_val"
-              label="Value"
-              :rules="[
-                isRequired,
-                additionalContact.additional_contact_type === 'email'
-                  ? isEmail
-                  : isNumber,
-              ]"
-              class="w-full"
-            />
-          </div>
-
-          <div class="text-right space-x-4 mt-12">
-            <x-button size="sm" @click.prevent="modals.addContact = false">
-              Cancel
-            </x-button>
-
-            <x-button
-              size="sm"
-              color="emerald"
-              :loading="additionalContact.processing"
-              type="submit"
-            >
-              Save
-            </x-button>
-          </div>
-        </x-form>
-      </x-modal>
-
-      <x-modal v-model="modals.contactPrimaryConfirm" show-close backdrop>
-        <template #header> Primary Additional Contact </template>
-        <p>Are you sure you want to make this information as Primary?</p>
-        <template #actions>
-          <div class="text-right space-x-4">
-            <x-button
-              size="sm"
-              ghost
-              @click.prevent="modals.contactPrimaryConfirm = false"
-            >
-              Cancel
-            </x-button>
-            <x-button
-              size="sm"
-              color="emerald"
-              @click.prevent="additionalContactPrimaryConfirmed"
-              :loading="contactLoader"
-            >
-              Confirm
             </x-button>
           </div>
         </template>
