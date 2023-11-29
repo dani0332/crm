@@ -18,7 +18,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
     protected $genderOptions;
     public function __construct($query)
     {
-        $this->genderOptions= app(CRUDService::class)->getGenderOptions();
+        $this->genderOptions = app(CRUDService::class)->getGenderOptions();
         $this->query = $query;
     }
 
@@ -66,6 +66,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
     public function map($quote): array
     {
         $ecomDetails = app(HealthQuoteService::class)->getEcomDetails($quote);
+
         return [
             $quote->code,
             $quote->first_name,
@@ -96,7 +97,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->salary_band_id_text,
             $quote->customer_type,
             $ecomDetails['planName'] ?? '',
-            $ecomDetails['providerName'] ?? ''
+            $ecomDetails['providerName'] ?? '',
         ];
     }
 }
