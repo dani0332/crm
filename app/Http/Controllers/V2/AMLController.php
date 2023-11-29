@@ -35,7 +35,6 @@ use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
-use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -136,8 +135,8 @@ class AMLController extends Controller
                     isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate) &&
                     isset($request->amlCreatedEndDate) && ! empty($request->amlCreatedEndDate)
                 ) {
-                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedStartDate));
-                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY'), strtotime($request->amlCreatedEndDate));
+                    $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($request->amlCreatedStartDate));
+                    $amlEndDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($request->amlCreatedEndDate));
                     $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedDate, $amlEndDate]);
                 }
 
@@ -201,11 +200,8 @@ class AMLController extends Controller
         $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
         $uboDetails = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $nationalities = NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
-        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
         $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
         $sanctionListService = app(SanctionListService::class);
@@ -234,14 +230,16 @@ class AMLController extends Controller
             LookupsEnum::PROFESSIONAL_TITLE,
             LookupsEnum::UBO_RELATION,
             LookupsEnum::COMPANY_TYPE,
+            LookupsEnum::MEMBER_RELATION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
         $lookups = $lookups->mapWithKeys(function ($item, $key) {
             return [str_replace('-', '_', $key) => $item];
         });
-        $entities = Entity::all();
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
+
+        $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
 
         $data = [
             'quoteType' => $quoteType,
@@ -249,13 +247,11 @@ class AMLController extends Controller
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
-            'memberRelations' => $memberRelations,
-            'uboRelations' => $uboRelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
-            'industryType' => $industryType,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'kycLogs' => $kycLogs,
+            'kycStatus' => $kycStatus,
             'quoteStatusCode' => $quoteStatusCode,
             'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
             'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
@@ -268,7 +264,6 @@ class AMLController extends Controller
             'customerDetails' => $customerDetails,
             'amlDecisionStatusEnum' => $amlDecisionStatusEnum,
             'lookups' => $lookups,
-            'entities' => $entities,
             'quoteAmlStatus' => $this->checkAmlQuoteStatus($quoteRequest->quote_status_id),
         ];
 
@@ -589,22 +584,18 @@ class AMLController extends Controller
 
     public function sendBridgerResponse(Request $request)
     {
-        if (auth()->user()->hasRole(RolesEnum::ComplianceSuperUser)) {
-            info('Bridger Insight : Email Triggered to Compliance Super User');
-            AMLService::sendAMLMatchedEmailtoComplianceTeam(
-                config('constants.APP_URL').$request['aml_quote_url'],
-                $request['quote_ref_id'],
-                $request['bridger_response'],
-                $request['customer_entity_name'],
-                $request['quote_type_text'],
-                auth()->user()->email,
-                true
-            );
+        info('Bridger Insight : Email Triggered to Compliance Super User - Ref ID: '.$request['quote_ref_id'].' - Email triggered by: '.auth()->user()->email);
+        AMLService::sendAMLMatchedEmailtoComplianceTeam(
+            config('constants.APP_URL').$request['aml_quote_url'],
+            $request['quote_ref_id'],
+            $request['bridger_response'],
+            $request['customer_entity_name'],
+            $request['quote_type_text'],
+            auth()->user()->email,
+            true
+        );
 
-            return response()->json(['message' => 'Email Triggered to Compliance Super User']);
-        }
-
-        return true;
+        return response()->json(['message' => 'Email Triggered to Compliance Super User']);
     }
 
     private function checkAmlQuoteStatus($statusId)

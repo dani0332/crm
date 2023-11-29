@@ -81,7 +81,7 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
-  carInsuranceProviders: Array
+  carInsuranceProviders: Array,
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -347,22 +347,21 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
-``
+``;
 const onLoadAvailablePlansData = async () => {
-    let data = {
-        jsonData: true,
-    };
-    let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
-    axios
-        .post(url, data)
-        .then(res => {
-            availablePlansTable.data= res.data
-        })
-        .catch(err => {
-            console.log(err);
-        })
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      availablePlansTable.data = res.data;
+    })
+    .catch(err => {
+      console.log(err);
+    });
 };
-
 
 const historyDataTable = [
   { text: 'Modified At', value: 'created_at' },
@@ -373,11 +372,13 @@ const historyDataTable = [
 ];
 
 const availablePlansItems = computed(() => {
-	if (! Array.isArray(availablePlansTable.data)) {
-		return [];
-	}
-	return typeof availablePlansTable.data !== 'string' ? availablePlansTable.data : [];
-})
+  if (!Array.isArray(availablePlansTable.data)) {
+    return [];
+  }
+  return typeof availablePlansTable.data !== 'string'
+    ? availablePlansTable.data
+    : [];
+});
 
 const totalPriceVAT = computed(() => {
   let vat = 0;
@@ -1256,7 +1257,7 @@ const closeModal = v => {
 };
 onMounted(() => {
   onLoadAvailablePlansData();
-  if(can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)){
+  if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
 
@@ -1434,7 +1435,6 @@ const linkEntity = () => {
                 customerProfileForm.company_address = response.company_address;
                 customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
                 customerProfileForm.industry_type_code = response.industry_type_code;
-                customerProfileForm.emirate_of_registration_id = response.emirate_of_registration_id;
 
                 notification.success({
                     title: res.data.message,
@@ -2654,7 +2654,10 @@ const handleChildUpdate = planId => {
             @click.prevent="copyLink"
             size="sm"
             color="emerald"
-           v-if="typeof availablePlansTable.data !== 'string' && availablePlansTable.data.length > 0"
+            v-if="
+              typeof availablePlansTable.data !== 'string' &&
+              availablePlansTable.data.length > 0
+            "
           >
             Copy Link
           </x-button>
@@ -2872,7 +2875,7 @@ const handleChildUpdate = planId => {
                   Selected
               </x-button>
             </span>
-            
+
 
           </div>
         </template>
@@ -2967,6 +2970,7 @@ const handleChildUpdate = planId => {
           :available-plans="availablePlansItems"
           @success="onCreatePlan"
           @error="onPlanError"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->
@@ -3044,6 +3048,7 @@ const handleChildUpdate = planId => {
       :code="record.code"
       :quote="record"
       :modelType="quoteType"
+      :paymentStatusEnum="paymentStatusEnum"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">
