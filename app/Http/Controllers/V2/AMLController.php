@@ -239,6 +239,8 @@ class AMLController extends Controller
         });
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
+        $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
+
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
@@ -249,6 +251,7 @@ class AMLController extends Controller
             'emirates' => $emirates,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'kycLogs' => $kycLogs,
+            'kycStatus' => $kycStatus,
             'quoteStatusCode' => $quoteStatusCode,
             'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
             'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
