@@ -85,12 +85,19 @@ const onMemberPremiumUpdate = (member, premium) => {
 };
 
 const onMemberUpdate = member => {
+    updateGeneralInfo();
+    console.log(member);
+
   const memberData = {
     quoteUID: usePage().props.quote.uuid,
     planId: props.plan.id,
     planDetails: [
       {
         ...member,
+        // premium:
+        //   Number(
+        //     newPremiums.value.find(m => m.memberId == member.memberId)?.premium,
+        //   ) || member.premium,
         premium:
           Number(
             newPremiums.value.find(m => m.memberId == member.memberId)?.premium,
@@ -98,6 +105,7 @@ const onMemberUpdate = member => {
       },
     ],
   };
+  console.log(memberData);
 
   memberFormLoader.value = true;
 
@@ -652,7 +660,7 @@ onUpdated(() => {
                   :disabled="!isManual"
                   color="primary"
                   size="sm"
-                  @click="updateGeneralInfo()"
+                  @click="onMemberUpdate(props.plan.memberPremiumBreakdown)"
                 >
                   Update & Save
                 </x-button>
