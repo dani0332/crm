@@ -9,11 +9,8 @@ const props = defineProps({
   entityDetails: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   customerTypeEnum: Object,
   businessTypeCode: Object,
   businessCoverTypeText: Array,
@@ -600,8 +597,6 @@ onMounted(() => {
       :nationalities="nationalities"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
@@ -615,11 +610,8 @@ onMounted(() => {
       :entityDetails="entityDetails"
       :nationalities="nationalities"
       :emirates="emirates"
-      :industryType="industryType"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
