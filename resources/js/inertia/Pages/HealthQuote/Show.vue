@@ -1926,8 +1926,9 @@ const handleChildUpdate = planId => {
             <input type="hidden" :value="memberForm.id" />
               <x-input
                   v-model="memberForm.first_name"
-                  label="Member Name"
+                  label="Member Name*"
                   placeholder="Member Name"
+                  :rules="[isRequired]"
               />
             <ComboBox
               v-model="memberForm.nationality_id"
@@ -1940,7 +1941,7 @@ const handleChildUpdate = planId => {
 
             <x-select
               v-model="memberForm.emirate_of_your_visa_id"
-              label="Emirate of Visa"
+              label="Emirate of Visa*"
               :options="emiratesOptions"
               :rules="[isRequired]"
               placeholder="Select Emirate of Visa"
@@ -1949,7 +1950,7 @@ const handleChildUpdate = planId => {
 
             <x-select
               v-model="memberForm.member_category_id"
-              label="Member Category"
+              label="Member Category*"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
               placeholder="Select Member Category"
@@ -1958,7 +1959,7 @@ const handleChildUpdate = planId => {
 
             <x-select
               v-model="memberForm.gender"
-              label="Gender"
+              label="Gender*"
               :options="genderSelect"
               :rules="[isRequired]"
               placeholder="Select Gender"
