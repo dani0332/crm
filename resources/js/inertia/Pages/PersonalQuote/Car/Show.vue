@@ -3076,6 +3076,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
           :available-plans="availablePlansItems"
           @success="onCreatePlan"
           @error="onPlanError"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->
@@ -3272,7 +3273,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
     <SendUpdates
       v-if="true || showSendUpdate"
       :showAddButton="true"
-      reportableType="Car"
+      reportableType="CarQuote"
       :reportableId="record.id"
       :reportableUuid="record.uuid"
       :options="sendUpdateOptions"

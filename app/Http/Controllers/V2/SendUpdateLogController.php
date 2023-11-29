@@ -29,16 +29,21 @@ class SendUpdateLogController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
-        $response = SendUpdateLogRepository::create($request->validated());
+        $response = SendUpdateLogRepository::create($request->all());
+
+        if (! empty($response->message)) {
+            vAbort($response->message);
+        }
+
+        return redirect(route('quotes.car.view-update-log', ['id' => $request->reportable_uuid, 'uuid' => $response->uuid]));
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show($id, $uuid)
     {
-        //
+        return inertia('SendUpdateLog/Show');
     }
 
     /**
