@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
@@ -12,6 +13,7 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
@@ -314,5 +316,21 @@ class AMLService
         $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchResultsForUpdate, $request->notes);
 
         return true;
+    }
+
+    public static function getKycType($quoteTypeId, $quoteRequestId)
+    {
+        $status = KycLog::withTrashed()->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+            ->whereNot('decision', AMLDecisionStatusEnum::RYU)
+            ->orderBy('id', 'desc')
+            ->value('search_type');
+
+        if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
+            $status = CustomerTypeEnum::Entity;
+        } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
+            $status = CustomerTypeEnum::Individual;
+        }
+
+        return $status;
     }
 }

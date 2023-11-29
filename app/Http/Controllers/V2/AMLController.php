@@ -35,7 +35,6 @@ use App\Models\UAEAMLListUploads;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\EntityRepository;
-use App\Repositories\LookupRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteTypeRepository;
 use App\Services\AMLService;
@@ -201,11 +200,8 @@ class AMLController extends Controller
         $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
 
         $uboDetails = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code, CustomerTypeEnum::Entity);
-        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $nationalities = NationalityRepository::withActive()->get();
         $emirates = Emirate::where('is_active', 1)->orderBy('sort_order')->get();
-        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $isCurrentUserFromCompliance = auth()->user()->hasRole(RolesEnum::COMPLIANCE) ? 1 : 0;
         $isCurrentUserFromPaAml = auth()->user()->hasAnyRole([RolesEnum::PA, RolesEnum::AML]) ? 1 : 0;
         $sanctionListService = app(SanctionListService::class);
@@ -234,6 +230,7 @@ class AMLController extends Controller
             LookupsEnum::PROFESSIONAL_TITLE,
             LookupsEnum::UBO_RELATION,
             LookupsEnum::COMPANY_TYPE,
+            LookupsEnum::MEMBER_RELATION,
         ])->get()->groupBy('key');
 
         //lookups , loop through each key, replace - with _ and update key
@@ -242,19 +239,19 @@ class AMLController extends Controller
         });
         $amlDecisionStatusEnum = AMLDecisionStatusEnum::asArray();
 
+        $kycStatus = AMLService::getKycType($quoteTypeId, $quoteRequestId);
+
         $data = [
             'quoteType' => $quoteType,
             'quoteRequest' => $quoteRequest,
             'entityDetails' => $entityDetails,
             'membersDetails' => $membersDetail,
             'uboDetails' => $uboDetails,
-            'memberRelations' => $memberRelations,
-            'uboRelations' => $uboRelations,
             'nationalities' => $nationalities,
             'emirates' => $emirates,
-            'industryType' => $industryType,
             'customerTypeEnum' => CustomerTypeEnum::asArray(),
             'kycLogs' => $kycLogs,
+            'kycStatus' => $kycStatus,
             'quoteStatusCode' => $quoteStatusCode,
             'isCurrentUserFromCompliance' => $isCurrentUserFromCompliance,
             'isCurrentUserFromPaAml' => $isCurrentUserFromPaAml,
