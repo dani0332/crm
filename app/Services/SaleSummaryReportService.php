@@ -214,23 +214,22 @@ class SaleSummaryReportService implements ManagementReport
             }
         }
 
-        if(isset($filters['teams']) && !empty($filters['teams'])){
+        if (isset($filters['teams']) && ! empty($filters['teams'])) {
             $query->whereIn('teams.id', $filters['teams']);
         }
 
-        if(isset($filters['subTeams']) && !empty($filters['subTeams'])){
+        if (isset($filters['subTeams']) && ! empty($filters['subTeams'])) {
             $query->whereIn('users.sub_team_id', $filters['subTeams']);
         }
 
-        if(isset($filters['leadSource']) && !empty($filters['leadSource'])){
+        if (isset($filters['leadSource']) && ! empty($filters['leadSource'])) {
             $query->whereIn('personal_quotes.source', $filters['leadSource']);
         }
 
-        if(isset($filters['includeCancelPolicies']) && !empty($filters['includeCancelPolicies'])){
-            if($filters['includeCancelPolicies'] == "Yes"){
+        if (isset($filters['includeCancelPolicies']) && ! empty($filters['includeCancelPolicies'])) {
+            if ($filters['includeCancelPolicies'] == 'Yes') {
                 $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyCancelled);
-            }
-            else{
+            } else {
                 $query->where('personal_quotes.quote_status_id', QuoteStatusEnum::PolicyBooked);
             }
         }
