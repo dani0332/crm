@@ -59,6 +59,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Salary Band',
             'HEALTH INSURANCE',
             'TYPE OF PLAN',
+            'Provider Name',
         ];
     }
 
@@ -94,7 +95,8 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->member_category_id_text,
             $quote->salary_band_id_text,
             $quote->customer_type,
-            $ecomDetails['planName'] ?? ''
+            $ecomDetails['planName'] ?? '',
+            $ecomDetails['providerName'] ?? ''
         ];
     }
 }
