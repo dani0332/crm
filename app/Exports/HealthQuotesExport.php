@@ -87,7 +87,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->currently_insured_with_id_text,
             $quote->is_ecommerce ? 'Yes' : 'No',
             $quote->device,
-            $this->genderOptions[$quote->gender],
+            $this->genderOptions[$quote->gender] ?? '',
             $quote->nationality_id_text,
             Carbon::parse($quote->dob)->age,
             $quote->emirate_of_your_visa_id_text,
