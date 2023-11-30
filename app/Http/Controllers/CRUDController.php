@@ -632,10 +632,10 @@ class CRUDController extends Controller
             $sendUpdateOptions = [];
             $sendUpdateLogs = [];
             
-            if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            // if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
                 $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
                 $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
-            }
+            // }
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',

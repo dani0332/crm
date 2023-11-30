@@ -4,6 +4,7 @@ namespace App\Http\Controllers\V2;
 
 use App\Http\Controllers\Controller;
 use App\Repositories\SendUpdateLogRepository;
+use App\Services\LookupService;
 use Illuminate\Http\Request;
 
 class SendUpdateLogController extends Controller
@@ -43,7 +44,14 @@ class SendUpdateLogController extends Controller
      */
     public function show($id, $uuid)
     {
-        return inertia('SendUpdateLog/Show');
+        $sendUpdateLog = SendUpdateLogRepository::getLogById($uuid);
+        $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($id);
+
+        return inertia('SendUpdateLog/Show', [
+            'quoteId' => $id,
+            'sendUpdateLog' => $sendUpdateLog,
+            'sendUpdateOptions' => $sendUpdateOptions,
+        ]);
     }
 
     /**

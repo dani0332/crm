@@ -7,11 +7,19 @@ use Illuminate\Support\Str;
 
 class SendUpdateLogRepository extends BaseRepository
 {
+    /**
+     * 
+     * 
+     */
     public function model()
     {
         return SendUpdateLog::class;
     }
 
+    /**
+     * 
+     * 
+     */
     public function fetchCreate($request) 
     {        
         try {
@@ -21,7 +29,7 @@ class SendUpdateLogRepository extends BaseRepository
                 $code .= mb_substr(ucfirst($word), 0, 1);
             });
 
-            $uuid = Str::upper(Str::random(7)); // EF-JHU12L1
+            $uuid = Str::upper(Str::random(8)); // EF-JHU12L1
 
             $res = $this->create([
                 'reportable_type' => $request['reportable_type'],
@@ -39,5 +47,14 @@ class SendUpdateLogRepository extends BaseRepository
         }
 
         return $res;
+    }
+
+    /**
+     * 
+     * 
+     */
+    public function fetchGetLogById($uuid)
+    {
+        return $this->where('uuid', $uuid)->firstOrFail();
     }
 }
