@@ -70,7 +70,6 @@ class AMLController extends Controller
      */
     public function index(AMLRequest $request)
     {
-//        dd($request->all());
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = [];
