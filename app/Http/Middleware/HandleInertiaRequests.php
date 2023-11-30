@@ -175,7 +175,7 @@ class HandleInertiaRequests extends Middleware
         /* personal quotes section */
         $nav = $nav->add('Personal Quotes', '', function (Section $section) {
             $section
-                ->addIf(    
+                ->addIf(
                     auth()->user()->hasAnyPermission([PermissionsEnum::CarQuotesList, PermissionsEnum::CarQuoteSearch]),
                     'Car',
                     '/quotes/car',

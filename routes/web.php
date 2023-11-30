@@ -453,7 +453,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('age', AgeDiscountController::class);
     });
 
-    
     // Route::group(['prefix' => 'telemarketing'], function () {
     //     Route::resource('tmleads', TmLeadController::class);
     //     Route::resource('tminsurancetype', TmInsuranceTypeController::class);
