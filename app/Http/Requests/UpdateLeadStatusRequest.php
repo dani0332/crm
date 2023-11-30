@@ -39,7 +39,7 @@ class UpdateLeadStatusRequest extends FormRequest
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
             'notes' => 'nullable',
-            'lost_notes' => 'nullable|max:100',
+            'lost_notes' => 'nullable|max:500',
             'approve_reason_id' => 'nullable',
             'reject_reason_id' => 'nullable',
         ];
