@@ -38,6 +38,8 @@ const tableHeader = [
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'PRICE', value: 'premium' },
   { text: 'POLICY NUMBER', value: 'policy_number' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const filters = reactive({
@@ -52,6 +54,8 @@ const filters = reactive({
   advisors: [],
   is_renewal: '',
   page: 1,
+  previous_quote_policy_number: '',
+  renewal_batch: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -302,6 +306,22 @@ const permissionsEnum = page.props.permissionsEnum;
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

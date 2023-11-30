@@ -45,6 +45,8 @@ const filters = reactive({
   business_type_of_insurance_id: '',
   company_name: '',
   page: 1,
+  previous_quote_policy_number: '',
+  renewal_batch: '',
 });
 
 const leadStatusOptions = computed(() => {
@@ -90,6 +92,8 @@ const tableHeader = [
     value: 'business_type_of_insurance_id_text',
   },
   { text: 'GENDER', value: 'gender' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 function resetFilters() {
@@ -332,6 +336,23 @@ onMounted(() => {
             class="w-full"
           />
         </x-field>
+        <x-input
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+        />
+
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

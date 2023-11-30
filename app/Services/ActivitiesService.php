@@ -161,6 +161,12 @@ class ActivitiesService extends BaseService
             case 'jetski':
                 $quoteTypeId = QuoteTypeId::Jetski;
                 break;
+            case 'bike':
+                $quoteTypeId = QuoteTypeId::Bike;
+                break;
+            case 'yacht':
+                $quoteTypeId = QuoteTypeId::Yacht;
+                break;
             default:
                 break;
         }

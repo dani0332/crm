@@ -4,10 +4,11 @@ import LazyAvailablePlan from './Partials/AvailablePlans.vue';
 import LazyCreatePlan from './Partials/CreatePlan.vue';
 import AssignTier from './Partials/AssignTier.vue';
 import FollowUpReasons from './Partials/FollowUpReasons.vue';
+import RiskRatingScoreDetails from '../../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
   quote: Object,
-  leadStatuses: Array,
+  leadStatuses: Object,
   ecomDetails: Object,
   membersDetail: Array,
   memberCategories: Array,
@@ -15,7 +16,7 @@ defineProps({
   nationalities: Array,
   emirates: Array,
   advisors: Array,
-  listQuotePlans: Array,
+  listQuotePlans: { Array, String },
   quoteDocuments: Array,
   documentTypes: Object,
   cdnPath: String,
@@ -47,7 +48,7 @@ defineProps({
   record: Object,
   quoteType: String,
   paymentEntityModel: Object,
-  displaySendPolicyButton: Boolean,
+  displaySendPolicyButton: { Boolean, Number },
   isRenewalUser: Boolean,
   emailStatuses: Array,
   carQuotePlanAddons: Array,
@@ -72,7 +73,16 @@ defineProps({
   tiersExceptTierR: Array,
   leadSourceEnum: Object,
   carPlanTypeEnum: Object,
+  customerTypeEnum: Object,
+  memberRelations: Array,
+  membersDetails: Array,
+  industryType: Object,
+  UBORelations: Array,
+  UBOsDetails: Array,
+  isCommercialVehicles: Boolean,
+  carInsuranceProviders: Array,
 });
+
 const page = usePage();
 const notification = useNotifications('toast');
 const showfollowup = ref(false);
@@ -234,6 +244,7 @@ function repairTypeCheck(repairType) {
 }
 
 const availablePlansTable = reactive({
+  data: [],
   columns: [
     { text: 'Provider Name', value: 'providerName' },
     { text: 'Plan Name', value: 'name' },
@@ -336,6 +347,21 @@ const onLoadHistoryData = async () => {
   historyData.value = finalRes;
   historyLoading.value = false;
 };
+``;
+const onLoadAvailablePlansData = async () => {
+  let data = {
+    jsonData: true,
+  };
+  let url = `/quotes/car/available-plans/${page.props.record.uuid}`;
+  axios
+    .post(url, data)
+    .then(res => {
+      availablePlansTable.data = res.data;
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
 
 const historyDataTable = [
   { text: 'Modified At', value: 'created_at' },
@@ -346,11 +372,11 @@ const historyDataTable = [
 ];
 
 const availablePlansItems = computed(() => {
-  if (!Array.isArray(page.props.listQuotePlans)) {
+  if (!Array.isArray(availablePlansTable.data)) {
     return [];
   }
-  return typeof page.props.listQuotePlans !== 'string'
-    ? page.props.listQuotePlans
+  return typeof availablePlansTable.data !== 'string'
+    ? availablePlansTable.data
     : [];
 });
 
@@ -1005,7 +1031,7 @@ const copyLink = () => {
   copy(page.props.planURL);
   if (copied)
     notification.success({
-      title: 'Link copied to clipboardd',
+      title: 'Link copied to clipboard',
       position: 'top',
     });
 };
@@ -1028,6 +1054,10 @@ const onLeadStatus = () => {
       preserveScroll: true,
       onError: errors => {
         console.log(errors);
+        notification.error({
+          title: errors.value,
+          position: 'top',
+        });
       },
       onSuccess: () => {
         notification.success({
@@ -1177,7 +1207,6 @@ const emailsHeaders = ref([
   { text: 'Email', value: 'customer_email' },
   { text: 'Subject', value: 'subject' },
   { text: 'Schedule Date', value: 'schedule_date' },
-  { text: 'Sent date', value: 'sent_date' },
   { text: 'Status', value: 'status' },
   { text: 'Created At', value: 'created_at' },
   { text: 'Actions', value: 'actions' },
@@ -1227,6 +1256,7 @@ const closeModal = v => {
   showfollowup.value = false;
 };
 onMounted(() => {
+  onLoadAvailablePlansData();
   if (can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)) {
     getFollowUpsByQuote();
   }
@@ -1274,6 +1304,158 @@ const loadEmailEvents = email => {
       });
       modals.showEmailEventsModal = false;
     });
+};
+
+const industryTypeOptions = computed(() => {
+  return page.props.industryType.map(indType => ({
+    value: indType.code,
+    label: indType.text,
+  }));
+});
+
+const emiratesOptions = computed(() => {
+  return page.props.emirates.map(em => ({
+    value: em.id,
+    label: em.text,
+  }));
+});
+
+const isProfileUpdateAllow = computed(() => {
+  return hasAnyRole([
+    page.props.rolesEnum.PA,
+    page.props.rolesEnum.OE,
+    page.props.rolesEnum.NRA,
+  ]);
+});
+
+const customerProfileForm = useForm({
+  customer_id: page.props.record.customer_id,
+  customer_type: page.props.record.customer_type,
+  quote_type: page.props.modelType,
+  quote_type_id: page.props.quoteTypeId,
+  quote_request_id: page.props.record.id,
+
+  insured_first_name: page.props.record.insured_first_name || '',
+  insured_last_name: page.props.record.insured_last_name || '',
+  emirates_id_number: page.props.record.emirates_id_number || null,
+  emirates_id_expiry_date: page.props.record.emirates_id_expiry_date || null,
+
+  entity_id: page.props.record.entity_id ?? null,
+  trade_license_no: page.props.record.trade_license_no ?? null,
+  company_name: page.props.record.company_name ?? null,
+  company_address: page.props.record.company_address ?? null,
+  entity_type_code: page.props.record.entity_type_code ?? 'Parent',
+  industry_type_code: page.props.record.industry_type_code ?? null,
+  emirate_of_registration_id:
+    page.props.record.emirate_of_registration_id ?? null,
+});
+
+const updateProfileDetails = isValid => {
+  if (!isValid) return;
+
+  customerProfileForm.post(route('update-customer-profile'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      notification.success({
+        title: 'Customer profile details update Successfully',
+        position: 'top',
+      });
+    },
+    onError: errors => {
+      Object.keys(errors).forEach(function (key) {
+        notification.error({
+          title: errors[key],
+          position: 'top',
+        });
+      });
+    },
+  });
+};
+
+const entityDetailsFound = ref(false);
+const getParentEntityModel = ref(false);
+const tradeLicenseEntity = reactive({
+  entity_id: null,
+  trade_license: null,
+  company_name: null,
+  company_address: null,
+  triggeredFrom: false,
+});
+
+const entityTypeChange = event => {
+  if (event === 'SubEntity') {
+    getParentEntityModel.value = true;
+  }
+};
+
+const searchByTradeLicense = trigger => {
+  let url = `/kyc/aml-fetch-entity?trade_license=${customerProfileForm.trade_license_no}`;
+  axios
+    .get(url)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
+        entityDetailsFound.value = true;
+        tradeLicenseEntity.entity_id = response.id;
+        tradeLicenseEntity.trade_license = response.trade_license_no;
+        tradeLicenseEntity.company_name = response.company_name;
+        tradeLicenseEntity.company_address = response.company_address;
+        tradeLicenseEntity.triggeredFrom = trigger === 'SubEntity';
+
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+      } else {
+        notification.error({
+          title: res.data.message,
+          position: 'top',
+        });
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const linkEntity = () => {
+  let entityDetails = {
+    quote_type_id: page.props.quoteTypeId,
+    quote_request_id: page.props.record.id,
+    entity_id: tradeLicenseEntity.entity_id,
+    triggeredFrom: tradeLicenseEntity.triggeredFrom,
+  };
+  axios
+    .post(route('link-entity-details'), entityDetails)
+    .then(res => {
+      if (res.data.status) {
+        let response = res.data.response;
+
+        // Append Entity data in fields
+        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.company_name = response.company_name;
+        customerProfileForm.company_address = response.company_address;
+        customerProfileForm.entity_type_code =
+          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+        customerProfileForm.industry_type_code = response.industry_type_code;
+        customerProfileForm.emirate_of_registration_id =
+          response.emirate_of_registration_id;
+
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+        entityDetailsFound.value = false;
+      }
+    })
+    .catch(err => {
+      console.log(err);
+    });
+};
+
+const prefillPlanId = ref(page.props.quote.prefill_plan_id);
+const handleChildUpdate = planId => {
+  prefillPlanId.value = planId;
 };
 </script>
 
@@ -1416,11 +1598,6 @@ const loadEmailEvents = email => {
               Duplicate Lead
             </x-button>
           </template>
-
-          <!-- <Link :href="route('health.index')" preserve-scroll>
-              <x-button size="sm" color="primary" tag="div"> Health List </x-button>
-            </Link> -->
-
           <Link :href="route('car.index')">
             <x-button size="sm" tag="div">Car List</x-button>
           </Link>
@@ -1430,52 +1607,33 @@ const loadEmailEvents = email => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">REF-ID</dt>
-            <dd>{{ record.code }}</dd>
+            <div>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Ref-ID
+                </label>
+                <template #tooltip> Reference ID </template>
+              </x-tooltip>
+            </div>
+            <div>{{ record.code }}</div>
+          </div>
+          <div class="grid sm:grid-cols-2">
+            <dt class="font-medium">CUSTOMER TYPE</dt>
+            <dd>{{ quote.customer_type }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">BATCH</dt>
             <dd>{{ record.quote_batch_id_text }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">FIRST NAME</dt>
-            <dd>{{ record.first_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">LAST NAME</dt>
-            <dd>{{ record.last_name }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">DATE OF BIRTH</dt>
-            <dd>{{ record.dob }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CUSTOMER AGE</dt>
             <dd>{{ record.customer_age }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PHONE NUMBER</dt>
-            <dd>{{ record.mobile_no }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">EMAIL</dt>
-            <dd>{{ record.email }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
             <dt class="font-medium">LEAD SOURCE</dt>
             <dd>{{ record.source }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">NATIONALITY</dt>
-            <dd>{{ record.nationality_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">UAE LICENCE HELD FOR</dt>
-            <dd>{{ record.uae_license_held_for_id_text }}</dd>
-          </div>
-          <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">HOME COUNTRY DRIVING LICENSE HELD FOR</dt>
-            <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
             <dt class="font-medium">CAR MAKE</dt>
@@ -1588,8 +1746,24 @@ const loadEmailEvents = email => {
             <dd>{{ record.created_by }}</dd>
           </div>
           <div class="grid sm:grid-cols-2">
-            <dt class="font-medium">PARENT REF-ID</dt>
+            <dt>
+              <x-tooltip position="bottom">
+                <label
+                  class="font-medium text-gray-800 text-sm underline decoration-dotted decoration-primary-700"
+                >
+                  Parent Ref-ID
+                </label>
+                <template #tooltip> Parent Reference ID </template>
+              </x-tooltip>
+            </dt>
             <dd>{{ record.parent_duplicate_quote_id ?? '' }}</dd>
+          </div>
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+          >
+            <dt class="font-medium">ID</dt>
+            <dd>{{ record.id }}</dd>
           </div>
         </dl>
       </div>
@@ -1640,6 +1814,322 @@ const loadEmailEvents = email => {
         </div>
       </x-form>
     </x-modal>
+
+    <div class="p-4 rounded shadow mb-6 bg-white">
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="font-semibold text-primary-800 text-lg">
+          {{
+            record.customer_type == page.props.customerTypeEnum.Individual
+              ? 'Customer '
+              : 'Entity '
+          }}
+          Profile
+        </h3>
+        <x-button
+          size="sm"
+          color="orange"
+          v-if="quote.kyc_decision === 'Complete'"
+        >
+          KYC - Complete
+        </x-button>
+        <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+      </div>
+      <x-divider class="mb-4 mt-1" />
+      <x-form @submit="updateProfileDetails" :auto-focus="false">
+        <div class="text-sm">
+          <dl
+            v-if="
+              record.customer_type === page.props.customerTypeEnum.Individual
+            "
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+          >
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">FIRST NAME</dt>
+              <dd>{{ record.first_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">LAST NAME</dt>
+              <dd>{{ record.last_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">INSURED FIRST NAME</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.insured_first_name"
+                  :rules="[isRequired]"
+                  placeholder="INSURED FIRST NAME"
+                  class="w-full"
+                  :disabled="!isProfileUpdateAllow"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">INSURED LAST NAME</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.insured_last_name"
+                  :rules="[isRequired]"
+                  placeholder="INSURED LAST NAME"
+                  class="w-full"
+                  :disabled="!isProfileUpdateAllow"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">MOBILE NUMBER</dt>
+              <dd>{{ record.mobile_no }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMAIL</dt>
+              <dd>{{ record.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">NATIONALITY</dt>
+              <dd>{{ record.nationality_id_text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">DATE OF BIRTH</dt>
+              <dd>{{ record.dob }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES ID NUMBER</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.emirates_id_number"
+                  :rules="[isRequired]"
+                  placeholder="EMIRATES ID NUMBER"
+                  class="w-full"
+                  :disabled="!isProfileUpdateAllow"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES ID EXPIRY DATE</dt>
+              <dd>
+                <DatePicker
+                  v-model="customerProfileForm.emirates_id_expiry_date"
+                  :rules="[isRequired]"
+                  placeholder="EMIRATES ID EXPIRY DATE"
+                  :disabled="!isProfileUpdateAllow"
+                  :min-date="new Date()"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">UAE LICENCE HELD FOR</dt>
+              <dd>{{ record.uae_license_held_for_id_text }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">HOME COUNTRY LICENSE HELD FOR</dt>
+              <dd>{{ record.back_home_license_held_for_id_text ?? '' }}</dd>
+            </div>
+            <RiskRatingScoreDetails :quote="quote" :modelType="quoteType" />
+          </dl>
+          <dl
+            v-if="record.customer_type === page.props.customerTypeEnum.Entity"
+            class="grid md:grid-cols-2 gap-x-6 gap-y-4"
+          >
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">FIRST NAME</dt>
+              <dd>{{ record.first_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">LAST NAME</dt>
+              <dd>{{ record.last_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">MOBILE NUMBER</dt>
+              <dd>{{ record.mobile_no }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMAIL</dt>
+              <dd>{{ record.email }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY NAME</dt>
+              <dd>{{ customerProfileForm.company_name }}</dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">TRADE LICENSE NO</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.trade_license_no"
+                  placeholder="TRADE LICENSE NO"
+                  type="text"
+                  class="w-full"
+                />
+                <x-button
+                  @click.prevent="searchByTradeLicense"
+                  size="xs"
+                  color="primary"
+                >
+                  Search
+                </x-button>
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">EMIRATES OF REGISTRATION</dt>
+              <dd>
+                <ComboBox
+                  v-model="customerProfileForm.emirate_of_registration_id"
+                  :single="true"
+                  placeholder="SELECT EMIRATES OF REGISTRATION"
+                  :options="emiratesOptions"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">COMPANY ADDRESS</dt>
+              <dd>
+                <x-input
+                  v-model="customerProfileForm.company_address"
+                  placeholder="COMPANY ADDRESS"
+                  type="text"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">INDUSTRY TYPE</dt>
+              <dd>
+                <ComboBox
+                  :single="true"
+                  v-model="customerProfileForm.industry_type_code"
+                  placeholder="SELECT INDUSTRY TYPE"
+                  :options="industryTypeOptions"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+            <div class="grid sm:grid-cols-2">
+              <dt class="font-medium">ENTITY TYPE</dt>
+              <dd>
+                <ComboBox
+                  @update:modelValue="entityTypeChange($event)"
+                  :single="true"
+                  v-model:modelValue="customerProfileForm.entity_type_code"
+                  placeholder="SELECT ENTITY TYPE"
+                  :options="[
+                    { label: 'Parent', value: 'Parent' },
+                    { label: 'Sub Entity', value: 'SubEntity' },
+                  ]"
+                  class="w-full"
+                />
+              </dd>
+            </div>
+          </dl>
+          <div class="flex justify-end">
+            <x-button
+              v-if="isProfileUpdateAllow"
+              class="mt-4"
+              color="emerald"
+              size="sm"
+              :loading="customerProfileForm.processing"
+              type="submit"
+            >
+              Update Profile
+            </x-button>
+          </div>
+        </div>
+      </x-form>
+    </div>
+
+    <x-modal v-model="getParentEntityModel" size="lg" show-close backdrop>
+      <h3 class="font-semibold text-center text-lg mb-10">
+        Search Entity by Parent Entity Trade License No
+      </h3>
+      <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Parent Entity Trade License No</dt>
+          <dd>
+            <x-input
+              v-model="customerProfileForm.trade_license_no"
+              placeholder="TRADE LICENSE NO"
+              type="text"
+              class="w-full"
+            />
+          </dd>
+        </div>
+      </dl>
+      <div class="flex justify-end">
+        <x-button
+          class="mt-4"
+          color="primary"
+          size="sm"
+          :loading="customerProfileForm.processing"
+          @click.prevent="searchByTradeLicense('SubEntity')"
+        >
+          Search
+        </x-button>
+      </div>
+    </x-modal>
+    <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
+      <h3 class="font-semibold text-center text-lg mb-10">
+        Entity found with the entered Trade License number
+      </h3>
+      <dl class="grid md:grid-cols-1 gap-x-6 gap-y-4">
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Trade License No</dt>
+          <dd>
+            <x-input
+              v-model="tradeLicenseEntity.trade_license"
+              placeholder="TRADE LICENSE NO"
+              type="text"
+              class="w-full"
+              disabled
+            />
+          </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Company Name</dt>
+          <dd>
+            <x-input
+              v-model="tradeLicenseEntity.company_name"
+              placeholder="Company Name"
+              type="text"
+              class="w-full"
+              disabled
+            />
+          </dd>
+        </div>
+        <div class="grid sm:grid-cols-2">
+          <dt class="font-medium">Company Address</dt>
+          <dd>
+            <x-input
+              v-model="tradeLicenseEntity.company_address"
+              placeholder="Company Address"
+              type="text"
+              class="w-full"
+              disabled
+            />
+          </dd>
+        </div>
+        <div class="text-left space-x-4">
+          <x-button size="sm" color="orange" @click.prevent="linkEntity">
+            Link
+          </x-button>
+        </div>
+      </dl>
+    </x-modal>
+
+    <MemberDetails
+      v-if="record.customer_type == page.props.customerTypeEnum.Individual"
+      :quote="quote"
+      :membersDetails="membersDetails"
+      :nationalities="nationalities"
+      :memberRelations="memberRelations"
+      :quote_type="quoteType"
+    />
+
+    <UBODetails
+      v-if="record.customer_type == page.props.customerTypeEnum.Entity"
+      :quote="quote"
+      :UBOsDetails="UBOsDetails"
+      :nationalities="nationalities"
+      :UBORelations="UBORelations"
+      :quote_type="quoteType"
+    />
 
     <LastYearPolicyDetail
       :canAddBatchNumber="hasRole(rolesEnum.CarManager)"
@@ -1948,6 +2438,8 @@ const loadEmailEvents = email => {
       :payments="payments"
       :quoteRequest="paymentEntityModel"
       :paymentStatusEnum="paymentStatusEnum"
+      :isCommercialVehicles="isCommercialVehicles"
+      :carInsuranceProviders="carInsuranceProviders"
       :paymentMethods="
         paymentMethods.map(pm => {
           return { value: pm.code, label: pm.name };
@@ -2210,7 +2702,8 @@ const loadEmailEvents = email => {
             size="sm"
             color="emerald"
             v-if="
-              typeof listQuotePlans !== 'string' && listQuotePlans.length > 0
+              typeof availablePlansTable.data !== 'string' &&
+              availablePlansTable.data.length > 0
             "
           >
             Copy Link
@@ -2410,6 +2903,27 @@ const loadEmailEvents = email => {
                 Change Insurer
               </x-button>
             </template>
+
+            <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
+            <span v-if="true == false">
+              <SelectPlan
+                v-if="prefillPlanId != item.id"
+                @update:updatePlanId="handleChildUpdate"
+                :plan="item"
+                :quoteType="quoteType"
+                :uuid="quote.uuid"
+              />
+
+              <x-button
+                v-else
+                size="xs"
+                color="orange"
+                outlined
+                :disabled="true"
+              >
+                Selected
+              </x-button>
+            </span>
           </div>
         </template>
       </DataTable>
@@ -2474,6 +2988,7 @@ const loadEmailEvents = email => {
             ])
           "
           :totalSelectedAddonsPriceWithVat="totalPriceVAT"
+          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
       </x-modal>
       <x-modal v-model="modals.sendConfirm" show-close backdrop>
@@ -2499,7 +3014,9 @@ const loadEmailEvents = email => {
         <LazyCreatePlan
           :record="record"
           :insuranceProviders="insuranceProviders"
-          :listQuotePlans="listQuotePlans"
+          :available-plans="availablePlansItems"
+          @success="onCreatePlan"
+          @error="onPlanError"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->

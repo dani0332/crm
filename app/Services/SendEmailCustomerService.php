@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\DefaultAdvisorEnum;
 use App\Enums\EnvEnum;
 use App\Facades\Capi;
 use App\Jobs\UpdateSendPolicySubjectJob;
@@ -150,6 +151,11 @@ class SendEmailCustomerService extends BaseService
                     'name' => $emailData->pdfAttachment->name,
                 ];
             }
+            if ($emailData->advisorEmailAddress == null || $emailData->advisorName == null) {
+                $emailData->advisorEmailAddress = DefaultAdvisorEnum::ADVISOREMAIL;
+                $emailData->advisorName = DefaultAdvisorEnum::ADVISORNAME;
+                $emailData->advisorMobileNo = DefaultAdvisorEnum::ADVISORMOBILENO;
+            }
 
             $body = [
                 'sender' => [
@@ -256,7 +262,7 @@ class SendEmailCustomerService extends BaseService
     public function sendRenewalsOcbEmail($emailTemplateId, $emailData, $tag)
     {
         try {
-            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', emailData: '.json_encode($emailData).', tag: '.$tag);
+            info('fn: sendRenewalsOcbEmail, email sending started. emailTemplateId: '.$emailTemplateId.', tag: '.$tag);
 
             $tag = $this->appEnv == EnvEnum::PRODUCTION ? $tag : $this->appEnv.'-'.$tag;
 
@@ -407,7 +413,7 @@ class SendEmailCustomerService extends BaseService
                 $emailTemplateId = (int) config('constants.SIB_MYALFRED_CUSTOMER_WE_TEMPLATE_ID');
             }
 
-            info('sendMyAlfredWelcomeEmail data: '.json_encode($emailData).' , emailTemplateId:'.$emailTemplateId);
+            info('sendMyAlfredWelcomeEmail  , emailTemplateId:'.$emailTemplateId);
             $tag = $appEnv == EnvEnum::PRODUCTION ? $tag : $appEnv.'-'.$tag;
 
             $headers = [
@@ -483,6 +489,12 @@ class SendEmailCustomerService extends BaseService
                         'name' => basename($emailAttachment),
                     ];
                 }
+            }
+            if (! empty($emailData->pdfAttachment->pdf) && ! empty($emailData->pdfAttachment->name)) {
+                $attachments[] = [
+                    'content' => chunk_split(base64_encode($emailData->pdfAttachment->pdf->stream())),
+                    'name' => $emailData->pdfAttachment->name,
+                ];
             }
 
             $bcc = [[

@@ -2,24 +2,37 @@
 
 namespace App\Http\Controllers\V2;
 
+use App\Enums\AmlSearchType;
+use App\Enums\CustomerTypeEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
+use App\Models\Emirate;
+use App\Models\Entity;
+use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\BikeQuoteRepository;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\DocumentTypeRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
 use App\Repositories\LostReasonRepository;
 use App\Repositories\PaymentMethodRepository;
 use App\Repositories\PersonalPlanRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\CRUDService;
+use App\Services\LookupService;
+use App\Traits\GenericQueriesAllLobs;
 
 class BikeQuoteController extends Controller
 {
+    use GenericQueriesAllLobs;
+
     /**
      * @return \Inertia\Response|\Inertia\ResponseFactory
      */
@@ -86,10 +99,11 @@ class BikeQuoteController extends Controller
         $quote = BikeQuoteRepository::getBy('uuid', $uuid);
 
         $quoteStatuses = QuoteStatusRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
-
+        $membersDetail = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::BIKE->name);
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::BIKE->id())->get();
         $paymentMethods = PaymentMethodRepository::orderBy('name')->get();
-
+        $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypes::BIKE->id());
         $personalPlans = PersonalPlanRepository::get();
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::BIKE->value);
@@ -100,10 +114,46 @@ class BikeQuoteController extends Controller
         ])->with('assignee')->orderBy('created_at', 'desc')->get();
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
-
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::BIKE->id(), $quote->id);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::BIKE->name, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
+
+        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+            $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
+        $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
+        $countries = Nationality::all();
+        $lookupService = app(LookupService::class);
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
+        if ($quote->customer_type == AmlSearchType::ENTITY) {
+            $entities = Entity::all();
+            $legalStructure = $lookupService->getLegalStructure();
+            $idDocumentType = $lookupService->getEntityDocumentTypes();
+            $issuancePlace = $lookupService->getIssuancePlaces();
+            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
+        } else {
+            $idDocumentType = $lookupService->getIndividualDocumentTypes();
+            $modeOfContact = $lookupService->getModeOfContact();
+            $employmentSectors = $lookupService->getEmploymentSector();
+            $residentialStatus = $lookupService->getResidentialStatus();
+            $companyPosition = $lookupService->getCompanyPosition();
+        }
 
         return inertia('BikeQuote/Show', [
+            'amlQuoteStatus' => $amlQuoteStatus,
+            'countryList' => $countries,
+            'entities' => $entities,
+            'legalStructure' => $legalStructure,
+            'idDocumentType' => $idDocumentType,
+            'issuancePlace' => $issuancePlace,
+            'issuanceAuthorities' => $issuanceAuthorities,
+            'modeOfContact' => $modeOfContact,
+            'employmentSectors' => $employmentSectors,
+            'residentialStatus' => $residentialStatus,
+            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::BIKE,
             'quote' => $quote,
             'activities' => $activities,
@@ -120,6 +170,13 @@ class BikeQuoteController extends Controller
             'modelType' => QuoteTypes::BIKE,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::BikeManager),
             'embeddedProducts' => $embeddedProducts,
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'membersDetails' => $membersDetail,
+            'memberRelations' => $memberRelations,
+            'nationalities' => $nationalities,
+            'emirates' => $emirates,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
         ]);
     }
 

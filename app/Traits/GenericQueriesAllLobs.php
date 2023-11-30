@@ -49,6 +49,7 @@ trait GenericQueriesAllLobs
     public function getQuoteObject($quoteType, $id)
     {
         $nameSpace = '\\App\\Models\\';
+
         $model = (in_array(ucwords($quoteType), newUi()) && checkPersonalQuotes(ucwords($quoteType))) ? $nameSpace.'PersonalQuote' : $nameSpace.ucwords($quoteType).'Quote';
 
         if (! class_exists($model)) {
