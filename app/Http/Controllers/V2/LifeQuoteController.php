@@ -7,6 +7,9 @@ use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\PaymentStatusEnum;
+use App\Enums\PaymentTooltip;
+use App\Repositories\InsuranceProviderRepository;
 use App\Enums\QuoteTypeId;
 use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
@@ -88,6 +91,10 @@ class LifeQuoteController extends Controller
     public function show($uuid)
     {
         $quote = LifeQuoteRepository::getBy('uuid', $uuid);
+        $payments = $quote->payments;
+        
+        $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Life);
+
         $duplicateAllowedLobs = (new CentralService())->duplicateAllowedLobsList(QuoteTypes::LIFE->value, $quote->code);
 
         $advisors = UserRepository::getPersonalQuoteAdvisors(QuoteTypes::LIFE->value);
@@ -134,7 +141,7 @@ class LifeQuoteController extends Controller
         $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
         $lookupService = app(LookupService::class);
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;       
         if ($quote->customer_type == AmlSearchType::ENTITY) {
             $entities = Entity::all();
             $legalStructure = $lookupService->getLegalStructure();
@@ -186,6 +193,11 @@ class LifeQuoteController extends Controller
             'emirates' => $emirates,
             'UBOsDetails' => $uboDetails,
             'UBORelations' => $uboRelations,
+            'paymentMethods' => $lookupService->getPaymentMethods(),
+            'paymentTooltipEnum' => PaymentTooltip::asArray(),
+            'paymentStatusEnum' => PaymentStatusEnum::asArray(),
+            'payments' => $payments,
+            'insuranceProviders' => $insuranceProviders,
         ]);
     }
 

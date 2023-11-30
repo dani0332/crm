@@ -51,7 +51,7 @@ const resetDiscountReason = ref('');
 const approveErrorMessage = ref('');
 
 const discountValue = ref(0); // Initial discount value
-const totalPrice = ref(props.quoteRequest.premium); // Initial total price
+
 const paymentTypesFiltered = ref([]);
 const approvedDocumentModel = ref([]);
 const isPaymentMetodNotSelected = ref([]);
@@ -74,8 +74,20 @@ const isDiscountReasonError = ref(false);
 const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
 
-const totalAmount = ref(props.quoteRequest.premium); // Initial total price
+// Array of quote types to check against
+const quoteTypesToCheck = ['Car', 'Health', 'Travel'];
+const initialAmount = quoteTypesToCheck.includes(props.quoteType)
+  ? props.quoteRequest.premium
+  : props.quoteRequest.price_with_vat;
 
+const totalPrice = ref(initialAmount); // Initial total price
+const totalAmount = ref(initialAmount); // Initial total price
+
+const planDetail = quoteTypesToCheck.includes(props.quoteType)
+? props.quoteRequest.plan
+: props.quoteRequest.insurance_provider_details
+
+console.log('azharPLAN='+props.quoteRequest.quoteType);
 const paidAmountSum = ref(0);
 const totalPaidAmount = ref(0);
 const masterPaymentStatus = ref('NEW');
@@ -524,7 +536,12 @@ const calculateDueDates = () => {
     }
   } else if(paymentMethodsForm.frequency === 'custom'){
     for (let i = 2; i <= paymentMethodsForm.payment_no; i++) { 
-      dueDateModels.value[i] = '';
+        const currentDueDate = dueDateModels.value[i - 1];
+        const nextDueDate = new Date(currentDueDate);
+        // Set the month to the next month
+        nextDueDate.setMonth(nextDueDate.getMonth() + 1);
+        // Update the due date model
+        dueDateModels.value[i] = nextDueDate;
     }
   } else if(paymentMethodsForm.frequency === 'monthly'){
     dueDateModels.value[1] = paymentMethodsForm.collection_date;
@@ -734,7 +751,7 @@ const addPaymentModal = () => {
   isPaymentMetodNotSelected.value[1] = false;
   isDocumentNotUploaded.value = [];
 
-  if (totalPrice.value > 0 && props.quoteRequest.plan) {
+  if (totalPrice.value > 0 && planDetail) {
     totalAmount.value = totalPrice.value;
   } else {
     let errorMsg = 'Please select a plan.';
@@ -829,20 +846,9 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   showDiscountOptions.value = true;
   paymentMethodsForm.discount_reason = payment.discount_reason !== null ? payment.discount_reason : '';
   
-  if (paymentMethodsForm.status === 'view') {
-    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'N/A';  
-    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : 'N/A';  
-  } else {
-    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';  
-    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';  
-  }
-   
-  console.log('AZZZ='+paymentMethodsForm.credit_approval);
-  
   if(payment.discount_reason !== null && payment.discount_type !== null) {
     resetDiscountReason.value = payment.discount_reason;
-  }    
-  
+  } 
   
   /*
   if (payment.discount_type=='' || payment.discount_type==null) {
@@ -908,6 +914,15 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
       isFieldReadonly.value = false;      
     }
   }
+
+  if (paymentMethodsForm.status === 'view' || capture_approval>0 || isFieldReadonly.value === true ) {
+    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'N/A';  
+    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : 'N/A';     
+  } else {
+    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';  
+    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';  
+  }   
+  console.log('AZZZ='+paymentMethodsForm.discount);
 
   if(capture_approval>0) {
     isApproveClicked.value = true;
@@ -1004,7 +1019,7 @@ const addPayment = isValid => {
     if (validateCapturePayment(isValid)) return;
   } else if (paymentMethodsForm.status === 'view' && isApproveClicked.value) {
     if (validateViewPayment(isValid)) return;    
-  } else {
+  } else if (paymentMethodsForm.status !== 'view') {
     console.log('INNN22');
     if (validatePaymentOption()) return;  
   }  
@@ -1029,7 +1044,7 @@ const addPayment = isValid => {
     code: paymentMethodsForm.payment_method,
     modelType: props.quoteType,
     quote_id: props.quoteRequest.id,
-    plan_id: props.quoteRequest.plan.id,
+    plan_id: planDetail.id,
     insurance_provider_id: providerId.value,
     collection_type: paymentMethodsForm.collection_type,
     payment_methods: mainPaymentMethod,
@@ -1076,7 +1091,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: props.quoteRequest.plan.id,
+      plan_id: planDetail.id,
       customer_id: props.quoteRequest.customer_id,      
       collection_amount: collectionAmountModels.value,      
       is_declined: isDeclineClicked.value,
@@ -1106,7 +1121,7 @@ const addPayment = isValid => {
     let viewData = {
       modelType: props.quoteType,
       quote_id: props.quoteRequest.id,
-      plan_id: props.quoteRequest.plan.id,
+      plan_id: planDetail.id,
       customer_id: props.quoteRequest.customer_id,
       collection_amount: paymentMethodsForm.collection_amount,
       bank_reference_number: paymentMethodsForm.bank_reference_number,
@@ -1278,23 +1293,27 @@ const uploadDocument = (doc, files, count) => {
           reject(errors);
         },
         onSuccess: (data) => {
+          let quoteDocuments = [];
+          if (quoteTypesToCheck.includes(props.quoteType)) {
+              quoteDocuments = data.props.quoteDocuments;
+          } else {
+              quoteDocuments = data.props.quote.documents;
+          }
           if (paymentMethodsForm.status === 'view') {
             isApprovedDocumentNotUploaded.value = false;
-
             for (let i = 0; i < files.length; i++) {
-              approvedDocumentModel.value[count].push(data.props.quoteDocuments[i]);
+              approvedDocumentModel.value[count].push(quoteDocuments[i]);
             }
-
             console.log('approveddoc=' + JSON.stringify(approvedDocumentModel.value));
             resolve(data);
             return;
           }
 
           for (let i = 0; i < files.length; i++) {
-            fileUploadModels.value[count].push(data.props.quoteDocuments[i]);
+            fileUploadModels.value[count].push(quoteDocuments[i]);
           }
           isDocumentNotUploaded.value[count] = false;
-          console.log('azhar9999=' + JSON.stringify(data.props.quoteDocuments[0]));
+          console.log('azhar9999=' + JSON.stringify(quoteDocuments[0]));
           resolve(data);
         },
         onFinish: () => {
@@ -1404,12 +1423,12 @@ const getCaptureOption = computed(() => {
 });
 
 const getPlanName = computed(() => {
-  const plan = props.quoteRequest.plan;
+  const plan = planDetail;
   return plan ? plan.text : 'Not Available';
 });
 
 const providerName = computed(() => {
-  const plan = props.quoteRequest.plan;
+  const plan = planDetail;
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.text;
   }
@@ -1417,12 +1436,14 @@ const providerName = computed(() => {
 });
 
 const providerId = computed(() => {
-  const plan = props.quoteRequest.plan;
+  const plan = planDetail;
   console.log('TRAVELPLAN='+JSON.stringify(props.quoteRequest));
   if (plan && plan.insurance_provider) {
     return plan.insurance_provider.id;
   } else if (plan && plan.provider_id) {
     return plan.provider_id;
+  }  else if (plan && plan.id) {
+    return plan.id;
   }
   return null;
 });
@@ -2069,7 +2090,10 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
 
         <div class="w-full grid">
-          <!-- Header -->
+          <!-- Header -->          
+          <div class="mb-3">
+            <h3>Payment Schedule</h3>
+          </div>
           <div class="flex w-full">
             <div class="w-1/6 px-2 text-center">
               <span class="relative group text-sm">
@@ -2414,12 +2438,12 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <x-divider class="mb-4 mt-1" />
 
       <div v-if="isViewEnabled" class="p-1 mb-2">
-        <h3>NOTES</h3>
+        <h3>Notes</h3>
       </div>
       
       <div class="w-full grid">
         <x-field>
-          <label v-if="!isViewEnabled">NOTES</label>
+          <label v-if="!isViewEnabled">Notes</label>
           <p v-if="(isFieldReadonly && isViewEnabled) || isCreditApprovalView">{{ paymentMethodsForm.notes }}</p>
           <x-input
             v-if="!isViewEnabled && !isCreditApprovalView"
