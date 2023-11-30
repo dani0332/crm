@@ -326,6 +326,12 @@ class AMLController extends Controller
 
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
+        if ($getMemberOrUBODetails) {
+            $memberValidateCheck = collect($getMemberOrUBODetails)->pluck('first_name')->toArray();
+            if (in_array(null, $memberValidateCheck)) {
+                return redirect()->back()->with('error', 'First Name missing');
+            }
+        }
 
         if ($updateQuote) {
             info('Bridger Insight - Get Quote Successfully');

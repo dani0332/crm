@@ -2002,8 +2002,9 @@ const sectionExpanded = computed(() => {
             <input type="hidden" :value="memberForm.id" />
             <x-input
               v-model="memberForm.first_name"
-              label="Member Name"
+              label="Member Name*"
               placeholder="Member Name"
+              :rules="[isRequired]"
             />
             <ComboBox
               v-model="memberForm.nationality_id"
@@ -2016,7 +2017,7 @@ const sectionExpanded = computed(() => {
 
             <x-select
               v-model="memberForm.emirate_of_your_visa_id"
-              label="Emirate of Visa"
+              label="Emirate of Visa*"
               :options="emiratesOptions"
               :rules="[isRequired]"
               placeholder="Select Emirate of Visa"
@@ -2025,7 +2026,7 @@ const sectionExpanded = computed(() => {
 
             <x-select
               v-model="memberForm.member_category_id"
-              label="Member Category"
+              label="Member Category*"
               :options="memberCategoriesOptions"
               :rules="[isRequired]"
               placeholder="Select Member Category"
@@ -2034,7 +2035,7 @@ const sectionExpanded = computed(() => {
 
             <x-select
               v-model="memberForm.gender"
-              label="Gender"
+              label="Gender*"
               :options="genderSelect"
               :rules="[isRequired]"
               placeholder="Select Gender"
@@ -2045,7 +2046,14 @@ const sectionExpanded = computed(() => {
               label="DOB"
               :hasError="memberFieldReq.dob"
             />
-
+            <x-select
+              v-model="memberForm.member_category_id"
+              label="Member Category*"
+              :options="memberCategoriesOptions"
+              :rules="[isRequired]"
+              placeholder="Select Member Category"
+              class="w-full"
+            />
             <x-select
               v-model="memberForm.relation_code"
               label="Relation"
