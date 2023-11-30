@@ -826,6 +826,7 @@ const linkEntity = () => {
     />
 
     <QuoteDocuments
+      v-if="page.props.quoteDocuments && page.props.quoteDocuments.length > 0"
       :document-types="documentTypes"
       :quote-documents="quote.documents || []"
       :storageUrl="storageUrl"
