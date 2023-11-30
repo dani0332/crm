@@ -46,7 +46,6 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
-use App\Models\CarQuote;
 use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
@@ -70,7 +69,7 @@ class AMLController extends Controller
      */
     public function index(AMLRequest $request)
     {
-//        dd($request->all());
+        //        dd($request->all());
         $quoteTypes = QuoteTypeRepository::allowedQuoteForAml();
         $quoteStatuses = QuoteStatus::withActive()->orderBy('sort_order')->get();
         $quotes = [];
@@ -108,9 +107,9 @@ class AMLController extends Controller
 
                 $dataAml = DB::table($quoteRequestTable)
                 //    ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
-                    ->select($quoteRequestTable.'.*',   DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id')
+                    ->select($quoteRequestTable.'.*', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id')
                     ->orderBy($quoteRequestTable.'.created_at', 'desc');
-                if($quoteRequestTable == 'personal_quotes'){
+                if ($quoteRequestTable == 'personal_quotes') {
                     $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
                 }
                 if (
@@ -120,9 +119,9 @@ class AMLController extends Controller
                     if ($request->searchType == 'cdbId') {
                         $dataAml->where($quoteRequestTable.'.code', $request->searchField);
                     }
-//                    if ($request->searchType == 'id') {
-//                        $dataAml->where('kyc_logs.id', $request->searchField);
-//                    }
+                    //                    if ($request->searchType == 'id') {
+                    //                        $dataAml->where('kyc_logs.id', $request->searchField);
+                    //                    }
                     if ($request->searchType == 'customerEmail') {
                         $dataAml->where($quoteRequestTable.'.email', $request->searchField);
                     }
