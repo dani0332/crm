@@ -5,9 +5,9 @@ namespace App\Models;
 use App\Enums\QuoteTypeId;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use OwenIt\Auditing\Auditable;
 use OwenIt\Auditing\Contracts\Auditable as AuditableContract;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class PetQuote extends Model implements AuditableContract
 {
