@@ -40,8 +40,15 @@ const apiLogs = reactive({
   ],
 });
 
-const onLoadAuditLogData = async (hasinsuranceId = true) => {
-  if (!hasinsuranceId) insuranceProviderId.value = null;
+const filteredLogs = computed(() => {
+  if (insuranceProviderId.value != null)
+    return apiLogs.data.filter(
+      item => item.insurance_provider.id == insuranceProviderId.value,
+    );
+  else return apiLogs.data;
+});
+
+const onLoadAuditLogData = async () => {
   apiLogs.loading = true;
 
   let url = '/insurer-logs';
@@ -51,7 +58,6 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
       ? { auditableType: props.type, auditableId: props.id }
       : { quote_type: props.quoteType, auditable_id: props.id }),
     jsonData: true,
-    insurance_provider: insuranceProviderId.value ?? null,
   };
   axios
     .post(url, data)
@@ -101,17 +107,8 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
         </x-field>
         <x-button
           size="sm"
-          color="orange"
-          @click="onLoadAuditLogData"
-          :loading="apiLogs.loading"
-          class="h-10 mt-3"
-        >
-          Search
-        </x-button>
-        <x-button
-          size="sm"
           color="primary"
-          @click="onLoadAuditLogData(false)"
+          @click="insuranceProviderId = null"
           class="h-10 mt-3"
         >
           Reset
@@ -120,7 +117,7 @@ const onLoadAuditLogData = async (hasinsuranceId = true) => {
       <DataTable
         table-class-name="compact tablefixed"
         :headers="apiLogs.table"
-        :items="apiLogs.data || []"
+        :items="filteredLogs || []"
         border-cell
         hide-rows-per-page
         :rows-per-page="15"
