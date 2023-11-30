@@ -31,6 +31,7 @@ use App\Services\QuoteDocumentService;
 use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use PDF;
 
 class AjaxController extends Controller
@@ -276,7 +277,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info($ex->getMessage());
+            Log::error("KYC Individual $request->quote_uuid - ERROR:".$ex->getMessage());
         }
 
         return response()->json(['error' => false]);
@@ -349,7 +350,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info($ex->getMessage());
+            Log::error("KYC Entity $request->quote_uuid - ERROR:".$ex->getMessage());
         }
 
         return response()->json(['message' => 'Something went wrong, contact to administrator.']);
