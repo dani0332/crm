@@ -22,6 +22,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class AMLService
@@ -320,15 +321,16 @@ class AMLService
 
     public static function getKycType($quoteTypeId, $quoteRequestId)
     {
-        $status = KycLog::withTrashed()->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+        $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
+            ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
             ->whereNot('decision', AMLDecisionStatusEnum::RYU)
             ->orderBy('id', 'desc')
-            ->value('search_type');
+            ->value('splitted_customer_code');
 
         if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
-            $status = CustomerTypeEnum::Entity;
+            $status = CustomerTypeEnum::EntityShort;
         } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
-            $status = CustomerTypeEnum::Individual;
+            $status = CustomerTypeEnum::IndividualShort;
         }
 
         return $status;

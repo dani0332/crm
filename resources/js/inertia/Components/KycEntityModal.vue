@@ -114,13 +114,6 @@ const countryList = computed(() => {
   }));
 });
 
-const minDate = computed(() => {
-  const today = new Date();
-  const tomorrow = new Date(today);
-
-  return tomorrow.setDate(today.getDate() + 1);
-});
-
 const nationalityOptions = computed(() => {
   return props.nationalities.map(nat => ({
     value: nat.id,
@@ -385,7 +378,6 @@ onMounted(() => {
         <DatePicker
           v-model="kycForm.id_expiry_date"
           class="w-full"
-          :min-date="minDate"
           :rules="[isRequired]"
         />
       </div>
