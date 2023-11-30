@@ -20,6 +20,8 @@ const props = defineProps({
 
 const page = usePage();
 const notification = useToast();
+const {isRequired} = useRules();
+
 const modals = reactive({
     member: false,
 });
@@ -223,8 +225,9 @@ const memberDeleteConfirmed = () => {
                     <input type="hidden" :value="memberForm.id" />
                     <x-input
                         v-model="memberForm.first_name"
-                        label="Member Name"
+                        label="Member Name*"
                         placeholder="Member Name"
+                        :rules="[isRequired]"
                     />
                     <ComboBox
                         v-model="memberForm.nationality_id"
@@ -236,8 +239,9 @@ const memberDeleteConfirmed = () => {
                     />
                     <DatePicker
                         v-model="memberForm.dob"
-                        label="DOB"
+                        label="DOB*"
                         :hasError="memberFieldReq.dob"
+                        :rules="[isRequired]"
                     />
                     <x-select
                         v-model="memberForm.relation_code"
