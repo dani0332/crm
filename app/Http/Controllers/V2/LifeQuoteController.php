@@ -130,41 +130,12 @@ class LifeQuoteController extends Controller
                 'status' => $activity->status,
             ];
         }
-        $crudService = app(CRUDService::class);
-        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
-        $countries = Nationality::all();
-        $lookupService = app(LookupService::class);
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
-        if ($quote->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $lookupService->getLegalStructure();
-            $idDocumentType = $lookupService->getEntityDocumentTypes();
-            $issuancePlace = $lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        } else {
-            $idDocumentType = $lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $lookupService->getModeOfContact();
-            $employmentSectors = $lookupService->getEmploymentSector();
-            $residentialStatus = $lookupService->getResidentialStatus();
-            $companyPosition = $lookupService->getCompanyPosition();
-        }
 
         $documentTypes = DocumentTypeRepository::byQuoteTypeId(QuoteTypes::LIFE->id())->get();
 
         return inertia('LifeQuote/Show', [
             'documentTypes' => $documentTypes,
             'storageUrl' => storageUrl(),
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
-            'modeOfContact' => $modeOfContact,
-            'employmentSectors' => $employmentSectors,
-            'residentialStatus' => $residentialStatus,
-            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::LIFE,
             'quoteTypeId' => QuoteTypeId::Life,
             'quoteStatuses' => $quoteStatuses,
