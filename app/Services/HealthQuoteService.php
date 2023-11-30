@@ -1273,14 +1273,8 @@ class HealthQuoteService extends BaseService
         return $response;
     }
 
-    /**
-     *
-     * HERE We ARE
-     *
-     */
     public function healthPlanModify($request)
     {
-        dd($request->toArray());
         $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans';
         $apiToken = config('constants.KEN_API_TOKEN');
         $apiTimeout = config('constants.KEN_API_TIMEOUT');
@@ -1311,6 +1305,73 @@ class HealthQuoteService extends BaseService
                 'update' => true,
                 'plans' => [$plansArray],
             ];
+            $apiCreds = [
+                'apiEndPoint' => $apiEndPoint,
+                'apiToken' => $apiToken,
+                'apiTimeout' => $apiTimeout,
+                'apiUserName' => $apiUserName,
+                'apiPassword' => $apiPassword,
+            ];
+            $response = $this->httpService->processRequest($dataArray, $apiCreds);
+
+            return $response;
+        }
+    }
+
+     /**
+     *
+     * HERE We ARE
+     *
+     */
+    public function healthPlanModifyV2($request)
+    {
+        $loadingPrices = $request->get('loadingPrice');
+
+        if (empty($request->get('selectedCopay'))) {
+            $copayId = $request->get('defaultCopayId');
+        } else {
+            $selectedCopay = $request->get('selectedCopay');
+            $copayId = $selectedCopay['id'];
+        }
+
+        $apiEndPoint = config('constants.KEN_API_ENDPOINT').'/save-manual-health-quote-plans';
+        $apiToken = config('constants.KEN_API_TOKEN');
+        $apiTimeout = config('constants.KEN_API_TIMEOUT');
+        $apiUserName = config('constants.KEN_API_USER');
+        $apiPassword = config('constants.KEN_API_PWD');
+        if ($request->planId && ! empty($request->planDetails)) {
+            $membersBreakDown = [];
+            $plansArray = [
+                'planId' => (int) $request->planId,
+                'isManualUpdate' => true,
+                'memberPremiumBreakdown' => '',
+            ];
+            foreach ($request->planDetails as $key => $value) {
+                $toBeUpdatedCopay = [];
+                if (isset($value['ratesPerCopay']))
+                {
+                    foreach ($value['ratesPerCopay'] as $copay) {
+                        if ((int)$copay['healthPlanCoPaymentId'] == (int) $copayId) {
+                            $copay['loadingPrice'] = $loadingPrices[$key];
+                            array_push($toBeUpdatedCopay, $copay);
+                        }
+                    }
+                }
+
+                $array = [
+                    'memberId' => (int) $value['memberId'],
+                    'memberCategoryText' => $value['memberCategoryText'],
+                    'ratesPerCopay' => $toBeUpdatedCopay,
+                ];
+                array_push($membersBreakDown, $array);
+            }
+            $plansArray['memberPremiumBreakdown'] = $membersBreakDown;
+            $dataArray = [
+                'quoteUID' => $request->quoteUID,
+                'update' => true,
+                'plans' => [$plansArray],
+            ];
+
             $apiCreds = [
                 'apiEndPoint' => $apiEndPoint,
                 'apiToken' => $apiToken,

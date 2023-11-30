@@ -56,6 +56,25 @@ class HealthQuoteController extends Controller
         return $message;
     }
 
+    public function healthPlanUpdateManualProcessV2(Request $request)
+    {
+        $response = $this->healthQuoteService->healthPlanModifyV2($request);
+
+        $message = '';
+        if (gettype($response) == GenericRequestEnum::INTEGER && ($response == 200 || $response == 201)) {
+            $message = 'Plan has been updated';
+        } else {
+            if (isset($response->message)) {
+                $responseMessage = $response->message;
+            } else {
+                $responseMessage = $response;
+            }
+            $message = 'Plan has not been updated '.$responseMessage;
+        }
+
+        return $message;
+    }
+
     public function plansByInsuranceProvider(Request $request)
     {
         $insuranceProviderId = $request->insuranceProviderId;

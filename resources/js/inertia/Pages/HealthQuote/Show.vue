@@ -504,6 +504,7 @@ const plansTable = reactive({
 const planClicked = plan => {
   selectedPlan.value = plan;
   modals.plan = true;
+  console.log(selectedPlan.value);
 };
 
 const onExportPlans = () => {
