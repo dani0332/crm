@@ -31,10 +31,11 @@ const props = defineProps({
 })
 
 const page = usePage();
+const dateFormat = date => date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const sendUpdatesTable = reactive({
   headers: [
-    { text: 'SU-REF ID', value: 'ref_id' },
+    { text: 'SU-REF ID', value: 'code' },
     { text: 'Type', value: 'type' },
     { text: 'Sub Type', value: 'sub_type' },
     { text: 'Status', value: 'status' },
@@ -113,6 +114,28 @@ const onAddUpdate = () => {
     })
 }
 
+const findOption = (item, key) => {
+  let title = '';
+  props.options.forEach(option => {
+    if (option.id === item[key]) {
+      title = option.title;
+    } else {
+      option.childs.forEach(child => {
+        if (child.id === item[key]) {
+          title = child.title;
+        } else {
+          child.childs.forEach(grandChild => {
+            if (grandChild.id === item[key]) {
+              title = grandChild.title;
+            }
+          })
+        }
+      })
+    }
+  })
+  return title;
+}
+
 </script>
 
 <template>
@@ -142,7 +165,21 @@ const onAddUpdate = () => {
           hide-rows-per-page
           :hide-footer="sendUpdatesTable.data <= 10"
         >
+          <template #item-code="{ code, uuid }">
+            <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
+          </template>
 
+          <template #item-type="item">
+            <span>{{ findOption(item, 'category_id') }}</span>
+          </template>
+
+          <template #item-sub_type="item">
+            <span>{{ findOption(item, 'option_id') }}</span>
+          </template>
+
+          <template #item-created_at="{ created_at }">
+            <span>{{ dateFormat(created_at) }}</span>
+          </template>
         </DataTable>
       </template>
     </x-collapse>

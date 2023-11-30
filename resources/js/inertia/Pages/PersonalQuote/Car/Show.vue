@@ -81,7 +81,8 @@ defineProps({
   UBOsDetails: Array,
   isCommercialVehicles: Boolean,
   carInsuranceProviders: Array,
-  sendUpdateOptions: Array
+  sendUpdateOptions: Array,
+  sendUpdateLogs: Array
 });
 const page = usePage();
 const notification = useNotifications('toast');
@@ -3277,7 +3278,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
       :reportableId="record.id"
       :reportableUuid="record.uuid"
       :options="sendUpdateOptions"
-      :data="[]"
+      :data="sendUpdateLogs"
     />
 
     <div class="p-4 rounded shadow mb-6 bg-white" v-if="isQuoteDocumentEnabled">

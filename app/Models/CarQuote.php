@@ -440,4 +440,9 @@ class CarQuote extends BaseModel
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->where('quote_type_id', QuoteTypeId::Car);
     }
+
+    public function sendUpdateLogs()
+    {
+        return $this->morphMany(SendUpdateLog::class, 'reportable');
+    }
 }

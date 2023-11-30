@@ -649,10 +649,12 @@ class CRUDController extends Controller
             }
 
             $sendUpdateOptions = [];
-
-            // if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
+            $sendUpdateLogs = [];
+            
+            if ($record->quote_status_id == QuoteStatusEnum::PolicyIssued) {
                 $sendUpdateOptions = $this->lookupService->getSendUpdateOptions($quoteTypeId);
-            // }
+                $sendUpdateLogs = $paymentEntityModel->sendUpdateLogs;
+            }
             // return view('shared.show', compact([
             //     'record', 'model', 'customTitles', 'listQuotePlans', 'customTableList', 'embeddedProducts',
             //     'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'mainPayment',
@@ -698,7 +700,7 @@ class CRUDController extends Controller
 
             return inertia('PersonalQuote/Car/Show', compact([
                 'amlQuoteStatus', 'sendUpdateOptions', 'entities', 'legalStructure', 'idDocumentType', 'issuancePlace', 'issuanceAuthorities', 'modeOfContact', 'employmentSectors', 'residentialStatus', 'companyPosition', 'countries',
-                'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
+                'record', 'sendUpdateLogs', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser', 'sendUpdateEnum',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
                 'activities', 'advisors', 'isRenewalUser', 'isNewBusinessUser', 'emailStatuses', 'carPlanAddonsCodeEnum', 'tiersExceptTierR', 'isTierRAssigned',
