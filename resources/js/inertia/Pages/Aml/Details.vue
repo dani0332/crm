@@ -590,7 +590,7 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-        v-if="props.kycStatus === 'Entity'"
+        v-if="props.kycStatus === 'ENT'"
         v-model="modals.insuranceForm"
         :quoteType="quoteType"
         :quoteDetails="quoteRequest"
