@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\V2;
 
-use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\LookupsEnum;
 use App\Enums\quoteStatusCode;
@@ -13,8 +12,6 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LifeQuoteRequest;
 use App\Models\Emirate;
-use App\Models\Entity;
-use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\CustomerRepository;
@@ -27,8 +24,6 @@ use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Services\CentralService;
-use App\Services\CRUDService;
-use App\Services\LookupService;
 use Illuminate\Http\Request;
 
 class LifeQuoteController extends Controller

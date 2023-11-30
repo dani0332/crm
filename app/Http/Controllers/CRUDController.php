@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AmlSearchType;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -36,7 +35,6 @@ use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
 use App\Models\Nationality;

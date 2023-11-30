@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AmlSearchType;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
 use App\Enums\LookupsEnum;
@@ -20,8 +19,6 @@ use App\Http\Requests\StoreTravelRequest;
 use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
 use App\Models\Emirate;
-use App\Models\Entity;
-use App\Models\Nationality;
 use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
