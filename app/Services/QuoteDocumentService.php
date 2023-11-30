@@ -193,7 +193,8 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocuments($quoteType, $recordId)
     {
-        $quote = app()->make('App\\Models\\'.$quoteType.'Quote')::where('id', $recordId)->first();
+        $quoteTypeDoc = $this->getDocumentType($quoteType);
+        $quote = app()->make('App\\Models\\' . $quoteTypeDoc . 'Quote')::where('id', $recordId)->first();
         if ($quote && $quote->documents) {
             $quote->documents->load('createdBy:id,name');
 
@@ -201,5 +202,19 @@ class QuoteDocumentService extends BaseService
         } else {
             return [];
         }
+    }
+
+    private function getDocumentType($quoteType)
+    {
+        $quoteTypeDoc = ucfirst($quoteType);
+
+        switch ($quoteTypeDoc) {
+            case quoteTypeCode::Home:
+                $quoteTypeDoc = quoteTypeCode::PERSONAL;
+                break;
+            default:
+                $quoteTypeDoc = $quoteType;
+        }
+        return $quoteTypeDoc;
     }
 }
