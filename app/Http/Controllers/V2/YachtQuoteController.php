@@ -11,6 +11,7 @@ use App\Enums\RolesEnum;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\BikeQuoteRequest;
 use App\Http\Requests\YachtQuoteRequest;
+use App\Models\Emirate;
 use App\Models\Entity;
 use App\Models\Nationality;
 use App\Repositories\ActivityRepository;
@@ -111,10 +112,11 @@ class YachtQuoteController extends Controller
         }
 
         $lostReasons = LostReasonRepository::orderBy('text', 'asc')->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(QuoteTypes::YACHT->id(), $quote->id);
         $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
         $countries = Nationality::all();
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
+        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = $industryType = null;
         $lookupService = app(LookupService::class);
         if ($quote->customer_type == AmlSearchType::ENTITY) {
             $entities = Entity::all();
@@ -122,6 +124,7 @@ class YachtQuoteController extends Controller
             $idDocumentType = $lookupService->getEntityDocumentTypes();
             $issuancePlace = $lookupService->getIssuancePlaces();
             $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
+            $industryType = $lookupService->getCompanyTypes();
         } else {
             $idDocumentType = $lookupService->getIndividualDocumentTypes();
             $modeOfContact = $lookupService->getModeOfContact();
@@ -162,6 +165,8 @@ class YachtQuoteController extends Controller
             'membersDetails' => $membersDetail,
             'memberRelations' => $memberRelations,
             'nationalities' => $nationalities,
+            'industryType' => $industryType,
+            'emirates' => $emirates,
         ]);
     }
 
