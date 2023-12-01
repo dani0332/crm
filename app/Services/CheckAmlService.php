@@ -285,10 +285,10 @@ class CheckAmlService
     {
         $createdDate = $parseDate;
         if (empty($parseDate)) {
-            $record = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->first();//OrFail()->created_at;
-            if($record){
-                $createdDate =  $record->created_at;
-            }else{
+            $record = AML::where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])->first(); //OrFail()->created_at;
+            if ($record) {
+                $createdDate = $record->created_at;
+            } else {
                 $createdDate = Carbon::createFromFormat('Y-m-d', '2023-11-30');
             }
         }
