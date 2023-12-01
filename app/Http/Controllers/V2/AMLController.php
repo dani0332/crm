@@ -108,7 +108,7 @@ class AMLController extends Controller
 
                     $dataAml = $dataAml->select($quoteRequestTable . '.*', $quoteRequestTable . '.personal_quote_id as id', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
                         }else {
-                    $dataAml = $dataAml->select($quoteRequestTable . '.*', $quoteRequestTable . '.personal_quote_id as id', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
+                    $dataAml = $dataAml->select($quoteRequestTable . '.*', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
                         }
 
                 $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
