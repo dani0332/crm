@@ -11,11 +11,8 @@ const props = defineProps({
   entityDetails: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   customerTypeEnum: Object,
   residentStatuses: Object,
   lookups: Object,
@@ -89,7 +86,7 @@ const emirateRegistrationOptions = computed(() => {
 });
 
 const industryTypeOptions = computed(() => {
-  return props.industryType.map(indType => ({
+  return props?.lookups?.company_type.map(indType => ({
     value: indType.code,
     label: indType.text,
   }));
@@ -219,11 +216,13 @@ const submitQuoteUpdateForm = isValid => {
         position: 'top',
       });
     },
-    onSuccess: () => {
-      notification.success({
-        title: 'Quote is updated',
-        position: 'top',
-      });
+    onSuccess: (response) => {
+        if (response.props.flash.length === 0) {
+            notification.success({
+                title: 'Quote is updated',
+                position: 'top',
+            });
+        }
     },
   });
 };
@@ -390,110 +389,6 @@ const linkEntity = () => {
     .finally(() => (entityDetailsFound.value = false));
 };
 
-const payerNameRef = ref(null);
-const paidByRef = ref('third-party');
-
-// new update function
-// const updateInsuredAndPaymentsDetails = () => {
-//     linkLoader.value = true;
-//     let entityDetails = {
-//         quote_type_id: props.quoteType.id,
-//         quote_request_id: props.quoteDetails.id,
-//         entity_id: tradeLicenseEntity.entity_id,
-//         payment_Details: paymentDetailsRef.value
-//     };
-//     axios
-//         .post(route('insuredPayerDetailsUpdate'), entityDetails)
-//         .then(res => {
-//             if (res.data.status) {
-
-//                 notification.success({
-//                     title: res.data.message,
-//                     position: 'top',
-//                 });
-//             }else{
-//                 notification.error({
-//                     title: res.data.message,
-//                     position: 'top',
-//                 });
-//             }
-//             linkLoader.value = false;
-
-//         })
-//         .catch(err => {
-//             console.log(err);
-//         })
-// }
-
-//faisal
-// const customerDetailsForm = useForm({
-
-//     customer_id: props.quoteDetails.customer_id,
-//     customer_type: props.customerTypeEnum.Individual,
-//     quote_type: props.quoteType.code,
-
-//     insured_first_name: props.quoteDetails?.customer?.insured_first_name ?? null,
-//     insured_last_name: props.quoteDetails?.customer?.insured_last_name ?? null,
-//     nationality_id:  null,//props.quoteDetails?.customer.nationality_id ??
-//     dob: props.quoteDetails?.customer.dob ?? null,
-
-//     place_of_birth: props.quoteDetails?.customer?.detail?.place_of_birth ?? null,
-//     country_of_residence: props.quoteDetails?.customer?.detail?.country_of_residence ?? null,
-//     residential_address: props.quoteDetails?.customer?.detail?.residential_address ?? null,
-//     residential_status: props.quoteDetails?.customer?.detail?.residential_status ?? null,
-//     id_type: props.quoteDetails?.customer?.detail?.id_type ?? null,
-//     id_issuance_date: props.quoteDetails?.customer?.detail?.id_issuance_date ?? null,
-//     mode_of_contact: props.quoteDetails?.customer?.detail?.mode_of_contact ?? null,
-//     transaction_value: props.quoteDetails?.customer?.detail?.transaction_value ?? null,
-//     mode_of_delivery: props.quoteDetails?.customer?.detail?.mode_of_delivery ?? null,
-//     employment_sector: props.quoteDetails?.customer?.detail?.employment_sector ?? null,
-//     customer_tenure: props.quoteDetails?.customer?.detail?.customer_tenure ?? null,
-// });
-
-//faisal
-// const updateCustomerDetails = () => {
-
-//     //submit form manually
-
-//     console.log(myForm.value);
-
-//     //validate customerDetailsForm manually
-//     validateCustomerFields.value = true;
-
-//     if (myForm.refs.value.validate()) {
-//         console.log("VALIDATED");
-//     }
-//     else{
-//         console.log("FAILED");
-//     }
-
-//     // console.log(isValid, ":VALID");
-
-//     // customerDetailsForm.post(`${props.quoteDetails.id}/update-customer-details`, {
-//     //     preserveScroll: true,
-//     //     onError: errors => {
-//     //         notification.error({
-//     //             title: errors.error || 'Customer update failed',
-//     //             position: 'top',
-//     //         });
-//     //     },
-//     //     onSuccess: () => {
-//     //         notification.success({
-//     //             title: 'Customer update failed',
-//     //             position: 'top',
-//     //         });
-
-//     //     },
-//     // });
-
-// }
-
-const updateDetails = () => {
-  // console.log("update clicked");
-  // console.log(paymentDetailsRef.value);
-  // updateInsuredAndPaymentsDetails(paymentDetailsRef);
-};
-
 const is_insured = ref(false);
 
 watch(
@@ -504,15 +399,6 @@ watch(
   { immediate: true },
 );
 
-onMounted(() => {
-  // paymentDetailsRef.value = props.quoteDetails.payments.map(payment => ({
-  //     paymentCode : payment.code,
-  //     paymentMethod: payment.payment_method.name,
-  //     payerName: payment.get_customer_payment_instrument?.card_holder_name ?? '',
-  //     paymentAmount: payment.captured_amount,
-  //     paidBy: 'self',
-  // }));
-});
 </script>
 
 <template>
@@ -584,7 +470,7 @@ onMounted(() => {
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Individual"
         />
 
@@ -595,7 +481,7 @@ onMounted(() => {
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Individual"
         />
         <div class="my-5 flex justify-center">
@@ -631,102 +517,6 @@ onMounted(() => {
           :entity-details="props.entityDetails"
           :customer-details="props.customerDetails"
         />
-
-        <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
-                Payer Details
-            </h3>
-
-            <section v-if="paymentsDataArray.length > 0">
-                <dl v-for="(payment, index) in paymentsDataArray" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                    <x-field label="Payment ID:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentCode"
-                            placeholder="Payment ID"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Payment Method:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentMethod"
-                            placeholder="Payment Method"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
-                        <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                            />
-                        </template>
-                        <template v-else>
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                            />
-                        </template>
-                    </x-field>
-                    <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
-                        <x-input
-                            v-model="insurerFullName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-else>
-                        <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Total Amount:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentAmount"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            placeholder="Total Amount"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Paid By:">
-                        <ComboBox
-                            v-model="paymentDetailsRef[index].paidBy"
-                            :single="true"
-                            :rules="[isRequired]"
-                            placeholder="Select Paid by"
-                            :options="[
-                                {label: 'Self', value: 'self'},
-                                {label: 'Third Party', value: 'third-party'}
-                            ]"
-                            selected="self"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <br/>
-                    <x-divider class="mb-4 mt-4"/>
-                    <x-divider class="mb-4 mt-4"/>
-                </dl>
-            </section> -->
       </x-form>
     </x-modal>
 
@@ -841,103 +631,6 @@ onMounted(() => {
               :hasError="emirateRegistrationId"
             />
           </x-field>
-
-          <!-- new fields -->
-
-          <!-- <x-field label="Legal Structure">
-            <ComboBox
-              :single="true"
-              :hasError="
-                !insuredFormDetails.legal_structure && validateEntityFields
-              "
-              v-model="insuredFormDetails.legal_structure"
-              placeholder="Legal Structure"
-              :options="legalStructureOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="Country of Incorporation">
-            <ComboBox
-              :single="true"
-              :hasError="
-                !insuredFormDetails.country_of_corporation &&
-                validateEntityFields
-              "
-              v-model="insuredFormDetails.country_of_corporation"
-              placeholder="Country of Incorporation"
-              :options="nationalitiesOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="Website">
-            <x-input
-              v-model="insuredFormDetails.website"
-              placeholder="Please enter the official website of the entity here"
-              type="text"
-              :rules="validateEntityFields ? [isRequired] : []"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID / Document Type">
-            <ComboBox
-              :single="true"
-              :hasError="
-                !insuredFormDetails.entity_id_type && validateEntityFields
-              "
-              v-model="insuredFormDetails.entity_id_type"
-              placeholder="Please specify the type of ID received from the customer "
-              :options="idTypeOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID / Document Issue Date">
-            <DatePicker
-              v-model="insuredFormDetails.entity_id_issuance_date"
-              placeholder="Please specify the issuance date of the ID collected"
-              :rules="validateEntityFields ? [isRequired] : []"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID / Document Expiry Date">
-            <DatePicker
-              v-model="insuredFormDetails.id_expiry_date"
-              placeholder="Please specify the Expiry date of the ID collected"
-              class="w-full"
-              :rules="validateEntityFields ? [isRequired] : []"
-            />
-          </x-field>
-
-          <x-field label="Place of Issue">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.id_issuance_place"
-              :hasError="
-                !insuredFormDetails.id_issuance_place && validateEntityFields
-              "
-              placeholder="Place of Issue"
-              :options="idIssuancePlanceOptions"
-              class="w-full"
-            />
-          </x-field>
-
-          <x-field label="ID Issue Authority">
-            <ComboBox
-              :single="true"
-              v-model="insuredFormDetails.id_issuance_authority"
-              :hasError="
-                !insuredFormDetails.id_issuance_authority &&
-                validateEntityFields
-              "
-              placeholder="ID Issue Authority"
-              :options="idIssuanceAuthorityOptions"
-              class="w-full"
-            />
-          </x-field> -->
         </dl>
         <x-divider class="mb-4 mt-1" />
         <template v-if="entityDetailsFound">
@@ -992,7 +685,7 @@ onMounted(() => {
           :quoteType="quoteType"
           :nationalities="nationalities"
           :uboDetails="uboDetails"
-          :uboRelations="uboRelations"
+          :uboRelations="props.lookups.ubo_relation"
           :entity_id="insuredFormDetails.entity_id"
           :customerType="props.customerTypeEnum.Entity"
         />
@@ -1004,7 +697,7 @@ onMounted(() => {
           :quoteDetails="quoteDetails"
           :nationalities="nationalities"
           :membersDetails="membersDetails"
-          :memberRelations="memberRelations"
+          :memberRelations="props.lookups.member_relation"
           :customerType="props.customerTypeEnum.Entity"
         />
 
@@ -1019,102 +712,6 @@ onMounted(() => {
           </x-button>
         </div>
         <x-divider class="mb-4 mt-4" />
-
-        <!-- <h3 class="font-semibold text-primary-800 text-lg mb-4">
-                Payer Details
-            </h3>
-
-            <section v-if="paymentsDataArray.length > 0">
-                <dl v-for="(payment, index) in paymentsDataArray" class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-                    <x-field label="Payment ID:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentCode"
-                            placeholder="Payment ID"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Payment Method:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentMethod"
-                            placeholder="Payment Method"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-if="payment.payment_methods_code == 'CC'" label="Payer Name:">
-                        <template v-if="payment.get_customer_payment_instrument?.card_holder_name">
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                            />
-                        </template>
-                        <template v-else>
-                            <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                            />
-                        </template>
-                    </x-field>
-                    <x-field v-else-if="payment.payment_methods_code == 'CSH' || payment.payment_methods_code == 'IP'" label="Payer Name:">
-                        <x-input
-                            v-model="insurerFullName"
-                            placeholder="Payer Name"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field v-else>
-                        <x-input
-                            v-model="paymentDetailsRef[index].payerName"
-                            placeholder="Payer Name"
-                            type="text"
-                            :rules="[isRequired]"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Total Amount:">
-                        <x-input
-                            v-model="paymentDetailsRef[index].paymentAmount"
-                            :readonly="true"
-                            :rules="[isRequired]"
-                            placeholder="Total Amount"
-                            type="text"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <x-field label="Paid By:">
-                        <ComboBox
-                            v-model="paymentDetailsRef[index].paidBy"
-                            :single="true"
-                            :rules="[isRequired]"
-                            placeholder="Select Paid by"
-                            :options="[
-                                {label: 'Self', value: 'self'},
-                                {label: 'Third Party', value: 'third-party'}
-                            ]"
-                            selected="self"
-                            class="w-full"
-                        />
-                    </x-field>
-                    <br/>
-                    <x-divider class="mb-4 mt-4"/>
-                    <x-divider class="mb-4 mt-4"/>
-                </dl>
-            </section> -->
 
         <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">KYC Details</h3>
@@ -1132,8 +729,8 @@ onMounted(() => {
           :issuance-place="props.lookups.issuance_place"
           :issuing-authority="props.lookups.issuing_authority"
           :entity-details="props.entityDetails"
-          :uboRelation="uboRelations"
-          :industry-type="props.industryType"
+          :uboRelation="props.lookups.ubo_relation"
+          :industry-type="props.lookups.company_type"
         />
       </x-form>
     </x-modal>

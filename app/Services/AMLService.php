@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\AMLDecisionStatusEnum;
 use App\Enums\CustomerTypeEnum;
 use App\Enums\EnvEnum;
 use App\Enums\QuoteTypes;
@@ -12,6 +13,7 @@ use App\Models\BusinessQuote;
 use App\Models\CarQuote;
 use App\Models\HealthQuote;
 use App\Models\HomeQuote;
+use App\Models\KycLog;
 use App\Models\LifeQuote;
 use App\Models\PersonalQuote;
 use App\Models\PetQuote;
@@ -20,6 +22,7 @@ use App\Models\User;
 use App\Models\YachtQuote;
 use App\Repositories\CustomerMembersRepository;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 
 class AMLService
@@ -314,5 +317,22 @@ class AMLService
         $bridgerInsightService->updateDecisionOnLexisNexis($bridgerAPIToken, $request->result_id, $matchResultsForUpdate, $request->notes);
 
         return true;
+    }
+
+    public static function getKycType($quoteTypeId, $quoteRequestId)
+    {
+        $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
+            ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
+            ->whereNot('decision', AMLDecisionStatusEnum::RYU)
+            ->orderBy('id', 'desc')
+            ->value('splitted_customer_code');
+
+        if ($status == null && $quoteTypeId == QuoteTypes::BUSINESS->id()) {
+            $status = CustomerTypeEnum::EntityShort;
+        } elseif ($status == null && $quoteTypeId != QuoteTypes::BUSINESS->id()) {
+            $status = CustomerTypeEnum::IndividualShort;
+        }
+
+        return $status;
     }
 }

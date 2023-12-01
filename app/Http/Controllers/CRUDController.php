@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\AmlSearchType;
 use App\Enums\ApplicationStorageEnums;
 use App\Enums\CarPlanAddonsCode;
 use App\Enums\CarPlanExclusionsCode;
@@ -36,7 +35,6 @@ use App\Models\CarQuote;
 use App\Models\EmbeddedProductOption;
 use App\Models\EmbeddedTransaction;
 use App\Models\Emirate;
-use App\Models\Entity;
 use App\Models\GenericModel;
 use App\Models\HealthPlanType;
 use App\Models\Nationality;
@@ -482,26 +480,10 @@ class CRUDController extends Controller
             //Fix for trailing slash when loading plans through jQuery
             return redirect(request()->url());
         }
-        $countries = Nationality::all();
         $quoteType = strtolower($this->genericModel->modelType);
         $quoteTypeId = $this->activityService->getQuoteTypeId($quoteType);
         $record = $this->crudService->getEntity($this->genericModel->modelType, $id);
         abort_if(! $record, 404);
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
-        if ($record->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $this->lookupService->getLegalStructure();
-            $idDocumentType = $this->lookupService->getEntityDocumentTypes();
-            $issuancePlace = $this->lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $this->lookupService->getIssuanceAuthorities();
-        } else {
-            $idDocumentType = $this->lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $this->lookupService->getModeOfContact();
-            $employmentSectors = $this->lookupService->getEmploymentSector();
-            $residentialStatus = $this->lookupService->getResidentialStatus();
-            $companyPosition = $this->lookupService->getCompanyPosition();
-        }
-        $amlQuoteStatus = $this->crudService->checkAmlQuoteStatus($record->quote_status_id);
 
         $autoAllocationDisabled = $this->lookupService->getApplicationStorageValue('LEAD_ALLOCATION_JOB_SWITCH');
         if (strtolower($this->genericModel->modelType) == strtolower(quoteTypeCode::Health) && Auth::user()->isHealthWCUAdvisor() && $record->wcu_id != Auth::user()->id && $autoAllocationDisabled == '1') {
@@ -559,7 +541,6 @@ class CRUDController extends Controller
             }
         }
         $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($model->modelType)) ? strtolower($model->modelType).'QuoteService' : lcfirst(ucwords($model->modelType)).'Service';
         $allowedDuplicateLOB = $this->crudService->getAllowedDuplicateLOB($model->modelType, $record->code);
         $activitiesData = $this->activityService->getActivityByLeadId($record->id, strtolower($model->modelType));
         $activities = [];
@@ -689,7 +670,6 @@ class CRUDController extends Controller
             $nationalities = NationalityRepository::withActive()->get();
 
             return inertia('PersonalQuote/Car/Show', compact([
-                'amlQuoteStatus', 'entities', 'legalStructure', 'idDocumentType', 'issuancePlace', 'issuanceAuthorities', 'modeOfContact', 'employmentSectors', 'residentialStatus', 'companyPosition', 'countries',
                 'record', 'quote', 'model', 'customTitles', 'customTableList', 'paymentStatusEnum', 'quoteStatusEnum', 'leadSourceEnum', 'isBetaUser',
                 'ecomCarInsuranceQuoteUrl', 'carQuotePlanAddons', 'vehicleTypes', 'leadStatuses', 'docUploadURL', 'isPlanUpdateActive', 'allowQuoteLogAction', 'carLostChangeStatus',
                 'lostReasons', 'selectedLostReasonId', 'model_name', 'allowedDuplicateLOB', 'audits', 'websiteURL', 'insuranceProviders', 'leadDocsStoragePath',
@@ -732,7 +712,6 @@ class CRUDController extends Controller
         if ($this->genericModel->modelType == quoteTypeCode::Home && in_array($this->genericModel->modelType, newUi())) {
             $nationalities = Nationality::where('is_active', 1)->select('id', 'text')->get();
             $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
-            $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
             $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
             $domainPath = config('constants.AFIA_WEBSITE_DOMAIN');
             $notProductionApproval = ! auth()->user()->hasRole(RolesEnum::PA);
@@ -778,17 +757,6 @@ class CRUDController extends Controller
             return inertia('HomeQuote/Show', [
                 'storageUrl' => storageUrl(),
                 'quoteDocuments' => array_values($quoteDocuments->toArray()),
-                'amlQuoteStatus' => $amlQuoteStatus,
-                'countryList' => $countries,
-                'entities' => $entities,
-                'legalStructure' => $legalStructure,
-                'idDocumentType' => $idDocumentType,
-                'issuancePlace' => $issuancePlace,
-                'issuanceAuthorities' => $issuanceAuthorities,
-                'modeOfContact' => $modeOfContact,
-                'employmentSectors' => $employmentSectors,
-                'residentialStatus' => $residentialStatus,
-                'companyPosition' => $companyPosition,
                 'quote' => $record,
                 'allowedDuplicateLOB' => $allowedDuplicateLOB,
                 'leadStatuses' => array_values($leadStatuses->toArray()),
@@ -908,17 +876,6 @@ class CRUDController extends Controller
             $healthPlanTypes = HealthPlanType::where('is_active', 1)->select('id', 'text')->get();
 
             return inertia('HealthQuote/Show', [
-                'amlQuoteStatus' => $amlQuoteStatus,
-                'countryList' => $countries,
-                'entities' => $entities,
-                'legalStructure' => $legalStructure,
-                'idDocumentType' => $idDocumentType,
-                'issuancePlace' => $issuancePlace,
-                'issuanceAuthorities' => $issuanceAuthorities,
-                'modeOfContact' => $modeOfContact,
-                'employmentSectors' => $employmentSectors,
-                'residentialStatus' => $residentialStatus,
-                'companyPosition' => $companyPosition,
                 'paymentLink' => $paymentLink,
                 'quote' => $record,
                 'genderOptions' => $this->crudService->getGenderOptions(),
