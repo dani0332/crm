@@ -16,6 +16,8 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
      */
     public function run(): void
     {
+        $this->removePreviousData();
+
         $data = $this->getGenericData();
         
         $allLOBs = $this->getAllLOBs();
@@ -54,6 +56,21 @@ class AddSendUpdatesCategoriesInLookups extends Seeder
                     }
                 }
             }
+        }
+    }
+
+    private function removePreviousData()
+    {
+        $data = Lookup::where('code', '=', LookupsEnum::SEND_UPDATE_CODE)->with('childs')->get();
+
+        foreach ($data as $item) {
+            $item->childs()->each(function ($child) {
+                $child->childs()->each(function ($grandChild) {
+                    $grandChild->delete();
+                });
+                $child->delete();
+            });
+            $item->delete();
         }
     }
 
