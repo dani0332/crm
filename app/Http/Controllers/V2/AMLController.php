@@ -103,11 +103,15 @@ class AMLController extends Controller
                         }
                     }
                 }
+                $dataAml = DB::table($quoteRequestTable);
+                if($quoteRequestTable == 'pet_quote_request') {
 
-                $dataAml = DB::table($quoteRequestTable)
-                //    ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
-                    ->select($quoteRequestTable.'.*', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id')
-                    ->orderBy($quoteRequestTable.'.created_at', 'desc');
+                    $dataAml = $dataAml->select($quoteRequestTable . '.*', $quoteRequestTable . '.personal_quote_id as id', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
+                        }else {
+                    $dataAml = $dataAml->select($quoteRequestTable . '.*', $quoteRequestTable . '.personal_quote_id as id', DB::raw('"' . $request->quoteType . ' Insurance" as quote_type_text, "' . $quoteTypeId . '" as quote_type_id'), $quoteRequestTable . '.code as cdb_id');
+                        }
+
+                $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
                 if ($quoteRequestTable == 'personal_quotes') {
                     $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
                 }
@@ -186,6 +190,7 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
+
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
@@ -195,8 +200,8 @@ class AMLController extends Controller
                 $aml->orWhereNull('decision');
             });
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
-
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
         $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
