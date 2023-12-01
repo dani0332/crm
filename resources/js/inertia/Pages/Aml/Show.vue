@@ -131,7 +131,7 @@ const setSelectedOption = (e, item) => {
   }
 
 };
-const checkDecisionLockStatus = (props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.COMPLIANCE));
+const checkDecisionLockStatus = (props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH_REJECT_RISK );
 
 const isTrue = computed(() => {
   return amlResults.value.some(x => x.decision == 'TrueMatch');
