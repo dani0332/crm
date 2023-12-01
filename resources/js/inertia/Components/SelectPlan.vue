@@ -36,7 +36,6 @@ const updateSelectedPlan = () => {
 
 <template>
     <x-button
-        v-show="false"
         size="xs"
         color="success"
         outlined
