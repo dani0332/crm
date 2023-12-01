@@ -276,7 +276,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info($ex->getMessage());
+            info("KYC Individual $request->quote_uuid - ERROR:".$ex->getMessage());
         }
 
         return response()->json(['error' => false]);
@@ -349,7 +349,7 @@ class AjaxController extends Controller
                 return response()->json(['success' => true]);
             }
         } catch (\Exception $ex) {
-            info($ex->getMessage());
+            info("KYC Entity $request->quote_uuid - ERROR:".$ex->getMessage());
         }
 
         return response()->json(['message' => 'Something went wrong, contact to administrator.']);

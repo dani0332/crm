@@ -41,6 +41,7 @@ const page = usePage();
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 
 const modals = reactive({
   duplicate: false,
@@ -511,6 +512,13 @@ const linkEntity = () => {
       <div class="text-sm">
         <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
           <div class="grid sm:grid-cols-2">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
             <div>
               <x-tooltip position="bottom">
                 <label

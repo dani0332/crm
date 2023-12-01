@@ -9,16 +9,14 @@ const props = defineProps({
   entityDetails: Object,
   membersDetails: Object,
   uboDetails: Object,
-  memberRelations: Object,
-  uboRelations: Object,
   nationalities: Object,
   emirates: Object,
-  industryType: Object,
   customerTypeEnum: Object,
   businessTypeCode: Object,
   businessCoverTypeText: Array,
   businessCommuModeText: Array,
   kycLogs: Array,
+  kycStatus: String,
   quoteStatusCode: { type: [Object, String] },
   isCurrentUserFromCompliance: { type: [Array, Number] },
   isCurrentUserFromPaAml: { type: [Array, Number] },
@@ -592,19 +590,17 @@ onMounted(() => {
 
     <!-- AML Screening Models Start -->
     <EntityModel
-      v-if="entityDetails.entity"
-      v-model="modals.insuranceForm"
-      :quoteType="quoteType"
-      :quoteDetails="quoteRequest"
-      :entityDetails="entityDetails"
-      :nationalities="nationalities"
-      :membersDetails="membersDetails"
-      :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
-      :customerTypeEnum="customerTypeEnum"
-      :lookups="lookups"
-      :quote-aml-status="page.props.quoteAmlStatus"
+        v-if="props.kycStatus === 'ENT'"
+        v-model="modals.insuranceForm"
+        :quoteType="quoteType"
+        :quoteDetails="quoteRequest"
+        :entityDetails="entityDetails"
+        :nationalities="nationalities"
+        :membersDetails="membersDetails"
+        :uboDetails="uboDetails"
+        :customerTypeEnum="customerTypeEnum"
+        :lookups="lookups"
+        :quote-aml-status="page.props.quoteAmlStatus"
     />
 
     <IndividualModel
@@ -615,11 +611,8 @@ onMounted(() => {
       :entityDetails="entityDetails"
       :nationalities="nationalities"
       :emirates="emirates"
-      :industryType="industryType"
       :membersDetails="membersDetails"
       :uboDetails="uboDetails"
-      :memberRelations="memberRelations"
-      :uboRelations="uboRelations"
       :customerTypeEnum="customerTypeEnum"
       :lookups="lookups"
       :quote-aml-status="page.props.quoteAmlStatus"
@@ -672,44 +665,6 @@ onMounted(() => {
         </template>
       </DataTable>
     </div>
-
-    <!-- <div class="p-4 rounded shadow mb-6 bg-white">
-      <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-        <h3 class="font-semibold text-primary-800 text-lg">Payer Details</h3>
-      </div>
-      <x-divider class="mb-4 mt-1" />
-      <DataTable
-        table-class-name="tablefixed"
-        :headers="payersTableHeader"
-        :loading="loader.table"
-        :items="paymentsRef || []"
-        border-cell
-        hide-rows-per-page
-        hide-footer
-        fixed-checkbox
-      >
-        <template #payment_ref_id="{ code }">
-          {{ code }}
-        </template>
-        <template #payment-method="{ payment_method }">
-          {{ payment_method.name }}
-        </template>
-        <template #payer-name="item">
-          {{
-            paymentsRef.get_customer_payment_instrument.car_holder_name
-              ? paymentsRef.get_customer_payment_instrument.car_holder_name
-              : 'N/A'
-          }}
-        </template>
-        <template #total-amount="{ captured_amount }">
-          {{ captured_amount }}
-        </template>
-        <template #paid_by="{ paid_by }">
-          {{ paymentsRef.paid_by ? paymentsRef.paid_by : 'Third Party' }}
-        </template>
-      </DataTable>
-    </div> -->
-
     <AuditLogs
       :type="`App\\Models\\${quoteType.code}Quote`"
       :id="quoteRequest.id"

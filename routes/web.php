@@ -114,13 +114,6 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('/reports/fetch-advisor-by-team', [ReportsController::class, 'fetchAdvisorListByTeam']);
     Route::post('/reports/fetch-subteams-advisor-by-team', [ReportsController::class, 'fetchSubTeamsAdvisorListByTeam']);
 
-    Route::get('set-customer-member-records', function () {
-        if (auth()->user()->hasRole(\App\Enums\RolesEnum::Admin)) {
-            dd('Job Working in Progress - Not allowed to hit this job right now.');
-            \App\Jobs\UpdateCustomerMemberMissingData::dispatch();
-        }
-    });
-
     Route::group(['middleware' => ['check_route_access']], function () {
         Route::post('update-team-allocation-threshold', [AllocationThresholdController::class, 'updateAllocation']);
         Route::get('/accumulative-dashboard', [DashboardController::class, 'renderMainDashboard'])->name('main-dashboard-view');
@@ -460,16 +453,16 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
         Route::resource('age', AgeDiscountController::class);
     });
 
-    Route::group(['prefix' => 'telemarketing'], function () {
-        Route::resource('tmleads', TmLeadController::class);
-        Route::resource('tminsurancetype', TmInsuranceTypeController::class);
-        Route::resource('tmcallstatus', TmCallStatusController::class);
-        Route::resource('tmleadstatus', TmLeadStatusController::class);
-        Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
-        Route::resource('tmuploadlead', TmUploadLeadController::class);
-        Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
-        Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
-    });
+    // Route::group(['prefix' => 'telemarketing'], function () {
+    //     Route::resource('tmleads', TmLeadController::class);
+    //     Route::resource('tminsurancetype', TmInsuranceTypeController::class);
+    //     Route::resource('tmcallstatus', TmCallStatusController::class);
+    //     Route::resource('tmleadstatus', TmLeadStatusController::class);
+    //     Route::get('/car-model', [TmLeadController::class, 'carModelBasedOnCarMake']);
+    //     Route::resource('tmuploadlead', TmUploadLeadController::class);
+    //     Route::get('tmleads/{tmLeadID}/tmLeadUpdate', [TmLeadController::class, 'tmLeadUpdate'])->name('tmLeadUpdate');
+    //     Route::get('/tmLeadsAssign', [TmLeadController::class, 'tmLeadsAssign']);
+    // });
 
     Route::get('/car-model', [AjaxController::class, 'carModelBasedOnCarMake']);
     Route::get('/car-make', [AjaxController::class, 'getCarMake']);
@@ -491,6 +484,7 @@ Route::group(['middleware' => ['auth', 'last_login_check']], function () {
     Route::post('update-car-plan-details', [CarQuoteController::class, 'updateCarPlanDetails']);
 
     Route::resource('members', MembersDetailController::class);
+    Route::post('members/update', [MembersDetailController::class, 'uboUpdate']);
     Route::get('/insurance-provider-plans', [ClaimController::class, 'carPlansByInsuranceProvider']);
     Route::get('/insurance-provider-plans-health', [HealthQuoteController::class, 'plansByInsuranceProvider']);
     Route::get('/insurance-provider-networks', [HealthQuoteController::class, 'networksByInsuranceProvider']);
