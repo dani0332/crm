@@ -78,7 +78,7 @@ const UBODetailsTable = reactive({
   ],
 });
 
-const uboForm = reactive({
+const uboForm = useForm({
   quote_type: props.quoteType.code,
   customer_type: props.customerType,
   quote_request_id: props.quoteDetails.id,
