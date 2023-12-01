@@ -84,11 +84,13 @@ const insuredDetailsSubmit = isValid => {
         position: 'top',
       });
     },
-    onSuccess: () => {
-      notification.success({
-        title: 'Quote is updated',
-        position: 'top',
-      });
+    onSuccess: (response) => {
+        if (response.props.flash.length === 0) {
+            notification.success({
+                title: 'Quote is updated',
+                position: 'top',
+            });
+        }
     },
     onFinish: () => {
       modals.addContact = false;
