@@ -137,7 +137,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
             ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->latest()->first();
 
-            if (isset($fetchLastAMLCheck->search_type) && $fetchLastAMLCheck->search_type == CustomerTypeEnum::Individual) {
+            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort) {
 
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
                     'insured_first_name',
