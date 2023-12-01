@@ -1,5 +1,6 @@
 <script setup>
 import { useForm } from '@inertiajs/vue3';
+import {onMounted} from "vue";
 
 const props = defineProps({
   quoteDetails: Object,
@@ -77,10 +78,11 @@ const UBODetailsTable = reactive({
   ],
 });
 
-const uboForm = useForm({
+const uboForm = reactive({
   quote_type: props.quoteType.code,
   customer_type: props.customerType,
   quote_request_id: props.quoteDetails.id,
+  quote_id: props.quoteDetails.id, //Added this quote_id because quote_request_id is not getting in Controller Request.
   customer_id: props.quoteDetails.customer_id,
   entity_id: props.entity_id ?? null,
   id: null,
@@ -113,13 +115,12 @@ const onUBOSubmit = isValid => {
   loader.value.form = true;
   if (editUBODetails.value) {
     axios
-      .put(`/members/${uboForm.id}`, uboForm)
+      .post('/members/update', uboForm)
       .then(res => {
         notification.success({
           title: 'UBO Updated Successfully',
           position: 'top',
         });
-        uboForm.reset();
           if (res.status) {
               let { data } = res.data;
 
