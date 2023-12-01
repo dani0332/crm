@@ -76,25 +76,6 @@ class AMLService
 
     public static function getQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        $migratedQuoteTypes = [
-            QuoteTypes::BIKE->id(),
-            QuoteTypes::YACHT->id(),
-            QuoteTypes::PET->id(),
-            QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id(),
-        ];
-        $isDataMigrated = true;
-        $quoteRequestDetails = [];
-
-        if (in_array($quoteTypeId, $migratedQuoteTypes)) {
-            $checkAMLService = new CheckAmlService();
-            $isDataMigrated = $checkAMLService->isDataMigrated($quoteTypeId, $quoteRequestId);
-
-            if (! $isDataMigrated) {
-                $quoteRequestId = $checkAMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            }
-        }
-
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $quoteRequestDetails = CarQuote::with([
                 'quoteStatus',
@@ -168,24 +149,14 @@ class AMLService
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            if ($isDataMigrated) {
-                $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
-                    'petQuote',
-                    'customer.detail',
-                    'quoteStatus',
-                    'payments.paymentMethod',
-                    'payments.getCustomerPaymentInstrument',
-                    'paymentStatus',
-                ])->where('id', $quoteRequestId)->firstOrFail();
-            } else {
-                $quoteRequestDetails = PetQuote::with([
-                    'quoteStatus',
-                    'payments.paymentMethod',
-                    'payments.getCustomerPaymentInstrument',
-                    'paymentStatus',
-                    'customer.detail',
-                ])->where('id', $quoteRequestId)->firstOrFail();
-            }
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
+                'petQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
                 'bikeQuote',
