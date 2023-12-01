@@ -46,6 +46,7 @@ use App\Traits\GenericQueriesAllLobs;
 use Carbon\Carbon;
 use DataTables;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AMLController extends Controller
 {
@@ -87,11 +88,10 @@ class AMLController extends Controller
                     if (isset($request->amlCreatedStartDate) && ! empty($request->amlCreatedStartDate)) {
                         $quoteRequestTable = AMLService::isDataMigrated($quoteTypeId, '', $request->amlCreatedStartDate) ? 'personal_quotes' : $quoteRequestTable;
                     } else {
-                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail', 'id'])) {
+                        if (isset($request->searchType) && in_array($request->searchType, ['cdbId', 'customerEmail'])) {
                             $searchType = match ($request->searchType) {
                                 'cdbId' => 'code',
                                 'customerEmail' => 'email',
-                                'id' => 'id'
                             };
 
                             $createdDate =
@@ -103,12 +103,17 @@ class AMLController extends Controller
                     }
                 }
 
-                $dataAml = AML::select('kyc_logs.*', 'quote_type.text as quote_type_text', $quoteRequestTable.'.code as cdb_id')
-                    ->leftjoin('quote_type', 'quote_type.id', 'kyc_logs.quote_type_id')
-                    ->leftjoin($quoteRequestTable, $quoteRequestTable.'.id', 'kyc_logs.quote_request_id')
-                    ->where('kyc_logs.quote_type_id', $quoteTypeId)
-                    ->orderBy('kyc_logs.created_at', 'desc');
+                $dataAml = DB::table($quoteRequestTable);
+                if ($quoteRequestTable == strtolower(quoteTypeCode::Pet).'_quote_request') {
+                    $dataAml = $dataAml->select($quoteRequestTable.'.*', $quoteRequestTable.'.personal_quote_id as id', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id');
+                } else {
+                    $dataAml = $dataAml->select($quoteRequestTable.'.*', DB::raw('"'.$request->quoteType.' Insurance" as quote_type_text, "'.$quoteTypeId.'" as quote_type_id'), $quoteRequestTable.'.code as cdb_id');
+                }
 
+                $dataAml = $dataAml->orderBy($quoteRequestTable.'.created_at', 'desc');
+                if ($quoteRequestTable == 'personal_quotes') {
+                    $dataAml->where($quoteRequestTable.'.quote_type_id', $quoteTypeId);
+                }
                 if (
                     isset($request->searchType) && ! empty($request->searchType) &&
                     isset($request->searchField) && ! empty($request->searchField)
@@ -116,9 +121,7 @@ class AMLController extends Controller
                     if ($request->searchType == 'cdbId') {
                         $dataAml->where($quoteRequestTable.'.code', $request->searchField);
                     }
-                    if ($request->searchType == 'id') {
-                        $dataAml->where('kyc_logs.id', $request->searchField);
-                    }
+
                     if ($request->searchType == 'customerEmail') {
                         $dataAml->where($quoteRequestTable.'.email', $request->searchField);
                     }
@@ -137,7 +140,7 @@ class AMLController extends Controller
                 ) {
                     $amlCreatedDate = date(config('constants.DATE_FORMAT_ONLY').' 00:00:00', strtotime($request->amlCreatedStartDate));
                     $amlEndDate = date(config('constants.DATE_FORMAT_ONLY').' 23:59:59', strtotime($request->amlCreatedEndDate));
-                    $dataAml->whereBetween('kyc_logs.created_at', [$amlCreatedDate, $amlEndDate]);
+                    $dataAml->whereBetween($quoteRequestTable.'.created_at', [$amlCreatedDate, $amlEndDate]);
                 }
 
                 $quotes = $dataAml->simplePaginate(10)->withQueryString();
@@ -184,6 +187,7 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
+
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
@@ -193,8 +197,8 @@ class AMLController extends Controller
                 $aml->orWhereNull('decision');
             });
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
-
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
+
         $customerDetails = Customer::where('id', $quoteRequest->customer_id)->with('detail')->firstOrFail();
         $entityDetails = QuoteRequestEntityMapping::with('entity')->where(['quote_type_id' => $quoteTypeId, 'quote_request_id' => $quoteRequestId])->first() ?? [];
         $membersDetail = CustomerMembersRepository::getBy('quote_id', $quoteRequest->id, $quoteType->code);
