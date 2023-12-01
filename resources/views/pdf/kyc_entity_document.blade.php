@@ -283,7 +283,7 @@
         updates are
         required, please contact your insurance advisor.</p>
     <p style="font-size: 11px;">
-        <i>This KYC was authorized on {{ date('d/m/y') }} at {{ date('H:i:s') }}. IP Address: {{ request()->ip() }}</i>
+        <i>This KYC was authorized on {{ date('d/m/y') }} at {{ date('H:i:s') }}.</i>
     </p>
 
     <div id="footer">
