@@ -569,3 +569,26 @@ if (! function_exists('getRepositoryObject')) {
         return 'App\\Repositories\\'.$quoteType.'QuoteRepository';
     }
 }
+
+if (! function_exists('getModelNameForDocument')) {
+    function getModelNameForDocument($quoteType = 'personal', $read= false)
+    {
+        $quoteType = ucfirst($quoteType);
+        switch ($quoteType) {
+            case quoteTypeCode::Business:
+                $quoteType = quoteTypeCode::Business;
+                break;
+            case quoteTypeCode::Home:
+                $quoteType = quoteTypeCode::Home;
+                break;
+            case in_array($quoteType, [quoteTypeCode::Pet, quoteTypeCode::Bike, quoteTypeCode::Cycle, quoteTypeCode::Yacht]):
+                $quoteType = quoteTypeCode::PERSONAL;
+                break;
+            default:
+                if ($read) {
+                    $quoteType = 'Personal';
+                }
+        }
+        return 'App\\Models\\' . $quoteType . 'Quote';
+    }
+}

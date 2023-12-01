@@ -2,10 +2,10 @@
 
 namespace App\Repositories;
 
-use App\Enums\CustomerTypeEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\QuoteStatusEnum;
+use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypeId;
 use App\Facades\Capi;
 use App\Models\QuoteDocument;
@@ -19,22 +19,7 @@ class PersonalQuoteRepository extends BaseRepository
 {
     public function model()
     {
-        return $this->getModelName(request()->folder_path ?? "");
-    }
-
-    private function getModelName($quoteType='personal')
-    {
-        $quoteType = ucfirst($quoteType);
-        switch ($quoteType){
-            case CustomerTypeEnum::Business:
-                $quoteType = 'Business';
-                break;
-            default:
-                $quoteType = 'Personal';
-                break;
-        }
-
-        return 'App\\Models\\'.$quoteType.'Quote';
+        return getModelNameForDocument(request()->folder_path ?? "");
     }
 
     /**

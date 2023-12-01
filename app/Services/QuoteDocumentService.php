@@ -193,8 +193,8 @@ class QuoteDocumentService extends BaseService
 
     public function getQuoteDocuments($quoteType, $recordId)
     {
-        $quoteTypeDoc = $this->getDocumentType($quoteType);
-        $quote = app()->make('App\\Models\\' . $quoteTypeDoc . 'Quote')::where('id', $recordId)->first();
+        $quoteTypeDoc= getModelNameForDocument($quoteType);
+        $quote = app()->make($quoteTypeDoc)::where('id', $recordId)->first();
         if ($quote && $quote->documents) {
             $quote->documents->load('createdBy:id,name');
 
