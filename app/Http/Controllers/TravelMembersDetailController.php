@@ -45,6 +45,7 @@ class TravelMembersDetailController extends Controller
                     'customer_entity_id' => $customerEntityId,
                     'customer_type' => CustomerTypeEnum::Entity,
                     'quote_id' => $request->travel_quote_request_id ?? '',
+                    'gender' => $request->gender ?? '',
                 ]);
             }
 
@@ -132,7 +133,7 @@ class TravelMembersDetailController extends Controller
                     'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
                 ]));
 
-            $travelMemberData = $request->only(['dob', 'nationality_id']);
+            $travelMemberData = $request->only(['dob', 'nationality_id', 'gender']);
 
             TravelQuote::where('primary_member_id', $id)->update($travelMemberData);
 

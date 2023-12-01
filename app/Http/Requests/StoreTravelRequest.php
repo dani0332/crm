@@ -25,13 +25,16 @@ class StoreTravelRequest extends FormRequest
      */
     public function rules()
     {
+        $editMode= request()->edit_mode ?? false;
         $travelService = (app()->make(TravelQuoteService::class));
         $travelService->getGenericModel(quoteTypeCode::Travel);
         $properties = $travelService->getFieldsToCreate('skipProperties', 'create');
         $requireProperties = array_filter($properties, function ($value) {
             return strpos($value, 'required') !== false;
         });
-
+        if ($editMode) {
+            unset($requireProperties['members']);
+        }
         $rules = [];
         foreach ($requireProperties as $key => $value) {
             $rule = ['required'];
