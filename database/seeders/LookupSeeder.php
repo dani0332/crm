@@ -284,7 +284,6 @@ class LookupSeeder extends Seeder
         }
         Lookup::updateOrCreate(['key' => LookupsEnum::PROFESSIONAL_TITLE, 'code' => 'professional-unspecified'], ['text' => 'Unspecified']);
 
-
         if (! DB::table('lookups')->where('key', LookupsEnum::MEMBER_RELATION)->first()) {
             DB::table('lookups')->insert([
                 ['key' => LookupsEnum::MEMBER_RELATION, 'code' => 'relHusband', 'text' => 'Husband', 'created_at' => now(), 'updated_at' => now()],
