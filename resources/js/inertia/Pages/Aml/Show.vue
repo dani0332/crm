@@ -131,6 +131,7 @@ const setSelectedOption = (e, item) => {
   }
 
 };
+const checkDecisionLockStatus = (props.aml.decision === props.amlDecisionStatusCode.TRUE_MATCH && hasRole(rolesEnum.COMPLIANCE));
 
 const isTrue = computed(() => {
   return amlResults.value.some(x => x.decision == 'TrueMatch');
@@ -244,6 +245,7 @@ function complianceRules () {
               ]"
               placeholder="Select Result"
               class="w-full"
+              :disabled="checkDecisionLockStatus"
               @update:modelValue="setSelectedOption($event, item)"
               size="xs"
             />
