@@ -47,13 +47,13 @@ const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 
 const industryTypeOptions = computed(() => {
-  return page.props.industryType.map(indType => ({
+  return page.props.industryType?.map(indType => ({
     value: indType.code,
     label: indType.text,
   }));
 });
 const emiratesOptions = computed(() => {
-  return page.props.emirates.map(em => ({
+  return page.props.emirates?.map(em => ({
     value: em.id,
     label: em.text,
   }));

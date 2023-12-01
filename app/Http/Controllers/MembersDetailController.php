@@ -146,6 +146,51 @@ class MembersDetailController extends Controller
         return redirect()->back();
     }
 
+    public function uboUpdate(MemberDetailRequest $request)
+    {
+        $quoteMemberDetails = $request->validated();
+        $quoteObject = $this->getQuoteObject(strtolower($request->quote_type), $request->quote_request_id ?? $request->quote_id);
+
+        if ($quoteObject) {
+            $quoteModel = $this->getModelObject(strtolower($request->quote_type));
+
+            if ($request->customer_type == CustomerTypeEnum::Individual) {
+                $customerEntityId = $request->customer_id;
+                $quoteMemberDetails = array_merge($quoteMemberDetails, [
+                    'customer_entity_id' => $customerEntityId,
+                    'customer_type' => CustomerTypeEnum::Individual,
+                ]);
+            } else {
+                $customerEntityId = $request->entity_id;
+                $quoteMemberDetails = array_merge($quoteMemberDetails, [
+                    'customer_entity_id' => $customerEntityId,
+                    'customer_type' => CustomerTypeEnum::Entity,
+                ]);
+            }
+
+            $memberDetail = CustomerMembers::findOrFail($request->id);
+            $memberDetail->update(array_merge($quoteMemberDetails,
+                [
+                    'quote_type' => ltrim($quoteModel, "'\'"),
+                    'is_payer' => isset($request->is_payer) && $request->is_payer == 1,
+                ]));
+
+            if (ucwords(strtolower($request->quote_type)) == QuoteTypes::HEALTH->value) {
+                $quoteObject->quote_updated_at = Carbon::now();
+            }
+            $quoteObject->updated_at = Carbon::now();
+            $quoteObject->save();
+
+            $memberDetail = $memberDetail->load(['relation', 'nationality']);
+
+            if (isset($request->from_aml_model)) {
+                return response()->json(['status' => true, 'message' => 'Updated', 'data' => $memberDetail]);
+            }
+        }
+
+        return response()->json(['error' => 'Something went wrong.']);
+    }
+
     /**
      * Remove the specified resource from storage.
      *

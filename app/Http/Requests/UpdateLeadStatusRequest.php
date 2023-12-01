@@ -135,9 +135,9 @@ class UpdateLeadStatusRequest extends FormRequest
             $fetchLastAMLCheck = KycLog::withTrashed()->where([
                 'quote_request_id' => request()->leadId,
                 'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
-            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->latest()->first()->toArray();
+            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->latest()->first();
 
-            if (isset($fetchLastAMLCheck['search_type']) && $fetchLastAMLCheck['search_type'] == CustomerTypeEnum::Individual) {
+            if (isset($fetchLastAMLCheck->search_type) && $fetchLastAMLCheck->search_type == CustomerTypeEnum::Individual) {
 
                 $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
                     'insured_first_name',

@@ -196,6 +196,10 @@ class LookupService extends BaseService
                 $query->where('quote_type_id', $quoteTypeId)->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id');
             });
         })->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id')->get();
+    }
 
+    public function getCompanyTypes()
+    {
+        return Lookup::where('key', LookupsEnum::COMPANY_TYPE)->get();
     }
 }
