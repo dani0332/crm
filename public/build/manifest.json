@@ -7,11 +7,7 @@
     "css": [
       "assets/inertia-bc41b32b.css"
     ],
-<<<<<<< HEAD
-    "file": "assets/inertia-ad08c7da.js",
-=======
-    "file": "assets/inertia-df9d70ae.js",
->>>>>>> develop
+    "file": "assets/inertia-d5b1a2b1.js",
     "isEntry": true,
     "src": "resources/js/inertia/inertia.js"
   }
