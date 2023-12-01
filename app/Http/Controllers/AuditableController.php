@@ -38,7 +38,7 @@ class AuditableController extends Controller
 
     public function loadAuditLogs(Request $request)
     {
-        $code = isset($request->code) ? $request->code : '';
+         $code = isset($request->code) ? $request->code : '';
         $auditableTypes = ['App\Models\Payment', 'App\Models\PaymentSplits'];
         $query = DB::table('audits')
             ->select('audits.*', 'users.name')
@@ -54,18 +54,22 @@ class AuditableController extends Controller
         }
 
         return $query->orderBy('created_at', 'desc')->get();
+ 
     }
 
     public function loadApiLogs(Request $request)
     {
         if ($request->auditableType == CarQuote::class) {
-            $uuid = CarQuote::where('id', $request->auditableId)->value('uuid');
-
-            return InsurerRequestResponse::with('insuranceProvider')
+            $query = InsurerRequestResponse::with('insuranceProvider')
                 ->select('*')
-                ->where('insurer_request_response.quote_uuid', $uuid)
-                ->orderByDesc('insurer_request_response.created_at')
-                ->get();
+                ->where('insurer_request_response.quote_uuid', CarQuote::where('id', $request->auditableId)->value('uuid'))
+                ->orderByDesc('insurer_request_response.created_at');
+
+            if ($request->insurance_provider) {
+                $query->where('insurer_request_response.provider_id', $request->insurance_provider);
+            }
+
+            return $query->get();
         }
     }
 

@@ -20,8 +20,12 @@ const props = defineProps({
   paymentMethods: Array,
   quoteType: String,
   storageUrl: String,
+  eCommercePrice: {
+    type: String,
+    default: '0',
+  },
 });
-console.log('QUOTEREQUEST='+JSON.stringify(props.paymentDocument));
+console.log('QUOTEREQUEST='+JSON.stringify(props.quoteRequest));
 const createPaymentModal = ref(false);
 const isPaymentNoEnabled = ref(false);
 const isCustomReasonEnabled = ref(false);
@@ -76,10 +80,17 @@ const isCreditCardView = ref(false);
 
 // Array of quote types to check against
 const quoteTypesToCheck = ['Car', 'Health', 'Travel'];
-const initialAmount = quoteTypesToCheck.includes(props.quoteType)
-  ? props.quoteRequest.premium
-  : props.quoteRequest.price_with_vat;
+// Declare initialAmount variable
+let initialAmount;
 
+// Check quoteType and set initialAmount accordingly
+if (props.quoteType === 'Health') {
+  initialAmount = props.eCommercePrice;
+} else {
+  initialAmount = quoteTypesToCheck.includes(props.quoteType)
+    ? props.quoteRequest.premium
+    : props.quoteRequest.price_with_vat;
+}
 const totalPrice = ref(initialAmount); // Initial total price
 const totalAmount = ref(initialAmount); // Initial total price
 
@@ -482,7 +493,8 @@ const handleDiscountChange = () => {
   }
 
   isDiscountReasonEnabled.value = false;
-  if(paymentMethodsForm.discount === '' || paymentMethodsForm.discount === 'none'){
+  console.log('HAFDISC='+paymentMethodsForm.discount);
+  if(paymentMethodsForm.discount === '' || paymentMethodsForm.discount === undefined ){
     isDiscountEnabled.value = false;    
   }else{
     isDiscountEnabled.value = true; 
@@ -864,15 +876,25 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
   paymentMethodsForm.total_price= payment.total_price;
   paymentMethodsForm.collection_date= payment.collection_date;
   discountValue.value = payment.discount_value; // discount amount
-  console.log('azhar20='+payment.total_payments);
-  //console.log('azha221='+JSON.stringify(paymentMethodsForm));
+  //console.log('azhar20='+payment.total_payments);
+
+  if (paymentMethodsForm.status === 'view' || capture_approval>0 ) {
+    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'N/A';  
+    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : 'N/A';     
+  } else {
+    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';  
+    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';  
+  }   
+  console.log('AZZZ='+paymentMethodsForm.discount);
+  
   handleCollectionTypeChange();
   handleFrequencyChange(false);
   handleApprovalReasonChange();
   handleDiscountChange();
   handleDeclinedReasonChange();
   calculateTotalAmount();
-  
+
+  console.log('azha221='+JSON.stringify(paymentMethodsModels.value));
   console.log('azhar200='+JSON.stringify(payment.payment_splits));
 
   var isAnyPaid = false;
@@ -901,10 +923,10 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
         if (!fileUploadModels.value[i]) {
           fileUploadModels.value[i] = [];
         }            
-        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]);        
-        
+        fileUploadModels.value[i].push(payment.payment_splits[i-1].documents[doc]); 
       }
     }
+
   }
   
   if (paymentMethodsForm.status == 'edit') {
@@ -913,16 +935,7 @@ const editPaymentModal = (payment,split_payment_id,sr_no,capture_approval) => {
     } else {
       isFieldReadonly.value = false;      
     }
-  }
-
-  if (paymentMethodsForm.status === 'view' || capture_approval>0 || isFieldReadonly.value === true ) {
-    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : 'N/A';  
-    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : 'N/A';     
-  } else {
-    paymentMethodsForm.credit_approval= payment.credit_approval !== null ? payment.credit_approval : '';  
-    paymentMethodsForm.discount = payment.discount_type !== null ? payment.discount_type : '';  
-  }   
-  console.log('AZZZ='+paymentMethodsForm.discount);
+  } 
 
   if(capture_approval>0) {
     isApproveClicked.value = true;
@@ -2050,8 +2063,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               <ToolTip
                 v-if="!isFieldReadonly"
                 title="TOTAL AMOUNT"
-                :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"
-                :required=true
+                :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
               />
             <x-field v-else label="TOTAL AMOUNT" class="w-full"></x-field>
             <x-field class="w-full">
