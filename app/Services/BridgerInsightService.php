@@ -154,7 +154,7 @@ class BridgerInsightService
                                 'created_at' => Carbon::now(),
                                 'input' => $customerOrEntityName,
                                 'match_found' => $amlResultCount > 0 ? 1 : 0,
-                                'search_type' => $customerType,
+                                'search_type' => (substr($memberUboDetails['code'], 0, 3) == CustomerTypeEnum::IndividualShort) ? CustomerTypeEnum::Individual : CustomerTypeEnum::Entity,
                                 'customer_code' => $memberUboDetails['code'],
                             ];
 
