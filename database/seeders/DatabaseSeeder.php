@@ -43,7 +43,6 @@ class DatabaseSeeder extends Seeder
             //            LookupSeeder::class,
             //            AddNewDocumentTypesSeeder::class,
             // UpdateCustomerToHealthAndTravelMemberDetails::class,
-            addEnableLeadReassignment::class,
         ]);
     }
 }
