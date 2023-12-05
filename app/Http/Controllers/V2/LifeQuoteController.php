@@ -23,6 +23,7 @@ use App\Repositories\LostReasonRepository;
 use App\Repositories\NationalityRepository;
 use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
+use App\Services\AMLService;
 use App\Services\CentralService;
 use Illuminate\Http\Request;
 
@@ -102,7 +103,7 @@ class LifeQuoteController extends Controller
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
-        if ($quote->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+        if (AMLService::checkAMLStatusFailed(QuoteTypes::LIFE->id(), $quote->id)) {
             $quoteStatuses = collect($quoteStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();

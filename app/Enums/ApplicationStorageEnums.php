@@ -45,4 +45,5 @@ final class ApplicationStorageEnums extends Enum
     public const ENABLE_AUTO_FOLLOWUP = 'ENABLE_AUTO_FOLLOWUP';
     public const APPLY_DUBAI_NOW_EXCLUSION = 'APPLY_DUBAI_NOW_EXCLUSION';
     public const ENABLE_CAMMY_FOLLOWUP = 'ENABLE_CAMMY_FOLLOWUP';
+    public const ENABLE_LEAD_REASSIGNMENT = 'ENABLE_LEAD_REASSIGNMENT';
 }
