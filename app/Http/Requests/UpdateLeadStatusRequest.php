@@ -152,7 +152,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            if (AMLService::checkAMLStatusFailed(request()->leadId, $quoteTypesIds[request()->modelType]) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
                 $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
             }
 
