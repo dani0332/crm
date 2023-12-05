@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\FilterTypes;
+use App\Enums\QuoteTypeId;
 use App\Traits\FilterCriteria;
 use App\Traits\QuoteModelTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,6 +30,7 @@ class PersonalQuote extends Model implements AuditableContract
         'quote_status_id' => FilterTypes::IN,
         'is_ecommerce' => FilterTypes::EXACT,
         'previous_quote_policy_number' => FilterTypes::NULL_CHECK,
+        'previous_quote_policy_number_text' => FilterTypes::EXACT,
         'advisor_id' => FilterTypes::IN,
         'policy_number' => FilterTypes::EXACT,
     ];
@@ -39,6 +41,14 @@ class PersonalQuote extends Model implements AuditableContract
     public function quoteStatus()
     {
         return $this->belongsTo(QuoteStatus::class);
+    }
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class);
     }
 
     /**
@@ -224,5 +234,11 @@ class PersonalQuote extends Model implements AuditableContract
     public function leadHistory()
     {
         return $this->hasMany(QuoteStatusLog::class, 'quote_request_id');
+    }
+
+    public function quoteRequestEntityMapping()
+    {
+        return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
+            ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
     }
 }

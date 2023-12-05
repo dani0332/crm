@@ -58,6 +58,8 @@ const tableHeader = [
   { text: 'MEMBER CATEGORY', value: 'member_category_id_text' },
   { text: 'CURRENTLY INSURED WITH', value: 'currently_insured_with_id_text' },
   { text: 'IS ECOMMERCE', value: 'is_ecommerce' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const filteredTableHeader = computed(() => {
@@ -84,6 +86,8 @@ const filters = reactive({
   is_ecommerce: '',
   is_renewal: '',
   page: 1,
+  previous_quote_policy_number: '',
+  renewal_batch: '',
 });
 
 const subTeamOptions = [
@@ -359,6 +363,22 @@ onMounted(() => {
           placeholder="Please select assignment type"
           class="w-full"
         />
+        <x-input
+          v-model="filters.previous_quote_policy_number"
+          type="text"
+          name="previous_quote_policy_number"
+          label="Previous Policy Number"
+          class="w-full"
+          placeholder="Search by Previous Policy Number"
+        />
+        <x-input
+          v-model="filters.renewal_batch"
+          type="text"
+          name="renewal_batch"
+          label="Renewal Batch"
+          class="w-full"
+          placeholder="Search by Renewal Batch"
+      />
       </div>
       <div class="flex justify-between gap-3 mb-4 mt-1">
         <div v-if="can(permissionsEnum.DATA_EXTRACTION)">

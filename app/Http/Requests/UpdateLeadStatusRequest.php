@@ -2,9 +2,16 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\AMLDecisionStatusEnum;
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\quoteStatusCode;
+use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
+use App\Enums\QuoteTypeId;
 use App\Enums\RolesEnum;
+use App\Models\Customer;
+use App\Models\KycLog;
 use App\Models\RenewalBatch;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
@@ -36,7 +43,7 @@ class UpdateLeadStatusRequest extends FormRequest
             'quote_uuid' => 'required',
             'leadStatus' => 'required',
             'notes' => 'nullable',
-            'lost_notes' => 'nullable|max:100',
+            'lost_notes' => 'nullable|max:500',
             'approve_reason_id' => 'nullable',
             'reject_reason_id' => 'nullable',
         ];
@@ -87,11 +94,81 @@ class UpdateLeadStatusRequest extends FormRequest
             }
         }
 
+        if (request()->leadStatus == QuoteStatusEnum::Lost) {
+            $rules['lostReason'] = 'required';
+        }
+
+        if (request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            $rules['trans_code'] = 'required';
+        }
+
+        if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Car)) {
+            if (in_array(request()->leadStatus, [QuoteStatusEnum::FollowupCall, QuoteStatusEnum::Interested, QuoteStatusEnum::NoAnswer])) {
+                $rules['next_followup_date'] = 'required|date_format:'.config('constants.DATETIME_DISPLAY_FORMAT').'|after_or_equal:'.date(config('constants.DATETIME_DISPLAY_FORMAT'));
+                $rules['notes'] = 'required';
+            }
+
+            if (request()->leadStatus == QuoteStatusEnum::IMRenewal) {
+                if (! isset(request()->tier_id)) {
+                    $rules['tier_id'] = 'required';
+                }
+            }
+        }
+
         return $rules;
+    }
+
+    /**
+     * validate quote record and maximum number of alread uploaded files
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+
+            $quoteTypesIds = QuoteTypeId::asArray();
+            $quoteObject = $this->getQuoteObject(strtolower(request()->modelType), request()->leadId);
+
+            if (! $quoteObject) {
+                $validator->errors()->add('value', 'Lead not found please try again.');
+            }
+
+            $fetchLastAMLCheck = KycLog::withTrashed()->where([
+                'quote_request_id' => request()->leadId,
+                'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
+            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->latest()->first();
+
+            if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort) {
+
+                $customerProfileDetails = Customer::where('id', $quoteObject->customer_id)->first([
+                    'insured_first_name',
+                    'insured_last_name',
+                    'emirates_id_number',
+                    'emirates_id_expiry_date',
+                ])->toArray();
+
+                if (in_array(null, $customerProfileDetails) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                    $validator->errors()->add('value', 'Please update customer profile information before moving to '.quoteStatusCode::TRANSACTIONAPPROVED.' status');
+                }
+            }
+
+            if ($quoteObject->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+                $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
+            }
+
+            if (strtolower(request()->modelType) == strtolower(quoteTypeCode::Health)) {
+                if (($quoteObject->health_team_type == null || $quoteObject->health_team_type == quoteTypeCode::WCU) &&
+                    request()->leadStatus == QuoteStatusEnum::Qualified) {
+                    $validator->errors()->add('value', 'Please select team type before moving to '.quoteStatusCode::QUALIFIED.' status');
+                }
+            }
+        });
     }
 
     public function messages()
     {
-        return ['proof_document.required' => 'In order to change the status to Car Sold or Uncontactable, a proof document is required'];
+        return [
+            'proof_document.required' => 'In order to change the status to Car Sold or Uncontactable, a proof document is required',
+            'leadStatus.required' => 'Please select lead status and try again.',
+        ];
     }
 }

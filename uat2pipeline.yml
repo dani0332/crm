@@ -1,0 +1,10 @@
+trigger:
+- none
+
+pool:
+  vmImage: 'Ubuntu 20.04'
+  
+steps:
+
+- publish: '$(System.DefaultWorkingDirectory)'
+  artifact: imcrmuat2

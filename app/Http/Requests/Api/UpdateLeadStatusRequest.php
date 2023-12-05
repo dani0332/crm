@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Api;
 
+use App\Rules\ValidateQuoteObject;
 use Illuminate\Foundation\Http\FormRequest;
 
-class MemberDetail extends FormRequest
+class UpdateLeadStatusRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,10 +25,10 @@ class MemberDetail extends FormRequest
     public function rules()
     {
         return [
-            'gender' => 'required',
-            'dob' => 'required',
-            'health_quote_request_id' => 'required',
-            'modelType' => '',
+            'quote_type' => 'required',
+            'quote_uuid' => ['required', new ValidateQuoteObject],
+            'quote_status_id' => 'required|exists:quote_status,id',
+            'notes' => '',
         ];
     }
 }

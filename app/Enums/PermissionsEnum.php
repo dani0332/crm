@@ -96,6 +96,8 @@ final class PermissionsEnum extends Enum
     const VehicleDepreciationDelete = 'vehicle-depreciation-delete';
     const VehicleValuationList = 'vehicle-valuation-list';
     const AMLList = 'aml-list';
+    const AMLDecisionUpdate = 'aml-decision-update';
+    const AMLDecisionUpdateTrueMatch = 'aml-decision-update-true-match';
     const TeleMarketingList = 'telemarketing-list';
     const TeleMarketingCreate = 'telemarketing-create';
     const TeleMarketingEdit = 'telemarketing-edit';
@@ -235,4 +237,5 @@ final class PermissionsEnum extends Enum
     public const RENEWAL_BATCHES_EDIT = 'renewal-batches-edit';
     public const RENEWAL_BATCH_REPORT = 'renewal-batch-report';
     public const PAUSE_AUTO_FOLLOWUPS = 'pause-auto-followups';
+    const EmbeddedProductView = 'embedded-product-view';
 }
