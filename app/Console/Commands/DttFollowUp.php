@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\ApplicationStorageEnums;
+use App\Enums\LeadSourceEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\TiersEnum;
 use App\Jobs\CarRevivalFollowUpEmailJob;
@@ -66,10 +67,12 @@ class DttFollowUp extends Command
                 ['is_assigned', 0],
             ])->get();
 
+            $paymentStatusArray = [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED];
+            $leadSourceArray = [LeadSourceEnum::REVIVAL_PAID];
             foreach ($unreplied as $item) {
                 $created_at = $item->created_at;
                 $lead = CarQuote::where('uuid', $item->uuid)->first();
-                if (! empty($created_at) && ! in_array($lead->payment_status_id, [PaymentStatusEnum::CAPTURED, PaymentStatusEnum::PARTIAL_CAPTURED, PaymentStatusEnum::AUTHORISED])) {
+                if (! empty($created_at) && ! in_array($lead->payment_status_id, $paymentStatusArray) && ! in_array($lead->source, $leadSourceArray)) {
 
                     $afterTwoDays = Carbon::parse($created_at)->addDays(2)->startOfDay();
                     $afterSevenDays = Carbon::parse($created_at)->addDays(7)->startOfDay();
