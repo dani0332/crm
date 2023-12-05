@@ -470,23 +470,6 @@ const linkEntity = () => {
           }}
           Profile
         </h3>
-        <KycForm
-          :roles="$page.props.rolesEnum"
-          :quote="page.props.quote"
-          :country-list="page.props.countryList"
-          :aml-quote-status="page.props.amlQuoteStatus"
-          :nationalities="page.props.nationalities"
-          :modelType="'Cycle'"
-          :entities="page.props.entities"
-          :legal-structure="page.props.legalStructure"
-          :id-document-type="page.props.idDocumentType"
-          :mode-of-contact="page.props.modeOfContact"
-          :employment-sectors="page.props.employmentSectors"
-          :residential-status="page.props.residentialStatus"
-          :company-position="page.props.companyPosition"
-          :issuance-place="page.props.issuancePlace"
-          :issuing-authority="page.props.issuanceAuthorities"
-        />
       </div>
       <x-divider class="mb-4 mt-1" />
       <x-form @submit="updateProfileDetails" :auto-focus="false">

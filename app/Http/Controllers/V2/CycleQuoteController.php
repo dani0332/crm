@@ -137,38 +137,8 @@ class CycleQuoteController extends Controller
         $uboDetails = CustomerMembersRepository::getBy('quote_id', $quote->id, QuoteTypes::CYCLE->name, CustomerTypeEnum::Entity);
         $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
         $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
-        $amlQuoteStatus = app(CRUDService::class)->checkAmlQuoteStatus($quote->quote_status_id);
-        $countries = Nationality::all();
-        $lookupService = app(LookupService::class);
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = $industryType = null;
-        if ($quote->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $lookupService->getLegalStructure();
-            $idDocumentType = $lookupService->getEntityDocumentTypes();
-            $issuancePlace = $lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-            $industryType = $lookupService->getCompanyTypes();
-        } else {
-            $idDocumentType = $lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $lookupService->getModeOfContact();
-            $employmentSectors = $lookupService->getEmploymentSector();
-            $residentialStatus = $lookupService->getResidentialStatus();
-            $companyPosition = $lookupService->getCompanyPosition();
-        }
 
         return inertia('CycleQuote/Show', [
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
-            'industryType' => $industryType,
-            'modeOfContact' => $modeOfContact,
-            'employmentSectors' => $employmentSectors,
-            'residentialStatus' => $residentialStatus,
-            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::CYCLE,
             'quote' => $quote,
             'activities' => $activities,

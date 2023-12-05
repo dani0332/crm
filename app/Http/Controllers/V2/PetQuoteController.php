@@ -116,37 +116,8 @@ class PetQuoteController extends Controller
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
-        $crudService = app(CRUDService::class);
-        $amlQuoteStatus = $crudService->checkAmlQuoteStatus($quote->quote_status_id);
-        $countries = Nationality::all();
-        $lookupService = app(LookupService::class);
-        $entities = $residentialStatus = $legalStructure = $idDocumentType = $modeOfContact = $employmentSectors = $companyPosition = $issuancePlace = $issuanceAuthorities = null;
-        if ($quote->customer_type == AmlSearchType::ENTITY) {
-            $entities = Entity::all();
-            $legalStructure = $lookupService->getLegalStructure();
-            $idDocumentType = $lookupService->getEntityDocumentTypes();
-            $issuancePlace = $lookupService->getIssuancePlaces();
-            $issuanceAuthorities = $lookupService->getIssuanceAuthorities();
-        } else {
-            $idDocumentType = $lookupService->getIndividualDocumentTypes();
-            $modeOfContact = $lookupService->getModeOfContact();
-            $employmentSectors = $lookupService->getEmploymentSector();
-            $residentialStatus = $lookupService->getResidentialStatus();
-            $companyPosition = $lookupService->getCompanyPosition();
-        }
 
         return inertia('PetQuote/Show', [
-            'amlQuoteStatus' => $amlQuoteStatus,
-            'countryList' => $countries,
-            'entities' => $entities,
-            'legalStructure' => $legalStructure,
-            'idDocumentType' => $idDocumentType,
-            'issuancePlace' => $issuancePlace,
-            'issuanceAuthorities' => $issuanceAuthorities,
-            'modeOfContact' => $modeOfContact,
-            'employmentSectors' => $employmentSectors,
-            'residentialStatus' => $residentialStatus,
-            'companyPosition' => $companyPosition,
             'quoteType' => QuoteTypes::PET,
             'quote' => $quote,
             'activities' => $activities,
