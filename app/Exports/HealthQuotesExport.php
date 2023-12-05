@@ -2,9 +2,6 @@
 
 namespace App\Exports;
 
-use App\Services\CRUDService;
-use App\Services\HealthQuoteService;
-use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\Exportable;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -15,11 +12,8 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
 {
     use Exportable;
 
-    private $genderOptions;
-
     public function __construct($query)
     {
-        $this->genderOptions = app(CRUDService::class)->getGenderOptions();
         $this->query = $query;
     }
 
@@ -51,23 +45,11 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'MEMBER CATEGORY',
             'CURRENTLY INSURED WITH',
             'IS ECOMMERCE',
-            'Device',
-            'Gender',
-            'Nationality',
-            'Age Bands',
-            'Emirates of Visa',
-            'Member Category',
-            'Salary Band',
-            'HEALTH INSURANCE',
-            'TYPE OF PLAN',
-            'Provider Name',
         ];
     }
 
     public function map($quote): array
     {
-        $ecomDetails = app(HealthQuoteService::class)->getEcomDetails($quote);
-
         return [
             $quote->code,
             $quote->first_name,
@@ -89,16 +71,6 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             $quote->member_category_id_text,
             $quote->currently_insured_with_id_text,
             $quote->is_ecommerce ? 'Yes' : 'No',
-            $quote->device,
-            $this->genderOptions[$quote->gender] ?? '',
-            $quote->nationality_id_text,
-            Carbon::parse($quote->dob)->age,
-            $quote->emirate_of_your_visa_id_text,
-            $quote->member_category_id_text,
-            $quote->salary_band_id_text,
-            $quote->customer_type,
-            $ecomDetails['planName'] ?? '',
-            $ecomDetails['providerName'] ?? '',
         ];
     }
 }
