@@ -13,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Models\Customer;
 use App\Models\KycLog;
 use App\Models\RenewalBatch;
+use App\Services\AMLService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -151,7 +152,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            if ($quoteObject->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
                 $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
             }
 
