@@ -31,7 +31,7 @@ class TravelMemberDetailRequest extends FormRequest
             'relation_code' => 'nullable',
             'quote_request_id' => 'sometimes|required',
             'customer_id' => 'required',
-            'gender' => 'nullable'
+            'gender' => 'nullable',
         ];
     }
 }
