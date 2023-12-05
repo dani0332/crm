@@ -61,6 +61,9 @@
         table.tbl-dec {
             border: none;
         }
+        table.tbl-dec {
+            font-size: 8px;
+        }
         table.tbl-dec tr td, table.tbl-dec tr td a {border: none;}
         table {
             min-width: 1220px;
@@ -185,7 +188,7 @@
             background-color: #1d83bc;
             color: #ffffff;
             padding: 8px 25px;
-            margin-top: 50px;
+            margin-top: 20px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
