@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Entity extends Model
 {
-
     protected $guarded = [];
 
     public function quoteRequestEntityMapping(): HasMany
