@@ -25,7 +25,6 @@ use App\Repositories\QuoteStatusRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\YachtQuoteRepository;
 use App\Services\AMLService;
-use App\Services\CRUDService;
 use App\Services\LookupService;
 
 class YachtQuoteController extends Controller
