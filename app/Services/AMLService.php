@@ -306,4 +306,22 @@ class AMLService
 
         return $status;
     }
+
+    public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
+    {
+        $fetchAMLRecords = KycLog::withTrashed()->where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId
+        ])->pluck('decision')->filter(function ($value){
+            return $value != AMLDecisionStatusEnum::RYU;
+        });
+
+        if ($fetchAMLRecords->count() == 0) {
+            return true;
+        }
+
+        return collect($fetchAMLRecords)->contains( function ($value) {
+            return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
+        });
+    }
 }
