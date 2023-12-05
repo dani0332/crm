@@ -11,6 +11,7 @@ import MemberDetails from '../../Components/MemberDetails.vue';
 import KycForm from '@/inertia/Components/KycForm.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
+import PaymentTableNew from '../../Components/PaymentTableNew.vue'; 
 
 defineProps({
   quote: Object,
@@ -38,6 +39,8 @@ defineProps({
   UBORelations: Array,
   UBOsDetails: Array,
   canAddBatchNumber: Boolean,
+  paymentStatusEnum: Object,
+  paymentTooltipEnum: Object,
 });
 
 const page = usePage();
@@ -49,6 +52,7 @@ const rolesEnum = page.props.rolesEnum;
 const historyLoading = ref(false);
 
 const { isRequired } = useRules();
+const hasRole = role => useHasRole(role);
 const notification = useNotifications('toast');
 
 const modals = reactive({
@@ -795,7 +799,19 @@ const linkEntity = () => {
       :quote-type="quoteType"
     />
 
+    <PaymentTableNew 
+			v-if="hasRole(rolesEnum.BetaUser)"
+			:quoteType="quoteType"
+			:payments="quote.payments"
+			:paymentDocument="documentTypes.filter(item => item.code === 'PPD' || item.code === 'PPDR')"
+			:quoteRequest="quote"
+			:paymentStatusEnum="paymentStatusEnum"
+			:paymentTooltipEnum="paymentTooltipEnum"
+			:paymentMethods="paymentMethods.map(pm => { return { value: pm.code, label: pm.name, tooltip: pm.tool_tip } })"
+			:storageUrl="storageUrl"
+		/>
     <QuotePayments
+      v-else
       :can="can"
       :payments="quote.payments"
       :quote-type="quoteType"
@@ -838,6 +854,6 @@ const linkEntity = () => {
 
     <LeadHistory :quote="quote" />
 
-    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" />
+    <AuditLogs :quote-type="quoteType" :id="$page.props.quote.id" :quoteCode="$page.props.quote.code" />
   </div>
 </template>

@@ -241,4 +241,9 @@ class PersonalQuote extends Model implements AuditableContract
         return $this->hasOne(QuoteRequestEntityMapping::class, 'quote_request_id')
             ->whereIn('quote_type_id', [QuoteTypeId::Cycle, QuoteTypeId::Bike, QuoteTypeId::Pet, QuoteTypeId::Yacht, QuoteTypeId::Jetski]);
     }
+
+    public function insuranceProviderDetails()
+    {
+        return $this->hasOne(InsuranceProvider::class, 'id', 'insurance_provider_id');
+    }
 }

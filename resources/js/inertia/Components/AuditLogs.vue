@@ -50,6 +50,7 @@ const onLoadAuditLogData = async () => {
     data = {
       auditable_id: props.id,
       quote_type: props.quoteType,
+      code: props.quoteCode,
       jsonData: true,
     };
     url = '/audits/get-quote-audits';

@@ -137,5 +137,36 @@ class AddNewDocumentTypeSeeder extends Seeder
             ]);
         }
 
+        $documentTypesCount = DocumentType::get()->where('code', 'PPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'PPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'pet',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 9,
+                'send_to_customer' => true,
+                'sort_order' => 1,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'PPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'PPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'pet',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 9,
+                'send_to_customer' => true,
+                'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+
     }
 }

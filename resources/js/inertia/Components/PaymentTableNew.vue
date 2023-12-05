@@ -79,7 +79,7 @@ const isCreditApprovalView = ref(false);
 const isCreditCardView = ref(false);
 
 // Array of quote types to check against
-const quoteTypesToCheck = ['Car', 'Health', 'Travel'];
+const quoteTypesToCheck = ['Car', 'Health', 'Travel']; //Ecommerce LOBs
 // Declare initialAmount variable
 let initialAmount;
 
@@ -204,6 +204,16 @@ const discountError = computed(() => {
 
 const rules = {
   isRequired: v => !!v || 'This field is required',
+  isBankReferenceRequird: v => {
+      if (paymentMethodsForm.collection_type === 'insurer'
+          && paymentMethodsModels.value[splitPaymentNo.value] === 'CHQ'
+          && paymentMethodsForm.credit_approval != '') {
+            return true;
+      } else {
+        return !!v || 'This field is required';
+      }
+      return true;
+  },
   reference: v => {
     if (paymentMethodsForm.payment_method !== 'CC') {
       return !!v || 'This field is required';
@@ -590,7 +600,7 @@ const calculateDueDates = () => {
 const calculatePaymentBreakup = (changeMethod = true) => {  
 
   var perInstallmentPrice = parseFloat(((totalAmount.value-paidAmountSum.value)/(paymentMethodsForm.payment_no-totalPaidAmount.value)).toFixed(2));
-  console.log('azhar9991='+perInstallmentPrice);
+  console.log('azhar9991='+JSON.stringify(paymentMethodsModels.value));
   if ( paymentMethodsForm.status === 'edit') {
     splitAmountModels.value = [];
   }
@@ -599,9 +609,17 @@ const calculatePaymentBreakup = (changeMethod = true) => {
     if(readOnlyPayments.value[i]!=undefined && readOnlyPayments.value[i]===true) {
       continue;
     }
-    splitAmountModels.value[i] = perInstallmentPrice;    
+    splitAmountModels.value[i] = perInstallmentPrice.toFixed(2);    
     if(i>1 && changeMethod){
-      paymentMethodsModels.value[i] = '';
+      if (
+          paymentMethodsModels.value[i] !== undefined 
+          && paymentMethodsModels.value[i] !== null
+          && (paymentMethodsForm.frequency === 'split_payments' || paymentMethodsForm.frequency === 'custom')
+          ) {
+        paymentMethodsModels.value[i] = paymentMethodsModels.value[i];
+      } else {
+        paymentMethodsModels.value[i] = '';
+      }
     }    
   }
  calculateDueDates(); 
@@ -766,10 +784,10 @@ const addPaymentModal = () => {
   if (totalPrice.value > 0 && planDetail) {
     totalAmount.value = totalPrice.value;
   } else {
-    let errorMsg = 'Please select a plan.';
-    if( !(totalPrice.value>0) ) {
-      errorMsg = 'Please update the Total Price in the Plan Details section.';
-    }    
+    let errorMsg = 'Please update the Total Price in the Plan Details section.'; 
+    if(quoteTypesToCheck.includes(props.quoteType)) {
+      errorMsg = 'Please select a plan.';
+    }
     notification.error({
       title: errorMsg,
       position: 'top',
@@ -1873,7 +1891,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   :options="totalPayments"
                   :rules="[rules.isRequired]"
                   :disabled="!isPaymentNoEnabled"
-                  @change="calculatePaymentBreakup(paymentMethodsForm.payment_no)"
+                  @change="calculatePaymentBreakup()"
                   >
                   <template v-for="option in totalPayments" :key="option.value">
                       <option :value="option.value" :title="option.tooltip">{{ option.label }}</option>                
@@ -2029,8 +2047,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 :rules="[rules.isRequired]"                
               />
           </x-field>
-
-            <div v-if="isDiscountEnabled">             
+            <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">             
               <ToolTip
                   v-if="!isFieldReadonly"
                   title="DISCOUNT VALUE"
@@ -2059,7 +2076,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               </x-field>
             </div>            
             
-            <div v-if="isDiscountEnabled || isFieldReadonly">            
+            <div v-if="isDiscountEnabled && isFieldReadonly && paymentMethodsForm.discount!='N/A'">            
               <ToolTip
                 v-if="!isFieldReadonly"
                 title="TOTAL AMOUNT"
@@ -2532,15 +2549,20 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                     <x-input
                       class="w-full"
                       v-model="paymentMethodsForm.collection_amount"
-                      :rules="[rules.isRequired,rules.amount]"
-                      @keyup="isApprovePaymentError=false"        
+                      :rules="[rules.isRequired,rules.amount]"                      
                     />
                   </x-field>
                 </div> 
               </div>
               <div class="w-1/2 px-2" v-if="paymentMethodsModels[splitPaymentNo]=='BT' || paymentMethodsModels[splitPaymentNo]=='CHQ'">                
                 <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">BANK REFERENCE NUMBER <sup class="text-red-500">*</sup></span>   
+                  <span class="border-b-2 border-dotted border-black text-sm">BANK REFERENCE NUMBER 
+                    <sup v-if="!(paymentMethodsForm.collection_type === 'insurer'
+                      && paymentMethodsModels[splitPaymentNo] === 'CHQ'
+                      && paymentMethodsForm.credit_approval != ''
+                      )" class="text-red-500">*</sup>
+                  
+                  </span>   
                   <template #tooltip>
                       <span>{{ paymentTooltipEnum.PAYMENT_VIEW_BANK_REFERENCE }}</span>
                 </template>
@@ -2549,7 +2571,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                   <x-input
                     class="w-full"
                     v-model="paymentMethodsForm.bank_reference_number"
-                    :rules="[rules.isRequired]"         
+                    :rules="[rules.isBankReferenceRequird]"      
                   />
                 </x-field>
               </div>
@@ -2603,12 +2625,12 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             <div class="w-full text-right">Do you wish to proceed with payment confirmation?</div>
             <div class="w-full flex justify-end">
               <div class="mr-4">
-                <x-button size="sm" @click="handleNoButtonChange">
+                <x-button size="sm" @click="handleNoButtonChange" tabindex="0" class="focus:outline-black">
                   No
                 </x-button>
               </div>
               <div>
-                <x-button class="mr-2" size="sm" color="#ff5e00" type="submit">
+                <x-button class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0">
                   Yes
                 </x-button>
               </div>
@@ -2617,25 +2639,25 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           <template v-else-if="isCreditApprovalView || (paymentMethodsModels[splitPaymentNo]!=='CA' && paymentMethodsModels[splitPaymentNo]!=='CC')" >
             <div v-if="isCreditApprovalView || (splitPaymentRecord.payment_status_id!=paymentStatusEnum.PAID && can(permissionEnum.ApprovePayments))" class="w-full flex justify-end">
               <div v-if="isDeclineClicked" class="mr-4">
-                <x-button size="sm" @click="handleCancelChanges">
+                <x-button size="sm" @click="handleCancelChanges" tabindex="0" class="focus:outline-black">
                   Cancel
                 </x-button>
               </div>            
               <div v-if="(!isApproveClicked && !isDeclineClicked) || (isCreditApprovalView && !isDeclineClicked)" class="mr-4">
-                <x-button size="sm"  @click="handleDeclinedChange">
+                <x-button size="sm"  @click="handleDeclinedChange" tabindex="0" class="focus:outline-black">
                   Decline
                 </x-button>
               </div>
               <div v-if="!isApproveClicked && isDeclineClicked" class="mr-4">
-                <x-button size="sm"  type="submit" >
+                <x-button size="sm"  type="submit" tabindex="0" class="focus:outline-black" >
                   Decline
                 </x-button>
               </div>
               <div v-if="!isDeclineClicked && (paymentMethodsModels[splitPaymentNo]!='CC' || isCreditApprovalView)">
-                <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked">
+                <x-button v-if="!isApproveClicked && isViewEnabled" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" @click="isApproveClicked = !isApproveClicked" tabindex="0">
                   Approve
                 </x-button>
-                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2" size="sm" color="#ff5e00" type="submit">
+                <x-button v-if="isApproveClicked || (isCreditApprovalView && !isDeclineClicked)" class="mr-2 focus:outline-black" size="sm" color="#ff5e00" type="submit" tabindex="0">
                   <template v-if="isCreditApprovalView && isCreditCardView">
                   Capture
                   </template>
@@ -2650,7 +2672,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       <template v-else>        
         <div class="w-full md:col-span-4 flex justify-end"> 
             <div v-if="paymentMethodsForm.status == 'edit'" class="mr-4">
-              <x-button @click="createPaymentModal=!createPaymentModal">
+              <x-button @click="createPaymentModal=!createPaymentModal" tabindex="0" class="focus:outline-black">
                 Cancel
               </x-button>
             </div>
@@ -2660,7 +2682,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
                 paymentMethodsForm.status == 'edit'
               "
             >
-              <x-button color="emerald" type="submit">
+              <x-button color="emerald" type="submit" tabindex="0" class="focus:outline-black">
                 {{ paymentMethodsForm.status == 'create' ? 'Add Manual Payment' : 'Update' }}          
               </x-button>
             </div>          
