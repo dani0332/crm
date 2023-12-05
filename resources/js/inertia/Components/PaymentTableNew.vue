@@ -2668,59 +2668,71 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
       </template>
       </x-form>
     
-    <div class="modal-overlay" v-if="isGalleryModelOpen">        
-      <div class="modal-container">
-        <div class="modal-header text-lg">
-          <div class="flex items-center justify-between">
-            <div class="text-lg font-bold mb-2">{{ currentFile.original_name}}</div>            
-            <div class="flex items-center space-x-2 cursor-pointer">
-              <span class="text-gray-600 font-bold" v-if="currentFile.doc_mime_type === 'image/jpegg' || currentFile.doc_mime_type === 'image/png2'">
-              <a :href="storageUrl + currentFile.doc_url" download="document.png" target="_blank" class="flex items-center space-x-2 cursor-pointer">
-                &#8615;
-              </a></span>           
-              <span @click="closeInnerModal" class="text-gray-600 font-bold">&#10006;</span>
-            </div>
-          </div>
-          <x-divider class="mb-4 mt-1" />
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2 cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
-              <span class="text-gray-600 font-bold">&#8592;</span>
-              <span class="font-bold">Previous</span>
-            </div>
-            <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'">
-              <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
-                <span class="text-gray-600 font-bold">&#8722;</span>              
-              </div>
-              
-              <div class="flex flex-initial w-24 justify-center"><span class="text-gray-600 font-bold">{{ zoomLevel * 100 }}%</span></div>
-              
-              <div class="flex items-center space-x-2 cursor-pointer" @click="zoomIn">
-                <span class="text-gray-600 font-bold">&#43;</span>              
+      <div class="modal-overlay fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center" v-if="isGalleryModelOpen">
+        <div class="modal-container bg-white w-full max-w-full overflow-hidden rounded-lg">
+          <div class="modal-header text-sm text-white bg-gray-800">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                {{ currentFile.original_name }}
+              </div>          
+              <div class="flex items-center space-x-2">
+                <span @click="closeInnerModal" class="text-gray-300 font-bold cursor-pointer pr-1">
+                  <!-- SVG for Close Modal -->
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </span>
               </div>
             </div>
-            <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
-              <span class="text-gray-600 font-bold">&#8594;</span>
-              <span class="font-bold">Next</span>
+            <div class="flex items-center justify-between">              
+              <div class="flex items-center space-x-2 cursor-pointer" @click="previousFile" :class="{ 'opacity-50 cursor-not-allowed': !hasPreviousFile }">
+                <!-- SVG for Previous -->
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-gray-300">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>                
+              </div>
+              <div class="flex items-center space-x-2" v-if="currentFile.doc_mime_type != 'application/pdf'">
+                <div class="flex items-center space-x-2 cursor-pointer" @click="zoomOut">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 text-gray-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                  </svg>
+                </div>
+                <div class="flex flex-initial w-24 justify-center">
+                  <span class="text-gray-300 font-bold">{{ zoomLevel * 100 }}%</span>
+                </div>
+                <div class="flex items-center space-x-2 cursor-pointer" @click="zoomIn">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="h-6 w-6 text-gray-300">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                </div>
+              </div>
+              <div class="flex items-center space-x-2 cursor-pointer" @click="nextFile" :class="{ 'opacity-50 cursor-not-allowed': !hasNextFile }">
+                <!-- SVG for Next -->
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-6 h-6 text-gray-300">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>                
+              </div>            
             </div>
           </div>
-        </div>
-        <x-divider class="mb-4 mt-1" />
-        <div class="modal-body">
-          <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
-            <div class="overflow-auto justify-center ">
-              <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" />
+          <div class="modal-body w-full h-full mt-2">
+            <div v-if="currentFile.doc_mime_type === 'image/jpeg' || currentFile.doc_mime_type === 'image/png'" class="flex items-center justify-center">
+              <div class="overflow-auto items-center justify-center">
+                <img :src="storageUrl + currentFile.doc_url" :style="{ transform: `scale(${zoomLevel})` }" class="max-w-full max-h-full" />
+              </div>
             </div>
-          </div>
-          <div v-else-if="currentFile.doc_mime_type === 'application/pdf'">
-            <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" width="100%" height="800px" />
+            <div v-else-if="currentFile.doc_mime_type === 'application/pdf'" class="w-full h-80vh">
+              <embed :src="storageUrl + currentFile.doc_url" type="application/pdf" class="w-full h-full" />
+            </div>     
           </div>
         </div>
       </div>
-  </div>
     </x-modal>    
   </div>
 </template>
 <style scoped>
+.h-80vh {
+  height: 85vh;
+} 
 .tooltip-display {
   display: inherit;
 } 
@@ -2729,7 +2741,7 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 90%;
+  width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1040;
@@ -2742,25 +2754,19 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
   transform: translate(-50%, -50%);
   width: 100%;
   height: 100%; 
-  background-color: #fff;
+  background-color: hsl(0, 4%, 9%);
   border-radius: 4px;
-  padding: 20px;
+  padding: 5px;
   z-index: 1050;
 }
 /* Modal header */
 .modal-header {
+  background-color: hsl(0, 4%, 9%);
   
 }
 /* Modal body */
 .modal-body {
   padding: 10px 0;
-}
-/* Modal footer */
-.modal-footer {
-  display: flex;
-  justify-content: space-between;
-  padding: 20px;
-  border-top: 1px solid #eee;
 }
 .inner-th-class {
   min-width: 160px;
