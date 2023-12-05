@@ -311,8 +311,8 @@ class AMLService
     {
         $fetchAMLRecords = KycLog::withTrashed()->where([
             'quote_type_id' => $quoteTypeId,
-            'quote_request_id' => $quoteRequestId
-        ])->pluck('decision')->filter(function ($value){
+            'quote_request_id' => $quoteRequestId,
+        ])->pluck('decision')->filter(function ($value) {
             return $value != AMLDecisionStatusEnum::RYU;
         });
 
@@ -320,7 +320,7 @@ class AMLService
             return true;
         }
 
-        return collect($fetchAMLRecords)->contains( function ($value) {
+        return collect($fetchAMLRecords)->contains(function ($value) {
             return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
         });
     }
