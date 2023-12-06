@@ -136,7 +136,7 @@ class UpdateLeadStatusRequest extends FormRequest
             $fetchLastAMLCheck = KycLog::withTrashed()->where([
                 'quote_request_id' => request()->leadId,
                 'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
-            ])->where(function ($ryuFilter){
+            ])->where(function ($ryuFilter) {
                 $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $ryuFilter->orWhereNull('decision');
             })->whereNull('screenshot')->latest()->first();

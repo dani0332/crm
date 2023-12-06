@@ -156,7 +156,7 @@ class BridgerInsightService
                                 'match_found' => $amlResultCount > 0 ? 1 : 0,
                                 'search_type' => (substr($memberUboDetails['code'], 0, 3) == CustomerTypeEnum::IndividualShort) ? CustomerTypeEnum::Individual : CustomerTypeEnum::Entity,
                                 'customer_code' => $memberUboDetails['code'],
-                                'decision' => AMLDecisionStatusEnum::ESCALATED
+                                'decision' => AMLDecisionStatusEnum::ESCALATED,
                             ];
 
                             if ($amlResultCount == 0) {
