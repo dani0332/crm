@@ -35,11 +35,11 @@ const dateFormat = date => date ? useDateFormat(date, 'DD-MM-YYYY').value : '-';
 
 const sendUpdatesTable = reactive({
   headers: [
-    { text: 'SU-REF ID', value: 'code' },
-    { text: 'Type', value: 'type' },
-    { text: 'Sub Type', value: 'sub_type' },
-    { text: 'Status', value: 'status' },
-    { text: 'Created date', value: 'created_at' },
+    { text: 'SU-REF ID', value: 'code', tooltip: 'A unique reference identifier assigned to each "Send Update" request, allowing for easy tracking and reference.' },
+    { text: 'Type', value: 'type', tooltip: 'The type of "Send Update" request, categorizing the nature of the action being taken.' },
+    { text: 'Sub Type', value: 'sub_type', tooltip: 'A further classification of the "Send Update" request, providing additional context or details.' },
+    { text: 'Status', value: 'status', tooltip: 'The current status of the "Send Update" request, indicating whether it is pending, transaction approved, or declined, among other possible states.' },
+    { text: 'Created date', value: 'created_at', tooltip: 'The date when the "Send Update" request was created. It indicates when the action was initiated' },
   ],
   data: props.data
 })
@@ -53,6 +53,7 @@ const form = useForm({
   parentCategory: null,
   childCategory: null,
   option: null,
+  quote_type_id: null,
   reportable_type: props.reportableType,
   reportable_uuid: props.reportableUuid,
   reportable_id: props.reportableId,
@@ -66,19 +67,26 @@ const resetForm = () => {
   modals.step = 'step1'
 }
 
-const setOption = (step_next, value) => {
-  switch (step_next) {
+const setOption = (next_step, value) => {
+  switch (next_step) {
     case 'step1':
       form.parentCategory = null;
-      modals.step = step_next
+      modals.step = next_step
       break;
     case 'step2':
       form.parentCategory = value
-      modals.step = step_next
+      modals.step = next_step
       break;
     case 'step3':
       form.childCategory = value
-      modals.step = step_next
+      modals.step = next_step
+
+      if (form.childCategory.childs.length === 0) {
+        modals.step = 'step1';
+        modals.show = false;
+        onAddUpdate();
+      }
+
       break;
   
     default:
@@ -102,6 +110,7 @@ const onAddUpdate = () => {
   form
     .transform(data => ({
       ...data,
+      quote_type_id: '',
       model_type: data.reportable_type,
       reportable_type: `App\\Models\\${data.reportable_type}`
     }))
@@ -165,6 +174,56 @@ const findOption = (item, key) => {
           hide-rows-per-page
           :hide-footer="sendUpdatesTable.data <= 10"
         >
+          <template #header-code="{ text, tooltip }">
+            <x-tooltip position="bottom">
+              <span class="underline decoration-dotted">{{ text }}</span>
+              <template #tooltip>
+                <span class="capitalize">
+                  {{ tooltip }}
+                </span>
+              </template>
+            </x-tooltip>
+          </template>
+          <template #header-type="{ text, tooltip }">
+            <x-tooltip position="bottom">
+              <span class="underline decoration-dotted">{{ text }}</span>
+              <template #tooltip>
+                <span class="capitalize">
+                  {{ tooltip }}
+                </span>
+              </template>
+            </x-tooltip>
+          </template>
+          <template #header-sub_type="{ text, tooltip }">
+            <x-tooltip position="bottom">
+              <span class="underline decoration-dotted">{{ text }}</span>
+              <template #tooltip>
+                <span class="capitalize">
+                  {{ tooltip }}
+                </span>
+              </template>
+            </x-tooltip>
+          </template>
+          <template #header-status="{ text, tooltip }">
+            <x-tooltip position="bottom">
+              <span class="underline decoration-dotted">{{ text }}</span>
+              <template #tooltip>
+                <span class="capitalize">
+                  {{ tooltip }}
+                </span>
+              </template>
+            </x-tooltip>
+          </template>
+          <template #header-created_at="{ text, tooltip }">
+            <x-tooltip position="bottom">
+              <span class="underline decoration-dotted">{{ text }}</span>
+              <template #tooltip>
+                <span class="capitalize">
+                  {{ tooltip }}
+                </span>
+              </template>
+            </x-tooltip>
+          </template>
           <template #item-code="{ code, uuid }">
             <Link :href="route('quotes.car.view-update-log', {id: reportableUuid, uuid: uuid})" class="text-primary-800 underline">{{ code }}</Link>
           </template>
@@ -183,7 +242,7 @@ const findOption = (item, key) => {
         </DataTable>
       </template>
     </x-collapse>
-    <x-modal v-model="modals.show" size="xl" show-close backdrop @update:modelValue="resetForm">
+    <x-modal v-model="modals.show" size="lg" show-close backdrop @update:modelValue="resetForm">
       <template #header>
         <div class="flex gap-3">
           <x-icon icon="prev" size="md" class="text-primary-800 mt-1 cursor-pointer" @click="goBack" v-if="modals.step !== 'step1'"/>
@@ -194,13 +253,13 @@ const findOption = (item, key) => {
       </template>
 
       <!-- modal 1 -->
-      <div class="w-full flex gap-5 justify-center text-center mb-10" v-if="modals.step === 'step1'">
+      <div class="w-full flex gap-5 justify-center text-center my-10 mb-20" v-if="modals.step === 'step1'">
         <template v-for="option in options" :key="option.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl" @click="setOption('step2', option)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px]" @click="setOption('step2', option)">
               {{ option.title }}
             </x-button>
-            <template #tooltip> <div>{{ option.description }}</div> </template>
+            <template #tooltip> <div class="truncate w-40">{{ option.description }}</div> </template>
           </x-tooltip>
         </template>
       </div>
@@ -209,7 +268,7 @@ const findOption = (item, key) => {
       <div class="w-full flex gap-5 justify-center text-center mb-10" v-else-if="modals.step === 'step2'">
         <template v-for="category in form.parentCategory?.childs" :key="category.title">
           <x-tooltip position="bottom" class="arrow-t">
-            <x-button color="primary" class="py-8 px-6 rounded-xl" @click="setOption('step3', category)">
+            <x-button color="primary" class="py-8 px-6 rounded-xl w-[200px]" @click="setOption('step3', category)">
               {{ category.title }}
             </x-button>
             <template #tooltip> <div>{{ category.description }}</div> </template>
@@ -221,11 +280,12 @@ const findOption = (item, key) => {
       <div class="w-full flex gap-5 mb-10" v-else-if="modals.step === 'step3' && form.childCategory.childs.length > 0">
         <div class="flex flex-col gap-2 flex-grow w-75">
           <x-field :label="form.childCategory.title" required>
-            <x-select
+            <ComboBox
               v-model="form.option"
-              :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id }))"
+              :single="true"
+              :options="form.childCategory.childs.map(item => ({ label: item.title, value: item.id, tooltip: item.tooltip }))"
               :rules="[isRequired]"
-              placeholder="Select Reason"
+              :placeholder="['endorsement financial', 'endorsement non financial'].includes(form.childCategory.title.toLowerCase()) ? 'Select Subtype' : 'Select Reason'"
               class="w-full"
             />
           </x-field>
@@ -237,7 +297,7 @@ const findOption = (item, key) => {
               :disabled="form.processing"
               :loading="form.processing"
             >
-              Add Update
+              Add
             </x-button>  
           </div>
         </div>

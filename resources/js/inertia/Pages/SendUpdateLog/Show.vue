@@ -20,6 +20,10 @@ const selectedType = computed(() => {
 	return currentOption?.value?.childs.find(child => child.id === props.sendUpdateLog.category_id)
 })
 
+const redirectBack = () => {
+	window.location.href = `/quotes/${props.quoteId}`;
+}
+
 </script>
 
 <template>
@@ -34,7 +38,7 @@ const selectedType = computed(() => {
         </template>
         <template #content>
 					<div class="flex mb-3 justify-end">
-						<x-button color="primary" size="sm">Go back to lead page</x-button>
+						<x-button color="primary" size="sm" @click="redirectBack">Go back to lead page</x-button>
 					</div>
 					<div class="grid grid-cols-2 gap-5">
 

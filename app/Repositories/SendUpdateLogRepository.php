@@ -34,6 +34,7 @@ class SendUpdateLogRepository extends BaseRepository
             $res = $this->create([
                 'reportable_type' => $request['reportable_type'],
                 'reportable_id' => $request['reportable_id'],
+                'quote_type_id' => $request['quote_type_id'],
                 'category_id' => $request['childCategory']['id'],
                 'option_id' => $request['option'],
                 'status' => $request['status'],
@@ -53,7 +54,7 @@ class SendUpdateLogRepository extends BaseRepository
      * 
      * 
      */
-    public function fetchGetLogById($uuid)
+    public function fetchGetLogByUuid($uuid)
     {
         return $this->where('uuid', $uuid)->firstOrFail();
     }

@@ -44,7 +44,10 @@ class SendUpdateLogController extends Controller
      */
     public function show($id, $uuid)
     {
-        $sendUpdateLog = SendUpdateLogRepository::getLogById($uuid);
+        $sendUpdateLog = SendUpdateLogRepository::getLogByUuid($uuid);
+
+//        $quoteTyeId = $this->getQuoteTypeId($sendUpdateLog->reportable_type);
+
         $sendUpdateOptions = (new LookupService)->getSendUpdateOptions($id);
 
         return inertia('SendUpdateLog/Show', [
@@ -74,6 +77,11 @@ class SendUpdateLogController extends Controller
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
+    {
+        //
+    }
+
+    private function getQuoteTypeId()
     {
         //
     }

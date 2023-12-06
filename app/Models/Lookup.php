@@ -9,10 +9,17 @@ class Lookup extends Model
 {
     use HasFactory;
 
-    // public function scopeWithChilderns($query, $quoteTypeId) 
-    // {
-    //     return $query->with('childs');
-    // }
+    public function scopeWithChildTree($query, $quoteTypeId) 
+    {
+        return $query->with('childs', function ($query) use ($quoteTypeId) { 
+            $query->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id', 'quote_type_id')
+            ->with('childs', function ($query) use ($quoteTypeId) {
+                $query->where('quote_type_id', $quoteTypeId)->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id', 'quote_type_id');
+            });
+        })->select('id', 'key as title', 'text as description', 'code as slug', 'parent_id', 'quote_type_id');
+
+        return $query->with('childs');
+    }
 
     public function childs() 
     {
