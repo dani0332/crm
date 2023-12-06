@@ -84,7 +84,7 @@ class DttFollowUp extends Command
 
                     $quotePlansCount = is_countable($listQuotePlans) ? count($listQuotePlans) : 0;
 
-                    info('carRevivalFollowUpEmailJob: Plan count is  '.$quotePlansCount.' for lead '.$item->uuid);
+                    info('carRevivalFollowUpEmailJobPlanCountIs  '.$quotePlansCount.' for lead '.$item->uuid);
 
                     $tierR = Tier::where('name', TiersEnum::TIER_R)->where('is_active', 1)->first();
 
@@ -102,7 +102,7 @@ class DttFollowUp extends Command
                     $emailData->advisorEmail = 'askalfred@insurancemarket.ae';
                     // $emailData->customerEmail = 'nouman.hussain@insurancemarket.ae';
                     $emailData->id = $item->id;
-                    info('carRevivalFollowUpEmailJob: EmailData '.json_encode($emailData));
+                    info('carRevivalFollowUpEmailJobEmailData '.json_encode($emailData));
 
                     // after two days
                     if ($today->eq($afterTwoDays)) {
@@ -168,7 +168,7 @@ class DttFollowUp extends Command
                 }
             }
 
-            info('------carRevivalFollowUpEmailJob count --'.count($leads));
+            info('------carRevivalFollowUpEmailJobCount --'.count($leads));
 
             $jobs = [];
             foreach ($leads as $item) {
