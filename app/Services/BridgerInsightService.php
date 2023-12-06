@@ -132,9 +132,9 @@ class BridgerInsightService
                 } else {
                     if ($getDecodeContents) {
                         // Send Email alert to Compliance team only
-                     /*   if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
-                            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
-                        } */
+                        /*   if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteId))) {
+                               $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
+                           } */
                         $quoteRefId = $this->getQuoteCode($quoteType->code, $quoteId);
                         if ($quoteRefId) {
                             // AML Log data inserted into kyc_logs just for BridgerInsight
