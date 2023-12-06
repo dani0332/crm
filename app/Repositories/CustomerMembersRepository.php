@@ -27,4 +27,14 @@ class CustomerMembersRepository extends BaseRepository
                 'nationality',
             ])->get();
     }
+
+    public function fetchGetMemberInfo($column, $value, $quoteType, $customerType = CustomerTypeEnum::Individual, $selectedColumns = 'id')
+    {
+        return $this->byQuoteType($quoteType)
+            ->where([
+                $column => $value,
+                'customer_type' => $customerType,
+            ])
+            ->select($selectedColumns)->get()->toArray();
+    }
 }

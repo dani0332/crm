@@ -187,7 +187,6 @@ class AMLController extends Controller
 
     public function amlQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-
         $quoteStatusCode = '';
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
         $isCompanySearchEnabled = ApplicationStorage::where('key_name', '=', 'IS_AML_ENTITY_SEARCH_ENABLED')->value('value');
@@ -195,7 +194,7 @@ class AMLController extends Controller
             ->where(function ($aml) {
                 $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                 $aml->orWhereNull('decision');
-            });
+            })->whereNull('screenshot');
         $kycLogs = $amlRecordFetch->orderBy('created_at', 'desc')->get();
         $quoteRequest = AMLService::getQuoteDetails($quoteTypeId, $quoteRequestId);
 
@@ -356,7 +355,7 @@ class AMLController extends Controller
                 ->where(function ($aml) {
                     $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                     $aml->orWhereNull('decision');
-                })->withTrashed()->get()->pluck('decision')->toArray();
+                })->whereNull('screenshot')->withTrashed()->get()->pluck('decision')->toArray();
 
             if ($AMLCheckRequest->customer_type == CustomerTypeEnum::Individual) {
                 info('Bridger Insight - Customer type : Individual');
