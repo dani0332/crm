@@ -1152,11 +1152,13 @@ class CRUDController extends Controller
         if ($modelType == null) {
             $modelType = $request->get('modelType');
         }
-        $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
-        $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
-        $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
-        $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
-        $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        if ($modelType!='Bike') {
+            $quoteTypes = 'Health,Car,Travel,Life,Home,Business,Pet';
+            $serviceType = str_contains($quoteTypes, ucwords($modelType)) ? strtolower($modelType).'QuoteService' : lcfirst(ucwords($modelType)).'Service';
+            $this->genericModel->properties = $this->{$serviceType}->fillModelProperties();
+            $this->genericModel->skipProperties = $this->{$serviceType}->fillModelSkipProperties();
+            $this->genericModel->searchProperties = $this->{$serviceType}->fillModelSearchProperties();
+        }
     }
 
     public function getDropdownSourceNameForDisplay($modelType, $propertyName, $recordId)

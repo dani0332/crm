@@ -168,5 +168,36 @@ class AddNewDocumentTypeSeeder extends Seeder
             ]);
         }
 
+        $documentTypesCount = DocumentType::get()->where('code', 'BPD')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'BPD',
+                'text' => 'Payment Proof',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'bike',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 6,
+                'send_to_customer' => true,
+                'sort_order' => 1,
+                'is_required' => 0,
+            ]);
+        }
+        $documentTypesCount = DocumentType::get()->where('code', 'BPDR')->count();
+        if (! $documentTypesCount) {
+            \DB::table('document_types')->insert([
+                'code' => 'BPDR',
+                'text' => 'Receipt',
+                'max_files' => 15,
+                'max_size' => 30,
+                'folder_path' => 'bike',
+                'accepted_files' => '.png,.pdf,.jpeg,.jpg',
+                'quote_type_id' => 6,
+                'send_to_customer' => true,
+                'sort_order' => 2,
+                'is_required' => 0,
+            ]);
+        }
+
     }
 }

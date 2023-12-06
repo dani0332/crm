@@ -270,24 +270,36 @@ const validatePaymentOption = () => {
         issueFound = true;
       }
       console.log('paymentCalc='+issueFound);
-      for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
-        isDocumentNotUploaded.value[i] = false;
+      
+      if(
+        (paymentMethodsForm.frequency === 'monthly' || paymentMethodsForm.frequency === 'quarterly' 
+        || paymentMethodsForm.frequency === 'semi_annual' || paymentMethodsForm.frequency === 'custom')
+        && paymentMethodsModels.value[1]=='IP' && paymentMethodsForm.collection_type === 'insurer'
+        && (fileUploadModels.value[1]===undefined || fileUploadModels.value[1].length===0)
+        ){
+          isDocumentNotUploaded.value[1] = true;
+          issueFound = true;
+      } else {
+        for (let i = 1; i <= paymentMethodsForm.payment_no; i++) { 
+          isDocumentNotUploaded.value[i] = false;
 
-        console.log('azharLEN='+fileUploadModels.value[i]);
-        if ( (
-          paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' 
-          || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' ||
-          ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   
-          ) 
-        && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)       
-        ) {
-          isDocumentNotUploaded.value[i] = true;
-          issueFound = true;
-        } else if (paymentMethodsModels.value[i]=='CA' && i===1  && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)) {
-          isDocumentNotUploaded.value[i] = true;
-          issueFound = true;
+          console.log('azharLEN='+fileUploadModels.value[i]);
+          if ( (
+            paymentMethodsModels.value[i]=='BT' || paymentMethodsModels.value[i]=='CHQ' 
+            || paymentMethodsModels.value[i]=='PDC' || paymentMethodsModels.value[i]=='IP' ||
+            ( paymentMethodsForm.discount !== '' && i===1 && (paymentMethodsModels.value[i]=='CC' || paymentMethodsModels.value[i]=='CSH') )   
+            ) 
+          && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)       
+          ) {
+            isDocumentNotUploaded.value[i] = true;
+            issueFound = true;
+          } else if (paymentMethodsModels.value[i]=='CA' && i===1  && (fileUploadModels.value[i]===undefined || fileUploadModels.value[i].length===0)) {
+            isDocumentNotUploaded.value[i] = true;
+            issueFound = true;
+          }
         }
       }
+
       console.log('DocError='+issueFound);
       if(
       paymentMethodsForm.discount === 'refer_a_friend' ||
@@ -657,6 +669,7 @@ const formatAmount = (amount) => {
 }
 
 const handleFrequencyChange = (noPaymentUpdate=true) => {
+  
   var resetPaymentMethod = false;
   totalPayments.value = []; 
   if ( paymentMethodsForm.status === 'create' ) {
@@ -801,7 +814,7 @@ const addPaymentModal = () => {
   } else {
     paymentMethodsForm.collection_type = 'broker';
   }
-
+  
   paymentMethodsForm.amount = '';
   paymentMethodsForm.payment_reference = '';
   paymentMethodsForm.paymentCode = '';
@@ -810,10 +823,13 @@ const addPaymentModal = () => {
   paymentMethodsForm.collection_date = new Date();
   paymentMethodsForm
   createPaymentModal.value = true;
-  paymentMethodsForm.payment_no = '1';
+  
   paymentMethodsForm.frequency = 'upfront';
   paymentMethodsForm.discount = '';
   paymentMethodsForm.credit_approval = '';
+  totalPayments.value = [];
+  totalPayments.value.push({ value: '1', label: '1' });
+  paymentMethodsForm.payment_no = '1';  
   handleCollectionTypeChange();
   calculatePaymentBreakup();
 };
@@ -1710,18 +1726,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         <div class="w-full grid md:grid-cols-2 gap-3">          
           <div>
             <ToolTip
-            v-if="!isFieldReadonly"
-            title="COLLECTION DATE"
+             title="COLLECTION DATE"
             :tooltip="paymentTooltipEnum.COLLECTION_DATE"
-            :required=true
-            />
-            <x-field v-else label="COLLECTION DATE" class="w-full"></x-field>
+            :required="!isFieldReadonly"
+            />            
             <x-field class="w-full">
                 <span v-if="isFieldReadonly">
-                  <ToolTip
-                    :title="formatDate(paymentMethodsForm.collection_date)"
-                    :tooltip="paymentTooltipEnum.COLLECTION_DATE"                    
-                    />
+                  {{ formatDate(paymentMethodsForm.collection_date)}}
                 </span>
                 <DatePicker
                 v-if="!isFieldReadonly"
@@ -1732,21 +1743,15 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </x-field>
           </div>
           <div>
-          <x-tooltip v-if="!isFieldReadonly">
+          <x-tooltip>
             <span class="border-b-2 border-dotted border-black text-sm">TOTAL PRICE</span>
             <template #tooltip>
                <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
             </template>
           </x-tooltip> 
-          <x-field v-else label="TOTAL PRICE" class="w-full"></x-field>          
-            <x-field class="w-full">
+             <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                <x-tooltip>  
-                  <span class="border-b-2 border-dotted border-black text-sm">{{ formatAmount(totalPrice) }}</span>
-                    <template #tooltip>
-                  <span>{{ paymentTooltipEnum.TOTAL_PRICE }}</span>
-                </template>
-              </x-tooltip> 
+                {{ formatAmount(totalPrice) }}
               </span>              
               <x-input
                   v-if="!isFieldReadonly"
@@ -1758,18 +1763,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
         </div>
           <div>
             <ToolTip
-            v-if="!isFieldReadonly"
             title="COLLECTED BY"
             :tooltip="paymentTooltipEnum.COLLECTED_BY"
-            :required=true
-            />
-          <x-field v-else label="COLLECTED BY" class="w-full"></x-field>
+            :required="!isFieldReadonly"
+            />          
           <x-field class="w-full">
             <span v-if="isFieldReadonly">
-              <ToolTip
-                :title="collectionTypes.find(item => item.value === paymentMethodsForm.collection_type).label"
-                :tooltip="paymentTooltipEnum.COLLECTED_BY"                
-                />
+              {{  collectionTypes.find(item => item.value === paymentMethodsForm.collection_type).label }}
             </span>
             <select
                 v-if="!isFieldReadonly"
@@ -1786,22 +1786,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </x-field>
           </div>
           <div>
-          <x-tooltip v-if="!isFieldReadonly">
+          <x-tooltip>
             <span class="border-b-2 border-dotted border-black text-sm">PROVIDER NAME</span>           
             <template #tooltip>
                 <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>
                 <span v-else >{{ paymentTooltipEnum.PROVIDER_NAME }}</span>
             </template>    
           </x-tooltip>
-          <x-field v-else label="PROVIDER NAME" class="w-full"></x-field>
           <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">{{ providerName }}</span>
-                  <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PROVIDER_NAME_VIEW }}</span>                      
-                  </template>    
-                </x-tooltip>
+                {{ providerName }}
               </span>
               <x-input
                   v-if="!isFieldReadonly"
@@ -1814,18 +1808,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
           <div>
             <ToolTip
-            v-if="!isFieldReadonly"
-            title="FREQUENCY"
+             title="FREQUENCY"
             :tooltip="paymentTooltipEnum.FREQUENCY"
-            :required=true
+            :required="!isFieldReadonly"
             />          
-          <x-field v-else label="FREQUENCY" class="w-full"></x-field>
-          <x-field class="w-full">  
+           <x-field class="w-full">  
               <span v-if="isFieldReadonly">                
-                <ToolTip
-                  :title="frequencyTypes.find(item => item.value === paymentMethodsForm.frequency).label"
-                  :tooltip="paymentTooltipEnum.FREQUENCY"
-                />      
+                {{ frequencyTypes.find(item => item.value === paymentMethodsForm.frequency).label }}  
               </span>            
               <select
                   v-if="!isFieldReadonly"
@@ -1843,22 +1832,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           </div>
 
           <div>
-          <x-tooltip v-if="!isFieldReadonly">
+          <x-tooltip>
             <span class="border-b-2 border-dotted border-black text-sm">PLAN NAME</span>
             <template #tooltip>
                 <span v-if="isFieldReadonly">{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>
                 <span v-else >{{ paymentTooltipEnum.PLAN_NAME }}</span>
             </template>            
           </x-tooltip> 
-          <x-field v-else label="PLAN NAME" class="w-full"></x-field> 
           <x-field class="w-full">
               <span v-if="isFieldReadonly">                
-                <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">{{ getPlanName }}</span>
-                  <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PLAN_NAME_VIEW }}</span>                      
-                  </template>            
-                </x-tooltip> 
+                {{ getPlanName }}
               </span>
               <x-input
                   v-if="!isFieldReadonly"
@@ -1871,18 +1854,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
           <div>
             <ToolTip
-              v-if="!isFieldReadonly"
-              title="PAYMENT NO"
+               title="PAYMENT NO"
               :tooltip="paymentTooltipEnum.PAYMENT_NO"
-              :required=true
+              :required="!isFieldReadonly"
               />
-          <x-field v-else label="PAYMENT NO" class="w-full"></x-field>
-          <x-field class="w-full">
+           <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                <ToolTip
-                  :title="paymentMethodsForm.payment_no"
-                  :tooltip="paymentTooltipEnum.PAYMENT_NO"                  
-                  />
+                {{ paymentMethodsForm.payment_no }}
               </span>              
               <select
                   v-if="!isFieldReadonly"
@@ -1900,21 +1878,15 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             </x-field>
            </div>
           <div>
-          <x-tooltip v-if="!isFieldReadonly">
+          <x-tooltip>
             <span class="border-b-2 border-dotted border-black text-sm">PAYMENT STATUS</span>            
             <template #tooltip>
                 <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
             </template>
           </x-tooltip>
-          <x-field v-else label="PAYMENT STATUS" class="w-full"></x-field>
           <x-field class="w-full">
               <span v-if="isFieldReadonly">
-                <x-tooltip>
-                  <span class="border-b-2 border-dotted border-black text-sm">{{ formatString(masterPaymentStatus) }}</span>
-                  <template #tooltip>
-                      <span>{{ paymentTooltipEnum.PAYMENT_STATUS }}</span>
-                  </template>
-                </x-tooltip>              
+                {{ formatString(masterPaymentStatus) }}        
               </span>
               <x-input
                   v-if="!isFieldReadonly"
@@ -1927,17 +1899,12 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
 
           <div>
             <ToolTip
-              v-if="!isFieldReadonly"
               title="CREDIT APPROVAL"
               :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"              
             />
-          <x-field v-else label="CREDIT APPROVAL" class="w-full"></x-field>
-          <x-field class="w-full">
+            <x-field class="w-full">
               <span v-if="isFieldReadonly">                
-                <ToolTip
-                  :title="creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval)?.label || 'N/A'"
-                  :tooltip="paymentTooltipEnum.CREDIT_APPROVAL"
-                />
+                {{  creditApprovalReasons.find(item => item.value === paymentMethodsForm.credit_approval)?.label || 'N/A' }}
               </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.credit_approval!=''" class="close-icon"  @mousedown.stop="resetCreditApproval()">
@@ -1969,21 +1936,16 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
               />
           </x-field>          
           <div v-if="showDiscountOptions">
-            <x-tooltip v-if="!isFieldReadonly">
+            <x-tooltip>
               <span class="border-b-2 border-dotted border-black text-sm">DISCOUNT APPLICABLE (DISCOUNT TYPE)</span> 
               <template #tooltip>
-                  <span>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
+                  <span v-if="isFieldReadonly">{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>
+                  <span v-else >{{ paymentTooltipEnum.DISCOUNT_APPLICABLE }}</span>
               </template>
-            </x-tooltip>
-            <x-field v-else label="DISCOUNT APPLICABLE (DISCOUNT TYPE)" class="w-full"></x-field>
+            </x-tooltip>            
             <x-field class="w-full">
             <span v-if="isFieldReadonly">              
-              <x-tooltip>
-                <span class="border-b-2 border-dotted border-black text-sm">{{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}</span>
-                <template #tooltip>
-                    <span>{{ paymentTooltipEnum.DISCOUNT_APPLICABLE_VIEW }}</span>                    
-                </template>
-              </x-tooltip>            
+              {{ discountTypes.find(item => item.value === paymentMethodsForm.discount)?.label  || 'N/A'}}          
             </span>
               <div v-if="!isFieldReadonly" class="custom-dropdown">
                 <span v-if="paymentMethodsForm.discount!=''" class="close-icon"  @mousedown.stop="resetDiscount()">
@@ -2007,19 +1969,13 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           
           <div v-if="isDiscountReasonEnabled" class="">
             <ToolTip
-              v-if="!isFieldReadonly"
-              title="DISCOUNT REASON"
-              :tooltip="paymentTooltipEnum.DISCOUNT_REASON"
+               title="DISCOUNT REASON"
+              :tooltip="(isFieldReadonly)? discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip: paymentTooltipEnum.DISCOUNT_REASON"
               :required=true
-            />
-          <x-field v-else label="DISCOUNT REASON" class="w-full" ></x-field>
+            />          
           <x-field class="w-full">
               <span v-if="isFieldReadonly">                 
-                <ToolTip
-                  :title="discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).label"
-                  :tooltip="discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).tooltip"
-                  class="w-3/6"                 
-                />
+                {{ discountReasons.find(item => item.value === paymentMethodsForm.discount_reason).label }}
               </span>
               <select
                   v-if="!isFieldReadonly"
@@ -2049,20 +2005,14 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
           </x-field>
             <div v-if="isDiscountEnabled && paymentMethodsForm.discount!='N/A'">             
               <ToolTip
-                  v-if="!isFieldReadonly"
                   title="DISCOUNT VALUE"
                   :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
                   class="w-3/6"
-                  :required=true                
-                />              
-              <x-field v-else label="DISCOUNT VALUE" class="w-full"></x-field>
+                  :required="!isFieldReadonly"                
+                />                            
               <x-field class="w-full">
                 <span v-if="isFieldReadonly">                  
-                  <ToolTip
-                    :title="formatAmount(discountValue)"
-                    :tooltip="paymentTooltipEnum.DISCOUNT_VALUE"
-                    class="w-3/6"                                   
-                  />    
+                  {{ formatAmount(discountValue) }}
                 </span>
                 <x-input
                     v-if="!isFieldReadonly"                  
@@ -2078,17 +2028,12 @@ watch(() => paymentMethodsForm.collection_date, (newValue, oldValue) => {
             
             <div v-if="isDiscountEnabled && isFieldReadonly && paymentMethodsForm.discount!='N/A'">            
               <ToolTip
-                v-if="!isFieldReadonly"
                 title="TOTAL AMOUNT"
                 :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                
               />
-            <x-field v-else label="TOTAL AMOUNT" class="w-full"></x-field>
-            <x-field class="w-full">
+              <x-field class="w-full">
                 <span v-if="isFieldReadonly">                  
-                  <ToolTip
-                    :title="formatAmount(totalAmount)"
-                    :tooltip="paymentTooltipEnum.TOTAL_AMOUNT_VIEW"                    
-                  />                  
+                  {{ formatAmount(totalAmount)}}            
                 </span>
                 <x-input
                     v-if="!isFieldReadonly"
