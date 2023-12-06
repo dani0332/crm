@@ -87,7 +87,7 @@ class Dtt extends Command
                 ->get();
 
             // dd(count($leads));
-            info('------CarRevivalLeadsCreationJob count --'.count($leads));
+            info('------CarRevivalLeadsCreationJobCount --'.count($leads));
             foreach ($leads as $carLead) {
                 $isTierR = $this->leadAllocationService->checkIfLeadIsRenewal($carLead);
                 info('------isTierR --'.! $isTierR);
