@@ -128,7 +128,6 @@ class BerlinService extends BaseService
         $customerDataArr['email'] = $customerEmail;
 
         $customerDataJson = json_encode($customerDataArr);
-        info('customerDataArr: ', $customerDataArr);
 
         $magicUrlGeneratauthBasic = base64_encode($this->berlinUserName.':'.$this->berlinAuthPassword);
 

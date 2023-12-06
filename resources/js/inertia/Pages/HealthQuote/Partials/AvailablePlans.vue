@@ -10,6 +10,7 @@ const emit = defineEmits([
   'copayUpdate',
   'update:modelValue',
   'membersDetailsReviewed',
+  'onLoadAvailablePlansData'
 ]);
 
 const showModal = computed({
@@ -188,10 +189,7 @@ const onTogglePlans = () => {
         title: 'Plan has been updated',
         position: 'top',
       });
-      router.reload({
-        preserveScroll: true,
-        preserveState: true,
-      });
+      emit("onLoadAvailablePlansData")
     })
     .catch(error => {
       notification.error({

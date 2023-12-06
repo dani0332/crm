@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CustomerTypeEnum;
 use App\Enums\GenericRequestEnum;
+use App\Enums\LookupsEnum;
 use App\Enums\PaymentMethodsEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Enums\PermissionsEnum;
@@ -14,12 +16,19 @@ use App\Enums\QuoteTypes;
 use App\Enums\RolesEnum;
 use App\Enums\TravelQuoteEnum;
 use App\Http\Requests\StoreTravelRequest;
+use App\Http\Requests\TravelRenewalsUploadRequest;
 use App\Http\Requests\UpdateTravelRequest;
+use App\Models\Emirate;
+use App\Repositories\CustomerMembersRepository;
 use App\Repositories\EmbeddedProductRepository;
 use App\Repositories\InsuranceProviderRepository;
+use App\Repositories\LookupRepository;
+use App\Repositories\NationalityRepository;
+use App\Services\AMLService;
 use App\Services\CRUDService;
 use App\Services\DropdownSourceService;
 use App\Services\LookupService;
+use App\Services\RenewalsUploadService;
 use App\Services\TravelQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -30,6 +39,7 @@ use RuntimeException;
 class TravelController extends Controller
 {
     protected $travelQuoteService;
+    private $renewalQuoteService;
     protected $lookupService;
     protected $crudService;
     protected $genericModel;
@@ -40,9 +50,11 @@ class TravelController extends Controller
     /**
      * TravelController constructor.
      */
-    public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService)
+    public function __construct(TravelQuoteService $travelQuoteService, LookupService $lookupService, CRUDService $crudService,
+        RenewalsUploadService $renewalQuoteService)
     {
         $this->travelQuoteService = $travelQuoteService;
+        $this->renewalQuoteService = $renewalQuoteService;
         $this->genericModel = $this->travelQuoteService->getGenericModel(self::TYPE);
         $this->lookupService = $lookupService;
         $this->crudService = $crudService;
@@ -104,6 +116,12 @@ class TravelController extends Controller
             ];
         })->values();
 
+        if (AMLService::checkAMLStatusFailed(self::TYPE_ID, $record->id)) {
+            $dropdownSource['quote_status_id'] = collect($dropdownSource['quote_status_id'])->filter(function ($value) {
+                return $value['id'] != QuoteStatusEnum::TransactionApproved;
+            })->values();
+        }
+
         $insuranceProviders = InsuranceProviderRepository::byQuoteTypeMapping(QuoteTypeId::Travel);
         $filteredInsuranceProviders = [];
         if (! empty($insuranceProviders)) {
@@ -127,9 +145,9 @@ class TravelController extends Controller
             $payment->approved_button = $payment->payment_status_id == PaymentStatusEnum::PAID;
         });
 
-        $isRenewalUser = auth()->user()->isRenewalUser();
         $renewalAdvisors = $this->travelQuoteService->getRenewalAdvisors();
         $this->travelQuoteService->fillData();
+        $nationalities = NationalityRepository::withActive()->get();
 
         $ecomDetails = [
             'premium' => $record->premium,
@@ -143,22 +161,30 @@ class TravelController extends Controller
         $displaySendPolicyButton = $this->travelQuoteService->displaySendPolicyButton($record, $quoteDocuments, self::TYPE_ID);
         $documentTypes = $this->travelQuoteService->getQuoteDocumentsForUpload(self::TYPE_ID);
         $documentTypes = collect($documentTypes)->groupBy('category');
-
+        $memberRelations = LookupRepository::where('key', LookupsEnum::MEMBER_RELATION)->get();
         $activities = $this->travelQuoteService->getActivityByLeadId($record->id, strtolower($this->genericModel->modelType));
         $customerAdditionalContacts = $this->travelQuoteService->getAdditionalContacts($record->customer_id, $record->mobile_no);
-
+        $industryType = LookupRepository::where('key', LookupsEnum::COMPANY_TYPE)->get();
         $cdnPath = config('constants.AZURE_IM_STORAGE_URL').config('constants.AZURE_IM_STORAGE_CONTAINER').'/';
         $fields = $this->travelQuoteService->fieldsToDisplay($this->travelQuoteService->getFieldsToShow(), $record);
         if (! auth()->user()->hasRole(RolesEnum::Engineering)) {
             unset($fields['id']);
         }
 
+        // Remove Duplicate fields which are already visible in Customer Profile Section
+        $removeFields = ['first_name', 'last_name', 'email', 'mobile_no', 'dob'];
+        $fields = array_diff_key($fields, array_flip($removeFields));
+
         $embeddedProducts = EmbeddedProductRepository::byQuoteType(self::TYPE_ID, $record->id);
+        $uboDetails = CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name, CustomerTypeEnum::Entity);
+        $uboRelations = LookupRepository::where('key', LookupsEnum::UBO_RELATION)->get();
+        $emirates = Emirate::where('is_active', 1)->select('id', 'text')->get();
 
         return inertia('TravelQuote/Show', [
             'quote' => $record,
             'fieldsToDisplay' => $fields,
             'modelType' => $this->genericModel->modelType,
+            'quoteTypeId' => QuoteTypeId::Travel,
             'dropdownSource' => $dropdownSource,
             'leadStatuses' => $dropdownSource['quote_status_id'],
             'advisors' => $advisors,
@@ -167,14 +193,13 @@ class TravelController extends Controller
             'assignmentTypes' => $assignmentTypes,
             'genderOptions' => $this->crudService->getGenderOptions(),
             'lostReasons' => $this->lookupService->getLostReasons(),
-            'travelers' => $this->travelQuoteService->getMembersDetail($record->id),
+            'travelers' => CustomerMembersRepository::getBy('quote_id', $record->id, QuoteTypes::TRAVEL->name),
             'ecomDetails' => $ecomDetails,
-            'quoteDocuments' => $quoteDocuments,
+            'quoteDocuments' => array_values($quoteDocuments->toArray()),
             'documentTypes' => $documentTypes,
             'cdnPath' => $cdnPath,
             'memberCategories' => $this->lookupService->getMemberCategories(),
             'emailStatuses' => $this->travelQuoteService->getEmailStatus(self::TYPE_ID, $record->id),
-            'listQuotePlans' => $this->travelQuoteService->listQuotePlans($id),
             'activities' => $activities,
             'payments' => $payments,
             'quoteRequest' => $paymentEntityModel,
@@ -187,7 +212,6 @@ class TravelController extends Controller
             'embeddedProducts' => $embeddedProducts,
             'canAddBatchNumber' => auth()->user()->hasRole(RolesEnum::TravelManager),
             'message' => session('message'),
-            'quoteType' => QuoteTypes::TRAVEL,
             'permissions' => [
                 'admin' => auth()->user()->hasAnyRole([RolesEnum::Admin]),
                 'isManualAllocationAllowed' => auth()->user()->isAdmin() || auth()->user()->hasRole(RolesEnum::LeadPool) ? true : false,
@@ -210,6 +234,13 @@ class TravelController extends Controller
                 'paymentStatusEnum' => PaymentStatusEnum::asArray(),
                 'travelQuoteEnum' => TravelQuoteEnum::asArray(),
             ],
+            'customerTypeEnum' => CustomerTypeEnum::asArray(),
+            'nationalities' => $nationalities,
+            'memberRelations' => $memberRelations,
+            'industryType' => $industryType,
+            'UBOsDetails' => $uboDetails,
+            'UBORelations' => $uboRelations,
+            'emirates' => $emirates,
         ]);
     }
 
@@ -425,5 +456,20 @@ class TravelController extends Controller
         return inertia('TravelQuote/Cards', [
             'quotes' => array_values($leadStatuses),
         ]);
+    }
+
+    public function uploadRenewals()
+    {
+        return inertia('TravelQuote/Upload');
+    }
+
+    /**
+     * process upload and create import.
+     *
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     */
+    public function renewalsUploadCreate(TravelRenewalsUploadRequest $request)
+    {
+        return $this->renewalQuoteService->travelRenewalsUploadCreate($request->validated());
     }
 }

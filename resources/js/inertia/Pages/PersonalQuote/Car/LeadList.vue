@@ -66,6 +66,8 @@ const tableHeader = [
   { text: 'PRICE', value: 'premium' },
   { text: 'LOST REASON', value: 'lost_reason' },
   { text: 'QUOTE LINK', value: 'quote_link' },
+  { text: 'Previous Policy Number', value: 'previous_quote_policy_number' },
+  { text: 'Renewal Batch', value: 'renewal_batch' },
 ];
 
 const ecommerceOptions = [
@@ -259,7 +261,7 @@ function onReset() {
 
 const objToUrl = obj => {
   Object.keys(obj).forEach(
-    key => (obj[key] === '' || obj[key].length === 0) && delete obj[key],
+    key => (obj[key] === '' || obj[key]?.length === 0) && delete obj[key],
   );
   return Object.keys(obj)
     .map(key => {
@@ -354,12 +356,26 @@ onMounted(() => {
         <DatePicker
           v-model="filters.created_at"
           label="Created Date Start"
-          :rules="filters.code || filters.email || filters.renewal_batch || filters.quote_batch_id ? [] : [isRequired]"
+          :rules="
+            filters.code ||
+            filters.email ||
+            filters.renewal_batch ||
+            filters.quote_batch_id
+              ? []
+              : [isRequired]
+          "
         />
         <DatePicker
           v-model="filters.created_at_end"
           label="Created Date End"
-          :rules="filters.code || filters.email || filters.renewal_batch || filters.quote_batch_id ? [] : [isRequired]"
+          :rules="
+            filters.code ||
+            filters.email ||
+            filters.renewal_batch ||
+            filters.quote_batch_id
+              ? []
+              : [isRequired]
+          "
         />
         <x-input
           v-model="filters.email"
@@ -437,7 +453,7 @@ onMounted(() => {
         />
         <x-input
           v-model="filters.renewal_batch"
-          type="number"
+          type="text"
           name="renewal_batch"
           label="Renewal Batch"
           class="w-full"

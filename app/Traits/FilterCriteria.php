@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use App\Enums\DatabaseColumnsString;
 use App\Enums\FilterTypes;
 use Carbon\Carbon;
 
@@ -18,6 +19,9 @@ trait FilterCriteria
 
                     switch ($operator) {
                         case FilterTypes::EXACT:
+                            if ($key == DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER_TEXT) {
+                                $key = DatabaseColumnsString::PREVIOUS_QUOTE_POLICY_NUMBER;
+                            }
                             $query->where($key, $value);
                             break;
                         case FilterTypes::FREE:
