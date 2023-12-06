@@ -55,7 +55,7 @@ class HealthQuotesExport implements FromQuery, ShouldAutoSize, WithHeadings, Wit
             'Nationality',
             'Age Bands',
             'Emirates of Visa',
-            'HEALTH INSURANCE',
+            'FOR WHOM DO YOU REQUIRE HEALTH INSURANCE?',
             'TYPE OF PLAN',
             'Provider Name',
         ];
