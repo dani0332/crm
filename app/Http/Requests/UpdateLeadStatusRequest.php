@@ -13,6 +13,7 @@ use App\Enums\RolesEnum;
 use App\Models\Customer;
 use App\Models\KycLog;
 use App\Models\RenewalBatch;
+use App\Services\AMLService;
 use App\Traits\GenericQueriesAllLobs;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -135,7 +136,10 @@ class UpdateLeadStatusRequest extends FormRequest
             $fetchLastAMLCheck = KycLog::withTrashed()->where([
                 'quote_request_id' => request()->leadId,
                 'quote_type_id' => $quoteTypesIds[request()->modelType] ?? '',
-            ])->where('decision', '!=', AMLDecisionStatusEnum::RYU)->latest()->first();
+            ])->where(function ($ryuFilter) {
+                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $ryuFilter->orWhereNull('decision');
+            })->whereNull('screenshot')->latest()->first();
 
             if (isset($fetchLastAMLCheck->search_type) && substr($fetchLastAMLCheck->customer_code, 0, 3) == CustomerTypeEnum::IndividualShort) {
 
@@ -151,7 +155,7 @@ class UpdateLeadStatusRequest extends FormRequest
                 }
             }
 
-            if ($quoteObject->quote_status_id != QuoteStatusEnum::AMLScreeningCleared && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
+            if (AMLService::checkAMLStatusFailed($quoteTypesIds[request()->modelType], request()->leadId) && request()->leadStatus == QuoteStatusEnum::TransactionApproved) {
                 $validator->errors()->add('value', 'Error Approving, AML Status is not Passed');
             }
 
