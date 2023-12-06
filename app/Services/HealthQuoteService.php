@@ -1342,10 +1342,8 @@ class HealthQuoteService extends BaseService
         }
     }
 
-     /**
-     *
+    /**
      * HERE We ARE
-     *
      */
     public function healthPlanModifyV2($request)
     {
@@ -1372,10 +1370,9 @@ class HealthQuoteService extends BaseService
             ];
             foreach ($request->planDetails as $key => $value) {
                 $toBeUpdatedCopay = [];
-                if (isset($value['ratesPerCopay']))
-                {
+                if (isset($value['ratesPerCopay'])) {
                     foreach ($value['ratesPerCopay'] as $copay) {
-                        if ((int)$copay['healthPlanCoPaymentId'] == (int) $copayId) {
+                        if ((int) $copay['healthPlanCoPaymentId'] == (int) $copayId) {
                             $copay['loadingPrice'] = (int) $loadingPrices[$key];
                             array_push($toBeUpdatedCopay, $copay);
                         }
