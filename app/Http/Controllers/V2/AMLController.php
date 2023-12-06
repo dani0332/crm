@@ -321,12 +321,13 @@ class AMLController extends Controller
 
     public function quoteUpdate(AMLCheckRequest $AMLCheckRequest, $quoteTypeId, $quoteRequestId)
     {
+
         $quoteId = $quoteRequestId;
         $quoteType = QuoteType::where('id', $quoteTypeId)->firstOrFail();
 
-        if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteRequestId))) {
-            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteId);
-        }
+        /*if (checkPersonalQuotes($quoteType->code) && (! AMLService::isDataMigrated($quoteTypeId, $quoteRequestId))) {
+            $quoteId = AMLService::getPersonalQuoteId($quoteTypeId, $quoteRequestId);
+        } */
 
         $updateQuote = $this->getQuoteObject($quoteType->code, $quoteId);
         $getMemberOrUBODetails = AMLService::getMemberOrUBODetails($AMLCheckRequest, $quoteType, $quoteId);
@@ -341,7 +342,7 @@ class AMLController extends Controller
             info('Bridger Insight - Get Quote Successfully');
             if (auth()->user()->hasAnyRole([RolesEnum::AML, RolesEnum::PA])) {
                 if (checkPersonalQuotes($quoteType->code)) {
-                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, AMLService::isDataMigrated($quoteTypeId, $quoteId));
+                    AMLService::updatePaIdForPersonalQuotes($quoteTypeId, $quoteRequestId, true);
                 } else {
                     $updateQuote->pa_id = auth()->user()->id;
                     $updateQuote->save();
