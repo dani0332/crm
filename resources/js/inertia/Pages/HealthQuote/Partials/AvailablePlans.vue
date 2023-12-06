@@ -125,31 +125,52 @@ const onMemberUpdate = member => {
     });
 };
 
-// const onToggleManual = () => {
-//     // toggleLoader.value = true;
-//     console.log('manual toggle action');
-//     console.log(props.plan);
-// }
-
 const selectedCopay = ref([]);
 const defaultCopayId = ref(null);
 
 const onCoPaySelect = copayId => {
-  props.plan.ratesPerCopay?.forEach(element => {
-    if (element.healthPlanCoPaymentId == copayId) {
-      let copayDetails = {
-        id: element.healthPlanCoPaymentId,
-        premium: element.premium,
-        discounted_premium: element.discountPremium,
-        vat: element.vat,
-        planId: props.plan.id,
-      };
+    props.plan.ratesPerCopay?.forEach(element => {
+        if (element.healthPlanCoPaymentId == copayId) {
+            let copayDetails = {
+                id: element.healthPlanCoPaymentId,
+                premium: element.premium,
+                discounted_premium: element.discountPremium,
+                vat: element.vat,
+                planId: props.plan.id,
+                loadingPrice: element.loadingPrice ? element.loadingPrice : 0,
+            };
 
-      selectedCopay.value = copayDetails;
+            selectedCopay.value = copayDetails;
+
+            loadingPrices.value = [];
+            totalLoadingPrice.value = 0;
+        }
+    });
+
+    props.plan?.memberPremiumBreakdown?.forEach(members => {
+        members.ratesPerCopay.forEach(data => {
+            if (data.healthPlanCoPaymentId == copayId && data.loadingPrice != undefined) {
+                loadingPrices.value.push({
+                    memberId: members.memberId,
+                    price: data.loadingPrice,
+                });
+            } else if (data.healthPlanCoPaymentId == copayId && (data.loadingPrice == undefined || data.loadingPrice == 0)) {
+                loadingPrices.value.push({
+                    memberId: members.memberId,
+                    price: 0,
+                });
+            }
+        });
+
+    });
+
+    if (loadingPrices != undefined || loadingPrices.length != 0) {
+        loadingPrices.value.forEach(data => {
+            totalLoadingPrice.value = Number(totalLoadingPrice.value) + Number(data.price);
+        });
     }
-  });
 
-  emit('copayUpdate', selectedCopay.value);
+    emit('copayUpdate', selectedCopay.value);
 };
 
 const onTogglePlans = () => {
@@ -199,7 +220,6 @@ const getDefaultVaues = () => {
         defaultCopayId.value = element.healthPlanCoPaymentId;
       }
     });
-
     newActualPremium.value = smallestCopayValue;
   }
 };
@@ -214,9 +234,6 @@ const loadingPriceBeingUpdated = ref(false);
 const handleLoadingPrice = (event, memberId) => {
   loadingPriceBeingUpdated.value = true;
   const index = loadingPrices.value.findIndex(m => m.memberId == memberId);
-
-  //   console.log(index);
-
   if (index > -1) {
     loadingPrices.value[index].price = event.target.value;
   } else {
@@ -254,93 +271,81 @@ const updateGeneralInfo = () => {
           Number(totalLoadingPrice.value) + Number(loadingPrice.price);
       });
     }
-    // loadingPrices.value = [];
     loadingPriceBeingUpdated.value = false;
     emit('membersDetailsReviewed', true);
   }
-  //   console.log(totalLoadingPrice);
 };
 
 const onLoadingPricesUpdate = member => {
     updateGeneralInfo();
-    // console.log(membersLoadingPrices.value); // loading prices for each members
-    console.log(selectedCopay.value); // will be empty if no copay is selected
-    console.log(defaultCopayId.value); // default copay id
-    console.log(newActualPremium.value); // new premiums for each members
-    console.log(member);
+    const memberData = {
+        quoteUID: usePage().props.quote.uuid,
+        planId: props.plan.id,
+        planDetails:
+        {
+            ...member,
+        },
+        defaultCopayId: defaultCopayId.value,
+        selectedCopay: selectedCopay.value,
+        loadingPrice: loadingPrices.value.map(m => m.price)
+    };
 
-  const memberData = {
-    quoteUID: usePage().props.quote.uuid,
-    planId: props.plan.id,
-    planDetails:
-      {
-        ...member,
-      },
-      defaultCopayId: defaultCopayId.value,
-      selectedCopay: selectedCopay.value,
-      loadingPrice: loadingPrices.value.map(m => m.price)
-  };
-  console.log("ok ok ok");
-  console.log(memberData);
+    memberFormLoader.value = true;
 
-  memberFormLoader.value = true;
-
-  axios
-    .post('/health-plan-manual-update-process-v2', memberData)
-    .then(res => {
-      if (res.data == 'Plan has been updated') {
-        notification.success({
-          title: res.data,
-          position: 'top',
+    axios
+        .post('/health-plan-manual-update-process-v2', memberData)
+        .then(res => {
+            if (res.data == 'Plan has been updated') {
+                notification.success({
+                    title: res.data,
+                    position: 'top',
+                });
+            } else {
+                notification.error({
+                    title: res.data,
+                    position: 'top',
+                });
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        })
+        .finally(() => {
+            memberFormLoader.value = false;
+            isManual.value = false;
         });
-      } else {
-        notification.error({
-          title: res.data,
-          position: 'top',
-        });
-      }
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    .finally(() => {
-      memberFormLoader.value = false;
-      loadingPrices.value = [];
-    });
 };
 
 onUpdated(() => {
-  getDefaultVaues();
-  coPay.value = defaultCopayId.value; // get the default selected value for coPay
+    loadingPrices.value = [];
+    selectedCopay.value = [];
+    totalLoadingPrice.value = 0;
+    isManual.value = false;
+    loadingPriceBeingUpdated.value = false;
+    getDefaultVaues();
+    coPay.value = defaultCopayId.value; // get the default selected value for coPay
 
-  props.plan?.memberPremiumBreakdown?.forEach(members => {
-        console.log("inside foreach");
-        console.log(members);
+    props.plan?.memberPremiumBreakdown?.forEach(members => {
         members.ratesPerCopay.forEach(data => {
-            console.log(data.loadingPrice);
             if (data.healthPlanCoPaymentId == selectedCopay.value.id && data.loadingPrice != undefined) {
-                console.log("dhisooom");
-
-                console.log(data.loadingPrice);
-
-                // membersLoadingPrices[memberIndexPerId(members.memberId)].value = data.loadingPrice;
-                // loadingPrices.value.push(data.loadingPrice);
                 loadingPrices.value.push({
-                memberId: members.memberId,
-                price: data.loadingPrice,
+                    memberId: members.memberId,
+                    price: data.loadingPrice,
+                });
+            }
+            else if (data.healthPlanCoPaymentId == selectedCopay.value.id && data.loadingPrice == undefined) {
+                loadingPrices.value.push({
+                    memberId: members.memberId,
+                    price: 0,
                 });
             }
             else if ((selectedCopay.value === undefined ||
                 selectedCopay.value.length == 0) &&
                 data.healthPlanCoPaymentId == defaultCopayId.value &&
                 data.loadingPrice != undefined) {
-                    console.log("else if dhisooom");
-                    console.log(data.loadingPrice);
-                // membersLoadingPrices[memberIndexPerId(members.memberId)].value = data.loadingPrice;
-                // loadingPrices.value.push(data.loadingPrice);
                 loadingPrices.value.push({
-                memberId: members.memberId,
-                price: data.loadingPrice,
+                    memberId: members.memberId,
+                    price: data.loadingPrice,
                 });
 
             }
@@ -348,20 +353,21 @@ onUpdated(() => {
                 selectedCopay.value.length == 0) &&
                 data.healthPlanCoPaymentId == defaultCopayId.value &&
                 data.loadingPrice == undefined) {
-                    console.log("else dhisooom");
-                // membersLoadingPrices[memberIndexPerId(members.memberId)].value = 0;
-                // loadingPrices.value.push(0);
-
                 loadingPrices.value.push({
-                memberId: members.memberId,
-                price: 0,
+                    memberId: members.memberId,
+                    price: 0,
                 });
 
             }
         });
 
     });
+
+    loadingPrices.value.forEach(data => {
+        totalLoadingPrice.value = Number(totalLoadingPrice.value) + Number(data.price);
+    });
 });
+
 </script>
 
 <template>
@@ -467,10 +473,10 @@ onUpdated(() => {
                     selectedCopay === undefined || selectedCopay.length == 0
                   "
                 >
-                  {{ newActualPremium.toLocaleString() }}
+                  {{ newActualPremium?.toLocaleString() }}
                 </dd>
                 <dd v-else>
-                  {{ selectedCopay.premium.toLocaleString() }}
+                  {{ selectedCopay.premium?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
@@ -485,7 +491,7 @@ onUpdated(() => {
                       newActualPremium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
-                      totalLoadingPrice).toLocaleString()
+                      totalLoadingPrice)?.toLocaleString()
                   }}
                 </dd>
                 <dd v-else>
@@ -494,35 +500,35 @@ onUpdated(() => {
                       selectedCopay.premium +
                       (props.plan.basmah || 0) +
                       (props.plan.policyFee || 0) +
-                      totalLoadingPrice).toLocaleString()
+                      totalLoadingPrice)?.toLocaleString()
                   }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Loading Price</dt>
                 <dd>
-                  {{ totalLoadingPrice.toLocaleString() }}
+                  {{ totalLoadingPrice?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total VAT amount</dt>
                 <dd>
-                  {{ (vatAmount = totalLoadingPrice * 0.05).toLocaleString() }}
+                  {{ (vatAmount = totalLoadingPrice * 0.05)?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Basmah</dt>
-                <dd>{{ props.plan.basmah.toLocaleString() }}</dd>
+                <dd>{{ props.plan.basmah?.toLocaleString() }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Total Price with VAT</dt>
                 <dd>
-                  {{ (finalPrice + vatAmount).toLocaleString() }}
+                  {{ (finalPrice + vatAmount)?.toLocaleString() }}
                 </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">Policy Fee</dt>
-                <dd>{{ props.plan.policyFee.toLocaleString() }}</dd>
+                <dd>{{ props.plan.policyFee?.toLocaleString() }}</dd>
               </div>
               <!-- <div class="grid sm:grid-cols-2">
               <dt class="font-medium">Total (exclusive of VAT)</dt>
@@ -651,7 +657,7 @@ onUpdated(() => {
                   <section v-for="data in item.ratesPerCopay">
                         <x-input
                         v-if="data.healthPlanCoPaymentId == selectedCopay.id"
-                        :value="data.premium.toLocaleString()"
+                        :value="data.premium?.toLocaleString()"
                         :disabled="data.premium != 0"
                         size="sm"
                         @update:modelValue="onMemberPremiumUpdate(item, $event)"
@@ -662,7 +668,7 @@ onUpdated(() => {
                             selectedCopay.length == 0) &&
                             data.healthPlanCoPaymentId == defaultCopayId
                         "
-                        :value="data.premium.toLocaleString()"
+                        :value="data.premium?.toLocaleString()"
                         :disabled="data.premium != 0"
                         size="sm"
                         @update:modelValue="onMemberPremiumUpdate(item, $event)"
@@ -685,6 +691,15 @@ onUpdated(() => {
                     <section v-for="data in item.ratesPerCopay">
                         <x-input
                             v-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice != undefined"
+                            v-model="
+                            loadingPrices[memberIndexPerId(item.memberId)].price
+                            "
+                            :disabled="!isManual"
+                            size="sm"
+                            @keyup="handleLoadingPrice($event, item.memberId)"
+                        />
+                        <x-input
+                            v-if="data.healthPlanCoPaymentId == selectedCopay.id && data.loadingPrice == undefined"
                             v-model="
                             loadingPrices[memberIndexPerId(item.memberId)].price
                             "
@@ -738,7 +753,7 @@ onUpdated(() => {
                       :value="
                         (
                           Number(data.loadingPrice) + Number(data.premium)
-                        ).toLocaleString()
+                        )?.toLocaleString()
                       "
                     />
                     <x-input
@@ -751,7 +766,7 @@ onUpdated(() => {
                             loadingPrices[memberIndexPerId(item.memberId)]
                               ?.price || 0,
                           ) + Number(data.premium)
-                        ).toLocaleString()
+                        )?.toLocaleString()
                       "
                     />
                     <x-input
@@ -766,7 +781,7 @@ onUpdated(() => {
                       :value="
                         (
                           Number(data.loadingPrice) + Number(data.premium)
-                        ).toLocaleString()
+                        )?.toLocaleString()
                       "
                     />
                     <x-input
@@ -784,7 +799,7 @@ onUpdated(() => {
                             loadingPrices[memberIndexPerId(item.memberId)]
                               ?.price || 0,
                           ) + Number(data.premium)
-                        ).toLocaleString()
+                        )?.toLocaleString()
                       "
                     />
                   </section>

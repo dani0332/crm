@@ -1352,7 +1352,7 @@ class HealthQuoteService extends BaseService
                 {
                     foreach ($value['ratesPerCopay'] as $copay) {
                         if ((int)$copay['healthPlanCoPaymentId'] == (int) $copayId) {
-                            $copay['loadingPrice'] = $loadingPrices[$key];
+                            $copay['loadingPrice'] = (int) $loadingPrices[$key];
                             array_push($toBeUpdatedCopay, $copay);
                         }
                     }

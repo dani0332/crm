@@ -43,6 +43,8 @@ defineProps({
   quoteType: String,
 });
 
+const isManualPlansCount = ref(0);
+
 const page = usePage();
 
 const notification = useToast();
@@ -504,7 +506,6 @@ const plansTable = reactive({
 const planClicked = plan => {
   selectedPlan.value = plan;
   modals.plan = true;
-  console.log(selectedPlan.value);
 };
 
 const onExportPlans = () => {
@@ -1129,6 +1130,11 @@ onMounted(() => {
   if (isHealthAdvisor) assignLead.value = isHealthAdvisor.id;
   getSmallestCopayRateAsDefaultValue();
   isMounted.value = true;
+  page.props.listQuotePlans.forEach(plan => {
+    if (plan.isManualPlan) {
+      isManualPlansCount.value++;
+    }
+  });
 });
 </script>
 <template>
