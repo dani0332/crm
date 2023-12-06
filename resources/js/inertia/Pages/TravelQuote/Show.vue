@@ -1008,10 +1008,9 @@ const handleChildUpdate = planId => {
 };
 
 const genderList = [
-    { value: 'M', label: 'Male' },
-    { value: 'F', label: 'Female' },
+  { value: 'M', label: 'Male' },
+  { value: 'F', label: 'Female' },
 ];
-
 </script>
 
 <template>
@@ -1294,7 +1293,9 @@ const genderList = [
           }}
           Profile
         </h3>
-        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+          KYC - Complete
+        </x-tag>
         <x-tag color="amber" v-else> KYC - Pending </x-tag>
       </div>
       <x-divider class="mb-4 mt-1" />
@@ -1602,7 +1603,7 @@ const genderList = [
           {{ relation?.text }}
         </template>
         <template #item-gender="{ gender }">
-          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : '' }}
         </template>
         <template #item-nationality="{ nationality }">
           {{ nationality?.text }}
@@ -1670,13 +1671,13 @@ const genderList = [
               placeholder="Select Relation"
               class="w-full"
             />
-            <x-field label="Gender*" >
+            <x-field label="Gender*">
               <x-select
-                  v-model="travelerForm.gender"
-                  placeholder="Gender"
-                  :options="genderList"
-                  :rules="[isRequired]"
-                  class="w-full"
+                v-model="travelerForm.gender"
+                placeholder="Gender"
+                :options="genderList"
+                :rules="[isRequired]"
+                class="w-full"
               />
             </x-field>
           </div>
