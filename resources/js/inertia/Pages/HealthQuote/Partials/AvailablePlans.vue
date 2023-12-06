@@ -401,7 +401,8 @@ onUpdated(() => {
             :key="index"
             v-slot="{ selected }"
           >
-            <x-tooltip
+          <!-- don't remove this commented part anyone please -->
+            <!-- <x-tooltip
               v-if="label == 'Members' && props.memebersDetailsChanged"
               position="bottom"
               class="arrow-t"
@@ -431,10 +432,9 @@ onUpdated(() => {
                 >Price outdated! <br />
                 Please update</template
               >
-            </x-tooltip>
+            </x-tooltip> -->
 
             <button
-              v-else
               @click="checkLoadingPriceUpdate"
               :class="[
                 'rounded-lg px-3 py-2 md:min-w-[15%] text-sm font-medium text-gray-800 transition duration-200 ease-in-out uppercase',
