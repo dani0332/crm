@@ -35,7 +35,7 @@ class QuoteStatusService
                 ->where(function ($aml) {
                     $aml->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
                     $aml->orWhereNull('decision');
-                })->withTrashed()->get()->pluck('decision')->toArray();
+                })->whereNull('screenshot')->withTrashed()->get()->pluck('decision')->toArray();
 
             $updateQuote = $this->getQuoteObject($quoteType->code, $quoteRequestId);
             $quoteStatusID = (in_array(AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, $kycLogs)) ? QuoteStatusEnum::AMLScreeningFailed : $quoteStatus->id;
