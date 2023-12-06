@@ -143,7 +143,7 @@ class CarRevivalLeadsCreationJob implements ShouldQueue, StackableJob
             info('CarRevivalLeadsCreationJobemailResponse '.json_encode($response));
             if ($response == 201) {
 
-                info('CarRevivalLeadsCreationJobEmailSent--'.$emailData->customerEmail.' - Email Sent');
+                info('CarRevivalLeadsCreationJobEmailSent--'.$emailData->customerEmail.'-'.$capiResponse->quoteUID.'- Email Sent');
 
                 DttRevival::create([
                     'quote_type_id' => QuoteTypes::CAR->id(),
