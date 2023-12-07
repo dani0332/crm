@@ -253,7 +253,7 @@ const sectionExpanded = computed(() => {
 <template>
   <div>
     <Head title="Pet Quotes" />
-    
+
     <x-modal v-model="modals.duplicate" size="lg" show-close backdrop>
       <template #header> Duplicate Lead </template>
       <x-form @submit="onCreateDuplicate" :auto-focus="false">
@@ -294,7 +294,7 @@ const sectionExpanded = computed(() => {
         </div>
       </x-form>
     </x-modal>
-    
+
     <div class="p-4 rounded shadow mb-6 bg-white">
       <x-collapse :expanded="sectionExpanded" show-icon>
         <div class="flex justify-between items-center flex-wrap gap-2 mb-5">
@@ -311,26 +311,28 @@ const sectionExpanded = computed(() => {
             >
               <x-button size="sm" tag="div">Edit</x-button>
             </Link>
-  
+
             <Link
               v-if="can(permissionsEnum.PetQuotesList)"
               :href="route('pet-quotes-list')"
               preserve-scroll
             >
-              <x-button size="sm" color="primary" tag="div"> Pet Quotes </x-button>
+              <x-button size="sm" color="primary" tag="div">
+                Pet Quotes
+              </x-button>
             </Link>
           </div>
-          
+
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
-            <div
-              class="grid sm:grid-cols-2"
-              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-            >
-              <dt class="font-medium">ID</dt>
-              <dd>{{ quote.id }}</dd>
-            </div>
+                <div
+                  class="grid sm:grid-cols-2"
+                  v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+                >
+                  <dt class="font-medium">ID</dt>
+                  <dd>{{ quote.id }}</dd>
+                </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -351,86 +353,86 @@ const sectionExpanded = computed(() => {
                 <dt class="font-medium">ADVISOR</dt>
                 <dd>{{ quote?.advisor?.name }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">CREATED DATE</dt>
                 <dd>{{ quote.created_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LAST MODIFIED DATE</dt>
                 <dd>{{ quote.updated_at }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">DEVICE</dt>
                 <dd>{{ quote.device }}</dd>
               </div>
             </dl>
           </div>
-    
+
           <div class="mt-6">
             <h3 class="font-semibold text-primary-800">Quote Details</h3>
             <x-divider class="mb-4 mt-1" />
           </div>
-    
+
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
                 <dd>{{ quote?.pet_quote?.premium }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">POLICY NUMBER</dt>
                 <dd>{{ quote?.pet_quote?.policy_number }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">TYPE OF PET</dt>
                 <dd>{{ quote?.pet_quote?.pet_type?.text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">BREED OF PET</dt>
                 <dd>{{ quote?.pet_quote?.breed_of_pet1 }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">AGE OF PET</dt>
                 <dd>{{ quote?.pet_quote?.pet_age?.text }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS NEUTERED</dt>
                 <dd>{{ quote?.pet_quote?.is_neutered ? 'Yes' : 'No' }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS MICROCHIPPED</dt>
                 <dd>{{ quote?.pet_quote?.is_microchipped ? 'Yes' : 'No' }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">MICROCHIP NO</dt>
                 <dd>{{ quote?.pet_quote?.microchip_no }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">IS MIXED BREED</dt>
                 <dd>{{ quote?.pet_quote?.is_mixed_breed ? 'Yes' : 'No' }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">HAS INJURY</dt>
                 <dd>{{ quote?.pet_quote?.has_injury ? 'Yes' : 'No' }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">GENDER</dt>
                 <dd>{{ quote?.pet_quote?.gender }}</dd>
               </div>
-    
+
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">ACCOMMODATION TYPE</dt>
                 <dd>{{ quote?.pet_quote?.accomodation_type?.text }}</dd>
@@ -483,8 +485,10 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-4 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -573,7 +577,9 @@ const sectionExpanded = computed(() => {
                 />
               </dl>
               <dl
-                v-if="quote.customer_type === page.props.customerTypeEnum.Entity"
+                v-if="
+                  quote.customer_type === page.props.customerTypeEnum.Entity
+                "
                 class="grid md:grid-cols-2 gap-x-6 gap-y-4"
               >
                 <div class="grid sm:grid-cols-2">
@@ -713,7 +719,7 @@ const sectionExpanded = computed(() => {
         </x-button>
       </div>
     </x-modal>
-    
+
     <x-modal v-model="entityDetailsFound" size="lg" show-close backdrop>
       <h3 class="font-semibold text-center text-lg mb-10">
         Entity found with the entered Trade License number
@@ -783,7 +789,11 @@ const sectionExpanded = computed(() => {
       :expanded="sectionExpanded"
     />
 
-    <AdditionalContacts :quote="quote" :quote-type="quoteType" :expanded="sectionExpanded" />
+    <AdditionalContacts
+      :quote="quote"
+      :quote-type="quoteType"
+      :expanded="sectionExpanded"
+    />
 
     <LastYearPolicyDetail
       v-if="
@@ -813,7 +823,6 @@ const sectionExpanded = computed(() => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
-      :expanded="sectionExpanded"
     />
 
     <QuoteStatus
@@ -837,7 +846,6 @@ const sectionExpanded = computed(() => {
       :quote="quote"
       :can="can"
       :quoteStatusEnum="quoteStatusEnum"
-      :expanded="sectionExpanded"
     />
 
     <PlanDetails

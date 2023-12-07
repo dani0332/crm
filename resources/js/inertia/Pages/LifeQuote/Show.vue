@@ -542,10 +542,10 @@ const sectionExpanded = computed(() => {
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-          <div
-            class="grid sm:grid-cols-2"
-            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
-          >
+              <div
+                class="grid sm:grid-cols-2"
+                v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+              >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -598,7 +598,9 @@ const sectionExpanded = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
-            <dd>{{ quote.life_quote_request_detail?.lost_reason?.text }}</dd>
+                <dd>
+                  {{ quote.life_quote_request_detail?.lost_reason?.text }}
+                </dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
@@ -664,8 +666,10 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-4 justify-end">
-            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'">
+              KYC - Complete
+            </x-tag>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -1287,7 +1291,7 @@ const sectionExpanded = computed(() => {
         </template>
       </x-collapse>
     </div>
-    
+
     <AuditLogs
       :type="'App\\Models\\LifeQuote'"
       :id="$page.props.quote.id"

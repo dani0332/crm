@@ -809,7 +809,6 @@ const sectionExpanded = computed(() => {
       :insurance-providers="insuranceProviders"
       :is-beta-user="isBetaUser"
       :personal-plans="personalPlans"
-      :expanded="sectionExpanded"
     />
 
     <QuoteStatus
@@ -833,7 +832,6 @@ const sectionExpanded = computed(() => {
       :quote="quote"
       :can="can"
       :quoteStatusesEnum="quoteStatusesEnum"
-      :expanded="sectionExpanded"
     />
 
     <PlanDetails

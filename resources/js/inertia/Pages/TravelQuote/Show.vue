@@ -1909,67 +1909,70 @@ const sectionExpanded = computed(() => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <div>
-        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
-        <x-divider class="mb-4 mt-1" />
-      </div>
-      <x-form @submit="submitPolicyDetails" :auto-focus="false">
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.policy_number"
-              :disabled="!policyDetails.editMode"
-              label="POLICY NUMBER"
-              :rules="[isRequired, policy_number]"
-              class="w-full"
-            />
+      <x-collapse expanded show-icon>
+        <template #default="{ collapsed }">
+          <div>
+            <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+            <x-divider class="mb-4 mt-4" v-if="!collapsed" />
           </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_issuance_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="ISSUANCE DATE"
-              :rules="[isRequired]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.policy_start_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="START DATE"
-              :rules="[isRequired, policy_start_date]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2">
-            <DatePicker
-              v-model="policyDetails.renewal_expiry_date"
-              :disabled="!policyDetails.editMode"
-              type="date"
-              label="EXPIRY DATE"
-              :rules="[isRequired, renewal_expiry_date]"
-              class="w-full"
-            />
-          </div>
-        </div>
-        <div class="flex gap-6 w-full">
-          <div class="w-full md:w-1/2">
-            <x-input
-              v-model="policyDetails.premium"
-              :disabled="!policyDetails.editMode"
-              label="PRICE"
-              :rules="[isRequired, premium]"
-              class="w-full"
-            />
-          </div>
-          <div class="w-full md:w-1/2"></div>
-        </div>
-
+        </template>
+        <template #content>
+          <x-form @submit="submitPolicyDetails" :auto-focus="false">
+            <div class="flex gap-6 w-full">
+              <div class="w-full md:w-1/2">
+                <x-input
+                  v-model="policyDetails.policy_number"
+                  :disabled="!policyDetails.editMode"
+                  label="POLICY NUMBER"
+                  :rules="[isRequired, policy_number]"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-full md:w-1/2">
+                <DatePicker
+                  v-model="policyDetails.policy_issuance_date"
+                  :disabled="!policyDetails.editMode"
+                  type="date"
+                  label="ISSUANCE DATE"
+                  :rules="[isRequired]"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            <div class="flex gap-6 w-full">
+              <div class="w-full md:w-1/2">
+                <DatePicker
+                  v-model="policyDetails.policy_start_date"
+                  :disabled="!policyDetails.editMode"
+                  type="date"
+                  label="START DATE"
+                  :rules="[isRequired, policy_start_date]"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-full md:w-1/2">
+                <DatePicker
+                  v-model="policyDetails.renewal_expiry_date"
+                  :disabled="!policyDetails.editMode"
+                  type="date"
+                  label="EXPIRY DATE"
+                  :rules="[isRequired, renewal_expiry_date]"
+                  class="w-full"
+                />
+              </div>
+            </div>
+            <div class="flex gap-6 w-full">
+              <div class="w-full md:w-1/2">
+                <x-input
+                  v-model="policyDetails.premium"
+                  :disabled="!policyDetails.editMode"
+                  label="PRICE"
+                  :rules="[isRequired, premium]"
+                  class="w-full"
+                />
+              </div>
+              <div class="w-full md:w-1/2"></div>
+            </div>
             <div
               class="text-right space-x-4 mt-12"
               v-if="policyDetails.canEdit"
@@ -1999,7 +2002,7 @@ const sectionExpanded = computed(() => {
             </div>
           </x-form>
         </template>
-      </x-collapse>
+      </x-collapse>      
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
