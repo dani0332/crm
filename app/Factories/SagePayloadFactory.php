@@ -84,6 +84,7 @@ class SagePayloadFactory
                 ],
             ],
         ];
+        //dd($payLoad);
         /*$payLoad = [
             'BatchRecordType' => 'CA',
             'ReceiptsAdjustments' => [
