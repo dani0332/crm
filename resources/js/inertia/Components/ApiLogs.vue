@@ -114,33 +114,24 @@ const onLoadAuditLogData = async () => {
                 "
               />
             </x-field>
-            <x-button
-              size="sm"
-              color="orange"
-              @click="onLoadAuditLogData"
-              :loading="apiLogs.loading"
-              class="h-10 mt-3"
-            >
-              Search
-            </x-button>
-            <x-button
-              size="sm"
-              color="primary"
-              @click="onLoadAuditLogData(false)"
-              class="h-10 mt-3"
-            >
+        <x-button
+          size="sm"
+          color="primary"
+          @click="insuranceProviderId = null"
+          class="h-10 mt-3"
+        >
               Reset
             </x-button>
           </div>
-          <DataTable
-            table-class-name="compact tablefixed"
-            :headers="apiLogs.table"
-            :items="apiLogs.data || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="apiLogs.data?.length < 15"
-          >
+      <DataTable
+        table-class-name="compact tablefixed"
+        :headers="apiLogs.table"
+        :items="filteredLogs || []"
+        border-cell
+        hide-rows-per-page
+        :rows-per-page="15"
+        :hide-footer="apiLogs.data?.length < 15"
+      >
             <template #item-status="{ status }">
               <x-tag
                 v-if="status"

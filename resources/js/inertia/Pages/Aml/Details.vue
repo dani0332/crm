@@ -34,6 +34,7 @@ const page = usePage();
 const rolesEnum = page.props.rolesEnum;
 const paymentsRef = ref(page.props.quoteRequest.payments);
 const hasRole = role => useHasRole(role);
+const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
 
@@ -643,7 +644,7 @@ onMounted(() => {
         <template #item-status="{ match_found, decision }">
           {{
             match_found > 0
-              ? decision === null
+              ? (decision === null || decision === amlDecisionStatusEnum.ESCALATED)
                 ? amlDecisionStatusEnum.ESCALATED
                 : decision === amlDecisionStatusEnum.TRUE_MATCH_REJECT_RISK
                 ? amlDecisionStatusEnum.REJECTED
@@ -651,7 +652,7 @@ onMounted(() => {
               : amlDecisionStatusEnum.PASS
           }}
         </template>
-        <template v-if="hasRole(rolesEnum.COMPLIANCE)" #item-action="{ id }">
+        <template v-if="hasAnyRole([rolesEnum.COMPLIANCE, rolesEnum.ComplianceSuperUser])" #item-action="{ id }">
           <div class="space-x-4">
             <x-button
               size="xs"

@@ -62,6 +62,7 @@ const page = usePage();
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 
 const historyLoading = ref(false);
 
@@ -541,7 +542,10 @@ const sectionExpanded = computed(() => {
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-              <div class="grid sm:grid-cols-2">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+          >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -594,9 +598,7 @@ const sectionExpanded = computed(() => {
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">LOST REASON</dt>
-                <dd>
-                  {{ quote.life_quote_request_detail?.lost_reason?.text }}
-                </dd>
+            <dd>{{ quote.life_quote_request_detail?.lost_reason?.text }}</dd>
               </div>
               <div class="grid sm:grid-cols-2">
                 <dt class="font-medium">PRICE</dt>
@@ -662,16 +664,8 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-4 justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              v-if="quote.kyc_decision === 'Complete'"
-            >
-              KYC - Complete
-            </x-button>
-            <x-button size="sm" color="primary" v-else>
-              KYC - Pending
-            </x-button>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">

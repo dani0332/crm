@@ -221,11 +221,6 @@ const memberRelationOptions = computed(() => {
   }));
 });
 
-const traveler_members = ref(page.props.travelers);
-const computedTravelers = computed(() => {
-  return traveler_members.value.filter(x => !x.is_third_party_payer);
-});
-
 const emiratesOptions = computed(() => {
   return page.props.emirates.map(em => ({
     value: em.id,
@@ -240,6 +235,7 @@ const travelerForm = useForm({
   dob: '',
   nationality_id: null,
   relation_code: null,
+  gender: null,
   customer_id: page.props.quote.customer_id,
   customer_type: page.props.quote.customer_type,
 });
@@ -267,6 +263,10 @@ const travelerTable = reactive({
       value: 'dob',
     },
     {
+      text: 'Gender',
+      value: 'gender',
+    },
+    {
       text: 'Relation',
       value: 'relation',
     },
@@ -289,6 +289,7 @@ const submitTraveler = isValid => {
 
 const addTravelMember = isValid => {
   if (!isValid) return;
+  // '/travelers'
   travelerForm.post(route('travelers.store'), {
     preserveScroll: true,
     onBefore: () => {
@@ -299,18 +300,8 @@ const addTravelMember = isValid => {
         title: 'Member Added',
         position: 'top',
       });
-      onLoadAvailablePlansData()
-      location.reload();
+      onLoadAvailablePlansData();
     },
-      onError: (errors) => {
-          Object.keys(errors).forEach(function(key) {
-              notification.error({
-                  title: errors[key],
-                  position: 'top',
-              });
-          });
-          return false;
-      },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
@@ -319,6 +310,7 @@ const addTravelMember = isValid => {
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
       travelerForm.id = null;
+      travelerForm.gender = null;
       travelerForm.reset();
     },
   });
@@ -332,6 +324,7 @@ const onAddTraveler = () => {
   travelerForm.relation_code = '';
   travelerForm.id = null;
   travelerTable.addTraveler = true;
+  travelerForm.gender = null;
 };
 
 const travelerName = ref('');
@@ -341,6 +334,7 @@ const onEditTraveler = traveler => {
   travelerForm.id = traveler.id;
   travelerForm.first_name = traveler.first_name;
   travelerForm.dob = traveler.dob;
+  travelerForm.gender = traveler.gender;
   travelerForm.relation_code = traveler.relation_code;
   travelerForm.nationality_id = traveler.nationality_id;
   travelerTable.addTraveler = true;
@@ -358,18 +352,8 @@ const editTraveler = isValid => {
         title: 'Member Updated',
         position: 'top',
       });
-      onLoadAvailablePlansData()
-      location.reload();
+      onLoadAvailablePlansData();
     },
-      onError: (errors) => {
-          Object.keys(errors).forEach(function(key) {
-              notification.error({
-                  title: errors[key],
-                  position: 'top',
-              });
-          });
-          return false;
-      },
     onFinish: () => {
       travelerTable.addTraveler = false;
       travelerForm.processing = false;
@@ -378,6 +362,7 @@ const editTraveler = isValid => {
       travelerForm.nationality_id = '';
       travelerForm.relation_code = '';
       travelerForm.id = null;
+      travelerForm.gender = null;
       travelerForm.reset();
     },
   });
@@ -394,8 +379,7 @@ const deleteTraveler = id => {
         title: 'Member Deleted',
         position: 'top',
       });
-      onLoadAvailablePlansData()
-      location.reload();
+      onLoadAvailablePlansData();
     },
     onFinish: () => {
       travelerTable.processing = false;
@@ -1023,6 +1007,11 @@ const handleChildUpdate = planId => {
   prefillPlanId.value = planId;
 };
 
+const genderList = [
+    { value: 'M', label: 'Male' },
+    { value: 'F', label: 'Female' },
+];
+
 const sectionExpanded = computed(() => {
   return !(
     page.props.quote.quote_status_id ===
@@ -1133,6 +1122,16 @@ const sectionExpanded = computed(() => {
                     <template #tooltip> Parent Reference ID </template>
                   </x-tooltip>
                 </dt>
+            <div
+              class="grid sm:grid-cols-2"
+              v-else-if="
+                hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering]) &&
+                field.title == 'ID'
+              "
+            >
+              <dt class="font-medium uppercase">{{ field.title }}</dt>
+              <dd>{{ field?.value }}</dd>
+            </div>
                 <dt v-else class="font-medium uppercase">{{ field.title }}</dt>
                 <dd>{{ field?.value }}</dd>
               </div>
@@ -1316,16 +1315,8 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-3 justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              v-if="quote.kyc_decision === 'Complete'"
-            >
-              KYC - Complete
-            </x-button>
-            <x-button size="sm" color="primary" v-else>
-              KYC - Pending
-            </x-button>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -1610,7 +1601,7 @@ const sectionExpanded = computed(() => {
         <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Member Details
-            <x-tag size="sm">{{ computedTravelers.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
           </h3>
         </div>
         <template #content>
@@ -1623,11 +1614,11 @@ const sectionExpanded = computed(() => {
           <DataTable
             table-class-name="tablefixed compact"
             :headers="travelerTable.columns"
-            :items="computedTravelers || []"
+        :items="travelers || []"
             border-cell
             hide-rows-per-page
             :rows-per-page="15"
-            :hide-footer="computedTravelers.length < 15"
+        :hide-footer="travelers.length < 15"
             show-index
           >
             <template #item-index="{ index, code }">
@@ -1637,12 +1628,15 @@ const sectionExpanded = computed(() => {
               {{ dateFormat(dob).value }}
             </template>
 
-            <template #item-relation="{ relation }">
-              {{ relation?.text }}
-            </template>
-            <template #item-nationality="{ nationality }">
-              {{ nationality?.text }}
-            </template>
+        <template #item-relation="{ relation }">
+          {{ relation?.text }}
+        </template>
+        <template #item-gender="{ gender }">
+          {{ gender === 'M' ? 'Male' : gender === 'F' ? 'Female' : ''  }}
+        </template>
+        <template #item-nationality="{ nationality }">
+          {{ nationality?.text }}
+        </template>
 
             <template #item-action="item">
               <div class="flex gap-2">
@@ -1708,6 +1702,15 @@ const sectionExpanded = computed(() => {
               placeholder="Select Relation"
               class="w-full"
             />
+            <x-field label="Gender*" >
+              <x-select
+                  v-model="travelerForm.gender"
+                  placeholder="Gender"
+                  :options="genderList"
+                  :rules="[isRequired]"
+                  class="w-full"
+              />
+            </x-field>
           </div>
           <div class="text-right space-x-4 mt-8">
             <x-button size="sm" @click.prevent="modals.addTraveler = false">
@@ -1906,194 +1909,66 @@ const sectionExpanded = computed(() => {
     </div>
 
     <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <div class="flex flex-wrap gap-4 justify-between items-center mb-4">
-          <h3 class="font-semibold text-primary-800 text-lg">
-            Travelers
-            <x-tag size="sm">{{ travelers.length || 0 }}</x-tag>
-          </h3>
+      <div>
+        <h3 class="font-semibold text-primary-800 text-lg">Policy Details</h3>
+        <x-divider class="mb-4 mt-1" />
+      </div>
+      <x-form @submit="submitPolicyDetails" :auto-focus="false">
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.policy_number"
+              :disabled="!policyDetails.editMode"
+              label="POLICY NUMBER"
+              :rules="[isRequired, policy_number]"
+              class="w-full"
+            />
+          </div>
+          <div class="w-full md:w-1/2">
+            <DatePicker
+              v-model="policyDetails.policy_issuance_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="ISSUANCE DATE"
+              :rules="[isRequired]"
+              class="w-full"
+            />
+          </div>
         </div>
-        <template #content>
-          <div class="flex flex-wrap gap-3 my-4 justify-end">
-            <x-button size="sm" color="primary" @click.prevent="onAddTraveler">
-              Add Member
-            </x-button>
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <DatePicker
+              v-model="policyDetails.policy_start_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="START DATE"
+              :rules="[isRequired, policy_start_date]"
+              class="w-full"
+            />
           </div>
-          <DataTable
-            table-class-name="tablefixed compact"
-            :headers="travelerTable.columns"
-            :items="travelers || []"
-            border-cell
-            hide-rows-per-page
-            :rows-per-page="15"
-            :hide-footer="travelers.length < 15"
-            show-index
-          >
-            <template #item-name="item"> Traveler {{ item.index }} </template>
-            <template #item-dob="{ dob }">
-              {{ dateFormat(dob).value }}
-            </template>
-
-            <template #item-created_at="{ created_at }">
-              {{ dateTimeFormat(created_at).value }}
-            </template>
-
-            <template #item-updated_at="{ updated_at }">
-              {{ dateTimeFormat(updated_at).value }}
-            </template>
-
-            <template #item-action="item">
-              <div class="flex gap-2 justify-center">
-                <x-button
-                  size="xs"
-                  color="primary"
-                  @click.prevent="onEditTraveler(item)"
-                  outlined
-                >
-                  Edit
-                </x-button>
-                <x-button
-                  size="xs"
-                  color="emerald"
-                  @click.prevent="
-                    confirmModal.onConfirm = () => deleteTraveler(item.id);
-                    confirmModal.show = true;
-                  "
-                  outlined
-                >
-                  Delete
-                </x-button>
-              </div>
-            </template>
-          </DataTable>
-        </template>
-      </x-collapse>
-      <x-modal
-        v-model="travelerTable.addTraveler"
-        size="lg"
-        show-close
-        backdrop
-      >
-        <template #header>
-          {{ travelerForm.id ? 'Edit: ' + travelerName : 'New Member' }}
-        </template>
-        <x-form @submit="submitTraveler" :auto-focus="false">
-          <x-input
-            label="Name"
-            placeholder="Name"
-            value="Member"
-            readonly
-            disabled
-            class="w-full"
-          />
-          <DatePicker
-            v-model="travelerForm.dob"
-            label="Date of Birth"
-            input-classes="w-full "
-            :rules="[isRequired]"
-          />
-          <div class="flex justify-end">
-            <x-button
-              class="mt-4"
-              color="emerald"
-              size="sm"
-              type="submit"
-              :loading="travelerTable.processing"
-            >
-              Save
-            </x-button>
+          <div class="w-full md:w-1/2">
+            <DatePicker
+              v-model="policyDetails.renewal_expiry_date"
+              :disabled="!policyDetails.editMode"
+              type="date"
+              label="EXPIRY DATE"
+              :rules="[isRequired, renewal_expiry_date]"
+              class="w-full"
+            />
           </div>
-        </x-form>
-      </x-modal>
-    </div>
-
-    <x-modal v-model="confirmModal.show" show-close backdrop>
-      <template #header> {{ confirmModal.title }} </template>
-      <p>{{ confirmModal.message }}</p>
-      <template #actions>
-        <div class="text-right space-x-4">
-          <x-button size="sm" ghost @click.prevent="confirmModal.show = false">
-            Cancel
-          </x-button>
-          <x-button
-            size="sm"
-            color="error"
-            @click.prevent="confirmModal.onConfirm"
-            :loading="confirmModal.processing"
-          >
-            Delete
-          </x-button>
         </div>
-      </template>
-    </x-modal>
-
-    <div class="p-4 rounded shadow mb-6 bg-white">
-      <x-collapse :expanded="sectionExpanded" show-icon>
-        <template #default="{ collapsed }">
-          <div>
-            <h3 class="font-semibold text-primary-800 text-lg mb-4">
-              Policy Details
-            </h3>
-            <x-divider class="mb-4 mt-1" v-if="!collapsed" />
+        <div class="flex gap-6 w-full">
+          <div class="w-full md:w-1/2">
+            <x-input
+              v-model="policyDetails.premium"
+              :disabled="!policyDetails.editMode"
+              label="PRICE"
+              :rules="[isRequired, premium]"
+              class="w-full"
+            />
           </div>
-        </template>
-        <template #content>
-          <x-form @submit="submitPolicyDetails" :auto-focus="false">
-            <div class="flex gap-6 w-full">
-              <div class="w-full md:w-1/2">
-                <x-input
-                  v-model="policyDetails.policy_number"
-                  :disabled="!policyDetails.editMode"
-                  label="POLICY NUMBER"
-                  :rules="[isRequired, policy_number]"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-full md:w-1/2">
-                <DatePicker
-                  v-model="policyDetails.policy_issuance_date"
-                  :disabled="!policyDetails.editMode"
-                  type="date"
-                  label="ISSUANCE DATE"
-                  :rules="[isRequired]"
-                  class="w-full"
-                />
-              </div>
-            </div>
-            <div class="flex gap-6 w-full">
-              <div class="w-full md:w-1/2">
-                <DatePicker
-                  v-model="policyDetails.policy_start_date"
-                  :disabled="!policyDetails.editMode"
-                  type="date"
-                  label="START DATE"
-                  :rules="[isRequired, policy_start_date]"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-full md:w-1/2">
-                <DatePicker
-                  v-model="policyDetails.renewal_expiry_date"
-                  :disabled="!policyDetails.editMode"
-                  type="date"
-                  label="EXPIRY DATE"
-                  :rules="[isRequired, renewal_expiry_date]"
-                  class="w-full"
-                />
-              </div>
-            </div>
-            <div class="flex gap-6 w-full">
-              <div class="w-full md:w-1/2">
-                <x-input
-                  v-model="policyDetails.premium"
-                  :disabled="!policyDetails.editMode"
-                  label="PRICE"
-                  :rules="[isRequired, premium]"
-                  class="w-full"
-                />
-              </div>
-              <div class="w-full md:w-1/2"></div>
-            </div>
+          <div class="w-full md:w-1/2"></div>
+        </div>
 
             <div
               class="text-right space-x-4 mt-12"
@@ -2228,7 +2103,7 @@ const sectionExpanded = computed(() => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(computedTravelers)"
+          :members="memberDataDocs(travelers)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"

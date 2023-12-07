@@ -1,6 +1,5 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -9,7 +8,6 @@ import PlanDetails from '../../Components/PlanDetails.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import KycForm from '@/inertia/Components/KycForm.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
 defineProps({
@@ -43,6 +41,7 @@ const page = usePage();
 const { isRequired } = useRules();
 const can = permission => useCan(permission);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const permissionsEnum = page.props.permissionsEnum;
 const notification = useToast();
 
@@ -241,6 +240,13 @@ const sectionExpanded = computed(() => {
 
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+          >
+            <dt class="font-medium">ID</dt>
+            <dd>{{ quote.id }}</dd>
+          </div>
               <div class="grid sm:grid-cols-2">
                 <div>
                   <x-tooltip position="bottom">
@@ -368,29 +374,12 @@ const sectionExpanded = computed(() => {
               }}
               Profile
             </h3>
+        <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-divider class="mb-4 mt-1" v-if="!collapsed" />
         </template>
         <template #content>
-          <div class="flex mb-4 justify-end">
-            <KycForm
-              :roles="$page.props.rolesEnum"
-              :quote="page.props.quote"
-              :country-list="page.props.countryList"
-              :aml-quote-status="page.props.amlQuoteStatus"
-              :nationalities="page.props.nationalities"
-              :modelType="'Bike'"
-              :entities="page.props.entities"
-              :legal-structure="page.props.legalStructure"
-              :id-document-type="page.props.idDocumentType"
-              :mode-of-contact="page.props.modeOfContact"
-              :employment-sectors="page.props.employmentSectors"
-              :residential-status="page.props.residentialStatus"
-              :company-position="page.props.companyPosition"
-              :issuance-place="page.props.issuancePlace"
-              :issuing-authority="page.props.issuanceAuthorities"
-            />
-          </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
               <dl

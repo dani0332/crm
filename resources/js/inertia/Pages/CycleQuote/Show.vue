@@ -42,6 +42,7 @@ defineProps({
 const page = usePage();
 const notification = useToast();
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 const modals = reactive({
   duplicate: false,
 });
@@ -345,6 +346,13 @@ const sectionExpanded = computed(() => {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -482,23 +490,8 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-4 justify-end">
-            <KycForm
-              :roles="$page.props.rolesEnum"
-              :quote="page.props.quote"
-              :country-list="page.props.countryList"
-              :aml-quote-status="page.props.amlQuoteStatus"
-              :nationalities="page.props.nationalities"
-              :modelType="'Cycle'"
-              :entities="page.props.entities"
-              :legal-structure="page.props.legalStructure"
-              :id-document-type="page.props.idDocumentType"
-              :mode-of-contact="page.props.modeOfContact"
-              :employment-sectors="page.props.employmentSectors"
-              :residential-status="page.props.residentialStatus"
-              :company-position="page.props.companyPosition"
-              :issuance-place="page.props.issuancePlace"
-              :issuing-authority="page.props.issuanceAuthorities"
-            />
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">

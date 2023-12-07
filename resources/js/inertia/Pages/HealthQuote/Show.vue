@@ -55,6 +55,7 @@ const page = usePage();
 const notification = useToast();
 const hasRole = role => useHasRole(role);
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 
 const paymentStatusEnum = page.props.paymentStatusEnum;
 const dateFormat = date =>
@@ -333,11 +334,6 @@ const onLeadStatus = () => {
   );
 };
 
-const members = ref(page.props.membersDetail);
-const computedMembers = computed(() => {
-  return members.value.filter(x => !x.is_third_party_payer);
-});
-
 const memberDetailsTable = reactive({
   isLoading: false,
   columns: [
@@ -456,8 +452,7 @@ const onMemberSubmit = isValid => {
           position: 'top',
         });
         memberForm.reset();
-        onLoadAvailablePlansData()
-        location.reload();
+        onLoadAvailablePlansData();
       },
       onFinish: () => {
         modals.member = false;
@@ -471,8 +466,7 @@ const onMemberSubmit = isValid => {
           title: 'Member Added',
           position: 'top',
         });
-        onLoadAvailablePlansData()
-        location.reload();
+        onLoadAvailablePlansData();
       },
       onFinish: () => {
         modals.member = false;
@@ -487,24 +481,26 @@ const memberDelete = id => {
 };
 
 const memberDeleteConfirmed = () => {
-  memberForm.delete(`/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`, {
-    preserveScroll: true,
-    onSuccess: () => {
-      notification.success({
-        title: 'Member Deleted',
-        position: 'top',
-      });
-      onLoadAvailablePlansData()
-      location.reload();
+  memberForm.delete(
+    `/members/${page.props.quote.customer_type}-${page.props.modelType}-${confirmDeleteData.member}`,
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        notification.success({
+          title: 'Member Deleted',
+          position: 'top',
+        });
+        onLoadAvailablePlansData();
+      },
+      onFinish: () => {
+        modals.memberConfirm = false;
+      },
     },
-    onFinish: () => {
-      modals.memberConfirm = false;
-    },
-  });
+  );
 };
 
-const memberDataDocs = computedMembers => {
-  return computedMembers
+const memberDataDocs = membersDetail => {
+  return membersDetail
     .map(member => ({
       id: member.id,
       name: memberCategoryText(member.member_category_id).value,
@@ -1475,10 +1471,10 @@ const sectionExpanded = computed(() => {
           </div>
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
-              <div
-                v-if="hasRole($page.props.rolesEnum.Engineering)"
-                class="grid sm:grid-cols-2"
-              >
+          <div
+            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            class="grid sm:grid-cols-2"
+          >
                 <dt class="font-medium">ID</dt>
                 <dd>{{ quote.id }}</dd>
               </div>
@@ -1611,16 +1607,8 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-3 justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              v-if="quote.kyc_decision === 'Complete'"
-            >
-              KYC - Complete
-            </x-button>
-            <x-button size="sm" color="primary" v-else>
-              KYC - Pending
-            </x-button>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
           <x-form @submit="updateProfileDetails" :auto-focus="false">
             <div class="text-sm">
@@ -1924,7 +1912,7 @@ const sectionExpanded = computed(() => {
         <div class="flex justify-between items-center mb-4">
           <h3 class="font-semibold text-primary-800 text-lg">
             Member Details
-            <x-tag size="sm">{{ computedMembers.length || 0 }}</x-tag>
+          <x-tag size="sm">{{ membersDetail.length || 0 }}</x-tag>
           </h3>
         </div>
         <template #content>
@@ -1941,7 +1929,7 @@ const sectionExpanded = computed(() => {
           <DataTable
             table-class-name="tablefixed compact"
             :headers="memberDetailsTable.columns"
-            :items="computedMembers || []"
+        :items="membersDetail || []"
             show-index
             border-cell
             hide-rows-per-page
@@ -2668,7 +2656,7 @@ const sectionExpanded = computed(() => {
         <template #header> Create Heath Quote </template>
         <LazyCreatePlan
           :uuid="quote.uuid"
-          :members="computedMembers"
+          :members="membersDetail"
           :genders="genderOptions"
           @success="onCreatePlan"
           @error="onPlanError"
@@ -2833,7 +2821,7 @@ const sectionExpanded = computed(() => {
       <x-modal v-model="modals.doc" size="xl" show-close backdrop>
         <template #header> Upload Documents </template>
         <LazyDocumentUploader
-          :members="memberDataDocs(computedMembers)"
+          :members="memberDataDocs(membersDetail)"
           :doc-types="documentTypes"
           :docs="quoteDocuments || []"
           :cdn="cdnPath"

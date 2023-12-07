@@ -41,6 +41,7 @@ const page = usePage();
 const { isRequired } = useRules();
 const notification = useNotifications('toast');
 const hasAnyRole = roles => useHasAnyRole(roles);
+const rolesEnum = page.props.rolesEnum;
 
 const modals = reactive({
   duplicate: false,
@@ -521,6 +522,13 @@ const sectionExpanded = computed(() => {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -659,14 +667,8 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-4 justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              v-if="quote.kyc_decision === 'Complete'"
-            >
-              KYC - Complete
-            </x-button>
-            <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">

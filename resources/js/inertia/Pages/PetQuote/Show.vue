@@ -1,6 +1,5 @@
 <script setup>
 import QuoteDocuments from '../PersonalQuote/Partials/QuoteDocuments';
-import LeadStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuoteStatus from '../PersonalQuote/Partials/QuoteStatus';
 import QuotePayments from '../PersonalQuote/Partials/QuotePayments';
 import QuoteActivities from '../PersonalQuote/Partials/QuoteActivities';
@@ -8,7 +7,6 @@ import QuotePolicy from '../PersonalQuote/Partials/QuotePolicy';
 import AdditionalContacts from '../PersonalQuote/Partials/AdditionalContacts.vue';
 import LeadHistory from '../PersonalQuote/Partials/LeadHistory.vue';
 import MemberDetails from '../../Components/MemberDetails.vue';
-import KycForm from '@/inertia/Components/KycForm.vue';
 import PlanDetails from '../../Components/PlanDetails.vue';
 import RiskRatingScoreDetails from '../../Components/RiskRatingScoreDetails.vue';
 
@@ -44,6 +42,7 @@ const page = usePage();
 const hasAnyRole = roles => useHasAnyRole(roles);
 const can = permission => useCan(permission);
 const permissionsEnum = page.props.permissionsEnum;
+const rolesEnum = page.props.rolesEnum;
 
 const historyLoading = ref(false);
 
@@ -325,6 +324,13 @@ const sectionExpanded = computed(() => {
           <div class="text-sm">
             <dl class="grid md:grid-cols-2 gap-x-6 gap-y-4">
               <div class="grid sm:grid-cols-2">
+            <div
+              class="grid sm:grid-cols-2"
+              v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+            >
+              <dt class="font-medium">ID</dt>
+              <dd>{{ quote.id }}</dd>
+            </div>
                 <div>
                   <x-tooltip position="bottom">
                     <label
@@ -477,23 +483,8 @@ const sectionExpanded = computed(() => {
         </template>
         <template #content>
           <div class="flex mb-4 justify-end">
-            <KycForm
-              :roles="$page.props.rolesEnum"
-              :quote="page.props.quote"
-              :country-list="page.props.countryList"
-              :aml-quote-status="page.props.amlQuoteStatus"
-              :nationalities="page.props.nationalities"
-              :modelType="'Pet'"
-              :entities="page.props.entities"
-              :legal-structure="page.props.legalStructure"
-              :id-document-type="page.props.idDocumentType"
-              :mode-of-contact="page.props.modeOfContact"
-              :employment-sectors="page.props.employmentSectors"
-              :residential-status="page.props.residentialStatus"
-              :company-position="page.props.companyPosition"
-              :issuance-place="page.props.issuancePlace"
-              :issuing-authority="page.props.issuanceAuthorities"
-            />
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">

@@ -238,9 +238,10 @@ const memberDeleteConfirmed = () => {
         <div class="grid md:grid-cols-2 gap-4">
           <input type="hidden" :value="memberForm.id" />
           <x-input
-            v-model="memberForm.first_name"
-            label="Member Name"
-            placeholder="Member Name"
+                        v-model="memberForm.first_name"
+                        label="Member Name*"
+                        placeholder="Member Name"
+                        :rules="[isRequired]"
           />
           <ComboBox
             v-model="memberForm.nationality_id"
@@ -251,9 +252,10 @@ const memberDeleteConfirmed = () => {
             :hasError="memberFieldReq.nationality"
           />
           <DatePicker
-            v-model="memberForm.dob"
-            label="DOB"
-            :hasError="memberFieldReq.dob"
+                        v-model="memberForm.dob"
+                        label="DOB*"
+                        :hasError="memberFieldReq.dob"
+                        :rules="[isRequired]"
           />
           <x-select
             v-model="memberForm.relation_code"

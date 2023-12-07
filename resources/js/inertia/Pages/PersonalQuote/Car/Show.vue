@@ -1431,21 +1431,25 @@ const linkEntity = () => {
             if(res.data.status) {
                 let response = res.data.response;
 
-                // Append Entity data in fields
-                customerProfileForm.trade_license_no = response.trade_license_no;
-                customerProfileForm.company_name = response.company_name;
-                customerProfileForm.company_address = response.company_address;
-                customerProfileForm.entity_type_code = response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
-                customerProfileForm.industry_type_code = response.industry_type_code;
+        // Append Entity data in fields
+        customerProfileForm.trade_license_no = response.trade_license_no;
+        customerProfileForm.company_name = response.company_name;
+        customerProfileForm.company_address = response.company_address;
+        customerProfileForm.entity_type_code =
+          response?.quote_request_entity_mapping[0]?.entity_type_code ?? '';
+        customerProfileForm.industry_type_code = response.industry_type_code;
+        customerProfileForm.emirate_of_registration_id =
+          response.emirate_of_registration_id;
 
-                notification.success({
-                    title: res.data.message,
-                    position: 'top',
-                });
-                entityDetailsFound.value = false;
-            }
-        }).catch(err => {
-        console.log(err);
+        notification.success({
+          title: res.data.message,
+          position: 'top',
+        });
+        entityDetailsFound.value = false;
+      }
+    })
+    .catch(err => {
+      console.log(err);
     });
 };
 
@@ -1781,6 +1785,13 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
                 </dt>
                 <dd>{{ record.parent_duplicate_quote_id ?? '' }}</dd>
               </div>
+          <div
+            class="grid sm:grid-cols-2"
+            v-if="hasAnyRole([rolesEnum.Admin, rolesEnum.Engineering])"
+          >
+            <dt class="font-medium">ID</dt>
+            <dd>{{ record.id }}</dd>
+          </div>
             </dl>
           </div>
           <x-divider class="mb-4 mt-4" />
@@ -1851,14 +1862,9 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
         </template>
         <template #content>
           <div class="flex mb-3 justify-end">
-            <x-button
-              size="sm"
-              color="orange"
-              v-if="quote.kyc_decision === 'Complete'"
-            >
-              KYC - Complete
-            </x-button>
-            <x-button size="sm" color="primary" v-else> KYC - Pending </x-button>
+            <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
+        <x-tag color="amber" v-else> KYC - Pending </x-tag>
+      </div>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">
@@ -2961,7 +2967,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
                 </template>
     
                 <!-- v-if="hasRole(rolesEnum.CarAdvisor)" , hide it temp -->
-                <span v-if="hasRole(page.props.rolesEnum.HealthAdvisor)">
+            <span v-if="true == false">
                   <SelectPlan
                     v-if="prefillPlanId != item.id"
                     @update:updatePlanId="handleChildUpdate"
@@ -2984,15 +2990,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </template>
           </DataTable>
     
-          <FollowUpReasons
-            v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
-            :modelValue="showfollowup"
-            @update:modelValue="value => closeModal(value)"
-            :uuid="page.props.record.id"
-            :source="page.props.record.source"
-            :followUpId="followUpId"
-            :kyoEndPoint="kyoEndPoint"
-          />
+
         </template>
       </x-collapse>
       
@@ -3018,7 +3016,17 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
             </x-button>
           </div>
         </template>
-      </x-modal>      
+      </x-modal>
+
+      <FollowUpReasons
+        v-if="can(permissionEnum.PAUSE_AUTO_FOLLOWUPS)"
+        :modelValue="showfollowup"
+        @update:modelValue="value => closeModal(value)"
+        :uuid="page.props.record.id"
+        :source="page.props.record.source"
+        :followUpId="followUpId"
+        :kyoEndPoint="kyoEndPoint"
+      />
 
       <x-modal v-model="modals.plan" size="xl" show-close backdrop>
         <template #header>
@@ -3077,7 +3085,6 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
           :available-plans="availablePlansItems"
           @success="onCreatePlan"
           @error="onPlanError"
-          @onLoadAvailablePlansData="onLoadAvailablePlansData"
         />
         <!-- missing @success="onCreatePlan"
          missing @error="onPlanError" -->
