@@ -261,7 +261,7 @@ class AMLService
     {
         $membersFor = ($request->customer_type == CustomerTypeEnum::Entity) ? CustomerTypeEnum::Entity : CustomerTypeEnum::Individual;
 
-        return CustomerMembersRepository::getBy('quote_id', $quoteRequestId, $quoteType->code, $membersFor);
+        return CustomerMembersRepository::getBy($quoteRequestId, $quoteType->code, $membersFor);
     }
 
     public static function updateAMLDecisionLexisNexis($request)

@@ -14,18 +14,19 @@ class CustomerMembersRepository extends BaseRepository
         return CustomerMembers::class;
     }
 
-    public function fetchGetBy($column, $value, $quoteType, $customerType = CustomerTypeEnum::Individual)
+    public function fetchGetBy($quote_request_id, $quoteType, $customerType = CustomerTypeEnum::Individual)
     {
-        return $this->byQuoteType($quoteType)
-            ->where([
-                $column => $value,
-                'customer_type' => $customerType,
-            ])
-            ->with([
-                'relation',
-                'emirate',
-                'nationality',
-            ])->get();
+        $quoteModelObject = $this->getModelObject(strtolower($quoteType));
+
+        return $this->where([
+            'quote_type' => ltrim($quoteModelObject,'\\'),
+            'quote_id' => $quote_request_id,
+            'customer_type' => $customerType
+        ])->with([
+            'relation',
+            'emirate',
+            'nationality'
+        ])->get();
     }
 
     public function fetchGetMemberInfo($column, $value, $quoteType, $customerType = CustomerTypeEnum::Individual, $selectedColumns = 'id')
