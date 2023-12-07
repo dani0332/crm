@@ -1667,10 +1667,12 @@ class CRUDController extends Controller
      */
     public function exportCarLeads(Request $request)
     {
-        $created_at_start = $request->created_at_start;
-        $created_at_end = $request->created_at_end;
+        $created_at_start = Carbon::parse($request->created_at)->format('Y-m-d');
+        $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
-        if (Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end)) > 120) {
+        $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
+        
+        if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
 
