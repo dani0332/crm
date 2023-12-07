@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
+use App\Models\HealthQuote;
 use App\Models\QuoteDocument;
 use Http\Client\Exception;
 use Illuminate\Bus\Queueable;
@@ -28,7 +29,7 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
         try {
             info('------------------- Update Member Detail ID Job Started At : ' . now() . ' -------------------');
             QuoteDocument::withTrashed()
-                ->where('quote_documentable_type', 'App\Models\HealthQuote')
+                ->where('quote_documentable_type', HealthQuote::class)
                 ->whereNotNull('member_detail_id')
                 ->where('created_at', '<=', '2023-11-23 23:59:59')
                 ->chunk(1000, function ($healthDocuments) {
@@ -48,7 +49,7 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
                                 'dob' => $getOldHealthMemberRecord->dob ?? ''
                             ];
 
-                            $getCustomerMemberRecord = CustomerMembers::where($customerMemberFilter)->where('quote_type', 'App\Models\HealthQuote')->get();
+                            $getCustomerMemberRecord = CustomerMembers::where($customerMemberFilter)->where('quote_type', HealthQuote::class)->get();
                             if ($getOldHealthMemberRecord->count() == 1) {
                                 info('Updating... Quote Document ID: '.$healthDocument->id.' - Old member_detail_id: '.$healthDocument->member_detail_id.' - New member_detail_id: '.$getCustomerMemberRecord[0]->id);
                                 $healthDocument->old_member_detail_id = $healthDocument->member_detail_id;
