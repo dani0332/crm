@@ -1671,7 +1671,7 @@ class CRUDController extends Controller
         $created_at_end = Carbon::parse($request->created_at_end)->format('Y-m-d');
 
         $diff = Carbon::parse($created_at_start)->diffInDays(Carbon::parse($created_at_end));
-        
+
         if ($diff > 120) {
             return back()->with('error', 'Maximum of 120 days (created date) are allowed to be exported.');
         }
