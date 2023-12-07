@@ -1863,8 +1863,7 @@ const showSendUpdate = computed(() => !sectionExpanded?.value);
         <template #content>
           <div class="flex mb-3 justify-end">
             <x-tag color="success" v-if="quote.kyc_decision === 'Complete'"> KYC - Complete </x-tag>
-        <x-tag color="amber" v-else> KYC - Pending </x-tag>
-      </div>
+            <x-tag color="amber" v-else> KYC - Pending </x-tag>
           </div>
 
           <x-form @submit="updateProfileDetails" :auto-focus="false">

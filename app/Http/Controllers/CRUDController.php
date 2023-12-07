@@ -54,6 +54,7 @@ use App\Repositories\RenewalBatchRepository;
 use App\Repositories\UserRepository;
 use App\Services\ActivitiesService;
 use App\Services\AllocationService;
+use App\Services\AMLService;
 use App\Services\ApplicationStorageService;
 use App\Services\BusinessQuoteService;
 use App\Services\CarEmailService;
@@ -514,11 +515,13 @@ class CRUDController extends Controller
             $renewalAdvisors = $this->crudService->getNewBusinessAdvisorsByModelType($this->genericModel->modelType);
         }
         $leadStatuses = $this->dropdownSourceService->getDropdownSource('quote_status_id', $quoteTypeId);
-        if ($record->quote_status_id !== QuoteStatusEnum::AMLScreeningCleared) {
+
+        if (AMLService::checkAMLStatusFailed($quoteTypeId, $record->id)) {
             $leadStatuses = collect($leadStatuses)->filter(function ($value) {
                 return $value['id'] != QuoteStatusEnum::TransactionApproved;
             })->values();
         }
+
         $lostReasons = $this->lookupService->getLostReasons();
         $selectedLostReasonId = '';
         if (strtolower($this->genericModel->modelType) != 'teams' && strtolower($this->genericModel->modelType) != 'leadstatus') {

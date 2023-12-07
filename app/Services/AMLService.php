@@ -76,25 +76,6 @@ class AMLService
 
     public static function getQuoteDetails($quoteTypeId, $quoteRequestId)
     {
-        $migratedQuoteTypes = [
-            QuoteTypes::BIKE->id(),
-            QuoteTypes::YACHT->id(),
-            QuoteTypes::PET->id(),
-            QuoteTypes::CYCLE->id(),
-            QuoteTypes::JETSKI->id(),
-        ];
-        $isDataMigrated = true;
-        $quoteRequestDetails = [];
-
-        if (in_array($quoteTypeId, $migratedQuoteTypes)) {
-            $checkAMLService = new CheckAmlService();
-            $isDataMigrated = $checkAMLService->isDataMigrated($quoteTypeId, $quoteRequestId);
-
-            if (! $isDataMigrated) {
-                $quoteRequestId = $checkAMLService->getPersonalQuoteId($quoteTypeId, $quoteRequestId);
-            }
-        }
-
         if ($quoteTypeId == QuoteTypes::CAR->id()) {
             $quoteRequestDetails = CarQuote::with([
                 'quoteStatus',
@@ -168,24 +149,14 @@ class AMLService
                 'nationality',
             ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::PET->id()) {
-            if ($isDataMigrated) {
-                $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
-                    'petQuote',
-                    'customer.detail',
-                    'quoteStatus',
-                    'payments.paymentMethod',
-                    'payments.getCustomerPaymentInstrument',
-                    'paymentStatus',
-                ])->where('id', $quoteRequestId)->firstOrFail();
-            } else {
-                $quoteRequestDetails = PetQuote::with([
-                    'quoteStatus',
-                    'payments.paymentMethod',
-                    'payments.getCustomerPaymentInstrument',
-                    'paymentStatus',
-                    'customer.detail',
-                ])->where('id', $quoteRequestId)->firstOrFail();
-            }
+            $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::PET->id())->with([
+                'petQuote',
+                'customer.detail',
+                'quoteStatus',
+                'payments.paymentMethod',
+                'payments.getCustomerPaymentInstrument',
+                'paymentStatus',
+            ])->where('id', $quoteRequestId)->firstOrFail();
         } elseif ($quoteTypeId == QuoteTypes::BIKE->id()) {
             $quoteRequestDetails = PersonalQuote::byQuoteTypeId(QuoteTypes::BIKE->id())->with([
                 'bikeQuote',
@@ -323,7 +294,11 @@ class AMLService
     {
         $status = KycLog::withTrashed()->select(DB::raw('LEFT(customer_code, 3) AS splitted_customer_code'))
             ->where(['quote_request_id' => $quoteRequestId, 'quote_type_id' => $quoteTypeId])
-            ->whereNot('decision', AMLDecisionStatusEnum::RYU)
+            ->where(function ($ryuFilter) {
+                $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+                $ryuFilter->orWhereNull('decision');
+            })
+            ->whereNull('screenshot')
             ->orderBy('id', 'desc')
             ->value('splitted_customer_code');
 
@@ -334,5 +309,24 @@ class AMLService
         }
 
         return $status;
+    }
+
+    public static function checkAMLStatusFailed($quoteTypeId, $quoteRequestId)
+    {
+        $fetchAMLRecords = KycLog::withTrashed()->where([
+            'quote_type_id' => $quoteTypeId,
+            'quote_request_id' => $quoteRequestId,
+        ])->where(function ($ryuFilter) {
+            $ryuFilter->whereNotIn('decision', [AMLDecisionStatusEnum::RYU]);
+            $ryuFilter->orWhereNull('decision');
+        })->whereNull('screenshot')->pluck('decision');
+
+        if ($fetchAMLRecords->count() == 0) {
+            return true;
+        }
+
+        return collect($fetchAMLRecords)->contains(function ($value) {
+            return in_array($value, [AMLDecisionStatusEnum::TRUE_MATCH, AMLDecisionStatusEnum::TRUE_MATCH_REJECT_RISK, null]);
+        });
     }
 }
