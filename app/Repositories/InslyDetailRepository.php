@@ -105,7 +105,7 @@ class InslyDetailRepository extends BaseRepository
         $inslyCoverageArray = $this->inslyInsurances();
         $quoteType = null;
         foreach ($inslyCoverageArray as $key => $item) {
-            if (in_array(ucfirst($coverage), $item)) {
+            if (in_array($coverage, $item)) {
                 $quoteType = $key;
             }
         }
@@ -128,7 +128,6 @@ class InslyDetailRepository extends BaseRepository
         if (! empty($policy)) {
             $coverage = $policy['policy']['coverage'];
             $quoteType = $this->getQuoteType($coverage);
-
             $data = [];
             $model = $this->getModelObject($quoteType);
             if ($model) {
