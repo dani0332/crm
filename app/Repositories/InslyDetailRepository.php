@@ -43,7 +43,7 @@ class InslyDetailRepository extends BaseRepository
         if (auth()->user()->hasRole(RolesEnum::BikeAdvisor)) {
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
         }
-        if (auth()->user()->hasRole(RolesEnum::CorplineManager)) {
+        if (auth()->user()->hasRole(RolesEnum::CorpLineAdvisor)) {
             $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BUSINESS->value]);
         }
         if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
