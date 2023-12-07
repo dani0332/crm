@@ -6,6 +6,7 @@ use App\Enums\LeadSourceEnum;
 use App\Enums\QuoteStatusEnum;
 use App\Enums\quoteTypeCode;
 use App\Enums\QuoteTypes;
+use App\Enums\RolesEnum;
 use App\Models\InslyDetail;
 use App\Models\QuoteType;
 use App\Services\CapiRequestService;
@@ -21,6 +22,9 @@ class InslyDetailRepository extends BaseRepository
     }
     public function fetchGetData()
     {
+
+        $inslyCoverageArray = $this->inslyInsurances();
+
         $query = InslyDetail::query();
 
         if (! empty(request()->policy_number)) {
@@ -33,6 +37,49 @@ class InslyDetailRepository extends BaseRepository
 
         if (! empty(request()->mobile_no)) {
             $query->where('customer.mobile_phone', '=', request()->mobile_no);
+        }
+
+        $coverage = [];
+        if (auth()->user()->hasRole(RolesEnum::BikeAdvisor)) {
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BIKE->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::CorplineManager)) {
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::BUSINESS->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::CarAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::CAR->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::LifeAdvisor)) {
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::LIFE->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::HomeAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::HOME->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::TravelAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::TRAVEL->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::HealthAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::HEALTH->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::CycleAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::CYCLE->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::PetAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::PET->value]);
+        }
+        if (auth()->user()->hasRole(RolesEnum::YachtAdvisor)) {
+
+            $coverage = array_merge($coverage, $inslyCoverageArray[QuoteTypes::YACHT->value]);
+        }
+
+        if (! empty($coverage)) {
+            $query->whereIn('policy.coverage', $coverage);
         }
         $data = $query->simplePaginate()->withQueryString()->toArray();
 

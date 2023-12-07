@@ -17,7 +17,7 @@ class LegacyPolicyController extends Controller
     public function index(Request $request)
     {
         $policies = [];
-        if (!empty($request->all())) {
+        if (! empty($request->all())) {
             $policies = InslyDetailRepository::getData();
         }
 
