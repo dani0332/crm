@@ -4,8 +4,8 @@ namespace App\Jobs;
 
 use App\Models\CustomerMembers;
 use App\Models\HealthMemberDetail;
-use App\Models\HealthQuote;
 use App\Models\QuoteDocument;
+use Http\Client\Exception;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,43 +25,48 @@ class UpdateMemberKeyHealthDocsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        info('------------------- Update Member Detail ID Job Started At : '. now() .' -------------------');
-        QuoteDocument::withTrashed()->hasMorph('quoteDocumentable', HealthQuote::class)
-            ->whereNotNull('member_detail_id')
-            ->where('created_at', '<=', '2023-11-23 23:59:59')
-            ->chunk(1000, function ($healthDocuments){
-                foreach ($healthDocuments as $healthDocument) {
-                    info('Update Member Detail Job Processing to : health_quote_request_member_details table ID ' . $healthDocument->member_detail_id . ' quote_documents table ID ' .$healthDocument->id);
+        try {
+            info('------------------- Update Member Detail ID Job Started At : ' . now() . ' -------------------');
+            QuoteDocument::withTrashed()
+                ->where('quote_documentable_type', 'App\Models\HealthQuote')
+                ->whereNotNull('member_detail_id')
+                ->where('created_at', '<=', '2023-11-23 23:59:59')
+                ->chunk(1000, function ($healthDocuments) {
+                    foreach ($healthDocuments as $healthDocument) {
+                        info('Processing... Quote Document ID: ' . $healthDocument->id . ' - Member Detail ID: ' . $healthDocument->member_detail_id);
 
-                    $getOldHealthMemberRecord = HealthMemberDetail::where([
-                        'id' => $healthDocument->member_detail_id
-                    ])->first();
+                        $getOldHealthMemberRecord = HealthMemberDetail::where([
+                            'id' => $healthDocument->member_detail_id
+                        ])->first();
 
-                    $customerMemberFilter = [
-                        'quote_id' => $getOldHealthMemberRecord->health_quote_request_id,
-                        'customer_entity_id' => $getOldHealthMemberRecord->customer_id,
-                        'code' => $getOldHealthMemberRecord->code,
-                        'dob' => $getOldHealthMemberRecord->dob
-                    ];
+                        if ($getOldHealthMemberRecord) {
 
-                    $getCustomerMemberRecord = CustomerMembers::hasMorph('quote', HealthQuote::class)->where($customerMemberFilter)->get();
+                            $customerMemberFilter = [
+                                'quote_id' => $getOldHealthMemberRecord->health_quote_request_id,
+                                'customer_entity_id' => $getOldHealthMemberRecord->customer_id ?? '',
+                                'code' => $getOldHealthMemberRecord->code ?? '',
+                                'dob' => $getOldHealthMemberRecord->dob ?? ''
+                            ];
 
-                    if ($getOldHealthMemberRecord) {
-                        if ($getOldHealthMemberRecord->count() == 1) {
-                            info('Update Member Detail Job : Update member_detail_id ' . $healthDocument->member_detail_id . ' with customer_member ID '.$getCustomerMemberRecord[0]->id);
-                            $healthDocument->member_detail_id = $getCustomerMemberRecord[0]->id;
-                            $healthDocument->save();
-                            $healthDocument->refresh();
+                            $getCustomerMemberRecord = CustomerMembers::where($customerMemberFilter)->where('quote_type', 'App\Models\HealthQuote')->get();
+                            if ($getOldHealthMemberRecord->count() == 1) {
+                                info('Updating... Quote Document ID: '.$healthDocument->id.' - Old member_detail_id: '.$healthDocument->member_detail_id.' - New member_detail_id: '.$getCustomerMemberRecord[0]->id);
+                                $healthDocument->old_member_detail_id = $healthDocument->member_detail_id;
+                                $healthDocument->member_detail_id = $getCustomerMemberRecord[0]->id;
+                                $healthDocument->save();
+                            } else {
+                                info('Multiple records found in customer_members against Quote Request ID: ' . $getOldHealthMemberRecord->health_quote_request_id . ' - Customer ID: ' . $getOldHealthMemberRecord->customer_id . ' - Code: ' . $getOldHealthMemberRecord->code . ' - DOB: ' . $getOldHealthMemberRecord->dob);
+                            }
                         } else {
-                            info('Update Member Detail Job : Multiple records found against ' . json_encode($getCustomerMemberRecord));
+                            info('Record not found in health_quote_request_member_details against : Quote Request ID : ' . $healthDocument->quote_documentable_id . ' - ID : ' . $healthDocument->member_detail_id);
                         }
-                    } else {
-                        info('Update Member Detail Job : Record not found in customer_member table against ' . json_encode($getCustomerMemberRecord));
                     }
-                }
-            });
+                });
 
-        info('------------------- Update Member Detail ID Job End At : '. now() .' -------------------');
+            info('------------------- Update Member Detail ID Job End At : ' . now() . ' -------------------');
+        } catch (Exception $exception) {
+            \Log::error('Update Member Detail ID Job - Error - Message: '.$exception->getMessage());
+        }
 
     }
 }
